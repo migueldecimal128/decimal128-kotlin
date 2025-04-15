@@ -10,9 +10,9 @@ import com.decimal128.RecipMulPow10.Companion.unpackMulDwordCount
 import com.decimal128.RecipMulPow10.Companion.unpackAccDwordCount
 import com.decimal128.RecipMulPow10.Companion.unpackQuotDwordCount
 
-import com.decimal128.Residual.Companion.EXACT
-import com.decimal128.Residual.Companion.HALF
-import com.decimal128.Residual.Companion.BIAS_TRUNC
+import com.decimal128.Residue.Companion.EXACT
+import com.decimal128.Residue.Companion.HALF
+import com.decimal128.Residue.Companion.BIAS_TRUNC
 
 class TestGenRecipMulRoundTable5 {
 
@@ -31,8 +31,8 @@ class TestGenRecipMulRoundTable5 {
         println("TaDa!")
     }
 
-    class TC(val dividend: BigInteger, val pow10: Int, val expectedResidual: Residual) {
-        constructor(dividend: String, pow10: Int, residual: Residual) : this(BigInteger(dividend), pow10, residual)
+    class TC(val dividend: BigInteger, val pow10: Int, val expectedResidue: Residue) {
+        constructor(dividend: String, pow10: Int, residue: Residue) : this(BigInteger(dividend), pow10, residue)
         val quotient = dividend.divide(bi10.pow(pow10))
         val dividendDigitCount = dividend.toString().length
     }

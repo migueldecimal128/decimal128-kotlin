@@ -3,9 +3,9 @@ package com.decimal128
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 
-import com.decimal128.Residual.Companion.EXACT
-import com.decimal128.Residual.Companion.HALF
-import com.decimal128.Residual.Companion.BIAS_TRUNC
+import com.decimal128.Residue.Companion.EXACT
+import com.decimal128.Residue.Companion.HALF
+import com.decimal128.Residue.Companion.BIAS_TRUNC
 
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
@@ -15,15 +15,15 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 
 
 
-class TestResidualHalfUlpRounding {
+class TestResidueHalfUlpRounding {
 
     val verbose = false
 
     class HalfUlpRoundingCase(
-        val roundingDirection: RoundingDirection, val residual: Residual, val lsdw: Long, val sign: Boolean,
+        val roundingDirection: RoundingDirection, val residue: Residue, val lsdw: Long, val sign: Boolean,
         val expectedBias: Long) {
         override fun toString() : String {
-            return "$roundingDirection $residual sign:$sign lsb:$lsdw expectedBias:$expectedBias"
+            return "$roundingDirection $residue sign:$sign lsb:$lsdw expectedBias:$expectedBias"
         }
     }
 
@@ -121,7 +121,7 @@ class TestResidualHalfUlpRounding {
         if (verbose)
             println("$tc")
         val effectiveRoundingDirection = tc.roundingDirection.negate(tc.sign)
-        val observedBias = tc.residual.halfUlpBias(effectiveRoundingDirection, tc.lsdw)
+        val observedBias = tc.residue.halfUlpBias(effectiveRoundingDirection, tc.lsdw)
         assertEquals(tc.expectedBias, observedBias)
     }
 

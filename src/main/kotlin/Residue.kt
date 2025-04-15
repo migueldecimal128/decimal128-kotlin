@@ -3,17 +3,15 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
-import kotlin.math.round
 
 @JvmInline
-value class Residual private constructor(val value: Int) {
+value class Residue private constructor(val value: Int) {
     companion object {
-        val HALF = Residual(0)
-        val BIAS_TRUNC = Residual(1)
-        val LT_HALF = Residual(2)
-        val GT_HALF = Residual(3)
-        val EXACT = Residual(4)
+        val HALF = Residue(0)
+        val BIAS_TRUNC = Residue(1)
+        val LT_HALF = Residue(2)
+        val GT_HALF = Residue(3)
+        val EXACT = Residue(4)
 
 
     }
