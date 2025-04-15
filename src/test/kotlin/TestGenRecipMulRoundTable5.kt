@@ -251,7 +251,7 @@ class TestGenRecipMulRoundTable5 {
         val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
 
         val inexact2 = residual != EXACT
-        val bias = Residual.halfUlpBias(RoundingDirection.ROUND_TIES_TO_EVEN, residual, lsbIsOdd)
+        val bias = residual.halfUlpBias(RoundingDirection.ROUND_TIES_TO_EVEN, lsbIsOdd)
 
         //println("Residual.inexactAndRoundupFrom(RoundingDirection.roundTiesToEven, $residual, $lsbIsOdd) => inexact2:$inexact2 bias:$bias")
 
