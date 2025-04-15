@@ -151,7 +151,7 @@ class TestGenRecipMulRoundTable5 {
     fun test1(tc: TC) {
         if (tc.dividendDigitCount < MIN_DIVIDEND_DIGIT_COUNT || tc.dividendDigitCount >= MAX_DIVIDEND_DIGIT_COUNT ||
             tc.pow10 < MIN_DIVISOR_POW10 || tc.pow10 >= MAX_DIVISOR_POW10) {
-            println("dividendDigitCount ${tc.dividendDigitCount} ${tc.pow10} out of range")
+            //println("dividendDigitCount ${tc.dividendDigitCount} ${tc.pow10} out of range")
             return
         }
         val index = RecipMulPow10.indexOf(tc.dividendDigitCount, tc.pow10)
