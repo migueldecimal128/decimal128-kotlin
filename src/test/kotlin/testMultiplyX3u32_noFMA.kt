@@ -126,7 +126,7 @@ class testMultiplyX3u32_noFMA {
         return hiUnsigned to lo
     }
 
-    inline fun unsignedFMA32(a: Int, b: Int, carryIn: Int): Pair<Int, Int> {
+    fun unsignedFMA32(a: Int, b: Int, carryIn: Int): Pair<Int, Int> {
         val fmaUnsigned = ((a.toLong() and 0xFFFFFFFFL) * (b.toLong() and 0xFFFFFFFFL)) + carryIn.toLong()
 
         val unsignedCorrection = ((a shr 31) and b) + ((b shr 31) and a)

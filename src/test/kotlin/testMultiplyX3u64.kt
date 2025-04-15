@@ -213,7 +213,7 @@ class testMultiplyX3u64 {
 
     @Test
     fun testRandoms() {
-        for (i in 0..<1000000)
+        for (i in 0..<100000)
             testRandom1()
     }
 

@@ -13,7 +13,7 @@ fun multu64u64u128(a: Long, b: Long): Pair<Long, Long> {
     return hiUnsigned to lo
 }
 
-inline fun unsignedFMA64(a: Long, b: Long, carryIn: Long): Pair<Long, Long> {
+fun unsignedFMA64(a: Long, b: Long, carryIn: Long): Pair<Long, Long> {
     val unsignedCorrection = ((a shr 63) and b) + ((b shr 63) and a)
     val loBase = a * b
     val hiSigned = Math.multiplyHigh(a, b)

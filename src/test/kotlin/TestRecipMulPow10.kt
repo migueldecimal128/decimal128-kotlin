@@ -19,6 +19,7 @@ class TestRecipMulPow10 {
     }
 
     val cases = arrayOf(
+        TC("999999999999999999", 1),
         TC("514113841839100794470103300866030655828223544458509797475011690", 47),
         TC("1", 0),
         TC("999999999999999999", 1),
@@ -95,7 +96,8 @@ class TestRecipMulPow10 {
         val coeffQ = Coefficient()
         val coeffR = Coefficient()
 
-        if (coeffA.digitCount < minDividendDigitCount || pow10 < minDivisorPow10) {
+        if (coeffA.digitCount < MIN_DIVIDEND_DIGIT_COUNT || pow10 < MIN_DIVISOR_POW10 ||
+            (coeffA.digitCount + pow10) >= MAX_DIVIDEND_DIGIT_COUNT ) {
             println("out of range")
             return
         }

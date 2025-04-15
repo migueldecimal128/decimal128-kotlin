@@ -14,6 +14,7 @@ class TestCoeffientScaleUp {
     }
 
     val cases = arrayOf(
+        TC("0", 60),
         TC(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE).divide(BigInteger.TEN), 1),
         //TC("1", 1),
         TC("999", 1),

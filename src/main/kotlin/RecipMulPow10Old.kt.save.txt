@@ -1,0 +1,484 @@
+package com.decimal128
+
+import java.math.BigInteger
+import java.lang.Math.unsignedMultiplyHigh
+import java.lang.Math.max
+import com.decimal128.MulCoefficient.Companion.mulCoeff
+import com.decimal128.MulCoefficient.Companion.mulCoeffPow10
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x1shr64
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x2shr128
+import com.decimal128.MulCoefficient.Companion.mulCoeff3x3shr128
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x3shr192
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x4shr256
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x4shr192
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x5shr320
+import com.decimal128.MulCoefficient.Companion.mulCoeff4x5shr256
+
+
+val MIN_DIVIDEND_DIGIT_COUNT = 2
+val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
+val MIN_DIVISOR_POW10 = 1
+val MAX_DIVISOR_POW10 = 45
+
+private val rmp10IndexTable = ShortArray(3388)
+private val rmp10ParamTable = LongArray(9828)
+
+class RecipMulPow10 {
+
+
+    companion object {
+
+        init {
+
+            // Rmp10 == Reciprocal Multiplication Power10
+            class Rmp10(val dividendDigitCount: Int, val divisorPow10: Int, val mul: BigInteger, val shift: Int) {
+                val biDividend = BigInteger.TEN.pow(dividendDigitCount).subtract(BigInteger.ONE)
+                val biDivisor = BigInteger.TEN.pow(divisorPow10)
+                val accBitCount = biDividend.multiply(mul).bitLength()
+                val quotBitCount = biDividend.multiply(mul).shiftRight(shift).bitLength()
+                val mulBitCount = mul.bitLength()
+                val mulDwordCount get() = (mulBitCount + 63) / 64 // 5 == 3 bits
+                val mulDigitCount get() = mul.toString().length   // 97 == 7 bits
+                val accDwordCount get() = (accBitCount + 63) / 64 // 9 == 4 bits
+                val quotDwordCount get() = (quotBitCount + 63) / 64 // 4 == 3 bits
+
+                // max shift == 448 == 9 bits
+                val shiftedAccDwordCount get() = accDwordCount - shift / 64
+
+                fun packDescriptor(tableOffset: Int) =
+                    (((mulDwordCount) or (quotDwordCount shl 4) or (accDwordCount shl 8) or (shift shl 12) or (mulDigitCount shl 22)).toLong()
+                            or (tableOffset.toLong() shl 32))
+
+                fun serialize(out: LongArray, offsetIn: Int): Int {
+                    var offsetOut = offsetIn
+                    out[offsetOut++] = packDescriptor(offsetIn)
+                    for (i in 0..<mulDwordCount)
+                        out[offsetOut++] = mul.shiftRight(i * 64).toLong()
+                    return offsetOut
+                }
+
+                override fun toString(): String {
+                    return "dividend:$dividendDigitCount divisor:$divisorPow10 mulDwordCount:$mulDwordCount " +
+                            "shift:$shift accDwordCount:$accDwordCount accBitCount:$accBitCount quotDwordCount:$quotDwordCount quotBitCount:$quotBitCount"
+                }
+
+            }
+
+            fun generateMulAndShift(
+                biMaxDividend: BigInteger,
+                biDivisor: BigInteger,
+                startShift: Int
+            ): Pair<BigInteger, Int> {
+
+                fun tryMulAndShift(
+                    biQuotient: BigInteger,
+                    biDivisor: BigInteger,
+                    mul: BigInteger,
+                    shift: Int
+                ): Boolean {
+                    val estimate = mul.multiply(biQuotient).shiftRight(shift)
+                    val actual = biQuotient.divide(biDivisor)
+                    return actual.equals(estimate)
+                }
+
+                for (shift in startShift..1000) {
+                    val mul = BigInteger.ONE.shiftLeft(shift).divide(biDivisor).add(BigInteger.ONE)
+                    val estimate = mul.multiply(biMaxDividend).shiftRight(shift)
+                    val actual = biMaxDividend.divide(biDivisor)
+                    if (tryMulAndShift(biMaxDividend, biDivisor, mul, shift)) {
+                        return mul to shift
+                    }
+                }
+                throw RuntimeException("fail")
+            }
+
+            fun generateRecipMultParams(dividendDigitCount: Int, divisorPow10: Int): Rmp10 {
+                val biDividend = BigInteger.TEN.pow(dividendDigitCount).subtract(BigInteger.ONE)
+                val biDivisor = BigInteger.TEN.pow(divisorPow10)
+                val (mul, shift) = generateMulAndShift(biDividend, biDivisor, 1)
+                val params = Rmp10(dividendDigitCount, divisorPow10, mul, shift)
+                if (params.quotBitCount > 0 && shift % 64 != 0) {
+                    // try rounding up to next 64-bit boundary
+                    val shift64 = ((shift + 63) / 64) * 64
+                    val (mul64, shiftT) = generateMulAndShift(biDividend, biDivisor, shift64)
+                    require(shiftT == shift64)
+                    val params64 = Rmp10(dividendDigitCount, divisorPow10, mul64, shift64)
+                    require(params.quotBitCount == params64.quotBitCount)
+                    //println("params:$params")
+                    //println("params64:$params64")
+                    if ((params64.accDwordCount == params.accDwordCount) && (params64.mulDwordCount == params.mulDwordCount)) {
+                        //println("RoundUp!")
+                        return params64
+                    } else {
+                        //println("failed:")
+                    }
+                }
+                return params
+            }
+
+            assert((MAX_DIVIDEND_DIGIT_COUNT - MIN_DIVIDEND_DIGIT_COUNT) * (MAX_DIVISOR_POW10 - MIN_DIVISOR_POW10) == 3388)
+
+            var rmp10Index = 0
+            var rmp10ParamOffset = 1
+            var maxMulDwordCount = 0
+            var maxAccDwordCount = 0
+            var maxShiftedAccDwordCount = 0
+            var maxShift = 0
+            for (dividendDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
+                for (divisorPow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10) {
+                    val rmp10 = generateRecipMultParams(dividendDigitCount, divisorPow10)
+                    maxMulDwordCount = max(maxMulDwordCount, rmp10.mulDwordCount)
+                    maxAccDwordCount = max(maxAccDwordCount, rmp10.accDwordCount)
+                    maxShiftedAccDwordCount = max(maxShiftedAccDwordCount, rmp10.shiftedAccDwordCount)
+                    maxShift = max(maxShift, rmp10.shift)
+                    //if ((dividendDigitCount == 18 || dividendDigitCount == 19) && rmp10.quotBitCount > 0)
+                    //    println(rmp10.toString())
+                    if (rmp10.quotDwordCount != 0) {
+                        rmp10IndexTable[rmp10Index] = rmp10ParamOffset.toShort()
+                        rmp10ParamOffset = rmp10.serialize(rmp10ParamTable, rmp10ParamOffset)
+                    }
+                    ++rmp10Index
+                }
+            }
+            //println("maxMulDwordCount:$maxMulDwordCount maxAccDwordCount:$maxAccDwordCount maxShiftedAccDwordCount:$maxShiftedAccDwordCount maxShift:$maxShift")
+            assert(maxMulDwordCount == 5)
+            assert(maxAccDwordCount == 9)
+            assert(maxShiftedAccDwordCount == 4)
+            assert(maxShift == 448)
+            assert(rmp10Index == rmp10IndexTable.size)
+            assert(rmp10ParamOffset == rmp10ParamTable.size)
+
+        }
+
+
+        private fun rmp10IndexFrom(dividendDigitCount: Int, divisorDigitCount: Int): Int {
+            assert(dividendDigitCount >= MIN_DIVIDEND_DIGIT_COUNT)
+            assert(divisorDigitCount >= MIN_DIVISOR_POW10)
+            return ((dividendDigitCount - MIN_DIVIDEND_DIGIT_COUNT) * (MAX_DIVISOR_POW10 - MIN_DIVISOR_POW10) +
+                    (divisorDigitCount - MIN_DIVISOR_POW10))
+        }
+
+        fun getRmp10Descriptor(dividendDigitCount: Int, divisorPow10: Int): Long {
+            require(dividendDigitCount >= MIN_DIVIDEND_DIGIT_COUNT)
+            require(dividendDigitCount <= MAX_DIVIDEND_DIGIT_COUNT)
+            require(divisorPow10 >= MIN_DIVISOR_POW10)
+            require(divisorPow10 <= MAX_DIVISOR_POW10)
+            val lookupIndex = rmp10IndexFrom(dividendDigitCount, divisorPow10)
+            val rmp10Index = rmp10IndexTable[lookupIndex].toInt()
+            val rmp10Descriptor = rmp10ParamTable[rmp10Index]
+            return rmp10Descriptor
+        }
+
+        // ((mulDwordCount) or (quotDwordCount shl 4) or (accDwordCount shl 8) or (shift shl 12) or (mulDigitCount shl 22)
+        fun unpackMulDwordCount(rmp10Descriptor: Long) = (rmp10Descriptor.toInt() shr 0) and 0x0F
+
+        fun unpackQuotDwordCont(rmp10Descriptor: Long) = (rmp10Descriptor.toInt() shr 4) and 0x0F
+
+        fun unpackAccDwordCount(rmp10Descriptor: Long) = (rmp10Descriptor.toInt() shr 8) and 0x0F
+
+        fun unpackShift(rmp10Descriptor: Long) = (rmp10Descriptor.toInt() shr 12) and 0x03FF
+
+        fun unpackMulDigitCount(rmp10Descriptor: Long) = (rmp10Descriptor.toInt() shr 22) and 0x03FF
+
+        fun unpackMulOffset(rmp10Descriptor: Long): Int {
+            val descriptorOffset = (rmp10Descriptor ushr 32).toInt()
+            assert(descriptorOffset > 0)
+            assert(descriptorOffset < rmp10ParamTable.size)
+            assert(rmp10Descriptor == rmp10ParamTable[descriptorOffset])
+            val mulOffset = descriptorOffset + 1
+            return mulOffset
+        }
+
+        fun divModPow10_y(dividendDw0: Long, divisorPow10: Int): Pair<Long, Long> {
+            if (divisorPow10 <= 0)
+                return dividendDw0 to 0L
+            val dividendDigitCount = calcDigitCount64(dividendDw0)
+            if (dividendDigitCount <= 1)
+                return 0L to dividendDw0
+            val rmp10Index = rmp10IndexFrom(dividendDigitCount, divisorPow10)
+            val paramIndex = rmp10IndexTable[rmp10Index].toInt()
+            if (paramIndex == 0)
+                return 0L to dividendDw0
+            //println("dividendDw0:$dividendDw0 ${dividendDw0.toULong()} divisorPow10:$divisorPow10")
+            val rmp10Descriptor = rmp10ParamTable[paramIndex]
+            val mulDwordCount = unpackMulDwordCount(rmp10Descriptor)
+            val mulDigitCount = unpackMulDigitCount(rmp10Descriptor)
+            val accDwordCount = unpackAccDwordCount(rmp10Descriptor)
+            val shift = unpackShift(rmp10Descriptor)
+            val multiplierDw0 = rmp10ParamTable[paramIndex + 1]
+            val prodDw0 = dividendDw0 * multiplierDw0
+            val power10 = POW10[divisorPow10]
+            var quotient = prodDw0 ushr shift
+            if (accDwordCount > 1) {
+                val partialDw1m0Signed = Math.multiplyHigh(dividendDw0, multiplierDw0)
+                val partialDw1m0UnsignedCorrection =
+                    ((multiplierDw0 shr 63) and dividendDw0) + ((dividendDw0 shr 63) and multiplierDw0)
+                val partialDw1m0 = partialDw1m0Signed + partialDw1m0UnsignedCorrection
+                require(shift >= 64)
+                quotient = partialDw1m0 ushr (shift - 64)
+                if (mulDwordCount > 1) {
+                    val multiplierDw1 = rmp10ParamTable[paramIndex + 2]
+                    val partialDw0m1 = dividendDw0 * multiplierDw1
+                    val partialDw1m1Signed = Math.multiplyHigh(dividendDw0, multiplierDw1)
+                    val partialDw1m1UnsignedCorrection =
+                        ((multiplierDw1 shr 63) and dividendDw0) + ((dividendDw0 shr 63) and multiplierDw1)
+                    val partialDw1m1 = partialDw1m1Signed + partialDw1m1UnsignedCorrection
+
+                    val prodDw1 = partialDw1m0 + partialDw0m1
+                    val carryDw1 = if ((prodDw1 xor Long.MIN_VALUE) < (partialDw0m1 xor Long.MIN_VALUE)) 1 else 0
+
+                    val prodDw2 = partialDw1m1 + carryDw1
+                    require(shift >= 128)
+                    quotient = prodDw2 ushr (shift - 128)
+                }
+            }
+            val productDw0 = quotient * power10
+            val remainder = dividendDw0 - productDw0
+            return quotient to remainder
+        }
+
+        fun divModPow10(d0: Long, pow10: Int): Pair<Long, Long> =
+            divModPow10(calcDigitCount64(d0), d0, pow10)
+
+
+        fun divModPow10(dividendDigitCount: Int, d0: Long, pow10: Int): Pair<Long, Long> {
+            if (dividendDigitCount == 0 || pow10 <= 0)
+                return d0 to 0L
+            val quotientDigitCount = dividendDigitCount - pow10
+            if (quotientDigitCount <= 0)
+                return 0L to d0
+            val rmp10Index = rmp10IndexFrom(dividendDigitCount, pow10)
+            val paramIndex = rmp10IndexTable[rmp10Index].toInt()
+            if (paramIndex == 0) {
+                println("why wasn't this caught by quotientDigitCount test? 987504")
+                return 0L to d0
+            }
+            //println("dividendDw0:$dividendDw0 ${dividendDw0.toULong()} divisorPow10:$divisorPow10")
+            val rmp10Descriptor = rmp10ParamTable[paramIndex]
+            val mulDwordCount = unpackMulDwordCount(rmp10Descriptor)
+            val mulDigitCount = unpackMulDigitCount(rmp10Descriptor)
+            val accDwordCount = unpackAccDwordCount(rmp10Descriptor)
+            val shift = unpackShift(rmp10Descriptor)
+            val m0 = rmp10ParamTable[paramIndex + 1]
+            val pp00Lo = d0 * m0
+            var quotient = pp00Lo ushr shift
+            if (accDwordCount > 1) {
+                val pp00Hi = unsignedMultiplyHigh(d0, m0)
+                require(shift >= 64)
+                quotient = pp00Hi ushr (shift - 64)
+                if (mulDwordCount > 1) {
+                    val m1 = rmp10ParamTable[paramIndex + 2]
+                    val pp01Lo = d0 * m1
+                    val pp01Hi = unsignedMultiplyHigh(d0, m1)
+                    val (carry1, p1) = sumU64(pp00Hi, pp01Lo)
+
+                    val p2 = pp01Hi + carry1
+                    require(shift >= 128)
+                    quotient = p2 ushr (shift - 128)
+                }
+            }
+            val power10 = POW10[pow10]
+            val prod0 = quotient * power10
+            val remainder = d0 - prod0
+            return quotient to remainder
+        }
+
+        fun divModPow10(q: Coefficient, r: Coefficient, d: Coefficient, pow10: Int) {
+            if (pow10 <= 0) {
+                if (pow10 < 0)
+                    throw RuntimeException("cannot handle negative pow10:$pow10")
+                q.set(d); r.setZero(); return
+            }
+
+            val quotientDigitCount = d.digitCount - pow10
+            if (quotientDigitCount <= 0) { // this takes care of quotient == 0
+                q.setZero(); r.set(d); return
+            }
+            val rmp10Index = rmp10IndexFrom(d.digitCount, pow10)
+            val paramIndex = rmp10IndexTable[rmp10Index].toInt()
+            if (paramIndex <= 0) {
+                throw RuntimeException("why wasn't this caught by quotientDigitCount test? 987504")
+            }
+            val rmp10Descriptor = rmp10ParamTable[paramIndex]
+            val mulDwordCount = unpackMulDwordCount(rmp10Descriptor)
+            val mulDigitCount = unpackMulDigitCount(rmp10Descriptor)
+            val accDwordCount = unpackAccDwordCount(rmp10Descriptor)
+            val shift = unpackShift(rmp10Descriptor)
+            val m0 = rmp10ParamTable[paramIndex + 1]
+            val m1 = if (mulDwordCount < 2) 0L else rmp10ParamTable[paramIndex + 2]
+            val m2 = if (mulDwordCount < 3) 0L else rmp10ParamTable[paramIndex + 3]
+            val m3 = if (mulDwordCount < 4) 0L else rmp10ParamTable[paramIndex + 4]
+            val m4 = if (mulDwordCount < 5) 0L else rmp10ParamTable[paramIndex + 5]
+            do {
+                if (accDwordCount <= 4) {
+                    // intermediate results will fit in the quotient Coefficient
+                    when (mulDwordCount) {
+                        1 -> mulCoeff(q, d, mulDigitCount, m0)
+                        2 -> mulCoeff(q, d, mulDigitCount, m1, m0)
+                        3 -> mulCoeff(q, d, mulDigitCount, m2, m1, m0)
+                        4 -> mulCoeff(q, d, mulDigitCount, m3, m2, m1, m0)
+                        else -> throw RuntimeException("why am I here?")
+                    }
+                    coeffShiftRight(q, shift shr 6, shift and 0x3F)
+                } else {
+                    var remainingDwordShift = shift shr 6
+                    when (mulDwordCount) {
+                        1 -> {
+                            assert(remainingDwordShift >= 1)
+                            mulCoeff4x1shr64(q, d.dw3, d.dw2, d.dw1, d.dw0, m0)
+                            remainingDwordShift -= 1
+                        }
+
+                        2 -> {
+                            assert(remainingDwordShift >= 2)
+                            mulCoeff4x2shr128(q, d.dw3, d.dw2, d.dw1, d.dw0, m1, m0)
+                            remainingDwordShift -= 2
+                        }
+
+                        3 -> {
+                            if (remainingDwordShift == 2) {
+                                assert(d.dw3 == 0L)
+                                mulCoeff3x3shr128(q, d.dw2, d.dw1, d.dw0, m2, m1, m0)
+                                remainingDwordShift -= 2
+                            } else if (remainingDwordShift >= 3) {
+                                mulCoeff4x3shr192(q, d.dw3, d.dw2, d.dw1, d.dw0, m2, m1, m0)
+                                remainingDwordShift -= 3
+                            } else {
+                                throw RuntimeException("?que?")
+                            }
+                        }
+
+                        4 -> {
+                            if (remainingDwordShift == 3) {
+                                mulCoeff4x4shr192(q, d.dw3, d.dw2, d.dw1, d.dw0, m3, m2, m1, m0)
+                                remainingDwordShift -= 3
+                            } else if (remainingDwordShift >= 4) {
+                                mulCoeff4x4shr256(q, d.dw3, d.dw2, d.dw1, d.dw0, m3, m2, m1, m0)
+                                remainingDwordShift -= 4
+                            } else {
+                                throw RuntimeException("?que?")
+                            }
+                        }
+
+                        5 -> {
+                            if (remainingDwordShift == 4) {
+                                mulCoeff4x5shr256(q, d.dw3, d.dw2, d.dw1, d.dw0, m4, m3, m2, m1, m0)
+                                remainingDwordShift = 0
+                            } else if (remainingDwordShift >= 5) {
+                                mulCoeff4x5shr320(q, d.dw3, d.dw2, d.dw1, d.dw0, m4, m3, m2, m1, m0)
+                                remainingDwordShift -= 5
+                            } else {
+                                assert(false)
+                                throw RuntimeException("?que?")
+                            }
+                        }
+                    }
+                    val bitShift = shift and 0x3F
+                    coeffShiftRight(q, remainingDwordShift, shift and 0x3F)
+                }
+            } while (false)
+
+            q.digitCount = quotientDigitCount
+            mulCoeffPow10(r, q, pow10)
+            r.absDiff(d, r)
+        }
+
+        var bitShift0 = 0L
+        var dwordShift0 = 0L
+        var totalShift = 0L;
+
+        fun coeffShiftRight(c: Coefficient, dwordShift: Int, bitShift: Int) {
+            // Note that this does NOT update coefficient digit count
+            ++totalShift
+            val bitShiftLeft = 64 - bitShift
+            if (bitShift == 0) {
+                ++bitShift0
+                if (dwordShift >= 1) {
+                    if (dwordShift == 1) {
+                        c.dw0 = c.dw1; c.dw1 = c.dw2; c.dw2 = c.dw3
+                    } else {
+                        if (dwordShift == 2) {
+                            c.dw0 = c.dw2; c.dw1 = c.dw3
+                        } else {
+                            if (dwordShift == 3) {
+                                c.dw0 = c.dw3
+                            } else {
+                                c.dw0 = 0L
+                            }
+                            c.dw1 = 0L
+                        }
+                        c.dw2 = 0L;
+                    }
+                    c.dw3 = 0L
+                }
+            } else if (dwordShift == 0) {
+                ++dwordShift0
+                c.dw0 = (c.dw1 shl bitShiftLeft) or (c.dw0 ushr bitShift)
+                c.dw1 = (c.dw2 shl bitShiftLeft) or (c.dw1 ushr bitShift)
+                c.dw2 = (c.dw3 shl bitShiftLeft) or (c.dw2 ushr bitShift)
+                c.dw3 = c.dw3 ushr bitShift
+            } else {
+                if (dwordShift == 1) {
+                    c.dw0 = (c.dw2 shl bitShiftLeft) or (c.dw1 ushr bitShift)
+                    c.dw1 = (c.dw3 shl bitShiftLeft) or (c.dw2 ushr bitShift)
+                    c.dw2 = c.dw3 ushr bitShift
+                } else {
+                    if (dwordShift == 2) {
+                        c.dw0 = (c.dw3 shl bitShiftLeft) or (c.dw2 ushr bitShift)
+                        c.dw1 = c.dw3 ushr bitShift
+                    } else {
+                        if (dwordShift == 3) {
+                            c.dw0 = c.dw3 ushr bitShift
+                        } else {
+                            c.dw0 = 0L
+                        }
+                        c.dw1 = 0L
+                    }
+                    c.dw2 = 0L;
+                }
+                c.dw3 = 0L
+            }
+            c.digitCount = -1
+            println("totalShift:$totalShift bitShift0:$bitShift0 dwordShift0:$dwordShift0")
+        }
+
+        fun getMultShift(digitCount: Int, pow10: Int) : Pair<BigInteger, Int> {
+            require(digitCount > 0)
+            require(pow10 >= 0)
+            val rmp10Index = rmp10IndexFrom(digitCount, pow10)
+            val paramIndex = rmp10IndexTable[rmp10Index].toInt()
+            if (paramIndex == 0) {
+                return BigInteger.ONE.negate() to -1
+            }
+            val rmp10Descriptor = rmp10ParamTable[paramIndex]
+            val mulDwordCount = unpackMulDwordCount(rmp10Descriptor)
+            val mulDigitCount = unpackMulDigitCount(rmp10Descriptor)
+            val accDwordCount = unpackAccDwordCount(rmp10Descriptor)
+            val shift = unpackShift(rmp10Descriptor)
+            val m0 = rmp10ParamTable[paramIndex + 1]
+            val m1 = if (mulDwordCount < 2) 0L else rmp10ParamTable[paramIndex + 2]
+            val m2 = if (mulDwordCount < 3) 0L else rmp10ParamTable[paramIndex + 3]
+            val m3 = if (mulDwordCount < 4) 0L else rmp10ParamTable[paramIndex + 4]
+            val m4 = if (mulDwordCount < 5) 0L else rmp10ParamTable[paramIndex + 5]
+
+            var bi = BigInteger.ZERO
+            fun accum(l: Long, dwordIndex: Int) {
+                val lo = l and 0xFFFFFFFFL
+                val hi = l ushr 32
+                bi = bi or BigInteger(lo.toString()).shiftLeft(64 * dwordIndex)
+                bi = bi or BigInteger(hi.toString()).shiftLeft(64 * dwordIndex + 32)
+            }
+
+            accum(m0, 0)
+            accum(m1, 1)
+            accum(m2, 2)
+            accum(m3, 3)
+            accum(m4, 4)
+
+            return bi to shift
+
+        }
+
+
+    }
+}

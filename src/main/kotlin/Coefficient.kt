@@ -62,7 +62,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     fun isValidDigitCount() : Boolean {
         val prevDigitCount = digitCount
         recalcDigitCount256orLess()
-        return digitCount == prevDigitCount
+        val t = digitCount
+        digitCount = prevDigitCount
+        return t == prevDigitCount
     }
 
     fun compareTo(other: Coefficient) : Int {
@@ -277,7 +279,11 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     fun mul(x: Coefficient, yDigitCount: Int, yDw3: Long, yDw2: Long, yDw1: Long, yDw0: Long) {
         assert(isValidDigitCount())
         assert(x.isValidDigitCount())
-        assert(calcDigitCount256(yDw3, yDw2, yDw1, yDw0) == yDigitCount)
+        assert(calcDigitCount(yDw3, yDw2, yDw1, yDw0) == yDigitCount)
+        if ((x.digitCount or yDigitCount) == 0) {
+            setZero();
+            return
+        }
         when {
             (x.dw3 != 0L) ->
                 if ((yDw3 or yDw2 or yDw1) == 0L) {
@@ -411,9 +417,10 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     }
 
     fun mutateScalePow10(pow10: Int) {
+        if (digitCount == 0 || pow10 == 0)
+            return
         if (pow10 >= 0) {
-            if (pow10 == 0)
-                return
+            //println("mutateScalePow10 $this $pow10")
             // note that this is a lie
             // digitCount is actually pow10 + 1
             // but this works OK because multiplying by a power of 10 will not cause the product digitCount to increase by more than pow10
@@ -436,6 +443,10 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
                 else -> throw RuntimeException("?que?")
             }
             digitCount = finalDigitCount
+            if (! isValidDigitCount()) {
+                println("mutateScalePow10 $this $pow10")
+                println("foo!")
+            }
             assert(isValidDigitCount())
         }
     }
