@@ -3,9 +3,7 @@ package com.decimal128
 import org.junit.jupiter.api.Test
 
 import java.math.BigInteger
-import kotlin.collections.ArrayList
 import java.util.Random
-import com.decimal128.RecipMulPow10.Companion.RecipMulParams5
 import com.decimal128.RecipMulPow10.Companion.unpackShift
 import com.decimal128.RecipMulPow10.Companion.unpackMulDigitCount
 import com.decimal128.RecipMulPow10.Companion.unpackMulDwordCount
@@ -253,7 +251,7 @@ class TestGenRecipMulRoundTable5 {
         val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
 
         val inexact2 = residual != EXACT
-        val bias = Residual.biasFrom(RoundingDirection.ROUND_TIES_TO_EVEN, residual, lsbIsOdd)
+        val bias = Residual.halfUlpBias(RoundingDirection.ROUND_TIES_TO_EVEN, residual, lsbIsOdd)
 
         //println("Residual.inexactAndRoundupFrom(RoundingDirection.roundTiesToEven, $residual, $lsbIsOdd) => inexact2:$inexact2 bias:$bias")
 
