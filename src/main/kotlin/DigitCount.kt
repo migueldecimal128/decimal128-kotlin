@@ -334,8 +334,9 @@ fun recalcDigitCountOnly256(c: Coefficient) {
     c.digitCount = POW10_256_OFFSET + lo
 }
 
-fun tweakDigitCountOnly64(c: Coefficient, loDigitCount: Int) {
+fun tweakDigitCountOnly64(c: Coefficient) {
     // recalcDigitCount256orLess()
+    val loDigitCount = c.digitCount
     assert(loDigitCount >= 0 && loDigitCount <= POW10_128_OFFSET)
     if (loDigitCount < POW10_128_OFFSET) { // < 20 digits
         val hiDigitCount = loDigitCount + 1
@@ -349,8 +350,9 @@ fun tweakDigitCountOnly64(c: Coefficient, loDigitCount: Int) {
 
 }
 
-fun tweakDigitCountOnly128(c: Coefficient, loDigitCount: Int) {
+fun tweakDigitCountOnly128(c: Coefficient) {
     // recalcDigitCount256orLess()
+    val loDigitCount = c.digitCount
     assert(loDigitCount >= POW10_128_OFFSET-1 && loDigitCount <= POW10_192_OFFSET)
     assert(c.dw1 != 0L && (c.dw2 or c.dw3) == 0L)
     if (loDigitCount < POW10_128_OFFSET) {
@@ -371,8 +373,9 @@ fun tweakDigitCountOnly128(c: Coefficient, loDigitCount: Int) {
     }
 }
 
-fun tweakDigitCountOnly192(c: Coefficient, loDigitCount: Int) {
+fun tweakDigitCountOnly192(c: Coefficient) {
     // recalcDigitCount256orLess()
+    val loDigitCount = c.digitCount
     assert(loDigitCount >= POW10_192_OFFSET-1 && loDigitCount <= POW10_256_OFFSET)
     assert(c.dw2 != 0L && c.dw3 == 0L)
     if (loDigitCount < POW10_192_OFFSET) {
@@ -398,8 +401,9 @@ fun tweakDigitCountOnly192(c: Coefficient, loDigitCount: Int) {
     }
 }
 
-fun tweakDigitCountOnly256(c: Coefficient, loDigitCount: Int) {
+fun tweakDigitCountOnly256(c: Coefficient) {
     // recalcDigitCount256orLess()
+    val loDigitCount = c.digitCount
     if (!(loDigitCount >= POW10_256_OFFSET-1 && loDigitCount <= POW10_MAX_OFFSET))
         println("foo!")
     assert(loDigitCount >= POW10_256_OFFSET-1 && loDigitCount <= POW10_MAX_OFFSET)
@@ -430,5 +434,19 @@ fun tweakDigitCountOnly256(c: Coefficient, loDigitCount: Int) {
     } else {
         c.digitCount = POW10_MAX_OFFSET
     }
+
 }
 
+fun tweakDigitCountPostRoundup(c: Coefficient, ctx: Decimal128Context) {
+    if ((c.dw3 or c.dw2) == 0L) {
+        if (c.dw1 == 0L)
+            tweakDigitCountOnly64(c)
+        else
+            tweakDigitCountOnly128(c)
+    } else {
+        if (c.dw3 == 0L)
+            tweakDigitCountOnly192(c)
+        else
+            tweakDigitCountOnly256(c)
+    }
+}

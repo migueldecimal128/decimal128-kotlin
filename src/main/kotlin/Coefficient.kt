@@ -36,10 +36,10 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     private fun recalcDigitCountOnly192() = recalcDigitCountOnly192(this)
     private fun recalcDigitCountOnly256() = recalcDigitCountOnly256(this)
 
-    private fun tweakDigitCountOnly64(loDigitCount: Int) = tweakDigitCountOnly64(this, loDigitCount)
-    private fun tweakDigitCountOnly128(loDigitCount: Int) = tweakDigitCountOnly128(this, loDigitCount)
-    private fun tweakDigitCountOnly192(loDigitCount: Int) = tweakDigitCountOnly192(this, loDigitCount)
-    private fun tweakDigitCountOnly256(loDigitCount: Int) = tweakDigitCountOnly256(this, loDigitCount)
+    private fun tweakDigitCountOnly64() = tweakDigitCountOnly64(this)
+    private fun tweakDigitCountOnly128() = tweakDigitCountOnly128(this)
+    private fun tweakDigitCountOnly192() = tweakDigitCountOnly192(this)
+    private fun tweakDigitCountOnly256() = tweakDigitCountOnly256(this)
 
     // these are used by subtraction where the number of digits can drop dramatically
     fun recalcDigitCount128orLess() = if (dw1 == 0L) recalcDigitCountOnly64() else recalcDigitCountOnly128()
@@ -132,7 +132,8 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
         if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
             dw3 = 0L; dw2 = 0L; dw1 = 0L
-            tweakDigitCountOnly64(maxDigitCount)
+            digitCount = maxDigitCount
+            tweakDigitCountOnly64()
             assert(isValidDigitCount())
             return
         }
@@ -146,7 +147,8 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
         if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
             dw3 = 0L; dw2 = 0L;
-            tweakDigitCountOnly128(maxDigitCount)
+            digitCount = maxDigitCount
+            tweakDigitCountOnly128()
             assert(isValidDigitCount())
             return
         }
@@ -160,7 +162,8 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
         if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
             dw3 = 0L;
-            tweakDigitCountOnly192(maxDigitCount)
+            digitCount = maxDigitCount
+            tweakDigitCountOnly192()
             assert(isValidDigitCount())
             return
         }
@@ -174,7 +177,8 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
         if (carry3 != 0L)
             throw RuntimeException("coefficient add overflow x:$x y:$y")
-        tweakDigitCountOnly256(maxDigitCount)
+        digitCount = maxDigitCount
+        tweakDigitCountOnly256()
         assert(isValidDigitCount())
     }
 
@@ -200,8 +204,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry0 = -carry0
             dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = (d0 xor negCarry0) - negCarry0
+            digitCount = loDigitCount
             when {
-                (dw0 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly64(loDigitCount) else recalcDigitCountOnly64()
+                (dw0 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly64() else recalcDigitCountOnly64()
                 else        -> digitCount = 0
             }
             assert(isValidDigitCount())
@@ -219,9 +224,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             dw1 = (d1 xor negCarry1) - (negCarry1 and ((dw0 or -dw0) shr 63).inv())
             dw2 = 0L
             dw3 = 0L
-            digitCount = 0
+            digitCount = loDigitCount
             when {
-                (dw1 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly128(loDigitCount) else recalcDigitCountOnly128()
+                (dw1 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly128() else recalcDigitCountOnly128()
                 (dw0 != 0L) -> recalcDigitCountOnly64()
                 else        -> digitCount = 0
             }
@@ -240,8 +245,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             dw1 = (d1 xor negCarry2) - (negCarry2 and ((dw0 or -dw0) shr 63).inv())
             dw2 = (d2 xor negCarry2) - (negCarry2 and ((dw1 or -dw1) shr 63).inv())
             dw3 = 0L
+            digitCount = loDigitCount
             when {
-                (dw2 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly192(loDigitCount) else recalcDigitCountOnly192()
+                (dw2 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly192() else recalcDigitCountOnly192()
                 (dw1 != 0L) -> recalcDigitCountOnly128()
                 (dw0 != 0L) -> recalcDigitCountOnly64()
                 else        -> digitCount = 0
@@ -261,8 +267,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         dw1 = (d1 xor negCarry3) - (negCarry3 and ((dw0 or -dw0) shr 63).inv())
         dw2 = (d2 xor negCarry3) - (negCarry3 and ((dw1 or -dw1) shr 63).inv())
         dw3 = (d3 xor negCarry3) - (negCarry3 and ((dw2 or -dw2) shr 63).inv())
+        digitCount = loDigitCount
         when {
-            (dw3 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly256(loDigitCount) else recalcDigitCountOnly256()
+            (dw3 != 0L) -> if (digitCountDiff >= 2) tweakDigitCountOnly256() else recalcDigitCountOnly256()
             (dw2 != 0L) -> recalcDigitCountOnly192()
             (dw1 != 0L) -> recalcDigitCountOnly128()
             (dw0 != 0L) -> recalcDigitCountOnly64()
@@ -338,7 +345,8 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             dw0 = dw0T
             dw1 = 0L; dw2 = 0L; dw3 = 0L
-            tweakDigitCountOnly64(loDigitCount)
+            digitCount = loDigitCount
+            tweakDigitCountOnly64()
             assert(isValidDigitCount())
             return
         }
@@ -349,10 +357,11 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             dw0 = dw0T
             dw1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
             dw2 = 0L; dw3 = 0L;
+            digitCount = loDigitCount
             if (dw1 == 0L)
-                tweakDigitCountOnly64(loDigitCount)
+                tweakDigitCountOnly64()
             else
-                tweakDigitCountOnly128(loDigitCount)
+                tweakDigitCountOnly128()
             assert(isValidDigitCount())
             return
         }
@@ -367,10 +376,11 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             dw1 = dw1T
             dw2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo
             dw3 = 0L;
+            digitCount = loDigitCount
             if (dw2 == 0L)
-                tweakDigitCountOnly128(loDigitCount)
+                tweakDigitCountOnly128()
             else
-                tweakDigitCountOnly192(loDigitCount)
+                tweakDigitCountOnly192()
             assert(isValidDigitCount())
             return
         }
@@ -388,10 +398,11 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             dw1 = dw1T
             dw2 = dw2T
             dw3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo
+            digitCount = loDigitCount
             if (dw3 == 0L)
-                tweakDigitCountOnly192(loDigitCount)
+                tweakDigitCountOnly192()
             else
-                tweakDigitCountOnly256(loDigitCount)
+                tweakDigitCountOnly256()
             assert(isValidDigitCount())
             return
         }
@@ -409,7 +420,8 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             dw1 = dw1T
             dw2 = dw2T
             dw3 = dw3T
-            tweakDigitCountOnly256(loDigitCount)
+            digitCount = loDigitCount
+            tweakDigitCountOnly256()
             assert(isValidDigitCount())
             return
         }

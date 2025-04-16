@@ -15,7 +15,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -26,10 +27,11 @@ class MulCoefficient {
                 c.dw0 = dw0T
                 c.dw1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
                 c.dw2 = 0L; c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw1 == 0L)
-                    tweakDigitCountOnly64(c, loDigitCount)
+                    tweakDigitCountOnly64(c)
                 else
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -44,10 +46,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo
                 c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw2 == 0L)
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 else
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -65,10 +68,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = dw2T
                 c.dw3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo
+                c.digitCount = loDigitCount
                 if (c.dw3 == 0L)
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 else
-                    tweakDigitCountOnly256(c, loDigitCount)
+                    tweakDigitCountOnly256(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -86,7 +90,8 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = dw2T
                 c.dw3 = dw3T
-                tweakDigitCountOnly256(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly256(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -105,7 +110,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -115,10 +121,11 @@ class MulCoefficient {
                 c.dw0 = dw0T
                 c.dw1 = pp00Hi + pp10Lo
                 c.dw2 = 0L; c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw1 == 0L)
-                    tweakDigitCountOnly64(c, loDigitCount)
+                    tweakDigitCountOnly64(c)
                 else
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -130,10 +137,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = carry1 + pp10Hi + pp20Lo
                 c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw2 == 0L)
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 else
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -146,10 +154,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = dw2T
                 c.dw3 = carry2 + pp20Hi + pp30Lo
+                c.digitCount = loDigitCount
                 if (c.dw3 == 0L)
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 else
-                    tweakDigitCountOnly256(c, loDigitCount)
+                    tweakDigitCountOnly256(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -163,7 +172,8 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = dw2T
                 c.dw3 = dw3T
-                tweakDigitCountOnly256(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly256(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -182,7 +192,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -193,10 +204,11 @@ class MulCoefficient {
                 c.dw0 = dw0T
                 c.dw1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
                 c.dw2 = 0L; c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw1 == 0L)
-                    tweakDigitCountOnly64(c, loDigitCount)
+                    tweakDigitCountOnly64(c)
                 else
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -210,10 +222,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp20Lo
                 c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw2 == 0L)
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 else
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -227,10 +240,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = dw2T
                 c.dw3 = carry2 + pp11Hi + pp20Hi + pp21Lo
+                c.digitCount = loDigitCount
                 if (c.dw3 == 0L)
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 else
-                    tweakDigitCountOnly256(c, loDigitCount)
+                    tweakDigitCountOnly256(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -244,7 +258,8 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = dw2T
                 c.dw3 = dw3T
-                tweakDigitCountOnly256(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly256(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -263,7 +278,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -273,10 +289,11 @@ class MulCoefficient {
                 c.dw0 = dw0T
                 c.dw1 = pp00Hi + pp10Lo
                 c.dw2 = 0L; c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw1 == 0L)
-                    tweakDigitCountOnly64(c, loDigitCount)
+                    tweakDigitCountOnly64(c)
                 else
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -288,10 +305,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = carry1 + pp10Hi + pp20Lo
                 c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw2 == 0L)
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 else
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -302,10 +320,11 @@ class MulCoefficient {
             c.dw1 = dw1T
             c.dw2 = dw2T
             c.dw3 = carry2 + pp20Hi
+            c.digitCount = loDigitCount
             if (c.dw3 == 0L)
-                tweakDigitCountOnly192(c, loDigitCount)
+                tweakDigitCountOnly192(c)
             else
-                tweakDigitCountOnly256(c, loDigitCount)
+                tweakDigitCountOnly256(c)
             assert(c.isValidDigitCount())
         }
 
@@ -321,7 +340,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -332,10 +352,11 @@ class MulCoefficient {
                 c.dw0 = dw0T
                 c.dw1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
                 c.dw2 = 0L; c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw1 == 0L)
-                    tweakDigitCountOnly64(c, loDigitCount)
+                    tweakDigitCountOnly64(c)
                 else
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -348,10 +369,11 @@ class MulCoefficient {
                 c.dw1 = dw1T
                 c.dw2 = carry1 + pp01Hi + pp10Hi + pp11Lo
                 c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw2 == 0L)
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 else
-                    tweakDigitCountOnly192(c, loDigitCount)
+                    tweakDigitCountOnly192(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -362,10 +384,11 @@ class MulCoefficient {
             c.dw1 = dw1T
             c.dw2 = dw2T
             c.dw3 = carry2 + pp11Hi
+            c.digitCount = loDigitCount
             if (c.dw3 == 0L)
-                tweakDigitCountOnly192(c, loDigitCount)
+                tweakDigitCountOnly192(c)
             else
-                tweakDigitCountOnly256(c, loDigitCount)
+                tweakDigitCountOnly256(c)
             assert(c.isValidDigitCount())
         }
 
@@ -381,7 +404,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -391,10 +415,11 @@ class MulCoefficient {
                 c.dw0 = dw0T
                 c.dw1 = pp00Hi + pp10Lo // no carry possible because of maxMulDigitCount
                 c.dw2 = 0L; c.dw3 = 0L;
+                c.digitCount = loDigitCount
                 if (c.dw1 == 0L)
-                    tweakDigitCountOnly64(c, loDigitCount)
+                    tweakDigitCountOnly64(c)
                 else
-                    tweakDigitCountOnly128(c, loDigitCount)
+                    tweakDigitCountOnly128(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -405,10 +430,11 @@ class MulCoefficient {
             c.dw1 = dw1T
             c.dw2 = carry1 + pp10Hi
             c.dw3 = 0L;
+            c.digitCount = loDigitCount
             if (c.dw2 == 0L)
-                tweakDigitCountOnly128(c, loDigitCount)
+                tweakDigitCountOnly128(c)
             else
-                tweakDigitCountOnly192(c, loDigitCount)
+                tweakDigitCountOnly192(c)
             assert(c.isValidDigitCount())
             return
         }
@@ -425,7 +451,8 @@ class MulCoefficient {
             if (maxMulDigitCount < POW10_128_OFFSET) {
                 c.dw0 = dw0T
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                tweakDigitCountOnly64(c, loDigitCount)
+                c.digitCount = loDigitCount
+                tweakDigitCountOnly64(c)
                 assert(c.isValidDigitCount())
                 return
             }
@@ -434,10 +461,11 @@ class MulCoefficient {
             c.dw0 = dw0T
             c.dw1 = pp00Hi
             c.dw2 = 0L; c.dw3 = 0L;
+            c.digitCount = loDigitCount
             if (c.dw1 == 0L)
-                tweakDigitCountOnly64(c, loDigitCount)
+                tweakDigitCountOnly64(c)
             else
-                tweakDigitCountOnly128(c, loDigitCount)
+                tweakDigitCountOnly128(c)
             assert(c.isValidDigitCount())
         }
 
