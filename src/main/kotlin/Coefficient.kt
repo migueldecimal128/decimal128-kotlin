@@ -554,7 +554,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     }
 
     fun set(c: Coefficient) {
-        digitCount = c.digitCount; dw3 = c.dw3; dw2 = c.dw2; dw1 = c.dw1; dw0 = c.dw0
+        if (this != c) {
+            digitCount = c.digitCount; dw3 = c.dw3; dw2 = c.dw2; dw1 = c.dw1; dw0 = c.dw0
+        }
         assert(isValidDigitCount())
     }
 

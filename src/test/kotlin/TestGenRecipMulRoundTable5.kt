@@ -19,9 +19,12 @@ class TestGenRecipMulRoundTable5 {
     companion object {
         val bi0 = BigInteger.ZERO
         val bi1 = BigInteger.ONE
+        val bi2 = BigInteger.TWO
         val bi3 = 3.toBigInteger()
         val bi5 = 5.toBigInteger()
         val bi10 = BigInteger.TEN
+
+        val biMap = arrayOf(bi0, bi1, bi2, bi3)
     }
 
     @Test
@@ -35,6 +38,10 @@ class TestGenRecipMulRoundTable5 {
         constructor(dividend: String, pow10: Int, residue: Residue) : this(BigInteger(dividend), pow10, residue)
         val quotient = dividend.divide(bi10.pow(pow10))
         val dividendDigitCount = dividend.toString().length
+
+        override fun toString(): String {
+            return "dividend:$dividend pow10:$pow10"
+        }
     }
 
     val tcs = arrayOf(
@@ -224,6 +231,7 @@ class TestGenRecipMulRoundTable5 {
         val bitsQuot = quot5x2.plus(BigInteger(roundUp.toString())).shiftRight(1)
         //println("$div / 10**${tc.pow10} ==> bitsQuot:$bitsQuot inexact:$inexact roundUp:$roundUp")
 
+        /*
         if (firstLoStickyBits == 0 && frac < biMul) {
             if (quot5x2.and(bi1).equals(bi0)) {
                 //println("$div / ${tc.pow10} EXACT")
@@ -241,8 +249,9 @@ class TestGenRecipMulRoundTable5 {
             //println("just round it up and truncate")
             quot5x2.plus(bi1).shiftRight(1)
         }
+         */
 
-        val residual =
+        val residue =
             if (firstLoStickyBits == 0 && frac < biMul) {
                 if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
             } else {
@@ -250,15 +259,21 @@ class TestGenRecipMulRoundTable5 {
             }
         val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
 
-        val inexact2 = residual != EXACT
-        val bias = residual.halfUlpBias(RoundingDirection.ROUND_TIES_TO_EVEN, lsbIsOdd)
+        val inexact2 = residue != EXACT
+        val biasHalfUlp = residue.halfUlpBias(RoundingDirection.ROUND_TIES_TO_EVEN, lsbIsOdd)
+        val biBiasHalfUlp = biMap[biasHalfUlp.toInt()]
+        println("$residue.halfUlpBias(RoundingDirection.roundTiesToEven, $lsbIsOdd) => biasHalfUlp:$biasHalfUlp")
 
-        //println("Residual.inexactAndRoundupFrom(RoundingDirection.roundTiesToEven, $residual, $lsbIsOdd) => inexact2:$inexact2 bias:$bias")
+        val quotTiesToEvenPlusHalfUlp = quot5x2.add(biBiasHalfUlp)
+        val quotTiesToEven = quotTiesToEvenPlusHalfUlp.shiftRight(1)
+        println("$tc => quotTiesToEven:$quotTiesToEven")
+
+
 
 
         val pause = 1
 
-    //    assertEquals(tc.quotient, quot5)
+//        assertEquals(tc.quotient, quot5)
         /*
         // now figure out rounding
         val cmpHalf = frac.compareTo(biHalfFrac)

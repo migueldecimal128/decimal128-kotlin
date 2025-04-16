@@ -219,6 +219,12 @@ class RecipMulPow10 {
             throw RuntimeException("not impl")
         }
 
+        fun divPow10(q: Coefficient,
+                     sign: Boolean, digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long,
+                     pow10: Int, ctx: Decimal128Context) {
+            throw RuntimeException("not impl")
+        }
+
     }
 
 

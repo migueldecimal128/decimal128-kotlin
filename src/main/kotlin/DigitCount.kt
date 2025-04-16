@@ -20,6 +20,8 @@ const val POW10_MAX_OFFSET = 78
 const val POW10_256_COUNT = POW10_MAX_OFFSET - POW10_256_OFFSET
 const val POW10_MAX_DWORD_INDEX = POW10_256_DWORD_INDEX + (4 * POW10_256_COUNT)
 
+const val MAX_COEFF_DIGIT_COUNT = POW10_MAX_OFFSET
+
 val POW10 = longArrayOf(
     // minBitCount:0  maxBitCount:64
     1L, // 1 (0)
