@@ -1,9 +1,9 @@
 package com.decimal128
 import java.lang.Math.unsignedMultiplyHigh
 
-class MulCoefficient {
+class CoeffMul {
     companion object {
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -98,7 +98,7 @@ class MulCoefficient {
             throw RuntimeException("coefficient multiply overflow")
         }
 
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -180,7 +180,7 @@ class MulCoefficient {
             throw RuntimeException("coefficient multiply overflow")
         }
 
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -266,7 +266,7 @@ class MulCoefficient {
             throw RuntimeException("coefficient multiply overflow")
         }
 
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -328,7 +328,7 @@ class MulCoefficient {
             assert(c.isValidDigitCount())
         }
 
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -392,7 +392,7 @@ class MulCoefficient {
             assert(c.isValidDigitCount())
         }
 
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -439,7 +439,7 @@ class MulCoefficient {
             return
         }
 
-        fun mulCoeff(c: Coefficient, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
+        fun mulCoeff(c: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -469,7 +469,7 @@ class MulCoefficient {
             assert(c.isValidDigitCount())
         }
 
-        fun mulCoeff(product: Coefficient, x: Coefficient, yDigitCount: Int, y0: Long) {
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y0: Long) {
             when {
                 (x.dw3 != 0L) -> mulCoeff(product, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
                 (x.dw2 != 0L) -> mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
@@ -478,7 +478,7 @@ class MulCoefficient {
             }
         }
 
-        fun mulCoeff(product: Coefficient, x: Coefficient, yDigitCount: Int, y1: Long, y0: Long) {
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long) {
             when {
                 (x.dw3 != 0L) -> throw RuntimeException("?que?")
                 (x.dw2 != 0L) -> mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y1, y0)
@@ -487,7 +487,7 @@ class MulCoefficient {
             }
         }
 
-        fun mulCoeff(product: Coefficient, x: Coefficient, yDigitCount: Int, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long) {
             when {
                 ((x.dw3 or x.dw2)!= 0L) -> assert(false)
                 (x.dw1 != 0L) -> mulCoeff(product, yDigitCount, y2, y1, y0, x.digitCount, x.dw1, x.dw0)
@@ -495,14 +495,14 @@ class MulCoefficient {
             }
         }
 
-        fun mulCoeff(product: Coefficient, x: Coefficient, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
             when {
                 ((x.dw3 or x.dw2 or x.dw3)!= 0L) -> throw RuntimeException("?que?")
                 else -> mulCoeff(product, yDigitCount, y3, y2, y1, y0, x.digitCount, x.dw0)
             }
         }
 
-        fun mulCoeffPow10(product: Coefficient, x: Coefficient, pow10: Int) {
+        fun mulCoeffPow10(product: Coeff, x: Coeff, pow10: Int) {
             when {
                 (pow10 < POW10_128_OFFSET) -> mulCoeff(product, x, pow10, POW10[pow10])
                 (pow10 < POW10_192_OFFSET) -> {
@@ -520,7 +520,7 @@ class MulCoefficient {
             }
         }
 
-        fun mulCoeff4x5shr320(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y4: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff4x5shr320(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y4: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -586,7 +586,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff4x5shr256(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y4: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff4x5shr256(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y4: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -653,7 +653,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff4x4shr256(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff4x4shr256(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -709,7 +709,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff4x4shr192(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff4x4shr192(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -767,7 +767,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff4x3shr192(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff4x3shr192(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y2: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -813,7 +813,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff3x3shr128(prodShifted: Coefficient, x2: Long, x1: Long, x0: Long, y2: Long, y1: Long, y0: Long) {
+        fun mulCoeff3x3shr128(prodShifted: Coeff, x2: Long, x1: Long, x0: Long, y2: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -852,7 +852,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff4x2shr128(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y1: Long, y0: Long) {
+        fun mulCoeff4x2shr128(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y1: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo
@@ -889,7 +889,7 @@ class MulCoefficient {
             prodShifted.digitCount = -1
         }
 
-        fun mulCoeff4x1shr64(prodShifted: Coefficient, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long) {
+        fun mulCoeff4x1shr64(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long) {
             val pp00Hi = unsignedMultiplyHigh(x0, y0)
             val pp00Lo = x0 * y0
             val dw0T = pp00Lo

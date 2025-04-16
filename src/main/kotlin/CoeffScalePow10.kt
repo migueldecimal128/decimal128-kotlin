@@ -1,11 +1,11 @@
 package com.decimal128
 
-import com.decimal128.MulCoefficient.Companion.mulCoeff
+import com.decimal128.CoeffMul.Companion.mulCoeff
 
 class CoeffScalePow10 {
     companion object {
 
-        fun scalePow10(p: Coefficient, sign: Boolean, x: Coefficient, pow10: Int, ctx: Decimal128Context) {
+        fun scalePow10(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
             if (x.digitCount == 0 || pow10 == 0) {
                 p.set(x)
                 return
@@ -16,7 +16,7 @@ class CoeffScalePow10 {
                 scaleDownPow10(p, sign, x, -pow10, ctx)
         }
 
-        private fun scaleUpPow10(p: Coefficient, x: Coefficient, pow10: Int, ctx: Decimal128Context) {
+        private fun scaleUpPow10(p: Coeff, x: Coeff, pow10: Int, ctx: Decimal128Context) {
             assert(pow10 > 0)
             assert(x.digitCount > 0)
 
@@ -46,7 +46,7 @@ class CoeffScalePow10 {
             assert(p.isValidDigitCount())
         }
 
-        private fun scaleDownPow10(p: Coefficient, sign: Boolean, x: Coefficient, pow10: Int, ctx: Decimal128Context) {
+        private fun scaleDownPow10(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
             assert(pow10 > 0)
             assert(x.digitCount > 0)
 

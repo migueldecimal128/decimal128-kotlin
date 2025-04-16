@@ -8,11 +8,6 @@ import com.decimal128.Residue.Companion.LT_HALF
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.EXACT
 
-import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import java.math.BigInteger
 
 
@@ -23,7 +18,7 @@ class TestResidueUlpResidue {
     class UlpResidueCase(val bi: BigInteger) {
         constructor(str: String) : this(BigInteger(str))
 
-        val coeff = Coefficient(bi)
+        val coeff = Coeff(bi)
         val pow10 = BigInteger.TEN.pow(coeff.digitCount)
         val bix2 = bi.shiftLeft(1)
         val cmp = bix2.compareTo(pow10)

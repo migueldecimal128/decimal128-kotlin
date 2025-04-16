@@ -90,11 +90,11 @@ class TestRecipMulPow10 {
 
     fun test1(case: TC) {
 
-        val coeffA = Coefficient(case.biA)
+        val coeffA = Coeff(case.biA)
         val pow10 = case.pow10
         println("$coeffA (${coeffA.digitCount}) divMod 10**$pow10 = expected:${case.biQuotient} ${case.biRemainder}")
-        val coeffQ = Coefficient()
-        val coeffR = Coefficient()
+        val coeffQ = Coeff()
+        val coeffR = Coeff()
 
         if (coeffA.digitCount < MIN_DIVIDEND_DIGIT_COUNT || pow10 < MIN_DIVISOR_POW10 ||
             (coeffA.digitCount + pow10) >= MAX_DIVIDEND_DIGIT_COUNT ) {

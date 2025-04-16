@@ -91,9 +91,9 @@ class TestCoeffientMul {
         val expected = case.biProduct
         if (expected.bitLength() > 256)
             return
-        val coeffA = Coefficient(case.biA)
-        val coeffB = Coefficient(case.biB)
-        val coeffC = Coefficient()
+        val coeffA = Coeff(case.biA)
+        val coeffB = Coeff(case.biB)
+        val coeffC = Coeff()
         //println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = expected:$expected")
         coeffC.mul(coeffA, coeffB)
         val biC = coeffC.toBigInteger()

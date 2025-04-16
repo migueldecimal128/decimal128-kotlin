@@ -5,7 +5,7 @@ import java.lang.Long.compareUnsigned
 class CoeffAdd private constructor() {
     companion object {
 
-        fun roundUp(c: Coefficient, ctx: Decimal128Context) {
+        fun roundUp(c: Coeff, ctx: Decimal128Context) {
             c.dw0 += 1
             if (c.dw0 != 0L) {
                 tweakDigitCountPostRoundup(c, ctx)
@@ -28,7 +28,7 @@ class CoeffAdd private constructor() {
             }
         }
 
-        fun add(sum: Coefficient, x: Coefficient, y: Coefficient,
+        fun add(sum: Coeff, x: Coeff, y: Coeff,
                 scaleDelta: Int, sign: Boolean, ctx: Decimal128Context) {
             if (x.digitCount == 0) {
                 sum.set(y)
@@ -50,7 +50,7 @@ class CoeffAdd private constructor() {
 
         }
 
-        fun addUnscaled(sum: Coefficient, x: Coefficient, y: Coefficient) {
+        fun addUnscaled(sum: Coeff, x: Coeff, y: Coeff) {
             val maxDigitCount = Math.max(x.digitCount, y.digitCount)
 
             val x0 = x.dw0
@@ -116,7 +116,7 @@ class CoeffAdd private constructor() {
         }
 
 
-        fun addScaled(sum: Coefficient, x: Coefficient, y: Coefficient,
+        fun addScaled(sum: Coeff, x: Coeff, y: Coeff,
                       scaleDelta: Int, sign: Boolean, ctx: Decimal128Context) {
             assert(x.digitCount > 0)
             assert(y.digitCount > 0)
@@ -139,7 +139,7 @@ class CoeffAdd private constructor() {
             addScaledOverlap(sum, x, y, scaleDelta, sign, ctx)
         }
 
-        fun addScaledOverlap(sum: Coefficient, x: Coefficient, y: Coefficient,
+        fun addScaledOverlap(sum: Coeff, x: Coeff, y: Coeff,
                              scaleDelta: Int, sign: Boolean, ctx: Decimal128Context) {
             // FIXME above this is correct, but below has not been modified for scaling + rounding
             val maxDigitCount = Math.max(x.digitCount, y.digitCount)

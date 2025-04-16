@@ -17,7 +17,7 @@ value class Residue private constructor(val value: Int) {
         val GT_HALF = Residue(3)
         val EXACT = Residue(4)
 
-        fun residueFrom(c: Coefficient) : Residue {
+        fun residueFrom(c: Coeff) : Residue {
             assert (c.digitCount > 0)
             return (
                     if (( c.dw3 or c.dw2) == 0L) {

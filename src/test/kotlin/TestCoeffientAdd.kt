@@ -54,9 +54,9 @@ class TestCoeffientAdd {
         val expected = case.biSum
         if (expected.bitLength() > 256)
             return
-        val coeffA = Coefficient(case.biA)
-        val coeffB = Coefficient(case.biB)
-        val coeffC = Coefficient()
+        val coeffA = Coeff(case.biA)
+        val coeffB = Coeff(case.biB)
+        val coeffC = Coeff()
         coeffC.add(coeffA, coeffB)
         val oldDigitCount = coeffC.digitCount
         if (! coeffC.isValidDigitCount()) {

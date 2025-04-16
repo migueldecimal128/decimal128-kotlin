@@ -210,7 +210,7 @@ class RecipMulPow10 {
             throw RuntimeException("not impl")
         }
 
-        fun divModPow10(q: Coefficient, r: Coefficient, d: Coefficient, pow10: Int) {
+        fun divModPow10(q: Coeff, r: Coeff, d: Coeff, pow10: Int) {
             throw RuntimeException("not impl")
         }
 
@@ -219,7 +219,7 @@ class RecipMulPow10 {
             throw RuntimeException("not impl")
         }
 
-        fun divPow10(q: Coefficient,
+        fun divPow10(q: Coeff,
                      sign: Boolean, digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long,
                      pow10: Int, ctx: Decimal128Context) {
             throw RuntimeException("not impl")

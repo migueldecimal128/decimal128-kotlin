@@ -16,7 +16,7 @@ class TestCoeffientRoundTrip {
     }
 
     fun test1(str: String) {
-        val coeff = Coefficient()
+        val coeff = Coeff()
         coeff.set(str)
         val expected = str
         val observed = coeff.toString();
@@ -26,7 +26,7 @@ class TestCoeffientRoundTrip {
     }
 
     fun test1(bi: BigInteger) {
-        val coeff = Coefficient()
+        val coeff = Coeff()
         coeff.set(bi)
         val observed = coeff.toBigInteger()
         assert (bi.equals(observed))

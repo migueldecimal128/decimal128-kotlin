@@ -3,12 +3,12 @@ package com.decimal128
 import java.math.BigInteger
 import java.lang.Long.compareUnsigned
 import java.lang.Math.unsignedMultiplyHigh
-import com.decimal128.MulCoefficient.Companion.mulCoeff
+import com.decimal128.CoeffMul.Companion.mulCoeff
 
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
+class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -19,7 +19,7 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         require(bi.bitLength() <= 256)
     }
     constructor(str: String) : this(BigInteger(str))
-    constructor(c: Coefficient): this(c.dw3, c.dw2, c.dw1, c.dw0)
+    constructor(c: Coeff): this(c.dw3, c.dw2, c.dw1, c.dw0)
 
     var digitCount = 0
 
@@ -67,7 +67,7 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         return t == prevDigitCount
     }
 
-    fun compareTo(other: Coefficient) : Int {
+    fun compareTo(other: Coeff) : Int {
         assert(isValidDigitCount())
         assert(other.isValidDigitCount())
         if (digitCount != other.digitCount)
@@ -81,17 +81,17 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         return compareUnsigned(dw0, other.dw0)
     }
 
-    fun EQ(other: Coefficient) : Boolean {
+    fun EQ(other: Coeff) : Boolean {
         assert(isValidDigitCount())
         assert(other.isValidDigitCount())
         return (digitCount == other.digitCount) && (dw0 == other.dw0) && (dw1 == other.dw1) && (dw2 == other.dw2) && (dw3 == other.dw3)
     }
 
-    fun NE(other: Coefficient) : Boolean = !EQ(other)
+    fun NE(other: Coeff) : Boolean = !EQ(other)
 
-    fun GE(other: Coefficient) : Boolean = !LT(other)
+    fun GE(other: Coeff) : Boolean = !LT(other)
 
-    fun GT(other: Coefficient) : Boolean {
+    fun GT(other: Coeff) : Boolean {
         assert(isValidDigitCount())
         assert(other.isValidDigitCount())
         return when {
@@ -103,9 +103,9 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         }
     }
 
-    fun LE(other: Coefficient) : Boolean = !GT(other)
+    fun LE(other: Coeff) : Boolean = !GT(other)
 
-    fun LT(other: Coefficient) : Boolean {
+    fun LT(other: Coeff) : Boolean {
         assert(isValidDigitCount())
         assert(other.isValidDigitCount())
         return when {
@@ -117,7 +117,7 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         }
     }
 
-    fun add(x: Coefficient, y: Coefficient) {
+    fun add(x: Coeff, y: Coeff) {
         val maxDigitCount = Math.max(x.digitCount, y.digitCount)
 
         val x0 = x.dw0
@@ -184,7 +184,7 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     // absolute difference
     // if minuend < subtrahend then negate to return positive result
-    fun absDiff(x: Coefficient, y: Coefficient) : Long { // minuend - subtrahend
+    fun absDiff(x: Coeff, y: Coeff) : Long { // minuend - subtrahend
         assert(isValidDigitCount())
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
@@ -279,11 +279,11 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         return negCarry3
     }
 
-    fun mul(x: Coefficient, y:Coefficient) {
+    fun mul(x: Coeff, y:Coeff) {
         mul(x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
     }
 
-    fun mul(x: Coefficient, yDigitCount: Int, yDw3: Long, yDw2: Long, yDw1: Long, yDw0: Long) {
+    fun mul(x: Coeff, yDigitCount: Int, yDw3: Long, yDw2: Long, yDw1: Long, yDw0: Long) {
         assert(isValidDigitCount())
         assert(x.isValidDigitCount())
         assert(calcDigitCount(yDw3, yDw2, yDw1, yDw0) == yDigitCount)
@@ -330,7 +330,7 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     }
 
-    fun mul_x(x: Coefficient, y:Coefficient) {
+    fun mul_x(x: Coeff, y:Coeff) {
         assert(isValidDigitCount())
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
@@ -553,7 +553,7 @@ class Coefficient(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         recalcDigitCount256orLess();
     }
 
-    fun set(c: Coefficient) {
+    fun set(c: Coeff) {
         if (this != c) {
             digitCount = c.digitCount; dw3 = c.dw3; dw2 = c.dw2; dw1 = c.dw1; dw0 = c.dw0
         }

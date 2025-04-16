@@ -230,7 +230,7 @@ fun calcDigitCount(dw3: Long, dw2: Long, dw1: Long, dw0: Long) : Int {
         return if (dw3 == 0L) calcDigitCount192(dw2, dw1, dw0) else calcDigitCount256(dw3, dw2, dw1, dw0)
 }
 
- fun recalcDigitCountOnly64(c: Coefficient) {
+ fun recalcDigitCountOnly64(c: Coeff) {
     assert ((c.dw3 or c.dw2 or c.dw1) == 0L)
     var lo = 0
     var hi = POW10_64_COUNT
@@ -246,7 +246,7 @@ fun calcDigitCount(dw3: Long, dw2: Long, dw1: Long, dw0: Long) : Int {
     c.digitCount = POW10_64_OFFSET + lo
 }
 
-fun recalcDigitCountOnly128(c: Coefficient) {
+fun recalcDigitCountOnly128(c: Coeff) {
     assert ((c.dw3 or c.dw2) == 0L && c.dw1 != 0L)
     var lo = 0
     var hi = POW10_128_COUNT
@@ -269,7 +269,7 @@ fun recalcDigitCountOnly128(c: Coefficient) {
     c.digitCount = POW10_128_OFFSET + lo
 }
 
-fun recalcDigitCountOnly192(c: Coefficient) {
+fun recalcDigitCountOnly192(c: Coeff) {
     assert (c.dw3 == 0L && c.dw2 != 0L)
     var lo = 0
     var hi = POW10_192_COUNT
@@ -299,7 +299,7 @@ fun recalcDigitCountOnly192(c: Coefficient) {
     c.digitCount = POW10_192_OFFSET + lo
 }
 
-fun recalcDigitCountOnly256(c: Coefficient) {
+fun recalcDigitCountOnly256(c: Coeff) {
     assert (c.dw3 != 0L)
     var lo = 0
     var hi = POW10_256_COUNT
@@ -336,7 +336,7 @@ fun recalcDigitCountOnly256(c: Coefficient) {
     c.digitCount = POW10_256_OFFSET + lo
 }
 
-fun tweakDigitCountOnly64(c: Coefficient) {
+fun tweakDigitCountOnly64(c: Coeff) {
     // recalcDigitCount256orLess()
     val loDigitCount = c.digitCount
     assert(loDigitCount >= 0 && loDigitCount <= POW10_128_OFFSET)
@@ -352,7 +352,7 @@ fun tweakDigitCountOnly64(c: Coefficient) {
 
 }
 
-fun tweakDigitCountOnly128(c: Coefficient) {
+fun tweakDigitCountOnly128(c: Coeff) {
     // recalcDigitCount256orLess()
     val loDigitCount = c.digitCount
     assert(loDigitCount >= POW10_128_OFFSET-1 && loDigitCount <= POW10_192_OFFSET)
@@ -375,7 +375,7 @@ fun tweakDigitCountOnly128(c: Coefficient) {
     }
 }
 
-fun tweakDigitCountOnly192(c: Coefficient) {
+fun tweakDigitCountOnly192(c: Coeff) {
     // recalcDigitCount256orLess()
     val loDigitCount = c.digitCount
     assert(loDigitCount >= POW10_192_OFFSET-1 && loDigitCount <= POW10_256_OFFSET)
@@ -403,7 +403,7 @@ fun tweakDigitCountOnly192(c: Coefficient) {
     }
 }
 
-fun tweakDigitCountOnly256(c: Coefficient) {
+fun tweakDigitCountOnly256(c: Coeff) {
     // recalcDigitCount256orLess()
     val loDigitCount = c.digitCount
     if (!(loDigitCount >= POW10_256_OFFSET-1 && loDigitCount <= POW10_MAX_OFFSET))
@@ -439,7 +439,7 @@ fun tweakDigitCountOnly256(c: Coefficient) {
 
 }
 
-fun tweakDigitCountPostRoundup(c: Coefficient, ctx: Decimal128Context) {
+fun tweakDigitCountPostRoundup(c: Coeff, ctx: Decimal128Context) {
     if ((c.dw3 or c.dw2) == 0L) {
         if (c.dw1 == 0L)
             tweakDigitCountOnly64(c)

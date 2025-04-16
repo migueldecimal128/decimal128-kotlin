@@ -4,9 +4,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
-import kotlin.test.assertFailsWith
 
-class TestCoefficientAbsDiff {
+class TestCoeffAbsDiff {
 
     class TC(val biA: BigInteger, val biB: BigInteger) {
         val biAbsDiff = biA.subtract(biB).abs()
@@ -72,10 +71,10 @@ class TestCoefficientAbsDiff {
         val biExpected = case.biAbsDiff
         if (biExpected.bitLength() > 256)
             return // outside our supported range
-        val coeffA = Coefficient(case.biA)
-        val coeffB = Coefficient(case.biB)
-        val yin = Coefficient()
-        val yang = Coefficient()
+        val coeffA = Coeff(case.biA)
+        val coeffB = Coeff(case.biB)
+        val yin = Coeff()
+        val yang = Coeff()
         //println("$coeffA - $coeffB = expected:$biExpected")
         val yinReversed = yin.absDiff(coeffA, coeffB)
         val yangReversed = yang.absDiff(coeffB, coeffA)

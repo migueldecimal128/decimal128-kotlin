@@ -1,6 +1,5 @@
 package com.decimal128
 
-import com.decimal128.TestCoeffientMul.TC
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
@@ -89,8 +88,8 @@ class TestCoeffientScaleUp {
             println("product would overflow ... skipped")
             return
         }
-        val coeffA = Coefficient(case.biA)
-        val coeffObserved = Coefficient(coeffA)
+        val coeffA = Coeff(case.biA)
+        val coeffObserved = Coeff(coeffA)
         val pow10 = case.pow10
         //println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = expected:$expected")
         coeffObserved.mutateScalePow10(pow10)
