@@ -3,7 +3,59 @@ import java.lang.Math.unsignedMultiplyHigh
 
 class CoeffMul {
     companion object {
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
+
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y0: Long) {
+            when {
+                (x.dw3 != 0L) -> _mulCoeff(product, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
+                (x.dw2 != 0L) -> _mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
+                (x.dw1 != 0L) -> _mulCoeff(product, x.digitCount, x.dw1, x.dw0, yDigitCount, y0)
+                else -> _mulCoeff(product, x.digitCount, x.dw0, yDigitCount, y0)
+            }
+        }
+
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long) {
+            when {
+                (x.dw3 != 0L) -> throw RuntimeException("?que?")
+                (x.dw2 != 0L) -> _mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y1, y0)
+                (x.dw1 != 0L) -> _mulCoeff(product, x.digitCount, x.dw1, x.dw0, yDigitCount, y1, y0)
+                else -> _mulCoeff(product, yDigitCount, y1, y0, x.digitCount, x.dw0)
+            }
+        }
+
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long) {
+            when {
+                ((x.dw3 or x.dw2)!= 0L) -> assert(false)
+                (x.dw1 != 0L) -> _mulCoeff(product, yDigitCount, y2, y1, y0, x.digitCount, x.dw1, x.dw0)
+                else -> _mulCoeff(product, yDigitCount, y2, y1, y0, x.digitCount, x.dw0)
+            }
+        }
+
+        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
+            when {
+                ((x.dw3 or x.dw2 or x.dw3)!= 0L) -> throw RuntimeException("?que?")
+                else -> _mulCoeff(product, yDigitCount, y3, y2, y1, y0, x.digitCount, x.dw0)
+            }
+        }
+
+        fun mulCoeffPow10(product: Coeff, x: Coeff, pow10: Int) {
+            when {
+                (pow10 < POW10_128_OFFSET) -> mulCoeff(product, x, pow10, POW10[pow10])
+                (pow10 < POW10_192_OFFSET) -> {
+                    val index = POW10_128_DWORD_INDEX + (pow10 - POW10_128_OFFSET)*2
+                    mulCoeff(product, x, pow10, POW10[index + 1], POW10[index])
+                }
+                (pow10 < POW10_256_OFFSET) -> {
+                    val index = POW10_192_DWORD_INDEX + (pow10 - POW10_192_OFFSET)*3
+                    mulCoeff(product, x, pow10, POW10[index + 2], POW10[index + 1], POW10[index])
+                }
+                (pow10 < POW10_MAX_OFFSET) -> {
+                    val index = POW10_256_DWORD_INDEX + (pow10 - POW10_256_OFFSET)*4
+                    mulCoeff(product, x, pow10, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index])
+                }
+            }
+        }
+
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -98,7 +150,7 @@ class CoeffMul {
             throw RuntimeException("coefficient multiply overflow")
         }
 
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -180,7 +232,7 @@ class CoeffMul {
             throw RuntimeException("coefficient multiply overflow")
         }
 
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -266,7 +318,7 @@ class CoeffMul {
             throw RuntimeException("coefficient multiply overflow")
         }
 
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -328,7 +380,7 @@ class CoeffMul {
             assert(c.isValidDigitCount())
         }
 
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -392,7 +444,7 @@ class CoeffMul {
             assert(c.isValidDigitCount())
         }
 
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -439,7 +491,7 @@ class CoeffMul {
             return
         }
 
-        fun mulCoeff(c: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
+        private fun _mulCoeff(c: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
             if (xDigitCount == 0 || yDigitCount == 0) {
                 c.setZero()
                 return
@@ -467,57 +519,6 @@ class CoeffMul {
             else
                 tweakDigitCountOnly128(c)
             assert(c.isValidDigitCount())
-        }
-
-        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y0: Long) {
-            when {
-                (x.dw3 != 0L) -> mulCoeff(product, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
-                (x.dw2 != 0L) -> mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
-                (x.dw1 != 0L) -> mulCoeff(product, x.digitCount, x.dw1, x.dw0, yDigitCount, y0)
-                else -> mulCoeff(product, x.digitCount, x.dw0, yDigitCount, y0)
-            }
-        }
-
-        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long) {
-            when {
-                (x.dw3 != 0L) -> throw RuntimeException("?que?")
-                (x.dw2 != 0L) -> mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y1, y0)
-                (x.dw1 != 0L) -> mulCoeff(product, x.digitCount, x.dw1, x.dw0, yDigitCount, y1, y0)
-                else -> mulCoeff(product, yDigitCount, y1, y0, x.digitCount, x.dw0)
-            }
-        }
-
-        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long) {
-            when {
-                ((x.dw3 or x.dw2)!= 0L) -> assert(false)
-                (x.dw1 != 0L) -> mulCoeff(product, yDigitCount, y2, y1, y0, x.digitCount, x.dw1, x.dw0)
-                else -> mulCoeff(product, yDigitCount, y2, y1, y0, x.digitCount, x.dw0)
-            }
-        }
-
-        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
-            when {
-                ((x.dw3 or x.dw2 or x.dw3)!= 0L) -> throw RuntimeException("?que?")
-                else -> mulCoeff(product, yDigitCount, y3, y2, y1, y0, x.digitCount, x.dw0)
-            }
-        }
-
-        fun mulCoeffPow10(product: Coeff, x: Coeff, pow10: Int) {
-            when {
-                (pow10 < POW10_128_OFFSET) -> mulCoeff(product, x, pow10, POW10[pow10])
-                (pow10 < POW10_192_OFFSET) -> {
-                    val index = POW10_128_DWORD_INDEX + (pow10 - POW10_128_OFFSET)*2
-                    mulCoeff(product, x, pow10, POW10[index + 1], POW10[index])
-                }
-                (pow10 < POW10_256_OFFSET) -> {
-                    val index = POW10_192_DWORD_INDEX + (pow10 - POW10_192_OFFSET)*3
-                    mulCoeff(product, x, pow10, POW10[index + 2], POW10[index + 1], POW10[index])
-                }
-                (pow10 < POW10_MAX_OFFSET) -> {
-                    val index = POW10_256_DWORD_INDEX + (pow10 - POW10_256_OFFSET)*4
-                    mulCoeff(product, x, pow10, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index])
-                }
-            }
         }
 
         fun mulCoeff4x5shr320(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y4: Long, y3: Long, y2: Long, y1: Long, y0: Long) {
@@ -915,7 +916,6 @@ class CoeffMul {
             prodShifted.dw0 = dw1T
             prodShifted.digitCount = -1
         }
-
 
     }
 }

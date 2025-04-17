@@ -13,6 +13,7 @@ class TestCoeffientMul {
     }
 
     val cases = arrayOf(
+        TC("9999999999999999919", "9999999999999999919"),
         TC("9999999999999999918", "99999999999999999920"),
         TC("6075018513315086291545187086261960270921991288466", "16192"),
         TC(BigInteger.ONE.shiftLeft(64), BigInteger.ZERO),

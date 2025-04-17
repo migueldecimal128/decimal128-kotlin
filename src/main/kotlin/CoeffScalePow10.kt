@@ -1,11 +1,12 @@
 package com.decimal128
 
 import com.decimal128.CoeffMul.Companion.mulCoeff
+import com.decimal128.CoeffFma.Companion.fmaCoeff
 
 class CoeffScalePow10 {
     companion object {
 
-        fun scalePow10(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
+        fun scalePow10(p: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
             if (x.digitCount == 0 || pow10 == 0) {
                 p.set(x)
                 return
@@ -42,7 +43,7 @@ class CoeffScalePow10 {
                     mulCoeff(p, x, pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0]) }
                 else -> throw RuntimeException("?que?")
             }
-            p.digitCount = productDigitCount
+            assert(p.digitCount == productDigitCount)
             assert(p.isValidDigitCount())
         }
 
@@ -64,5 +65,61 @@ class CoeffScalePow10 {
             }
             RecipMulPow10.divPow10(p, sign, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10, ctx)
         }
+
+        fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, a: Coeff, sign: Boolean, ctx: Decimal128Context) {
+            assert(pow10 > 0)
+            assert(x.digitCount > 0)
+            assert((x.dw3 or x.dw2) == 0L)
+            assert(a.digitCount > 0)
+            assert((a.dw3 or a.dw2) == 0L)
+
+            val productDigitCount = x.digitCount + pow10
+            assert(productDigitCount < MAX_COEFF_DIGIT_COUNT)
+
+            val aDigitCount = a.digitCount
+            val a1 = a.dw1
+            val a0 = a.dw0
+            if (a1 == 0L)
+                _scaleUpPow10Add(p, x, pow10, aDigitCount, a0, sign, ctx)
+            else
+                _scaleUpPow10Add(p, x, pow10, aDigitCount, a1, a0, sign, ctx)
+            assert(p.isValidDigitCount())
+            assert(p.digitCount == productDigitCount || p.digitCount == productDigitCount + 1)
+        }
+
+        fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a0: Long, sign: Boolean, ctx: Decimal128Context) {
+            // note that this is a litle lie
+            // digitCount is actually pow10 + 1
+            // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
+            val pow10DigitCount = pow10
+
+            when {
+                (pow10 < POW10_128_OFFSET) ->
+                { val index = pow10;
+                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a0) }
+                (pow10 < POW10_192_OFFSET) ->
+                { val index = POW10_128_DWORD_INDEX + 2*(pow10 - POW10_128_OFFSET);
+                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a0) }
+                else -> throw RuntimeException("?que?")
+            }
+        }
+
+        fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a1: Long, a0: Long, sign: Boolean, ctx: Decimal128Context) {
+            // note that this is a litle lie
+            // digitCount is actually pow10 + 1
+            // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
+            val pow10DigitCount = pow10
+
+            when {
+                (pow10 < POW10_128_OFFSET) ->
+                { val index = pow10;
+                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0) }
+                (pow10 < POW10_192_OFFSET) ->
+                { val index = POW10_128_DWORD_INDEX + 2*(pow10 - POW10_128_OFFSET);
+                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0) }
+                else -> throw RuntimeException("?que?")
+            }
+        }
+
     }
 }

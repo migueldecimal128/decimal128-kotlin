@@ -280,9 +280,36 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     }
 
     fun mul(x: Coeff, y:Coeff) {
-        mul(x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
+        assert(x.isValidDigitCount())
+        assert(y.isValidDigitCount())
+        if (x.digitCount <= 1) {
+            if (x.digitCount == 0) {
+                setZero()
+                return
+            }
+            if (x.dw0 == 1L) {
+                set(y)
+                return
+            }
+        }
+        when {
+            ((y.dw3 or y.dw2) == 0L) -> {
+                if (y.dw1 == 0L) {
+                    if ((y.dw0 ushr 1) == 0L) {
+                        if (y.dw0 == 1L) set(x) else setZero()
+                        return
+                    }
+                    mulCoeff(this, x, y.digitCount, y.dw0)
+                } else {
+                    mulCoeff(this, x, y.digitCount, y.dw1, y.dw0)
+                }
+            }
+            (y.dw3 == 0L) -> mulCoeff(this, x, y.digitCount, y.dw2, y.dw1, y.dw0)
+            else -> mulCoeff(this, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
+        }
     }
 
+    /*
     fun mul(x: Coeff, yDigitCount: Int, yDw3: Long, yDw2: Long, yDw1: Long, yDw0: Long) {
         assert(isValidDigitCount())
         assert(x.isValidDigitCount())
@@ -329,6 +356,7 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         throw RuntimeException("coefficient multiply overflow")
 
     }
+     */
 
     fun mul_x(x: Coeff, y:Coeff) {
         assert(isValidDigitCount())
