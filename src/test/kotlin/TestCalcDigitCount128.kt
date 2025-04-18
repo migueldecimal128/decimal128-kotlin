@@ -4,7 +4,21 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 import java.math.BigInteger
+import java.util.*
+
 class TestCalcDigitCount128 {
+
+    val cases = arrayOf(
+        "67427991645008806127",
+        )
+
+    @Test
+    fun testCases() {
+        for (case in cases) {
+            val bi = BigInteger(case)
+            test1(bi)
+        }
+    }
 
     @Test
     fun test() {
@@ -26,7 +40,28 @@ class TestCalcDigitCount128 {
         val dw0 = bi.toLong()
         val dw1 = bi.shiftRight(64).toLong()
         val observed = calcDigitCount128(dw1, dw0)
+        if (! expected.equals(observed))
+            println("$bi expected:$expected observed:$observed")
         assertEquals(expected, observed)
     }
+
+    @Test
+    fun testRandom() {
+        for (i in 1..1000000)
+            test1Random()
+    }
+
+    val random = Random()
+
+    fun test1Random() {
+        var bi = BigInteger.ZERO
+        do {
+            val bitLength = random.nextInt(65, 129)
+            bi = BigInteger(bitLength, random)
+        } while (bi.bitLength() < 65)
+        test1(bi)
+    }
+
+
 
 }

@@ -2,6 +2,7 @@ package com.decimal128
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.*
 
 /*
 fun getDigitCount(n: Int) : Int {
@@ -17,6 +18,9 @@ class TestCalcDigitCount64 {
 
     @Test
     fun test() {
+        test1(Long.MAX_VALUE.toULong())
+        test1(Long.MIN_VALUE.toULong())
+        test1(ULong.MAX_VALUE)
         //var ul = 10_000_000_000_000_000_000uL
         var ul = 1uL
         while (true) {
@@ -25,7 +29,6 @@ class TestCalcDigitCount64 {
                 break;
             ul *= 10uL
         }
-        test1(ULong.MAX_VALUE)
     }
 
     fun test3(ul: ULong) {
@@ -42,5 +45,25 @@ class TestCalcDigitCount64 {
             println("expected:$expected  observed:$observed  ul:$ul")
         assertEquals(expected, observed)
     }
+
+    @Test
+    fun testRandom() {
+        for (i in 1..1000000)
+            test1Random()
+    }
+
+    val random = Random()
+
+    fun test1Random() {
+        var bitLength = 0
+        do {
+            bitLength = random.nextInt(0, 65)
+        } while (bitLength == 0)
+        val l = random.nextLong()
+        val m = if (bitLength == 64) l else ((1L shl bitLength) - 1)
+        test1(m.toULong())
+    }
+
+
 
 }

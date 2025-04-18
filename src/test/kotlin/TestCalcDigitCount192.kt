@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 import java.math.BigInteger
+import java.util.*
+
 class TestCalcDigitCount192 {
 
     @Test
@@ -36,5 +38,23 @@ class TestCalcDigitCount192 {
             println(bi)
         assertEquals(expected, observed)
     }
+
+    @Test
+    fun testRandom() {
+        for (i in 1..1000000)
+            test1Random()
+    }
+
+    val random = Random()
+
+    fun test1Random() {
+        var bi = BigInteger.ZERO
+        do {
+            val bitLength = random.nextInt(129, 193)
+            bi = BigInteger(bitLength, random)
+        } while (bi.bitLength() < 128)
+        test1(bi)
+    }
+
 
 }
