@@ -6,18 +6,18 @@ import com.decimal128.CoeffFma.Companion.fmaCoeff
 class CoeffScalePow10 {
     companion object {
 
-        fun scalePow10(p: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
+        fun scalePow10Coeff(p: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
             if (x.digitCount == 0 || pow10 == 0) {
                 p.set(x)
                 return
             }
             if (pow10 > 0)
-                scaleUpPow10(p, x, pow10, ctx)
+                scaleUpPow10Coeff(p, x, pow10, ctx)
             else
-                scaleDownPow10(p, sign, x, -pow10, ctx)
+                scaleDownPow10Coeff(p, sign, x, -pow10, ctx)
         }
 
-        private fun scaleUpPow10(p: Coeff, x: Coeff, pow10: Int, ctx: Decimal128Context) {
+        private fun scaleUpPow10Coeff(p: Coeff, x: Coeff, pow10: Int, ctx: Decimal128Context) {
             assert(pow10 > 0)
             assert(x.digitCount > 0)
 
@@ -47,7 +47,7 @@ class CoeffScalePow10 {
             assert(p.isValidDigitCount())
         }
 
-        private fun scaleDownPow10(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
+        private fun scaleDownPow10Coeff(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
             assert(pow10 > 0)
             assert(x.digitCount > 0)
 
@@ -66,7 +66,7 @@ class CoeffScalePow10 {
             RecipMulPow10.divPow10(p, sign, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10, ctx)
         }
 
-        fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, a: Coeff, sign: Boolean, ctx: Decimal128Context) {
+        fun _scaleUpPow10AddCoeff(p: Coeff, x: Coeff, pow10: Int, a: Coeff, sign: Boolean, ctx: Decimal128Context) {
             assert(pow10 > 0)
             assert(x.digitCount > 0)
             assert((x.dw3 or x.dw2) == 0L)
@@ -84,7 +84,7 @@ class CoeffScalePow10 {
             assert(p.digitCount == productDigitCount || p.digitCount == productDigitCount + 1)
         }
 
-        fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a1: Long, a0: Long, sign: Boolean, ctx: Decimal128Context) {
+        private fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a1: Long, a0: Long, sign: Boolean, ctx: Decimal128Context) {
             // note that this is a litle lie
             // digitCount is actually pow10 + 1
             // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10

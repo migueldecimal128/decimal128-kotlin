@@ -13,9 +13,9 @@ class TestCoeffientScaleUp {
     }
 
     val cases = arrayOf(
+        TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE), 1),
         TC("0", 60),
-        TC(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE).divide(BigInteger.TEN), 1),
-        //TC("1", 1),
+        TC("1", 1),
         TC("999", 1),
         TC("999", 2),
         TC("999999999999999999", 1),
@@ -27,7 +27,7 @@ class TestCoeffientScaleUp {
         TC("99999999999999999999", 1),
         TC("99999999999999999999", 2),
         TC("99999999999999999999", 3),
-        TC(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE).divide(BigInteger.TEN), 1),
+        TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE), 1),
     )
 
     @Test
@@ -89,10 +89,11 @@ class TestCoeffientScaleUp {
             return
         }
         val coeffA = Coeff(case.biA)
-        val coeffObserved = Coeff(coeffA)
+        val coeffObserved = Coeff()
         val pow10 = case.pow10
-        //println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = expected:$expected")
-        coeffObserved.mutateScalePow10(pow10)
+        val ctx = Decimal128Context()
+        //println("$coeffA (${coeffA.digitCount}) * 10**$pow10 = expected:$expected")
+        coeffObserved.scalePow10(coeffA, pow10, false, ctx)
         val observed = coeffObserved.toBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitCount}) * 10**$pow10 = $coeffObserved (${coeffObserved.digitCount})  expected:$expected")
