@@ -256,10 +256,6 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
         assert(a.isValidDigitCount())
-        if (a.digitCount == 0) {
-            mul(x, y)
-            return
-        }
         if (x.digitCount <= 1) {
             if (x.digitCount == 0) {
                 set(a)
@@ -267,6 +263,16 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
             }
             if (x.dw0 == 1L) {
                 add(y, a)
+                return
+            }
+        }
+        if (y.digitCount <= 1) {
+            if (y.digitCount == 0) {
+                set(a)
+                return
+            }
+            if (y.dw0 == 1L) {
+                add(x, a)
                 return
             }
         }
@@ -282,8 +288,12 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
                     fmaCoeff(this, x, y.digitCount, y.dw1, y.dw0, a)
                 }
             }
-            (y.dw3 == 0L) -> fmaCoeff(this, x, y.digitCount, y.dw2, y.dw1, y.dw0, a)
-            else -> fmaCoeff(this, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0, a)
+            (y.dw3 == 0L) -> {
+                fmaCoeff(this, x, y.digitCount, y.dw2, y.dw1, y.dw0, a)
+            }
+            else -> {
+                fmaCoeff(this, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0, a)
+            }
         }
     }
 
