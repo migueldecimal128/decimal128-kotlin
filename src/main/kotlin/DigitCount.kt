@@ -113,10 +113,10 @@ private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == 
 
 
 fun calcDigitCount64_nlz(dw0:Long) : Int {
+    if (dw0 == 0L)
+        return 0;
     val nlz = numberOfLeadingZeros(dw0)
     val bitLength = 64 - nlz
-    if (bitLength == 0)
-        return 0;
     val loDigitCount = (bitLength * 1233) shr 12
     val hiDigitCount = loDigitCount + 1
     val m0 = POW10[loDigitCount]
@@ -129,6 +129,8 @@ fun calcDigitCount64_nlz(dw0:Long) : Int {
 }
 
 fun calcDigitCount128_nlz(dw1:Long, dw0:Long) : Int {
+    if (dw1 == 0L)
+        return calcDigitCount64(dw0)
     val nlz = numberOfLeadingZeros(dw1)
     val bitLength = 128 - nlz
     val loDigitCount = (bitLength * 1233) shr 12
@@ -145,6 +147,8 @@ fun calcDigitCount128_nlz(dw1:Long, dw0:Long) : Int {
 }
 
 fun calcDigitCount192_nlz(dw2:Long, dw1:Long, dw0:Long) : Int {
+    if (dw2 == 0L)
+        return calcDigitCount128_nlz(dw1, dw0)
     val nlz = numberOfLeadingZeros(dw2)
     val bitLength = 192 - nlz
     val loDigitCount = (bitLength * 1233) shr 12
@@ -164,6 +168,8 @@ fun calcDigitCount192_nlz(dw2:Long, dw1:Long, dw0:Long) : Int {
 }
 
 fun calcDigitCount256_nlz(dw3:Long, dw2:Long, dw1:Long, dw0:Long) : Int {
+    if (dw3 == 0L)
+        return calcDigitCount192_nlz(dw2, dw1, dw0)
     val nlz = numberOfLeadingZeros(dw3)
     val bitLength = 256 - nlz
     val loDigitCount = (bitLength * 1233) shr 12
@@ -202,6 +208,8 @@ fun calcDigitCount64_binarySearch(dw0: Long) : Int {
 }
 
 fun calcDigitCount128_binarySearch(dw1:Long, dw0:Long) : Int {
+    if (dw1 == 0L)
+        return calcDigitCount64_binarySearch(dw0)
     var lo = 0
     var hi = POW10_128_COUNT
     do {
@@ -225,6 +233,8 @@ fun calcDigitCount128_binarySearch(dw1:Long, dw0:Long) : Int {
 }
 
 fun calcDigitCount192_binarySearch(dw2: Long, dw1: Long, dw0: Long) : Int {
+    if (dw2 == 0L)
+        return calcDigitCount128_binarySearch(dw1, dw0)
     var lo = 0
     var hi = POW10_192_COUNT
     do {
@@ -255,6 +265,8 @@ fun calcDigitCount192_binarySearch(dw2: Long, dw1: Long, dw0: Long) : Int {
 }
 
 fun calcDigitCount256_binarySearch(dw3: Long, dw2: Long, dw1: Long, dw0: Long) : Int {
+    if (dw3 == 0L)
+        return calcDigitCount192_binarySearch(dw2, dw1, dw0)
     var lo = 0
     var hi = POW10_256_COUNT
     do {
@@ -312,7 +324,8 @@ fun calcDigitCount(dw3: Long, dw2: Long, dw1: Long, dw0: Long) : Int {
         return if (dw3 == 0L) calcDigitCount192(dw2, dw1, dw0) else calcDigitCount256(dw3, dw2, dw1, dw0)
 }
 
- fun recalcDigitCountOnly64(c: Coeff) {
+/*
+fun recalcDigitCountOnly64(c: Coeff) {
     assert ((c.dw3 or c.dw2 or c.dw1) == 0L)
     var lo = 0
     var hi = POW10_64_COUNT
@@ -417,120 +430,37 @@ fun recalcDigitCountOnly256(c: Coeff) {
     } while (lo < hi)
     c.digitCount = POW10_256_OFFSET + lo
 }
-
-fun tweakDigitCountOnly64(c: Coeff) {
-    // recalcDigitCount256orLess()
-    val loDigitCount = c.digitCount
-    assert(loDigitCount >= 0 && loDigitCount <= POW10_128_OFFSET)
-    if (loDigitCount < POW10_128_OFFSET) { // < 20 digits
-        val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_64_OFFSET
-        val index = i * 1 + POW10_64_DWORD_INDEX
-        val m0 = POW10[index + 0]
-        c.digitCount = if (compareUnsigned(c.dw0, m0) < 0) loDigitCount else hiDigitCount
-    } else {
-        c.digitCount = POW10_128_OFFSET
-    }
-
+*/
+fun setDigitCount64(c: Coeff) {
+    assert((c.dw3 or c.dw2 or c.dw1) == 0L)
+    c.digitCount = calcDigitCount64(c.dw0)
 }
 
-fun tweakDigitCountOnly128(c: Coeff) {
-    // recalcDigitCount256orLess()
-    val loDigitCount = c.digitCount
-    assert(loDigitCount >= POW10_128_OFFSET-1 && loDigitCount <= POW10_192_OFFSET)
-    assert(c.dw1 != 0L && (c.dw2 or c.dw3) == 0L)
-    if (loDigitCount < POW10_128_OFFSET) {
-        c.digitCount = POW10_128_OFFSET
-    } else if (loDigitCount < POW10_192_OFFSET) {
-        val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_128_OFFSET
-        val index = i*2 + POW10_128_DWORD_INDEX
-        val m1 = POW10[index + 1]
-        if (c.dw1 != m1) {
-            c.digitCount = if (compareUnsigned(c.dw1, m1) < 0) loDigitCount else hiDigitCount
-            return
-        }
-        val m0 = POW10[index + 0]
-        c.digitCount = if (compareUnsigned(c.dw0, m0) < 0) loDigitCount else hiDigitCount
-    } else {
-        c.digitCount = POW10_192_OFFSET
-    }
+fun setDigitCount128(c: Coeff) {
+    assert((c.dw3 or c.dw2) == 0L)
+    c.digitCount = calcDigitCount128(c.dw1, c.dw0)
 }
 
-fun tweakDigitCountOnly192(c: Coeff) {
-    // recalcDigitCount256orLess()
-    val loDigitCount = c.digitCount
-    assert(loDigitCount >= POW10_192_OFFSET-1 && loDigitCount <= POW10_256_OFFSET)
-    assert(c.dw2 != 0L && c.dw3 == 0L)
-    if (loDigitCount < POW10_192_OFFSET) {
-        c.digitCount = POW10_192_OFFSET
-    } else if (loDigitCount < POW10_256_OFFSET) {
-        val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_192_OFFSET
-        val index = i * 3 + POW10_192_DWORD_INDEX
-        val m2 = POW10[index + 2]
-        if (c.dw2 != m2) {
-            c.digitCount = if (compareUnsigned(c.dw2, m2) < 0) loDigitCount else hiDigitCount
-            return
-        }
-        val m1 = POW10[index + 1]
-        if (c.dw1 != m1) {
-            c.digitCount = if (compareUnsigned(c.dw1, m1) < 0) loDigitCount else hiDigitCount
-            return
-        }
-        val m0 = POW10[index + 0]
-        c.digitCount = if (compareUnsigned(c.dw0, m0) < 0) loDigitCount else hiDigitCount
-    } else {
-        c.digitCount = POW10_256_OFFSET
-    }
+fun setDigitCount192(c: Coeff) {
+    assert(c.dw3 == 0L)
+    c.digitCount = calcDigitCount192(c.dw2, c.dw1, c.dw0)
 }
 
-fun tweakDigitCountOnly256(c: Coeff) {
-    // recalcDigitCount256orLess()
-    val loDigitCount = c.digitCount
-    if (!(loDigitCount >= POW10_256_OFFSET-1 && loDigitCount <= POW10_MAX_OFFSET))
-        println("foo!")
-    assert(loDigitCount >= POW10_256_OFFSET-1 && loDigitCount <= POW10_MAX_OFFSET)
-    assert(c.dw3 != 0L)
-    if (loDigitCount < POW10_256_OFFSET) {
-        c.digitCount = POW10_256_OFFSET
-    } else if (loDigitCount < POW10_MAX_OFFSET) {
-        val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_256_OFFSET
-        val index = i * 4 + POW10_256_DWORD_INDEX
-        val m3 = POW10[index + 3]
-        if (c.dw3 != m3) {
-            c.digitCount = if (compareUnsigned(c.dw3, m3) < 0) loDigitCount else hiDigitCount
-            return
-        }
-        val m2 = POW10[index + 2]
-        if (c.dw2 != m2) {
-            c.digitCount = if (compareUnsigned(c.dw2, m2) < 0) loDigitCount else hiDigitCount
-            return
-        }
-        val m1 = POW10[index + 1]
-        if (c.dw1 != m1) {
-            c.digitCount = if (compareUnsigned(c.dw1, m1) < 0) loDigitCount else hiDigitCount
-            return
-        }
-        val m0 = POW10[index + 0]
-        c.digitCount = if (compareUnsigned(c.dw0, m0) < 0) loDigitCount else hiDigitCount
-    } else {
-        c.digitCount = POW10_MAX_OFFSET
-    }
-
+fun setDigitCount256(c: Coeff) {
+    c.digitCount = calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
 }
 
-fun tweakDigitCountPostRoundup(c: Coeff, ctx: Decimal128Context) {
-    if ((c.dw3 or c.dw2) == 0L) {
-        if (c.dw1 == 0L)
-            tweakDigitCountOnly64(c)
-        else
-            tweakDigitCountOnly128(c)
-    } else {
-        if (c.dw3 == 0L)
-            tweakDigitCountOnly192(c)
-        else
-            tweakDigitCountOnly256(c)
-    }
+fun setDigitCount(c: Coeff) {
+    c.digitCount = (
+            if ((c.dw3 or c.dw2) == 0L) {
+                if (c.dw1 == 0L)
+                    calcDigitCount64(c.dw0)
+                else
+                    calcDigitCount128(c.dw1, c.dw0)
+            } else {
+                if (c.dw3 == 0L)
+                    calcDigitCount192(c.dw2, c.dw1, c.dw0)
+                else
+                    calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
+            })
 }

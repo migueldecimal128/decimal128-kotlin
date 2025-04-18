@@ -8,22 +8,22 @@ class CoeffAdd private constructor() {
         fun roundUp(c: Coeff, ctx: Decimal128Context) {
             c.dw0 += 1
             if (c.dw0 != 0L) {
-                tweakDigitCountPostRoundup(c, ctx)
+                setDigitCount64(c)
                 return
             }
             c.dw1 += 1
             if (c.dw1 != 0L) {
-                tweakDigitCountPostRoundup(c, ctx)
+                setDigitCount128(c)
                 return
             }
             c.dw2 += 1
             if (c.dw2 != 0L) {
-                tweakDigitCountPostRoundup(c, ctx)
+                setDigitCount192(c)
                 return
             }
             c.dw3 += 1
             if (c.dw3 != 0L) {
-                tweakDigitCountPostRoundup(c, ctx)
+                setDigitCount256(c)
                 return
             }
         }
@@ -65,9 +65,7 @@ class CoeffAdd private constructor() {
             // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
             if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
                 sum.dw3 = 0L; sum.dw2 = 0L; sum.dw1 = 0L
-                sum.digitCount = maxDigitCount
-                tweakDigitCountOnly64(sum)
-                assert(sum.isValidDigitCount())
+                sum.digitCount = calcDigitCount64(p0)
                 return
             }
 
@@ -80,9 +78,7 @@ class CoeffAdd private constructor() {
             val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
             if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
                 sum.dw3 = 0L; sum.dw2 = 0L;
-                sum.digitCount = maxDigitCount
-                tweakDigitCountOnly128(sum)
-                assert(sum.isValidDigitCount())
+                sum.digitCount = calcDigitCount128(p1, p0)
                 return
             }
 
@@ -95,9 +91,7 @@ class CoeffAdd private constructor() {
             val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
             if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
                 sum.dw3 = 0L;
-                sum.digitCount = maxDigitCount
-                tweakDigitCountOnly192(sum)
-                assert(sum.isValidDigitCount())
+                sum.digitCount = calcDigitCount192(p2, p1, p0)
                 return
             }
 
@@ -110,9 +104,7 @@ class CoeffAdd private constructor() {
             val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
             if (carry3 != 0L)
                 throw RuntimeException("coefficient add overflow x:$x y:$y")
-            sum.digitCount = maxDigitCount
-            tweakDigitCountOnly256(sum)
-            assert(sum.isValidDigitCount())
+            sum.digitCount = calcDigitCount256(p3, p2, p1, p0)
         }
 
 
@@ -156,9 +148,7 @@ class CoeffAdd private constructor() {
             // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
             if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
                 sum.dw3 = 0L; sum.dw2 = 0L; sum.dw1 = 0L
-                sum.digitCount = maxDigitCount
-                tweakDigitCountOnly64(sum)
-                assert(sum.isValidDigitCount())
+                sum.digitCount = calcDigitCount64(p0)
                 return
             }
 
@@ -171,8 +161,7 @@ class CoeffAdd private constructor() {
             val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
             if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
                 sum.dw3 = 0L; sum.dw2 = 0L;
-                sum.digitCount = maxDigitCount
-                tweakDigitCountOnly128(sum)
+                sum.digitCount = calcDigitCount128(p1, p0)
                 assert(sum.isValidDigitCount())
                 return
             }
@@ -186,9 +175,7 @@ class CoeffAdd private constructor() {
             val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
             if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
                 sum.dw3 = 0L;
-                sum.digitCount = maxDigitCount
-                tweakDigitCountOnly192(sum)
-                assert(sum.isValidDigitCount())
+                sum.digitCount = calcDigitCount192(p2, p1, p0)
                 return
             }
 
@@ -201,9 +188,7 @@ class CoeffAdd private constructor() {
             val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
             if (carry3 != 0L)
                 throw RuntimeException("coefficient add overflow x:$x y:$y")
-            sum.digitCount = maxDigitCount
-            tweakDigitCountOnly256(sum)
-            assert(sum.isValidDigitCount())
+            sum.digitCount = calcDigitCount256(p3, p2, p1, p0)
         }
 
     }
