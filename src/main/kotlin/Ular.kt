@@ -92,6 +92,26 @@ class Ular {
 
         }
 
+        fun toBigInteger(x3:Long, x2:Long, x1:Long, x0:Long) : BigInteger {
+            var bi = BigInteger.ZERO
+            val x0Lo = x0 and 0xFFFFFFFFL
+            val x0Hi = x0 ushr 32
+            val x1Lo = x1 and 0xFFFFFFFFL
+            val x1Hi = x1 ushr 32
+            val x2Lo = x2 and 0xFFFFFFFFL
+            val x2Hi = x2 ushr 32
+            val x3Lo = x3 and 0xFFFFFFFFL
+            val x3Hi = x3 ushr 32
+            bi = bi or BigInteger(x0Lo.toString()).shiftLeft(0)
+            bi = bi or BigInteger(x0Hi.toString()).shiftLeft(32)
+            bi = bi or BigInteger(x1Lo.toString()).shiftLeft(64)
+            bi = bi or BigInteger(x1Hi.toString()).shiftLeft(96)
+            bi = bi or BigInteger(x2Lo.toString()).shiftLeft(128)
+            bi = bi or BigInteger(x2Hi.toString()).shiftLeft(160)
+            bi = bi or BigInteger(x3Lo.toString()).shiftLeft(192)
+            bi = bi or BigInteger(x3Hi.toString()).shiftLeft(224)
+            return bi
+        }
 
     }
 }

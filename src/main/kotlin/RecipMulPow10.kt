@@ -1,5 +1,8 @@
 package com.decimal128
 
+import com.decimal128.Residue.Companion.BIAS_TRUNC
+import com.decimal128.Residue.Companion.EXACT
+import com.decimal128.Residue.Companion.HALF
 import java.math.BigInteger
 
 val MIN_DIVIDEND_DIGIT_COUNT = 2
@@ -13,10 +16,12 @@ class RecipMulPow10 {
 
         val bi0 = BigInteger.ZERO
         val bi1 = BigInteger.ONE
+        val bi2 = BigInteger.TWO
         val bi3 = 3.toBigInteger()
         val bi5 = 5.toBigInteger()
         val bi10 = BigInteger.TEN
 
+        val biMap = arrayOf(bi0, bi1, bi2, bi3)
 
         class RecipMulParams5(
             val dividendDigitCount:Int, val divisorPow10:Int,
@@ -123,8 +128,8 @@ class RecipMulPow10 {
         val rowSize = MAX_DIVISOR_POW10 - MIN_DIVISOR_POW10
         val tableSize = (MAX_DIVIDEND_DIGIT_COUNT - MIN_DIVIDEND_DIGIT_COUNT) * rowSize
 
-        val indexesPow5 = IntArray(tableSize)
-        var paramsPow5 = LongArray(0)
+        val INDEXES = IntArray(tableSize)
+        var PARAMS = LongArray(0)
 
         fun indexOf(digitCount: Int, pow10: Int) : Int {
             assert(digitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
@@ -144,17 +149,17 @@ class RecipMulPow10 {
                     val index = indexOf(digitCount10, pow10)
                     val rmp5 = generateRecipMulParams5(digitCount10, pow10)
                     if (rmp5.quotDwordCount == 0) {
-                        indexesPow5[index] = 0
+                        INDEXES[index] = 0
                     } else {
                         val paramsIndex = serializeParams(paramsArrayList, rmp5)
 //                    println("digitCount10:$digitCount10 pow10:$pow10 $rmp5")
 //                    println()
-                        indexesPow5[index] = paramsIndex
+                        INDEXES[index] = paramsIndex
                     }
                 }
             }
-            paramsPow5 = paramsArrayList.toLongArray()
-            println("initialized: params.size:${paramsPow5.size}")
+            PARAMS = paramsArrayList.toLongArray()
+            println("initialized: params.size:${PARAMS.size}")
             initialized = true
         }
 
@@ -184,10 +189,10 @@ class RecipMulPow10 {
             for (digitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
                 for (pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10) {
                     val index = indexOf(digitCount, pow10)
-                    val paramsIndex = indexesPow5[index]
+                    val paramsIndex = INDEXES[index]
                     if (paramsIndex == 0)
                         continue
-                    val descriptor = paramsPow5[paramsIndex].toInt()
+                    val descriptor = PARAMS[paramsIndex].toInt()
                     val mulDwordCount = unpackMulDwordCount(descriptor)
                     val mulDigitCount = unpackMulDigitCount(descriptor)
                     val accDwordCount = unpackAccDwordCount(descriptor)
@@ -219,11 +224,102 @@ class RecipMulPow10 {
             throw RuntimeException("not impl")
         }
 
-        fun divPow10(q: Coeff,
-                     sign: Boolean, digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long,
-                     pow10: Int, ctx: Decimal128Context) {
-            throw RuntimeException("not impl")
+        fun divPow10(q:Coeff, x:Coeff, pow10:Int, sign:Boolean, ctx:Decimal128Context) {
+            initialize()
+            if (pow10 <= 0) {
+                assert(pow10 == 0)
+                q.set(x)
+                return
+            }
+            if (x.digitCount <= pow10) {
+                if (x.digitCount == 0) {
+                    q.setZero()
+                    return
+                }
+                // otherwise, non-zero residue ... round it
+                val residue = if (x.digitCount == pow10) Residue.residueFrom(x) else Residue.LT_HALF
+                val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), x.dw0)
+                q.setLoBit(roundUp)
+                ctx.setInexact()
+                return
+            }
+            /*
+            when {
+                ((x.dw3 or x.dw2) == 0L) -> {
+                    if (x.dw1 == 0L)
+                        _divPow10(q, x.digitCount, x.dw0, pow10, sign, ctx)
+                    else
+                        _divPow10(q, x.digitCount, x.dw1, x.dw0, pow10, sign, ctx)
+                }
+                (x.dw3 == 0L) ->
+                    _divPow10(q, x.digitCount, x.dw2, x.dw1, x.dw0, pow10, sign, ctx)
+                else ->
+
+             */
+                    _divPow10(q, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10, sign, ctx)
+
+            //}
         }
+
+        private fun _divPow10(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
+                              pow10:Int, sign:Boolean, ctx:Decimal128Context) {
+            assert(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
+            assert(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
+
+            val index = indexOf(xDigitCount, pow10)
+            val paramsIndex = INDEXES[index]
+            if (paramsIndex == 0) {
+                //println("don't forget to check for rounding in this case")
+                throw RuntimeException("why am I here?")
+            }
+            val descriptor = PARAMS[paramsIndex].toInt()
+            val mulDwordCount = unpackMulDwordCount(descriptor)
+            val mulDigitCount = unpackMulDigitCount(descriptor)
+            val accDwordCount = unpackAccDwordCount(descriptor)
+            val shift = unpackShift(descriptor)
+            val quotDwordCount = unpackQuotDwordCount(descriptor)
+            val biMul = Ular.toBigInteger(PARAMS, paramsIndex + 1, mulDwordCount)
+
+            val div = Ular.toBigInteger(x3, x2, x1, x0)
+
+            val firstLoBits = if (pow10 == 1) bi0 else div.and(bi1.shiftLeft(pow10-1).subtract(bi1))
+            val firstLoStickyBits = if (pow10 == 1 || div.and(bi1.shiftLeft(pow10-1).subtract(bi1)).equals(bi0)) 0 else 1
+            val dividend5 = div.shiftRight(pow10-1)
+            val prod = dividend5.multiply(biMul)
+            val prodBitLength = prod.bitLength()
+            val prodDwordCount = (prodBitLength + 63) / 64
+            val frac = prod.and(bi1.shiftLeft(shift).subtract(bi1))
+
+            if (! (prodDwordCount <= accDwordCount)) {
+                println("dividend:${div} pow10:${pow10}")
+                println("prodDwordCount:$prodDwordCount accDwordCount:$accDwordCount")
+            }
+            assert(prodDwordCount <= accDwordCount)
+            val quot5x2 = prod.shiftRight(shift) // the quotient*2 to get rounding bit
+            val quot5x2BitLength = quot5x2.bitLength()
+            val quot5x2DwordLength = (quot5x2BitLength + 63) / 64
+            assert(quot5x2DwordLength <= quotDwordCount)
+            //println("$div / 10**${tc.pow10} ==> quotRounded:$quotRounded")
+            val quot5x2Lo2Bits = quot5x2.and(bi3).toInt()
+            val residue =
+                if (firstLoStickyBits == 0 && frac < biMul) {
+                    if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
+                } else {
+                    if ((quot5x2Lo2Bits and 1) == 0) BIAS_TRUNC else BIAS_TRUNC
+                }
+            val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
+
+            val inexact = residue != EXACT
+            val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
+            val biasHalfUlp = residue.halfUlpBias(effectiveRoundingDirection, lsbIsOdd)
+            val biBiasHalfUlp = biMap[biasHalfUlp.toInt()]
+
+            val quotPlusHalfUlp = quot5x2.add(biBiasHalfUlp)
+            val quotRounded = quotPlusHalfUlp.shiftRight(1)
+            q.set(quotRounded)
+            ctx.setInexact(inexact)
+        }
+
 
     }
 

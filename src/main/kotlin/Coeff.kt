@@ -301,6 +301,13 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         CoeffScalePow10.scalePow10Coeff(this, x, pow10, sign, ctx)
     }
 
+    fun setLoBit(dw0:Long) {
+        val masked = dw0 and 1
+        this.dw3 = 0L; this.dw2 = 0L; this.dw1 = 0L
+        this.dw0 = masked
+        this.digitCount = masked.toInt()
+    }
+
     fun set(dw0: Long) {
         this.dw3 = 0L; this.dw2 = 0L; this.dw1 = 0L
         this.dw0 = dw0;

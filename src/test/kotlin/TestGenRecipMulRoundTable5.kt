@@ -162,12 +162,12 @@ class TestGenRecipMulRoundTable5 {
             return
         }
         val index = RecipMulPow10.indexOf(tc.dividendDigitCount, tc.pow10)
-        val paramsIndex = RecipMulPow10.indexesPow5[index]
+        val paramsIndex = RecipMulPow10.INDEXES[index]
         if (paramsIndex == 0) {
             //println("don't forget to check for rounding in this case")
             return
         }
-        val params = RecipMulPow10.paramsPow5
+        val params = RecipMulPow10.PARAMS
         val descriptor = params[paramsIndex].toInt()
         val mulDwordCount = unpackMulDwordCount(descriptor)
         val mulDigitCount = unpackMulDigitCount(descriptor)

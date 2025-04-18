@@ -7,13 +7,13 @@ class Decimal128Context(val roundingDirection:RoundingDirection) {
 
     var invalid = false
         private set
-    private var divByZero = false
+    var divByZero = false
         private set
-    private var overflow = false
+    var overflow = false
         private set
-    private var underflow = false
+    var underflow = false
         private set
-    private var inexact = false
+    var inexact = false
         private set
 
     fun setInvalid() { invalid = true }
@@ -21,5 +21,6 @@ class Decimal128Context(val roundingDirection:RoundingDirection) {
     fun setOverflow() { overflow = true }
     fun setUnderflow() { underflow = true }
     fun setInexact() { inexact = true }
+    fun setInexact(inexact:Boolean) { this.inexact = inexact}
 
 }

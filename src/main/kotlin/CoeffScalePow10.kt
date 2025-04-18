@@ -63,7 +63,7 @@ class CoeffScalePow10 {
                 ctx.setInexact()
                 return
             }
-            RecipMulPow10.divPow10(p, sign, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10, ctx)
+            RecipMulPow10.divPow10(p, x, pow10, sign, ctx)
         }
 
         fun _scaleUpPow10AddCoeff(p:Coeff, x:Coeff, pow10:Int, a:Coeff, sign:Boolean, ctx:Decimal128Context) {
