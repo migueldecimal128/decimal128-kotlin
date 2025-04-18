@@ -5,7 +5,7 @@ import java.lang.Long.compareUnsigned
 class CoeffAdd private constructor() {
     companion object {
 
-        fun roundUp(c: Coeff, ctx: Decimal128Context) {
+        fun roundUp(c:Coeff, ctx:Decimal128Context) {
             c.dw0 += 1
             if (c.dw0 != 0L) {
                 setDigitCount64(c)
@@ -28,8 +28,8 @@ class CoeffAdd private constructor() {
             }
         }
 
-        fun add(sum: Coeff, x: Coeff, y: Coeff,
-                scaleDelta: Int, sign: Boolean, ctx: Decimal128Context) {
+        fun add(sum:Coeff, x:Coeff, y:Coeff,
+                scaleDelta:Int, sign: Boolean, ctx: Decimal128Context) {
             if (x.digitCount == 0) {
                 sum.set(y)
                 return

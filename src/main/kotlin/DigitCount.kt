@@ -112,7 +112,7 @@ val POW10 = longArrayOf(
 private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX) ; true}
 
 
-fun calcDigitCount64_nlz(dw0:Long) : Int {
+fun calcDigitCount64_nlz(dw0:Long) :Int {
     if (dw0 == 0L)
         return 0;
     val nlz = numberOfLeadingZeros(dw0)
@@ -128,7 +128,7 @@ fun calcDigitCount64_nlz(dw0:Long) : Int {
     return digitCount
 }
 
-fun calcDigitCount128_nlz(dw1:Long, dw0:Long) : Int {
+fun calcDigitCount128_nlz(dw1:Long, dw0:Long) :Int {
     if (dw1 == 0L)
         return calcDigitCount64(dw0)
     val nlz = numberOfLeadingZeros(dw1)
@@ -146,7 +146,7 @@ fun calcDigitCount128_nlz(dw1:Long, dw0:Long) : Int {
     return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
 }
 
-fun calcDigitCount192_nlz(dw2:Long, dw1:Long, dw0:Long) : Int {
+fun calcDigitCount192_nlz(dw2:Long, dw1:Long, dw0:Long) :Int {
     if (dw2 == 0L)
         return calcDigitCount128_nlz(dw1, dw0)
     val nlz = numberOfLeadingZeros(dw2)
@@ -167,7 +167,7 @@ fun calcDigitCount192_nlz(dw2:Long, dw1:Long, dw0:Long) : Int {
     return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
 }
 
-fun calcDigitCount256_nlz(dw3:Long, dw2:Long, dw1:Long, dw0:Long) : Int {
+fun calcDigitCount256_nlz(dw3:Long, dw2:Long, dw1:Long, dw0:Long) :Int {
     if (dw3 == 0L)
         return calcDigitCount192_nlz(dw2, dw1, dw0)
     val nlz = numberOfLeadingZeros(dw3)

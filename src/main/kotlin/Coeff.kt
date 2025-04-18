@@ -9,9 +9,9 @@ import com.decimal128.CoeffMul.Companion.mulCoeff
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
+class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
 
-    constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
+    constructor(dw2:Long, dw1:Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
     constructor(dw0: Long) : this(0L, 0L, 0L, dw0)
     constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
@@ -20,7 +20,7 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         require(bi.bitLength() <= 256)
     }
     constructor(str: String) : this(BigInteger(str))
-    constructor(c: Coeff): this(c.dw3, c.dw2, c.dw1, c.dw0)
+    constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
     var digitCount = run { calcDigitCount256(dw3, dw2, dw1, dw0) }
 

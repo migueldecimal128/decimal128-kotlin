@@ -6,10 +6,10 @@ import java.util.*
 
 class TestCoeffientAdd {
 
-    class TC(val biA: BigInteger, val biB: BigInteger) {
+    class TC(val biA:BigInteger, val biB:BigInteger) {
         val biSum = biA.add(biB)
 
-        constructor(a: String, b:String) : this(BigInteger(a), BigInteger(b))
+        constructor(a:String, b:String) : this(BigInteger(a), BigInteger(b))
     }
 
     val cases = arrayOf(

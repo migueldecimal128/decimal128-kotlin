@@ -9,7 +9,7 @@ import java.math.BigInteger
 
 
 @JvmInline
-value class Residue private constructor(val value: Int) {
+value class Residue private constructor(val value:Int) {
     companion object {
         val HALF = Residue(0)
         val BIAS_TRUNC = Residue(1)
@@ -17,7 +17,7 @@ value class Residue private constructor(val value: Int) {
         val GT_HALF = Residue(3)
         val EXACT = Residue(4)
 
-        fun residueFrom(c: Coeff) : Residue {
+        fun residueFrom(c:Coeff) :Residue {
             assert (c.digitCount > 0)
             return (
                     if (( c.dw3 or c.dw2) == 0L) {
@@ -35,7 +35,7 @@ value class Residue private constructor(val value: Int) {
 
         }
 
-        fun residueFrom(digitCount: Int, dw0: Long) : Residue {
+        fun residueFrom(digitCount:Int, dw0: Long) : Residue {
             if (dw0 >= 0) {
                 val dw0x2 = dw0 shl 1
                 val ten0 = POW10[digitCount]
@@ -268,7 +268,7 @@ value class Residue private constructor(val value: Int) {
         }
     }
 
-    override fun toString(): String = when (this) {
+    override fun toString() : String = when (this) {
         EXACT -> "EXACT"
         HALF -> "HALF"
         BIAS_TRUNC -> "BIAS_TRUNC"

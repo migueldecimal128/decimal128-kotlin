@@ -31,7 +31,7 @@ class RecipMulPow10 {
         init {
 
             // Rmp10 == Reciprocal Multiplication Power10
-            class Rmp10(val dividendDigitCount: Int, val divisorPow10: Int, val mul: BigInteger, val shift: Int) {
+            class Rmp10(val dividendDigitCount:Int, val divisorPow10:Int, val mul:BigInteger, val shift:Int) {
                 val biDividend = BigInteger.TEN.pow(dividendDigitCount).subtract(BigInteger.ONE)
                 val biDivisor = BigInteger.TEN.pow(divisorPow10)
                 val accBitCount = biDividend.multiply(mul).bitLength()
@@ -45,11 +45,11 @@ class RecipMulPow10 {
                 // max shift == 448 == 9 bits
                 val shiftedAccDwordCount get() = accDwordCount - shift / 64
 
-                fun packDescriptor(tableOffset: Int) =
+                fun packDescriptor(tableOffset:Int) =
                     (((mulDwordCount) or (quotDwordCount shl 4) or (accDwordCount shl 8) or (shift shl 12) or (mulDigitCount shl 22)).toLong()
                             or (tableOffset.toLong() shl 32))
 
-                fun serialize(out: LongArray, offsetIn: Int): Int {
+                fun serialize(out:LongArray, offsetIn:Int) :Int {
                     var offsetOut = offsetIn
                     out[offsetOut++] = packDescriptor(offsetIn)
                     for (i in 0..<mulDwordCount)
@@ -57,7 +57,7 @@ class RecipMulPow10 {
                     return offsetOut
                 }
 
-                override fun toString(): String {
+                override fun toString() :String {
                     return "dividend:$dividendDigitCount divisor:$divisorPow10 mulDwordCount:$mulDwordCount " +
                             "shift:$shift accDwordCount:$accDwordCount accBitCount:$accBitCount quotDwordCount:$quotDwordCount quotBitCount:$quotBitCount"
                 }
@@ -65,17 +65,17 @@ class RecipMulPow10 {
             }
 
             fun generateMulAndShift(
-                biMaxDividend: BigInteger,
-                biDivisor: BigInteger,
-                startShift: Int
-            ): Pair<BigInteger, Int> {
+                biMaxDividend:BigInteger,
+                biDivisor:BigInteger,
+                startShift:Int
+            ) : Pair<BigInteger, Int> {
 
                 fun tryMulAndShift(
                     biQuotient: BigInteger,
                     biDivisor: BigInteger,
                     mul: BigInteger,
                     shift: Int
-                ): Boolean {
+                ) : Boolean {
                     val estimate = mul.multiply(biQuotient).shiftRight(shift)
                     val actual = biQuotient.divide(biDivisor)
                     return actual.equals(estimate)
@@ -92,7 +92,7 @@ class RecipMulPow10 {
                 throw RuntimeException("fail")
             }
 
-            fun generateRecipMultParams(dividendDigitCount: Int, divisorPow10: Int): Rmp10 {
+            fun generateRecipMultParams(dividendDigitCount: Int, divisorPow10: Int) : Rmp10 {
                 val biDividend = BigInteger.TEN.pow(dividendDigitCount).subtract(BigInteger.ONE)
                 val biDivisor = BigInteger.TEN.pow(divisorPow10)
                 val (mul, shift) = generateMulAndShift(biDividend, biDivisor, 1)
@@ -151,14 +151,14 @@ class RecipMulPow10 {
         }
 
 
-        private fun rmp10IndexFrom(dividendDigitCount: Int, divisorDigitCount: Int): Int {
+        private fun rmp10IndexFrom(dividendDigitCount: Int, divisorDigitCount: Int) : Int {
             assert(dividendDigitCount >= MIN_DIVIDEND_DIGIT_COUNT)
             assert(divisorDigitCount >= MIN_DIVISOR_POW10)
             return ((dividendDigitCount - MIN_DIVIDEND_DIGIT_COUNT) * (MAX_DIVISOR_POW10 - MIN_DIVISOR_POW10) +
                     (divisorDigitCount - MIN_DIVISOR_POW10))
         }
 
-        fun getRmp10Descriptor(dividendDigitCount: Int, divisorPow10: Int): Long {
+        fun getRmp10Descriptor(dividendDigitCount: Int, divisorPow10: Int) : Long {
             require(dividendDigitCount >= MIN_DIVIDEND_DIGIT_COUNT)
             require(dividendDigitCount <= MAX_DIVIDEND_DIGIT_COUNT)
             require(divisorPow10 >= MIN_DIVISOR_POW10)
@@ -180,7 +180,7 @@ class RecipMulPow10 {
 
         fun unpackMulDigitCount(rmp10Descriptor: Long) = (rmp10Descriptor.toInt() shr 22) and 0x03FF
 
-        fun unpackMulOffset(rmp10Descriptor: Long): Int {
+        fun unpackMulOffset(rmp10Descriptor: Long) : Int {
             val descriptorOffset = (rmp10Descriptor ushr 32).toInt()
             assert(descriptorOffset > 0)
             assert(descriptorOffset < rmp10ParamTable.size)
@@ -189,7 +189,7 @@ class RecipMulPow10 {
             return mulOffset
         }
 
-        fun divModPow10_y(dividendDw0: Long, divisorPow10: Int): Pair<Long, Long> {
+        fun divModPow10_y(dividendDw0: Long, divisorPow10: Int) : Pair<Long, Long> {
             if (divisorPow10 <= 0)
                 return dividendDw0 to 0L
             val dividendDigitCount = calcDigitCount64(dividendDw0)
@@ -237,11 +237,11 @@ class RecipMulPow10 {
             return quotient to remainder
         }
 
-        fun divModPow10(d0: Long, pow10: Int): Pair<Long, Long> =
+        fun divModPow10(d0: Long, pow10: Int) : Pair<Long, Long> =
             divModPow10(calcDigitCount64(d0), d0, pow10)
 
 
-        fun divModPow10(dividendDigitCount: Int, d0: Long, pow10: Int): Pair<Long, Long> {
+        fun divModPow10(dividendDigitCount: Int, d0: Long, pow10: Int) : Pair<Long, Long> {
             if (dividendDigitCount == 0 || pow10 <= 0)
                 return d0 to 0L
             val quotientDigitCount = dividendDigitCount - pow10

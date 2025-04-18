@@ -114,7 +114,7 @@ class testMultiplyX3u32_noFMA {
         return carry to sum
     }
 
-    fun multu32u32u64(a: Int, b: Int): Pair<Int, Int> {
+    fun multu32u32u64(a: Int, b: Int) : Pair<Int, Int> {
         val productSigned = a.toLong() * b.toLong()
         val productUnsigned = (a.toLong() and 0xFFFFFFFFL) * (b.toLong() and 0xFFFFFFFFL)
         val hiSigned = (productSigned shr 32).toInt()
@@ -126,7 +126,7 @@ class testMultiplyX3u32_noFMA {
         return hiUnsigned to lo
     }
 
-    fun unsignedFMA32(a: Int, b: Int, carryIn: Int): Pair<Int, Int> {
+    fun unsignedFMA32(a: Int, b: Int, carryIn: Int) : Pair<Int, Int> {
         val fmaUnsigned = ((a.toLong() and 0xFFFFFFFFL) * (b.toLong() and 0xFFFFFFFFL)) + carryIn.toLong()
 
         val unsignedCorrection = ((a shr 31) and b) + ((b shr 31) and a)

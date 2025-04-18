@@ -19,8 +19,8 @@ class RecipMulPow10 {
 
 
         class RecipMulParams5(
-            val dividendDigitCount: Int, val divisorPow10: Int,
-            val mul: BigInteger, val shift: Int
+            val dividendDigitCount:Int, val divisorPow10:Int,
+            val mul:BigInteger, val shift:Int
         ) {
             val dividend9 = bi10.pow(dividendDigitCount).subtract(bi1)
             // for rounding, we need to leave one more bit in the dividend before dividing
@@ -45,13 +45,13 @@ class RecipMulPow10 {
                 ((mulDwordCount) or (mulDigitCount shl 3) or (accDwordCount shl 10) or
                         (shift shl 14) or (quotDwordCount shl 23))
 
-            fun serialize(out: ArrayList<Long>) {
+            fun serialize(out:ArrayList<Long>) {
                 out.add(packDescriptor().toLong())
                 for (i in 0..<mulDwordCount)
                     out.add(mul.shiftRight(i * 64).toLong())
             }
 
-            override fun toString(): String {
+            override fun toString() :String {
                 return "dividendDigitCount10:$dividendDigitCount divisorPow10:$divisorPow10\n" +
                         "  mulDwordCount:$mulDwordCount mulBitCount:$mulBitCount mulDigitCount:$mulDigitCount\n" +
                         "  dividend9:$dividend9 mul:$mul\n" +
@@ -62,13 +62,13 @@ class RecipMulPow10 {
             }
         }
 
-        fun serializeParams(params: ArrayList<Long>, recipMulParams: RecipMulParams5): Int {
+        fun serializeParams(params:ArrayList<Long>, recipMulParams: RecipMulParams5) : Int {
             val paramsIndex = params.size
             recipMulParams.serialize(params)
             return paramsIndex
         }
 
-        fun generateRecipMulParams5(dividendDigitCount: Int, divisorPow10: Int): RecipMulParams5 {
+        fun generateRecipMulParams5(dividendDigitCount: Int, divisorPow10: Int) : RecipMulParams5 {
             val biDividend10 = BigInteger.TEN.pow(dividendDigitCount).subtract(BigInteger.ONE)
             val biDividend5 = biDividend10.shr(divisorPow10)
             val biDivisor10 = BigInteger.TEN.pow(divisorPow10)
@@ -99,7 +99,7 @@ class RecipMulPow10 {
             biMaxDividend: BigInteger,
             biDivisor: BigInteger,
             startShift: Int
-        ): Pair<BigInteger, Int> {
+        ) : Pair<BigInteger, Int> {
             for (shift in startShift..1000) {
                 val mul = BigInteger.ONE.shiftLeft(shift).divide(biDivisor).add(BigInteger.ONE)
                 val estimate = mul.multiply(biMaxDividend).shiftRight(shift)
@@ -111,7 +111,7 @@ class RecipMulPow10 {
             throw RuntimeException("fail")
         }
 
-        fun tryMulAndShift(biQuotient: BigInteger, biDivisor: BigInteger, mul: BigInteger, shift: Int): Boolean {
+        fun tryMulAndShift(biQuotient: BigInteger, biDivisor: BigInteger, mul: BigInteger, shift: Int) : Boolean {
             val estimate = mul.multiply(biQuotient).shiftRight(shift)
             val actual = biQuotient.divide(biDivisor)
             return actual.equals(estimate)
@@ -126,7 +126,7 @@ class RecipMulPow10 {
         val indexesPow5 = IntArray(tableSize)
         var paramsPow5 = LongArray(0)
 
-        fun indexOf(digitCount: Int, pow10: Int): Int {
+        fun indexOf(digitCount: Int, pow10: Int) : Int {
             assert(digitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
             assert(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
             val index = (digitCount - MIN_DIVIDEND_DIGIT_COUNT) * rowSize + (pow10 - MIN_DIVISOR_POW10)
@@ -206,7 +206,7 @@ class RecipMulPow10 {
             println("maxQuotDwordCount:$maxQuotDwordCount")
         }
 
-        fun divModPow10(dividendDigitCount: Int, d0: Long, pow10: Int): Pair<Long, Long> {
+        fun divModPow10(dividendDigitCount: Int, d0: Long, pow10: Int) : Pair<Long, Long> {
             throw RuntimeException("not impl")
         }
 

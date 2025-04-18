@@ -39,7 +39,7 @@ class TestGenRecipMulRoundTable5 {
         val quotient = dividend.divide(bi10.pow(pow10))
         val dividendDigitCount = dividend.toString().length
 
-        override fun toString(): String {
+        override fun toString() : String {
             return "dividend:$dividend pow10:$pow10"
         }
     }

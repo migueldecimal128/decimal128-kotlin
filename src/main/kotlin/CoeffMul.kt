@@ -4,7 +4,7 @@ import java.lang.Math.unsignedMultiplyHigh
 class CoeffMul {
     companion object {
 
-        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y0: Long) {
+        fun mulCoeff(product:Coeff, x:Coeff, yDigitCount:Int, y0:Long) {
             when {
                 (x.dw3 != 0L) -> _mulCoeff(product, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
                 (x.dw2 != 0L) -> _mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
@@ -13,7 +13,7 @@ class CoeffMul {
             }
         }
 
-        fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long) {
+        fun mulCoeff(product:Coeff, x:Coeff, yDigitCount: Int, y1: Long, y0: Long) {
             when {
                 (x.dw3 != 0L) -> throw RuntimeException("?que?")
                 (x.dw2 != 0L) -> _mulCoeff(product, x.digitCount, x.dw2, x.dw1, x.dw0, yDigitCount, y1, y0)

@@ -6,7 +6,7 @@ import java.math.BigInteger
 
 class TestDivModPow10 {
 
-    fun powerOf10(n: Int): Long {
+    fun powerOf10(n:Int) :Long {
         require(n >= 0 && n <= 19)
         var result = 1L
         repeat(n) {
@@ -29,13 +29,13 @@ class TestDivModPow10 {
     }
 
 
-    fun test3(l: Long, divisorPow10: Int) {
+    fun test3(l:Long, divisorPow10:Int) {
         test1(l- 1, divisorPow10)
         test1(l, divisorPow10)
         test1(l + 1, divisorPow10)
     }
 
-    fun test1(l: Long, divisorPow10: Int) {
+    fun test1(l:Long, divisorPow10:Int) {
         val biDividend = bigIntegerFromLong(l)
         val biDivisor = BigInteger.TEN.pow(divisorPow10)
         val (biQuot, biRem) = biDividend.divideAndRemainder(biDivisor)
@@ -46,7 +46,7 @@ class TestDivModPow10 {
         assertEquals(biRem, bigIntegerFromLong(rem))
     }
 
-    fun bigIntegerFromLong(l: Long) : BigInteger {
+    fun bigIntegerFromLong(l:Long) : BigInteger {
         var bi = BigInteger((l and Long.MAX_VALUE).toString())
         if (l < 0)
             bi = bi or BigInteger.ONE.shiftLeft(63)

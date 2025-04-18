@@ -9,9 +9,9 @@ import java.util.Random
 class testMultiplyX1 {
 
     fun multiplyX1(
-        product: IntArray, productOff: Int,
-        multiplicand: IntArray, multiplicandOff: Int, multiplicandLen: Int,
-        multiplier: Int) {
+        product:IntArray, productOff:Int,
+        multiplicand:IntArray, multiplicandOff:Int, multiplicandLen:Int,
+        multiplier:Int) {
         val uMultiplier = multiplier.toLong() and 0xFFFFFFFFL // Treat as unsigned
 
         var carry = 0L
@@ -25,7 +25,7 @@ class testMultiplyX1 {
         product[productOff + multiplicandLen] = carry.toInt() // Store any remaining carry
     }
 
-    fun biFromArray(words: IntArray) = biFromArray(words, 0, words.size)
+    fun biFromArray(words:IntArray) = biFromArray(words, 0, words.size)
 
     fun biFromArray(words: IntArray, off: Int, len: Int) : BigInteger {
         var bi = BigInteger.ZERO

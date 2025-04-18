@@ -16,7 +16,7 @@ private val twoPowS = BigInteger("2").pow(S)
 private val M = (twoPowS + DIVISOR - BigInteger.ONE) / DIVISOR
 private val m = M.longValueExact()
 
-fun mul63x63_hi64(x: Long, y: Long): Long {
+fun mul63x63_hi64(x:Long, y:Long) :Long {
     val xL = x and 0xFFFFFFFFL
     val xH = x ushr 32
     val yL = y and 0xFFFFFFFFL
@@ -33,7 +33,7 @@ fun mul63x63_hi64(x: Long, y: Long): Long {
     return s3
 }
 
-fun divMod1e8(x: Long): Pair<Long, Long> {
+fun divMod1e8(x:Long) :Pair<Long, Long> {
     val USE_BIGINTEGER = false
     if (USE_BIGINTEGER) {
         val X = BigInteger.valueOf(x)
@@ -75,7 +75,7 @@ fun mainX() {
 
 
 fun main() {
-    // Divisor: 100,000,000
+    // Divisor:100,000,000
 
     val t = mutableSetOf<BigInteger>()
     var pow = BigInteger.ONE

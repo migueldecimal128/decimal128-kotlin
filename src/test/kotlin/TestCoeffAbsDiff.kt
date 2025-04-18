@@ -7,11 +7,11 @@ import java.util.*
 
 class TestCoeffAbsDiff {
 
-    class TC(val biA: BigInteger, val biB: BigInteger) {
+    class TC(val biA:BigInteger, val biB:BigInteger) {
         val biAbsDiff = biA.subtract(biB).abs()
         val isEqual = biA == biB
         val isReversed = biA < biB
-        constructor(a: String, b:String) : this(BigInteger(a), BigInteger(b))
+        constructor(a:String, b:String) :this(BigInteger(a), BigInteger(b))
 
     }
 
@@ -61,7 +61,7 @@ class TestCoeffAbsDiff {
 
     val random = Random()
 
-    fun randBi() : BigInteger {
+    fun randBi() :BigInteger {
         val bitLength = random.nextInt(0, 255)
         val bi = BigInteger(bitLength, random)
         return bi

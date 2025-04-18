@@ -1,7 +1,7 @@
 package com.decimal128
 
 @JvmInline
-value class RoundingDirection private constructor(val value: Int) {
+value class RoundingDirection private constructor(val value:Int) {
     companion object {
         val ROUND_TIES_TO_EVEN = RoundingDirection(0)
         val ROUND_TIES_TO_AWAY = RoundingDirection(1)
@@ -12,13 +12,13 @@ value class RoundingDirection private constructor(val value: Int) {
 
     // roundTiesToEve, roundTiesToAway, and roundTiesTowardZero are the same independent of sign
     // roundTowardPositive and roundTowardNegative are complementary
-    fun negate() : RoundingDirection {
+    fun negate() :RoundingDirection {
         return if (value < 3) this else if (value == 3) ROUND_TOWARD_NEGATIVE else ROUND_TOWARD_POSITIVE
     }
 
-    fun negate(signBit: Boolean) = if (signBit) negate() else this
+    fun negate(signBit:Boolean) = if (signBit) negate() else this
 
-    override fun toString(): String = when (this) {
+    override fun toString() :String = when (this) {
         ROUND_TIES_TO_EVEN -> "ROUND_TIES_TO_EVEN"
         ROUND_TIES_TO_AWAY -> "ROUND_TIES_TO_AWAY"
         ROUND_TOWARD_ZERO -> "ROUND_TOWARD_ZERO"

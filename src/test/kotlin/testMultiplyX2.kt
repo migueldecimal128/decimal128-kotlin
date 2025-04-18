@@ -8,9 +8,9 @@ import java.util.Random
 class testMultiplyX2 {
 
     fun multiplyX2(
-        product: IntArray, productOff: Int,
-        multiplicand: IntArray, multiplicandOff: Int, multiplicandLen: Int,
-        multiplierW1: Int, multiplierW0: Int) {
+        product:IntArray, productOff:Int,
+        multiplicand:IntArray, multiplicandOff:Int, multiplicandLen:Int,
+        multiplierW1:Int, multiplierW0:Int) {
 
         val mHi = multiplierW1.toLong() and 0xFFFFFFFFL // multiplier hi word 1
         val mLo = multiplierW0.toLong() and 0xFFFFFFFFL // multiplier lo word 0
@@ -42,7 +42,7 @@ class testMultiplyX2 {
         product[productOff + i + 1] = (final2Digits ushr 32).toInt()
     }
 
-    fun arrayFrom(str: String) = arrayFrom(BigInteger(str))
+    fun arrayFrom(str:String) = arrayFrom(BigInteger(str))
 
     fun arrayFrom(bi: BigInteger) : IntArray {
         if (bi.equals(BigInteger.ZERO))

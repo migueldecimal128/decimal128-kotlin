@@ -7,15 +7,15 @@ import kotlin.math.min
 class Ular {
     companion object {
 
-        fun toString(ular: LongArray) = toString(ular, 0, ular.size)
+        fun toString(ular:LongArray) = toString(ular, 0, ular.size)
 
-        fun toString(ular: LongArray, off: Int, len: Int) : String {
+        fun toString(ular:LongArray, off:Int, len:Int) :String {
             return toBigInteger(ular, off, len).toString()
         }
 
-        fun toHexString(ular: LongArray) = toString(ular, 0, ular.size)
+        fun toHexString(ular:LongArray) = toString(ular, 0, ular.size)
 
-        fun toHexString(ular: LongArray, off: Int, len: Int) : String {
+        fun toHexString(ular:LongArray, off:Int, len: Int) : String {
             return "0x" + toBigInteger(ular, off, len).toString(16)
         }
 

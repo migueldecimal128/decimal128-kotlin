@@ -1,13 +1,13 @@
 package com.decimal128
 import java.lang.Long.compareUnsigned
 
-fun sumU64(dwA: Long, dwB: Long) : Pair<Long, Long> {
+fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = (compareUnsigned(sumAB, dwA) ushr 31).toLong()
     return carryAB to sumAB
 }
 
-fun sumU64(dwA: Long, dwB: Long, dwC: Long) : Pair<Long, Long> {
+fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = (compareUnsigned(sumAB, dwA) ushr 31).toLong()
 
@@ -142,7 +142,7 @@ fun mul1x1(xDw0: Long, yDw0: Long) : Pair<Long, Long> {
     return pDw1 to pDw0
 }
 
-fun multu64u64u128(a: Long, b: Long): Pair<Long, Long> {
+fun multu64u64u128(a: Long, b: Long) : Pair<Long, Long> {
     val hiSigned = Math.multiplyHigh(a, b)
     val lo = a * b
     val unsignedCorrection = ((a shr 63) and b) + ((b shr 63) and a)
