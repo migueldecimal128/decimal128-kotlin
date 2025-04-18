@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffientScaleUp {
+class TestCoeffScaleUp {
 
     class TC(val biA: BigInteger, val pow10: Int) {
         val biProduct = biA.multiply(BigInteger.TEN.pow(pow10))

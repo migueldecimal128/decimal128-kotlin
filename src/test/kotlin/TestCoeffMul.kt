@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffientMul {
+class TestCoeffMul {
 
     class TC(val biA: BigInteger, val biB: BigInteger) {
         val biProduct = biA.multiply(biB)

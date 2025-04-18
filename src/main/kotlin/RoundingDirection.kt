@@ -1,5 +1,13 @@
 package com.decimal128
 
+import java.math.RoundingMode
+
+private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HALF_UP,
+    RoundingMode.DOWN, RoundingMode.CEILING, RoundingMode.FLOOR)
+private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
+    "ROUND_TOWARD_ZERO", "ROUND_TOWARD_POSITIVE", "ROUND_TOWARD_NEGATIVE")
+
+
 @JvmInline
 value class RoundingDirection private constructor(val value:Int) {
     companion object {
@@ -18,14 +26,8 @@ value class RoundingDirection private constructor(val value:Int) {
 
     fun negate(signBit:Boolean) = if (signBit) negate() else this
 
-    override fun toString() :String = when (this) {
-        ROUND_TIES_TO_EVEN -> "ROUND_TIES_TO_EVEN"
-        ROUND_TIES_TO_AWAY -> "ROUND_TIES_TO_AWAY"
-        ROUND_TOWARD_ZERO -> "ROUND_TOWARD_ZERO"
-        ROUND_TOWARD_POSITIVE -> "ROUND_TOWARD_POSITIVE"
-        ROUND_TOWARD_NEGATIVE -> "ROUND_TOWARD_NEGATIVE"
-        else -> "invalid RoundingDirection"
-    }
+    fun mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
+    override fun toString() = TO_STRING_MAP[value]
 
 }

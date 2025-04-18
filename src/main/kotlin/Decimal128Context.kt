@@ -1,7 +1,9 @@
 package com.decimal128
 
+import java.math.MathContext
+
 class Decimal128Context(val roundingDirection:RoundingDirection) {
-    constructor() :this(RoundingDirection.ROUND_TIES_TO_EVEN)
+    constructor() : this(RoundingDirection.ROUND_TIES_TO_EVEN)
 
     var invalid = false
         private set

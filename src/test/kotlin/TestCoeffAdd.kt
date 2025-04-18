@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffientAdd {
+class TestCoeffAdd {
 
     class TC(val biA:BigInteger, val biB:BigInteger) {
         val biSum = biA.add(biB)

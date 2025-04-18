@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffientRoundTrip {
+class TestCoeffRoundTrip {
 
     val cases : Array<String> = arrayOf("0", "1", "9", "10", "99")
 
