@@ -79,29 +79,9 @@ class CoeffScalePow10 {
             val aDigitCount = a.digitCount
             val a1 = a.dw1
             val a0 = a.dw0
-            if (a1 == 0L)
-                _scaleUpPow10Add(p, x, pow10, aDigitCount, a0, sign, ctx)
-            else
-                _scaleUpPow10Add(p, x, pow10, aDigitCount, a1, a0, sign, ctx)
+            _scaleUpPow10Add(p, x, pow10, aDigitCount, a1, a0, sign, ctx)
             assert(p.isValidDigitCount())
             assert(p.digitCount == productDigitCount || p.digitCount == productDigitCount + 1)
-        }
-
-        fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a0: Long, sign: Boolean, ctx: Decimal128Context) {
-            // note that this is a litle lie
-            // digitCount is actually pow10 + 1
-            // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
-            val pow10DigitCount = pow10
-
-            when {
-                (pow10 < POW10_128_OFFSET) ->
-                { val index = pow10;
-                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a0) }
-                (pow10 < POW10_192_OFFSET) ->
-                { val index = POW10_128_DWORD_INDEX + 2*(pow10 - POW10_128_OFFSET);
-                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a0) }
-                else -> throw RuntimeException("?que?")
-            }
         }
 
         fun _scaleUpPow10Add(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a1: Long, a0: Long, sign: Boolean, ctx: Decimal128Context) {
@@ -111,12 +91,25 @@ class CoeffScalePow10 {
             val pow10DigitCount = pow10
 
             when {
-                (pow10 < POW10_128_OFFSET) ->
-                { val index = pow10;
-                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0) }
-                (pow10 < POW10_192_OFFSET) ->
-                { val index = POW10_128_DWORD_INDEX + 2*(pow10 - POW10_128_OFFSET);
-                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0) }
+                (pow10 < POW10_128_OFFSET) -> {
+                    val index = pow10;
+                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0)
+                }
+                (pow10 < POW10_192_OFFSET) -> {
+                    val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
+                    fmaCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0)
+                }
+                (pow10 < POW10_256_OFFSET) -> {
+                    val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
+                    fmaCoeff(p, x,
+                        pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0)
+                }
+                (pow10 < POW10_MAX_OFFSET) -> {
+                    val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_192_OFFSET);
+                    fmaCoeff(p, x,
+                        pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0],
+                        aDigitCount, a1, a0)
+                }
                 else -> throw RuntimeException("?que?")
             }
         }
