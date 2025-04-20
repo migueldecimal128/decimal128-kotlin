@@ -305,7 +305,7 @@ class RecipMulPow10 {
                 if (firstLoStickyBits == 0 && frac < biMul) {
                     if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
                 } else {
-                    if ((quot5x2Lo2Bits and 1) == 0) BIAS_TRUNC else BIAS_TRUNC
+                    BIAS_TRUNC
                 }
             val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
 

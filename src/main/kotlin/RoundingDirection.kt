@@ -16,6 +16,18 @@ value class RoundingDirection private constructor(val value:Int) {
         val ROUND_TOWARD_ZERO = RoundingDirection(2)
         val ROUND_TOWARD_POSITIVE = RoundingDirection(3)
         val ROUND_TOWARD_NEGATIVE = RoundingDirection(4)
+
+        fun fromValue(value:Int) : RoundingDirection {
+            return when (value) {
+                0 -> ROUND_TIES_TO_EVEN
+                1 -> ROUND_TIES_TO_AWAY
+                2 -> ROUND_TOWARD_ZERO
+                3 -> ROUND_TOWARD_POSITIVE
+                4 -> ROUND_TOWARD_NEGATIVE
+                else -> throw RuntimeException("value:$value out of range for RoundingDirection")
+            }
+        }
+
     }
 
     // roundTiesToEve, roundTiesToAway, and roundTiesTowardZero are the same independent of sign
