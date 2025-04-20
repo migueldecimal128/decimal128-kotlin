@@ -122,7 +122,6 @@ class RecipMulPow10 {
             return actual.equals(estimate)
         }
 
-
         var initialized = false
 
         val rowSize = MAX_DIVISOR_POW10 - MIN_DIVISOR_POW10
