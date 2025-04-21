@@ -4,9 +4,14 @@ import com.decimal128.Residue.Companion.BIAS_TRUNC
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.HALF
 import java.math.BigInteger
+import java.math.BigInteger.ZERO
+import java.math.BigInteger.ONE
+import java.math.BigInteger.TWO
+import java.math.BigInteger.TEN
+import kotlin.math.ceil
 
 val MIN_DIVIDEND_DIGIT_COUNT = 2
-val MAX_DIVIDEND_DIGIT_COUNT = 78 // exclusive
+val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
 val MIN_DIVISOR_POW10 = 1
 val MAX_DIVISOR_POW10 = MAX_DIVIDEND_DIGIT_COUNT - 34
 
@@ -14,54 +19,47 @@ class RecipMulPow10 {
 
     companion object {
 
-        val bi0 = BigInteger.ZERO
-        val bi1 = BigInteger.ONE
-        val bi2 = BigInteger.TWO
-        val bi3 = 3.toBigInteger()
-        val bi5 = 5.toBigInteger()
-        val bi10 = BigInteger.TEN
+        val THREE = 3.toBigInteger()
 
-        val biMap = arrayOf(bi0, bi1, bi2, bi3)
+        val biMap = arrayOf(ZERO, ONE, TWO, THREE)
 
-        class RecipMulParams5(
-            val dividendDigitCount:Int, val divisorPow10:Int,
-            val mul:BigInteger, val shift:Int
-        ) {
-            val dividend9 = bi10.pow(dividendDigitCount).subtract(bi1)
-            // for rounding, we need to leave one more bit in the dividend before dividing
-            val dividendShiftWithRoundingBit = divisorPow10-1
-            val maxProd = dividend9.shiftRight(dividendShiftWithRoundingBit).multiply(mul)
-            val accBitCount = maxProd.bitLength()
-            val quotBitCount = maxProd.shiftRight(shift).bitLength()
+        class RecipMulParams5(val qDigitCount:Int, val xPow10:Int,
+                              val fivePowNegXScaled:BigInteger, val yFractionalBitLength:Int) {
 
-            val mulBitCount = mul.bitLength()
-            val mulDwordCount get() = (mulBitCount + 63) / 64 // 3 bits
-            val mulDigitCount = mul.toString().length
-            val accDwordCount get() = (accBitCount + 63) / 64 // 4 bits
-            val quotDwordCount get() = (quotBitCount + 63) / 64 // 3 bits
+            val maxDividend = TEN.pow(qDigitCount)
+            val maxProdWithRoundBit = maxDividend.shiftRight(xPow10 - 1).multiply(fivePowNegXScaled)
+            val maxQuotRounded = maxProdWithRoundBit.shiftRight(yFractionalBitLength)
 
-            // 3 mulDwordCount
-            // 7 mulDigitCount
-            // 4 accDwordCount
-            // 9 shift
-            // 3 quotDwordCount
+            val mulBitLength = fivePowNegXScaled.bitLength()
+            val mulDwordLength get() = (mulBitLength + 63) / 64 // 3 bits
+            val mulDigitLength = fivePowNegXScaled.toString().length
+            val accBitLength = maxProdWithRoundBit.bitLength()
+            val accDwordLength get() = (accBitLength + 63) / 64 // 4 bits
+            val quotBitLength = maxQuotRounded.bitLength()
+            val quotDwordLength get() = (quotBitLength + 63) / 64 // 3 bits
+
+            // 3 bits mulDwordLength
+            // 7 bits mulDigitLength
+            // 4 bits accDwordLength
+            // 9 bits yFractionalBitLength
+            // 3 bits quotDwordLength
 
             fun packDescriptor() =
-                ((mulDwordCount) or (mulDigitCount shl 3) or (accDwordCount shl 10) or
-                        (shift shl 14) or (quotDwordCount shl 23))
+                ((mulDwordLength) or (mulDigitLength shl 3) or (accDwordLength shl 10) or
+                        (yFractionalBitLength shl 14) or (quotDwordLength shl 23))
 
             fun serialize(out:ArrayList<Long>) {
                 out.add(packDescriptor().toLong())
-                for (i in 0..<mulDwordCount)
-                    out.add(mul.shiftRight(i * 64).toLong())
+                for (i in 0..<mulDwordLength)
+                    out.add(fivePowNegXScaled.shiftRight(i * 64).toLong())
             }
 
             override fun toString() :String {
-                return "dividendDigitCount10:$dividendDigitCount divisorPow10:$divisorPow10\n" +
-                        "  mulDwordCount:$mulDwordCount mulBitCount:$mulBitCount mulDigitCount:$mulDigitCount\n" +
-                        "  dividend9:$dividend9 mul:$mul\n" +
-                        "  accDwordCount:$accDwordCount accBitCount:$accBitCount shift:$shift\n" +
-                        "  quotDwordCount:$quotDwordCount quotBitCount:$quotBitCount\n" +
+                return "qDigitCount:$qDigitCount xPow10:$xPow10\n" +
+                        "  mulDwordCount:$mulDwordLength mulBitCount:$mulBitLength mulDigitCount:$mulDigitLength\n" +
+                        "  fivePowNegXScaled:$fivePowNegXScaled yFractionalBitCount:$yFractionalBitLength\n" +
+                        "  accDwordCount:$accDwordLength accBitCount:$accBitLength\n" +
+                        "  quotDwordCount:$quotDwordLength quotBitCount:$quotBitLength\n" +
                         ""
 
             }
@@ -83,14 +81,14 @@ class RecipMulPow10 {
             assert(biQuotient10.equals(biQuotient5))
             val (mul, shift) = generateMulAndShift(biDividend5, biDivisor5, 1)
             val params = RecipMulParams5(dividendDigitCount, divisorPow10, mul, shift)
-            if (params.quotBitCount > 0 && shift % 64 != 0) {
+            if (params.quotBitLength > 0 && shift % 64 != 0) {
                 // try rounding up to next 64-bit boundary
                 val shift64 = ((shift + 63) / 64) * 64
                 val (mul64, shiftT) = generateMulAndShift(biDividend5, biDivisor5, shift64)
                 require(shiftT == shift64)
                 val params64 = RecipMulParams5(dividendDigitCount, divisorPow10, mul64, shift64)
-                require(params.quotBitCount == params64.quotBitCount)
-                if ((params64.accDwordCount == params.accDwordCount) && (params64.mulDwordCount == params.mulDwordCount)) {
+                require(params.quotBitLength == params64.quotBitLength)
+                if ((params64.accDwordLength == params.accDwordLength) && (params64.mulDwordLength == params.mulDwordLength)) {
                     //    println("params:$params")
                     //    println("params64:$params64")
                     //    println("RoundUp!")
@@ -122,6 +120,171 @@ class RecipMulPow10 {
             return actual.equals(estimate)
         }
 
+        // there can be errors here, but we are specifically testing and this will do for starters
+        val rho = Math.log(10.0) / Math.log(2.0)
+        val FIVE = 5.toBigInteger()
+
+        fun calcTheoreticalMinY05(qDigitCount: Int, xPow10: Int): Int {
+            val min10d = (qDigitCount + xPow10) * rho
+            val min05 = ceil(min10d).toInt() - xPow10
+            return min05
+        }
+
+        fun calcMinY05(qDigitCount:Int, xPow10:Int) : Int {
+            val theoreticalMinY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
+            if (! verifyY05(qDigitCount, xPow10, theoreticalMinY05))
+                throw RuntimeException("?que?")
+            var minY05 = theoreticalMinY05
+            while (verifyY05(qDigitCount, xPow10, minY05 - 1))
+                --minY05
+            return minY05
+        }
+
+        fun calcFivePowNegXScaled(xPow10:Int, yFractionalBitCount:Int) : BigInteger {
+            val tenPowX = TEN.pow(xPow10)
+            val fivePowX = tenPowX.shiftRight(xPow10)
+            val fractionalScale = ONE.shiftLeft(yFractionalBitCount)
+            val fivePowNegXScaled = fractionalScale.add(fivePowX).subtract(ONE).divide(fivePowX)
+            return fivePowNegXScaled
+        }
+
+        fun verifyY05(qDigitCount: Int, xPow10: Int, yFractionalBitCount: Int): Boolean {
+            val maxDividend10 = TEN.pow(qDigitCount)
+            val maxDividend05 = maxDividend10.shiftRight(xPow10)
+            val tenPowX = TEN.pow(xPow10)
+            val fivePowX = tenPowX.shiftRight(xPow10)
+
+            val actualMaxQuotientInteger = maxDividend10.divide(tenPowX)
+
+            val pow10Mask = ONE.shiftLeft(xPow10).subtract(ONE)
+            val pow10MaskShr1 = pow10Mask.shiftRight(1)
+            val fractionalScale = ONE.shiftLeft(yFractionalBitCount)
+            val fractionTailMask = fractionalScale.shiftRight(1).subtract(ONE)
+            //val fivePowNegXScaled = fractionalScale.add(fivePowX).subtract(ONE).divide(fivePowX)
+            val fivePowNegXScaled = calcFivePowNegXScaled(xPow10, yFractionalBitCount)
+
+            fun verify05Even(d: BigInteger): Boolean {
+                val actualQuotientInteger = d.divide(tenPowX)
+
+                val d05 = d.shiftRight(xPow10 - 1)
+                val fractionPow2 = d.and(pow10MaskShr1).toLong()
+
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
+                val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
+                val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
+                if (!quotientInteger.equals(actualQuotientInteger))
+                    return false;
+                val roundBit = quotientIntegerAndRoundBit.toInt() and 1
+                val fractionTail = quotientScaled.and(fractionTailMask)
+
+                return roundBit == 0 && fractionPow2 == 0L && fractionTail < fivePowNegXScaled
+            }
+
+            fun verify05LtHalf(d: BigInteger): Boolean {
+                val actualQuotientInteger = d.divide(tenPowX)
+
+                val d05 = d.shiftRight(xPow10 - 1)
+                val fractionPow2 = d.and(pow10MaskShr1).toLong()
+
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
+                val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
+                val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
+                if (!quotientInteger.equals(actualQuotientInteger))
+                    return false;
+                val roundBit = quotientIntegerAndRoundBit.toInt() and 1
+                val fractionTail = quotientScaled.and(fractionTailMask)
+
+                return roundBit == 0 && (fractionPow2 != 0L || fractionTail >= fivePowNegXScaled)
+            }
+
+            fun verify05Half(d: BigInteger): Boolean {
+                val actualQuotientInteger = d.divide(tenPowX)
+
+                val d05 = d.shiftRight(xPow10 - 1)
+                val fractionPow2 = d.and(pow10MaskShr1).toLong()
+
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
+                val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
+                val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
+                if (!quotientInteger.equals(actualQuotientInteger))
+                    return false;
+                val roundBit = quotientIntegerAndRoundBit.toInt() and 1
+                val fractionTail = quotientScaled.and(fractionTailMask)
+
+                return roundBit == 1 && fractionPow2 == 0L && fractionTail < fivePowNegXScaled
+            }
+
+            fun verify05GtHalf(d: BigInteger): Boolean {
+                val actualQuotientInteger = d.divide(tenPowX)
+
+                val d05 = d.shiftRight(xPow10 - 1)
+                val fractionPow2 = d.and(pow10MaskShr1).toLong()
+
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
+                val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
+                val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
+                if (!quotientInteger.equals(actualQuotientInteger))
+                    return false;
+                val roundBit = quotientIntegerAndRoundBit.toInt() and 1
+                val fractionTail = quotientScaled.and(fractionTailMask)
+
+                return roundBit == 1 && (fractionPow2 != 0L || fractionTail >= fivePowNegXScaled)
+            }
+
+            val max = maxDividend10
+            if (!verify05Even(max))
+                return false
+
+            val halfUlp = tenPowX.shiftRight(1)
+
+            if (! verify05LtHalf(ONE))
+                return false
+
+            if (! verify05LtHalf(halfUlp.subtract(ONE)))
+                return false
+
+            if (!verify05Half(halfUlp))
+                return false
+
+            val min10 = TEN.pow(qDigitCount - 1)
+
+            if (!verify05GtHalf(min10.subtract(ONE)))
+                return false
+
+            if (!verify05Even(min10))
+                return false
+
+            if (!verify05LtHalf(min10.add(ONE)))
+                return false
+
+            val min90 = max.subtract(min10)
+            if (!verify05Even(min90))
+                return false
+
+            val min95 = min90.add(halfUlp)
+            if (!verify05Half(min95))
+                return false
+
+            if (! verify05GtHalf(min95.add(ONE)))
+                return false
+
+            val min99 = max.subtract(ONE)
+            if (!verify05GtHalf(min99))
+                return false
+
+            return true
+
+
+        }
+
+        fun calcRecipMulParams5(qDigitCount:Int, xPow10:Int) : RecipMulParams5 {
+            val yFractionalBitCount = calcMinY05(qDigitCount, xPow10)
+            val fivePowNegXScaled = calcFivePowNegXScaled(xPow10, yFractionalBitCount)
+            val rcmp5 = RecipMulParams5(qDigitCount, xPow10, fivePowNegXScaled, yFractionalBitCount)
+            return rcmp5
+        }
+
+
         var initialized = false
 
         val rowSize = MAX_DIVISOR_POW10 - MIN_DIVISOR_POW10
@@ -142,18 +305,18 @@ class RecipMulPow10 {
                 return
             val paramsArrayList = ArrayList<Long>(tableSize * 4)
             paramsArrayList.add(0L)
-            for (digitCount10 in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
-                val maxPow10 = Math.min(digitCount10, MAX_DIVISOR_POW10)
-                for (pow10 in MIN_DIVISOR_POW10..<maxPow10) {
-                    val index = indexOf(digitCount10, pow10)
-                    val rmp5 = generateRecipMulParams5(digitCount10, pow10)
-                    if (rmp5.quotDwordCount == 0) {
-                        INDEXES[index] = 0
-                    } else {
+            for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
+                val maxPow10 = Math.min(qDigitCount, MAX_DIVISOR_POW10)
+                for (xPow10 in MIN_DIVISOR_POW10..<maxPow10) {
+                    val index = indexOf(qDigitCount, xPow10)
+                    if (qDigitCount > xPow10) {
+                        val rmp5 = calcRecipMulParams5(qDigitCount, xPow10)
                         val paramsIndex = serializeParams(paramsArrayList, rmp5)
 //                    println("digitCount10:$digitCount10 pow10:$pow10 $rmp5")
 //                    println()
                         INDEXES[index] = paramsIndex
+                    } else {
+                        INDEXES[index] = 0
                     }
                 }
             }
@@ -262,8 +425,8 @@ class RecipMulPow10 {
 
         private fun _divPow10(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
                               pow10:Int, sign:Boolean, ctx:Decimal128Context) {
-            assert(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
-            assert(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
+            require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
+            require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
 
             val index = indexOf(xDigitCount, pow10)
             val paramsIndex = INDEXES[index]
@@ -281,13 +444,13 @@ class RecipMulPow10 {
 
             val div = Ular.toBigInteger(x3, x2, x1, x0)
 
-            val firstLoBits = if (pow10 == 1) bi0 else div.and(bi1.shiftLeft(pow10-1).subtract(bi1))
-            val firstLoStickyBits = if (pow10 == 1 || div.and(bi1.shiftLeft(pow10-1).subtract(bi1)).equals(bi0)) 0 else 1
+            val firstLoBits = if (pow10 == 1) ZERO else div.and(ONE.shiftLeft(pow10-1).subtract(ONE))
+            val firstLoStickyBits = if (pow10 == 1 || div.and(ONE.shiftLeft(pow10-1).subtract(ONE)).equals(ZERO)) 0 else 1
             val dividend5 = div.shiftRight(pow10-1)
             val prod = dividend5.multiply(biMul)
             val prodBitLength = prod.bitLength()
             val prodDwordCount = (prodBitLength + 63) / 64
-            val frac = prod.and(bi1.shiftLeft(shift).subtract(bi1))
+            val frac = prod.and(ONE.shiftLeft(shift).subtract(ONE))
 
             if (! (prodDwordCount <= accDwordCount)) {
                 println("dividend:${div} pow10:${pow10}")
@@ -299,7 +462,7 @@ class RecipMulPow10 {
             val quot5x2DwordLength = (quot5x2BitLength + 63) / 64
             assert(quot5x2DwordLength <= quotDwordCount)
             //println("$div / 10**${tc.pow10} ==> quotRounded:$quotRounded")
-            val quot5x2Lo2Bits = quot5x2.and(bi3).toInt()
+            val quot5x2Lo2Bits = quot5x2.and(THREE).toInt()
             val residue =
                 if (firstLoStickyBits == 0 && frac < biMul) {
                     if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF

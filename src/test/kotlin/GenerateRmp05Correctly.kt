@@ -1,11 +1,9 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
 import kotlin.math.ceil
-import kotlin.math.min
 
 class GenerateRmp05Correctly {
     companion object {
@@ -22,12 +20,21 @@ class GenerateRmp05Correctly {
 
         fun calcMinY05(qDigitCount:Int, xPow10:Int) : Int {
             val theoreticalMinY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
+            println("$qDigitCount $xPow10 => theory:$theoreticalMinY05")
             if (! verifyY05(qDigitCount, xPow10, theoreticalMinY05))
                 throw RuntimeException("?que?")
             var minY05 = theoreticalMinY05
             while (verifyY05(qDigitCount, xPow10, minY05 - 1))
                 --minY05
             return minY05
+        }
+
+        fun calcFivePowNegXScaled(xPow10:Int, yFractionalBitCount:Int) : BigInteger {
+            val tenPowX = TEN.pow(xPow10)
+            val fivePowX = tenPowX.shiftRight(xPow10)
+            val fractionalScale = ONE.shiftLeft(yFractionalBitCount)
+            val fivePowNegXScaled = fractionalScale.add(fivePowX).subtract(ONE).divide(fivePowX)
+            return fivePowNegXScaled
         }
 
         fun verifyY05(qDigitCount: Int, xPow10: Int, yFractionalBitCount: Int): Boolean {
@@ -42,7 +49,8 @@ class GenerateRmp05Correctly {
             val pow10MaskShr1 = pow10Mask.shiftRight(1)
             val fractionalScale = ONE.shiftLeft(yFractionalBitCount)
             val fractionTailMask = fractionalScale.shiftRight(1).subtract(ONE)
-            val tenPowNegXScaled = fractionalScale.add(fivePowX).subtract(ONE).divide(fivePowX)
+            //val fivePowNegXScaled = fractionalScale.add(fivePowX).subtract(ONE).divide(fivePowX)
+            val fivePowNegXScaled = calcFivePowNegXScaled(xPow10, yFractionalBitCount)
 
             fun verify05Even(d: BigInteger): Boolean {
                 val actualQuotientInteger = d.divide(tenPowX)
@@ -50,7 +58,7 @@ class GenerateRmp05Correctly {
                 val d05 = d.shiftRight(xPow10 - 1)
                 val fractionPow2 = d.and(pow10MaskShr1).toLong()
 
-                val quotientScaled = d05.multiply(tenPowNegXScaled)
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
                 val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
                 val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
                 if (!quotientInteger.equals(actualQuotientInteger))
@@ -58,7 +66,7 @@ class GenerateRmp05Correctly {
                 val roundBit = quotientIntegerAndRoundBit.toInt() and 1
                 val fractionTail = quotientScaled.and(fractionTailMask)
 
-                return roundBit == 0 && fractionPow2 == 0L && fractionTail < tenPowNegXScaled
+                return roundBit == 0 && fractionPow2 == 0L && fractionTail < fivePowNegXScaled
             }
 
             fun verify05LtHalf(d: BigInteger): Boolean {
@@ -67,7 +75,7 @@ class GenerateRmp05Correctly {
                 val d05 = d.shiftRight(xPow10 - 1)
                 val fractionPow2 = d.and(pow10MaskShr1).toLong()
 
-                val quotientScaled = d05.multiply(tenPowNegXScaled)
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
                 val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
                 val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
                 if (!quotientInteger.equals(actualQuotientInteger))
@@ -75,7 +83,7 @@ class GenerateRmp05Correctly {
                 val roundBit = quotientIntegerAndRoundBit.toInt() and 1
                 val fractionTail = quotientScaled.and(fractionTailMask)
 
-                return roundBit == 0 && (fractionPow2 != 0L || fractionTail >= tenPowNegXScaled)
+                return roundBit == 0 && (fractionPow2 != 0L || fractionTail >= fivePowNegXScaled)
             }
 
             fun verify05Half(d: BigInteger): Boolean {
@@ -84,7 +92,7 @@ class GenerateRmp05Correctly {
                 val d05 = d.shiftRight(xPow10 - 1)
                 val fractionPow2 = d.and(pow10MaskShr1).toLong()
 
-                val quotientScaled = d05.multiply(tenPowNegXScaled)
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
                 val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
                 val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
                 if (!quotientInteger.equals(actualQuotientInteger))
@@ -92,7 +100,7 @@ class GenerateRmp05Correctly {
                 val roundBit = quotientIntegerAndRoundBit.toInt() and 1
                 val fractionTail = quotientScaled.and(fractionTailMask)
 
-                return roundBit == 1 && fractionPow2 == 0L && fractionTail < tenPowNegXScaled
+                return roundBit == 1 && fractionPow2 == 0L && fractionTail < fivePowNegXScaled
             }
 
             fun verify05GtHalf(d: BigInteger): Boolean {
@@ -101,7 +109,7 @@ class GenerateRmp05Correctly {
                 val d05 = d.shiftRight(xPow10 - 1)
                 val fractionPow2 = d.and(pow10MaskShr1).toLong()
 
-                val quotientScaled = d05.multiply(tenPowNegXScaled)
+                val quotientScaled = d05.multiply(fivePowNegXScaled)
                 val quotientIntegerAndRoundBit = quotientScaled.shiftRight(yFractionalBitCount)
                 val quotientInteger = quotientIntegerAndRoundBit.shiftRight(1)
                 if (!quotientInteger.equals(actualQuotientInteger))
@@ -109,7 +117,7 @@ class GenerateRmp05Correctly {
                 val roundBit = quotientIntegerAndRoundBit.toInt() and 1
                 val fractionTail = quotientScaled.and(fractionTailMask)
 
-                return roundBit == 1 && (fractionPow2 != 0L || fractionTail >= tenPowNegXScaled)
+                return roundBit == 1 && (fractionPow2 != 0L || fractionTail >= fivePowNegXScaled)
             }
 
             val max = maxDividend10
@@ -175,32 +183,56 @@ class GenerateRmp05Correctly {
     }
 
     @Test
+    fun test70_40() {
+        test(70, 40)
+    }
+
+    @Test
     fun test19_3() {
         test(19, 3)
     }
 
     fun test(q: Int, x: Int) {
-        var y = 0
-        var verify = false
-        y = calcTheoreticalMinY05(q, x)
-        verify = verifyY05(q, x, y)
-        println("q:$q x:$x => y:$y verify:$verify")
+        val yTheory = calcTheoreticalMinY05(q, x)
+        val verifyTheory = verifyY05(q, x, yTheory)
+        println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
 
-        y -= 1
-        verify = verifyY05(q, x, y)
-        println("q:$q x:$x => y:$y verify:$verify")
+        val yMin = calcMinY05(q, x)
+        val verifyYMin = verifyY05(q, x, yMin)
+        println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
 
 
     }
 
     @Test
+    fun test78_1() {
+        test(78, 1)
+        val yMin = calcMinY05(78, 1)
+    }
+
+    @Test
+    fun test78_44() {
+        test(78, 44)
+        val yMin = calcMinY05(78, 44)
+    }
+
+    @Test
     fun genAll() {
-        for (qDigitCount in 2..<78)
+        var maxMinY05 = 0
+        var maxFivePowNegXScaled = ZERO
+        for (qDigitCount in 2..78) { // include 78 digits ... up through 2**256-1
             for (xPow10 in 1..<Math.min(qDigitCount, 45)) {
                 val theoreticalY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
                 val minY05 = calcMinY05(qDigitCount, xPow10)
                 println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY05 -> min:$minY05")
+                maxMinY05 = Math.max(maxMinY05, minY05)
+                val fivePowNegXScaled = calcFivePowNegXScaled(xPow10, minY05)
+                if (fivePowNegXScaled > maxFivePowNegXScaled)
+                    maxFivePowNegXScaled = fivePowNegXScaled
             }
+        }
+        println("maxMinY05:$maxMinY05")
+        println("maxFivePowNegXScaled:$maxFivePowNegXScaled bitLength:${maxFivePowNegXScaled.bitLength()}")
     }
 }
 

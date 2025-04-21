@@ -10,9 +10,10 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import java.math.BigDecimal
-import java.math.MathContext
 
 class TestCoeffScaleDown {
+
+    val verbose = false
 
     class TC(val biA:BigInteger, val pow10:Int, val sign:Boolean,
              val roundingDirection:RoundingDirection, val biExpected:BigInteger, val expectedInexact:Boolean) {
@@ -23,12 +24,17 @@ class TestCoeffScaleDown {
     }
 
     val cases = arrayOf(
+        TC("115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, false, ROUND_TIES_TO_EVEN, "11579208923731619542357098500868790785326998466564056403945758400791312963994", true),
+        TC("115792089237316195423570985008687907853269984665640564039457584007913129639935", 44, false, ROUND_TIES_TO_EVEN, "1157920892373161954235709850086879", true),
+        TC("161027067925926009762976744537943203828", 39, false, ROUND_TIES_TO_AWAY, "0", true),
+        TC("167457751028870756383096012673692132664", 39, false, ROUND_TIES_TO_AWAY, "0", true),
+        TC("1234567890123456789012345678901234567890123456789012345678901234567890", 40, false, ROUND_TIES_TO_EVEN, "123456789012345678901234567890", true),
         TC("74", 1, false, ROUND_TIES_TO_EVEN, "7", true),
         TC("94", 1, false, ROUND_TIES_TO_EVEN, "9", true),
         TC("14", 1, false, ROUND_TIES_TO_EVEN, "1", true),
         TC("84", 1, false, ROUND_TIES_TO_EVEN, "8", true),
-        TC("95", 1, false, ROUND_TIES_TO_EVEN, "9", true),
-        TC("96", 1, false, ROUND_TIES_TO_EVEN, "9", true),
+        TC("95", 1, false, ROUND_TIES_TO_EVEN, "10", true),
+        TC("96", 1, false, ROUND_TIES_TO_EVEN, "10", true),
         TC("0", 2, false, ROUND_TIES_TO_EVEN, "0", false),
         TC("1234567890", 1, false, ROUND_TIES_TO_EVEN, "123456789", false),
         TC("0", 1, false, ROUND_TIES_TO_EVEN, "0", false),
@@ -60,6 +66,7 @@ class TestCoeffScaleDown {
 
         TC("1234567890123456789012345678901234567890123456789012345678901234567890", 40, false, ROUND_TIES_TO_EVEN, "123456789012345678901234567890", true),
         TC("1234567890123456789012345678901234567890123456789012345678901234567890", 1, false, ROUND_TIES_TO_EVEN, "123456789012345678901234567890123456789012345678901234567890123456789", false),
+
     )
 
     @Test
@@ -67,55 +74,94 @@ class TestCoeffScaleDown {
         for (case in cases)
             test1(case)
     }
-/*
+
     val deltas = arrayOf(BigInteger.ONE.negate(), BigInteger.ZERO, BigInteger.ONE)
 
     @Test
-    fun testBoundaries() {
-        for (i in 0..<77) {
-            val biX = BigInteger.TEN.pow(i)
-            for (pow10 in 0..<77-i) {
+    fun testDecimalBoundaries() {
+        for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
+            val biQ = BigInteger.TEN.pow(qDigitCount)
+            for (xPow10 in MIN_DIVISOR_POW10..<Math.min(MIN_DIVISOR_POW10, qDigitCount + 2)) {
                 for (deltaX in deltas) {
-                    val biA = biX.add(deltaX)
-                    val tc = TC(biA, pow10)
-                    if (tc.biProduct.bitLength() <= 256)
-                        test1(tc)
+                    val biA = biQ.add(deltaX)
+                    val case = buildTestCase(biA, xPow10)
+                    test1(case)
                 }
             }
         }
     }
-*/
+
+    @Test
+    fun testBinaryBoundaries() {
+        val quads = longArrayOf(
+            -1, -1, -1, -1,
+            -1, 0, 0,0,
+            -1, -1, 0, 0,
+            -1, -1, -1, 0,
+            -1, -1, -1, -1,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        )
+
+        for (i in quads.indices step 4) {
+            val dw0 = quads[i + 0]
+            val dw1 = quads[i + 1]
+            val dw2 = quads[i + 2]
+            val dw3 = quads[i + 3]
+            val biQ = Ular.toBigInteger(dw3, dw2, dw1, dw0)
+            for (xPow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10) {
+                for (deltaX in deltas) {
+                    val biA = biQ.add(deltaX)
+                    if (biA.bitLength() <= 256) {
+                        val case = buildTestCase(biA, xPow10)
+                        test1(case)
+                    }
+                }
+            }
+        }
+    }
+
     val random = Random()
 
     @Test
-    fun testRandomMul() {
-        for (i in 0..<1000000) {
+    fun testRandomScaleDown() {
+        for (i in 0..<100000) {
             val bi = randBi()
             val pow10 = randPow(bi)
-            val roundingDirection = RoundingDirection.fromValue(random.nextInt(5))
-            val sign = random.nextBoolean()
-            val bd = if (sign) BigDecimal(bi).negate() else BigDecimal(bi)
-            val bdScaled = bd.scaleByPowerOfTen(-pow10)
-            val bdRounded = bdScaled.setScale(0, roundingDirection.mapToRoundingMode())
-            val inexact = bdScaled.compareTo(bdRounded) != 0
-            val biRoundedAbs = bdRounded.toBigIntegerExact().abs()
-            val case = TC(bi, pow10, sign, roundingDirection, biRoundedAbs, inexact)
+            val case = buildTestCase(bi, pow10)
             test1(case)
         }
 
     }
 
+    fun buildTestCase(bi:BigInteger, xPow10:Int) : TC {
+        val roundingDirection = RoundingDirection.fromValue(random.nextInt(5))
+        val sign = random.nextBoolean()
+        val bd = if (sign) BigDecimal(bi).negate() else BigDecimal(bi)
+        val bdScaled = bd.scaleByPowerOfTen(-xPow10)
+        val bdRounded = bdScaled.setScale(0, roundingDirection.mapToRoundingMode())
+        val inexact = bdScaled.compareTo(bdRounded) != 0
+        val biRoundedAbs = bdRounded.toBigIntegerExact().abs()
+        val case = TC(bi, xPow10, sign, roundingDirection, biRoundedAbs, inexact)
+        return case
+    }
+
     fun randPow(bi: BigInteger) : Int {
         val biDigitCount = bi.toString().length
-        val maxPow = biDigitCount + 2
+        val maxPow = Math.min(MAX_DIVISOR_POW10 - 1, biDigitCount + 2)
         val randPow = random.nextInt(maxPow)
         return randPow
     }
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 10)
-        val bi = BigInteger(bitLength, random)
-        return bi
+        while (true) {
+            val bitLength = random.nextInt(0, 257)
+            val bi = BigInteger(bitLength, random)
+            if (bi.toString().length < MAX_DIVIDEND_DIGIT_COUNT)
+                return bi
+        }
     }
 
 
@@ -130,7 +176,8 @@ class TestCoeffScaleDown {
         val coeffObserved = Coeff()
         val pow10 = case.pow10
         val ctx = Decimal128Context(case.roundingDirection)
-        println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = ${case.roundingDirection} expected:$expected expectedInexact:${case.expectedInexact}")
+        if (verbose)
+            println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = ${case.roundingDirection} expected:$expected expectedInexact:${case.expectedInexact}")
         coeffObserved.scalePow10(coeffA, -pow10, case.sign, ctx)
         val observed = coeffObserved.toBigInteger()
         if (! observed.equals(expected))

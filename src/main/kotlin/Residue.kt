@@ -43,13 +43,21 @@ value class Residue private constructor(val value:Int) {
                 val residue = if (cmp0 < 0) LT_HALF else if (cmp0 == 0) HALF else GT_HALF
                 return residue
             } else {
-                val residue = if (digitCount < POW10_128_OFFSET) GT_HALF else LT_HALF
+                //10**19 has the msb set
+                //so if we have our msb set then we compare with 1E19
+                val oneE19 = POW10[19]
+                val cmp0 = compareUnsigned(dw0, oneE19)
+                val residue = if (cmp0 < 0) GT_HALF else LT_HALF
                 return residue
             }
         }
 
         fun residueFrom(digitCount: Int, dw1: Long, dw0: Long) : Residue {
-            if (dw1 >= 0) {
+            // 10**39 takes 3 dwords with most significant dword having value 0x02
+            if (digitCount == POW10_192_OFFSET)
+                return LT_HALF
+            assert (dw1 >= 0)
+            //if (dw1 >= 0) {
                 val index = 2 * (digitCount - POW10_128_OFFSET) + POW10_128_DWORD_INDEX
 
                 val dw1x2 = (dw1 shl 1) or (dw0 ushr 63)
@@ -69,17 +77,13 @@ value class Residue private constructor(val value:Int) {
                     return GT_HALF
 
                 return HALF
-            } else {
-                return if (digitCount < POW10_192_OFFSET) GT_HALF else LT_HALF
-            }
+            //} else {
+                // 10**39 takes 3 dwords with most significant dword having value 0x02
+                // therefore, half of that, 5E38, has a 1 in the most significant dword
+                // therefore, all 2 dword values with msb set are LT_HALF
+            //    return LT_HALF
+            //}
         }
-
-        private val fiveE57 = BigInteger.TEN.pow(58).shiftRight(1)
-        val bitLengthVerify = run { require(fiveE57.bitLength() == 192); 192}
-        val fiveE57dw0 = fiveE57.toLong()
-        val fiveE57dw1 = fiveE57.shiftRight(64).toLong()
-        val fiveE57dw2 = fiveE57.shiftRight(128).toLong()
-
 
         fun residueFrom(digitCount: Int, dw2: Long, dw1: Long, dw0: Long) : Residue {
             if (dw2 >= 0) {
@@ -112,7 +116,13 @@ value class Residue private constructor(val value:Int) {
                 return HALF
             } else {
                 assert(digitCount == 58)
-                // this case is a problem child because (10**58)/2 has 192 bits == 3 dwords
+                // this case is a problem child because (10**58) has 193 bits (4 dwords)
+                // but 10**58/2 has 192 bits == 3 dwords
+
+                // 0xE400000000000000, 0x37E9F14D3EEC8920, 0x97D4DF19D6057673, 0x0000000000000001, // (10**58)
+                val fiveE57dw2 = 0x97D4DF19D6057673uL.toLong() shr 1 // shr to replicate msb down from dw3
+                val fiveE57dw1 = (0x37E9F14D3EEC8920 shr 1) or Long.MIN_VALUE
+                val fiveE57dw0 = (0xE400000000000000uL.toLong()) ushr 1 //
 
                 val cmp2 = compareUnsigned(dw2, fiveE57dw2)
                 if (cmp2 < 0)
@@ -176,10 +186,43 @@ value class Residue private constructor(val value:Int) {
 
                 return HALF
             } else {
-                if (digitCount >= POW10_MAX_OFFSET)
-                    throw RuntimeException("decimal digit overflow 74396")
-                // all 77 digit numbers that have the hi bit set are GT_HALF
-                return GT_HALF
+                // 0x0000000000000000uL.toLong(), 0xAA987B6E6FD2A000uL.toLong(), 0x49EF0EB713F39EBEuL.toLong(),
+                // 0xDD15FE86AFFAD912uL.toLong(), // 100000000000000000000000000000000000000000000000000000000000000000000000000000 (10**77)
+
+                val oneE77dw3 = 0xDD15FE86AFFAD912uL.toLong()
+                val oneE77dw2 = 0x49EF0EB713F39EBEuL.toLong()
+                val oneE77dw1 = 0xAA987B6E6FD2A000uL.toLong()
+                val oneE77dw0 = 0L
+
+                val cmp3 = compareUnsigned(dw3, oneE77dw3)
+                if (cmp3 < 0)
+                    return GT_HALF
+                if (cmp3 > 0)
+                    return LT_HALF
+
+                val cmp2 = compareUnsigned(dw2, oneE77dw2)
+                if (cmp2 < 0)
+                    return GT_HALF
+                if (cmp2 > 0)
+                    return LT_HALF
+
+                val cmp1 = compareUnsigned(dw1, oneE77dw1)
+                if (cmp1 < 0)
+                    return GT_HALF
+                if (cmp1 > 0)
+                    return LT_HALF
+
+
+                //val cmp0 = compareUnsigned(dw0, oneE77dw0)
+                //if (cmp0 < 0)
+                //    return GT_HALF
+                //if (cmp0 > 0)
+                //    return LT_HALF
+                if (dw0 != 0L)
+                    LT_HALF // LF_HALF compared to 5e77 ... 78 digits ... which we do not support
+
+                //
+                return EXACT // exactly 1e77 ... 78 digits ... which we do not support
             }
         }
 
