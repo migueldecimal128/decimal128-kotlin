@@ -3,7 +3,6 @@ package com.decimal128
 import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
-import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.UlarMul.Companion.ularMul
 
 class Ular {
@@ -50,6 +49,16 @@ class Ular {
             }
             while (i < zLen)
                 z[zOff + i++] = 0L
+        }
+
+        fun set(z:LongArray, zOff:Int, zLen:Int, bi:BigInteger) {
+            val bitLen = bi.bitLength()
+            val len = (bitLen + 63) / 64
+            require(zLen >= len)
+            for (i in 0..<len)
+                z[zOff + i] = bi.shiftRight(i * 64).toLong()
+            for (i in len..<zLen)
+                z[zOff + i] = 0
         }
 
         fun from(bi: BigInteger) : LongArray {
@@ -143,6 +152,33 @@ class Ular {
                 ularMul(z, zOff, zLen, x, xOff, xLen, y, yOff, yLen)
             else
                 ularMul(z, zOff, zLen, y, yOff, yLen, x, xOff, xLen)
+        }
+
+        fun mutateShiftRight(x:LongArray, bitCount:Int) {
+            mutateShiftRight(x, 0, x.size, bitCount)
+        }
+
+        fun mutateShiftRight(x:LongArray, xOff:Int, xLen:Int, bitCount:Int) {
+            val wordShift = bitCount ushr 6
+            val bitShift = bitCount and ((1 shl 6) - 1)
+            if (wordShift >= xLen) {
+                for (i in xOff..<xOff + xLen)
+                    x[i] = 0L
+                return
+            }
+            val newLen = xLen - wordShift
+            if (wordShift > 0) {
+                for (i in 0..<newLen)
+                    x[xOff + i] = x[xOff + i + wordShift]
+                for (i in newLen..<xLen)
+                    x[xOff + i] = 0L
+            }
+            if (bitShift > 0) {
+                val last = newLen - 1
+                for (i in 0..<last)
+                    x[xOff + i] = (x[xOff + i] ushr bitShift) or (x[xOff + i + 1] shl (64 - bitShift))
+                x[xOff + last] = x[xOff + last] ushr bitShift
+            }
         }
 
         fun toBigInteger(x0:Long) : BigInteger {

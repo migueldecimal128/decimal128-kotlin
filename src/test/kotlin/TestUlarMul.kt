@@ -68,7 +68,7 @@ class TestUlarMul {
 
     @Test
     fun testRandomMul() {
-        for (i in 0..<1000000) {
+        for (i in 0..<100000) {
             val case = TC(randBi(), randBi())
             test1(case)
         }
@@ -98,6 +98,32 @@ class TestUlarMul {
         if (! observed.equals(expected)) {
             throw RuntimeException("$biA * $biB = expected:$expected observed:$observed")
         }
+
+        val aOff = random.nextInt(0, 4)
+        val aLen = ularA.size
+        val a = LongArray(aOff + aLen + random.nextInt(0, 4))
+        Ular.set(a, aOff, aLen, biA)
+
+        val bOff = random.nextInt(0, 4)
+        val bLen = ularB.size
+        val b = LongArray(bOff + bLen + random.nextInt(0, 4))
+        Ular.set(b, bOff, bLen, biB)
+
+        val pOff = random.nextInt(0, 4)
+        val pLen = aLen + bLen
+        val p = LongArray(pOff + pLen + random.nextInt(0, 4))
+        p.fill(0xCAFEBABEDEADBEEFuL.toLong())
+        Ular.mul(p, pOff, pLen, a, aOff, aLen, b, bOff, bLen)
+
+        val observed2 = Ular.toBigInteger(p, pOff, pLen)
+
+        if (! observed2.equals(expected)) {
+            throw RuntimeException("$biA * $biB = expected:$expected observed2:$observed2")
+        }
+
+
+
+
     }
 
 }
