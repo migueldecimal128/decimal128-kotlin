@@ -4,15 +4,16 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestUlarMul {
+class TestUlarCompare {
 
     class TC(val biA: BigInteger, val biB: BigInteger) {
-        val biProduct = biA.multiply(biB)
+        val cmp = biA.compareTo(biB)
 
         constructor(a: String, b:String) : this(BigInteger(a), BigInteger(b))
     }
 
     val cases = arrayOf(
+        TC("0", "0"),
         TC(BigInteger.ONE.shiftLeft(64).add(BigInteger.TWO), 3.toBigInteger().shiftLeft(64).add(4.toBigInteger())),
         TC("23552335528420943652", "34522815225662007740"),
         TC("0", "1"),
@@ -68,7 +69,7 @@ class TestUlarMul {
 
     @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<1000000) {
             val case = TC(randBi(), randBi())
             test1(case)
         }
@@ -78,7 +79,7 @@ class TestUlarMul {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 320)
+        val bitLength = random.nextInt(0, 500)
         val bi = BigInteger(bitLength, random)
         return bi
     }
@@ -86,17 +87,15 @@ class TestUlarMul {
     fun test1(case: TC) {
         val biA = case.biA
         val biB = case.biB
-        val expected = case.biProduct
-        val ularExpected = Ular.from(expected)
+        val expected = case.cmp
 
         val ularA = Ular.from(biA)
         val ularB = Ular.from(biB)
         val ularProd = LongArray(ularA.size + ularB.size)
-        Ular.mul(ularProd, ularA, ularB)
+        val observed = Ular.compare(ularA, ularB)
 
-        val observed = Ular.toBigInteger(ularProd)
-        if (! observed.equals(expected)) {
-            throw RuntimeException("$biA * $biB = expected:$expected observed:$observed")
+        if (observed != expected) {
+            throw RuntimeException("$biA compare $biB = expected:$expected observed:$observed")
         }
 
         val aOff = random.nextInt(0, 4)
@@ -109,16 +108,10 @@ class TestUlarMul {
         val b = LongArray(bOff + bLen + random.nextInt(0, 4))
         Ular.set(b, bOff, bLen, biB)
 
-        val pOff = random.nextInt(0, 4)
-        val pLen = aLen + bLen
-        val p = LongArray(pOff + pLen + random.nextInt(0, 4))
-        p.fill(0xCAFEBABEDEADBEEFuL.toLong())
-        Ular.mul(p, pOff, pLen, a, aOff, aLen, b, bOff, bLen)
-
-        val observed2 = Ular.toBigInteger(p, pOff, pLen)
+        val observed2 = Ular.compare(a, aOff, aLen, b, bOff, bLen)
 
         if (! observed2.equals(expected)) {
-            throw RuntimeException("$biA * $biB = expected:$expected observed2:$observed2")
+            throw RuntimeException("$biA compare $biB = expected:$expected observed2:$observed2")
         }
 
 

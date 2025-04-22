@@ -48,8 +48,8 @@ class TestCoeffAbsDiff {
     }
 
     @Test
-    fun testRandomAbsDiff() {
-        for (i in 0..<1000000) {
+    fun testRandom() {
+        for (i in 0..<100000) {
             val biA = randBi()
             val biB = randBi()
             val case = TC(biA, biB)

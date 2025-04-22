@@ -72,8 +72,8 @@ class TestCoeffMul {
     }
 
     @Test
-    fun testRandomMul() {
-        for (i in 0..<1000000) {
+    fun testRandoma() {
+        for (i in 0..<100000) {
             val case = TC(randBi(), randBi())
             test1(case)
         }

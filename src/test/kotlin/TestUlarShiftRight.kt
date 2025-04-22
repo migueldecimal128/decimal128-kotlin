@@ -28,7 +28,7 @@ class TestUlarShiftRight {
     }
 
     @Test
-    fun testRandomShift() {
+    fun testRandom() {
         for (i in 0..<100000) {
             val bi = randBi()
             val case = TC(randBi(), randShift(bi))

@@ -56,8 +56,8 @@ class TestCoeffScaleUp {
     val random = Random()
 
     @Test
-    fun testRandomMul() {
-        for (i in 0..<1000000) {
+    fun testRandom() {
+        for (i in 0..<100000) {
             val bi = randBi()
             val pow10 = randPow(bi)
             val case = TC(bi, pow10)

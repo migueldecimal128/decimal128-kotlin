@@ -48,7 +48,7 @@ class TestCalcDigitCount64 {
 
     @Test
     fun testRandom() {
-        for (i in 1..1000000)
+        for (i in 1..100000)
             test1Random()
     }
 

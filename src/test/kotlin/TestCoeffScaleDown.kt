@@ -126,7 +126,7 @@ class TestCoeffScaleDown {
     val random = Random()
 
     @Test
-    fun testRandomScaleDown() {
+    fun testRandoma() {
         for (i in 0..<100000) {
             val bi = randBi()
             val pow10 = randPow(bi)

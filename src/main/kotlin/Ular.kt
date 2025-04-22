@@ -4,6 +4,7 @@ import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
 import com.decimal128.UlarMul.Companion.ularMul
+import java.lang.Long.compareUnsigned
 
 class Ular {
     companion object {
@@ -180,6 +181,29 @@ class Ular {
                 x[xOff + last] = x[xOff + last] ushr bitShift
             }
         }
+
+        fun compare(x:LongArray, y:LongArray) = compare(x, 0, x.size, y, 0, y.size)
+
+        fun compare(x:LongArray, xOff:Int, xLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
+            val minLen = Math.min(xLen, yLen)
+            for (i in minLen..<xLen) {
+                if (x[xOff + i] != 0L)
+                    return 1
+            }
+            for (i in minLen..<yLen) {
+                if (y[yOff + i] != 0L)
+                    return -1
+            }
+            for (i in (minLen - 1) downTo 0) {
+                val x0 = x[xOff + i]
+                val y0 = y[yOff + i]
+                val cmp = compareUnsigned(x0, y0)
+                if (cmp != 0)
+                    return cmp
+            }
+            return 0
+        }
+
 
         fun toBigInteger(x0:Long) : BigInteger {
             var bi = BigInteger.ZERO

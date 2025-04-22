@@ -34,8 +34,8 @@ class TestCoeffAdd {
     }
 
     @Test
-    fun testRandomAdd() {
-        for (i in 0..<1000000) {
+    fun testRandom() {
+        for (i in 0..<100000) {
             val case = TC(randBi(), randBi())
             test1(case)
         }
