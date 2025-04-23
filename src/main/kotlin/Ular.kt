@@ -244,15 +244,37 @@ class Ular {
             throw RuntimeException("overflow")
         }
 
+        fun fromMask(maskBitLen:Int) : LongArray {
+            val maskDwordLen = (maskBitLen + 63) ushr 6
+            val innerLen = maskBitLen and 0x3F
+            val ular = LongArray(maskDwordLen)
+            ular.fill(-1L)
+            if (innerLen > 0)
+                ular[maskDwordLen-1] = ular[maskDwordLen-1] and ((1L shl innerLen) - 1)
+            return ular
+        }
+
+        fun mutateMask(x:LongArray, xOff:Int, xLen:Int, maskBitLen:Int) {
+            val maskDwordLen = (maskBitLen + 63) ushr 6
+            val innerLen = maskBitLen and 0x3F
+            for (i in xLen -1 downTo maskDwordLen)
+                x[xOff + i] = 0L
+            if (innerLen > 0) {
+                val mask = (1L shl innerLen) - 1
+                val lastIndex = xOff + maskDwordLen - 1
+                x[lastIndex] = x[lastIndex] and mask
+            }
+        }
+
         fun compare(x:LongArray, y:LongArray) = compare(x, 0, x.size, y, 0, y.size)
 
         fun compare(x:LongArray, xOff:Int, xLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
             val minLen = Math.min(xLen, yLen)
-            for (i in minLen..<xLen) {
+            for (i in (xLen-1) downTo minLen) {
                 if (x[xOff + i] != 0L)
                     return 1
             }
-            for (i in minLen..<yLen) {
+            for (i in (yLen-1) downTo minLen) {
                 if (y[yOff + i] != 0L)
                     return -1
             }
@@ -266,6 +288,33 @@ class Ular {
             return 0
         }
 
+        fun compareMasked(x:LongArray, xOff:Int, xLen:Int, xBitMaskLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
+            val maskDwordLen = (xBitMaskLen + 63) ushr 6
+            val innerShift = xBitMaskLen and 0x3F
+            if (innerShift == 0) {
+                return compare(x, xOff, maskDwordLen, y, yOff, yLen)
+            }
+            var mask = 1L shl (innerShift - 1)
+            val minLen = Math.min(maskDwordLen, yLen)
+            for (i in (maskDwordLen-1) downTo minLen) {
+                if ((x[xOff + i] and mask) != 0L)
+                    return 1
+                mask = -1
+            }
+            for (i in (yLen-1) downTo minLen) {
+                if (y[yOff + 1] != 0L)
+                    return -1
+            }
+            for (i in (minLen - 1) downTo 0) {
+                val x0 = x[xOff + i] and mask
+                val y0 = y[yOff + i]
+                val cmp = compareUnsigned(x0, y0)
+                if (cmp != 0)
+                    return cmp
+                mask = -1
+            }
+            return 0
+        }
 
         fun toBigInteger(x0:Long) : BigInteger {
             var bi = BigInteger.ZERO
