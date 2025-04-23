@@ -3,8 +3,8 @@ package com.decimal128
 import com.decimal128.CoeffFma.Companion.fmaCoeff
 import java.math.BigInteger
 import java.lang.Long.compareUnsigned
-import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.CoeffMul.Companion.mulCoeff
+import java.lang.Long.numberOfLeadingZeros
 
 private const val SIGNBIT = Long.MIN_VALUE
 
@@ -102,7 +102,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         val p0 = x0 + y0
         dw0 = p0
         val carry0 = if (compareUnsigned(p0, x0) < 0) 1L else 0L
-        // 64 bit boundary is a special case because 19 digits * 2 might generate carry into the next word
+        // 64 bit boundary is a special case because 19 digits * 2 might generate carry into the next dword
         // this is not the case for the 128 and 192 bit boundaries
         //
         // perhaps this test should be:
@@ -297,6 +297,50 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         }
     }
 
+    fun shiftRight(bitShift:Int) {
+        val wholeDwordCount = bitShift ushr 6
+        val innerShift = bitShift and 0x3F
+        if (innerShift == 0) {
+            when (wholeDwordCount) {
+                0 -> return
+                1 -> { dw0 = dw1; dw1 = dw2; dw2 = dw3; dw3 = 0L; setDigitCount192() }
+                2 -> { dw0 = dw2; dw1 = dw3; dw2 = 0L; dw3 = 0L; setDigitCount128()}
+                3 -> { dw0 = dw3; dw1 = 0L; dw2 = 0L; dw3 = 0L; setDigitCount64() }
+                else -> setZero()
+            }
+        } else {
+            val leftShift = 64 - innerShift
+            when (wholeDwordCount ) {
+                0 -> {
+                    dw0 = (dw1 shl leftShift) or (dw0 ushr innerShift)
+                    dw1 = (dw2 shl leftShift) or (dw1 ushr innerShift)
+                    dw2 = (dw3 shl leftShift) or (dw2 ushr innerShift)
+                    dw3 = dw3 ushr innerShift
+                    setDigitCount256()
+                }
+                1 -> {
+                    dw0 = (dw2 shl leftShift) or (dw1 ushr innerShift)
+                    dw1 = (dw3 shl leftShift) or (dw2 ushr innerShift)
+                    dw2 = dw3 ushr innerShift
+                    dw3 = 0L
+                    setDigitCount192()
+                }
+                2 -> {
+                    dw0 = (dw3 shl leftShift) or (dw2 ushr innerShift)
+                    dw1 = dw3 ushr innerShift
+                    dw2 = 0L; dw3 = 0L
+                    setDigitCount128()
+                }
+                3 -> {
+                    dw0 = dw3 ushr innerShift
+                    dw1 = 0L; dw2 = 0L; dw3 = 0L
+                    setDigitCount64()
+                }
+                else -> setZero()
+            }
+        }
+    }
+
     fun scalePow10(x:Coeff, pow10:Int, sign:Boolean, ctx:Decimal128Context) {
         CoeffScalePow10.scalePow10Coeff(this, x, pow10, sign, ctx)
     }
@@ -350,6 +394,110 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
     }
 
     fun set(str: String) = set(BigInteger(str))
+
+    fun set(x:LongArray, xOff:Int, xLen:Int) {
+        setZero()
+        if (xLen == 0)
+            return
+        var nonZeroIndex = xLen - 1
+        var nonZeroVal = 0L
+        while (nonZeroVal == 0L && --nonZeroIndex >= 0) {
+            nonZeroVal = x[xOff + nonZeroIndex]
+        }
+        when (nonZeroIndex) {
+            -1 -> {}
+            0 -> { dw0 = nonZeroVal; setDigitCount64() }
+            1 -> { dw0 = x[xOff+0]; dw1 = nonZeroVal; setDigitCount128() }
+            2 -> { dw0 = x[xOff+0]; dw1 = x[xOff+1]; dw2 = nonZeroVal; setDigitCount192() }
+            3 -> { dw0 = x[xOff+0]; dw1 = x[xOff+1]; dw2 = x[xOff+2]; dw3 = nonZeroVal; setDigitCount256() }
+            4 -> throw RuntimeException("overflow")
+        }
+    }
+
+    fun bitLength() : Int {
+        when {
+            (dw3 != 0L) -> return 192 + 64 - numberOfLeadingZeros(dw3)
+            (dw2 != 0L) -> return 128 + 64 - numberOfLeadingZeros(dw2)
+            (dw1 != 0L) -> return 64 + 64 - numberOfLeadingZeros(dw1)
+            (dw0 != 0L) -> return 64 - numberOfLeadingZeros(dw0)
+            else -> return 0
+        }
+    }
+
+    fun setShiftRight(x:LongArray, xOff:Int, xLen:Int, bitCount:Int) {
+        setZero()
+        // strip leading zeros from x
+        var nonZeroIndex = xLen - 1
+        var nonZeroVal = 0L
+        while (nonZeroVal == 0L && --nonZeroIndex >= 0) {
+            nonZeroVal = x[xOff + nonZeroIndex]
+        }
+        val nonZeroLen = nonZeroIndex + 1
+
+        val dwordShift = bitCount ushr 6
+        val innerShift = bitCount and ((1 shl 6) - 1)
+        val newLen = xLen - dwordShift
+        val shiftOff = xOff + dwordShift
+        if (innerShift == 0) {
+            when (newLen) {
+                0 -> {}
+                1 -> { dw0 = x[shiftOff + 0]; setDigitCount64() }
+                2 -> { dw0 = x[shiftOff + 0]; dw1 = x[shiftOff + 1]; setDigitCount128() }
+                3 -> { dw0 = x[shiftOff + 0]; dw1 = x[shiftOff + 1]; dw2 = x[shiftOff + 2]; setDigitCount192() }
+                4 -> { dw0 = x[shiftOff + 0]; dw1 = x[shiftOff + 1]; dw2 = x[shiftOff + 2];
+                    dw3 = x[shiftOff + 3]; setDigitCount256() }
+                else -> {
+                    for (i in 5..<newLen)
+                        if (x[shiftOff + i] != 0L)
+                            throw RuntimeException("overflow")
+                }
+            }
+            return
+        }
+        val leftShift = 64 - innerShift
+        when (newLen) {
+            0 -> {}
+            1 -> {
+                dw0 = x[shiftOff + 0] ushr innerShift; setDigitCount64()
+            }
+
+            2 -> {
+                dw0 = (x[shiftOff + 1] shl leftShift) or (x[shiftOff + 0] ushr innerShift)
+                dw1 = x[shiftOff + 1] ushr innerShift
+                setDigitCount128()
+            }
+
+            3 -> {
+                dw0 = (x[shiftOff + 1] shl leftShift) or (x[shiftOff + 0] ushr innerShift)
+                dw1 = (x[shiftOff + 2] shl leftShift) or (x[shiftOff + 1] ushr innerShift)
+                dw2 = x[shiftOff + 2] ushr innerShift
+                setDigitCount192()
+            }
+
+            4 -> {
+                dw0 = (x[shiftOff + 1] shl leftShift) or (x[shiftOff + 0] ushr innerShift)
+                dw1 = (x[shiftOff + 2] shl leftShift) or (x[shiftOff + 1] ushr innerShift)
+                dw2 = (x[shiftOff + 3] shl leftShift) or (x[shiftOff + 2] ushr innerShift)
+                dw3 = x[shiftOff + 3] ushr innerShift
+                setDigitCount256()
+            }
+
+            5 -> {
+                dw0 = (x[shiftOff + 1] shl leftShift) or (x[shiftOff + 0] ushr innerShift)
+                dw1 = (x[shiftOff + 2] shl leftShift) or (x[shiftOff + 1] ushr innerShift)
+                dw2 = (x[shiftOff + 3] shl leftShift) or (x[shiftOff + 2] ushr innerShift)
+                dw3 = (x[shiftOff + 4] shl leftShift) or (x[shiftOff + 3] ushr innerShift)
+                val dw4 = x[shiftOff + 4] ushr innerShift
+                if (dw4 != 0L)
+                    throw RuntimeException("overflow")
+                setDigitCount256()
+            }
+
+            else -> {
+                throw RuntimeException("overflow")
+            }
+        }
+    }
 
     fun toBigInteger() : BigInteger {
 //        assert(validateDigitCount())

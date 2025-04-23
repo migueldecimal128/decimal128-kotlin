@@ -431,6 +431,7 @@ fun recalcDigitCountOnly256(c: Coeff) {
     c.digitCount = POW10_256_OFFSET + lo
 }
 */
+
 fun setDigitCount64(c: Coeff) {
     assert((c.dw3 or c.dw2 or c.dw1) == 0L)
     c.digitCount = calcDigitCount64(c.dw0)

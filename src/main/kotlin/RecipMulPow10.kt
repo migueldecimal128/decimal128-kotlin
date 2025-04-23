@@ -425,7 +425,7 @@ class RecipMulPow10 {
 
         private fun _divPow10(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
                               pow10:Int, sign:Boolean, ctx:Decimal128Context) =
-            _divPow10_miguel2(q, xDigitCount, x3, x2, x1, x0, pow10, sign, ctx)
+            _divPow10_miguel3(q, xDigitCount, x3, x2, x1, x0, pow10, sign, ctx)
 
 
         private fun _divPow10_bi(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
@@ -615,6 +615,93 @@ class RecipMulPow10 {
                 assert(firstLoStickyBitsX == 0L)
             else
                 assert(firstLoStickyBitsX != 0L)
+
+            val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
+
+            val prod = dividend5.multiply(biMul)
+            val accumulatorBi = Ular.toBigInteger(accumulator)
+            assert(prod.equals(accumulatorBi))
+            val prodBitLength = prod.bitLength()
+            val prodDwordCount = (prodBitLength + 63) / 64
+            val frac = prod.and(ONE.shiftLeft(shift).subtract(ONE))
+
+            if (! (prodDwordCount <= accDwordCount)) {
+                println("dividend:${div} pow10:${pow10}")
+                println("prodDwordCount:$prodDwordCount accDwordCount:$accDwordCount")
+            }
+            assert(prodDwordCount <= accDwordCount)
+            val quot5x2 = prod.shiftRight(shift) // the quotient*2 to get rounding bit
+            val quot5x2BitLength = quot5x2.bitLength()
+            val quot5x2DwordLength = (quot5x2BitLength + 63) / 64
+            assert(quot5x2DwordLength <= quotDwordCount)
+            //println("$div / 10**${tc.pow10} ==> quotRounded:$quotRounded")
+            val quot5x2Lo2Bits = quot5x2.and(THREE).toInt()
+            val residue =
+                if (firstLoStickyBits == 0 && frac < biMul) {
+                    if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
+                } else {
+                    BIAS_TRUNC
+                }
+            val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
+
+            val inexact = residue != EXACT
+            val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
+            val biasHalfUlp = residue.halfUlpBias(effectiveRoundingDirection, lsbIsOdd)
+            val biBiasHalfUlp = biMap[biasHalfUlp.toInt()]
+
+            val quotPlusHalfUlp = quot5x2.add(biBiasHalfUlp)
+            val quotRounded = quotPlusHalfUlp.shiftRight(1)
+            q.set(quotRounded)
+            ctx.setInexact(inexact)
+        }
+
+        private fun _divPow10_miguel3(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
+                                      pow10:Int, sign:Boolean, ctx:Decimal128Context) {
+            require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
+            require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
+
+            val index = indexOf(xDigitCount, pow10)
+            val paramsIndex = INDEXES[index]
+            if (paramsIndex == 0) {
+                //println("don't forget to check for rounding in this case")
+                throw RuntimeException("why am I here?")
+            }
+            val descriptor = PARAMS[paramsIndex].toInt()
+            val mulDwordCount = unpackMulDwordCount(descriptor)
+            val mulDigitCount = unpackMulDigitCount(descriptor)
+            val accDwordCount = unpackAccDwordCount(descriptor)
+            val shift = unpackShift(descriptor)
+            val quotDwordCount = unpackQuotDwordCount(descriptor)
+            val m0 = PARAMS[paramsIndex + 1]
+            val m1 = if (mulDwordCount >= 2) PARAMS[paramsIndex + 2] else 0L
+            val m2 = if (mulDwordCount >= 3) PARAMS[paramsIndex + 3] else 0L
+            val m3 = if (mulDwordCount >= 4) PARAMS[paramsIndex + 4] else 0L
+            val m4 = if (mulDwordCount >= 5) PARAMS[paramsIndex + 5] else 0L
+            val biMul = Ular.toBigInteger(m4, m3, m2, m1, m0)
+
+            val pow10MinusOne = pow10 - 1
+            // this is be a bit mask or zero of pow10 == 1
+            val pow10MinusOneNonZeroMask = (-pow10MinusOne shr 31).toLong()
+            val stickyBitsPow2 = x0 and pow10MinusOneNonZeroMask and ((1L shl pow10MinusOne) - 1)
+
+            val d0 = ((x1 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x0 ushr pow10MinusOne)
+            val d1 = ((x2 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x1 ushr pow10MinusOne)
+            val d2 = ((x3 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x2 ushr pow10MinusOne)
+            val d3 = (x3 ushr pow10MinusOne)
+
+            val div = Ular.toBigInteger(x3, x2, x1, x0)
+
+            val accumulator = LongArray(accDwordCount)
+            Ular.mul(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0)
+
+            val firstLoStickyBitsY = if (pow10 == 1) 0L else div.and(ONE.shiftLeft(pow10-1).subtract(ONE)).toLong()
+            assert(stickyBitsPow2.equals(firstLoStickyBitsY))
+
+            val firstLoStickyBits = if (pow10 == 1 || div.and(ONE.shiftLeft(pow10-1).subtract(ONE)).equals(ZERO)) 0 else 1
+            if (firstLoStickyBits == 0)
+                assert(stickyBitsPow2 == 0L)
+            else
+                assert(stickyBitsPow2 != 0L)
 
             val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
 

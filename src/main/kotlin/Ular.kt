@@ -9,6 +9,7 @@ import com.decimal128.UlarMul.Companion.ularMul3
 import com.decimal128.UlarMul.Companion.ularMul2
 import com.decimal128.UlarMul.Companion.ularMul1
 import java.lang.Long.compareUnsigned
+import java.lang.Long.numberOfLeadingZeros
 
 class Ular {
     companion object {
@@ -176,26 +177,37 @@ class Ular {
         }
 
         fun shiftRight(x:LongArray, xOff:Int, xLen:Int, bitCount:Int) {
-            val wordShift = bitCount ushr 6
-            val bitShift = bitCount and ((1 shl 6) - 1)
-            if (wordShift >= xLen) {
+            val dwordShift = bitCount ushr 6
+            val innerShift = bitCount and ((1 shl 6) - 1)
+            if (dwordShift >= xLen) {
                 for (i in xOff..<xOff + xLen)
                     x[i] = 0L
                 return
             }
-            val newLen = xLen - wordShift
-            if (wordShift > 0) {
+            val newLen = xLen - dwordShift
+            if (dwordShift > 0) {
                 for (i in 0..<newLen)
-                    x[xOff + i] = x[xOff + i + wordShift]
+                    x[xOff + i] = x[xOff + i + dwordShift]
                 for (i in newLen..<xLen)
                     x[xOff + i] = 0L
             }
-            if (bitShift > 0) {
+            if (innerShift > 0) {
                 val last = newLen - 1
                 for (i in 0..<last)
-                    x[xOff + i] = (x[xOff + i] ushr bitShift) or (x[xOff + i + 1] shl (64 - bitShift))
-                x[xOff + last] = x[xOff + last] ushr bitShift
+                    x[xOff + i] = (x[xOff + i] ushr innerShift) or (x[xOff + i + 1] shl (64 - innerShift))
+                x[xOff + last] = x[xOff + last] ushr innerShift
             }
+        }
+
+        fun bitLength(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) : Int {
+            for (i in (xLen-1) downTo 0 ) {
+                val xI = x[xOff + i]
+                if (xI != 0L) {
+                    val bitLength = (i shl 6) - numberOfLeadingZeros(xI)
+                    return bitLength
+                }
+            }
+            return 0
         }
 
         fun getBit(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) : Int {
