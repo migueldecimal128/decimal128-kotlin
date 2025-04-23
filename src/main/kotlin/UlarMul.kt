@@ -100,10 +100,13 @@ class UlarMul {
             val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
             z[zOff + i] = z3
             ++i
-            val (carry4, z4) = sumU64(pp31_1, carry3)
-            z[zOff + i] = z4
-            ++i
-            require(carry4 == 0L)
+            //val (carry4, z4) = sumU64(pp31_1, carry3)
+            //require(carry4 == 0L)
+            val z4 = pp31_1 + carry3
+            if (z4 != 0L) {
+                z[zOff + i] = z4
+                ++i
+            }
             while (i < zLen) {
                 z[zOff + i] = 0L
                 ++i
@@ -167,10 +170,13 @@ class UlarMul {
             val (carry2, z2) = sumU64(pp21_2, pp20_1, pp11_1, carry1)
             z[zOff + i] = z2
             ++i
-            val (carry3, z3) = sumU64(pp21_1, carry2)
-            z[zOff + i] = z3
-            ++i
-            require(carry3 == 0L)
+            //val (carry3, z3) = sumU64(pp21_1, carry2)
+            //require(carry3 == 0L)
+            val z3 = pp21_1 + carry2
+            if (z3 != 0L) {
+                z[zOff + i] = z3
+                ++i
+            }
             while (i < zLen) {
                 z[zOff + i] = 0L
                 ++i
@@ -214,10 +220,13 @@ class UlarMul {
             val (carry1, z1) = sumU64(pp11_2, pp10_1, pp01_1, carry_0)
             z[zOff + i] = z1
             ++i
-            val (carry2, z2) = sumU64(pp11_1, carry1)
-            z[zOff + i] = z2
-            ++i
-            require(carry2 == 0L)
+            //val (carry2, z2) = sumU64(pp11_1, carry1)
+            //require(carry2 == 0L)
+            val z2 = pp11_1 + carry1
+            if (z2 != 0L) {
+                z[zOff + i] = z2
+                ++i
+            }
             while (i < zLen) {
                 z[zOff + i] = 0L
                 ++i
@@ -246,10 +255,13 @@ class UlarMul {
                 carry_0 = carry0
                 ++i
             }
-            val (carry1, z1) = sumU64(pp01_1, carry_0)
-            z[zOff + i] = z1
-            ++i
-            require(carry1 == 0L)
+            //val (carry1, z1) = sumU64(pp01_1, carry_0)
+            //require(carry1 == 0L)
+            val z1 = pp01_1 + carry_0
+            if (z1 != 0L) {
+                z[zOff + i] = z1
+                ++i
+            }
             while (i < zLen) {
                 z[zOff + i] = 0L
                 ++i

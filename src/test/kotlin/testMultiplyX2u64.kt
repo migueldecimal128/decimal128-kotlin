@@ -7,6 +7,8 @@ import java.util.Random
 
 class testMultiplyX2u64 {
 
+    val verbose = false
+
     fun multiplyX2_oldNames2(
         product: LongArray, productOff: Int,
         multiplicand: LongArray, multiplicandOff: Int, multiplicandLen: Int,

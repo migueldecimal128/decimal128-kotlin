@@ -4,6 +4,10 @@ import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
 import com.decimal128.UlarMul.Companion.ularMul
+import com.decimal128.UlarMul.Companion.ularMul4
+import com.decimal128.UlarMul.Companion.ularMul3
+import com.decimal128.UlarMul.Companion.ularMul2
+import com.decimal128.UlarMul.Companion.ularMul1
 import java.lang.Long.compareUnsigned
 
 class Ular {
@@ -144,6 +148,18 @@ class Ular {
             require(carry == 0L)
         }
 
+        fun mul(z:LongArray, x: LongArray, xOff:Int, xLen:Int, y3:Long, y2:Long, y1:Long, y0:Long) {
+            val zOff = 0
+            val zLen = z.size
+            when {
+                (y3 != 0L) -> ularMul4(z, zOff, zLen, x, xOff, xLen, y3, y2, y1, y0)
+                (y2 != 0L) -> ularMul3(z, zOff, zLen, x, xOff, xLen, y2, y1, y0)
+                (y1 != 0L) -> ularMul2(z, zOff, zLen, x, xOff, xLen, y1, y0)
+                (y0 != 0L) -> ularMul1(z, zOff, zLen, x, xOff, xLen, y0)
+                else -> Ular.setZero(z, zOff, zLen)
+            }
+        }
+
         fun mul(z:LongArray, x: LongArray, y:LongArray) {
             mul(z, 0, z.size, x, 0, x.size, y, 0, y.size)
         }
@@ -155,11 +171,11 @@ class Ular {
                 ularMul(z, zOff, zLen, y, yOff, yLen, x, xOff, xLen)
         }
 
-        fun mutateShiftRight(x:LongArray, bitCount:Int) {
-            mutateShiftRight(x, 0, x.size, bitCount)
+        fun shiftRight(x:LongArray, bitCount:Int) {
+            shiftRight(x, 0, x.size, bitCount)
         }
 
-        fun mutateShiftRight(x:LongArray, xOff:Int, xLen:Int, bitCount:Int) {
+        fun shiftRight(x:LongArray, xOff:Int, xLen:Int, bitCount:Int) {
             val wordShift = bitCount ushr 6
             val bitShift = bitCount and ((1 shl 6) - 1)
             if (wordShift >= xLen) {
@@ -180,6 +196,52 @@ class Ular {
                     x[xOff + i] = (x[xOff + i] ushr bitShift) or (x[xOff + i + 1] shl (64 - bitShift))
                 x[xOff + last] = x[xOff + last] ushr bitShift
             }
+        }
+
+        fun getBit(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) : Int {
+            val dwordIndex = bitIndex ushr 6
+            if (dwordIndex >= xLen)
+                return 0
+            val dword = x[xOff + dwordIndex]
+            val shifted = dword ushr (bitIndex and 0x3F)
+            val bit = shifted.toInt() and 1
+            return bit
+        }
+
+        fun setBit(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) {
+            val dwordIndex = bitIndex ushr 6
+            require(dwordIndex < xLen)
+            val dword = x[xOff + dwordIndex]
+            val shifted = 1L shl (bitIndex and 0x3F)
+            x[xOff + dwordIndex] = dword or shifted
+        }
+
+        fun addOneShifted(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) {
+            var dwordIndex = bitIndex ushr 6
+            require(dwordIndex < xLen)
+            var dword = x[xOff + dwordIndex]
+            val shifted = 1L shl (bitIndex and 0x3F)
+            var sum = dword + shifted
+            x[xOff + dwordIndex] = sum
+            while (compareUnsigned(sum, dword) <= 0) {
+                ++dwordIndex
+                if (dwordIndex == xLen)
+                    throw RuntimeException("overflow")
+                dword = x[xOff + dwordIndex]
+                sum = dword + 1
+                x[xOff + dwordIndex] = sum
+            }
+        }
+
+        fun increment(x:LongArray, xOff:Int, xLen:Int) {
+            for (i in xOff..<xOff+xLen) {
+                val dword = x[i]
+                val sum = dword + 1
+                x[xOff] = sum
+                if (compareUnsigned(sum, dword) > 0)
+                    return
+            }
+            throw RuntimeException("overflow")
         }
 
         fun compare(x:LongArray, y:LongArray) = compare(x, 0, x.size, y, 0, y.size)

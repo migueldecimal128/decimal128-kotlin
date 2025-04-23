@@ -59,7 +59,7 @@ class TestUlarShiftRight {
         val ularExpected = Ular.from(expected)
 
         val ularA = Ular.from(biA)
-        Ular.mutateShiftRight(ularA, bitShift)
+        Ular.shiftRight(ularA, bitShift)
 
         val observed = Ular.toBigInteger(ularA)
         if (! observed.equals(expected)) {
@@ -69,7 +69,7 @@ class TestUlarShiftRight {
         val bOff = random.nextInt(0, 4)
         val b = LongArray(bOff + bLen + random.nextInt(0, 4))
         Ular.set(b, bOff, bLen, biA)
-        Ular.mutateShiftRight(b, bOff, bLen, bitShift)
+        Ular.shiftRight(b, bOff, bLen, bitShift)
         val observedB = Ular.toBigInteger(b, bOff, bLen)
         if (! observedB.equals(expected)) {
             throw RuntimeException("$biA shr $bitShift = expected:$expected observedB:$observedB")

@@ -8,6 +8,8 @@ import java.math.BigInteger.*
 class GenerateRmp10Correctly {
     companion object {
 
+        val verbose = false
+
         // there can be errors here, but we are specifically testing and this will do for starters
         val rho = Math.log(10.0) / Math.log(2.0)
         val FIVE = 5.toBigInteger()
@@ -171,11 +173,13 @@ class GenerateRmp10Correctly {
         var verify = false
         y = calcTheoreticalMinY10(q, x)
         verify = verifyY(q, x, y)
-        println("q:$q x:$x => y:$y verify:$verify")
+        if (verbose)
+            println("q:$q x:$x => y:$y verify:$verify")
 
         y -= 1
         verify = verifyY(q, x, y)
-        println("q:$q x:$x => y:$y verify:$verify")
+        if (verbose)
+            println("q:$q x:$x => y:$y verify:$verify")
 
 
     }
@@ -186,7 +190,8 @@ class GenerateRmp10Correctly {
             for (xPow10 in 1..<Math.min(qDigitCount, 45)) {
                 val theoreticalY10 = calcTheoreticalMinY10(qDigitCount, xPow10)
                 val minY10 = calcMinY10(qDigitCount, xPow10)
-                println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY10 -> min:$minY10")
+                if (verbose)
+                    println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY10 -> min:$minY10")
             }
     }
 }

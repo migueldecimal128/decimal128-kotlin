@@ -7,6 +7,8 @@ import java.util.Random
 
 class testMultiplyX2 {
 
+    val verbose = false
+
     fun multiplyX2(
         product:IntArray, productOff:Int,
         multiplicand:IntArray, multiplicandOff:Int, multiplicandLen:Int,

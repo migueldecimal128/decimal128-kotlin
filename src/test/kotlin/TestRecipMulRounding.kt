@@ -11,6 +11,8 @@ import java.io.OutputStream
 
 class TestRecipMulRounding {
 
+    val verbose = false
+
     class RecipMulParams(val dividendDigitCount: Int, val divisorPow10: Int, val mul:BigInteger, val shift: Int, val biDividend: BigInteger, val biDivisor: BigInteger) {
         val accBitCount = biDividend.multiply(mul).bitLength()
         val quotBitCount = biDividend.multiply(mul).shiftRight(shift).bitLength()
@@ -48,7 +50,8 @@ class TestRecipMulRounding {
         val minDivisorPow10 = 1
         val maxDivisorPow10 = 78-34
         val tableSize = (maxQuotDigitCount - minQuotDigitCount + 1) * (maxDivisorPow10 - minDivisorPow10 + 1)
-        println("maxQuotDigitCount:$maxQuotDigitCount maxDivisionPow10:$maxDivisorPow10 sparseTableSize:$tableSize")
+        if (verbose)
+            println("maxQuotDigitCount:$maxQuotDigitCount maxDivisionPow10:$maxDivisorPow10 sparseTableSize:$tableSize")
         var denseTableSize = 0
         var zeroTableCount = 0
         var maxMulDwordCount = 0; var maxMulDwordCount5 = 0
@@ -66,11 +69,13 @@ class TestRecipMulRounding {
         var noFractionalShiftCount5 = 0
 
         var strIndex = ""
-        println("val minQuotDigitCount = $minQuotDigitCount")
-        println("val maxQuotDigitCount = $maxQuotDigitCount")
-        println("val minDivisorPow10 = $minDivisorPow10")
-        println("val maxDivisorPow10 = $maxDivisorPow10")
-        println("val recipMultIndexTable = shortArrayOf(")
+        if (verbose) {
+            println("val minQuotDigitCount = $minQuotDigitCount")
+            println("val maxQuotDigitCount = $maxQuotDigitCount")
+            println("val minDivisorPow10 = $minDivisorPow10")
+            println("val maxDivisorPow10 = $maxDivisorPow10")
+            println("val recipMultIndexTable = shortArrayOf(")
+        }
         for (dividendDigitCount in minQuotDigitCount..maxQuotDigitCount) {
             for (divisorPow10 in 1..maxDivisorPow10) {
                 val recipMulParams = generateRecipMultParams(dividendDigitCount, divisorPow10)
@@ -121,9 +126,11 @@ class TestRecipMulRounding {
                 }
             }
         }
-        println()
-        println("val assertRecipMultIndexTableSize = run { assert(recipMultIndexTable.size == $tableSize) }")
-        println()
+        if (verbose) {
+            println()
+            println("val assertRecipMultIndexTableSize = run { assert(recipMultIndexTable.size == $tableSize) }")
+            println()
+        }
 
         val out = BufferedOutputStream(FileOutputStream(File("src/main/resources/recipMultPow10.bin")))
         dumpFileHeader(out, minQuotDigitCount, maxQuotDigitCount, minDivisorPow10, maxDivisorPow10)

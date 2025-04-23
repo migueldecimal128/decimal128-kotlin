@@ -8,6 +8,8 @@ import java.util.Random
 
 class testMultiplyX4u64 {
 
+    val verbose = false
+
     fun multiplyX3_oldNames(
                    product: LongArray, productOff: Int,
                    multiplicand: LongArray, multiplicandOff: Int, multiplicandLen: Int,

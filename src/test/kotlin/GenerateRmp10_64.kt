@@ -8,6 +8,8 @@ import java.math.BigInteger.*
 class GenerateRmp10_64 {
     companion object {
 
+        val verbose = false
+
         // there can be errors here, but we are specifically testing and this will do for starters
         val rho = Math.log(10.0) / Math.log(2.0)
         val FIVE = 5.toBigInteger()
@@ -169,15 +171,18 @@ class GenerateRmp10_64 {
     fun test(q: Int, x: Int) {
         val yTheory = calcTheoreticalMinY10(q, x)
         val verifyTheory = verifyY10(q, x, yTheory)
-        println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
+        if (verbose)
+            println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
 
         val yMin = calcMinY10(q, x)
         val verifyYMin = verifyY10(q, x, yMin)
-        println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
+        if (verbose)
+            println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
 
         val y64 = ((yMin + 63)/64)*64
         val verify64 = verifyY10(q, x, y64)
-        println("q:$q x:$x => yTheory:$yTheory yMin:$yMin verifyYMin:$verifyYMin y64:$y64 verifyY64:$verify64")
+        if (verbose)
+            println("q:$q x:$x => yTheory:$yTheory yMin:$yMin verifyYMin:$verifyYMin y64:$y64 verifyY64:$verify64")
 
     }
 
@@ -188,7 +193,8 @@ class GenerateRmp10_64 {
                 val theoreticalY10 = calcTheoreticalMinY10(qDigitCount, xPow10)
                 val minY10 = calcMinY10(qDigitCount, xPow10)
                 val y64 = ((minY10+63)/64)*64
-                println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY10 -> min:$minY10 -> y64:$y64")
+                if (verbose)
+                    println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY10 -> min:$minY10 -> y64:$y64")
             }
     }
 }

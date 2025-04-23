@@ -8,6 +8,8 @@ import java.util.Random
 
 class testMultiplyX1 {
 
+    val verbose = false
+
     fun multiplyX1(
         product:IntArray, productOff:Int,
         multiplicand:IntArray, multiplicandOff:Int, multiplicandLen:Int,
@@ -58,9 +60,11 @@ class testMultiplyX1 {
         val biMultiplicand = biFromArray(tc.multiplicand)
         val biMultiplier = BigInteger(tc.multiplier.toULong().toString())
         val biProduct = biFromArray(product)
-        println("product:$biProduct multiplicand:$biMultiplicand multiplier ${tc.multiplier}")
+        if (verbose)
+            println("product:$biProduct multiplicand:$biMultiplicand multiplier ${tc.multiplier}")
         val expected = biMultiplicand.multiply(biMultiplier)
-        println("expected:$expected")
+        if (verbose)
+            println("expected:$expected")
         assert(expected.equals(biProduct))
     }
 
@@ -90,7 +94,8 @@ class testMultiplyX1 {
         val biProd = biFromArray(prod, prodOff, multiplicandLen + 1)
 
         val expected = biMultiplicand.multiply(BigInteger((multiplier.toLong() and 0xFFFFFFFFL).toString()))
-        println("expected:$expected biProd:$biProd")
+        if (verbose)
+            println("expected:$expected biProd:$biProd")
         assert(expected.equals(biProd))
     }
 }

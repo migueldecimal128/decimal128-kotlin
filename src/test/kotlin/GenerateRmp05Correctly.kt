@@ -8,6 +8,8 @@ import kotlin.math.ceil
 class GenerateRmp05Correctly {
     companion object {
 
+        val verbose = false
+
         // there can be errors here, but we are specifically testing and this will do for starters
         val rho = Math.log(10.0) / Math.log(2.0)
         val FIVE = 5.toBigInteger()
@@ -20,7 +22,8 @@ class GenerateRmp05Correctly {
 
         fun calcMinY05(qDigitCount:Int, xPow10:Int) : Int {
             val theoreticalMinY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
-            println("$qDigitCount $xPow10 => theory:$theoreticalMinY05")
+            if (verbose)
+                println("$qDigitCount $xPow10 => theory:$theoreticalMinY05")
             if (! verifyY05(qDigitCount, xPow10, theoreticalMinY05))
                 throw RuntimeException("?que?")
             var minY05 = theoreticalMinY05
@@ -195,11 +198,13 @@ class GenerateRmp05Correctly {
     fun test(q: Int, x: Int) {
         val yTheory = calcTheoreticalMinY05(q, x)
         val verifyTheory = verifyY05(q, x, yTheory)
-        println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
+        if (verbose)
+            println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
 
         val yMin = calcMinY05(q, x)
         val verifyYMin = verifyY05(q, x, yMin)
-        println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
+        if (verbose)
+            println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
 
 
     }

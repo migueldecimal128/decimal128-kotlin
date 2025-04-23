@@ -7,6 +7,8 @@ import java.util.Random
 
 class testMultiplyX3u64 {
 
+    val verbose = false
+
     fun multiplyX3_worksFor2(
         product: LongArray, productOff: Int,
         multiplicand: LongArray, multiplicandOff: Int, multiplicandLen: Int,
@@ -207,6 +209,7 @@ class testMultiplyX3u64 {
         multiplyX3(product, 0, tc.multiplicand, 0, tc.multiplicand.size, tc.multiplierDw2, tc.multiplierDw1, tc.multiplierDw0)
         val biProduct = biFromArray(product)
         //if (! expected.equals(biProduct))
+        if (verbose)
             println("expected:$expected observed:$biProduct multiplicand:$biMultiplicand multiplier $biMultiplier")
         assert(expected.equals(biProduct))
     }

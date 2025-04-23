@@ -7,6 +7,8 @@ import java.util.Random
 
 class testMultiplyX3u32_noFMA {
 
+    val verbose = false
+
     fun sumU32(wA: Int, wB: Int) : Pair<Int, Int> {
         val sum = wA + wB
         val carry = if ((sum xor Int.MIN_VALUE) < (wA xor Int.MIN_VALUE)) 1 else 0
@@ -302,6 +304,7 @@ class testMultiplyX3u32_noFMA {
         multiplyX3(expectedAsArray, product, 0, tc.multiplicand, 0, tc.multiplicand.size, tc.multiplierDw2, tc.multiplierDw1, tc.multiplierDw0)
         val biProduct = biFromArray(product)
         //if (! expected.equals(biProduct))
+        if (verbose)
             println("expected:$expected observed:$biProduct multiplicand:$biMultiplicand multiplier $biMultiplier")
         assert(expected.equals(biProduct))
     }

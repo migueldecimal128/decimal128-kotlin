@@ -8,6 +8,8 @@ import kotlin.math.ceil
 class GenerateRmp05_64 {
     companion object {
 
+        val verbose = false
+
         // there can be errors here, but we are specifically testing and this will do for starters
         val rho = Math.log(10.0) / Math.log(2.0)
         val FIVE = 5.toBigInteger()
@@ -20,7 +22,8 @@ class GenerateRmp05_64 {
 
         fun calcMinY05(qDigitCount:Int, xPow10:Int) : Int {
             val theoreticalMinY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
-            println("$qDigitCount $xPow10 => theory:$theoreticalMinY05")
+            if (verbose)
+                println("$qDigitCount $xPow10 => theory:$theoreticalMinY05")
             if (! verifyY05(qDigitCount, xPow10, theoreticalMinY05))
                 throw RuntimeException("?que?")
             var minY05 = theoreticalMinY05
@@ -195,11 +198,13 @@ class GenerateRmp05_64 {
     fun test(q: Int, x: Int) {
         val yTheory = calcTheoreticalMinY05(q, x)
         val verifyTheory = verifyY05(q, x, yTheory)
-        println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
+        if (verbose)
+            println("q:$q x:$x => yTheory:$yTheory verifyTheory:$verifyTheory")
 
         val yMin = calcMinY05(q, x)
         val verifyYMin = verifyY05(q, x, yMin)
-        println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
+        if (verbose)
+            println("q:$q x:$x => y:$yTheory yMin:$yMin verifyYMin:$verifyYMin")
 
 
     }
@@ -225,15 +230,17 @@ class GenerateRmp05_64 {
                 val theoreticalY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
                 val minY05 = calcMinY05(qDigitCount, xPow10)
                 val min64 = ((minY05 + 63)/64)*64
-                println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY05 -> min:$minY05 -> min64:$min64")
+                //println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY05 -> min:$minY05 -> min64:$min64")
                 maxMin64 = Math.max(maxMin64, min64)
                 val fivePowNegXScaled = calcFivePowNegXScaled(xPow10, min64)
                 if (fivePowNegXScaled > maxFivePowNegXScaled)
                     maxFivePowNegXScaled = fivePowNegXScaled
             }
         }
-        println("maxMin64:$maxMin64")
-        println("maxFivePowNegXScaled:$maxFivePowNegXScaled bitLength:${maxFivePowNegXScaled.bitLength()}")
+        if (verbose) {
+            println("maxMin64:$maxMin64")
+            println("maxFivePowNegXScaled:$maxFivePowNegXScaled bitLength:${maxFivePowNegXScaled.bitLength()}")
+        }
     }
 }
 

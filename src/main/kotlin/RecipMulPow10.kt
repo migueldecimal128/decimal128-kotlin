@@ -425,7 +425,7 @@ class RecipMulPow10 {
 
         private fun _divPow10(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
                               pow10:Int, sign:Boolean, ctx:Decimal128Context) =
-            _divPow10_miguel1(q, xDigitCount, x3, x2, x1, x0, pow10, sign, ctx)
+            _divPow10_miguel2(q, xDigitCount, x3, x2, x1, x0, pow10, sign, ctx)
 
 
         private fun _divPow10_bi(q:Coeff, xDigitCount:Int, x3:Long, x2:Long, x1:Long, x0:Long,
@@ -592,12 +592,20 @@ class RecipMulPow10 {
             val m4 = if (mulDwordCount >= 5) PARAMS[paramsIndex + 5] else 0L
             val biMul = Ular.toBigInteger(m4, m3, m2, m1, m0)
 
-            val div = Ular.toBigInteger(x3, x2, x1, x0)
-
             val pow10MinusOne = pow10 - 1
             // this will be a bit mask or zero of pow10 == 1
             val pow10MinusOneNonZeroMask = (-pow10MinusOne shr 31).toLong()
             val firstLoStickyBitsX = x0 and pow10MinusOneNonZeroMask and ((1L shl pow10MinusOne) - 1)
+
+            val d0 = ((x1 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x0 ushr pow10MinusOne)
+            val d1 = ((x2 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x1 ushr pow10MinusOne)
+            val d2 = ((x3 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x2 ushr pow10MinusOne)
+            val d3 = (x3 ushr pow10MinusOne)
+
+            val div = Ular.toBigInteger(x3, x2, x1, x0)
+
+            val accumulator = LongArray(accDwordCount)
+            Ular.mul(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0)
 
             val firstLoStickyBitsY = if (pow10 == 1) 0L else div.and(ONE.shiftLeft(pow10-1).subtract(ONE)).toLong()
             assert(firstLoStickyBitsX.equals(firstLoStickyBitsY))
@@ -608,13 +616,11 @@ class RecipMulPow10 {
             else
                 assert(firstLoStickyBitsX != 0L)
 
-            val d0 = ((x1 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x0 ushr pow10MinusOne)
-            val d1 = ((x2 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x1 ushr pow10MinusOne)
-            val d2 = ((x3 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x2 ushr pow10MinusOne)
-            val d3 = (x3 ushr pow10MinusOne)
             val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
 
             val prod = dividend5.multiply(biMul)
+            val accumulatorBi = Ular.toBigInteger(accumulator)
+            assert(prod.equals(accumulatorBi))
             val prodBitLength = prod.bitLength()
             val prodDwordCount = (prodBitLength + 63) / 64
             val frac = prod.and(ONE.shiftLeft(shift).subtract(ONE))

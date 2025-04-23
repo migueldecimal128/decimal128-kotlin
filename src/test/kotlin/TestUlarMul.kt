@@ -13,6 +13,7 @@ class TestUlarMul {
     }
 
     val cases = arrayOf(
+        TC("340282366920938463463374607431768211456", "340282366920938463463374607431768211456"),
         TC(BigInteger.ONE.shiftLeft(64).add(BigInteger.TWO), 3.toBigInteger().shiftLeft(64).add(4.toBigInteger())),
         TC("23552335528420943652", "34522815225662007740"),
         TC("0", "1"),
@@ -31,11 +32,11 @@ class TestUlarMul {
     @Test
     fun testBinaryBoundaries() {
         val quads = longArrayOf(
-            -1, -1, -1, -1,
-            -1, 0, 0,0,
+            -2, -1, -1, -1,
+            -1, 0, 0, 0,
             -1, -1, 0, 0,
             -1, -1, -1, 0,
-            -1, -1, -1, -1,
+            -2, -1, -1, -1,
             1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,

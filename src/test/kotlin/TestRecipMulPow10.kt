@@ -10,6 +10,8 @@ import com.decimal128.RecipMulPow10.Companion.getMultShift
 
 class TestRecipMulPow10 {
 
+    val verbose = false
+
     class TC(val biA: BigInteger, val pow10: Int) {
         constructor(a: String, b: Int) : this(BigInteger(a), b)
 
@@ -92,7 +94,8 @@ class TestRecipMulPow10 {
 
         val coeffA = Coeff(case.biA)
         val pow10 = case.pow10
-        println("$coeffA (${coeffA.digitCount}) divMod 10**$pow10 = expected:${case.biQuotient} ${case.biRemainder}")
+        if (verbose)
+            println("$coeffA (${coeffA.digitCount}) divMod 10**$pow10 = expected:${case.biQuotient} ${case.biRemainder}")
         val coeffQ = Coeff()
         val coeffR = Coeff()
 
@@ -105,7 +108,8 @@ class TestRecipMulPow10 {
         val digitCount = case.biA.toString().length
         val (mult, shift) = getMultShift(digitCount, case.pow10)
         val recipQuotient = case.biA.multiply(mult).shiftRight(shift)
-        println("mult:$mult shift:$shift")
+        if (verbose)
+            println("mult:$mult shift:$shift")
         if (shift >= 0)
             assertEquals(case.biQuotient, recipQuotient)
 
