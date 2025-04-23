@@ -46,6 +46,8 @@ class Ular {
                 z[zOff + i] = 0L
         }
 
+        fun set(z:LongArray, x:LongArray) = set(z, 0, z.size, x, 0, x.size)
+
         fun set(z:LongArray, zOff:Int, zLen:Int, x:LongArray, xOff:Int, xLen:Int) {
             val minLen = min(zLen, xLen)
             var i = 0
@@ -199,16 +201,39 @@ class Ular {
             }
         }
 
-        fun bitLength(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) : Int {
+        fun bitLength(x:LongArray) = bitLength(x, 0, x.size)
+
+        fun bitLength(x:LongArray, xOff:Int, xLen:Int) : Int {
             for (i in (xLen-1) downTo 0 ) {
                 val xI = x[xOff + i]
                 if (xI != 0L) {
-                    val bitLength = (i shl 6) - numberOfLeadingZeros(xI)
+                    val bitLength = ((i + 1) shl 6) - numberOfLeadingZeros(xI)
                     return bitLength
                 }
             }
             return 0
         }
+
+        fun get2Bits(x:LongArray, bitIndex:Int) = get2Bits(x, 0, x.size, bitIndex)
+
+        fun get2Bits(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) : Int {
+            val dwordIndex = bitIndex ushr 6
+            if (dwordIndex >= xLen)
+                return 0
+            val dword = x[xOff + dwordIndex]
+            val innerIndex = bitIndex and 0x3F
+            val bitsUnmasked =
+                if (innerIndex < 63 || dwordIndex == xLen-1) {
+                    dword ushr innerIndex
+                } else {
+                    val dwordUp = x[xOff + dwordIndex + 1]
+                    ((dwordUp shl 1) or (dword ushr 63)) and 0x03
+                }
+            val bits = bitsUnmasked.toInt() and 0x03
+            return bits
+        }
+
+        fun getBit(x:LongArray, bitIndex:Int) = getBit(x, 0, x.size, bitIndex)
 
         fun getBit(x:LongArray, xOff:Int, xLen:Int, bitIndex:Int) : Int {
             val dwordIndex = bitIndex ushr 6
@@ -266,6 +291,8 @@ class Ular {
             return ular
         }
 
+        fun mutateMask(x:LongArray, maskBitLen:Int) = mutateMask(x, 0, x.size, maskBitLen)
+
         fun mutateMask(x:LongArray, xOff:Int, xLen:Int, maskBitLen:Int) {
             val maskDwordLen = (maskBitLen + 63) ushr 6
             val innerLen = maskBitLen and 0x3F
@@ -277,6 +304,8 @@ class Ular {
                 x[lastIndex] = x[lastIndex] and mask
             }
         }
+
+        fun compare(x:LongArray, y:LongArray, yOff:Int, yLen:Int) = compare(x, 0, x.size, y, yOff, yLen)
 
         fun compare(x:LongArray, y:LongArray) = compare(x, 0, x.size, y, 0, y.size)
 
@@ -326,6 +355,22 @@ class Ular {
                 mask = -1
             }
             return 0
+        }
+
+        fun equals(x:LongArray, bi:BigInteger) = equals(x, 0, x.size, bi)
+
+        fun equals(x:LongArray, xOff:Int, xLen:Int, bi:BigInteger) : Boolean {
+            val bitLength = bitLength(x, xOff, xLen)
+            if (bitLength != bi.bitLength())
+                return false
+            val nonZeroDwordLen = (bitLength + 63) ushr 6
+            for (i in 0..<nonZeroDwordLen) {
+                val xX = x[xOff + i]
+                val biX = bi.shiftRight(i * 64).toLong()
+                if (xX != biX)
+                    return false
+            }
+            return true
         }
 
         fun toBigInteger(x0:Long) : BigInteger {

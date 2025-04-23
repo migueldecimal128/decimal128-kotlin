@@ -694,38 +694,38 @@ class RecipMulPow10 {
             val accumulator = LongArray(accDwordCount)
             Ular.mul(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0)
 
-            val firstLoStickyBitsY = if (pow10 == 1) 0L else div.and(ONE.shiftLeft(pow10-1).subtract(ONE)).toLong()
-            assert(stickyBitsPow2.equals(firstLoStickyBitsY))
-
-            val firstLoStickyBits = if (pow10 == 1 || div.and(ONE.shiftLeft(pow10-1).subtract(ONE)).equals(ZERO)) 0 else 1
-            if (firstLoStickyBits == 0)
-                assert(stickyBitsPow2 == 0L)
-            else
-                assert(stickyBitsPow2 != 0L)
-
             val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
 
             val prod = dividend5.multiply(biMul)
-            val accumulatorBi = Ular.toBigInteger(accumulator)
-            assert(prod.equals(accumulatorBi))
-            val prodBitLength = prod.bitLength()
-            val prodDwordCount = (prodBitLength + 63) / 64
+
             val frac = prod.and(ONE.shiftLeft(shift).subtract(ONE))
 
-            if (! (prodDwordCount <= accDwordCount)) {
-                println("dividend:${div} pow10:${pow10}")
-                println("prodDwordCount:$prodDwordCount accDwordCount:$accDwordCount")
-            }
-            assert(prodDwordCount <= accDwordCount)
+            val fracUlar = LongArray(accDwordCount)
+            Ular.set(fracUlar, accumulator)
+            Ular.mutateMask(fracUlar, shift)
+            assert(Ular.equals(fracUlar, frac))
+
+            val oddAndRoundBits = Ular.get2Bits(accumulator, shift)
+
+            val cmpFracMul = frac.compareTo(biMul)
+            val ularCmpFracMul = Ular.compare(fracUlar, PARAMS, paramsIndex + 1, mulDwordCount)
+            assert(cmpFracMul == ularCmpFracMul)
+
             val quot5x2 = prod.shiftRight(shift) // the quotient*2 to get rounding bit
             val quot5x2BitLength = quot5x2.bitLength()
             val quot5x2DwordLength = (quot5x2BitLength + 63) / 64
             assert(quot5x2DwordLength <= quotDwordCount)
             //println("$div / 10**${tc.pow10} ==> quotRounded:$quotRounded")
             val quot5x2Lo2Bits = quot5x2.and(THREE).toInt()
+
+            assert(quot5x2Lo2Bits == oddAndRoundBits)
             val residue =
-                if (firstLoStickyBits == 0 && frac < biMul) {
-                    if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
+                if (stickyBitsPow2 == 0L) {
+                    if (cmpFracMul < 0) {
+                        if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
+                    } else {
+                        BIAS_TRUNC
+                    }
                 } else {
                     BIAS_TRUNC
                 }
