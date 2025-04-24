@@ -699,61 +699,16 @@ class RecipMulPow10 {
             val accumulator = LongArray(accDwordCount + 3)
             val residueX = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero)
 
-            val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
-
-            val prod = dividend5.multiply(biMul)
-
-            val frac = prod.and(ONE.shiftLeft(shift).subtract(ONE))
-
-            val fracUlar = LongArray(accDwordCount)
-            Ular.set(fracUlar, accumulator)
-            Ular.mutateMask(fracUlar, shift)
-            assert(Ular.equals(fracUlar, frac))
-
-            val oddAndRoundBits = Ular.get2Bits(accumulator, shift)
-
-            val cmpFracMul = frac.compareTo(biMul)
-            val ularCmpFracMul = Ular.reverseCompare(fracUlar, PARAMS, paramsIndex + 1, mulDwordCount)
-            assert(cmpFracMul == ularCmpFracMul)
-
-            val quot5x2 = prod.shiftRight(shift) // the quotient*2 to get rounding bit
-            val quot5x2BitLength = quot5x2.bitLength()
-            val quot5x2DwordLength = (quot5x2BitLength + 63) / 64
-            assert(quot5x2DwordLength <= quotDwordCount)
-            //println("$div / 10**${tc.pow10} ==> quotRounded:$quotRounded")
-            val quot5x2Lo2Bits = quot5x2.and(THREE).toInt()
-
-            assert(quot5x2Lo2Bits == oddAndRoundBits)
-            val residue =
-                if (stickyBitsPow2EqZero) {
-                    if (cmpFracMul < 0) {
-                        if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
-                    } else {
-                        BIAS_TRUNC
-                    }
-                } else {
-                    BIAS_TRUNC
-                }
-            val halfUlp = quot5x2.and(BigInteger.ONE).toLong()
-            val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
-
-            val inexact = residue != EXACT
+            Ular.shiftRight(accumulator, shift+1)
+            val quot5 = Ular.toBigInteger(accumulator)
+            val lsbIsOdd = quot5.toLong()
             val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
-            val biasHalfUlp = residue.halfUlpBias(effectiveRoundingDirection, lsbIsOdd)
-            val biBiasHalfUlp = biMap[biasHalfUlp]
-
-            val quotPlusHalfUlp = quot5x2.add(biBiasHalfUlp)
-            val quotRounded = quotPlusHalfUlp.shiftRight(1)
-            val roundUp = quotRounded > quot5x2.shiftRight(1)
-            q.set(quotRounded)
-
-            val quot5 = quot5x2.shiftRight(1)
             val ulpBias = residueX.ulpBias(effectiveRoundingDirection, lsbIsOdd)
             val quot5Rounded = if (ulpBias == 0L) quot5 else quot5.add(ONE)
 
-            assert(quotRounded.equals(quot5Rounded))
-
+            val inexact = residueX != EXACT
             ctx.setInexact(inexact)
+            q.set(quot5Rounded)
         }
 
     }
