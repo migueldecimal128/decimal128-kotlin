@@ -687,6 +687,7 @@ class RecipMulPow10 {
             // this is be a bit mask or zero of pow10 == 1
             val pow10MinusOneNonZeroMask = (-pow10MinusOne shr 31).toLong()
             val stickyBitsPow2 = x0 and pow10MinusOneNonZeroMask and ((1L shl pow10MinusOne) - 1)
+            val stickyBitsPow2EqZero = stickyBitsPow2 == 0L
 
             val d0 = ((x1 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x0 ushr pow10MinusOne)
             val d1 = ((x2 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x1 ushr pow10MinusOne)
@@ -696,7 +697,7 @@ class RecipMulPow10 {
             val div = Ular.toBigInteger(x3, x2, x1, x0)
 
             val accumulator = LongArray(accDwordCount + 3)
-            val fracCmpX = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift)
+            val (halfUlp, fracCmpX) = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero)
 
             val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
 
@@ -725,7 +726,7 @@ class RecipMulPow10 {
 
             assert(quot5x2Lo2Bits == oddAndRoundBits)
             val residue =
-                if (stickyBitsPow2 == 0L) {
+                if (stickyBitsPow2EqZero) {
                     if (cmpFracMul < 0) {
                         if ((quot5x2Lo2Bits and 1) == 0) EXACT else HALF
                     } else {

@@ -8,15 +8,15 @@ class UlarRecipMul {
 
         fun ularRecipMul4(z:LongArray,
                           m:LongArray, mOff:Int, mLen:Int,
-                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int) : Int {
-           return ularRecipMul4(z, 0, z.size, m, mOff, mLen, n3, n2, n1, n0, bitShift)
+                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Pair<Int, Int>  {
+           return ularRecipMul4(z, 0, z.size, m, mOff, mLen, n3, n2, n1, n0, bitShift, stickyBitsPow2EqZero)
         }
 
         fun ularRecipMul4(z:LongArray, zOff:Int, zLen:Int,
                           m:LongArray, mOff:Int, mLen:Int,
-                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int) : Int {
-            var remainingBitShiftInclRound = bitShift + 1
-            var roundBit = 0
+                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Pair<Int, Int> {
+            var remainingBitShiftInclHalfUlp = bitShift + 1
+            var halfUlpIsolated = 0L
             var fracCmp = 0
             assert((bitShift + 63/64) >= mLen)
 
@@ -62,18 +62,19 @@ class UlarRecipMul {
 
                 val (carry0, z0) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_0)
                 z[zOff + i] = z0
-                if (remainingBitShiftInclRound > 0) {
+                if (remainingBitShiftInclHalfUlp > 0) {
                     var mask = -1L
-                    if (remainingBitShiftInclRound <= 64) {
-                        val roundBitShift = remainingBitShiftInclRound - 1
-                        roundBit = (z0 ushr roundBitShift).toInt() and 1
-                        mask = (1L shl roundBitShift) - 1L
+                    if (remainingBitShiftInclHalfUlp <= 64) {
+                        val roundBitShift = remainingBitShiftInclHalfUlp - 1
+                        val halfUlpMask = 1L shl roundBitShift
+                        halfUlpIsolated = z0 and halfUlpMask
+                        mask = halfUlpMask - 1L
                     }
                     if (mask != 0L) {
                         val cmp = compareUnsigned((z0 and mask), mX)
                         fracCmp = if (cmp != 0) cmp else fracCmp
                     }
-                    remainingBitShiftInclRound -= 64
+                    remainingBitShiftInclHalfUlp -= 64
                 }
 
                 pp31_4 = pp31_3
@@ -104,69 +105,80 @@ class UlarRecipMul {
             }
             val (carry1, z1) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, carry_0)
             z[zOff + i] = z1
-            if (z1 != 0L && remainingBitShiftInclRound > 0) {
+            if (z1 != 0L && remainingBitShiftInclHalfUlp > 0) {
                 var mask = -1L
-                if (remainingBitShiftInclRound <= 64) {
-                    val roundBitShift = remainingBitShiftInclRound - 1
-                    roundBit = (z1 ushr roundBitShift).toInt() and 1
-                    mask = (1L shl roundBitShift) - 1L
+                if (remainingBitShiftInclHalfUlp <= 64) {
+                    val roundBitShift = remainingBitShiftInclHalfUlp - 1
+                    val halfUlpMask = 1L shl roundBitShift
+                    halfUlpIsolated = z1 and halfUlpMask
+                    mask = halfUlpMask - 1L
                 }
                 if ((z1 and mask) != 0L)
                     fracCmp = 1
             }
-            remainingBitShiftInclRound -= 64
+            remainingBitShiftInclHalfUlp -= 64
             ++i
             val (carry2, z2) = sumU64(pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
             z[zOff + i] = z2
-            if (z2 != 0L && remainingBitShiftInclRound > 0) {
+            if (z2 != 0L && remainingBitShiftInclHalfUlp > 0) {
                 var mask = -1L
-                if (remainingBitShiftInclRound <= 64) {
-                    val roundBitShift = remainingBitShiftInclRound - 1
-                    roundBit = (z2 ushr roundBitShift).toInt() and 1
-                    mask = (1L shl roundBitShift) - 1L
+                if (remainingBitShiftInclHalfUlp <= 64) {
+                    val roundBitShift = remainingBitShiftInclHalfUlp - 1
+                    val halfUlpMask = 1L shl roundBitShift
+                    halfUlpIsolated = z2 and halfUlpMask
+                    mask = halfUlpMask - 1L
                 }
                 if ((z2 and mask) != 0L)
                     fracCmp = 1
             }
-            remainingBitShiftInclRound -= 64
+            remainingBitShiftInclHalfUlp -= 64
             ++i
             val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
             z[zOff + i] = z3
-            if (z3 != 0L && remainingBitShiftInclRound > 0) {
+            if (z3 != 0L && remainingBitShiftInclHalfUlp > 0) {
                 var mask = -1L
-                if (remainingBitShiftInclRound <= 64) {
-                    val roundBitShift = remainingBitShiftInclRound - 1
-                    roundBit = (z3 ushr roundBitShift).toInt() and 1
-                    mask = (1L shl roundBitShift) - 1L
+                if (remainingBitShiftInclHalfUlp <= 64) {
+                    val roundBitShift = remainingBitShiftInclHalfUlp - 1
+                    val halfUlpMask = 1L shl roundBitShift
+                    halfUlpIsolated = z3 and halfUlpMask
+                    mask = halfUlpMask - 1L
                 }
                 if ((z3 and mask) != 0L)
                     fracCmp = 1
             }
-            remainingBitShiftInclRound -= 64
+            remainingBitShiftInclHalfUlp -= 64
             ++i
             //val (carry4, z4) = sumU64(pp31_1, carry3)
             //require(carry4 == 0L)
             val z4 = pp31_1 + carry3
             if (z4 != 0L) {
                 z[zOff + i] = z4
-                if (remainingBitShiftInclRound > 0) {
+                if (remainingBitShiftInclHalfUlp > 0) {
                     var mask = -1L
-                    if (remainingBitShiftInclRound <= 64) {
-                        val roundBitShift = remainingBitShiftInclRound - 1
-                        roundBit = (z4 ushr roundBitShift).toInt() and 1
-                        mask = (1L shl roundBitShift) - 1L
-                    }
+                    if (remainingBitShiftInclHalfUlp <= 64) {
+                        val roundBitShift = remainingBitShiftInclHalfUlp - 1
+                        val halfUlpMask = 1L shl roundBitShift
+                        halfUlpIsolated = z4 and halfUlpMask
+                        mask = halfUlpMask - 1L
+                   }
                     if ((z4 and mask) != 0L)
                         fracCmp = 1
                 }
-                remainingBitShiftInclRound -= 64
+                remainingBitShiftInclHalfUlp -= 64
                 ++i
             }
             while (i < zLen) {
                 z[zOff + i] = 0L
                 ++i
             }
-            return fracCmp
+            val residue = (
+                    if (fracCmp < 0)
+                        if (halfUlpIsolated == 0L) Residue.EXACT else Residue.HALF
+                    else
+                        if (halfUlpIsolated == 0L) Residue.LT_HALF else Residue.GT_HALF
+                    )
+            val halfUlp = if (halfUlpIsolated == 0L) 0 else 1
+            return halfUlp to fracCmp
         }
 
     }
