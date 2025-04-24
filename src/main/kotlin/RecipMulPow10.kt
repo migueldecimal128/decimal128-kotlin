@@ -3,6 +3,10 @@ package com.decimal128
 import com.decimal128.Residue.Companion.BIAS_TRUNC
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.HALF
+import com.decimal128.UlarMul.Companion.ularMul1
+import com.decimal128.UlarMul.Companion.ularMul2
+import com.decimal128.UlarMul.Companion.ularMul3
+import com.decimal128.UlarMul.Companion.ularMul4
 import java.math.BigInteger
 import java.math.BigInteger.ZERO
 import java.math.BigInteger.ONE
@@ -691,8 +695,8 @@ class RecipMulPow10 {
 
             val div = Ular.toBigInteger(x3, x2, x1, x0)
 
-            val accumulator = LongArray(accDwordCount)
-            Ular.mul(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0)
+            val accumulator = LongArray(accDwordCount + 3)
+            val fracCmpX = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift)
 
             val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
 
@@ -708,8 +712,9 @@ class RecipMulPow10 {
             val oddAndRoundBits = Ular.get2Bits(accumulator, shift)
 
             val cmpFracMul = frac.compareTo(biMul)
-            val ularCmpFracMul = Ular.compare(fracUlar, PARAMS, paramsIndex + 1, mulDwordCount)
+            val ularCmpFracMul = Ular.reverseCompare(fracUlar, PARAMS, paramsIndex + 1, mulDwordCount)
             assert(cmpFracMul == ularCmpFracMul)
+            assert(cmpFracMul == fracCmpX)
 
             val quot5x2 = prod.shiftRight(shift) // the quotient*2 to get rounding bit
             val quot5x2BitLength = quot5x2.bitLength()
@@ -741,7 +746,6 @@ class RecipMulPow10 {
             q.set(quotRounded)
             ctx.setInexact(inexact)
         }
-
 
     }
 

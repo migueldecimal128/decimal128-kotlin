@@ -305,9 +305,9 @@ class Ular {
             }
         }
 
-        fun compare(x:LongArray, y:LongArray, yOff:Int, yLen:Int) = compare(x, 0, x.size, y, yOff, yLen)
-
         fun compare(x:LongArray, y:LongArray) = compare(x, 0, x.size, y, 0, y.size)
+
+        fun compare(x:LongArray, y:LongArray, yOff:Int, yLen:Int) = compare(x, 0, x.size, y, yOff, yLen)
 
         fun compare(x:LongArray, xOff:Int, xLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
             val minLen = Math.min(xLen, yLen)
@@ -327,6 +327,32 @@ class Ular {
                     return cmp
             }
             return 0
+        }
+
+        fun reverseCompare(x:LongArray, y:LongArray) = reverseCompare(x, 0, x.size, y, 0, y.size)
+
+        fun reverseCompare(x:LongArray, y:LongArray, yOff:Int, yLen:Int) = reverseCompare(x, 0, x.size, y, yOff, yLen)
+
+        fun reverseCompare(x:LongArray, xOff:Int, xLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
+            val minLen = Math.min(xLen, yLen)
+            var cmpPrev = 0
+            for (i in 0..<minLen) {
+                val xI = x[xOff + i]
+                val yI = y[yOff + i]
+                val cmp = compareUnsigned(xI, yI)
+                cmpPrev = if (cmp != 0) cmp else cmpPrev
+            }
+            for (i in minLen..<xLen) {
+                val xI = x[xOff + i]
+                if (xI != 0L)
+                    return 1
+            }
+            for (i in minLen..<yLen) {
+                val yI = y[yOff + i]
+                if (yI != 0L)
+                    return -1
+            }
+            return cmpPrev
         }
 
         fun compareMasked(x:LongArray, xOff:Int, xLen:Int, xBitMaskLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
