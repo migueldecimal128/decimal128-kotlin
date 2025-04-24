@@ -697,7 +697,7 @@ class RecipMulPow10 {
             val div = Ular.toBigInteger(x3, x2, x1, x0)
 
             val accumulator = LongArray(accDwordCount + 3)
-            val (halfUlpX, fracCmpX) = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero)
+            val residueX = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero)
 
             val dividend5 = Ular.toBigInteger(d3, d2, d1, d0)
 
@@ -715,7 +715,6 @@ class RecipMulPow10 {
             val cmpFracMul = frac.compareTo(biMul)
             val ularCmpFracMul = Ular.reverseCompare(fracUlar, PARAMS, paramsIndex + 1, mulDwordCount)
             assert(cmpFracMul == ularCmpFracMul)
-            assert(cmpFracMul == fracCmpX)
 
             val quot5x2 = prod.shiftRight(shift) // the quotient*2 to get rounding bit
             val quot5x2BitLength = quot5x2.bitLength()
@@ -735,7 +734,6 @@ class RecipMulPow10 {
                 } else {
                     BIAS_TRUNC
                 }
-            //assert(residue == residueX)
             val halfUlp = quot5x2.and(BigInteger.ONE).toLong()
             val lsbIsOdd = (quot5x2Lo2Bits shr 1).toLong()
 
@@ -747,8 +745,14 @@ class RecipMulPow10 {
             val quotPlusHalfUlp = quot5x2.add(biBiasHalfUlp)
             val quotRounded = quotPlusHalfUlp.shiftRight(1)
             val roundUp = quotRounded > quot5x2.shiftRight(1)
-            println("roundUp:$roundUp")
             q.set(quotRounded)
+
+            val quot5 = quot5x2.shiftRight(1)
+            val ulpBias = residueX.ulpBias(effectiveRoundingDirection, lsbIsOdd)
+            val quot5Rounded = if (ulpBias == 0L) quot5 else quot5.add(ONE)
+
+            assert(quotRounded.equals(quot5Rounded))
+
             ctx.setInexact(inexact)
         }
 
