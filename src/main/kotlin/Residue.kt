@@ -8,8 +8,8 @@ import java.lang.Long.compareUnsigned
 import java.math.BigInteger
 
 
-@JvmInline
-value class Residue private constructor(val value:Int) {
+//@JvmInline
+/*value*/ class Residue private constructor(val value:Int) {
     companion object {
         val HALF = Residue(0)
         val BIAS_TRUNC = Residue(1)

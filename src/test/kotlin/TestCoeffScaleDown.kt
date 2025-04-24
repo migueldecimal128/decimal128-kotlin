@@ -24,6 +24,15 @@ class TestCoeffScaleDown {
     }
 
     val cases = arrayOf(
+        TC("74", 1, false, ROUND_TIES_TO_EVEN, "7", true),
+        TC("75", 1, false, ROUND_TIES_TO_EVEN, "8", true),
+        TC("76", 1, false, ROUND_TIES_TO_EVEN, "8", true),
+        TC("740", 2, false, ROUND_TIES_TO_EVEN, "7", true),
+        TC("750", 2, false, ROUND_TIES_TO_EVEN, "8", true),
+        TC("760", 2, false, ROUND_TIES_TO_EVEN, "8", true),
+        TC("741", 2, false, ROUND_TIES_TO_EVEN, "7", true),
+        TC("751", 2, false, ROUND_TIES_TO_EVEN, "8", true),
+        TC("761", 2, false, ROUND_TIES_TO_EVEN, "8", true),
         TC("115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, false, ROUND_TIES_TO_EVEN, "11579208923731619542357098500868790785326998466564056403945758400791312963994", true),
         TC("1000000000000000009", 1, false, ROUND_TIES_TO_EVEN, "100000000000000001", true),
         TC("1000000000000000000", 1, false, ROUND_TIES_TO_EVEN, "100000000000000000", false),

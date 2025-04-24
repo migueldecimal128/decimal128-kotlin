@@ -3,6 +3,8 @@ package com.decimal128
 import com.decimal128.Residue.Companion.BIAS_TRUNC
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.HALF
+import com.decimal128.Residue.Companion.LT_HALF
+import com.decimal128.Residue.Companion.GT_HALF
 import java.lang.Math.unsignedMultiplyHigh
 import java.lang.Long.compareUnsigned
 
@@ -175,22 +177,14 @@ class UlarRecipMul {
                 ++i
             }
             val residue =
-                if (halfUlpIsolated == 0L) {
-                    if (stickyBitsPow2EqZero)
-                        if (fracCmp < 0) EXACT else HALF
-                    else
-                        Residue.LT_HALF
-                } else {
-                    Residue.GT_HALF
-                }
                 if (stickyBitsPow2EqZero) {
                     if (fracCmp < 0) {
                         if (halfUlpIsolated == 0L) EXACT else HALF
                     } else {
-                        BIAS_TRUNC
+                        if (halfUlpIsolated == 0L) LT_HALF else GT_HALF
                     }
                 } else {
-                    BIAS_TRUNC
+                    if (halfUlpIsolated == 0L) LT_HALF else GT_HALF
                 }
             val residueX =
                 if (stickyBitsPow2EqZero) {
