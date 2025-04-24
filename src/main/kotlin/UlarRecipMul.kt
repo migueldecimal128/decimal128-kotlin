@@ -1,5 +1,8 @@
 package com.decimal128
 
+import com.decimal128.Residue.Companion.BIAS_TRUNC
+import com.decimal128.Residue.Companion.EXACT
+import com.decimal128.Residue.Companion.HALF
 import java.lang.Math.unsignedMultiplyHigh
 import java.lang.Long.compareUnsigned
 
@@ -8,13 +11,13 @@ class UlarRecipMul {
 
         fun ularRecipMul4(z:LongArray,
                           m:LongArray, mOff:Int, mLen:Int,
-                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Pair<Int, Int>  {
+                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Pair<Long, Int>  {
            return ularRecipMul4(z, 0, z.size, m, mOff, mLen, n3, n2, n1, n0, bitShift, stickyBitsPow2EqZero)
         }
 
         fun ularRecipMul4(z:LongArray, zOff:Int, zLen:Int,
                           m:LongArray, mOff:Int, mLen:Int,
-                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Pair<Int, Int> {
+                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Pair<Long, Int> {
             var remainingBitShiftInclHalfUlp = bitShift + 1
             var halfUlpIsolated = 0L
             var fracCmp = 0
@@ -171,13 +174,36 @@ class UlarRecipMul {
                 z[zOff + i] = 0L
                 ++i
             }
-            val residue = (
-                    if (fracCmp < 0)
-                        if (halfUlpIsolated == 0L) Residue.EXACT else Residue.HALF
+            val residue =
+                if (halfUlpIsolated == 0L) {
+                    if (stickyBitsPow2EqZero)
+                        if (fracCmp < 0) EXACT else HALF
                     else
-                        if (halfUlpIsolated == 0L) Residue.LT_HALF else Residue.GT_HALF
-                    )
-            val halfUlp = if (halfUlpIsolated == 0L) 0 else 1
+                        Residue.LT_HALF
+                } else {
+                    Residue.GT_HALF
+                }
+                if (stickyBitsPow2EqZero) {
+                    if (fracCmp < 0) {
+                        if (halfUlpIsolated == 0L) EXACT else HALF
+                    } else {
+                        BIAS_TRUNC
+                    }
+                } else {
+                    BIAS_TRUNC
+                }
+            val residueX =
+                if (stickyBitsPow2EqZero) {
+                    if (fracCmp < 0) {
+                        if (halfUlpIsolated == 0L) EXACT else HALF
+                    } else {
+                        BIAS_TRUNC
+                    }
+                } else {
+                    BIAS_TRUNC
+                }
+            val halfUlp = if (halfUlpIsolated == 0L) 0L else 1L
+            val roundUp = false
             return halfUlp to fracCmp
         }
 

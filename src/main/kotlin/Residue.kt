@@ -229,7 +229,7 @@ value class Residue private constructor(val value:Int) {
     }
 
     // used by scaling operations with RecipMul
-    fun halfUlpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
+    fun halfUlpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Int {
         // with RoundingDirection ROUND_TOWARDS_POSITIVE and ROUND_TOWARDS_NEGATIVE
         // the bias is 1 ULP, not 1/2 ULP
         // this table stores 5 RoundingDirections, starting from the right
@@ -237,10 +237,10 @@ value class Residue private constructor(val value:Int) {
         assert(value != LT_HALF.value && value != GT_HALF.value)
         val HALF_ULP_BIAS_MAP = 0b0_00000000_00001010_00000000_00000101_00000100L
 
-        val exactOr3Mask = (((value - EXACT.value) shr 1) ushr 30).toLong() // exactOr3Mask = if (EXACT) 0L else 03L
+        val exactOr3Mask = ((value - EXACT.value) shr 1) ushr 30 // exactOr3Mask = if (EXACT) 0 else 03
         val biasMapEvenOdd = HALF_ULP_BIAS_MAP or (lsdwIsOdd and 1)
         val bitIndex = ((roundingDirection.value * 4) + value) * 2
-        val roundingMapShifted = biasMapEvenOdd shr bitIndex
+        val roundingMapShifted = (biasMapEvenOdd shr bitIndex).toInt()
         val bias = exactOr3Mask and roundingMapShifted
         return bias
     }
