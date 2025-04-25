@@ -4,6 +4,53 @@ import java.lang.Math.unsignedMultiplyHigh
 
 object CoeffFma {
 
+    fun coeffFma(z:Coeff, x:Coeff, y:Coeff, a:Coeff) {
+        assert(z.isValidDigitCount())
+        assert(x.isValidDigitCount())
+        assert(y.isValidDigitCount())
+        assert(a.isValidDigitCount())
+        if (x.digitCount <= 1) {
+            if (x.digitCount == 0) {
+                z.set(a)
+                return
+            }
+            if (x.dw0 == 1L) {
+                z.add(y, a)
+                return
+            }
+        }
+        if (y.digitCount <= 1) {
+            if (y.digitCount == 0) {
+                z.set(a)
+                return
+            }
+            if (y.dw0 == 1L) {
+                z.add(x, a)
+                return
+            }
+        }
+        when {
+            ((y.dw3 or y.dw2) == 0L) -> {
+                if (y.dw1 == 0L) {
+                    if ((y.dw0 ushr 1) == 0L) {
+                        if (y.dw0 == 1L) z.add(x, a) else z.set(a)
+                        return
+                    }
+                    fmaCoeff(z, x, y.digitCount, y.dw0, a)
+                } else {
+                    fmaCoeff(z, x, y.digitCount, y.dw1, y.dw0, a)
+                }
+            }
+            (y.dw3 == 0L) -> {
+                fmaCoeff(z, x, y.digitCount, y.dw2, y.dw1, y.dw0, a)
+            }
+            else -> {
+                fmaCoeff(z, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0, a)
+            }
+        }
+    }
+
+
     fun fmaCoeff(p: Coeff, x: Coeff, yDigitCount: Int, y0: Long, a: Coeff) {
         if ((a.dw3 or a.dw2) == 0L) {
             fmaCoeff(p, x, yDigitCount, y0, a.digitCount, a.dw1, a.dw0)

@@ -4,6 +4,15 @@ import com.decimal128.CoeffFma.fmaCoeff
 import java.math.BigInteger
 import java.lang.Long.compareUnsigned
 import com.decimal128.CoeffMul.mulCoeff
+import com.decimal128.CoeffMul.coeffMul
+import com.decimal128.CoeffFma.coeffFma
+import com.decimal128.CoeffAdd.coeffAdd
+import com.decimal128.CoeffAdd.coeffAddUnscaled
+import com.decimal128.CoeffAdd.coeffAbsDiffUnscaled
+import com.decimal128.CoeffCompare.coeffCompare
+import com.decimal128.CoeffCompare.coeffEQ
+import com.decimal128.CoeffCompare.coeffGT
+import com.decimal128.CoeffCompare.coeffLT
 import java.lang.Long.numberOfLeadingZeros
 
 private const val SIGNBIT = Long.MIN_VALUE
@@ -58,244 +67,30 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         return compareUnsigned(dw0, other.dw0)
     }
 
-    fun EQ(other: Coeff) : Boolean {
-        assert(isValidDigitCount())
-        assert(other.isValidDigitCount())
-        return (digitCount == other.digitCount) && (dw0 == other.dw0) && (dw1 == other.dw1) && (dw2 == other.dw2) && (dw3 == other.dw3)
-    }
+    fun EQ(other: Coeff) = coeffEQ(this, other)
 
     fun NE(other: Coeff) : Boolean = !EQ(other)
 
     fun GE(other: Coeff) : Boolean = !LT(other)
 
-    fun GT(other: Coeff) : Boolean {
-        assert(isValidDigitCount())
-        assert(other.isValidDigitCount())
-        return when {
-            (digitCount != other.digitCount) -> digitCount > other.digitCount
-            (dw3 !=other.dw3) -> compareUnsigned(dw3, other.dw3) > 0
-            (dw2 !=other.dw2) -> compareUnsigned(dw2, other.dw2) > 0
-            (dw1 !=other.dw1) -> compareUnsigned(dw1, other.dw1) > 0
-            else -> compareUnsigned(dw0, other.dw0) > 0
-        }
-    }
+    fun GT(other: Coeff) = coeffGT(this, other)
 
     fun LE(other: Coeff) : Boolean = !GT(other)
 
-    fun LT(other: Coeff) : Boolean {
-        assert(isValidDigitCount())
-        assert(other.isValidDigitCount())
-        return when {
-            (digitCount != other.digitCount) -> digitCount < other.digitCount
-            (dw3 !=other.dw3) -> compareUnsigned(dw3, other.dw3) < 0
-            (dw2 !=other.dw2) -> compareUnsigned(dw2, other.dw2) < 0
-            (dw1 !=other.dw1) -> compareUnsigned(dw1, other.dw1) < 0
-            else -> compareUnsigned(dw0, other.dw0) < 0
-        }
-    }
+    fun LT(other: Coeff) = coeffLT(this, other)
 
-    fun addUnrounded(x: Coeff, y: Coeff) {
-        val maxDigitCount = Math.max(x.digitCount, y.digitCount)
+    fun add(sum:Coeff, x:Coeff, y:Coeff, scaleDelta:Int,
+            sign: Boolean, ctx: Decimal128Context) = coeffAdd(sum, x, y, scaleDelta, sign, ctx)
 
-        val x0 = x.dw0
-        val y0 = y.dw0
-        val p0 = x0 + y0
-        dw0 = p0
-        val carry0 = if (compareUnsigned(p0, x0) < 0) 1L else 0L
-        // 64 bit boundary is a special case because 19 digits * 2 might generate carry into the next dword
-        // this is not the case for the 128 and 192 bit boundaries
-        //
-        // perhaps this test should be:
-        // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
-        if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
-            dw3 = 0L; dw2 = 0L; dw1 = 0L
-            setDigitCount64()
-            return
-        }
-
-        val x1 = x.dw1
-        val y1 = y.dw1
-        val p1a = x1 + y1
-        val carry1a = if (compareUnsigned(p1a, x1) < 0) 1L else 0L
-        val p1 = p1a + carry0
-        dw1 = p1
-        val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
-        if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
-            dw3 = 0L; dw2 = 0L;
-            setDigitCount128()
-            return
-        }
-
-        val x2 = x.dw2
-        val y2 = y.dw2
-        val p2a = x2 + y2
-        val carry2a = if (compareUnsigned(p2a, x2) < 0) 1L else 0L
-        val p2 = p2a + carry1
-        dw2 = p2
-        val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
-        if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
-            dw3 = 0L;
-            setDigitCount192()
-            return
-        }
-
-        val x3 = x.dw3
-        val y3 = y.dw3
-        val p3a = x3 + y3
-        val carry3a = if (compareUnsigned(p3a, x3) < 0) 1L else 0L
-        val p3 = p3a + carry2
-        dw3 = p3
-        val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
-        if (carry3 != 0L)
-            throw RuntimeException("coefficient add overflow x:$x y:$y")
-        setDigitCount256()
-    }
+    fun add(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
 
     // absolute difference
     // if minuend < subtrahend then negate to return positive result
-    fun absDiff(x: Coeff, y: Coeff) : Long { // minuend - subtrahend
-        assert(isValidDigitCount())
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
-        val maxDigitCount = Math.max(x.digitCount, y.digitCount)
-        val loDigitCount = maxDigitCount - 1
-        val minDigitCount = Math.min(x.digitCount, y.digitCount)
-        val digitCountDiff = maxDigitCount - minDigitCount
+    fun absDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
 
-        val d0 = x.dw0 - y.dw0
-        val carry0 = if (compareUnsigned(d0, x.dw0) > 0) 1L else 0L
-        // 64 bit boundary is a special case because 19 digits * 2 might generate carry into the next word
-        // this is not the case for the 128 and 192 bit boundaries
-        //
-        // perhaps this test should be:
-        // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
-        if (maxDigitCount < POW10_128_OFFSET) {
-            // if carry == 1 then complement-and-increment else NOOP
-            val negCarry0 = -carry0
-            dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = (d0 xor negCarry0) - negCarry0
-            setDigitCount64()
-            return negCarry0
-        }
+    fun mul(x:Coeff, y:Coeff) = coeffMul(this, x, y)
 
-        val d1a = x.dw1 - y.dw1
-        val carry1a = if (compareUnsigned(d1a, x.dw1) > 0) 1L else 0L
-        val d1 = d1a - carry0
-        val carry1 = if (compareUnsigned(d1, d1a) > 0) 1L else carry1a
-        if (maxDigitCount < POW10_192_OFFSET) {
-            // if carry == 1 then complement-and-increment else NOOP
-            val negCarry1 = -carry1
-            dw0 = (d0 xor negCarry1) - negCarry1
-            dw1 = (d1 xor negCarry1) - (negCarry1 and ((dw0 or -dw0) shr 63).inv())
-            dw2 = 0L
-            dw3 = 0L
-            setDigitCount128()
-            return negCarry1
-        }
-
-        val d2a = x.dw2 - y.dw2
-        val carry2a = if (compareUnsigned(d2a, x.dw2) > 0) 1L else 0L
-        val d2 = d2a - carry1
-        val carry2 = if (compareUnsigned(d2, d2a) > 0) 1L else carry2a
-        if (maxDigitCount < POW10_256_OFFSET) {
-            // if carry == 1 then complement-and-increment else NOOP
-            val negCarry2 = -carry2
-            dw0 = (d0 xor negCarry2) - negCarry2
-            dw1 = (d1 xor negCarry2) - (negCarry2 and ((dw0 or -dw0) shr 63).inv())
-            dw2 = (d2 xor negCarry2) - (negCarry2 and ((dw1 or -dw1) shr 63).inv())
-            dw3 = 0L
-            setDigitCount192()
-            return negCarry2
-        }
-
-        val d3a = x.dw3 - y.dw3
-        val carry3a = if (compareUnsigned(d3a, x.dw3) > 0) 1L else 0L
-        val d3 = d3a - carry2
-        val carry3 = if (compareUnsigned(d3, d3a) > 0) 1L else carry3a
-
-        // if carry == 1 then complement-and-increment else NOOP
-        val negCarry3 = -carry3
-        dw0 = (d0 xor negCarry3) - negCarry3
-        dw1 = (d1 xor negCarry3) - (negCarry3 and ((dw0 or -dw0) shr 63).inv())
-        dw2 = (d2 xor negCarry3) - (negCarry3 and ((dw1 or -dw1) shr 63).inv())
-        dw3 = (d3 xor negCarry3) - (negCarry3 and ((dw2 or -dw2) shr 63).inv())
-        setDigitCount256()
-        return negCarry3
-    }
-
-    fun mul(x:Coeff, y:Coeff) {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
-        if (x.digitCount <= 1) {
-            if (x.digitCount == 0) {
-                setZero()
-                return
-            }
-            if (x.dw0 == 1L) {
-                set(y)
-                return
-            }
-        }
-        when {
-            ((y.dw3 or y.dw2) == 0L) -> {
-                if (y.dw1 == 0L) {
-                    if ((y.dw0 ushr 1) == 0L) {
-                        if (y.dw0 == 1L) set(x) else setZero()
-                        return
-                    }
-                    mulCoeff(this, x, y.digitCount, y.dw0)
-                } else {
-                    mulCoeff(this, x, y.digitCount, y.dw1, y.dw0)
-                }
-            }
-            (y.dw3 == 0L) -> mulCoeff(this, x, y.digitCount, y.dw2, y.dw1, y.dw0)
-            else -> mulCoeff(this, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
-        }
-    }
-
-    fun fma(x:Coeff, y:Coeff, a:Coeff) {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
-        assert(a.isValidDigitCount())
-        if (x.digitCount <= 1) {
-            if (x.digitCount == 0) {
-                set(a)
-                return
-            }
-            if (x.dw0 == 1L) {
-                addUnrounded(y, a)
-                return
-            }
-        }
-        if (y.digitCount <= 1) {
-            if (y.digitCount == 0) {
-                set(a)
-                return
-            }
-            if (y.dw0 == 1L) {
-                addUnrounded(x, a)
-                return
-            }
-        }
-        when {
-            ((y.dw3 or y.dw2) == 0L) -> {
-                if (y.dw1 == 0L) {
-                    if ((y.dw0 ushr 1) == 0L) {
-                        if (y.dw0 == 1L) addUnrounded(x, a) else set(a)
-                        return
-                    }
-                    fmaCoeff(this, x, y.digitCount, y.dw0, a)
-                } else {
-                    fmaCoeff(this, x, y.digitCount, y.dw1, y.dw0, a)
-                }
-            }
-            (y.dw3 == 0L) -> {
-                fmaCoeff(this, x, y.digitCount, y.dw2, y.dw1, y.dw0, a)
-            }
-            else -> {
-                fmaCoeff(this, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0, a)
-            }
-        }
-    }
+    fun fma(x:Coeff, y:Coeff, a:Coeff) = coeffFma(this, x, y, a)
 
     fun shiftRight(bitShift:Int) {
         val wholeDwordCount = bitShift ushr 6

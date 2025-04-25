@@ -5,6 +5,38 @@ import com.decimal128.DigitCount.POW10
 
 object CoeffMul {
 
+    fun coeffMul(z:Coeff, x:Coeff, y:Coeff) {
+        assert(x.isValidDigitCount())
+        assert(y.isValidDigitCount())
+        if (x.digitCount <= 1) {
+            if (x.digitCount == 0) {
+                z.setZero()
+                return
+            }
+            if (x.dw0 == 1L) {
+                z.set(y)
+                return
+            }
+        }
+        when {
+            ((y.dw3 or y.dw2) == 0L) -> {
+                if (y.dw1 == 0L) {
+                    if ((y.dw0 ushr 1) == 0L) {
+                        if (y.dw0 == 1L) z.set(x) else z.setZero()
+                        return
+                    }
+                    mulCoeff(z, x, y.digitCount, y.dw0)
+                } else {
+                    mulCoeff(z, x, y.digitCount, y.dw1, y.dw0)
+                }
+            }
+            (y.dw3 == 0L) -> mulCoeff(z, x, y.digitCount, y.dw2, y.dw1, y.dw0)
+            else -> mulCoeff(z, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
+        }
+    }
+
+
+
     fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y0: Long) {
         when {
             (x.dw3 != 0L) -> _mulCoeff(product, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y0)
