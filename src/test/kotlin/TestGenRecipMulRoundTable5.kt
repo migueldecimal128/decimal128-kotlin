@@ -4,11 +4,11 @@ import org.junit.jupiter.api.Test
 
 import java.math.BigInteger
 import java.util.Random
-import com.decimal128.RecipMulPow10.Companion.unpackShift
-import com.decimal128.RecipMulPow10.Companion.unpackMulDigitCount
-import com.decimal128.RecipMulPow10.Companion.unpackMulDwordCount
-import com.decimal128.RecipMulPow10.Companion.unpackAccDwordCount
-import com.decimal128.RecipMulPow10.Companion.unpackQuotDwordCount
+import com.decimal128.RecipMulPow10.unpackShift
+import com.decimal128.RecipMulPow10.unpackMulDigitCount
+import com.decimal128.RecipMulPow10.unpackMulDwordCount
+import com.decimal128.RecipMulPow10.unpackAccDwordCount
+import com.decimal128.RecipMulPow10.unpackQuotDwordCount
 
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.HALF

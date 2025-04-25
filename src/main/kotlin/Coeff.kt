@@ -1,9 +1,9 @@
 package com.decimal128
 
-import com.decimal128.CoeffFma.Companion.fmaCoeff
+import com.decimal128.CoeffFma.fmaCoeff
 import java.math.BigInteger
 import java.lang.Long.compareUnsigned
-import com.decimal128.CoeffMul.Companion.mulCoeff
+import com.decimal128.CoeffMul.mulCoeff
 import java.lang.Long.numberOfLeadingZeros
 
 private const val SIGNBIT = Long.MIN_VALUE

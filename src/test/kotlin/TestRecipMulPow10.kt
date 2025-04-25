@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
 
-import com.decimal128.RecipMulPow10.Companion.divModPow10
-import com.decimal128.RecipMulPow10.Companion.getMultShift
+import com.decimal128.RecipMulPow10.divModPow10
+import com.decimal128.RecipMulPow10.getMultShift
 
 class TestRecipMulPow10 {
 
