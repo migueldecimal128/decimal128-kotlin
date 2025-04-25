@@ -245,6 +245,9 @@ import java.math.BigInteger
         return bias
     }
 
+    fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =
+        ulpBias(roundingDirection, lsdwIsOdd) != 0L
+
     fun ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) = ulpBiasY(roundingDirection, lsdwIsOdd)
 
     // for add operation when there is no overlap ...

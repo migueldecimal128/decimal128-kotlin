@@ -10,22 +10,31 @@ import java.lang.Long.compareUnsigned
 class UlarRecipMul {
     companion object {
 
-        fun ularRecipMul4(z:LongArray,
+        fun ularRecipMul4(q:Coeff, z:LongArray,
                           m:LongArray, mOff:Int, mLen:Int,
                           n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Residue  {
-           return ularRecipMul4(z, 0, z.size, m, mOff, mLen, n3, n2, n1, n0, bitShift, stickyBitsPow2EqZero)
+           return ularRecipMul4(q, z, 0, z.size, m, mOff, mLen, n3, n2, n1, n0, bitShift, stickyBitsPow2EqZero)
         }
 
-        fun ularRecipMul4(z:LongArray, zOff:Int, zLen:Int,
+        fun ularRecipMul4(q:Coeff, z:LongArray, zOff:Int, zLen:Int,
                           m:LongArray, mOff:Int, mLen:Int,
                           n3:Long, n2:Long, n1:Long, n0:Long, bitShiftX:Int, stickyBitsPow2EqZero:Boolean) : Residue {
-            var remainingBitShiftInclHalfUlp = bitShiftX + 1
-            val halfUlpShift = bitShiftX and 0x3F
-            val halfUlpMask = 1L shl halfUlpShift
-            val remainingBitsMask = halfUlpMask - 1
+            val fractionBitLen = bitShiftX + 1
+            val modulusBitLen = fractionBitLen and 0x3F
+            val isDwordAligned = (fractionBitLen and 0x3F) == 0
+            val shiftRightMask = if (isDwordAligned) 0 else -1L
+            val shiftRightModulus = if (isDwordAligned) 0 else modulusBitLen
+            val leftModulusShift = if (isDwordAligned) 0 else 64 - modulusBitLen
+            val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
+            val halfUlpBitMask = 1L shl halfUlpBitIndex
+            val fractionTailMask = halfUlpBitMask - 1
             var halfUlpIsolated = 0L
-            var fracCmp = 0
-            assert((bitShiftX + 63) ushr 6 >= mLen)
+            var quotientIndex = 0
+
+
+            var fractionBitsRemaining = fractionBitLen
+            var fracCompare = 0
+            assert((fractionBitLen + 63) ushr 6 >= mLen)
 
             var z_1 = 0L
             var zI = 0
@@ -72,17 +81,22 @@ class UlarRecipMul {
 
                 val (carry_0, z_0) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
                 z[zOff + zI] = z_0
-                if (remainingBitShiftInclHalfUlp > 0) {
-                    var mask = -1L
-                    if (remainingBitShiftInclHalfUlp <= 64) {
-                        halfUlpIsolated = z_0 and halfUlpMask
-                        mask = remainingBitsMask
-                    }
+                if (fractionBitsRemaining > 0) {
+                    fractionBitsRemaining -= 64
+                    val mask =
+                        if (fractionBitsRemaining <= 0) {
+                            halfUlpIsolated = z_0 and halfUlpBitMask
+                            fractionTailMask
+                        } else {
+                            -1L
+                        }
                     if (mask != 0L) {
                         val cmp = compareUnsigned((z_0 and mask), mX)
-                        fracCmp = if (cmp != 0) cmp else fracCmp
+                        fracCompare = if (cmp != 0) cmp else fracCompare
                     }
-                    remainingBitShiftInclHalfUlp -= 64
+                } else {
+                    val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+                    q[quotientIndex++] = q0
                 }
 
                 z_1 = z_0
@@ -116,67 +130,95 @@ class UlarRecipMul {
             }
             val (carry1, z1) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, carry_1)
             z[zOff + zI] = z1
-            if (z1 != 0L && remainingBitShiftInclHalfUlp > 0) {
-                var mask = -1L
-                if (remainingBitShiftInclHalfUlp <= 64) {
-                    halfUlpIsolated = z1 and halfUlpMask
-                    mask = remainingBitsMask
+            if (fractionBitsRemaining > 0) {
+                fractionBitsRemaining -= 64
+                val mask =
+                    if (fractionBitsRemaining <= 0) {
+                        halfUlpIsolated = z1 and halfUlpBitMask
+                        fractionTailMask
+                    } else {
+                        -1L
+                    }
+                if (mask != 0L) {
+                    fracCompare = if ((z1 and mask) != 0L) 1 else fracCompare
                 }
-                if ((z1 and mask) != 0L)
-                    fracCmp = 1
+            } else {
+                val q0 =  (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+                q[quotientIndex++] = q0
             }
-            remainingBitShiftInclHalfUlp -= 64
             ++zI
             val (carry2, z2) = sumU64(pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
             z[zOff + zI] = z2
-            if (z2 != 0L && remainingBitShiftInclHalfUlp > 0) {
-                var mask = -1L
-                if (remainingBitShiftInclHalfUlp <= 64) {
-                    halfUlpIsolated = z2 and halfUlpMask
-                    mask = remainingBitsMask
+            if (fractionBitsRemaining > 0) {
+                fractionBitsRemaining -= 64
+                val mask =
+                    if (fractionBitsRemaining <= 0) {
+                        halfUlpIsolated = z2 and halfUlpBitMask
+                        fractionTailMask
+                    } else {
+                        -1L
+                    }
+                if (mask != 0L) {
+                    fracCompare = if ((z2 and mask) != 0L) 1 else fracCompare
                 }
-                if ((z2 and mask) != 0L)
-                    fracCmp = 1
+            } else {
+                val q0 =  (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
+                q[quotientIndex++] = q0
             }
-            remainingBitShiftInclHalfUlp -= 64
             ++zI
             val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
             z[zOff + zI] = z3
-            if (z3 != 0L && remainingBitShiftInclHalfUlp > 0) {
-                var mask = -1L
-                if (remainingBitShiftInclHalfUlp <= 64) {
-                    halfUlpIsolated = z3 and halfUlpMask
-                    mask = remainingBitsMask
+            if (fractionBitsRemaining > 0) {
+                fractionBitsRemaining -= 64
+                val mask =
+                    if (fractionBitsRemaining <= 0) {
+                        halfUlpIsolated = z3 and halfUlpBitMask
+                        fractionTailMask
+                    } else {
+                        -1L
+                    }
+                if (mask != 0L) {
+                    fracCompare = if ((z3 and mask) != 0L) 1 else fracCompare
                 }
-                if ((z3 and mask) != 0L)
-                    fracCmp = 1
+            } else {
+                val q0 =  (z3 shl leftModulusShift) or ((z2 ushr shiftRightModulus) and shiftRightMask)
+                q[quotientIndex++] = q0
             }
-            remainingBitShiftInclHalfUlp -= 64
             ++zI
             //val (carry4, z4) = sumU64(pp31_1, carry3)
             //require(carry4 == 0L)
             val z4 = pp31_1 + carry3
-            if (z4 != 0L) {
+//            if (z4 != 0L) {
                 z[zOff + zI] = z4
-                if (remainingBitShiftInclHalfUlp > 0) {
-                    var mask = -1L
-                    if (remainingBitShiftInclHalfUlp <= 64) {
-                        halfUlpIsolated = z4 and halfUlpMask
-                        mask = remainingBitsMask
-                   }
-                    if ((z4 and mask) != 0L)
-                        fracCmp = 1
+                if (fractionBitsRemaining > 0) {
+                    fractionBitsRemaining -= 64
+                    val mask =
+                        if (fractionBitsRemaining <= 0) {
+                            halfUlpIsolated = z4 and halfUlpBitMask
+                            fractionTailMask
+                        } else {
+                            -1L
+                        }
+                    if (mask != 0L) {
+                        fracCompare = if ((z4 and mask) != 0L) 1 else fracCompare
+                    }
+                } else {
+                    val q0 =  (z4 shl leftModulusShift) or ((z3 ushr shiftRightModulus) and shiftRightMask)
+                    q[quotientIndex++] = q0
                 }
-                remainingBitShiftInclHalfUlp -= 64
                 ++zI
-            }
+  //          }
+            assert(fractionBitsRemaining <= 0)
+            val q4 = ((z4 ushr shiftRightModulus) and shiftRightMask)
+            if (q4 != 0L)
+                q[quotientIndex] = q4
             while (zI < zLen) {
                 z[zOff + zI] = 0L
                 ++zI
             }
             val residue =
                 if (stickyBitsPow2EqZero) {
-                    if (fracCmp < 0) {
+                    if (fracCompare < 0) {
                         if (halfUlpIsolated == 0L) EXACT else HALF
                     } else {
                         if (halfUlpIsolated == 0L) LT_HALF else GT_HALF

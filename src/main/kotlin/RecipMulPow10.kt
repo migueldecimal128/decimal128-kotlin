@@ -663,6 +663,8 @@ class RecipMulPow10 {
                                       pow10:Int, sign:Boolean, ctx:Decimal128Context) {
             require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
             require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
+            // clear coeff without worrying about aliasing
+            q.setZero()
 
             val index = indexOf(xDigitCount, pow10)
             val paramsIndex = INDEXES[index]
@@ -676,6 +678,8 @@ class RecipMulPow10 {
             val accDwordCount = unpackAccDwordCount(descriptor)
             val shift = unpackShift(descriptor)
             val quotDwordCount = unpackQuotDwordCount(descriptor)
+            assert(quotDwordCount <= 5)
+
             val m0 = PARAMS[paramsIndex + 1]
             val m1 = if (mulDwordCount >= 2) PARAMS[paramsIndex + 2] else 0L
             val m2 = if (mulDwordCount >= 3) PARAMS[paramsIndex + 3] else 0L
@@ -696,19 +700,40 @@ class RecipMulPow10 {
 
             val div = Ular.toBigInteger(x3, x2, x1, x0)
 
-            val accumulator = LongArray(accDwordCount + 3)
-            val residueX = UlarRecipMul.ularRecipMul4(accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero)
+            val accumulator = LongArray(accDwordCount + 4)
+            val residueX = UlarRecipMul.ularRecipMul4(
+                q, accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero
+            )
 
-            Ular.shiftRight(accumulator, shift+1)
+            Ular.shiftRight(accumulator, shift + 1)
+            assert(Ular.equals(accumulator, q.dw3, q.dw2, q.dw1, q.dw0))
+
+            /*
             val quot5 = Ular.toBigInteger(accumulator)
             val lsbIsOdd = quot5.toLong()
             val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
             val ulpBias = residueX.ulpBias(effectiveRoundingDirection, lsbIsOdd)
             val quot5Rounded = if (ulpBias == 0L) quot5 else quot5.add(ONE)
-
+*/
+            val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
+            val ulpRoundUp = residueX.ulpRoundUp(effectiveRoundingDirection, q.dw0)
+            if (ulpRoundUp) {
+                q.dw0 += 1
+                if (q.dw0 == 0L) {
+                    q.dw1 += 1
+                    if (q.dw1 == 0L) {
+                        q.dw2 += 1
+                        if (q.dw2 == 0L) {
+                            q.dw3 += 1
+                            if (q.dw3 == 0L)
+                                throw RuntimeException("overflow")
+                        }
+                    }
+                }
+            }
+            setDigitCount(q)
             val inexact = residueX != EXACT
             ctx.setInexact(inexact)
-            q.set(quot5Rounded)
         }
 
     }

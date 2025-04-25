@@ -399,6 +399,40 @@ class Ular {
             return true
         }
 
+        fun equals(x:LongArray, dw3:Long, dw2:Long, dw1:Long, dw0:Long) =
+            equals(x, 0, x.size, dw3, dw2, dw1, dw0)
+
+        fun equals(x:LongArray, xOff:Int, xLen:Int, dw3:Long, dw2:Long, dw1:Long, dw0:Long) : Boolean {
+            for (i in 4..<xLen)
+                if (x[xOff + i] != 0L)
+                    return false
+            if (xLen >= 4) {
+                if (x[xOff + 3] != dw3)
+                    return false
+            } else if (dw3 != 0L) {
+                    return false
+            }
+            if (xLen >= 3) {
+                if (x[xOff + 2] != dw2)
+                    return false
+            } else if (dw2 != 0L) {
+                return false
+            }
+            if (xLen >= 2) {
+                if (x[xOff + 1] != dw1)
+                    return false
+            } else if (dw1 != 0L) {
+                return false
+            }
+            if (xLen >= 0) {
+                if (x[xOff + 0] != dw0)
+                    return false
+            } else if (dw0 != 0L) {
+                return false
+            }
+            return true
+        }
+
         fun toBigInteger(x0:Long) : BigInteger {
             var bi = BigInteger.ZERO
             val x0Lo = x0 and 0xFFFFFFFFL

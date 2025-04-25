@@ -345,6 +345,26 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         CoeffScalePow10.scalePow10Coeff(this, x, pow10, sign, ctx)
     }
 
+    operator fun get(index:Int) : Long {
+        return when (index) {
+            0 -> dw0
+            1 -> dw1
+            2 -> dw2
+            3 -> dw3
+            else -> throw RuntimeException("indexOutOfBounds")
+        }
+    }
+
+    operator fun set(index:Int, value:Long) {
+        when (index) {
+            0 -> dw0 = value
+            1 -> dw1 = value
+            2 -> dw2 = value
+            3 -> dw3 = value
+            else -> throw RuntimeException("indexOutOfBounds")
+        }
+    }
+
     fun setLoBit(dw0:Long) {
         val masked = dw0 and 1
         this.dw3 = 0L; this.dw2 = 0L; this.dw1 = 0L

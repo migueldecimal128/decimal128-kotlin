@@ -465,3 +465,5 @@ fun setDigitCount(c: Coeff) {
                     calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
             })
 }
+
+
