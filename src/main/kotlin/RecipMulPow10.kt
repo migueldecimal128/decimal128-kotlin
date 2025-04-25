@@ -724,7 +724,7 @@ class RecipMulPow10 {
                     }
                 }
             }
-            setDigitCount(q)
+            DigitCount.setDigitCount(q)
             val inexact = residue != EXACT
             ctx.setInexact(inexact)
         }

@@ -121,7 +121,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -133,7 +133,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -148,7 +148,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
@@ -166,7 +166,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo, a3)
@@ -183,7 +183,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             throw RuntimeException("coefficient multiply overflow")
@@ -208,7 +208,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -220,7 +220,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -234,7 +234,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo)
@@ -248,7 +248,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp12Lo)
@@ -261,7 +261,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             throw RuntimeException("coefficient multiply overflow")
@@ -286,7 +286,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -298,7 +298,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -311,7 +311,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
@@ -323,7 +323,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             val (carry3, p3) = sumU64(carry2, pp11Hi)
@@ -335,7 +335,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             throw RuntimeException("coefficient multiply overflow")
@@ -360,7 +360,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -371,7 +371,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
@@ -382,7 +382,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp10Hi)
@@ -393,7 +393,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             val p3 = carry2
@@ -402,7 +402,7 @@ class CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+            DigitCount.setDigitCount256(p)
         }
 
         private fun _fma(p:Coeff,
@@ -424,7 +424,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -435,7 +435,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -447,7 +447,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
@@ -460,7 +460,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             val (carry3, p3) = sumU64(carry2, pp02Hi, pp03Lo)
@@ -473,7 +473,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             throw RuntimeException("coefficient multiply overflow")
@@ -498,7 +498,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -509,7 +509,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -521,7 +521,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
@@ -533,7 +533,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             val (carry3, p3) = sumU64(carry2, pp02Hi)
@@ -545,7 +545,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = p3
-                p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+                DigitCount.setDigitCount256(p)
                 return
             }
             throw RuntimeException("coefficient multiply overflow")
@@ -570,7 +570,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -581,7 +581,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -592,7 +592,7 @@ class CoeffFma {
                 p.dw1 = p1
                 p.dw2 = p2
                 p.dw3 = 0L;
-                p.digitCount = calcDigitCount192(p2, p1, p0)
+                DigitCount.setDigitCount192(p)
                 return
             }
             val (carry2, p2) = sumU64(carry1, pp01Hi)
@@ -602,7 +602,7 @@ class CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.digitCount = calcDigitCount256(p3, p2, p1, p0)
+            DigitCount.setDigitCount256(p)
         }
 
         private fun _fma(p:Coeff,
@@ -624,7 +624,7 @@ class CoeffFma {
                 val p0 = pp00Lo + a0
                 p.dw0 = p0
                 p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-                p.digitCount = calcDigitCount64(p0)
+                DigitCount.setDigitCount64(p)
                 return
             }
             val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -634,7 +634,7 @@ class CoeffFma {
                 p.dw0 = p0
                 p.dw1 = p1
                 p.dw2 = 0L; p.dw3 = 0L;
-                p.digitCount = calcDigitCount128(p1, p0)
+                DigitCount.setDigitCount128(p)
                 return
             }
             val (carry1, p1) = sumU64(carry0, pp00Hi, a1)
@@ -643,7 +643,7 @@ class CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.digitCount = calcDigitCount192(p2, p1, p0)
+            DigitCount.setDigitCount192(p)
         }
 
     }
