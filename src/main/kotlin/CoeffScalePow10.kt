@@ -2,6 +2,8 @@ package com.decimal128
 
 import com.decimal128.CoeffMul.Companion.mulCoeff
 import com.decimal128.CoeffFma.Companion.fmaCoeff
+import com.decimal128.DigitCount.Companion.POW10
+
 
 class CoeffScalePow10 {
     companion object {

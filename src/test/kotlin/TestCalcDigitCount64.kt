@@ -26,7 +26,7 @@ class TestCalcDigitCount64 {
         while (true) {
             test3(ul)
             if (ul == 10_000_000_000_000_000_000uL)
-                break;
+                break
             ul *= 10uL
         }
     }

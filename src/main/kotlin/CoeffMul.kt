@@ -1,7 +1,8 @@
 package com.decimal128
 import java.lang.Math.unsignedMultiplyHigh
+import com.decimal128.DigitCount.Companion.POW10
 
-class CoeffMul {
+class CoeffMul private constructor() {
     companion object {
 
         fun mulCoeff(product:Coeff, x:Coeff, yDigitCount:Int, y0:Long) {
