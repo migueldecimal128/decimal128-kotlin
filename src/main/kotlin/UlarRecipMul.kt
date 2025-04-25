@@ -18,14 +18,14 @@ class UlarRecipMul {
 
         fun ularRecipMul4(z:LongArray, zOff:Int, zLen:Int,
                           m:LongArray, mOff:Int, mLen:Int,
-                          n3:Long, n2:Long, n1:Long, n0:Long, bitShift:Int, stickyBitsPow2EqZero:Boolean) : Residue {
-            var remainingBitShiftInclHalfUlp = bitShift + 1
-            val halfUlpShift = bitShift and 0x3F
+                          n3:Long, n2:Long, n1:Long, n0:Long, bitShiftX:Int, stickyBitsPow2EqZero:Boolean) : Residue {
+            var remainingBitShiftInclHalfUlp = bitShiftX + 1
+            val halfUlpShift = bitShiftX and 0x3F
             val halfUlpMask = 1L shl halfUlpShift
             val remainingBitsMask = halfUlpMask - 1
             var halfUlpIsolated = 0L
             var fracCmp = 0
-            assert((bitShift + 63) ushr 6 >= mLen)
+            assert((bitShiftX + 63) ushr 6 >= mLen)
 
             var z_1 = 0L
             var zI = 0
