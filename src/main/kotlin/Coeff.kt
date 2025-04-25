@@ -94,7 +94,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         }
     }
 
-    fun add(x: Coeff, y: Coeff) {
+    fun addUnrounded(x: Coeff, y: Coeff) {
         val maxDigitCount = Math.max(x.digitCount, y.digitCount)
 
         val x0 = x.dw0
@@ -262,7 +262,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
                 return
             }
             if (x.dw0 == 1L) {
-                add(y, a)
+                addUnrounded(y, a)
                 return
             }
         }
@@ -272,7 +272,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
                 return
             }
             if (y.dw0 == 1L) {
-                add(x, a)
+                addUnrounded(x, a)
                 return
             }
         }
@@ -280,7 +280,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
             ((y.dw3 or y.dw2) == 0L) -> {
                 if (y.dw1 == 0L) {
                     if ((y.dw0 ushr 1) == 0L) {
-                        if (y.dw0 == 1L) add(x, a) else set(a)
+                        if (y.dw0 == 1L) addUnrounded(x, a) else set(a)
                         return
                     }
                     fmaCoeff(this, x, y.digitCount, y.dw0, a)

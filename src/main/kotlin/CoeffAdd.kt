@@ -1,34 +1,28 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
+import com.decimal128.DigitCount.Companion.tweakDigitCountAfterRoundUp
 
 class CoeffAdd private constructor() {
     companion object {
 
         fun roundUp(c:Coeff, ctx:Decimal128Context) {
             c.dw0 += 1
-            if (c.dw0 != 0L) {
-                setDigitCount64(c)
-                return
+            if (c.dw0 == 0L) {
+                c.dw1 += 1
+                if (c.dw1 == 0L) {
+                    c.dw2 += 1
+                    if (c.dw2 == 0L) {
+                        c.dw3 += 1
+                        if (c.dw3 == 0L)
+                            throw RuntimeException("overflow")
+                    }
+                }
             }
-            c.dw1 += 1
-            if (c.dw1 != 0L) {
-                setDigitCount128(c)
-                return
-            }
-            c.dw2 += 1
-            if (c.dw2 != 0L) {
-                setDigitCount192(c)
-                return
-            }
-            c.dw3 += 1
-            if (c.dw3 != 0L) {
-                setDigitCount256(c)
-                return
-            }
+            tweakDigitCountAfterRoundUp(c)
         }
 
-        fun add(sum:Coeff, x:Coeff, y:Coeff,
+        fun coeffAdd(sum:Coeff, x:Coeff, y:Coeff,
                 scaleDelta:Int, sign: Boolean, ctx: Decimal128Context) {
             if (x.digitCount == 0) {
                 sum.set(y)
@@ -39,18 +33,18 @@ class CoeffAdd private constructor() {
                 return
             }
             if (scaleDelta == 0) {
-                addUnscaled(sum, x, y)
+                coeffAddUnscaled(sum, x, y)
                 return
             }
             if (scaleDelta > 0) {
-                addScaled(sum, x, y, scaleDelta, sign, ctx)
+                coeffAddScaled(sum, x, y, scaleDelta, sign, ctx)
             } else {
-                addScaled(sum, y, x, -scaleDelta, sign, ctx)
+                coeffAddScaled(sum, y, x, -scaleDelta, sign, ctx)
             }
 
         }
 
-        fun addUnscaled(sum: Coeff, x: Coeff, y: Coeff) {
+        fun coeffAddUnscaled(sum: Coeff, x: Coeff, y: Coeff) {
             val maxDigitCount = Math.max(x.digitCount, y.digitCount)
 
             val x0 = x.dw0
@@ -108,7 +102,7 @@ class CoeffAdd private constructor() {
         }
 
 
-        fun addScaled(sum: Coeff, x: Coeff, y: Coeff,
+        fun coeffAddScaled(sum: Coeff, x: Coeff, y: Coeff,
                       scaleDelta: Int, sign: Boolean, ctx: Decimal128Context) {
             assert(x.digitCount > 0)
             assert(y.digitCount > 0)
@@ -121,9 +115,9 @@ class CoeffAdd private constructor() {
                         else
                             Residue.LT_HALF
                         )
-                val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), x.dw0)
+                val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.dw0)
                 sum.set(x)
-                if (roundUp > 0)
+                if (roundUp)
                     roundUp(sum, ctx)
                 ctx.setInexact()
                 return

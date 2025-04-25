@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffAdd {
+class TestCoeffAddUnrounded {
 
     class TC(val biA:BigInteger, val biB:BigInteger) {
         val biSum = biA.add(biB)
@@ -57,7 +57,7 @@ class TestCoeffAdd {
         val coeffA = Coeff(case.biA)
         val coeffB = Coeff(case.biB)
         val coeffC = Coeff()
-        coeffC.add(coeffA, coeffB)
+        coeffC.addUnrounded(coeffA, coeffB)
         val oldDigitCount = coeffC.digitCount
         if (! coeffC.isValidDigitCount()) {
             val digitCount = coeffC.digitCount
@@ -69,7 +69,7 @@ class TestCoeffAdd {
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         assert (biC.equals(expected))
 
-        coeffA.add(coeffA, coeffB)
+        coeffA.addUnrounded(coeffA, coeffB)
         assert (coeffA.toBigInteger().equals(expected))
     }
 

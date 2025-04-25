@@ -23,6 +23,38 @@ const val POW10_MAX_DWORD_INDEX = POW10_256_DWORD_INDEX + (4 * POW10_256_COUNT)
 
 const val MAX_COEFF_DIGIT_COUNT = POW10_MAX_OFFSET
 
+class DigitCount {
+    companion object {
+        fun tweakDigitCountAfterRoundUp(c:Coeff) {
+            if (c.digitCount < POW10_128_OFFSET) {
+                val i = c.digitCount - POW10_64_OFFSET + POW10_64_DWORD_INDEX
+                if (c.dw0 == POW10[i+0])
+                    ++c.digitCount
+                return
+            }
+            if (c.digitCount < POW10_192_OFFSET) {
+                val i = c.digitCount - POW10_128_OFFSET + POW10_128_DWORD_INDEX
+                if (c.dw0 == POW10[i+0] && c.dw1 == POW10[i+1])
+                    ++c.digitCount
+                return
+            }
+            if (c.digitCount < POW10_256_OFFSET) {
+                val i = c.digitCount - POW10_192_OFFSET + POW10_192_DWORD_INDEX
+                if (c.dw0 == POW10[i+0] && c.dw1 == POW10[i+1] && c.dw2 == POW10[i+2])
+                    ++c.digitCount
+                return
+            }
+            if (c.digitCount < POW10_MAX_OFFSET) {
+                val i = c.digitCount - POW10_256_OFFSET + POW10_256_DWORD_INDEX
+                if (c.dw0 == POW10[i+0] && c.dw1 == POW10[i+1] && c.dw2 == POW10[i+2] && c.dw3 == POW10[i+3])
+                    ++c.digitCount
+                return
+            }
+        }
+
+    }
+}
+
 val POW10 = longArrayOf(
     // minBitCount:0  maxBitCount:64
     1L, // 1 (0)
@@ -465,5 +497,6 @@ fun setDigitCount(c: Coeff) {
                     calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
             })
 }
+
 
 
