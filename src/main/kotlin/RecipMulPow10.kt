@@ -3,10 +3,10 @@ package com.decimal128
 import com.decimal128.Residue.Companion.BIAS_TRUNC
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.HALF
-import com.decimal128.UlarMul.Companion.ularMul1
-import com.decimal128.UlarMul.Companion.ularMul2
-import com.decimal128.UlarMul.Companion.ularMul3
-import com.decimal128.UlarMul.Companion.ularMul4
+import com.decimal128.CoeffRecipMulPow5.Companion.coeffRecipMul4
+import com.decimal128.CoeffRecipMulPow5.Companion.coeffRecipMul3
+import com.decimal128.CoeffRecipMulPow5.Companion.coeffRecipMul2
+import com.decimal128.CoeffRecipMulPow5.Companion.coeffRecipMul1
 import java.math.BigInteger
 import java.math.BigInteger.ZERO
 import java.math.BigInteger.ONE
@@ -677,46 +677,39 @@ class RecipMulPow10 {
             val mulDigitCount = unpackMulDigitCount(descriptor)
             val accDwordCount = unpackAccDwordCount(descriptor)
             val shift = unpackShift(descriptor)
+            val fractionBitLen = shift + 1 // include the halfUlp bit
             val quotDwordCount = unpackQuotDwordCount(descriptor)
             assert(quotDwordCount <= 5)
 
-            val m0 = PARAMS[paramsIndex + 1]
-            val m1 = if (mulDwordCount >= 2) PARAMS[paramsIndex + 2] else 0L
-            val m2 = if (mulDwordCount >= 3) PARAMS[paramsIndex + 3] else 0L
-            val m3 = if (mulDwordCount >= 4) PARAMS[paramsIndex + 4] else 0L
-            val m4 = if (mulDwordCount >= 5) PARAMS[paramsIndex + 5] else 0L
-            val biMul = Ular.toBigInteger(m4, m3, m2, m1, m0)
-
-            val pow10MinusOne = pow10 - 1
-            // this is be a bit mask or zero of pow10 == 1
-            val pow10MinusOneNonZeroMask = (-pow10MinusOne shr 31).toLong()
-            val stickyBitsPow2 = x0 and pow10MinusOneNonZeroMask and ((1L shl pow10MinusOne) - 1)
+            val dividendShiftRight = pow10 - 1
+            val dividendShiftLeft = 64 - dividendShiftRight
+            val shiftNonZeroMask = if (dividendShiftRight == 0) 0L else -1L
+            val stickyBitsPow2 = x0 and shiftNonZeroMask and ((1L shl dividendShiftRight) - 1)
             val stickyBitsPow2EqZero = stickyBitsPow2 == 0L
 
-            val d0 = ((x1 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x0 ushr pow10MinusOne)
-            val d1 = ((x2 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x1 ushr pow10MinusOne)
-            val d2 = ((x3 shl (64 - pow10MinusOne)) and pow10MinusOneNonZeroMask) or (x2 ushr pow10MinusOne)
-            val d3 = (x3 ushr pow10MinusOne)
+            val d0 = ((x1 shl dividendShiftLeft) and shiftNonZeroMask) or (x0 ushr dividendShiftRight)
+            val d1 = ((x2 shl dividendShiftLeft) and shiftNonZeroMask) or (x1 ushr dividendShiftRight)
+            val d2 = ((x3 shl dividendShiftLeft) and shiftNonZeroMask) or (x2 ushr dividendShiftRight)
+            val d3 = (x3 ushr dividendShiftRight)
 
-            val div = Ular.toBigInteger(x3, x2, x1, x0)
+            val residue = when {
+                (d3 != 0L) ->
+                    coeffRecipMul4(q, PARAMS, paramsIndex + 1, mulDwordCount,
+                        d3, d2, d1, d0, fractionBitLen, stickyBitsPow2EqZero)
+                (d2 != 0L) ->
+                    coeffRecipMul3(q, PARAMS, paramsIndex + 1, mulDwordCount,
+                        d2, d1, d0, fractionBitLen, stickyBitsPow2EqZero)
+                (d1 != 0L) ->
+                    coeffRecipMul2(q, PARAMS, paramsIndex + 1, mulDwordCount,
+                        d1, d0, fractionBitLen, stickyBitsPow2EqZero)
+                (d0 != 0L) ->
+                    coeffRecipMul1(q, PARAMS, paramsIndex + 1, mulDwordCount,
+                        d0, fractionBitLen, stickyBitsPow2EqZero)
+                else -> throw RuntimeException("why am I here?")
+            }
 
-            val accumulator = LongArray(accDwordCount + 4)
-            val residueX = UlarRecipMul.ularRecipMul4(
-                q, accumulator, PARAMS, paramsIndex + 1, mulDwordCount, d3, d2, d1, d0, shift, stickyBitsPow2EqZero
-            )
-
-            Ular.shiftRight(accumulator, shift + 1)
-            assert(Ular.equals(accumulator, q.dw3, q.dw2, q.dw1, q.dw0))
-
-            /*
-            val quot5 = Ular.toBigInteger(accumulator)
-            val lsbIsOdd = quot5.toLong()
             val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
-            val ulpBias = residueX.ulpBias(effectiveRoundingDirection, lsbIsOdd)
-            val quot5Rounded = if (ulpBias == 0L) quot5 else quot5.add(ONE)
-*/
-            val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
-            val ulpRoundUp = residueX.ulpRoundUp(effectiveRoundingDirection, q.dw0)
+            val ulpRoundUp = residue.ulpRoundUp(effectiveRoundingDirection, q.dw0)
             if (ulpRoundUp) {
                 q.dw0 += 1
                 if (q.dw0 == 0L) {
@@ -732,7 +725,7 @@ class RecipMulPow10 {
                 }
             }
             setDigitCount(q)
-            val inexact = residueX != EXACT
+            val inexact = residue != EXACT
             ctx.setInexact(inexact)
         }
 

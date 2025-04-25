@@ -13,7 +13,7 @@ import java.math.BigDecimal
 
 class TestCoeffScaleDown {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val biA:BigInteger, val pow10:Int, val sign:Boolean,
              val roundingDirection:RoundingDirection, val biExpected:BigInteger, val expectedInexact:Boolean) {

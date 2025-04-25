@@ -17,7 +17,7 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 
 class TestResidueHalfUlpRounding {
 
-    val verbose = false
+    val verbose = true
 
     class HalfUlpRoundingCase(
         val roundingDirection: RoundingDirection, val residue: Residue, val lsdw: Long, val sign: Boolean,
