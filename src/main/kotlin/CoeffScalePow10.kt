@@ -75,7 +75,7 @@ object CoeffScalePow10 {
         RecipMulPow10.divPow10(p, x, pow10, sign, ctx)
     }
 
-    fun _scaleUpPow10AddCoeff(p: Coeff, x: Coeff, pow10: Int, a: Coeff, sign: Boolean, ctx: Decimal128Context) {
+    fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff, sign: Boolean, ctx: Decimal128Context) {
         assert(pow10 > 0)
         assert(x.digitCount > 0)
         assert((x.dw3 or x.dw2) == 0L)
@@ -88,12 +88,12 @@ object CoeffScalePow10 {
         val aDigitCount = a.digitCount
         val a1 = a.dw1
         val a0 = a.dw0
-        _scaleUpPow10Add(p, x, pow10, aDigitCount, a1, a0, sign, ctx)
-        assert(p.isValidDigitCount())
-        assert(p.digitCount == productDigitCount || p.digitCount == productDigitCount + 1)
+        _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0, sign, ctx)
+        assert(z.isValidDigitCount())
+        assert(z.digitCount == productDigitCount || z.digitCount == productDigitCount + 1)
     }
 
-    private fun _scaleUpPow10Add(
+    private fun _scaleFmaPow10(
         p: Coeff,
         x: Coeff,
         pow10: Int,

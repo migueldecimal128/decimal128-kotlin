@@ -8,7 +8,7 @@ import com.decimal128.CoeffMul.coeffMul
 import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffAdd.coeffAdd
 import com.decimal128.CoeffAdd.coeffAddUnscaled
-import com.decimal128.CoeffAdd.coeffAbsDiffUnscaled
+import com.decimal128.CoeffAbsDiff.coeffAbsDiffUnscaled
 import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffEQ
 import com.decimal128.CoeffCompare.coeffGT

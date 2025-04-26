@@ -86,11 +86,11 @@ class TestCoeffAbsDiff {
         if (! biYang.equals(biExpected))
             println("$coeffB - $coeffA = yang:$biYang yangReversed:$yangReversed expected:$biExpected")
         if (case.isEqual) {
-            assert(yinReversed == 0L)
-            assert(yangReversed == 0L)
+            assert(yinReversed == false)
+            assert(yangReversed == false)
         } else {
-            assertEquals(case.isReversed, yinReversed < 0)
-            assertEquals(case.isReversed, yangReversed == 0L)
+            assertEquals(case.isReversed, yinReversed)
+            assertEquals(case.isReversed, ! yangReversed)
         }
 
         assert (biYin.equals(biExpected))
