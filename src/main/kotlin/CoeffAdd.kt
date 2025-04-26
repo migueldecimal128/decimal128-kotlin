@@ -34,10 +34,7 @@ object CoeffAdd {
             z.set(y)
             return
         }
-        if (y.digitCount == 0) {
-            z.set(x)
-            return
-        }
+        // when y == 0 simply go thru the FMA process if scaleDelta > 0
         if (scaleDelta == 0) {
             coeffAddUnscaled(z, x, y)
             return
@@ -113,24 +110,23 @@ object CoeffAdd {
         scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
     ) {
         assert(x.digitCount > 0)
-        assert(y.digitCount > 0)
         assert(scaleDelta > 0)
-        assert(scaleDelta == x.digitCount - y.digitCount)
-        if (scaleDelta >= y.digitCount) {
-            val residue = (
-                    if (scaleDelta == y.digitCount)
-                        Residue.residueFrom(y)
-                    else
-                        Residue.LT_HALF
-                    )
-            val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.dw0)
-            z.set(x)
-            if (roundUp)
-                roundUp(z, ctx)
-            ctx.setInexact()
+        val headRoom = MAX_COEFF_DIGIT_COUNT - x.digitCount
+        if (scaleDelta <= headRoom) {
+            addScaledFullOverlap(z, x, scaleDelta, y)
             return
         }
         addScaledOverlap(z, x, y, scaleDelta, sign, ctx)
+    }
+
+    fun addScaledFullOverlap(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
+        assert(scaleDelta > 0)
+        assert((x.dw3 or x.dw2) == 0L)
+        assert((y.dw3 or y.dw2) == 0L)
+        assert(x.isValidDigitCount())
+        assert(y.isValidDigitCount())
+
+        coeffScaleFmaPow10(z, x, scaleDelta, y)
     }
 
     fun addScaledOverlap(
@@ -144,7 +140,8 @@ object CoeffAdd {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
 
-        coeffScaleFmaPow10(z, x, scaleDelta, y, sign, ctx)
+        throw RuntimeException("not impl")
+        coeffScaleFmaPow10(z, x, scaleDelta, y)
     }
 
 

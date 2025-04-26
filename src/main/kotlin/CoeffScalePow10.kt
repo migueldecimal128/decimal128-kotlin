@@ -75,22 +75,21 @@ object CoeffScalePow10 {
         RecipMulPow10.divPow10(p, x, pow10, sign, ctx)
     }
 
-    fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff, sign: Boolean, ctx: Decimal128Context) {
+    fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
         assert(pow10 > 0)
         assert(x.digitCount > 0)
         assert((x.dw3 or x.dw2) == 0L)
-        assert(a.digitCount > 0)
         assert((a.dw3 or a.dw2) == 0L)
 
-        val productDigitCount = x.digitCount + pow10
-        assert(productDigitCount < MAX_COEFF_DIGIT_COUNT)
+        val minProductDigitCount = Math.max(x.digitCount + pow10, a.digitCount)
+        assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
 
         val aDigitCount = a.digitCount
         val a1 = a.dw1
         val a0 = a.dw0
-        _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0, sign, ctx)
+        _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0)
         assert(z.isValidDigitCount())
-        assert(z.digitCount == productDigitCount || z.digitCount == productDigitCount + 1)
+        assert(z.digitCount == minProductDigitCount || z.digitCount == minProductDigitCount + 1)
     }
 
     private fun _scaleFmaPow10(
@@ -100,8 +99,6 @@ object CoeffScalePow10 {
         aDigitCount: Int,
         a1: Long,
         a0: Long,
-        sign: Boolean,
-        ctx: Decimal128Context
     ) {
         // note that this is a litle lie
         // digitCount is actually pow10 + 1
