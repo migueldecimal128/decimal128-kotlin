@@ -1,9 +1,5 @@
 package com.decimal128
 
-import com.decimal128.Residue.Companion.EXACT
-import com.decimal128.Residue.Companion.HALF
-import com.decimal128.Residue.Companion.LT_HALF
-import com.decimal128.Residue.Companion.GT_HALF
 import java.lang.Math.unsignedMultiplyHigh
 import java.lang.Long.compareUnsigned
 
@@ -12,7 +8,7 @@ object CoeffRecipMulPow5 {
     fun coeffRecipMul4(
         q: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
-        n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2EqZero: Boolean
+        n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
         val isDwordAligned = (fractionBitLen and 0x3F) == 0
@@ -22,12 +18,12 @@ object CoeffRecipMulPow5 {
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
-        var halfUlpIsolated = 0L
+        var isolatedRoundBit = 0L
         var quotientIndex = 0
 
 
         var fractionBitsRemaining = fractionBitLen
-        var fracCompare = 0
+        var stickyBitsFracCompare = 0
         assert((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
@@ -77,14 +73,14 @@ object CoeffRecipMulPow5 {
                 fractionBitsRemaining -= 64
                 val mask =
                     if (fractionBitsRemaining <= 0) {
-                        halfUlpIsolated = z_0 and halfUlpBitMask
+                        isolatedRoundBit = z_0 and halfUlpBitMask
                         fractionTailMask
                     } else {
                         -1L
                     }
                 if (mask != 0L) {
                     val cmp = compareUnsigned((z_0 and mask), mX)
-                    fracCompare = if (cmp != 0) cmp else fracCompare
+                    stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
                 val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -124,13 +120,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z1 and halfUlpBitMask
+                    isolatedRoundBit = z1 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z1 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -141,13 +137,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z2 and halfUlpBitMask
+                    isolatedRoundBit = z2 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z2 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z2 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
@@ -158,13 +154,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z3 and halfUlpBitMask
+                    isolatedRoundBit = z3 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z3 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z3 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z3 shl leftModulusShift) or ((z2 ushr shiftRightModulus) and shiftRightMask)
@@ -177,13 +173,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z4 and halfUlpBitMask
+                    isolatedRoundBit = z4 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z4 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z4 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z4 shl leftModulusShift) or ((z3 ushr shiftRightModulus) and shiftRightMask)
@@ -195,14 +191,14 @@ object CoeffRecipMulPow5 {
         if (q4 != 0L)
             q[quotientIndex] = q4
 
-        val residue = Residue.residueFrom(stickyBitsPow2EqZero, fracCompare, halfUlpIsolated)
+        val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 
     fun coeffRecipMul3(
         q: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
-        n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2EqZero: Boolean
+        n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
         val isDwordAligned = (fractionBitLen and 0x3F) == 0
@@ -212,12 +208,12 @@ object CoeffRecipMulPow5 {
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
-        var halfUlpIsolated = 0L
+        var isolatedRoundBit = 0L
         var quotientIndex = 0
 
 
         var fractionBitsRemaining = fractionBitLen
-        var fracCompare = 0
+        var stickyBitsFracCompare = 0
         assert((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
@@ -255,14 +251,14 @@ object CoeffRecipMulPow5 {
                 fractionBitsRemaining -= 64
                 val mask =
                     if (fractionBitsRemaining <= 0) {
-                        halfUlpIsolated = z_0 and halfUlpBitMask
+                        isolatedRoundBit = z_0 and halfUlpBitMask
                         fractionTailMask
                     } else {
                         -1L
                     }
                 if (mask != 0L) {
                     val cmp = compareUnsigned((z_0 and mask), mX)
-                    fracCompare = if (cmp != 0) cmp else fracCompare
+                    stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
                 val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -293,13 +289,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z1 and halfUlpBitMask
+                    isolatedRoundBit = z1 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z1 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -310,13 +306,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z2 and halfUlpBitMask
+                    isolatedRoundBit = z2 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z2 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z2 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
@@ -327,13 +323,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z3 and halfUlpBitMask
+                    isolatedRoundBit = z3 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z3 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z3 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z3 shl leftModulusShift) or ((z2 ushr shiftRightModulus) and shiftRightMask)
@@ -344,14 +340,14 @@ object CoeffRecipMulPow5 {
         if (q3 != 0L)
             q[quotientIndex] = q3
 
-        val residue = Residue.residueFrom(stickyBitsPow2EqZero, fracCompare, halfUlpIsolated)
+        val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 
     fun coeffRecipMul2(
         q: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
-        n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2EqZero: Boolean
+        n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
         val isDwordAligned = (fractionBitLen and 0x3F) == 0
@@ -361,12 +357,12 @@ object CoeffRecipMulPow5 {
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
-        var halfUlpIsolated = 0L
+        var isolatedRoundBit = 0L
         var quotientIndex = 0
 
 
         var fractionBitsRemaining = fractionBitLen
-        var fracCompare = 0
+        var stickyBitsFracCompare = 0
         assert((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
@@ -394,14 +390,14 @@ object CoeffRecipMulPow5 {
                 fractionBitsRemaining -= 64
                 val mask =
                     if (fractionBitsRemaining <= 0) {
-                        halfUlpIsolated = z_0 and halfUlpBitMask
+                        isolatedRoundBit = z_0 and halfUlpBitMask
                         fractionTailMask
                     } else {
                         -1L
                     }
                 if (mask != 0L) {
                     val cmp = compareUnsigned((z_0 and mask), mX)
-                    fracCompare = if (cmp != 0) cmp else fracCompare
+                    stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
                 val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -425,13 +421,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z1 and halfUlpBitMask
+                    isolatedRoundBit = z1 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z1 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -442,13 +438,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z2 and halfUlpBitMask
+                    isolatedRoundBit = z2 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z2 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z2 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
@@ -459,14 +455,14 @@ object CoeffRecipMulPow5 {
         if (q2 != 0L)
             q[quotientIndex] = q2
 
-        val residue = Residue.residueFrom(stickyBitsPow2EqZero, fracCompare, halfUlpIsolated)
+        val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 
     fun coeffRecipMul1(
         q: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
-        n0: Long, fractionBitLen: Int, stickyBitsPow2EqZero: Boolean
+        n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
         val isDwordAligned = (fractionBitLen and 0x3F) == 0
@@ -476,12 +472,12 @@ object CoeffRecipMulPow5 {
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
-        var halfUlpIsolated = 0L
+        var isolatedRoundBit = 0L
         var quotientIndex = 0
 
 
         var fractionBitsRemaining = fractionBitLen
-        var fracCompare = 0
+        var stickyBitsFracCompare = 0
         assert((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
@@ -501,14 +497,14 @@ object CoeffRecipMulPow5 {
                 fractionBitsRemaining -= 64
                 val mask =
                     if (fractionBitsRemaining <= 0) {
-                        halfUlpIsolated = z_0 and halfUlpBitMask
+                        isolatedRoundBit = z_0 and halfUlpBitMask
                         fractionTailMask
                     } else {
                         -1L
                     }
                 if (mask != 0L) {
                     val cmp = compareUnsigned((z_0 and mask), mX)
-                    fracCompare = if (cmp != 0) cmp else fracCompare
+                    stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
                 val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -527,13 +523,13 @@ object CoeffRecipMulPow5 {
             fractionBitsRemaining -= 64
             val mask =
                 if (fractionBitsRemaining <= 0) {
-                    halfUlpIsolated = z1 and halfUlpBitMask
+                    isolatedRoundBit = z1 and halfUlpBitMask
                     fractionTailMask
                 } else {
                     -1L
                 }
             if (mask != 0L) {
-                fracCompare = if ((z1 and mask) != 0L) 1 else fracCompare
+                stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
             val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
@@ -544,7 +540,7 @@ object CoeffRecipMulPow5 {
         if (q1 != 0L)
             q[quotientIndex] = q1
 
-        val residue = Residue.residueFrom(stickyBitsPow2EqZero, fracCompare, halfUlpIsolated)
+        val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 

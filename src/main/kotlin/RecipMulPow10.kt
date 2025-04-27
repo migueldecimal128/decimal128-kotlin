@@ -460,7 +460,6 @@ object RecipMulPow10 {
         val dividendShiftLeft = 64 - dividendShiftRight
         val shiftNonZeroMask = if (dividendShiftRight == 0) 0L else -1L
         val stickyBitsPow2 = x0 and shiftNonZeroMask and ((1L shl dividendShiftRight) - 1)
-        val stickyBitsPow2EqZero = stickyBitsPow2 == 0L
 
         val d0 = ((x1 shl dividendShiftLeft) and shiftNonZeroMask) or (x0 ushr dividendShiftRight)
         val d1 = ((x2 shl dividendShiftLeft) and shiftNonZeroMask) or (x1 ushr dividendShiftRight)
@@ -471,25 +470,25 @@ object RecipMulPow10 {
             (d3 != 0L) ->
                 coeffRecipMul4(
                     q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d3, d2, d1, d0, fractionBitLen, stickyBitsPow2EqZero
+                    d3, d2, d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d2 != 0L) ->
                 coeffRecipMul3(
                     q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d2, d1, d0, fractionBitLen, stickyBitsPow2EqZero
+                    d2, d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d1 != 0L) ->
                 coeffRecipMul2(
                     q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d1, d0, fractionBitLen, stickyBitsPow2EqZero
+                    d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d0 != 0L) ->
                 coeffRecipMul1(
                     q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d0, fractionBitLen, stickyBitsPow2EqZero
+                    d0, fractionBitLen, stickyBitsPow2
                 )
 
             else -> throw RuntimeException("why am I here?")

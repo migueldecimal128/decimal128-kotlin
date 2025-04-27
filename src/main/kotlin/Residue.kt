@@ -7,16 +7,21 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.DigitCount.POW10
 
 import java.lang.Long.compareUnsigned
-import java.math.BigInteger
 
 
 //@JvmInline
 /*value*/ class Residue private constructor(val value:Int) {
+
+    // comment this out when we turn Residue into a value class
+    override fun equals(other: Any?): Boolean {
+        return other is Residue && this.value == other.value
+    }
+
     companion object {
-        val HALF = Residue(0)
-        val LT_HALF = Residue(2)
+        val EXACT = Residue(0)
+        val LT_HALF = Residue(1)
+        val HALF = Residue(2)
         val GT_HALF = Residue(3)
-        val EXACT = Residue(4)
 
         fun residueFrom(c:Coeff) :Residue {
             assert (c.digitCount > 0)
@@ -227,37 +232,27 @@ import java.math.BigInteger
             }
         }
 
-        fun residueFrom(stickyBitsPow2EqZero:Boolean, fracCompare:Int, halfUlpIsolated:Long) : Residue {
-            val residue =
-                if (stickyBitsPow2EqZero) {
-                    if (fracCompare < 0) {
-                        if (halfUlpIsolated == 0L) EXACT else HALF
+        fun residueFrom(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long) : Residue {
+            val stickyBit = if (stickyBitsFracCompare >= 0 || stickyBitsPow2 != 0L) 1 else 0
+            val roundBit = if (isolatedRoundBit == 0L) 0 else 1
+            val residueValue = (roundBit shl 1) or stickyBit
+            val residueX = Residue(residueValue)
+            val residueY =
+                if (stickyBitsPow2 == 0L) {
+                    if (stickyBitsFracCompare < 0) {
+                        if (isolatedRoundBit == 0L) EXACT else HALF
                     } else {
-                        if (halfUlpIsolated == 0L) LT_HALF else GT_HALF
+                        if (isolatedRoundBit == 0L) LT_HALF else GT_HALF
                     }
                 } else {
-                    if (halfUlpIsolated == 0L) LT_HALF else GT_HALF
+                    if (isolatedRoundBit == 0L) LT_HALF else GT_HALF
                 }
-            return residue
+            if (residueX != residueY)
+                println("residueX:$residueX residueY:$residueY")
+            assert(residueX == residueY)
+            return residueX
         }
 
-    }
-
-    // used by scaling operations with RecipMul
-    fun halfUlpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        // with RoundingDirection ROUND_TOWARDS_POSITIVE and ROUND_TOWARDS_NEGATIVE
-        // the bias is 1 ULP, not 1/2 ULP
-        // this table stores 5 RoundingDirections, starting from the right
-        // each entry is 8 bits long, although only 3x2=6 bits are actually used
-        assert(value != LT_HALF.value && value != GT_HALF.value)
-        val HALF_ULP_BIAS_MAP = 0b0_00000000_00001010_00000000_00000101_00000100L
-
-        val exactOr3Mask = ((value - EXACT.value) shr 1) ushr 30 // exactOr3Mask = if (EXACT) 0 else 03
-        val biasMapEvenOdd = HALF_ULP_BIAS_MAP or (lsdwIsOdd and 1)
-        val bitIndex = ((roundingDirection.value * 4) + value) * 2
-        val roundingMapShifted = (biasMapEvenOdd shr bitIndex)
-        val bias = exactOr3Mask.toLong() and roundingMapShifted
-        return bias
     }
 
     fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =
@@ -265,15 +260,10 @@ import java.math.BigInteger
 
     fun ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) = ulpBiasY(roundingDirection, lsdwIsOdd)
 
-    // for add operation when there is no overlap ...
-    // in this case, we are not going to add halfULP and trunc
-    // rather, we are going to bias the ULP by a whole amount
-    // used in add case when there is no overlapg
     fun ulpBiasY(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        // this becomes one bit per entry, with the special treament of ROUND_TIES_TO_EVEN and lsbg
-        val ULP_BIAS_MAP = 0b0_00000000_00001101_00000000_00001001_00001000L
+        val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
 
-        val biasMapEvenOdd = ULP_BIAS_MAP or (lsdwIsOdd and 1)
+        val biasMapEvenOdd = ULP_BIAS_MAP or ((lsdwIsOdd and 1) shl 2)
         val bitIndex = (roundingDirection.value * 8) + value
         val roundingMapShifted = biasMapEvenOdd shr bitIndex
         val bias = roundingMapShifted and 1
@@ -284,37 +274,37 @@ import java.math.BigInteger
     fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
         return when (roundingDirection) {
             ROUND_TIES_TO_EVEN -> when (value) {
-                HALF.value -> lsdwIsOdd and 1L
                 LT_HALF.value -> 0L
+                HALF.value -> lsdwIsOdd and 1L
                 GT_HALF.value -> 1L
                 // EXACT
                 else -> 0L
             }
             ROUND_TIES_TO_AWAY -> when (value) {
-                HALF.value -> 1L
                 LT_HALF.value -> 0L
+                HALF.value -> 1L
                 GT_HALF.value -> 1L
                 // EXACT
                 else -> 0L
             }
             ROUND_TOWARD_ZERO -> when (value) {
-                HALF.value -> 0L
                 LT_HALF.value -> 0L
+                HALF.value -> 0L
                 GT_HALF.value -> 0L
                 // EXACT
                 else -> 0L
             }
             ROUND_TOWARD_POSITIVE -> when (value) {
-                HALF.value -> 1L
                 LT_HALF.value -> 1L
+                HALF.value -> 1L
                 GT_HALF.value -> 1L
                 // EXACT
                 else -> 0L
             }
             // ROUND_TOWARD_NEGATIVE
             else -> when (value) {
-                HALF.value -> 0L
                 LT_HALF.value -> 0L
+                HALF.value -> 0L
                 GT_HALF.value -> 0L
                 // EXACT
                 else -> 0L
@@ -322,11 +312,11 @@ import java.math.BigInteger
         }
     }
 
-    override fun toString() : String = when (this) {
-        EXACT -> "EXACT"
-        HALF -> "HALF"
-        LT_HALF -> "LT_HALF"
-        GT_HALF -> "GT_HALF"
+    override fun toString() : String = when (this.value) {
+        EXACT.value -> "EXACT"
+        LT_HALF.value -> "LT_HALF"
+        HALF.value -> "HALF"
+        GT_HALF.value -> "GT_HALF"
         else -> "invalid Residue value"
     }
 }
