@@ -29,8 +29,12 @@ object CoeffAdd {
     }
 
     fun coeffAddUnscaled(z: Coeff, x: Coeff, y: Coeff) {
-        if (x.digitCount == 0 || y.digitCount == 0) {
-            z.setZero()
+        if (x.digitCount == 0) {
+            z.set(y)
+            return
+        }
+        if (y.digitCount == 0) {
+            z.set(x)
             return
         }
         val maxDigitCount = Math.max(x.digitCount, y.digitCount)
@@ -91,7 +95,6 @@ object CoeffAdd {
 
 
     fun coeffAddScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
-        assert(x.digitCount > 0)
         assert(scaleDelta > 0)
         assert(scaleDelta < PRECISION_34)
 

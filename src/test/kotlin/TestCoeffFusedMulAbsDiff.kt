@@ -2,6 +2,9 @@ package com.decimal128
 
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
+import java.math.BigInteger.ONE
+import java.math.BigInteger.TWO
+import java.math.BigInteger.TEN
 import java.util.*
 
 class TestCoeffFusedMulAbsDiff {
@@ -13,6 +16,7 @@ class TestCoeffFusedMulAbsDiff {
     }
 
     val cases = arrayOf(
+        TC(ONE.shiftLeft(256).subtract(ONE), TWO, ONE.shiftLeft(256).subtract(ONE)),
         TC("1", "41953078857", "69141105809440508213736970815833952828572312190904827688854686"),
         TC("9", "9", "99"),
         TC("99", "99", "999"),

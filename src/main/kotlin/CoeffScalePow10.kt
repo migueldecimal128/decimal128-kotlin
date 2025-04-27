@@ -5,6 +5,7 @@ import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffDigitCount.POW10
 import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
 import com.decimal128.Residue.Companion.EXACT
+import kotlin.math.max
 
 
 object CoeffScalePow10 {
@@ -64,11 +65,10 @@ object CoeffScalePow10 {
 
     fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
         assert(pow10 > 0)
-        assert(x.digitCount > 0)
         assert((x.dw3 or x.dw2) == 0L)
         assert((a.dw3 or a.dw2) == 0L)
 
-        val minProductDigitCount = Math.max(x.digitCount + pow10, a.digitCount)
+        val minProductDigitCount = if (x.digitCount == 0) a.digitCount else max(x.digitCount + pow10, a.digitCount)
         assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
 
         val aDigitCount = a.digitCount
