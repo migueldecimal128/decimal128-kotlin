@@ -39,7 +39,6 @@ import java.lang.Long.compareUnsigned
             "EXACT_NEGATED", "LT_HALF_NEGATED", "HALF_NEGATED", "GT_HALF_NEGATED")
 
         fun residueFrom(c:Coeff) :Residue {
-            assert (c.digitCount > 0)
             return (
                     if (( c.dw3 or c.dw2) == 0L) {
                         if (c.dw1 == 0L)
@@ -56,8 +55,11 @@ import java.lang.Long.compareUnsigned
 
         }
 
-        fun residueFrom(digitCount:Int, dw0: Long) : Residue {
-            if (dw0 >= 0) {
+        private fun residueFrom(digitCount:Int, dw0: Long) : Residue {
+            if (dw0 == 0L) {
+                assert(digitCount == 0)
+                return EXACT
+            } else if (dw0 > 0) {
                 val dw0x2 = dw0 shl 1
                 val ten0 = POW10[digitCount]
                 val cmp0 = compareUnsigned(dw0x2, ten0)
@@ -73,7 +75,7 @@ import java.lang.Long.compareUnsigned
             }
         }
 
-        fun residueFrom(digitCount: Int, dw1: Long, dw0: Long) : Residue {
+        private fun residueFrom(digitCount: Int, dw1: Long, dw0: Long) : Residue {
             // 10**39 takes 3 dwords with most significant dword having value 0x02
             if (digitCount == POW10_192_OFFSET)
                 return LT_HALF
@@ -106,7 +108,7 @@ import java.lang.Long.compareUnsigned
             //}
         }
 
-        fun residueFrom(digitCount: Int, dw2: Long, dw1: Long, dw0: Long) : Residue {
+        private fun residueFrom(digitCount: Int, dw2: Long, dw1: Long, dw0: Long) : Residue {
             if (dw2 >= 0) {
                 val index = 3 * (digitCount - POW10_192_OFFSET) + POW10_192_DWORD_INDEX
 
@@ -167,7 +169,7 @@ import java.lang.Long.compareUnsigned
             }
         }
 
-        fun residueFrom(digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : Residue {
+        private fun residueFrom(digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : Residue {
             if (dw3 >= 0) {
                 if (digitCount == 58)
                     return GT_HALF

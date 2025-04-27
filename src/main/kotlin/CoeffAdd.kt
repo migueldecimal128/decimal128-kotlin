@@ -7,6 +7,7 @@ import com.decimal128.DigitCount.setDigitCount128
 import com.decimal128.DigitCount.setDigitCount192
 import com.decimal128.DigitCount.setDigitCount256
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
+import com.decimal128.Residue.Companion.EXACT
 
 object CoeffAdd {
 
@@ -27,23 +28,22 @@ object CoeffAdd {
         tweakDigitCountAfterRoundUp(c)
     }
 
-    fun coeffAdd(
-        z: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int) {
+    fun coeffAdd(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
         if (x.digitCount == 0) {
             z.set(y)
-            return
+            return EXACT
         }
         // when y == 0 simply go thru the FMA process if scaleDelta > 0
         if (scaleDelta == 0) {
             coeffAddUnscaled(z, x, y)
-            return
+            return EXACT
         }
-        if (scaleDelta > 0) {
-            coeffAddScaled(z, x, scaleDelta, y)
-        } else {
-            coeffAddScaled(z, y, -scaleDelta, x)
-        }
+        return (
+                if (scaleDelta > 0)
+                    coeffAddScaled(z, x, scaleDelta, y)
+                else
+                    coeffAddScaled(z, y, -scaleDelta, x)
+                )
 
     }
 
@@ -105,15 +105,25 @@ object CoeffAdd {
     }
 
 
-    fun coeffAddScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
+    fun coeffAddScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
         assert(x.digitCount > 0)
         assert(scaleDelta > 0)
         val headRoom = MAX_COEFF_DIGIT_COUNT - x.digitCount
+        if (scaleDelta >= PRECISION_34) {
+            val residue = Residue.residueFrom(y)
+            val headroom = PRECISION_34 - x.digitCount
+            // FIXME ... the exponent needs to be shifted by headroom
+            // looks like my nice plan to keep Coeff operations separated from Coeff operations is ruined
+            // .OR. handle all these cases at a higher level so that all scaling is done exactly by
+            // the scaleDelta value that is mandated by the higher layer
+            CoeffScalePow10.scaleUpPow10Coeff(z, x, headroom)
+            throw RuntimeException("boo hoo hoo!")
+        }
         if (scaleDelta <= headRoom) {
             addScaledFullOverlap(z, x, scaleDelta, y)
-            return
+            return EXACT
         }
-        addScaledOverlap(z, x, scaleDelta, y)
+        return addScaledOverlap(z, x, scaleDelta, y)
     }
 
     fun addScaledFullOverlap(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
@@ -126,7 +136,7 @@ object CoeffAdd {
         coeffScaleFmaPow10(z, x, scaleDelta, y)
     }
 
-    fun addScaledOverlap(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
+    fun addScaledOverlap(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
         assert(scaleDelta > 0)
         assert(scaleDelta < y.digitCount)
         assert((x.dw3 or x.dw2) == 0L)

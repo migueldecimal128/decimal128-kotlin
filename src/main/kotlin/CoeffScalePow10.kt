@@ -13,12 +13,12 @@ object CoeffScalePow10 {
             return
         }
         if (pow10 > 0)
-            scaleUpPow10Coeff(p, x, pow10, ctx)
+            scaleUpPow10Coeff(p, x, pow10)
         else
             scaleDownPow10Coeff(p, sign, x, -pow10, ctx)
     }
 
-    private fun scaleUpPow10Coeff(p: Coeff, x: Coeff, pow10: Int, ctx: Decimal128Context) {
+    fun scaleUpPow10Coeff(p: Coeff, x: Coeff, pow10: Int) {
         assert(pow10 > 0)
         assert(x.digitCount > 0)
 

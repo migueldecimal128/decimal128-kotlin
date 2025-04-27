@@ -1,19 +1,18 @@
 package com.decimal128
 
-import com.decimal128.CoeffFma.fmaCoeff
 import java.math.BigInteger
 import java.lang.Long.compareUnsigned
-import com.decimal128.CoeffMul.mulCoeff
 import com.decimal128.CoeffMul.coeffMul
 import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffAdd.coeffAdd
 import com.decimal128.CoeffAdd.coeffAddUnscaled
 import com.decimal128.CoeffAbsDiff.coeffAbsDiffUnscaled
-import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffEQ
 import com.decimal128.CoeffCompare.coeffGT
 import com.decimal128.CoeffCompare.coeffLT
 import java.lang.Long.numberOfLeadingZeros
+
+const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
@@ -79,7 +78,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
 
     fun LT(other: Coeff) = coeffLT(this, other)
 
-    fun add(x:Coeff, y:Coeff, scaleDelta:Int) = coeffAdd(this, x, y, scaleDelta)
+    fun add(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
 
     fun add(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
 
