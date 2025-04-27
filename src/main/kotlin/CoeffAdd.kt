@@ -10,6 +10,7 @@ import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
 
 object CoeffAdd {
 
+    @Deprecated("should not be used with the Coeff layer")
     fun roundUp(c: Coeff, ctx: Decimal128Context) {
         c.dw0 += 1
         if (c.dw0 == 0L) {

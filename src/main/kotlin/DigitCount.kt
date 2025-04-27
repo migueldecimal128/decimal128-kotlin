@@ -152,63 +152,66 @@ object DigitCount {
         // we can represent all 77 decimal digit numbers
     )
 
+    @Suppress("unused")
     private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX); true }
 
     fun setDigitCount64(c: Coeff) {
         assert((c.dw3 or c.dw2 or c.dw1) == 0L)
-        c.digitCount = DigitCount.calcDigitCount64(c.dw0)
+        c.digitCount = calcDigitCount64(c.dw0)
     }
 
     fun setDigitCount128(c: Coeff) {
         assert((c.dw3 or c.dw2) == 0L)
-        c.digitCount = DigitCount.calcDigitCount128(c.dw1, c.dw0)
+        c.digitCount = calcDigitCount128(c.dw1, c.dw0)
     }
 
     fun setDigitCount192(c: Coeff) {
         assert(c.dw3 == 0L)
-        c.digitCount = DigitCount.calcDigitCount192(c.dw2, c.dw1, c.dw0)
+        c.digitCount = calcDigitCount192(c.dw2, c.dw1, c.dw0)
     }
 
     fun setDigitCount256(c: Coeff) {
-        c.digitCount = DigitCount.calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
+        c.digitCount = calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
     }
 
     fun setDigitCount(c: Coeff) {
         c.digitCount = (
                 if ((c.dw3 or c.dw2) == 0L) {
                     if (c.dw1 == 0L)
-                        DigitCount.calcDigitCount64(c.dw0)
+                        calcDigitCount64(c.dw0)
                     else
-                        DigitCount.calcDigitCount128(c.dw1, c.dw0)
+                        calcDigitCount128(c.dw1, c.dw0)
                 } else {
                     if (c.dw3 == 0L)
-                        DigitCount.calcDigitCount192(c.dw2, c.dw1, c.dw0)
+                        calcDigitCount192(c.dw2, c.dw1, c.dw0)
                     else
-                        DigitCount.calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
+                        calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
                 })
     }
 
 
-    fun calcDigitCount64(dw0: Long) = calcDigitCount64_nlz(dw0)
+    fun calcDigitCount64(dw0: Long) = calcDigitCount64nlz(dw0)
 
     fun calcDigitCount64(dw0: ULong) = calcDigitCount64(dw0.toLong())
 
-    fun calcDigitCount128(dw1: Long, dw0: Long) = calcDigitCount128_nlz(dw1, dw0)
+    fun calcDigitCount128(dw1: Long, dw0: Long) = calcDigitCount128nlz(dw1, dw0)
 
-    fun calcDigitCount192(dw2: Long, dw1: Long, dw0: Long) = calcDigitCount192_nlz(dw2, dw1, dw0)
+    fun calcDigitCount192(dw2: Long, dw1: Long, dw0: Long) = calcDigitCount192nlz(dw2, dw1, dw0)
 
-    fun calcDigitCount256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) = calcDigitCount256_nlz(dw3, dw2, dw1, dw0)
+    fun calcDigitCount256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) = calcDigitCount256nlz(dw3, dw2, dw1, dw0)
 
     fun calcDigitCount(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
-        if ((dw3 or dw2) == 0L)
-            return if (dw1 == 0L) calcDigitCount64(dw0) else calcDigitCount128(dw1, dw0)
-        else
-            return if (dw3 == 0L) calcDigitCount192(dw2, dw1, dw0) else calcDigitCount256(dw3, dw2, dw1, dw0)
+        return (
+                if ((dw3 or dw2) == 0L)
+                    if (dw1 == 0L) calcDigitCount64(dw0) else calcDigitCount128(dw1, dw0)
+                else
+                    if (dw3 == 0L) calcDigitCount192(dw2, dw1, dw0) else calcDigitCount256(dw3, dw2, dw1, dw0)
+                )
     }
 
-    fun calcDigitCount64_nlz(dw0: Long): Int {
+    private fun calcDigitCount64nlz(dw0: Long): Int {
         if (dw0 == 0L)
-            return 0;
+            return 0
         val nlz = numberOfLeadingZeros(dw0)
         val bitLength = 64 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -222,7 +225,7 @@ object DigitCount {
         return digitCount
     }
 
-    fun calcDigitCount128_nlz(dw1: Long, dw0: Long): Int {
+    private fun calcDigitCount128nlz(dw1: Long, dw0: Long): Int {
         if (dw1 == 0L)
             return calcDigitCount64(dw0)
         val nlz = numberOfLeadingZeros(dw1)
@@ -240,9 +243,9 @@ object DigitCount {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    fun calcDigitCount192_nlz(dw2: Long, dw1: Long, dw0: Long): Int {
+    private fun calcDigitCount192nlz(dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw2 == 0L)
-            return calcDigitCount128_nlz(dw1, dw0)
+            return calcDigitCount128nlz(dw1, dw0)
         val nlz = numberOfLeadingZeros(dw2)
         val bitLength = 192 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -261,9 +264,9 @@ object DigitCount {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    fun calcDigitCount256_nlz(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+    private fun calcDigitCount256nlz(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw3 == 0L)
-            return calcDigitCount192_nlz(dw2, dw1, dw0)
+            return calcDigitCount192nlz(dw2, dw1, dw0)
         val nlz = numberOfLeadingZeros(dw3)
         val bitLength = 256 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -285,7 +288,8 @@ object DigitCount {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    fun calcDigitCount64_binarySearch(dw0: Long): Int {
+    @Suppress("unused")
+    private fun calcDigitCount64binarySearch(dw0: Long): Int {
         var lo = 0
         var hi = POW10_64_COUNT
         do {
@@ -301,9 +305,10 @@ object DigitCount {
         return digitCount
     }
 
-    fun calcDigitCount128_binarySearch(dw1: Long, dw0: Long): Int {
+    @Suppress("unused")
+    private fun calcDigitCount128binarySearch(dw1: Long, dw0: Long): Int {
         if (dw1 == 0L)
-            return calcDigitCount64_binarySearch(dw0)
+            return calcDigitCount64binarySearch(dw0)
         var lo = 0
         var hi = POW10_128_COUNT
         do {
@@ -326,9 +331,10 @@ object DigitCount {
         return digitCount
     }
 
-    fun calcDigitCount192_binarySearch(dw2: Long, dw1: Long, dw0: Long): Int {
+    @Suppress("unused")
+    private fun calcDigitCount192binarySearch(dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw2 == 0L)
-            return calcDigitCount128_binarySearch(dw1, dw0)
+            return calcDigitCount128binarySearch(dw1, dw0)
         var lo = 0
         var hi = POW10_192_COUNT
         do {
@@ -358,9 +364,10 @@ object DigitCount {
         return digitCount
     }
 
-    fun calcDigitCount256_binarySearch(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+    @Suppress("unused")
+    fun calcDigitCount256binarySearch(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw3 == 0L)
-            return calcDigitCount192_binarySearch(dw2, dw1, dw0)
+            return calcDigitCount192binarySearch(dw2, dw1, dw0)
         var lo = 0
         var hi = POW10_256_COUNT
         do {
@@ -397,6 +404,7 @@ object DigitCount {
         return digitCount
     }
 
+    @Deprecated("should not be used with the Coeff layer")
     fun tweakDigitCountAfterRoundUp(c: Coeff) {
         if (c.digitCount < POW10_128_OFFSET) {
             val i = c.digitCount - POW10_64_OFFSET + POW10_64_DWORD_INDEX
