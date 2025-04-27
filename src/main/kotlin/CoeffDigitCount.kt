@@ -24,7 +24,7 @@ const val POW10_MAX_DWORD_INDEX = POW10_256_DWORD_INDEX + (4 * POW10_256_COUNT)
 
 const val MAX_COEFF_DIGIT_COUNT = POW10_MAX_OFFSET
 
-object DigitCount {
+object CoeffDigitCount {
 
     val POW10 = longArrayOf(
         // minBitCount:0  maxBitCount:64

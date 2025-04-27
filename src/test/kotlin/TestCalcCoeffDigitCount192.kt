@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCalcDigitCount192 {
+class TestCalcCoeffDigitCount192 {
 
     @Test
     fun test() {
@@ -33,7 +33,7 @@ class TestCalcDigitCount192 {
         val dw0 = bi.toLong()
         val dw1 = bi.shiftRight(64).toLong()
         val dw2 = bi.shiftRight(128).toLong()
-        val observed = DigitCount.calcDigitCount192(dw2, dw1, dw0)
+        val observed = CoeffDigitCount.calcDigitCount192(dw2, dw1, dw0)
         if (observed != expected)
             println(bi)
         assertEquals(expected, observed)

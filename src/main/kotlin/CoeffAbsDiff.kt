@@ -1,9 +1,9 @@
 package com.decimal128
 
-import com.decimal128.DigitCount.setDigitCount128
-import com.decimal128.DigitCount.setDigitCount192
-import com.decimal128.DigitCount.setDigitCount256
-import com.decimal128.DigitCount.setDigitCount64
+import com.decimal128.CoeffDigitCount.setDigitCount128
+import com.decimal128.CoeffDigitCount.setDigitCount192
+import com.decimal128.CoeffDigitCount.setDigitCount256
+import com.decimal128.CoeffDigitCount.setDigitCount64
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Long.compareUnsigned

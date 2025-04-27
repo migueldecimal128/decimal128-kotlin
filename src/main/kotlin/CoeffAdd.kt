@@ -1,11 +1,11 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
-import com.decimal128.DigitCount.tweakDigitCountAfterRoundUp
-import com.decimal128.DigitCount.setDigitCount64
-import com.decimal128.DigitCount.setDigitCount128
-import com.decimal128.DigitCount.setDigitCount192
-import com.decimal128.DigitCount.setDigitCount256
+import com.decimal128.CoeffDigitCount.tweakDigitCountAfterRoundUp
+import com.decimal128.CoeffDigitCount.setDigitCount64
+import com.decimal128.CoeffDigitCount.setDigitCount128
+import com.decimal128.CoeffDigitCount.setDigitCount192
+import com.decimal128.CoeffDigitCount.setDigitCount256
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
 import com.decimal128.Residue.Companion.EXACT
 
@@ -116,7 +116,7 @@ object CoeffAdd {
             // looks like my nice plan to keep Coeff operations separated from Coeff operations is ruined
             // .OR. handle all these cases at a higher level so that all scaling is done exactly by
             // the scaleDelta value that is mandated by the higher layer
-            CoeffScalePow10.scaleUpPow10Coeff(z, x, headroom)
+            CoeffScalePow10.coeffScaleUpPow10(z, x, headroom)
             throw RuntimeException("boo hoo hoo!")
         }
         if (scaleDelta <= headRoom) {

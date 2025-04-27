@@ -1,7 +1,6 @@
 package com.decimal128
 
 import com.decimal128.Residue.Companion.EXACT
-import com.decimal128.Residue.Companion.HALF
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
@@ -12,6 +11,7 @@ import java.math.BigInteger.ONE
 import java.math.BigInteger.TWO
 import java.math.BigInteger.TEN
 import kotlin.math.ceil
+import com.decimal128.CoeffDigitCount.setDigitCount
 
 val MIN_DIVIDEND_DIGIT_COUNT = 2
 val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
@@ -389,6 +389,24 @@ object RecipMulPow10 {
         throw RuntimeException("not impl")
     }
 
+    fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+        initialize()
+        if (pow10 <= 0) {
+            assert(pow10 == 0)
+            z.set(x)
+            return EXACT
+        }
+        if (x.digitCount <= pow10) {
+            if (x.digitCount == 0) {
+                z.setZero()
+                return EXACT
+            }
+            val residue = if (x.digitCount == pow10) Residue.residueFrom(x) else Residue.LT_HALF
+            return residue
+        }
+        return _divPow10(z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+    }
+
     fun divPow10(q: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
         initialize()
         if (pow10 <= 0) {
@@ -425,6 +443,11 @@ object RecipMulPow10 {
 
         //}
     }
+
+    private fun _divPow10(
+        q: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
+        pow10: Int) =
+        _divPow10_miguel3(q, xDigitCount, x3, x2, x1, x0, pow10)
 
     private fun _divPow10(
         q: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
@@ -510,9 +533,74 @@ object RecipMulPow10 {
                 }
             }
         }
-        DigitCount.setDigitCount(q)
+        CoeffDigitCount.setDigitCount(q)
         val inexact = residue != EXACT
         ctx.setInexact(inexact)
+    }
+
+    private fun _divPow10_miguel3(
+        z: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
+        pow10: Int): Residue {
+        require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
+        require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
+        // clear coeff without worrying about aliasing
+        z.setZero()
+
+        val index = indexOf(xDigitCount, pow10)
+        val paramsIndex = INDEXES[index]
+        if (paramsIndex == 0) {
+            //println("don't forget to check for rounding in this case")
+            throw RuntimeException("why am I here?")
+        }
+        val descriptor = PARAMS[paramsIndex].toInt()
+        val mulDwordCount = unpackMulDwordCount(descriptor)
+        val mulDigitCount = unpackMulDigitCount(descriptor)
+        val accDwordCount = unpackAccDwordCount(descriptor)
+        val shift = unpackShift(descriptor)
+        val fractionBitLen = shift + 1 // include the halfUlp bit
+        val quotDwordCount = unpackQuotDwordCount(descriptor)
+        assert(quotDwordCount <= 5)
+
+        val dividendShiftRight = pow10 - 1
+        val dividendShiftLeft = 64 - dividendShiftRight
+        val shiftNonZeroMask = if (dividendShiftRight == 0) 0L else -1L
+        val stickyBitsPow2 = x0 and shiftNonZeroMask and ((1L shl dividendShiftRight) - 1)
+
+        val d0 = ((x1 shl dividendShiftLeft) and shiftNonZeroMask) or (x0 ushr dividendShiftRight)
+        val d1 = ((x2 shl dividendShiftLeft) and shiftNonZeroMask) or (x1 ushr dividendShiftRight)
+        val d2 = ((x3 shl dividendShiftLeft) and shiftNonZeroMask) or (x2 ushr dividendShiftRight)
+        val d3 = (x3 ushr dividendShiftRight)
+
+        val residue = when {
+            (d3 != 0L) ->
+                coeffRecipMul4(
+                    z, PARAMS, paramsIndex + 1, mulDwordCount,
+                    d3, d2, d1, d0, fractionBitLen, stickyBitsPow2
+                )
+
+            (d2 != 0L) ->
+                coeffRecipMul3(
+                    z, PARAMS, paramsIndex + 1, mulDwordCount,
+                    d2, d1, d0, fractionBitLen, stickyBitsPow2
+                )
+
+            (d1 != 0L) ->
+                coeffRecipMul2(
+                    z, PARAMS, paramsIndex + 1, mulDwordCount,
+                    d1, d0, fractionBitLen, stickyBitsPow2
+                )
+
+            (d0 != 0L) ->
+                coeffRecipMul1(
+                    z, PARAMS, paramsIndex + 1, mulDwordCount,
+                    d0, fractionBitLen, stickyBitsPow2
+                )
+
+            else -> throw RuntimeException("why am I here?")
+        }
+
+        setDigitCount(z)
+        return residue
     }
 
 

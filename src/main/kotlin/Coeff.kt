@@ -30,7 +30,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
     constructor(str: String) : this(BigInteger(str))
     constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
-    var digitCount = run { DigitCount.calcDigitCount256(dw3, dw2, dw1, dw0) }
+    var digitCount = run { CoeffDigitCount.calcDigitCount256(dw3, dw2, dw1, dw0) }
 
     fun setZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; digitCount = 0
@@ -38,11 +38,11 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
 
     fun isZero() = digitCount == 0
 
-    private fun setDigitCount64() = DigitCount.setDigitCount64(this)
-    private fun setDigitCount128() = DigitCount.setDigitCount128(this)
-    private fun setDigitCount192() = DigitCount.setDigitCount192(this)
-    private fun setDigitCount256() = DigitCount.setDigitCount256(this)
-    private fun setDigitCount() = DigitCount.setDigitCount(this)
+    private fun setDigitCount64() = CoeffDigitCount.setDigitCount64(this)
+    private fun setDigitCount128() = CoeffDigitCount.setDigitCount128(this)
+    private fun setDigitCount192() = CoeffDigitCount.setDigitCount192(this)
+    private fun setDigitCount256() = CoeffDigitCount.setDigitCount256(this)
+    private fun setDigitCount() = CoeffDigitCount.setDigitCount(this)
 
     fun isValidDigitCount() : Boolean {
         val prevDigitCount = digitCount
@@ -134,9 +134,9 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
         }
     }
 
-    fun scalePow10(x:Coeff, pow10:Int, sign:Boolean, ctx:Decimal128Context) {
-        CoeffScalePow10.scalePow10Coeff(this, x, pow10, sign, ctx)
-    }
+    fun scaleUpPow10(x:Coeff, pow10:Int) = CoeffScalePow10.coeffScaleUpPow10(this, x, pow10)
+
+    fun scaleDownPow10(x:Coeff, pow10:Int) = CoeffScalePow10.coeffScaleDownPow10(this, x, pow10)
 
     operator fun get(index:Int) : Long {
         return when (index) {

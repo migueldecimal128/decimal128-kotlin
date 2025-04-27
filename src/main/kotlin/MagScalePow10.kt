@@ -3,16 +3,24 @@ package com.decimal128
 import com.decimal128.CoeffMul.mulCoeff
 import com.decimal128.CoeffFma.fmaCoeff
 import com.decimal128.CoeffDigitCount.POW10
-import com.decimal128.Residue.Companion.EXACT
 
 
-object CoeffScalePow10 {
+object MagScalePow10 {
 
-    fun coeffScaleUpPow10(z: Coeff, x: Coeff, pow10: Int) {
+    fun scalePow10Coeff(p: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
         if (x.digitCount == 0 || pow10 == 0) {
-            z.set(x)
+            p.set(x)
             return
         }
+        if (pow10 > 0)
+            scaleUpPow10Coeff(p, x, pow10)
+        else
+            scaleDownPow10Coeff(p, sign, x, -pow10, ctx)
+    }
+
+    fun scaleUpPow10Coeff(p: Coeff, x: Coeff, pow10: Int) {
+        assert(pow10 > 0)
+        assert(x.digitCount > 0)
 
         // note that this is a litle lie
         // digitCount is actually pow10 + 1
@@ -24,41 +32,47 @@ object CoeffScalePow10 {
             throw RuntimeException("coefficient overflow")
         when {
             (pow10 < POW10_128_OFFSET) -> {
-                val index = pow10; mulCoeff(z, x, pow10DigitCount, POW10[index + 0])
+                val index = pow10; mulCoeff(p, x, pow10DigitCount, POW10[index + 0])
             }
 
             (pow10 < POW10_192_OFFSET) -> {
                 val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
-                mulCoeff(z, x, pow10DigitCount, POW10[index + 1], POW10[index + 0])
+                mulCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0])
             }
 
             (pow10 < POW10_256_OFFSET) -> {
                 val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
-                mulCoeff(z, x, pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0])
+                mulCoeff(p, x, pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0])
             }
 
             (pow10 < POW10_MAX_OFFSET) -> {
                 val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_256_OFFSET);
-                mulCoeff(z, x, pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0])
+                mulCoeff(p, x, pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0])
             }
 
             else -> throw RuntimeException("?que?")
         }
-        assert(z.digitCount == productDigitCount)
-        assert(z.isValidDigitCount())
+        assert(p.digitCount == productDigitCount)
+        assert(p.isValidDigitCount())
     }
 
-    fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        if (x.digitCount == 0 || pow10 == 0) {
-            z.set(x)
-            return EXACT
-        }
+    private fun scaleDownPow10Coeff(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
+        assert(pow10 > 0)
+        assert(x.digitCount > 0)
+
         val productDigitCount = x.digitCount - pow10
         if (productDigitCount <= 0) {
             val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
-            return residue
+            val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), 0L)
+            p.setZero()
+            if (roundUp > 0) {
+                p.dw0 = 1
+                p.digitCount = 1
+            }
+            ctx.setInexact()
+            return
         }
-        return RecipMulPow10.divPow10(z, x, pow10)
+        RecipMulPow10.divPow10(p, x, pow10, sign, ctx)
     }
 
     fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {

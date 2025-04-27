@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 import java.util.Random
-class TestCalcDigitCountRandom {
+class TestCalcCoeffDigitCountRandom {
 
     val cases = arrayOf(
         "296010764949953917450610088237966833637"
@@ -40,7 +40,7 @@ class TestCalcDigitCountRandom {
         val dw1 = bi.shiftRight(64).toLong()
         val dw2 = bi.shiftRight(128).toLong()
         val dw3 = bi.shiftRight(192).toLong()
-        val observed = DigitCount.calcDigitCount(dw3, dw2, dw1, dw0)
+        val observed = CoeffDigitCount.calcDigitCount(dw3, dw2, dw1, dw0)
         if (observed != expected)
             println("failed on $bi ($biStrLen)")
         assertEquals(expected, observed)
