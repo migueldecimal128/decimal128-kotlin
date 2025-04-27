@@ -1,10 +1,12 @@
 package com.decimal128
 
+import com.decimal128.CoeffAbsDiff.coeffAbsDiffScaled
 import java.math.BigInteger
 import java.lang.Long.compareUnsigned
 import com.decimal128.CoeffMul.coeffMul
 import com.decimal128.CoeffFma.coeffFma
-import com.decimal128.CoeffAdd.coeffAdd
+import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
+import com.decimal128.CoeffAdd.coeffAddScaled
 import com.decimal128.CoeffAdd.coeffAddUnscaled
 import com.decimal128.CoeffAbsDiff.coeffAbsDiffUnscaled
 import com.decimal128.CoeffCompare.coeffEQ
@@ -78,17 +80,39 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
 
     fun LT(other: Coeff) = coeffLT(this, other)
 
-    fun add(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
+    fun add(x: Coeff, scaleDelta: Int, y: Coeff) {
+        when {
+            scaleDelta == 0 -> coeffAddUnscaled(this, x, y)
+            scaleDelta > 0 -> coeffAddScaled(this, x, scaleDelta, y)
+            else -> coeffAddScaled(this, y, -scaleDelta, x)
+        }
+    }
 
     fun add(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
 
     // absolute difference
     // if minuend < subtrahend then negate to return positive result
+    // and return a _NEGATED residue
+    // because it would have gone negative
+    @Suppress("unused")
+    fun coeffAbsDiff(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
+        return (
+                when {
+                    scaleDelta == 0 -> coeffAbsDiffUnscaled(this, x, y)
+                    scaleDelta > 0 -> coeffAbsDiffScaled(this, x, scaleDelta, y)
+                    else -> coeffAbsDiffScaled(this, y, -scaleDelta, x)
+                })
+    }
+
+
     fun absDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
+
 
     fun mul(x:Coeff, y:Coeff) = coeffMul(this, x, y)
 
     fun fma(x:Coeff, y:Coeff, a:Coeff) = coeffFma(this, x, y, a)
+
+    fun fusedMulAbsDiff(x:Coeff, y:Coeff, a:Coeff) = coeffFusedMulAbsDiff(this, x, y, a)
 
     fun shiftRight(bitShift:Int) {
         val wholeDwordCount = bitShift ushr 6

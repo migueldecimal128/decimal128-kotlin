@@ -1,7 +1,7 @@
 package com.decimal128
 
 import com.decimal128.CoeffMul.mulCoeff
-import com.decimal128.CoeffFma.fmaCoeff
+import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffDigitCount.POW10
 
 
@@ -108,17 +108,17 @@ object MagScalePow10 {
         when {
             (pow10 < POW10_128_OFFSET) -> {
                 val index = pow10;
-                fmaCoeff(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0)
+                coeffFma(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0)
             }
 
             (pow10 < POW10_192_OFFSET) -> {
                 val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
-                fmaCoeff(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0)
+                coeffFma(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0)
             }
 
             (pow10 < POW10_256_OFFSET) -> {
                 val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
-                fmaCoeff(
+                coeffFma(
                     p, x,
                     pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0
                 )
@@ -126,7 +126,7 @@ object MagScalePow10 {
 
             (pow10 < POW10_MAX_OFFSET) -> {
                 val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_192_OFFSET);
-                fmaCoeff(
+                coeffFma(
                     p, x,
                     pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0],
                     aDigitCount, a1, a0

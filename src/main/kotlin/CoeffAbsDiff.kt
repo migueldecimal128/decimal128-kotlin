@@ -4,37 +4,13 @@ import com.decimal128.CoeffDigitCount.setDigitCount128
 import com.decimal128.CoeffDigitCount.setDigitCount192
 import com.decimal128.CoeffDigitCount.setDigitCount256
 import com.decimal128.CoeffDigitCount.setDigitCount64
+import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Long.compareUnsigned
 import kotlin.math.max
 
 object CoeffAbsDiff {
-
-    // if y exceeds x then return a _NEGATED residue
-    // because it would have gone negative
-    @Suppress("unused")
-    fun coeffAbsDiff(sum: Coeff, x: Coeff, y: Coeff, scaleDelta: Int): Residue {
-        if (x.digitCount == 0) {
-            sum.set(y)
-            return if (y.digitCount > 0) EXACT_NEGATED else EXACT
-        }
-        if (y.digitCount == 0) {
-            sum.set(x)
-            return EXACT
-        }
-        if (scaleDelta == 0) {
-            return coeffAbsDiffUnscaled(sum, x, y)
-        }
-        return (
-                if (scaleDelta > 0)
-                    coeffAbsDiffScaled(sum, x, y, scaleDelta)
-                else
-                    coeffAbsDiffScaled(sum, y, x, -scaleDelta).toggleNegate()
-                )
-
-    }
-
 
     fun coeffAbsDiffUnscaled(z: Coeff, x: Coeff, y: Coeff): Residue { // minuend - subtrahend
         assert(z.isValidDigitCount())
@@ -64,10 +40,13 @@ object CoeffAbsDiff {
         if (maxDigitCount < POW10_192_OFFSET) {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry1 = -carry1
-            z.dw0 = (d0 xor negCarry1) - negCarry1
-            z.dw1 = (d1 xor negCarry1) - (negCarry1 and ((z.dw0 or -z.dw0) shr 63).inv())
-            z.dw2 = 0L
             z.dw3 = 0L
+            z.dw2 = 0L
+            z.dw1 = d1 xor negCarry1
+            z.dw0 = (d0 xor negCarry1) - negCarry1
+            if (negCarry1 < 0L && z.dw0 == 0L) {
+                ++z.dw1
+            }
             setDigitCount128(z)
             return if (negCarry1 < 0) EXACT_NEGATED else EXACT
         }
@@ -79,10 +58,16 @@ object CoeffAbsDiff {
         if (maxDigitCount < POW10_256_OFFSET) {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry2 = -carry2
-            z.dw0 = (d0 xor negCarry2) - negCarry2
-            z.dw1 = (d1 xor negCarry2) - (negCarry2 and ((z.dw0 or -z.dw0) shr 63).inv())
-            z.dw2 = (d2 xor negCarry2) - (negCarry2 and ((z.dw1 or -z.dw1) shr 63).inv())
             z.dw3 = 0L
+            z.dw2 = d2 xor negCarry2
+            z.dw1 = d1 xor negCarry2
+            z.dw0 = (d0 xor negCarry2) - negCarry2 // complement and increment
+            if (negCarry2 < 0L && z.dw0 == 0L) {
+                ++z.dw1
+                if (z.dw1 == 0L) {
+                    ++z.dw2
+                }
+            }
             setDigitCount192(z)
             return if (negCarry2 < 0) EXACT_NEGATED else EXACT
         }
@@ -94,38 +79,27 @@ object CoeffAbsDiff {
 
         // if carry == 1 then complement-and-increment else NOOP
         val negCarry3 = -carry3
-        z.dw0 = (d0 xor negCarry3) - negCarry3
-        z.dw1 = (d1 xor negCarry3) - (negCarry3 and ((z.dw0 or -z.dw0) shr 63).inv())
-        z.dw2 = (d2 xor negCarry3) - (negCarry3 and ((z.dw1 or -z.dw1) shr 63).inv())
-        z.dw3 = (d3 xor negCarry3) - (negCarry3 and ((z.dw2 or -z.dw2) shr 63).inv())
+        z.dw3 = d3 xor negCarry3
+        z.dw2 = d2 xor negCarry3
+        z.dw1 = d1 xor negCarry3
+        z.dw0 = (d0 xor negCarry3) - negCarry3 // complement and increment
+        if (negCarry3 < 0L && z.dw0 == 0L) {
+            ++z.dw1
+            if (z.dw1 == 0L) {
+                ++z.dw2
+                if (z.dw2 == 0L)
+                    ++z.dw3
+            }
+        }
         setDigitCount256(z)
         return if (negCarry3 < 0) EXACT_NEGATED else EXACT
     }
 
-    private fun coeffAbsDiffScaled(sum: Coeff, x: Coeff, y: Coeff, scaleDelta: Int): Residue {
+    fun coeffAbsDiffScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
         assert(x.digitCount > 0)
-        assert(y.digitCount > 0)
-        assert(scaleDelta == x.digitCount - y.digitCount)
         assert(scaleDelta > 0)
-        if (scaleDelta >= y.digitCount) {
-            val residue = (
-                    if (scaleDelta == y.digitCount)
-                        Residue.residueFrom(y)
-                    else
-                        Residue.LT_HALF
-                    )
-            sum.set(x)
-            return residue
-        }
-        return absDiffScaledOverlap(sum, x, y, scaleDelta)
-    }
+        assert(scaleDelta < 34)
 
-    private fun absDiffScaledOverlap(
-        z: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int
-    ): Residue {
-        assert(scaleDelta > 0)
-        assert(scaleDelta < y.digitCount)
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
         assert(x.isValidDigitCount())
@@ -133,7 +107,7 @@ object CoeffAbsDiff {
         assert(z.isValidDigitCount())
 
         throw RuntimeException("not impl")
-        //coeffScaleFmaPow10(z, x, scaleDelta, y, sign, ctx)
+        //return coeffScaleFmaPow10AbsDiff(z, x, scaleDelta, y)
     }
 
 }
