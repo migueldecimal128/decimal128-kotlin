@@ -1,45 +1,46 @@
 package com.decimal128
 
-import java.lang.Long.compareUnsigned
-import com.decimal128.DigitCount.setDigitCount64
 import com.decimal128.DigitCount.setDigitCount128
 import com.decimal128.DigitCount.setDigitCount192
 import com.decimal128.DigitCount.setDigitCount256
-import com.decimal128.CoeffAdd.roundUp
+import com.decimal128.DigitCount.setDigitCount64
+import com.decimal128.Residue.Companion.EXACT
+import com.decimal128.Residue.Companion.EXACT_NEGATED
+import java.lang.Long.compareUnsigned
+import kotlin.math.max
 
 object CoeffAbsDiff {
 
-    // return true if we had to swap the coefficients
+    // if y exceeds x then return a _NEGATED residue
     // because it would have gone negative
-    fun coeffAbsDiff(
-        sum: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
-    ): Boolean {
+    @Suppress("unused")
+    fun coeffAbsDiff(sum: Coeff, x: Coeff, y: Coeff, scaleDelta: Int): Residue {
         if (x.digitCount == 0) {
             sum.set(y)
-            return y.digitCount > 0
+            return if (y.digitCount > 0) EXACT_NEGATED else EXACT
         }
         if (y.digitCount == 0) {
             sum.set(x)
-            return false
+            return EXACT
         }
         if (scaleDelta == 0) {
             return coeffAbsDiffUnscaled(sum, x, y)
         }
-        if (scaleDelta > 0) {
-            return coeffAbsDiffScaled(sum, x, y, scaleDelta, sign, ctx)
-        } else {
-            return !coeffAbsDiffScaled(sum, y, x, -scaleDelta, !sign, ctx)
-        }
+        return (
+                if (scaleDelta > 0)
+                    coeffAbsDiffScaled(sum, x, y, scaleDelta)
+                else
+                    coeffAbsDiffScaled(sum, y, x, -scaleDelta).toggleNegate()
+                )
 
     }
 
 
-    fun coeffAbsDiffUnscaled(z: Coeff, x: Coeff, y: Coeff): Boolean { // minuend - subtrahend
+    fun coeffAbsDiffUnscaled(z: Coeff, x: Coeff, y: Coeff): Residue { // minuend - subtrahend
         assert(z.isValidDigitCount())
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
-        val maxDigitCount = Math.max(x.digitCount, y.digitCount)
+        val maxDigitCount = max(x.digitCount, y.digitCount)
 
         val d0 = x.dw0 - y.dw0
         val carry0 = if (compareUnsigned(d0, x.dw0) > 0) 1L else 0L
@@ -53,7 +54,7 @@ object CoeffAbsDiff {
             val negCarry0 = -carry0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = (d0 xor negCarry0) - negCarry0
             setDigitCount64(z)
-            return negCarry0 < 0
+            return if (negCarry0 < 0) EXACT_NEGATED else EXACT
         }
 
         val d1a = x.dw1 - y.dw1
@@ -68,7 +69,7 @@ object CoeffAbsDiff {
             z.dw2 = 0L
             z.dw3 = 0L
             setDigitCount128(z)
-            return negCarry1 < 0
+            return if (negCarry1 < 0) EXACT_NEGATED else EXACT
         }
 
         val d2a = x.dw2 - y.dw2
@@ -83,7 +84,7 @@ object CoeffAbsDiff {
             z.dw2 = (d2 xor negCarry2) - (negCarry2 and ((z.dw1 or -z.dw1) shr 63).inv())
             z.dw3 = 0L
             setDigitCount192(z)
-            return negCarry2 < 0
+            return if (negCarry2 < 0) EXACT_NEGATED else EXACT
         }
 
         val d3a = x.dw3 - y.dw3
@@ -98,13 +99,10 @@ object CoeffAbsDiff {
         z.dw2 = (d2 xor negCarry3) - (negCarry3 and ((z.dw1 or -z.dw1) shr 63).inv())
         z.dw3 = (d3 xor negCarry3) - (negCarry3 and ((z.dw2 or -z.dw2) shr 63).inv())
         setDigitCount256(z)
-        return negCarry3 < 0
+        return if (negCarry3 < 0) EXACT_NEGATED else EXACT
     }
 
-    fun coeffAbsDiffScaled(
-        sum: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
-    ): Boolean {
+    private fun coeffAbsDiffScaled(sum: Coeff, x: Coeff, y: Coeff, scaleDelta: Int): Residue {
         assert(x.digitCount > 0)
         assert(y.digitCount > 0)
         assert(scaleDelta == x.digitCount - y.digitCount)
@@ -116,26 +114,23 @@ object CoeffAbsDiff {
                     else
                         Residue.LT_HALF
                     )
-            val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.dw0)
             sum.set(x)
-            if (roundUp)
-                roundUp(sum, ctx)
-            ctx.setInexact()
-            return false
+            return residue
         }
-        return absDiffScaledOverlap(sum, x, y, scaleDelta, sign, ctx)
+        return absDiffScaledOverlap(sum, x, y, scaleDelta)
     }
 
-    fun absDiffScaledOverlap(
+    private fun absDiffScaledOverlap(
         z: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
-    ): Boolean {
+        scaleDelta: Int
+    ): Residue {
         assert(scaleDelta > 0)
         assert(scaleDelta < y.digitCount)
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
+        assert(z.isValidDigitCount())
 
         throw RuntimeException("not impl")
         //coeffScaleFmaPow10(z, x, scaleDelta, y, sign, ctx)

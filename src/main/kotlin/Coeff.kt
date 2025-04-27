@@ -79,8 +79,7 @@ class Coeff(var dw3:Long, var dw2:Long, var dw1:Long, var dw0:Long) {
 
     fun LT(other: Coeff) = coeffLT(this, other)
 
-    fun add(x:Coeff, y:Coeff, scaleDelta:Int,
-            sign: Boolean, ctx: Decimal128Context) = coeffAdd(this, x, y, scaleDelta, sign, ctx)
+    fun add(x:Coeff, y:Coeff, scaleDelta:Int) = coeffAdd(this, x, y, scaleDelta)
 
     fun add(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
 

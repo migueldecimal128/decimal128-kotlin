@@ -29,8 +29,7 @@ object CoeffAdd {
 
     fun coeffAdd(
         z: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
-    ) {
+        scaleDelta: Int) {
         if (x.digitCount == 0) {
             z.set(y)
             return
@@ -41,9 +40,9 @@ object CoeffAdd {
             return
         }
         if (scaleDelta > 0) {
-            coeffAddScaled(z, x, y, scaleDelta, sign, ctx)
+            coeffAddScaled(z, x, scaleDelta, y)
         } else {
-            coeffAddScaled(z, y, x, -scaleDelta, sign, ctx)
+            coeffAddScaled(z, y, -scaleDelta, x)
         }
 
     }
@@ -106,10 +105,7 @@ object CoeffAdd {
     }
 
 
-    fun coeffAddScaled(
-        z: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
-    ) {
+    fun coeffAddScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
         assert(x.digitCount > 0)
         assert(scaleDelta > 0)
         val headRoom = MAX_COEFF_DIGIT_COUNT - x.digitCount
@@ -117,7 +113,7 @@ object CoeffAdd {
             addScaledFullOverlap(z, x, scaleDelta, y)
             return
         }
-        addScaledOverlap(z, x, y, scaleDelta, sign, ctx)
+        addScaledOverlap(z, x, scaleDelta, y)
     }
 
     fun addScaledFullOverlap(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
@@ -130,16 +126,14 @@ object CoeffAdd {
         coeffScaleFmaPow10(z, x, scaleDelta, y)
     }
 
-    fun addScaledOverlap(
-        z: Coeff, x: Coeff, y: Coeff,
-        scaleDelta: Int, sign: Boolean, ctx: Decimal128Context
-    ) {
+    fun addScaledOverlap(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
         assert(scaleDelta > 0)
         assert(scaleDelta < y.digitCount)
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
+        assert(z.isValidDigitCount())
 
         throw RuntimeException("not impl")
         coeffScaleFmaPow10(z, x, scaleDelta, y)

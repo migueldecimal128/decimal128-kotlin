@@ -76,21 +76,21 @@ class TestCoeffAbsDiff {
         val yin = Coeff()
         val yang = Coeff()
         //println("$coeffA - $coeffB = expected:$biExpected")
-        val yinReversed = yin.absDiff(coeffA, coeffB)
-        val yangReversed = yang.absDiff(coeffB, coeffA)
+        val yinResidue = yin.absDiff(coeffA, coeffB)
+        val yangResidue = yang.absDiff(coeffB, coeffA)
 
         val biYin = yin.toBigInteger()
         val biYang = yang.toBigInteger()
         if (! biYin.equals(biExpected))
-            println("$coeffA - $coeffB = yin:$biYin yinReversed:$yinReversed expected:$biExpected")
+            println("$coeffA - $coeffB = yin:$biYin yinResidue:$yinResidue expected:$biExpected")
         if (! biYang.equals(biExpected))
-            println("$coeffB - $coeffA = yang:$biYang yangReversed:$yangReversed expected:$biExpected")
+            println("$coeffB - $coeffA = yang:$biYang yangResidue:$yangResidue expected:$biExpected")
         if (case.isEqual) {
-            assert(yinReversed == false)
-            assert(yangReversed == false)
+            assert(!yinResidue.isNegated())
+            assert(!yangResidue.isNegated())
         } else {
-            assertEquals(case.isReversed, yinReversed)
-            assertEquals(case.isReversed, ! yangReversed)
+            assertEquals(case.isReversed, yinResidue.isNegated())
+            assertEquals(case.isReversed, ! yangResidue.isNegated())
         }
 
         assert (biYin.equals(biExpected))
