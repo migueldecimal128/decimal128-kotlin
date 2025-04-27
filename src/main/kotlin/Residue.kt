@@ -17,11 +17,26 @@ import java.lang.Long.compareUnsigned
         return other is Residue && this.value == other.value
     }
 
+    fun toggleNegate() = RESIDUE_MAP[value xor 0x04]
+    fun withoutNegate() = RESIDUE_MAP[value and 0x03]
+    fun isNegated() = (value and 0x04) != 0
+
     companion object {
         val EXACT = Residue(0)
         val LT_HALF = Residue(1)
         val HALF = Residue(2)
         val GT_HALF = Residue(3)
+
+        val EXACT_NEGATED = Residue(4)
+        val LT_HALF_NEGATED = Residue(5)
+        val HALF_NEGATED = Residue(6)
+        val GT_HALF_NEGATED = Residue(7)
+
+
+        val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF, EXACT_NEGATED, LT_HALF_NEGATED, HALF_NEGATED, GT_HALF_NEGATED)
+
+        val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF",
+            "EXACT_NEGATED", "LT_HALF_NEGATED", "HALF_NEGATED", "GT_HALF_NEGATED")
 
         fun residueFrom(c:Coeff) :Residue {
             assert (c.digitCount > 0)
@@ -264,7 +279,7 @@ import java.lang.Long.compareUnsigned
         val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
 
         val biasMapEvenOdd = ULP_BIAS_MAP or ((lsdwIsOdd and 1) shl 2)
-        val bitIndex = (roundingDirection.value * 8) + value
+        val bitIndex = (roundingDirection.value * 8) + (value and 0x03) // mask off isNegated bit
         val roundingMapShifted = biasMapEvenOdd shr bitIndex
         val bias = roundingMapShifted and 1
         return bias
@@ -273,7 +288,7 @@ import java.lang.Long.compareUnsigned
     // used in add case when there is no overlap
     fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
         return when (roundingDirection) {
-            ROUND_TIES_TO_EVEN -> when (value) {
+            ROUND_TIES_TO_EVEN -> when (value and 0x03) { // mask off isNegated bit
                 LT_HALF.value -> 0L
                 HALF.value -> lsdwIsOdd and 1L
                 GT_HALF.value -> 1L
@@ -312,11 +327,7 @@ import java.lang.Long.compareUnsigned
         }
     }
 
-    override fun toString() : String = when (this.value) {
-        EXACT.value -> "EXACT"
-        LT_HALF.value -> "LT_HALF"
-        HALF.value -> "HALF"
-        GT_HALF.value -> "GT_HALF"
-        else -> "invalid Residue value"
+    override fun toString() : String {
+        return if (this.value in STRING_NAMES.indices) STRING_NAMES[this.value] else "invalid Residue:$value"
     }
 }
