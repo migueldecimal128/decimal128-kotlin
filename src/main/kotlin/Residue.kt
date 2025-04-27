@@ -14,7 +14,6 @@ import java.math.BigInteger
 /*value*/ class Residue private constructor(val value:Int) {
     companion object {
         val HALF = Residue(0)
-        val BIAS_TRUNC = Residue(1)
         val LT_HALF = Residue(2)
         val GT_HALF = Residue(3)
         val EXACT = Residue(4)
@@ -271,7 +270,6 @@ import java.math.BigInteger
     // rather, we are going to bias the ULP by a whole amount
     // used in add case when there is no overlapg
     fun ulpBiasY(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        assert(value != BIAS_TRUNC.value)
         // this becomes one bit per entry, with the special treament of ROUND_TIES_TO_EVEN and lsbg
         val ULP_BIAS_MAP = 0b0_00000000_00001101_00000000_00001001_00001000L
 
@@ -284,11 +282,9 @@ import java.math.BigInteger
 
     // used in add case when there is no overlap
     fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        assert(value != BIAS_TRUNC.value)
         return when (roundingDirection) {
             ROUND_TIES_TO_EVEN -> when (value) {
                 HALF.value -> lsdwIsOdd and 1L
-                BIAS_TRUNC.value -> 0L
                 LT_HALF.value -> 0L
                 GT_HALF.value -> 1L
                 // EXACT
@@ -296,7 +292,6 @@ import java.math.BigInteger
             }
             ROUND_TIES_TO_AWAY -> when (value) {
                 HALF.value -> 1L
-                BIAS_TRUNC.value -> 0L
                 LT_HALF.value -> 0L
                 GT_HALF.value -> 1L
                 // EXACT
@@ -304,7 +299,6 @@ import java.math.BigInteger
             }
             ROUND_TOWARD_ZERO -> when (value) {
                 HALF.value -> 0L
-                BIAS_TRUNC.value -> 0L
                 LT_HALF.value -> 0L
                 GT_HALF.value -> 0L
                 // EXACT
@@ -312,7 +306,6 @@ import java.math.BigInteger
             }
             ROUND_TOWARD_POSITIVE -> when (value) {
                 HALF.value -> 1L
-                BIAS_TRUNC.value -> 0L
                 LT_HALF.value -> 1L
                 GT_HALF.value -> 1L
                 // EXACT
@@ -321,7 +314,6 @@ import java.math.BigInteger
             // ROUND_TOWARD_NEGATIVE
             else -> when (value) {
                 HALF.value -> 0L
-                BIAS_TRUNC.value -> 0L
                 LT_HALF.value -> 0L
                 GT_HALF.value -> 0L
                 // EXACT
@@ -333,7 +325,6 @@ import java.math.BigInteger
     override fun toString() : String = when (this) {
         EXACT -> "EXACT"
         HALF -> "HALF"
-        BIAS_TRUNC -> "BIAS_TRUNC"
         LT_HALF -> "LT_HALF"
         GT_HALF -> "GT_HALF"
         else -> "invalid Residue value"
