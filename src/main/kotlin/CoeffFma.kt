@@ -10,6 +10,7 @@ object CoeffFma {
         assert(y.isValidDigitCount())
         assert(a.isValidDigitCount())
         if (x.digitCount <= 1) {
+            // FIXME I think precision is wrong in these cases
             if (x.digitCount == 0) {
                 z.set(a)
                 return
