@@ -117,9 +117,8 @@ object CoeffScalePow10 {
         }
     }
 
-    fun coeffScaleFmaPow10AbsDiff(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
+    fun coeffScaleFusedMulAbsDiffPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff): Residue {
         assert(pow10 > 0)
-        assert(x.digitCount > 0)
         assert((x.dw3 or x.dw2) == 0L)
         assert((a.dw3 or a.dw2) == 0L)
 
@@ -129,18 +128,17 @@ object CoeffScalePow10 {
         val aDigitCount = a.digitCount
         val a1 = a.dw1
         val a0 = a.dw0
-        _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0)
-        assert(z.isValidDigitCount())
-        assert(z.digitCount == minProductDigitCount || z.digitCount == minProductDigitCount + 1)
+        return _scaleFusedMulAbsDiffPow10(z, x, pow10, aDigitCount, a1, a0)
     }
 
-    private fun _scaleFmaPow10AbsDiff(z: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a1: Long, a0: Long) {
+    private fun _scaleFusedMulAbsDiffPow10(z: Coeff, x: Coeff, pow10: Int,
+                                           aDigitCount: Int, a1: Long, a0: Long): Residue {
         // note that this is a litle lie
         // digitCount is actually pow10 + 1
         // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
         val pow10DigitCount = pow10
 
-        when {
+        return when {
             (pow10 < POW10_128_OFFSET) -> {
                 val index = pow10;
                 coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0)

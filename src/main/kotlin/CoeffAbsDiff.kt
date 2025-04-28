@@ -5,12 +5,21 @@ import com.decimal128.CoeffDigitCount.setDigitCount192
 import com.decimal128.CoeffDigitCount.setDigitCount256
 import com.decimal128.CoeffDigitCount.setDigitCount64
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
+import com.decimal128.CoeffScalePow10.coeffScaleFusedMulAbsDiffPow10
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Long.compareUnsigned
 import kotlin.math.max
 
 object CoeffAbsDiff {
+
+    fun absDiff(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
+        return when {
+            scaleDelta == 0 -> coeffAbsDiffUnscaled(z, x, y)
+            scaleDelta > 0 -> coeffAbsDiffScaled(z, x, scaleDelta, y)
+            else -> coeffAbsDiffScaled(z, y, -scaleDelta, x)
+        }
+    }
 
     fun coeffAbsDiffUnscaled(z: Coeff, x: Coeff, y: Coeff): Residue { // minuend - subtrahend
         assert(z.isValidDigitCount())
@@ -96,7 +105,6 @@ object CoeffAbsDiff {
     }
 
     fun coeffAbsDiffScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff): Residue {
-        assert(x.digitCount > 0)
         assert(scaleDelta > 0)
         assert(scaleDelta < 34)
 
@@ -106,8 +114,7 @@ object CoeffAbsDiff {
         assert(y.isValidDigitCount())
         assert(z.isValidDigitCount())
 
-        throw RuntimeException("not impl")
-        //return coeffScaleFmaPow10AbsDiff(z, x, scaleDelta, y)
+        return coeffScaleFusedMulAbsDiffPow10(z, x, scaleDelta, y)
     }
 
 }

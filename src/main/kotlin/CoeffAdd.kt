@@ -7,7 +7,6 @@ import com.decimal128.CoeffDigitCount.setDigitCount128
 import com.decimal128.CoeffDigitCount.setDigitCount192
 import com.decimal128.CoeffDigitCount.setDigitCount256
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
-import com.decimal128.Residue.Companion.EXACT
 
 object CoeffAdd {
 
@@ -27,6 +26,16 @@ object CoeffAdd {
         }
         tweakDigitCountAfterRoundUp(c)
     }
+
+    fun coeffAdd(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
+        when {
+            scaleDelta == 0 -> coeffAddUnscaled(z, x, y)
+            scaleDelta > 0 -> coeffAddScaled(z, x, scaleDelta, y)
+            else -> coeffAddScaled(z, y, -scaleDelta, x)
+        }
+    }
+
+
 
     fun coeffAddUnscaled(z: Coeff, x: Coeff, y: Coeff) {
         if (x.digitCount == 0) {

@@ -155,6 +155,15 @@ object CoeffDigitCount {
     @Suppress("unused")
     private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX); true }
 
+    fun isValidDigitCount(c: Coeff): Boolean {
+        val prevDigitCount = c.digitCount
+        setDigitCount(c)
+        val t = c.digitCount
+        c.digitCount = prevDigitCount
+        return t == prevDigitCount
+    }
+
+
     fun setDigitCount64(c: Coeff) {
         assert((c.dw3 or c.dw2 or c.dw1) == 0L)
         c.digitCount = calcDigitCount64(c.dw0)
