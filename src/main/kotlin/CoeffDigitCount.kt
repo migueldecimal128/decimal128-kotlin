@@ -413,7 +413,6 @@ object CoeffDigitCount {
         return digitCount
     }
 
-    @Deprecated("should not be used with the Coeff layer")
     fun tweakDigitCountAfterRoundUp(c: Coeff) {
         if (c.digitCount < POW10_128_OFFSET) {
             val i = c.digitCount - POW10_64_OFFSET + POW10_64_DWORD_INDEX

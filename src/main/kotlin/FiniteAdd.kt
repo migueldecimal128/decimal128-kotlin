@@ -7,15 +7,65 @@ import com.decimal128.CoeffDigitCount.setDigitCount128
 import com.decimal128.CoeffDigitCount.setDigitCount192
 import com.decimal128.CoeffDigitCount.setDigitCount256
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
+import com.decimal128.FiniteSet.finiteSet
+import com.decimal128.Residue.Companion.EXACT
 
-object CoeffAdd {
+object FiniteAdd {
 
-    fun coeffAdd(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
-        when {
-            scaleDelta == 0 -> coeffAddUnscaled(z, x, y)
-            scaleDelta > 0 -> coeffAddScaled(z, x, scaleDelta, y)
-            else -> coeffAddScaled(z, y, -scaleDelta, x)
+    fun roundUp(f: Finite, ctx: Decimal128Context) {
+        val c = f.c
+        c.dw0 += 1
+        if (c.dw0 == 0L) {
+            c.dw1 += 1
+            if (c.dw1 == 0L) {
+                c.dw2 += 1
+                if (c.dw2 == 0L) {
+                    c.dw3 += 1
+                    if (c.dw3 == 0L)
+                        throw RuntimeException("overflow")
+                }
+            }
         }
+        tweakDigitCountAfterRoundUp(c)
+    }
+
+    fun finiteAdd(z: Finite, x: Finite, y: Finite, ctx: Decimal128Context) {
+        val zSign = x.sign xor y.sign
+        if (x.exp >= y.exp) {
+            if (!zSign) magAdd(z, x.sign, x, y, ctx) else magSub(z, x.sign, x, y, ctx)
+        } else {
+            if (!zSign) magAdd(z, y.sign, y, x, ctx) else magSub(z, y.sign, y, x, ctx)
+        }
+        z.finalize(ctx)
+    }
+
+    fun magAdd(z: Finite, sign: Boolean, x: Finite, y: Finite, ctx: Decimal128Context) {
+        assert(x.exp >= y.exp)
+        val exp = y.exp
+        val expDelta = x.exp - y.exp
+        if (expDelta >= PRECISION_34) {
+            val residue = (
+                    if (expDelta == PRECISION_34)
+                        Residue.residueFrom(y.c)
+                    else
+                        Residue.LT_HALF
+                    )
+            val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.c.dw0)
+            finiteSet(z, x)
+            if (roundUp)
+                roundUp(z, ctx)
+            z.sign = sign
+            if (residue.withoutNegate() != EXACT)
+                ctx.setInexact()
+            return
+        }
+        when {
+            expDelta == 0 -> coeffAddUnscaled(z.c, x.c, y.c)
+            expDelta > 0 -> coeffAddScaled(z.c, x.c, expDelta, y.c)
+            else -> coeffAddScaled(z.c, y.c, -expDelta, x.c)
+        }
+        z.exp = exp
+        z.sign = sign
     }
 
     fun coeffAddUnscaled(z: Coeff, x: Coeff, y: Coeff) {
@@ -95,5 +145,9 @@ object CoeffAdd {
         assert(z.isValidDigitCount())
 
         coeffScaleFmaPow10(z, x, scaleDelta, y)
+    }
+
+    fun magSub(z: Finite, sign: Boolean, x: Finite, y: Finite, ctx: Decimal128Context) {
+        throw RuntimeException("not impl")
     }
 }

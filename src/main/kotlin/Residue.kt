@@ -272,14 +272,11 @@ import java.lang.Long.compareUnsigned
 
     }
 
-    @Deprecated("don't use this in the Coeff layer")
     fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =
         ulpBias(roundingDirection, lsdwIsOdd) != 0L
 
-    @Deprecated("don't use this in the Coeff layer")
     fun ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) = ulpBiasY(roundingDirection, lsdwIsOdd)
 
-    @Deprecated("don't use this in the Coeff layer")
     fun ulpBiasY(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
         val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
 

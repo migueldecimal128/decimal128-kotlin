@@ -549,7 +549,7 @@ object RecipMulPow10 {
         val index = indexOf(xDigitCount, pow10)
         val paramsIndex = INDEXES[index]
         if (paramsIndex == 0) {
-            //println("don't forget to check for rounding in this case")
+            //FIXME don't forget to check for rounding in this case ?
             throw RuntimeException("why am I here?")
         }
         val descriptor = PARAMS[paramsIndex].toInt()

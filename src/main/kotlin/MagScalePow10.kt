@@ -22,7 +22,7 @@ object MagScalePow10 {
         assert(pow10 > 0)
         assert(x.digitCount > 0)
 
-        // note that this is a litle lie
+        // note that this is a little lie
         // digitCount is actually pow10 + 1
         // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
         val pow10DigitCount = pow10
