@@ -9,6 +9,8 @@ import java.util.*
 
 class TestCoeffFusedMulAbsDiff {
 
+    val verbose = false
+
     class TC(val biX: BigInteger, val biY: BigInteger, val biA: BigInteger) {
         val biAbsDiff = biX.multiply(biY).subtract(biA).abs()
 
@@ -83,7 +85,8 @@ class TestCoeffFusedMulAbsDiff {
         val coeffA = Coeff(case.biA)
         val coeffExpected = Coeff(case.biAbsDiff)
         val coeffAbsDiff = Coeff()
-        //println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) - $coeffA (${coeffA.digitCount}) = expected:$expected")
+        if (verbose)
+            println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) - $coeffA (${coeffA.digitCount}) = expected:$expected")
         coeffAbsDiff.fusedMulAbsDiff(coeffX, coeffY, coeffA)
         val observed = coeffAbsDiff.toBigInteger()
         if (! observed.equals(expected))
