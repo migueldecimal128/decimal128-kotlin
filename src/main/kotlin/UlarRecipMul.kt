@@ -21,10 +21,9 @@ class UlarRecipMul {
                           n3:Long, n2:Long, n1:Long, n0:Long, bitShiftX:Int, stickyBitsPow2EqZero:Boolean) : Residue {
             val fractionBitLen = bitShiftX + 1
             val modulusBitLen = fractionBitLen and 0x3F
-            val isDwordAligned = (fractionBitLen and 0x3F) == 0
-            val shiftRightMask = if (isDwordAligned) 0 else -1L
-            val shiftRightModulus = if (isDwordAligned) 0 else modulusBitLen
-            val leftModulusShift = if (isDwordAligned) 0 else 64 - modulusBitLen
+            val shiftRightMask = -modulusBitLen.toLong() shr 63
+            val shiftRightModulus = modulusBitLen
+            val leftModulusShift = -modulusBitLen
             val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
             val halfUlpBitMask = 1L shl halfUlpBitIndex
             val fractionTailMask = halfUlpBitMask - 1

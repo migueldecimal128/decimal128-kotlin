@@ -480,7 +480,7 @@ object RecipMulPow10 {
         assert(quotDwordCount <= 5)
 
         val dividendShiftRight = pow10 - 1
-        val dividendShiftLeft = 64 - dividendShiftRight
+        val dividendShiftLeft = -dividendShiftRight
         val shiftNonZeroMask = if (dividendShiftRight == 0) 0L else -1L
         val stickyBitsPow2 = x0 and shiftNonZeroMask and ((1L shl dividendShiftRight) - 1)
 
@@ -562,7 +562,7 @@ object RecipMulPow10 {
         assert(quotDwordCount <= 5)
 
         val dividendShiftRight = pow10 - 1
-        val dividendShiftLeft = 64 - dividendShiftRight
+        val dividendShiftLeft = -dividendShiftRight
         val shiftNonZeroMask = if (dividendShiftRight == 0) 0L else -1L
         val stickyBitsPow2 = x0 and shiftNonZeroMask and ((1L shl dividendShiftRight) - 1)
 

@@ -390,7 +390,7 @@ class RecipMulPow10 {
         fun coeffShiftRight(c: Coefficient, dwordShift: Int, bitShift: Int) {
             // Note that this does NOT update coefficient digit count
             ++totalShift
-            val bitShiftLeft = 64 - bitShift
+            val bitShiftLeft = -bitShift
             if (bitShift == 0) {
                 ++bitShift0
                 if (dwordShift >= 1) {

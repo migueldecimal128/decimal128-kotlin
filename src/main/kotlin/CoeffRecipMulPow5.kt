@@ -11,10 +11,9 @@ object CoeffRecipMulPow5 {
         n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
-        val isDwordAligned = (fractionBitLen and 0x3F) == 0
-        val shiftRightMask = if (isDwordAligned) 0 else -1L
-        val shiftRightModulus = if (isDwordAligned) 0 else modulusBitLen
-        val leftModulusShift = if (isDwordAligned) 0 else 64 - modulusBitLen
+        val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
+        val shiftRight = modulusBitLen
+        val shiftLeft = -shiftRight
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
@@ -83,7 +82,7 @@ object CoeffRecipMulPow5 {
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
-                val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+                val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
                 q[quotientIndex++] = q0
             }
 
@@ -129,7 +128,7 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         val (carry2, z2) = sumU64(pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
@@ -146,7 +145,7 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z2 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
@@ -163,7 +162,7 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z3 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z3 shl leftModulusShift) or ((z2 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z3 shl shiftLeft) or ((z2 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         //val (carry4, z4) = sumU64(pp31_1, carry3)
@@ -182,12 +181,12 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z4 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z4 shl leftModulusShift) or ((z3 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z4 shl shiftLeft) or ((z3 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
 
         assert(fractionBitsRemaining <= 0)
-        val q4 = ((z4 ushr shiftRightModulus) and shiftRightMask)
+        val q4 = ((z4 ushr shiftRight) and shiftRightNonZeroMask)
         if (q4 != 0L)
             q[quotientIndex] = q4
 
@@ -201,10 +200,9 @@ object CoeffRecipMulPow5 {
         n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
-        val isDwordAligned = (fractionBitLen and 0x3F) == 0
-        val shiftRightMask = if (isDwordAligned) 0 else -1L
-        val shiftRightModulus = if (isDwordAligned) 0 else modulusBitLen
-        val leftModulusShift = if (isDwordAligned) 0 else 64 - modulusBitLen
+        val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
+        val shiftRight = modulusBitLen
+        val shiftLeft = -shiftRight
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
@@ -261,7 +259,7 @@ object CoeffRecipMulPow5 {
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
-                val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+                val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
                 q[quotientIndex++] = q0
             }
 
@@ -298,7 +296,7 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         val (carry2, z2) = sumU64(pp21_2, pp20_1, pp11_1, carry1)
@@ -315,7 +313,7 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z2 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         val z3 = pp21_1 + carry2
@@ -332,11 +330,11 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z3 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z3 shl leftModulusShift) or ((z2 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z3 shl shiftLeft) or ((z2 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         assert(fractionBitsRemaining <= 0)
-        val q3 = ((z3 ushr shiftRightModulus) and shiftRightMask)
+        val q3 = ((z3 ushr shiftRight) and shiftRightNonZeroMask)
         if (q3 != 0L)
             q[quotientIndex] = q3
 
@@ -350,10 +348,9 @@ object CoeffRecipMulPow5 {
         n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
-        val isDwordAligned = (fractionBitLen and 0x3F) == 0
-        val shiftRightMask = if (isDwordAligned) 0 else -1L
-        val shiftRightModulus = if (isDwordAligned) 0 else modulusBitLen
-        val leftModulusShift = if (isDwordAligned) 0 else 64 - modulusBitLen
+        val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
+        val shiftRight = modulusBitLen
+        val shiftLeft = -shiftRight
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
@@ -400,7 +397,7 @@ object CoeffRecipMulPow5 {
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
-                val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+                val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
                 q[quotientIndex++] = q0
             }
 
@@ -430,7 +427,7 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         val z2 = pp11_1 + carry1
@@ -447,11 +444,11 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z2 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         assert(fractionBitsRemaining <= 0)
-        val q2 = ((z2 ushr shiftRightModulus) and shiftRightMask)
+        val q2 = ((z2 ushr shiftRight) and shiftRightNonZeroMask)
         if (q2 != 0L)
             q[quotientIndex] = q2
 
@@ -465,10 +462,9 @@ object CoeffRecipMulPow5 {
         n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
         val modulusBitLen = fractionBitLen and 0x3F
-        val isDwordAligned = (fractionBitLen and 0x3F) == 0
-        val shiftRightMask = if (isDwordAligned) 0 else -1L
-        val shiftRightModulus = if (isDwordAligned) 0 else modulusBitLen
-        val leftModulusShift = if (isDwordAligned) 0 else 64 - modulusBitLen
+        val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
+        val shiftRight = modulusBitLen
+        val shiftLeft = -shiftRight // jvm spec looks only at the bottom bits
         val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
         val halfUlpBitMask = 1L shl halfUlpBitIndex
         val fractionTailMask = halfUlpBitMask - 1
@@ -507,7 +503,7 @@ object CoeffRecipMulPow5 {
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
-                val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+                val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
                 q[quotientIndex++] = q0
             }
 
@@ -532,11 +528,11 @@ object CoeffRecipMulPow5 {
                 stickyBitsFracCompare = if ((z1 and mask) != 0L) 1 else stickyBitsFracCompare
             }
         } else {
-            val q0 = (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
+            val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
             q[quotientIndex++] = q0
         }
         assert(fractionBitsRemaining <= 0)
-        val q1 = ((z1 ushr shiftRightModulus) and shiftRightMask)
+        val q1 = ((z1 ushr shiftRight) and shiftRightNonZeroMask)
         if (q1 != 0L)
             q[quotientIndex] = q1
 

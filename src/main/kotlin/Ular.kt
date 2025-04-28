@@ -196,7 +196,7 @@ class Ular {
             if (innerShift > 0) {
                 val last = newLen - 1
                 for (i in 0..<last)
-                    x[xOff + i] = (x[xOff + i] ushr innerShift) or (x[xOff + i + 1] shl (64 - innerShift))
+                    x[xOff + i] = (x[xOff + i + 1] shl (-innerShift)) or (x[xOff + i] ushr innerShift)
                 x[xOff + last] = x[xOff + last] ushr innerShift
             }
         }
