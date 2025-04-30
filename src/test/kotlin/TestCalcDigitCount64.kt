@@ -14,7 +14,7 @@ fun getDigitCount(n: Int) : Int {
 }
 */
 @OptIn(ExperimentalUnsignedTypes::class)
-class TestCalcCoeffDigitCount64 {
+class TestCalcDigitCount64 {
 
     @Test
     fun test() {

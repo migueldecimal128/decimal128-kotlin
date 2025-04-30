@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 import java.util.Random
-class TestCalcCoeffDigitCountRandom {
+class TestCalcDigitCountRandom {
 
     val cases = arrayOf(
         "296010764949953917450610088237966833637"

@@ -6,26 +6,14 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCalcCoeffDigitCount128 {
-
-    val cases = arrayOf(
-        "67427991645008806127",
-        )
-
-    @Test
-    fun testCases() {
-        for (case in cases) {
-            val bi = BigInteger(case)
-            test1(bi)
-        }
-    }
+class TestCalcDigitCount256 {
 
     @Test
     fun test() {
-        test1(BigInteger.ONE.shiftLeft(64))
-        for (pow in 20..37)
+        test1(BigInteger.ONE.shiftLeft(192))
+        for (pow in 58..76)
             test3(BigInteger.TEN.pow(pow))
-        test1(BigInteger.ONE.shiftLeft(128).subtract(BigInteger.ONE))
+        test1(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE))
     }
 
     fun test3(bi: BigInteger) {
@@ -39,9 +27,9 @@ class TestCalcCoeffDigitCount128 {
         val expected = biStrLen
         val dw0 = bi.toLong()
         val dw1 = bi.shiftRight(64).toLong()
-        val observed = CoeffDigitCount.calcDigitCount128(dw1, dw0)
-        if (! expected.equals(observed))
-            println("$bi expected:$expected observed:$observed")
+        val dw2 = bi.shiftRight(128).toLong()
+        val dw3 = bi.shiftRight(192).toLong()
+        val observed = CoeffDigitCount.calcDigitCount256(dw3, dw2, dw1, dw0)
         assertEquals(expected, observed)
     }
 
@@ -56,12 +44,11 @@ class TestCalcCoeffDigitCount128 {
     fun test1Random() {
         var bi = BigInteger.ZERO
         do {
-            val bitLength = random.nextInt(65, 129)
+            val bitLength = random.nextInt(193, 257)
             bi = BigInteger(bitLength, random)
-        } while (bi.bitLength() < 65)
+        } while (bi.bitLength() < 193)
         test1(bi)
     }
-
 
 
 }

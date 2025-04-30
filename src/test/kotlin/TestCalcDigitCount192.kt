@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCalcCoeffDigitCount192 {
+class TestCalcDigitCount192 {
 
     @Test
     fun test() {
