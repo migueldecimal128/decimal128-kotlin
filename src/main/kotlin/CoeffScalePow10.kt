@@ -2,7 +2,7 @@ package com.decimal128
 
 import com.decimal128.CoeffMul.mulCoeff
 import com.decimal128.CoeffFma.coeffFma
-import com.decimal128.CoeffDigitCount.POW10
+import com.decimal128.CoeffDigitLen.POW10
 import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
 import com.decimal128.Residue.Companion.EXACT
 import kotlin.math.max
@@ -11,7 +11,7 @@ import kotlin.math.max
 object CoeffScalePow10 {
 
     fun coeffScaleUpPow10(z: Coeff, x: Coeff, pow10: Int) {
-        if (x.digitCount == 0 || pow10 == 0) {
+        if (x.digitLen == 0 || pow10 == 0) {
             z.set(x)
             return
         }
@@ -21,7 +21,7 @@ object CoeffScalePow10 {
         // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
         val pow10DigitCount = pow10
 
-        val productDigitCount = x.digitCount + pow10
+        val productDigitCount = x.digitLen + pow10
         if (productDigitCount >= MAX_COEFF_DIGIT_COUNT)
             throw RuntimeException("coefficient overflow")
         when {
@@ -46,16 +46,16 @@ object CoeffScalePow10 {
 
             else -> throw RuntimeException("?que?")
         }
-        assert(z.digitCount == productDigitCount)
+        assert(z.digitLen == productDigitCount)
         assert(z.isValidDigitCount())
     }
 
     fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        if (x.digitCount == 0 || pow10 == 0) {
+        if (x.digitLen == 0 || pow10 == 0) {
             z.set(x)
             return EXACT
         }
-        val productDigitCount = x.digitCount - pow10
+        val productDigitCount = x.digitLen - pow10
         if (productDigitCount <= 0) {
             val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
             return residue
@@ -68,15 +68,15 @@ object CoeffScalePow10 {
         assert((x.dw3 or x.dw2) == 0L)
         assert((a.dw3 or a.dw2) == 0L)
 
-        val minProductDigitCount = if (x.digitCount == 0) a.digitCount else max(x.digitCount + pow10, a.digitCount)
+        val minProductDigitCount = if (x.digitLen == 0) a.digitLen else max(x.digitLen + pow10, a.digitLen)
         assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
 
-        val aDigitCount = a.digitCount
+        val aDigitCount = a.digitLen
         val a1 = a.dw1
         val a0 = a.dw0
         _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0)
         assert(z.isValidDigitCount())
-        assert(z.digitCount == minProductDigitCount || z.digitCount == minProductDigitCount + 1)
+        assert(z.digitLen == minProductDigitCount || z.digitLen == minProductDigitCount + 1)
     }
 
     private fun _scaleFmaPow10(p: Coeff, x: Coeff, pow10: Int, aDigitCount: Int, a1: Long, a0: Long) {
@@ -122,10 +122,10 @@ object CoeffScalePow10 {
         assert((x.dw3 or x.dw2) == 0L)
         assert((a.dw3 or a.dw2) == 0L)
 
-        val minProductDigitCount = Math.max(x.digitCount + pow10, a.digitCount)
+        val minProductDigitCount = Math.max(x.digitLen + pow10, a.digitLen)
         assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
 
-        val aDigitCount = a.digitCount
+        val aDigitCount = a.digitLen
         val a1 = a.dw1
         val a0 = a.dw0
         return _scaleFusedMulAbsDiffPow10(z, x, pow10, aDigitCount, a1, a0)

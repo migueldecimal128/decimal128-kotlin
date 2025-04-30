@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.ONE
 import java.math.BigInteger.TWO
-import java.math.BigInteger.TEN
 import java.util.*
 
 class TestCoeffFusedMulAbsDiff {
@@ -86,17 +85,17 @@ class TestCoeffFusedMulAbsDiff {
         val coeffExpected = Coeff(case.biAbsDiff)
         val coeffAbsDiff = Coeff()
         if (verbose)
-            println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) - $coeffA (${coeffA.digitCount}) = expected:$expected")
+            println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) - $coeffA (${coeffA.digitLen}) = expected:$expected")
         coeffAbsDiff.fusedMulAbsDiff(coeffX, coeffY, coeffA)
         val observed = coeffAbsDiff.toBigInteger()
         if (! observed.equals(expected))
-            println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) - $coeffA (${coeffA.digitCount}) = $coeffAbsDiff (${coeffAbsDiff.digitCount})  expected:$expected")
+            println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) - $coeffA (${coeffA.digitLen}) = $coeffAbsDiff (${coeffAbsDiff.digitLen})  expected:$expected")
         assert (observed.equals(expected))
 
         coeffAbsDiff.fusedMulAbsDiff(coeffY, coeffX, coeffA)
         val observed2 = coeffAbsDiff.toBigInteger()
         if (! observed2.equals(expected))
-            println("$coeffX ($coeffY (${coeffY.digitCount}) * ${coeffX.digitCount}) - $coeffA (${coeffA.digitCount}) = $coeffAbsDiff (${coeffAbsDiff.digitCount})  expected:$expected")
+            println("$coeffX ($coeffY (${coeffY.digitLen}) * ${coeffX.digitLen}) - $coeffA (${coeffA.digitLen}) = $coeffAbsDiff (${coeffAbsDiff.digitLen})  expected:$expected")
         assert (observed2.equals(expected))
 
         val rnd = random.nextInt(6)

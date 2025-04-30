@@ -82,12 +82,12 @@ class TestCoeffFma {
         coeffProd.fma(coeffX, coeffY, coeffA)
         val biProd = coeffProd.toBigInteger()
         if (! biProd.equals(expected))
-            println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) + $coeffA (${coeffA.digitCount}) = $coeffProd (${coeffProd.digitCount})  expected:$expected")
+            println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) + $coeffA (${coeffA.digitLen}) = $coeffProd (${coeffProd.digitLen})  expected:$expected")
         assert (biProd.equals(expected))
 
-        val oldDigitCount = coeffProd.digitCount
+        val oldDigitCount = coeffProd.digitLen
         if (! coeffProd.isValidDigitCount()) {
-            val digitCount = coeffProd.digitCount
+            val digitCount = coeffProd.digitLen
             println("bad digit count $coeffX * $coeffY = $coeffProd was $oldDigitCount should be $digitCount")
             throw RuntimeException()
         }

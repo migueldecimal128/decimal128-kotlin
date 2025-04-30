@@ -99,16 +99,16 @@ class TestCoeffMul {
         val coeffB = Coeff(case.biB)
         val coeffC = Coeff()
         if (verbose)
-            println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = expected:$expected")
         coeffC.mul(coeffA, coeffB)
         val biC = coeffC.toBigInteger()
         if (! biC.equals(expected))
-            println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = $coeffC (${coeffC.digitCount})  expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
         assert (biC.equals(expected))
 
-        val oldDigitCount = coeffC.digitCount
+        val oldDigitCount = coeffC.digitLen
         if (! coeffC.isValidDigitCount()) {
-            val digitCount = coeffC.digitCount
+            val digitCount = coeffC.digitLen
             println("bad digit count $coeffA * $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()
         }

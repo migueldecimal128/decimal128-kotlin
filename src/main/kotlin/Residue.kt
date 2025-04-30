@@ -4,7 +4,7 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.CoeffDigitCount.POW10
+import com.decimal128.CoeffDigitLen.POW10
 
 import java.lang.Long.compareUnsigned
 
@@ -42,14 +42,14 @@ import java.lang.Long.compareUnsigned
             return (
                     if (( c.dw3 or c.dw2) == 0L) {
                         if (c.dw1 == 0L)
-                            residueFrom(c.digitCount, c.dw0)
+                            residueFrom(c.digitLen, c.dw0)
                         else
-                            residueFrom(c.digitCount, c.dw1, c.dw0)
+                            residueFrom(c.digitLen, c.dw1, c.dw0)
                     } else {
                         if (c.dw3 == 0L)
-                            residueFrom(c.digitCount, c.dw2, c.dw1, c.dw0)
+                            residueFrom(c.digitLen, c.dw2, c.dw1, c.dw0)
                         else
-                            residueFrom(c.digitCount, c.dw3, c.dw2, c.dw1, c.dw0)
+                            residueFrom(c.digitLen, c.dw3, c.dw2, c.dw1, c.dw0)
                     }
                     )
 

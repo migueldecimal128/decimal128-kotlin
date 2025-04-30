@@ -2,13 +2,13 @@ package com.decimal128
 
 import com.decimal128.CoeffMul.mulCoeff
 import com.decimal128.CoeffFma.coeffFma
-import com.decimal128.CoeffDigitCount.POW10
+import com.decimal128.CoeffDigitLen.POW10
 
 
 object MagScalePow10 {
 
     fun scalePow10Coeff(p: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
-        if (x.digitCount == 0 || pow10 == 0) {
+        if (x.digitLen == 0 || pow10 == 0) {
             p.set(x)
             return
         }
@@ -20,14 +20,14 @@ object MagScalePow10 {
 
     fun scaleUpPow10Coeff(p: Coeff, x: Coeff, pow10: Int) {
         assert(pow10 > 0)
-        assert(x.digitCount > 0)
+        assert(x.digitLen > 0)
 
         // note that this is a little lie
         // digitCount is actually pow10 + 1
         // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
         val pow10DigitCount = pow10
 
-        val productDigitCount = x.digitCount + pow10
+        val productDigitCount = x.digitLen + pow10
         if (productDigitCount >= MAX_COEFF_DIGIT_COUNT)
             throw RuntimeException("coefficient overflow")
         when {
@@ -52,22 +52,22 @@ object MagScalePow10 {
 
             else -> throw RuntimeException("?que?")
         }
-        assert(p.digitCount == productDigitCount)
+        assert(p.digitLen == productDigitCount)
         assert(p.isValidDigitCount())
     }
 
     private fun scaleDownPow10Coeff(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
         assert(pow10 > 0)
-        assert(x.digitCount > 0)
+        assert(x.digitLen > 0)
 
-        val productDigitCount = x.digitCount - pow10
+        val productDigitCount = x.digitLen - pow10
         if (productDigitCount <= 0) {
             val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
             val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), 0L)
             p.setZero()
             if (roundUp > 0) {
                 p.dw0 = 1
-                p.digitCount = 1
+                p.digitLen = 1
             }
             ctx.setInexact()
             return
@@ -77,19 +77,19 @@ object MagScalePow10 {
 
     fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
         assert(pow10 > 0)
-        assert(x.digitCount > 0)
+        assert(x.digitLen > 0)
         assert((x.dw3 or x.dw2) == 0L)
         assert((a.dw3 or a.dw2) == 0L)
 
-        val minProductDigitCount = Math.max(x.digitCount + pow10, a.digitCount)
+        val minProductDigitCount = Math.max(x.digitLen + pow10, a.digitLen)
         assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
 
-        val aDigitCount = a.digitCount
+        val aDigitCount = a.digitLen
         val a1 = a.dw1
         val a0 = a.dw0
         _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0)
         assert(z.isValidDigitCount())
-        assert(z.digitCount == minProductDigitCount || z.digitCount == minProductDigitCount + 1)
+        assert(z.digitLen == minProductDigitCount || z.digitLen == minProductDigitCount + 1)
     }
 
     private fun _scaleFmaPow10(

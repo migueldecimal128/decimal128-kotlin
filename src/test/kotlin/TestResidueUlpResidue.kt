@@ -19,11 +19,11 @@ class TestResidueUlpResidue {
         constructor(str: String) : this(BigInteger(str))
 
         val coeff = Coeff(bi)
-        val pow10 = BigInteger.TEN.pow(coeff.digitCount)
+        val pow10 = BigInteger.TEN.pow(coeff.digitLen)
         val bix2 = bi.shiftLeft(1)
         val cmp = bix2.compareTo(pow10)
         val expectedResidue = (
-                if (coeff.digitCount == 0)
+                if (coeff.digitLen == 0)
                     EXACT
                 else if (cmp < 0)
                     LT_HALF
@@ -33,7 +33,7 @@ class TestResidueUlpResidue {
                     GT_HALF
                 )
 
-        override fun toString() : String = "$bi (${coeff.digitCount}) $expectedResidue"
+        override fun toString() : String = "$bi (${coeff.digitLen}) $expectedResidue"
     }
 
     val residueCases = arrayOf(

@@ -9,9 +9,9 @@ object CoeffFma {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
         assert(a.isValidDigitCount())
-        if (x.digitCount <= 1) {
+        if (x.digitLen <= 1) {
             // FIXME I think precision is wrong in these cases
-            if (x.digitCount == 0) {
+            if (x.digitLen == 0) {
                 z.set(a)
                 return
             }
@@ -20,8 +20,8 @@ object CoeffFma {
                 return
             }
         }
-        if (y.digitCount <= 1) {
-            if (y.digitCount == 0) {
+        if (y.digitLen <= 1) {
+            if (y.digitLen == 0) {
                 z.set(a)
                 return
             }
@@ -37,16 +37,16 @@ object CoeffFma {
                         if (y.dw0 == 1L) z.add(x, a) else z.set(a)
                         return
                     }
-                    coeffFma(z, x, y.digitCount, y.dw0, a)
+                    coeffFma(z, x, y.digitLen, y.dw0, a)
                 } else {
-                    coeffFma(z, x, y.digitCount, y.dw1, y.dw0, a)
+                    coeffFma(z, x, y.digitLen, y.dw1, y.dw0, a)
                 }
             }
             (y.dw3 == 0L) -> {
-                coeffFma(z, x, y.digitCount, y.dw2, y.dw1, y.dw0, a)
+                coeffFma(z, x, y.digitLen, y.dw2, y.dw1, y.dw0, a)
             }
             else -> {
-                coeffFma(z, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0, a)
+                coeffFma(z, x, y.digitLen, y.dw3, y.dw2, y.dw1, y.dw0, a)
             }
         }
     }
@@ -54,12 +54,12 @@ object CoeffFma {
 
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y0: Long, a: Coeff) {
         if ((a.dw3 or a.dw2) == 0L) {
-            coeffFma(p, x, yDigitCount, y0, a.digitCount, a.dw1, a.dw0)
+            coeffFma(p, x, yDigitCount, y0, a.digitLen, a.dw1, a.dw0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, 0L, 0L, 0L, y0,
-                a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
             )
 
         }
@@ -67,36 +67,36 @@ object CoeffFma {
 
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long, a: Coeff) {
         if ((a.dw3 or a.dw2) == 0L) {
-            coeffFma(p, x, yDigitCount, y1, y0, a.digitCount, a.dw1, a.dw0)
+            coeffFma(p, x, yDigitCount, y1, y0, a.digitLen, a.dw1, a.dw0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, 0L, 0L, y1, y0,
-                a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
             )
         }
     }
 
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long, a: Coeff) {
         if ((a.dw3 or a.dw2) == 0L) {
-            coeffFma(p, x, yDigitCount, y2, y1, y0, a.digitCount, a.dw1, a.dw0)
+            coeffFma(p, x, yDigitCount, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, 0L, y2, y1, y0,
-                a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
             )
         }
     }
 
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long, a: Coeff) {
         if ((a.dw3 or a.dw2) == 0L) {
-            coeffFma(p, x, yDigitCount, y3, y2, y1, y0, a.digitCount, a.dw1, a.dw0)
+            coeffFma(p, x, yDigitCount, y3, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, y3, y2, y1, y0,
-                a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
             )
         }
     }
@@ -104,12 +104,12 @@ object CoeffFma {
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y0: Long, aDigitCount: Int, a1: Long, a0: Long) {
         if ((x.dw3 or x.dw2) == 0L) {
             if (x.dw1 == 0L)
-                _fma(p, x.digitCount, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
             else
-                _fma(p, x.digitCount, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, 0L, 0L, 0L, y0, aDigitCount, 0L, 0L, a1, a0
             )
         }
@@ -119,12 +119,12 @@ object CoeffFma {
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long, aDigitCount: Int, a1: Long, a0: Long) {
         if ((x.dw3 or x.dw2) == 0L) {
             if (x.dw1 == 0L)
-                _fma(p, x.digitCount, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
             else
-                _fma(p, x.digitCount, x.dw1, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw1, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, 0L, 0L, y1, y0, aDigitCount, 0L, 0L, a1, a0
             )
         }
@@ -143,12 +143,12 @@ object CoeffFma {
     ) {
         if ((x.dw3 or x.dw2) == 0L) {
             if (x.dw1 == 0L)
-                _fma(p, x.digitCount, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
             else
-                _fma(p, x.digitCount, x.dw1, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw1, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, 0L, y2, y1, y0, aDigitCount, 0L, 0L, a1, a0
             )
         }
@@ -168,15 +168,15 @@ object CoeffFma {
     ) {
         if ((x.dw3 or x.dw2) == 0L) {
             if (x.dw1 == 0L)
-                _fma(p, x.digitCount, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, a1, a0)
+                _fma(p, x.digitLen, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, a1, a0)
             else
                 _fma(
-                    p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, 0L, 0L, a1,
+                    p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, 0L, 0L, a1,
                     a0
                 )
         } else {
             _fma(
-                p, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                 yDigitCount, y3, y2, y1, y0, aDigitCount, 0L, 0L, a1, a0
             )
         }
@@ -203,7 +203,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -215,7 +215,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -230,7 +230,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
@@ -248,7 +248,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo, a3)
@@ -265,7 +265,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -292,7 +292,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -304,7 +304,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -318,7 +318,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo)
@@ -332,7 +332,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp12Lo)
@@ -345,7 +345,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -372,7 +372,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -384,7 +384,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -397,7 +397,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
@@ -409,7 +409,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi)
@@ -421,7 +421,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -448,7 +448,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -459,7 +459,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
@@ -470,7 +470,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp10Hi)
@@ -481,7 +481,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         val p3 = carry2
@@ -490,7 +490,7 @@ object CoeffFma {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = p3
-        CoeffDigitCount.setDigitCount256(p)
+        CoeffDigitLen.setDigitLen256(p)
     }
 
     private fun _fma(
@@ -514,7 +514,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -525,7 +525,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -537,7 +537,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
@@ -550,7 +550,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp02Hi, pp03Lo)
@@ -563,7 +563,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -590,7 +590,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -601,7 +601,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -613,7 +613,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
@@ -625,7 +625,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp02Hi)
@@ -637,7 +637,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitCount.setDigitCount256(p)
+            CoeffDigitLen.setDigitLen256(p)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -664,7 +664,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -675,7 +675,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -686,7 +686,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount192(p)
+            CoeffDigitLen.setDigitLen192(p)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi)
@@ -696,7 +696,7 @@ object CoeffFma {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = p3
-        CoeffDigitCount.setDigitCount256(p)
+        CoeffDigitLen.setDigitLen256(p)
     }
 
     private fun _fma(
@@ -720,7 +720,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitCount.setDigitCount64(p)
+            CoeffDigitLen.setDigitLen64(p)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -730,7 +730,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitCount.setDigitCount128(p)
+            CoeffDigitLen.setDigitLen128(p)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, a1)
@@ -739,7 +739,7 @@ object CoeffFma {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = 0L;
-        CoeffDigitCount.setDigitCount192(p)
+        CoeffDigitLen.setDigitLen192(p)
     }
 
 }

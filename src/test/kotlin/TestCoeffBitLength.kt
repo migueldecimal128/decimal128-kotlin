@@ -82,10 +82,10 @@ class TestCoeffBitLength {
             return
         val coeffA = Coeff(case.biA)
         if (verbose)
-            println("$coeffA (${coeffA.digitCount}) bitLength expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) bitLength expected:$expected")
         val observed = CoeffBits.bitLength(coeffA)
         if (expected != observed)
-            println("$coeffA (${coeffA.digitCount}) observed:$observed bitLength expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) observed:$observed bitLength expected:$expected")
         assertEquals(expected, observed)
     }
 

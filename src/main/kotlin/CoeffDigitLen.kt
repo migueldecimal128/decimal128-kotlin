@@ -24,7 +24,7 @@ const val POW10_MAX_DWORD_INDEX = POW10_256_DWORD_INDEX + (4 * POW10_256_COUNT)
 
 const val MAX_COEFF_DIGIT_COUNT = POW10_MAX_OFFSET
 
-object CoeffDigitCount {
+object CoeffDigitLen {
 
     val POW10 = longArrayOf(
         // minBitCount:0  maxBitCount:64
@@ -155,70 +155,70 @@ object CoeffDigitCount {
     @Suppress("unused")
     private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX); true }
 
-    fun isValidDigitCount(c: Coeff): Boolean {
-        val prevDigitCount = c.digitCount
-        setDigitCount(c)
-        val t = c.digitCount
-        c.digitCount = prevDigitCount
-        return t == prevDigitCount
+    fun isValidDigitLen(c: Coeff): Boolean {
+        val prevDigitLen = c.digitLen
+        setDigitLen(c)
+        val t = c.digitLen
+        c.digitLen = prevDigitLen
+        return t == prevDigitLen
     }
 
 
-    fun setDigitCount64(c: Coeff) {
+    fun setDigitLen64(c: Coeff) {
         assert((c.dw3 or c.dw2 or c.dw1) == 0L)
-        c.digitCount = calcDigitCount64(c.dw0)
+        c.digitLen = calcDigitLen64(c.dw0)
     }
 
-    fun setDigitCount128(c: Coeff) {
+    fun setDigitLen128(c: Coeff) {
         assert((c.dw3 or c.dw2) == 0L)
-        c.digitCount = calcDigitCount128(c.dw1, c.dw0)
+        c.digitLen = calcDigitLen128(c.dw1, c.dw0)
     }
 
-    fun setDigitCount192(c: Coeff) {
+    fun setDigitLen192(c: Coeff) {
         assert(c.dw3 == 0L)
-        c.digitCount = calcDigitCount192(c.dw2, c.dw1, c.dw0)
+        c.digitLen = calcDigitLen192(c.dw2, c.dw1, c.dw0)
     }
 
-    fun setDigitCount256(c: Coeff) {
-        c.digitCount = calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
+    fun setDigitLen256(c: Coeff) {
+        c.digitLen = calcDigitLen256(c.dw3, c.dw2, c.dw1, c.dw0)
     }
 
-    fun setDigitCount(c: Coeff) {
-        c.digitCount = (
+    fun setDigitLen(c: Coeff) {
+        c.digitLen = (
                 if ((c.dw3 or c.dw2) == 0L) {
                     if (c.dw1 == 0L)
-                        calcDigitCount64(c.dw0)
+                        calcDigitLen64(c.dw0)
                     else
-                        calcDigitCount128(c.dw1, c.dw0)
+                        calcDigitLen128(c.dw1, c.dw0)
                 } else {
                     if (c.dw3 == 0L)
-                        calcDigitCount192(c.dw2, c.dw1, c.dw0)
+                        calcDigitLen192(c.dw2, c.dw1, c.dw0)
                     else
-                        calcDigitCount256(c.dw3, c.dw2, c.dw1, c.dw0)
+                        calcDigitLen256(c.dw3, c.dw2, c.dw1, c.dw0)
                 })
     }
 
 
-    fun calcDigitCount64(dw0: Long) = calcDigitCount64nlz(dw0)
+    fun calcDigitLen64(dw0: Long) = calcDigitLen64nlz(dw0)
 
-    fun calcDigitCount64(dw0: ULong) = calcDigitCount64(dw0.toLong())
+    fun calcDigitLen64(dw0: ULong) = calcDigitLen64(dw0.toLong())
 
-    fun calcDigitCount128(dw1: Long, dw0: Long) = calcDigitCount128nlz(dw1, dw0)
+    fun calcDigitLen128(dw1: Long, dw0: Long) = calcDigitLen128nlz(dw1, dw0)
 
-    fun calcDigitCount192(dw2: Long, dw1: Long, dw0: Long) = calcDigitCount192nlz(dw2, dw1, dw0)
+    fun calcDigitLen192(dw2: Long, dw1: Long, dw0: Long) = calcDigitLen192nlz(dw2, dw1, dw0)
 
-    fun calcDigitCount256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) = calcDigitCount256nlz(dw3, dw2, dw1, dw0)
+    fun calcDigitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) = calcDigitLen256nlz(dw3, dw2, dw1, dw0)
 
-    fun calcDigitCount(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+    fun calcDigitLen(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         return (
                 if ((dw3 or dw2) == 0L)
-                    if (dw1 == 0L) calcDigitCount64(dw0) else calcDigitCount128(dw1, dw0)
+                    if (dw1 == 0L) calcDigitLen64(dw0) else calcDigitLen128(dw1, dw0)
                 else
-                    if (dw3 == 0L) calcDigitCount192(dw2, dw1, dw0) else calcDigitCount256(dw3, dw2, dw1, dw0)
+                    if (dw3 == 0L) calcDigitLen192(dw2, dw1, dw0) else calcDigitLen256(dw3, dw2, dw1, dw0)
                 )
     }
 
-    private fun calcDigitCount64nlz(dw0: Long): Int {
+    private fun calcDigitLen64nlz(dw0: Long): Int {
         if ((dw0 ushr 13) == 0L) { // fast path for small numbers
             val gt0 = -dw0 ushr 63
             val gt9 = ((9 - dw0) ushr 63)
@@ -240,9 +240,9 @@ object CoeffDigitCount {
         return digitCount
     }
 
-    private fun calcDigitCount128nlz(dw1: Long, dw0: Long): Int {
+    private fun calcDigitLen128nlz(dw1: Long, dw0: Long): Int {
         if (dw1 == 0L)
-            return calcDigitCount64(dw0)
+            return calcDigitLen64(dw0)
         val nlz = numberOfLeadingZeros(dw1)
         val bitLength = 128 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -258,9 +258,9 @@ object CoeffDigitCount {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    private fun calcDigitCount192nlz(dw2: Long, dw1: Long, dw0: Long): Int {
+    private fun calcDigitLen192nlz(dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw2 == 0L)
-            return calcDigitCount128nlz(dw1, dw0)
+            return calcDigitLen128nlz(dw1, dw0)
         val nlz = numberOfLeadingZeros(dw2)
         val bitLength = 192 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -279,9 +279,9 @@ object CoeffDigitCount {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    private fun calcDigitCount256nlz(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+    private fun calcDigitLen256nlz(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw3 == 0L)
-            return calcDigitCount192nlz(dw2, dw1, dw0)
+            return calcDigitLen192nlz(dw2, dw1, dw0)
         val nlz = numberOfLeadingZeros(dw3)
         val bitLength = 256 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -419,29 +419,29 @@ object CoeffDigitCount {
         return digitCount
     }
 
-    fun tweakDigitCountAfterRoundUp(c: Coeff) {
-        if (c.digitCount < POW10_128_OFFSET) {
-            val i = c.digitCount - POW10_64_OFFSET + POW10_64_DWORD_INDEX
+    fun tweakDigitLenAfterRoundUp(c: Coeff) {
+        if (c.digitLen < POW10_128_OFFSET) {
+            val i = c.digitLen - POW10_64_OFFSET + POW10_64_DWORD_INDEX
             if (c.dw0 == POW10[i + 0])
-                ++c.digitCount
+                ++c.digitLen
             return
         }
-        if (c.digitCount < POW10_192_OFFSET) {
-            val i = c.digitCount - POW10_128_OFFSET + POW10_128_DWORD_INDEX
+        if (c.digitLen < POW10_192_OFFSET) {
+            val i = c.digitLen - POW10_128_OFFSET + POW10_128_DWORD_INDEX
             if (c.dw0 == POW10[i + 0] && c.dw1 == POW10[i + 1])
-                ++c.digitCount
+                ++c.digitLen
             return
         }
-        if (c.digitCount < POW10_256_OFFSET) {
-            val i = c.digitCount - POW10_192_OFFSET + POW10_192_DWORD_INDEX
+        if (c.digitLen < POW10_256_OFFSET) {
+            val i = c.digitLen - POW10_192_OFFSET + POW10_192_DWORD_INDEX
             if (c.dw0 == POW10[i + 0] && c.dw1 == POW10[i + 1] && c.dw2 == POW10[i + 2])
-                ++c.digitCount
+                ++c.digitLen
             return
         }
-        if (c.digitCount < POW10_MAX_OFFSET) {
-            val i = c.digitCount - POW10_256_OFFSET + POW10_256_DWORD_INDEX
+        if (c.digitLen < POW10_MAX_OFFSET) {
+            val i = c.digitLen - POW10_256_OFFSET + POW10_256_DWORD_INDEX
             if (c.dw0 == POW10[i + 0] && c.dw1 == POW10[i + 1] && c.dw2 == POW10[i + 2] && c.dw3 == POW10[i + 3])
-                ++c.digitCount
+                ++c.digitLen
             return
         }
     }

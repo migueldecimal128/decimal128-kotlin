@@ -9,8 +9,8 @@ object CoeffCompare {
     fun coeffCompare(x:Coeff, y:Coeff) : Int {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
-        if (x.digitCount != y.digitCount)
-            return x.digitCount.compareTo(y.digitCount)
+        if (x.digitLen != y.digitLen)
+            return x.digitLen.compareTo(y.digitLen)
         if (x.dw3 != y.dw3)
             return compareUnsigned(x.dw3, y.dw3)
         if (x.dw2 != y.dw2)
@@ -23,7 +23,7 @@ object CoeffCompare {
     fun coeffEQ(x:Coeff, y:Coeff) : Boolean {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
-        return (x.digitCount == y.digitCount) &&
+        return (x.digitLen == y.digitLen) &&
                 (x.dw0 == y.dw0) && (x.dw1 == y.dw1) &&
                 (x.dw2 == y.dw2) && (x.dw3 == y.dw3)
     }
@@ -32,7 +32,7 @@ object CoeffCompare {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
         return when {
-            (x.digitCount != y.digitCount) -> x.digitCount > y.digitCount
+            (x.digitLen != y.digitLen) -> x.digitLen > y.digitLen
             (x.dw3 !=y.dw3) -> compareUnsigned(x.dw3, y.dw3) > 0
             (x.dw2 !=y.dw2) -> compareUnsigned(x.dw2, y.dw2) > 0
             (x.dw1 !=y.dw1) -> compareUnsigned(x.dw1, y.dw1) > 0
@@ -44,7 +44,7 @@ object CoeffCompare {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
         return when {
-            (x.digitCount != y.digitCount) -> x.digitCount < y.digitCount
+            (x.digitLen != y.digitLen) -> x.digitLen < y.digitLen
             (x.dw3 !=y.dw3) -> compareUnsigned(x.dw3, y.dw3) < 0
             (x.dw2 !=y.dw2) -> compareUnsigned(x.dw2, y.dw2) < 0
             (x.dw1 !=y.dw1) -> compareUnsigned(x.dw1, y.dw1) < 0
@@ -52,7 +52,7 @@ object CoeffCompare {
         }
     }
 
-    fun coeffGTOne(x: Coeff) = x.digitCount > 1 || x.digitCount == 1 && x.dw0 != 1L
+    fun coeffGTOne(x: Coeff) = x.digitLen > 1 || x.digitLen == 1 && x.dw0 != 1L
 
     fun coeffCompare(x: Coeff, y: IntArray): Int {
         require(y.size >= 8)

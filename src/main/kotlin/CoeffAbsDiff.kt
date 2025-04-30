@@ -1,10 +1,9 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitCount.setDigitCount128
-import com.decimal128.CoeffDigitCount.setDigitCount192
-import com.decimal128.CoeffDigitCount.setDigitCount256
-import com.decimal128.CoeffDigitCount.setDigitCount64
-import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
+import com.decimal128.CoeffDigitLen.setDigitLen128
+import com.decimal128.CoeffDigitLen.setDigitLen192
+import com.decimal128.CoeffDigitLen.setDigitLen256
+import com.decimal128.CoeffDigitLen.setDigitLen64
 import com.decimal128.CoeffScalePow10.coeffScaleFusedMulAbsDiffPow10
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
@@ -25,7 +24,7 @@ object CoeffAbsDiff {
         assert(z.isValidDigitCount())
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
-        val maxDigitCount = max(x.digitCount, y.digitCount)
+        val maxDigitCount = max(x.digitLen, y.digitLen)
 
         val d0 = x.dw0 - y.dw0
         val carry0 = if (compareUnsigned(d0, x.dw0) > 0) 1L else 0L
@@ -38,7 +37,7 @@ object CoeffAbsDiff {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry0 = -carry0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = (d0 xor negCarry0) - negCarry0
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negCarry0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -56,7 +55,7 @@ object CoeffAbsDiff {
             if (negCarry1 < 0L && z.dw0 == 0L) {
                 ++z.dw1
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negCarry1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -77,7 +76,7 @@ object CoeffAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitCount192(z)
+            setDigitLen192(z)
             return if (negCarry2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -100,7 +99,7 @@ object CoeffAbsDiff {
                     ++z.dw3
             }
         }
-        setDigitCount256(z)
+        setDigitLen256(z)
         return if (negCarry3 < 0) EXACT_NEGATED else EXACT
     }
 

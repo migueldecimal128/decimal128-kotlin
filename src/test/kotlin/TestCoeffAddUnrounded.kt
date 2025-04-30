@@ -58,9 +58,9 @@ class TestCoeffAddUnrounded {
         val coeffB = Coeff(case.biB)
         val coeffC = Coeff()
         coeffC.add(coeffA, coeffB)
-        val oldDigitCount = coeffC.digitCount
+        val oldDigitCount = coeffC.digitLen
         if (! coeffC.isValidDigitCount()) {
-            val digitCount = coeffC.digitCount
+            val digitCount = coeffC.digitLen
             println("bad digit count $coeffA + $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()
         }

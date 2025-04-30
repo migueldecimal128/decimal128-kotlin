@@ -1,7 +1,6 @@
 package com.decimal128
 
 import com.decimal128.CoeffAbsDiff.absDiff
-import com.decimal128.CoeffAbsDiff.coeffAbsDiffScaled
 import java.math.BigInteger
 import com.decimal128.CoeffMul.coeffMul
 import com.decimal128.CoeffFma.coeffFma
@@ -43,29 +42,29 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     constructor(str: String) : this(BigInteger(str))
     constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
-    var digitCount = run { CoeffDigitCount.calcDigitCount256(dw3, dw2, dw1, dw0) }
+    var digitLen = run { CoeffDigitLen.calcDigitLen256(dw3, dw2, dw1, dw0) }
 
     fun setZero() = coeffSetZero(this)
 
-    fun isZero() = digitCount == 0
+    fun isZero() = digitLen == 0
 
-    fun isOne() = digitCount == 1 && dw0 == 1L
+    fun isOne() = digitLen == 1 && dw0 == 1L
 
-    fun isLEOne() = digitCount <= 1 && (dw0 and 0x0F) <= 1
+    fun isLEOne() = digitLen <= 1 && (dw0 and 0x0F) <= 1
 
-    fun isGTOne() = digitCount > 1 || (dw0 and 0x0F) > 1
+    fun isGTOne() = digitLen > 1 || (dw0 and 0x0F) > 1
 
-    private fun setDigitCount64() = CoeffDigitCount.setDigitCount64(this)
-    private fun setDigitCount128() = CoeffDigitCount.setDigitCount128(this)
-    private fun setDigitCount192() = CoeffDigitCount.setDigitCount192(this)
-    private fun setDigitCount256() = CoeffDigitCount.setDigitCount256(this)
-    private fun setDigitCount() = CoeffDigitCount.setDigitCount(this)
+    private fun setDigitCount64() = CoeffDigitLen.setDigitLen64(this)
+    private fun setDigitCount128() = CoeffDigitLen.setDigitLen128(this)
+    private fun setDigitCount192() = CoeffDigitLen.setDigitLen192(this)
+    private fun setDigitCount256() = CoeffDigitLen.setDigitLen256(this)
+    private fun setDigitCount() = CoeffDigitLen.setDigitLen(this)
 
     fun isValidDigitCount(): Boolean {
-        val prevDigitCount = digitCount
+        val prevDigitCount = digitLen
         setDigitCount()
-        val t = digitCount
-        digitCount = prevDigitCount
+        val t = digitLen
+        digitLen = prevDigitCount
         return t == prevDigitCount
     }
 

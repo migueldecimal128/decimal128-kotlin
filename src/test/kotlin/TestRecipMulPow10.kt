@@ -1,6 +1,5 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
@@ -95,12 +94,12 @@ class TestRecipMulPow10 {
         val coeffA = Coeff(case.biA)
         val pow10 = case.pow10
         if (verbose)
-            println("$coeffA (${coeffA.digitCount}) divMod 10**$pow10 = expected:${case.biQuotient} ${case.biRemainder}")
+            println("$coeffA (${coeffA.digitLen}) divMod 10**$pow10 = expected:${case.biQuotient} ${case.biRemainder}")
         val coeffQ = Coeff()
         val coeffR = Coeff()
 
-        if (coeffA.digitCount < MIN_DIVIDEND_DIGIT_COUNT || pow10 < MIN_DIVISOR_POW10 ||
-            (coeffA.digitCount + pow10) >= MAX_DIVIDEND_DIGIT_COUNT ) {
+        if (coeffA.digitLen < MIN_DIVIDEND_DIGIT_COUNT || pow10 < MIN_DIVISOR_POW10 ||
+            (coeffA.digitLen + pow10) >= MAX_DIVIDEND_DIGIT_COUNT ) {
             println("out of range")
             return
         }

@@ -1,7 +1,6 @@
 package com.decimal128
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 class TestDivModPow10 {
@@ -40,7 +39,7 @@ class TestDivModPow10 {
         val biDivisor = BigInteger.TEN.pow(divisorPow10)
         val (biQuot, biRem) = biDividend.divideAndRemainder(biDivisor)
 
-        val (quot, rem) = RecipMulPow10.divModPow10(CoeffDigitCount.calcDigitCount64(l), l, divisorPow10)
+        val (quot, rem) = RecipMulPow10.divModPow10(CoeffDigitLen.calcDigitLen64(l), l, divisorPow10)
 
         assertEquals(biQuot, bigIntegerFromLong(quot))
         assertEquals(biRem, bigIntegerFromLong(rem))

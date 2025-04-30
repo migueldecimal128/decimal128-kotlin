@@ -1,11 +1,10 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
-import com.decimal128.CoeffDigitCount.tweakDigitCountAfterRoundUp
-import com.decimal128.CoeffDigitCount.setDigitCount64
-import com.decimal128.CoeffDigitCount.setDigitCount128
-import com.decimal128.CoeffDigitCount.setDigitCount192
-import com.decimal128.CoeffDigitCount.setDigitCount256
+import com.decimal128.CoeffDigitLen.setDigitLen64
+import com.decimal128.CoeffDigitLen.setDigitLen128
+import com.decimal128.CoeffDigitLen.setDigitLen192
+import com.decimal128.CoeffDigitLen.setDigitLen256
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
 
 object CoeffAdd {
@@ -19,15 +18,15 @@ object CoeffAdd {
     }
 
     fun coeffAddUnscaled(z: Coeff, x: Coeff, y: Coeff) {
-        if (x.digitCount == 0) {
+        if (x.digitLen == 0) {
             z.set(y)
             return
         }
-        if (y.digitCount == 0) {
+        if (y.digitLen == 0) {
             z.set(x)
             return
         }
-        val maxDigitCount = Math.max(x.digitCount, y.digitCount)
+        val maxDigitCount = Math.max(x.digitLen, y.digitLen)
 
         val x0 = x.dw0
         val y0 = y.dw0
@@ -41,7 +40,7 @@ object CoeffAdd {
         // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
         if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            setDigitCount64(z)
+            setDigitLen64(z)
             return
         }
 
@@ -54,7 +53,7 @@ object CoeffAdd {
         val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
         if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
             z.dw3 = 0L; z.dw2 = 0L;
-            setDigitCount128(z)
+            setDigitLen128(z)
             return
         }
 
@@ -67,7 +66,7 @@ object CoeffAdd {
         val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
         if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
             z.dw3 = 0L;
-            setDigitCount192(z)
+            setDigitLen192(z)
             return
         }
 
@@ -80,7 +79,7 @@ object CoeffAdd {
         val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
         if (carry3 != 0L)
             throw RuntimeException("coefficient add overflow x:$x y:$y")
-        setDigitCount256(z)
+        setDigitLen256(z)
     }
 
 

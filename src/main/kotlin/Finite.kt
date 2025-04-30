@@ -1,6 +1,6 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitCount.tweakDigitCountAfterRoundUp
+import com.decimal128.CoeffDigitLen.tweakDigitLenAfterRoundUp
 import com.decimal128.Residue.Companion.EXACT
 
 const val MIN_EXPONENT = -6143
@@ -27,20 +27,20 @@ class Finite {
                 }
             }
         }
-        tweakDigitCountAfterRoundUp(c)
+        tweakDigitLenAfterRoundUp(c)
 
     }
 
 
     fun finalize(ctx: Decimal128Context) {
-        var scaleDelta = c.digitCount - PRECISION_34
+        var scaleDelta = c.digitLen - PRECISION_34
         if (scaleDelta > 0) {
             val residue = CoeffScalePow10.coeffScaleDownPow10(c, c, scaleDelta)
             if (residue != EXACT) {
                 val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (roundUp) {
                     roundUp(ctx)
-                    if (c.digitCount > PRECISION_34) {
+                    if (c.digitLen > PRECISION_34) {
                         val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, 1)
                         assert(residue2 == Residue.EXACT)
                         ++scaleDelta

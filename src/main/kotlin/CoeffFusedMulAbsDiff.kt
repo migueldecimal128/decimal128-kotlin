@@ -1,9 +1,9 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitCount.setDigitCount64
-import com.decimal128.CoeffDigitCount.setDigitCount128
-import com.decimal128.CoeffDigitCount.setDigitCount192
-import com.decimal128.CoeffDigitCount.setDigitCount256
+import com.decimal128.CoeffDigitLen.setDigitLen64
+import com.decimal128.CoeffDigitLen.setDigitLen128
+import com.decimal128.CoeffDigitLen.setDigitLen192
+import com.decimal128.CoeffDigitLen.setDigitLen256
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Math.unsignedMultiplyHigh
@@ -16,9 +16,9 @@ object CoeffFusedMulAbsDiff {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
         assert(a.isValidDigitCount())
-        if (x.digitCount <= 1) {
+        if (x.digitLen <= 1) {
             // FIXME I think precision is wrong in these cases
-            if (x.digitCount == 0) {
+            if (x.digitLen == 0) {
                 z.set(a)
                 return EXACT
             }
@@ -26,8 +26,8 @@ object CoeffFusedMulAbsDiff {
                 return z.absDiff(y, a)
             }
         }
-        if (y.digitCount <= 1) {
-            if (y.digitCount == 0) {
+        if (y.digitLen <= 1) {
+            if (y.digitLen == 0) {
                 z.set(a)
                 return EXACT
             }
@@ -38,18 +38,18 @@ object CoeffFusedMulAbsDiff {
         return when {
             ((y.dw3 or y.dw2) == 0L) -> {
                 if (y.dw1 == 0L) {
-                    coeffFusedMulAbsDiff(z, x, y.digitCount, y.dw0, a)
+                    coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw0, a)
                 } else {
-                    coeffFusedMulAbsDiff(z, x, y.digitCount, y.dw1, y.dw0, a)
+                    coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw1, y.dw0, a)
                 }
             }
 
             (y.dw3 == 0L) -> {
-                coeffFusedMulAbsDiff(z, x, y.digitCount, y.dw2, y.dw1, y.dw0, a)
+                coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw2, y.dw1, y.dw0, a)
             }
 
             else -> {
-                coeffFusedMulAbsDiff(z, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0, a)
+                coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw3, y.dw2, y.dw1, y.dw0, a)
             }
         }
     }
@@ -58,12 +58,12 @@ object CoeffFusedMulAbsDiff {
     fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, yDigitCount: Int, y0: Long, a: Coeff): Residue {
         return (
                 if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y0, a.digitCount, a.dw1, a.dw0)
+                    coeffFusedMulAbsDiff(z, x, yDigitCount, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, 0L, y0,
-                        a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
                     )
                 })
     }
@@ -71,12 +71,12 @@ object CoeffFusedMulAbsDiff {
     fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long, a: Coeff): Residue {
         return (
                 if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y1, y0, a.digitCount, a.dw1, a.dw0)
+                    coeffFusedMulAbsDiff(z, x, yDigitCount, y1, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, y1, y0,
-                        a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
                     )
                 })
     }
@@ -84,12 +84,12 @@ object CoeffFusedMulAbsDiff {
     fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long, a: Coeff): Residue {
         return (
                 if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y2, y1, y0, a.digitCount, a.dw1, a.dw0)
+                    coeffFusedMulAbsDiff(z, x, yDigitCount, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, y2, y1, y0,
-                        a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
                     )
                 })
     }
@@ -102,12 +102,12 @@ object CoeffFusedMulAbsDiff {
     ): Residue {
         return (
                 if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y3, y2, y1, y0, a.digitCount, a.dw1, a.dw0)
+                    coeffFusedMulAbsDiff(z, x, yDigitCount, y3, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, y3, y2, y1, y0,
-                        a.digitCount, a.dw3, a.dw2, a.dw1, a.dw0
+                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
                     )
                 })
     }
@@ -121,12 +121,12 @@ object CoeffFusedMulAbsDiff {
         return (
                 if ((x.dw3 or x.dw2) == 0L) {
                     if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitCount, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
                     else
-                        fusedMulAbsDiff(z, x.digitCount, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, 0L, y0, aDigitCount, 0L, 0L, a1, a0
                     )
                 })
@@ -142,12 +142,12 @@ object CoeffFusedMulAbsDiff {
         return (
                 if ((x.dw3 or x.dw2) == 0L) {
                     if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitCount, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
                     else
-                        fusedMulAbsDiff(z, x.digitCount, x.dw1, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, y1, y0, aDigitCount, 0L, 0L, a1, a0
                     )
                 })
@@ -161,12 +161,12 @@ object CoeffFusedMulAbsDiff {
         return (
                 if ((x.dw3 or x.dw2) == 0L) {
                     if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitCount, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
                     else
-                        fusedMulAbsDiff(z, x.digitCount, x.dw1, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, y2, y1, y0, aDigitCount, 0L, 0L, a1, a0
                     )
                 })
@@ -180,16 +180,16 @@ object CoeffFusedMulAbsDiff {
         return (
                 if ((x.dw3 or x.dw2) == 0L) {
                     if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitCount, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, a1, a0)
+                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, a1, a0)
                     else
                         fusedMulAbsDiff(
-                            z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                            z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                             yDigitCount, y3, y2, y1, y0,
                             aDigitCount, 0L, 0L, a1, a0
                         )
                 } else {
                     fusedMulAbsDiff(
-                        z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0,
+                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, y3, y2, y1, y0, aDigitCount, 0L, 0L, a1, a0
                     )
                 })
@@ -214,7 +214,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -238,7 +238,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -266,7 +266,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitCount192(z)
+            setDigitLen192(z)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -302,7 +302,7 @@ object CoeffFusedMulAbsDiff {
                 // the multiply carry and the borrow out the top cancel each other out
                 z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
             }
-            setDigitCount256(z)
+            setDigitLen256(z)
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -327,7 +327,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -350,7 +350,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -372,7 +372,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitCount192(z)
+            setDigitLen192(z)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -402,7 +402,7 @@ object CoeffFusedMulAbsDiff {
                 // the multiply carry and the borrow out the top cancel each other out
                 z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
             }
-            setDigitCount256(z)
+            setDigitLen256(z)
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -427,7 +427,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -449,7 +449,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -469,7 +469,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitCount192(z)
+            setDigitLen192(z)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -490,7 +490,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw3
             }
         }
-        setDigitCount256(z)
+        setDigitLen256(z)
         return if (borrow3 > 0) EXACT_NEGATED else EXACT
     }
 
@@ -512,7 +512,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -532,7 +532,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -551,7 +551,7 @@ object CoeffFusedMulAbsDiff {
                 ++z.dw2
             }
         }
-        setDigitCount192(z)
+        setDigitLen192(z)
         return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
     }
 
@@ -573,7 +573,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -594,7 +594,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -615,7 +615,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitCount192(z)
+            setDigitLen192(z)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -645,7 +645,7 @@ object CoeffFusedMulAbsDiff {
                 // the multiply carry and the borrow out the top cancel each other out
                 z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
             }
-            setDigitCount256(z)
+            setDigitLen256(z)
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -669,7 +669,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -690,7 +690,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -710,7 +710,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitCount192(z)
+            setDigitLen192(z)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -731,7 +731,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw3
             }
         }
-        setDigitCount256(z)
+        setDigitLen256(z)
         return if (borrow3 > 0) EXACT_NEGATED else EXACT
     }
 
@@ -753,7 +753,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -773,7 +773,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitCount128(z)
+            setDigitLen128(z)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -792,7 +792,7 @@ object CoeffFusedMulAbsDiff {
                 ++z.dw2
             }
         }
-        setDigitCount192(z)
+        setDigitLen192(z)
         return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
     }
 
@@ -813,7 +813,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitCount64(z)
+            setDigitLen64(z)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -832,7 +832,7 @@ object CoeffFusedMulAbsDiff {
             if (z.dw1 == 0L)
                 ++z.dw2
         }
-        setDigitCount128(z)
+        setDigitLen128(z)
         return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
     }
 

@@ -40,7 +40,7 @@ class TestCalcDigitCount64 {
     fun test1(ul: ULong) {
         val ulStrLen = ul.toString().length
         val expected = if (ul == 0uL) 0 else ulStrLen
-        val observed = CoeffDigitCount.calcDigitCount64(ul)
+        val observed = CoeffDigitLen.calcDigitLen64(ul)
         if (expected != observed)
             println("expected:$expected  observed:$observed  ul:$ul")
         assertEquals(expected, observed)

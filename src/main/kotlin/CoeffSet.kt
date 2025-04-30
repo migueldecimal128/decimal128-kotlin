@@ -1,11 +1,11 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitCount.setDigitCount64
-import com.decimal128.CoeffDigitCount.setDigitCount128
-import com.decimal128.CoeffDigitCount.setDigitCount192
-import com.decimal128.CoeffDigitCount.setDigitCount256
-import com.decimal128.CoeffDigitCount.setDigitCount
-import com.decimal128.CoeffDigitCount.isValidDigitCount
+import com.decimal128.CoeffDigitLen.setDigitLen64
+import com.decimal128.CoeffDigitLen.setDigitLen128
+import com.decimal128.CoeffDigitLen.setDigitLen192
+import com.decimal128.CoeffDigitLen.setDigitLen256
+import com.decimal128.CoeffDigitLen.setDigitLen
+import com.decimal128.CoeffDigitLen.isValidDigitLen
 import java.math.BigInteger
 
 private const val MASK32 = 0xFFFFFFFFL
@@ -13,52 +13,52 @@ private const val MASK32 = 0xFFFFFFFFL
 object CoeffSet {
 
     fun coeffSetZero(c: Coeff) {
-        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 0L; c.digitCount = 0
+        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 0L; c.digitLen = 0
     }
 
     fun coeffSetOne(c: Coeff) {
-        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 1L; c.digitCount = 1
+        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 1L; c.digitLen = 1
     }
 
     fun coeffSet(c: Coeff, dw0: Long) {
         c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L
         c.dw0 = dw0
-        setDigitCount64(c)
+        setDigitLen64(c)
     }
 
     fun coeffSet(c: Coeff, dw1: Long, dw0: Long) {
         c.dw3 = 0L; c.dw2 = 0L
         c.dw1 = dw1;c.dw0 = dw0
-        setDigitCount128(c)
+        setDigitLen128(c)
     }
 
     fun coeffSet(c: Coeff, dw2: Long, dw1: Long, dw0: Long) {
         c.dw3 = 0L
         c.dw2 = dw2; c.dw1 = dw1; c.dw0 = dw0
-        setDigitCount192(c)
+        setDigitLen192(c)
     }
 
     fun coeffSet(c: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         c.dw3 = dw3; c.dw2 = dw2; c.dw1 = dw1;c.dw0 = dw0
-        setDigitCount(c)
+        setDigitLen(c)
     }
 
     fun coeffSet(c: Coeff, digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
-        c.digitCount = digitCount; c.dw3 = dw3; c.dw2 = dw2; c.dw1 = dw1;c.dw0 = dw0
-        require(isValidDigitCount(c))
+        c.digitLen = digitCount; c.dw3 = dw3; c.dw2 = dw2; c.dw1 = dw1;c.dw0 = dw0
+        require(isValidDigitLen(c))
     }
 
     fun coeffSet(c: Coeff, bi: BigInteger) {
         require(bi.bitLength() <= 256)
         coeffSet(c, bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
-        setDigitCount(c)
+        setDigitLen(c)
     }
 
     fun coeffSet(c: Coeff, x:Coeff) {
         if (c != x) {
-            c.digitCount = x.digitCount; c.dw3 = x.dw3; c.dw2 = x.dw2; c.dw1 = x.dw1; c.dw0 = x.dw0
+            c.digitLen = x.digitLen; c.dw3 = x.dw3; c.dw2 = x.dw2; c.dw1 = x.dw1; c.dw0 = x.dw0
         }
-        assert(isValidDigitCount(c))
+        assert(isValidDigitLen(c))
     }
 
     fun coeffSet(c: Coeff, str: String) = coeffSet(c, BigInteger(str))
@@ -75,20 +75,20 @@ object CoeffSet {
         when (nonZeroIndex) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal; setDigitCount64(c)
+                c.dw0 = nonZeroVal; setDigitLen64(c)
             }
 
             1 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = nonZeroVal; setDigitCount128(c)
+                c.dw0 = x[xOff + 0]; c.dw1 = nonZeroVal; setDigitLen128(c)
             }
 
             2 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1]; c.dw2 = nonZeroVal; setDigitCount192(c)
+                c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1]; c.dw2 = nonZeroVal; setDigitLen192(c)
             }
 
             3 -> {
                 c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1];
-                c.dw2 = x[xOff + 2]; c.dw3 = nonZeroVal; setDigitCount256(c)
+                c.dw2 = x[xOff + 2]; c.dw3 = nonZeroVal; setDigitLen256(c)
             }
 
             else -> throw RuntimeException("overflow")
@@ -107,20 +107,20 @@ object CoeffSet {
         when (nonZeroIndex2) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal ; setDigitCount64(c)
+                c.dw0 = nonZeroVal ; setDigitLen64(c)
             }
 
             1 -> {
                 c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
                 c.dw1 = nonZeroVal
-                setDigitCount128(c)
+                setDigitLen128(c)
             }
 
             2 -> {
                 c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
                 c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
                 c.dw2 = nonZeroVal
-                setDigitCount192(c)
+                setDigitLen192(c)
             }
 
             3 -> {
@@ -128,7 +128,7 @@ object CoeffSet {
                 c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
                 c.dw2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
                 c.dw3 = nonZeroVal;
-                setDigitCount256(c)
+                setDigitLen256(c)
             }
 
             else -> throw RuntimeException("overflow")
@@ -136,7 +136,7 @@ object CoeffSet {
     }
 
     fun coeffSetShiftRight(z: Coeff, x: Coeff, bitShift: Int) {
-        if (x.digitCount < POW10_128_OFFSET) {
+        if (x.digitLen < POW10_128_OFFSET) {
             val le63Mask = if (bitShift <= 63) -1L else 0L
             val r = (x.dw0 ushr bitShift) and le63Mask
             coeffSet(z, r)
@@ -156,7 +156,7 @@ object CoeffSet {
                     //FIXME less than one digit change going on here
                     // tweak the digit count instead of recalculating
                 }
-                setDigitCount(z)
+                setDigitLen(z)
             }
 
             1 -> {
@@ -164,20 +164,20 @@ object CoeffSet {
                 z.dw1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 z.dw2 = x.dw3 ushr innerShift
                 z.dw3 = 0L
-                setDigitCount192(z)
+                setDigitLen192(z)
             }
 
             2 -> {
                 z.dw0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 z.dw1 = x.dw3 ushr innerShift
                 z.dw2 = 0L; z.dw3 = 0L
-                setDigitCount128(z)
+                setDigitLen128(z)
             }
 
             3 -> {
                 z.dw0 = x.dw3 ushr innerShift
                 z.dw1 = 0L; z.dw2 = 0L; z.dw3 = 0L
-                setDigitCount64(z)
+                setDigitLen64(z)
             }
 
             else -> coeffSetZero(z)
@@ -237,7 +237,7 @@ object CoeffSet {
                 return
             }
         }
-        setDigitCount(z)
+        setDigitLen(z)
     }
 
     fun coeffSetShiftRight(c: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
@@ -258,20 +258,20 @@ object CoeffSet {
             0 -> {}
             1 -> {
                 c.dw0 = x[shiftOff + 0] ushr innerShift
-                setDigitCount64(c)
+                setDigitLen64(c)
             }
 
             2 -> {
                 c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
                 c.dw1 = x[shiftOff + 1] ushr innerShift
-                setDigitCount128(c)
+                setDigitLen128(c)
             }
 
             3 -> {
                 c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
                 c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
                 c.dw2 = x[shiftOff + 2] ushr innerShift
-                setDigitCount192(c)
+                setDigitLen192(c)
             }
 
             4 -> {
@@ -279,7 +279,7 @@ object CoeffSet {
                 c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
                 c.dw2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
                 c.dw3 = x[shiftOff + 3] ushr innerShift
-                setDigitCount256(c)
+                setDigitLen256(c)
             }
 
             5 -> {
@@ -290,7 +290,7 @@ object CoeffSet {
                 val dw4 = x[shiftOff + 4] ushr innerShift
                 if (dw4 != 0L)
                     throw RuntimeException("overflow")
-                setDigitCount256(c)
+                setDigitLen256(c)
             }
 
             else -> {
@@ -316,20 +316,20 @@ object CoeffSet {
         when (nonZeroIndex2) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal ; setDigitCount64(c)
+                c.dw0 = nonZeroVal ; setDigitLen64(c)
             }
 
             1 -> {
                 c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
                 c.dw1 = nonZeroVal
-                setDigitCount128(c)
+                setDigitLen128(c)
             }
 
             2 -> {
                 c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
                 c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
                 c.dw2 = nonZeroVal
-                setDigitCount192(c)
+                setDigitLen192(c)
             }
 
             3 -> {
@@ -337,7 +337,7 @@ object CoeffSet {
                 c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
                 c.dw2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
                 c.dw3 = nonZeroVal;
-                setDigitCount256(c)
+                setDigitLen256(c)
             }
 
             else -> throw RuntimeException("overflow")

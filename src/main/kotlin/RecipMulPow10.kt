@@ -11,7 +11,7 @@ import java.math.BigInteger.ONE
 import java.math.BigInteger.TWO
 import java.math.BigInteger.TEN
 import kotlin.math.ceil
-import com.decimal128.CoeffDigitCount.setDigitCount
+import com.decimal128.CoeffDigitLen.setDigitLen
 
 val MIN_DIVIDEND_DIGIT_COUNT = 2
 val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
@@ -396,15 +396,15 @@ object RecipMulPow10 {
             z.set(x)
             return EXACT
         }
-        if (x.digitCount <= pow10) {
-            if (x.digitCount == 0) {
+        if (x.digitLen <= pow10) {
+            if (x.digitLen == 0) {
                 z.setZero()
                 return EXACT
             }
-            val residue = if (x.digitCount == pow10) Residue.residueFrom(x) else Residue.LT_HALF
+            val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
             return residue
         }
-        return _divPow10(z, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+        return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
     }
 
     fun divPow10(q: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
@@ -414,13 +414,13 @@ object RecipMulPow10 {
             q.set(x)
             return
         }
-        if (x.digitCount <= pow10) {
-            if (x.digitCount == 0) {
+        if (x.digitLen <= pow10) {
+            if (x.digitLen == 0) {
                 q.setZero()
                 return
             }
             // otherwise, non-zero residue ... round it
-            val residue = if (x.digitCount == pow10) Residue.residueFrom(x) else Residue.LT_HALF
+            val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
             val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), x.dw0)
             q.setLoBit(roundUp)
             ctx.setInexact()
@@ -439,7 +439,7 @@ object RecipMulPow10 {
             else ->
 
          */
-        _divPow10(q, x.digitCount, x.dw3, x.dw2, x.dw1, x.dw0, pow10, sign, ctx)
+        _divPow10(q, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10, sign, ctx)
 
         //}
     }
@@ -533,7 +533,7 @@ object RecipMulPow10 {
                 }
             }
         }
-        CoeffDigitCount.setDigitCount(q)
+        CoeffDigitLen.setDigitLen(q)
         val inexact = residue != EXACT
         ctx.setInexact(inexact)
     }
@@ -599,7 +599,7 @@ object RecipMulPow10 {
             else -> throw RuntimeException("why am I here?")
         }
 
-        setDigitCount(z)
+        setDigitLen(z)
         return residue
     }
 

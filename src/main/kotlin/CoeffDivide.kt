@@ -26,7 +26,7 @@ private const val MASK32 = 0xFFFF_FFFFL
 object CoeffDivide {
 
     fun coeffDiv(z: Coeff, x: Coeff, y: Coeff): Residue {
-        if (y.digitCount <= 18) { // use 18 instead of 19 to ensure that hi bit is not set
+        if (y.digitLen <= 18) { // use 18 instead of 19 to ensure that hi bit is not set
             val y0 = y.dw0
             if (y0 <= 1L) {
                 if (y0 == 0L)
@@ -35,7 +35,7 @@ object CoeffDivide {
                 return EXACT
             }
             val x0 = x.dw0
-            if (x.digitCount <= 18) {
+            if (x.digitLen <= 18) {
                 val quot = x0 / y0
                 val rem = x0 % y0
                 val residue = when {
@@ -90,7 +90,7 @@ object CoeffDivide {
         assert(bitLenDelta >= 0)
         //TODO at this point I know that xBitLen >= yBitLen and x > y
         // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-        if (y.digitCount < POW10_128_OFFSET && (y.dw0 ushr 32) == 0L) {
+        if (y.digitLen < POW10_128_OFFSET && (y.dw0 ushr 32) == 0L) {
             return divx32(z, x, y.dw0)
         }
         return knuthDivideWrapper(z, x, y, false)
@@ -266,11 +266,11 @@ object CoeffDivide {
 
     fun coeffMod(z: Coeff, x: Coeff, y: Coeff) {
         assert(y.isGTOne())
-        if (x.digitCount < y.digitCount) {
+        if (x.digitLen < y.digitLen) {
             z.set(x)
             return
         }
-        if (x.digitCount == y.digitCount) {
+        if (x.digitLen == y.digitLen) {
             val cmp = coeffCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
@@ -282,7 +282,7 @@ object CoeffDivide {
                 return
             }
         }
-        if (y.digitCount < POW10_128_OFFSET && (y.dw0 ushr 32) == 0L) {
+        if (y.digitLen < POW10_128_OFFSET && (y.dw0 ushr 32) == 0L) {
             return modx32(z, x, y.dw0)
         }
         knuthDivideWrapper(z, x, y, true)
