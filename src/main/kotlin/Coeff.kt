@@ -47,6 +47,12 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     fun isZero() = digitCount == 0
 
+    fun isOne() = digitCount == 1 && dw0 == 1L
+
+    fun isLEOne() = digitCount <= 1 && (dw0 and 0x0F) <= 1
+
+    fun isGTOne() = digitCount > 1 || (dw0 and 0x0F) > 1
+
     private fun setDigitCount64() = CoeffDigitCount.setDigitCount64(this)
     private fun setDigitCount128() = CoeffDigitCount.setDigitCount128(this)
     private fun setDigitCount192() = CoeffDigitCount.setDigitCount192(this)
@@ -93,6 +99,10 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     fun fma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
 
     fun fusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) = coeffFusedMulAbsDiff(this, x, y, a)
+
+    fun div(x: Coeff, y: Coeff) = CoeffDivide.coeffDiv(this, x, y)
+
+    fun mod(x: Coeff, y: Coeff) = CoeffDivide.coeffMod(this, x, y)
 
     fun shiftRight(bitShift: Int) = coeffShiftRight(this, bitShift)
 

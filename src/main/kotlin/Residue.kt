@@ -270,6 +270,35 @@ import java.lang.Long.compareUnsigned
             return residueX
         }
 
+        fun residueFromRemainderDivisor(r: Coeff, d: Coeff): Residue {
+            if (r.dw3 < 0L) {
+                // high bit of residue is set
+                // doubling is certainly larger
+                return GT_HALF
+            }
+            val s3 = (r.dw3 shl 1) or (r.dw2 ushr -1)
+            if (s3 != d.dw3) {
+                val cmp = compareUnsigned(s3, d.dw3)
+                return if (cmp < 0) LT_HALF else GT_HALF
+            }
+            val s2 = (r.dw2 shl 1) or (r.dw1 ushr -1)
+            if (s2 != d.dw2) {
+                val cmp = compareUnsigned(s2, d.dw2)
+                return if (cmp < 0) LT_HALF else GT_HALF
+            }
+            val s1 = (r.dw1 shl 1) or (r.dw0 ushr -1)
+            if (s1 != d.dw1) {
+                val cmp = compareUnsigned(s1, d.dw1)
+                return if (cmp < 0) LT_HALF else GT_HALF
+            }
+            val s0 = (r.dw0 shl 1)
+            if (s0 != d.dw0) {
+                val cmp = compareUnsigned(s0, d.dw0)
+                return if (cmp < 0) LT_HALF else GT_HALF
+            }
+            return EXACT
+        }
+
     }
 
     fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =

@@ -8,10 +8,16 @@ import com.decimal128.CoeffDigitCount.setDigitCount
 import com.decimal128.CoeffDigitCount.isValidDigitCount
 import java.math.BigInteger
 
+private const val MASK32 = 0xFFFFFFFFL
+
 object CoeffSet {
 
     fun coeffSetZero(c: Coeff) {
         c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 0L; c.digitCount = 0
+    }
+
+    fun coeffSetOne(c: Coeff) {
+        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 1L; c.digitCount = 1
     }
 
     fun coeffSet(c: Coeff, dw0: Long) {
@@ -61,7 +67,7 @@ object CoeffSet {
         coeffSetZero(c)
         if (xLen == 0)
             return
-        var nonZeroIndex = xLen - 1
+        var nonZeroIndex = xLen
         var nonZeroVal = 0L
         while (nonZeroVal == 0L && --nonZeroIndex >= 0) {
             nonZeroVal = x[xOff + nonZeroIndex]
@@ -85,7 +91,92 @@ object CoeffSet {
                 c.dw2 = x[xOff + 2]; c.dw3 = nonZeroVal; setDigitCount256(c)
             }
 
-            4 -> throw RuntimeException("overflow")
+            else -> throw RuntimeException("overflow")
+        }
+    }
+
+    fun coeffSet(c: Coeff, x: IntArray, xLen: Int) {
+        coeffSetZero(c)
+        if (xLen == 0)
+            return
+        var nonZeroIndex2 = (xLen + 1) ushr 1
+        var nonZeroVal = if ((xLen and 1) != 0) (x[xLen - 1].toLong() and MASK32) else 0L
+        while (nonZeroVal == 0L && --nonZeroIndex2 >= 0) {
+            nonZeroVal = (x[nonZeroIndex2*2 + 1].toLong() shl 32) or (x[nonZeroIndex2*2].toLong() and MASK32)
+        }
+        when (nonZeroIndex2) {
+            -1 -> {}
+            0 -> {
+                c.dw0 = nonZeroVal ; setDigitCount64(c)
+            }
+
+            1 -> {
+                c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
+                c.dw1 = nonZeroVal
+                setDigitCount128(c)
+            }
+
+            2 -> {
+                c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
+                c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
+                c.dw2 = nonZeroVal
+                setDigitCount192(c)
+            }
+
+            3 -> {
+                c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
+                c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
+                c.dw2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
+                c.dw3 = nonZeroVal;
+                setDigitCount256(c)
+            }
+
+            else -> throw RuntimeException("overflow")
+        }
+    }
+
+    fun coeffSetShiftRight(c: Coeff, x: IntArray, xLen: Int, s: Int) {
+        assert(s < 32)
+        if (s == 0) {
+            coeffSet(c, x, xLen)
+            return
+        }
+        coeffSetZero(c)
+        if (xLen == 0)
+            return
+        var nonZeroIndex2 = (xLen + 1) ushr 1
+        var nonZeroVal = if ((xLen and 1) != 0) ((x[xLen - 1].toLong() and MASK32) shr s) else 0L
+        while (nonZeroVal == 0L && --nonZeroIndex2 >= 0) {
+            nonZeroVal = ((x[nonZeroIndex2*2 + 1].toLong() shl 32) or (x[nonZeroIndex2*2].toLong() and MASK32)) shr s
+        }
+        when (nonZeroIndex2) {
+            -1 -> {}
+            0 -> {
+                c.dw0 = nonZeroVal ; setDigitCount64(c)
+            }
+
+            1 -> {
+                c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
+                c.dw1 = nonZeroVal
+                setDigitCount128(c)
+            }
+
+            2 -> {
+                c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
+                c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
+                c.dw2 = nonZeroVal
+                setDigitCount192(c)
+            }
+
+            3 -> {
+                c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
+                c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
+                c.dw2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
+                c.dw3 = nonZeroVal;
+                setDigitCount256(c)
+            }
+
+            else -> throw RuntimeException("overflow")
         }
     }
 
