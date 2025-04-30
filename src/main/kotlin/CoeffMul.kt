@@ -9,8 +9,8 @@ import com.decimal128.CoeffSet.coeffSetZero
 object CoeffMul {
 
     fun coeffMul(z:Coeff, x:Coeff, y:Coeff) {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
 
         val xBitLenX = CoeffBits.bitLength(x)
         val yBitLenX = CoeffBits.bitLength(y)

@@ -86,7 +86,7 @@ class TestCoeffFma {
         assert (biProd.equals(expected))
 
         val oldDigitCount = coeffProd.digitLen
-        if (! coeffProd.isValidDigitCount()) {
+        if (! coeffProd.hasValidLengths()) {
             val digitCount = coeffProd.digitLen
             println("bad digit count $coeffX * $coeffY = $coeffProd was $oldDigitCount should be $digitCount")
             throw RuntimeException()

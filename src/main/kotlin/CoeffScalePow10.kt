@@ -47,7 +47,7 @@ object CoeffScalePow10 {
             else -> throw RuntimeException("?que?")
         }
         assert(z.digitLen == productDigitCount)
-        assert(z.isValidDigitCount())
+        assert(z.hasValidLengths())
     }
 
     fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
@@ -75,7 +75,7 @@ object CoeffScalePow10 {
         val a1 = a.dw1
         val a0 = a.dw0
         _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0)
-        assert(z.isValidDigitCount())
+        assert(z.hasValidLengths())
         assert(z.digitLen == minProductDigitCount || z.digitLen == minProductDigitCount + 1)
     }
 

@@ -5,10 +5,10 @@ import java.lang.Math.unsignedMultiplyHigh
 object CoeffFma {
 
     fun coeffFma(z:Coeff, x:Coeff, y:Coeff, a:Coeff) {
-        assert(z.isValidDigitCount())
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
-        assert(a.isValidDigitCount())
+        assert(z.hasValidLengths())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
+        assert(a.hasValidLengths())
         if (x.digitLen <= 1) {
             // FIXME I think precision is wrong in these cases
             if (x.digitLen == 0) {

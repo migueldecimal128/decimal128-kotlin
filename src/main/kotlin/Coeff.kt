@@ -14,6 +14,10 @@ import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffEQ
 import com.decimal128.CoeffCompare.coeffGT
 import com.decimal128.CoeffCompare.coeffLT
+import com.decimal128.CoeffDigitLen.calcDigitLen128
+import com.decimal128.CoeffDigitLen.calcDigitLen192
+import com.decimal128.CoeffDigitLen.calcDigitLen256
+import com.decimal128.CoeffDigitLen.calcDigitLen64
 import com.decimal128.CoeffDivide.coeffDiv
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
@@ -54,18 +58,49 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     fun isGTOne() = digitLen > 1 || (dw0 and 0x0F) > 1
 
-    private fun setDigitCount64() = CoeffDigitLen.setDigitLen64(this)
-    private fun setDigitCount128() = CoeffDigitLen.setDigitLen128(this)
-    private fun setDigitCount192() = CoeffDigitLen.setDigitLen192(this)
-    private fun setDigitCount256() = CoeffDigitLen.setDigitLen256(this)
+    fun updateLengths64() {
+        assert((dw3 or dw2 or dw1) == 0L)
+        digitLen = calcDigitLen64(dw0)
+    }
+
+    fun updateLengths128() {
+        assert((dw3 or dw2) == 0L)
+        digitLen = calcDigitLen128(dw1, dw0)
+    }
+
+    fun updateLengths192() {
+        assert(dw3 == 0L)
+        digitLen = calcDigitLen192(dw2, dw1, dw0)
+    }
+
+    fun updateLengths256() {
+        digitLen = calcDigitLen256(dw3, dw2, dw1, dw0)
+    }
+
+    fun updateLengths() {
+        digitLen = (
+                if ((dw3 or dw2) == 0L) {
+                    if (dw1 == 0L)
+                        calcDigitLen64(dw0)
+                    else
+                        calcDigitLen128(dw1, dw0)
+                } else {
+                    if (dw3 == 0L)
+                        calcDigitLen192(dw2, dw1, dw0)
+                    else
+                        calcDigitLen256(dw3, dw2, dw1, dw0)
+                })
+    }
+
+
     private fun setDigitCount() = CoeffDigitLen.setDigitLen(this)
 
-    fun isValidDigitCount(): Boolean {
-        val prevDigitCount = digitLen
-        setDigitCount()
+    fun hasValidLengths(): Boolean {
+        val prevDigitLen = digitLen
+        updateLengths()
         val t = digitLen
-        digitLen = prevDigitCount
-        return t == prevDigitCount
+        digitLen = prevDigitLen
+        return t == prevDigitLen
     }
 
     fun compareTo(other: Coeff) = coeffCompare(this, other)

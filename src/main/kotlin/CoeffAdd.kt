@@ -89,9 +89,9 @@ object CoeffAdd {
 
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
-        assert(z.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
+        assert(z.hasValidLengths())
 
         coeffScaleFmaPow10(z, x, scaleDelta, y)
     }

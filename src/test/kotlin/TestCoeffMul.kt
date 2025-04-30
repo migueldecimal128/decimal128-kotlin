@@ -107,7 +107,7 @@ class TestCoeffMul {
         assert (biC.equals(expected))
 
         val oldDigitCount = coeffC.digitLen
-        if (! coeffC.isValidDigitCount()) {
+        if (! coeffC.hasValidLengths()) {
             val digitCount = coeffC.digitLen
             println("bad digit count $coeffA * $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()

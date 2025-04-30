@@ -21,9 +21,9 @@ object CoeffAbsDiff {
     }
 
     fun coeffAbsDiffUnscaled(z: Coeff, x: Coeff, y: Coeff): Residue { // minuend - subtrahend
-        assert(z.isValidDigitCount())
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
+        assert(z.hasValidLengths())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
         val maxDigitCount = max(x.digitLen, y.digitLen)
 
         val d0 = x.dw0 - y.dw0
@@ -109,9 +109,9 @@ object CoeffAbsDiff {
 
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
-        assert(z.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
+        assert(z.hasValidLengths())
 
         return coeffScaleFusedMulAbsDiffPow10(z, x, scaleDelta, y)
     }

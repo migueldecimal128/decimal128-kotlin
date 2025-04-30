@@ -53,7 +53,7 @@ object MagScalePow10 {
             else -> throw RuntimeException("?que?")
         }
         assert(p.digitLen == productDigitCount)
-        assert(p.isValidDigitCount())
+        assert(p.hasValidLengths())
     }
 
     private fun scaleDownPow10Coeff(p: Coeff, sign: Boolean, x: Coeff, pow10: Int, ctx: Decimal128Context) {
@@ -88,7 +88,7 @@ object MagScalePow10 {
         val a1 = a.dw1
         val a0 = a.dw0
         _scaleFmaPow10(z, x, pow10, aDigitCount, a1, a0)
-        assert(z.isValidDigitCount())
+        assert(z.hasValidLengths())
         assert(z.digitLen == minProductDigitCount || z.digitLen == minProductDigitCount + 1)
     }
 

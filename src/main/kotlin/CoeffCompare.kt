@@ -7,8 +7,8 @@ private const val MASK32 = 0xFFFF_FFFFL
 object CoeffCompare {
 
     fun coeffCompare(x:Coeff, y:Coeff) : Int {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
         if (x.digitLen != y.digitLen)
             return x.digitLen.compareTo(y.digitLen)
         if (x.dw3 != y.dw3)
@@ -21,16 +21,16 @@ object CoeffCompare {
     }
 
     fun coeffEQ(x:Coeff, y:Coeff) : Boolean {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
         return (x.digitLen == y.digitLen) &&
                 (x.dw0 == y.dw0) && (x.dw1 == y.dw1) &&
                 (x.dw2 == y.dw2) && (x.dw3 == y.dw3)
     }
 
     fun coeffGT(x:Coeff, y:Coeff) : Boolean {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
         return when {
             (x.digitLen != y.digitLen) -> x.digitLen > y.digitLen
             (x.dw3 !=y.dw3) -> compareUnsigned(x.dw3, y.dw3) > 0
@@ -41,8 +41,8 @@ object CoeffCompare {
     }
 
     fun coeffLT(x:Coeff, y:Coeff) : Boolean {
-        assert(x.isValidDigitCount())
-        assert(y.isValidDigitCount())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
         return when {
             (x.digitLen != y.digitLen) -> x.digitLen < y.digitLen
             (x.dw3 !=y.dw3) -> compareUnsigned(x.dw3, y.dw3) < 0
