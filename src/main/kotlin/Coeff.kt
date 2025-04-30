@@ -9,8 +9,7 @@ import com.decimal128.CoeffAdd.coeffAddUnscaled
 import com.decimal128.CoeffAbsDiff.coeffAbsDiffUnscaled
 import com.decimal128.CoeffAdd.coeffAdd
 import com.decimal128.CoeffBits.setLoBit
-import com.decimal128.CoeffBits.coeffSetShiftRight
-import com.decimal128.CoeffBits.coeffShiftRight
+import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffEQ
 import com.decimal128.CoeffCompare.coeffGT
@@ -103,8 +102,6 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     fun div(x: Coeff, y: Coeff) = CoeffDivide.coeffDiv(this, x, y)
 
     fun mod(x: Coeff, y: Coeff) = CoeffDivide.coeffMod(this, x, y)
-
-    fun shiftRight(bitShift: Int) = coeffShiftRight(this, bitShift)
 
     fun scaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
 

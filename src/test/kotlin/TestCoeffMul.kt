@@ -83,7 +83,7 @@ class TestCoeffMul {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 255)
+        val bitLength = random.nextInt(0, 256)
         val bi = BigInteger(bitLength, random)
         return bi
     }

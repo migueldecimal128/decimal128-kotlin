@@ -229,6 +229,7 @@ class TestCoeffScaleDown {
         val observed = coeffObserved.toBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitCount}) ${case.roundingDirection} expected:$expected")
+        //assertEquals(observed, expected)
     }
 
 }

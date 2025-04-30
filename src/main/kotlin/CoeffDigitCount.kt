@@ -219,8 +219,14 @@ object CoeffDigitCount {
     }
 
     private fun calcDigitCount64nlz(dw0: Long): Int {
-        if (dw0 == 0L)
-            return 0
+        if ((dw0 ushr 13) == 0L) { // fast path for small numbers
+            val gt0 = -dw0 ushr 63
+            val gt9 = ((9 - dw0) ushr 63)
+            val gt99 = ((99 - dw0) ushr 63)
+            val gt999 = ((999 - dw0)) ushr 63
+            val digitCount = gt0 + gt9 + gt99 + gt999
+            return digitCount.toInt()
+        }
         val nlz = numberOfLeadingZeros(dw0)
         val bitLength = 64 - nlz
         val loDigitCount = (bitLength * 1233) shr 12

@@ -135,6 +135,112 @@ object CoeffSet {
         }
     }
 
+    fun coeffSetShiftRight(z: Coeff, x: Coeff, bitShift: Int) {
+        if (x.digitCount < POW10_128_OFFSET) {
+            val le63Mask = if (bitShift <= 63) -1L else 0L
+            val r = (x.dw0 ushr bitShift) and le63Mask
+            coeffSet(z, r)
+            return
+        }
+        val wholeDwordCount = bitShift ushr 6
+        val innerShift = bitShift and 0x3F
+        val nonZeroMask = -innerShift.toLong() shr 63
+        val leftShift = -innerShift
+        when (wholeDwordCount) {
+            0 -> {
+                z.dw0 = (nonZeroMask and (x.dw1 shl leftShift)) or (x.dw0 ushr innerShift)
+                z.dw1 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
+                z.dw2 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                z.dw3 = x.dw3 ushr innerShift
+                if (innerShift <= 3)
+                    // FIXME
+                setDigitCount(z)
+            }
+
+            1 -> {
+                z.dw0 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
+                z.dw1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                z.dw2 = x.dw3 ushr innerShift
+                z.dw3 = 0L
+                setDigitCount192(z)
+            }
+
+            2 -> {
+                z.dw0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                z.dw1 = x.dw3 ushr innerShift
+                z.dw2 = 0L; z.dw3 = 0L
+                setDigitCount128(z)
+            }
+
+            3 -> {
+                z.dw0 = x.dw3 ushr innerShift
+                z.dw1 = 0L; z.dw2 = 0L; z.dw3 = 0L
+                setDigitCount64(z)
+            }
+
+            else -> coeffSetZero(z)
+        }
+    }
+
+    fun coeffSetShiftRight(c: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
+
+        coeffSetZero(c)
+        // strip leading zeros from x
+        var nonZeroLen = xLen
+        while (nonZeroLen > 0 && x[xOff + nonZeroLen - 1] == 0L)
+            --nonZeroLen
+
+        val dwordShift = bitCount ushr 6
+        val innerShift = bitCount and 0x3F
+        val innerShiftNonZeroMask = -innerShift.toLong() shr 63
+        val newLen = nonZeroLen - dwordShift
+        val shiftOff = xOff + dwordShift
+        val leftShift = -innerShift // only bottom 6 bits are used
+        when (newLen) {
+            0 -> {}
+            1 -> {
+                c.dw0 = x[shiftOff + 0] ushr innerShift
+                setDigitCount64(c)
+            }
+
+            2 -> {
+                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                c.dw1 = x[shiftOff + 1] ushr innerShift
+                setDigitCount128(c)
+            }
+
+            3 -> {
+                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                c.dw2 = x[shiftOff + 2] ushr innerShift
+                setDigitCount192(c)
+            }
+
+            4 -> {
+                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                c.dw2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
+                c.dw3 = x[shiftOff + 3] ushr innerShift
+                setDigitCount256(c)
+            }
+
+            5 -> {
+                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                c.dw2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
+                c.dw3 = (innerShiftNonZeroMask and (x[shiftOff + 4] shl leftShift)) or (x[shiftOff + 3] ushr innerShift)
+                val dw4 = x[shiftOff + 4] ushr innerShift
+                if (dw4 != 0L)
+                    throw RuntimeException("overflow")
+                setDigitCount256(c)
+            }
+
+            else -> {
+                throw RuntimeException("overflow")
+            }
+        }
+    }
+
     fun coeffSetShiftRight(c: Coeff, x: IntArray, xLen: Int, s: Int) {
         assert(s < 32)
         if (s == 0) {

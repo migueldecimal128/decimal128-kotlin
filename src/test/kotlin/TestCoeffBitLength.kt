@@ -8,7 +8,7 @@ import java.util.*
 
 class TestCoeffBitLength {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val biA: BigInteger) {
         val bitLength = biA.bitLength()

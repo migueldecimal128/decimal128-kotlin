@@ -6,6 +6,7 @@ import com.decimal128.CoeffCompare.coeffGTOne
 import com.decimal128.CoeffSet.coeffSet
 import com.decimal128.CoeffSet.coeffSetOne
 import com.decimal128.CoeffSet.coeffSetShiftRight
+import com.decimal128.CoeffSet.coeffSetZero
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.HALF
@@ -25,22 +26,55 @@ private const val MASK32 = 0xFFFF_FFFFL
 object CoeffDivide {
 
     fun coeffDiv(z: Coeff, x: Coeff, y: Coeff): Residue {
-        if (y.isLEOne()) {
-            if (y.isZero())
-                throw RuntimeException("div by zero")
-            z.set(x)
-            return EXACT
+        if (y.digitCount <= 18) { // use 18 instead of 19 to ensure that hi bit is not set
+            val y0 = y.dw0
+            if (y0 <= 1L) {
+                if (y0 == 0L)
+                    throw RuntimeException("div by zero")
+                coeffSet(z, x)
+                return EXACT
+            }
+            val x0 = x.dw0
+            if (x.digitCount <= 18) {
+                val quot = x0 / y0
+                val rem = x0 % y0
+                val residue = when {
+                    rem == 0L -> EXACT
+                    2 * rem < y0 -> LT_HALF
+                    2 * rem == y0 -> HALF
+                    else -> GT_HALF
+                }
+                coeffSet(z, quot)
+                return residue
+            }
+            if ((y0 and (y0 - 1)) == 0L) {
+                // y0 is an exact power of 2 ... just shift right.
+                // 0 and 1 cases handled above, so if we are here then ntz >= 1
+                val ntz = numberOfTrailingZeros(y0)
+                val mask = (1L shl ntz) - 1L
+                val rem = x0 and mask
+                val residue = when {
+                    rem == 0L -> EXACT
+                    2 * rem < y0 -> LT_HALF
+                    2 * rem == y0 -> HALF
+                    else -> GT_HALF
+                }
+                coeffSetShiftRight(z, x, ntz)
+                return residue
+            }
         }
-        if (x.digitCount < y.digitCount) {
+        val xBitLen = CoeffBits.bitLength(x)
+        val yBitLen = CoeffBits.bitLength(y)
+        if (xBitLen < yBitLen) {
             val residue = when {
-                x.digitCount == 0 -> EXACT
-                x.digitCount <= y.digitCount - 2 -> LT_HALF
+                xBitLen == 0 -> EXACT
+                yBitLen - xBitLen >= 2 -> LT_HALF
                 else -> Residue.residueFromRemainderDivisor(x, y)
             }
-            z.setZero()
+            coeffSetZero(z)
             return residue
         }
-        if (x.digitCount == y.digitCount) {
+        if (xBitLen == yBitLen) {
             val cmp = coeffCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
@@ -51,9 +85,11 @@ object CoeffDivide {
                 coeffSetOne(z)
                 return EXACT
             }
-            //FIXME seems like there should be some shortcut here
-            // I know that digit counts are the same, so the quotient will be <= 9
         }
+        val bitLenDelta = xBitLen - yBitLen
+        assert(bitLenDelta >= 0)
+        //TODO at this point I know that xBitLen >= yBitLen and x > y
+        // if (bitLenDelta < some-small-number) then I should use repeated subtraction
         if (y.digitCount < POW10_128_OFFSET && (y.dw0 ushr 32) == 0L) {
             return divx32(z, x, y.dw0)
         }
