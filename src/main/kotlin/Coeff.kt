@@ -1,5 +1,6 @@
 package com.decimal128
 
+import com.decimal128.CoeffAbsDiff.absDiff
 import com.decimal128.CoeffAbsDiff.coeffAbsDiffScaled
 import java.math.BigInteger
 import com.decimal128.CoeffMul.coeffMul
@@ -14,6 +15,8 @@ import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffEQ
 import com.decimal128.CoeffCompare.coeffGT
 import com.decimal128.CoeffCompare.coeffLT
+import com.decimal128.CoeffDivide.coeffDiv
+import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
@@ -88,7 +91,7 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     // if minuend < subtrahend then negate to return positive result
     // and return a _NEGATED residue
     // because it would have gone negative
-    fun absDiff(x: Coeff, scaleDelta: Int, y: Coeff) = CoeffAbsDiff.absDiff(this, x, scaleDelta, y)
+    fun absDiff(x: Coeff, scaleDelta: Int, y: Coeff) = absDiff(this, x, scaleDelta, y)
 
     fun absDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
 
@@ -99,9 +102,9 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     fun fusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) = coeffFusedMulAbsDiff(this, x, y, a)
 
-    fun div(x: Coeff, y: Coeff) = CoeffDivide.coeffDiv(this, x, y)
+    fun div(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
 
-    fun mod(x: Coeff, y: Coeff) = CoeffDivide.coeffMod(this, x, y)
+    fun mod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
 
     fun scaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
 

@@ -152,8 +152,10 @@ object CoeffSet {
                 z.dw1 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
                 z.dw2 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 z.dw3 = x.dw3 ushr innerShift
-                if (innerShift <= 3)
-                    // FIXME
+                if (innerShift <= 3) {
+                    //FIXME less than one digit change going on here
+                    // tweak the digit count instead of recalculating
+                }
                 setDigitCount(z)
             }
 
@@ -180,6 +182,62 @@ object CoeffSet {
 
             else -> coeffSetZero(z)
         }
+    }
+
+    fun coeffSetShiftLeft(z: Coeff, x: Coeff, s: Int) {
+        val wholeDwordCount = s ushr 6
+        val innerL = s and 0x3F
+        val nonZeroMask = -innerL.toLong() shr 63
+        val innerR = -innerL
+        val topBitsMask = nonZeroMask shl innerR
+        //FIXME need to check for non-zero bit overflow out the top
+        when (wholeDwordCount) {
+            0 -> {
+                if (x.dw3 and topBitsMask != 0L)
+                    throw RuntimeException("coefficientOverflow")
+                z.dw3 = (x.dw3 shl innerL) or ((x.dw2 ushr innerR) and nonZeroMask)
+                z.dw2 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
+                z.dw1 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                z.dw0 = (x.dw0 shl innerL)
+                if (innerL <= 3) {
+                    //FIXME less than one digit change going on here
+                    // tweak the digit count instead of recalculating
+                }
+            }
+
+            1 -> {
+                if ((x.dw3 or (x.dw2 and topBitsMask)) != 0L)
+                    throw RuntimeException("coefficientOverflow")
+                z.dw3 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
+                z.dw2 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                z.dw1 = (x.dw0 shl innerL)
+                z.dw0 = 0L
+            }
+
+            2 -> {
+                if ((x.dw3 or x.dw2 or (x.dw1 and topBitsMask)) != 0L)
+                    throw RuntimeException("coefficientOverflow")
+                z.dw3 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                z.dw2 = (x.dw0 shl innerL)
+                z.dw1 = 0L
+                z.dw0 = 0L
+            }
+
+            3 -> {
+                if ((x.dw3 or x.dw2 or x.dw1 or (x.dw0 and topBitsMask)) != 0L)
+                    throw RuntimeException("coefficientOverflow")
+                z.dw3 = (x.dw0 shl innerL)
+                z.dw2 = 0L
+                z.dw1 = 0L
+                z.dw0 = 0L
+            }
+
+            else -> {
+                coeffSetZero(z)
+                return
+            }
+        }
+        setDigitCount(z)
     }
 
     fun coeffSetShiftRight(c: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {

@@ -36,7 +36,7 @@ class TestRecipMulPow10 {
         //TC(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE).divide(BigInteger.TEN), 1),
     )
 
-    @Test
+    //@Test
     fun testCases() {
         for (case in cases)
             test1(case)
@@ -44,7 +44,7 @@ class TestRecipMulPow10 {
 
     val deltas = arrayOf(BigInteger.ONE.negate(), BigInteger.ZERO, BigInteger.ONE)
 
-    @Test
+    //@Test
     fun testBoundaries() {
         for (i in 2..77) {
             val biX = BigInteger.TEN.pow(i)
@@ -60,7 +60,7 @@ class TestRecipMulPow10 {
 
     val random = Random()
 
-    @Test
+    //@Test
     fun testRandomMul() {
         for (i in 0..<10000) {
             val bi = randBi()

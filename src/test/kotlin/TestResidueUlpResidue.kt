@@ -13,7 +13,7 @@ import java.math.BigInteger
 
 class TestResidueUlpResidue {
 
-    val verbose = true
+    val verbose = false
 
     class UlpResidueCase(val bi: BigInteger) {
         constructor(str: String) : this(BigInteger(str))

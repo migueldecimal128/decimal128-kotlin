@@ -6,6 +6,8 @@ import java.util.*
 
 class TestCoeffMul {
 
+    val verbose = false
+
     class TC(val biA: BigInteger, val biB: BigInteger) {
         val biProduct = biA.multiply(biB)
 
@@ -13,6 +15,7 @@ class TestCoeffMul {
     }
 
     val cases = arrayOf(
+        TC("18446744073709551616", "0"),
         TC("9999999999999999919", "9999999999999999919"),
         TC("9999999999999999918", "99999999999999999920"),
         TC("6075018513315086291545187086261960270921991288466", "16192"),
@@ -95,7 +98,8 @@ class TestCoeffMul {
         val coeffA = Coeff(case.biA)
         val coeffB = Coeff(case.biB)
         val coeffC = Coeff()
-        //println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = expected:$expected")
+        if (verbose)
+            println("$coeffA (${coeffA.digitCount}) * $coeffB (${coeffB.digitCount}) = expected:$expected")
         coeffC.mul(coeffA, coeffB)
         val biC = coeffC.toBigInteger()
         if (! biC.equals(expected))

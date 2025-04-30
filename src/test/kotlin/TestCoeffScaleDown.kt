@@ -10,110 +10,37 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class TestCoeffScaleDown {
 
     val verbose = false
 
     class TC(
-        val biA: BigInteger, val pow10: Int, val roundingDirection: RoundingDirection,
-        val biExpected: BigInteger
-    ) {
+        val biA: BigInteger, val pow10: Int, val sign: Boolean, val roundingDirection: RoundingDirection)
+     {
 
         constructor(
-            x: String, pow10: Int,
-            roundingDirection: RoundingDirection, expected: String
+            x: String, pow10: Int, sign: Boolean,
+            roundingDirection: RoundingDirection
         ) :
-                this(BigInteger(x), pow10, roundingDirection, BigInteger(expected))
+                this(BigInteger(x), pow10, sign, roundingDirection)
+
+         val bd = if (sign) BigDecimal(biA).negate() else BigDecimal(biA)
+         val bdScaled = bd.scaleByPowerOfTen(-pow10)
+         val bdRounded = bdScaled.setScale(0, roundingDirection.mapToRoundingMode())
+         val inexact = bdScaled.compareTo(bdRounded) != 0
+         val biRoundedAbs = bdRounded.toBigIntegerExact().abs()
+         val biUnrounded = bdScaled.setScale(0, RoundingMode.DOWN).toBigIntegerExact().abs()
+         //FIXME ... currently not testing rounding because
+         // coeffDiv and coeffScaleDownPow10 return the Residue
+         val biExpected = biUnrounded
     }
 
     val cases = arrayOf(
-        TC(
-            "1234567890123456789012345678901234567890123456789012345678901234567890", 40, ROUND_TIES_TO_EVEN, "123456789012345678901234567890"
-        ),
-        TC(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639935", 4, ROUND_TIES_TO_EVEN, "11579208923731619542357098500868790785326998466564056403945758400791312964"
-        ),
-        TC(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639935", 3, ROUND_TIES_TO_EVEN, "115792089237316195423570985008687907853269984665640564039457584007913129640"
-        ),
-        TC(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, ROUND_TIES_TO_EVEN, "11579208923731619542357098500868790785326998466564056403945758400791312963994"
-        ),
-        TC(
-            "1234567890123456789012345678901234567890123456789012345678901234567890", 40, ROUND_TIES_TO_EVEN, "123456789012345678901234567890"
-        ),
-        TC("167457751028870756383096012673692132664", 39, ROUND_TIES_TO_AWAY, "0"),
-        TC("1000000000000000000", 1, ROUND_TIES_TO_EVEN, "100000000000000000"),
-        TC("74", 1, ROUND_TIES_TO_EVEN, "7"),
-        TC("75", 1, ROUND_TIES_TO_EVEN, "8"),
-        TC("76", 1, ROUND_TIES_TO_EVEN, "8"),
-        TC("740", 2, ROUND_TIES_TO_EVEN, "7"),
-        TC("750", 2, ROUND_TIES_TO_EVEN, "8"),
-        TC("760", 2, ROUND_TIES_TO_EVEN, "8"),
-        TC("741", 2, ROUND_TIES_TO_EVEN, "7"),
-        TC("751", 2, ROUND_TIES_TO_EVEN, "8"),
-        TC("761", 2, ROUND_TIES_TO_EVEN, "8"),
-        TC("1000000000000000009", 1, ROUND_TIES_TO_EVEN, "100000000000000001"),
-        TC(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, ROUND_TIES_TO_EVEN, "11579208923731619542357098500868790785326998466564056403945758400791312963994"
-        ),
-        TC("1000000000000000000", 1, ROUND_TIES_TO_EVEN, "100000000000000000"),
-        TC("100000000000000000", 1, ROUND_TIES_TO_EVEN, "10000000000000000"),
-        TC("0", 1, ROUND_TIES_TO_EVEN, "0"),
-        TC(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639935", 1, ROUND_TIES_TO_EVEN, "11579208923731619542357098500868790785326998466564056403945758400791312963994"
-        ),
-        TC(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639935", 44, ROUND_TIES_TO_EVEN, "1157920892373161954235709850086879"
-        ),
-        TC("161027067925926009762976744537943203828", 39, ROUND_TIES_TO_AWAY, "0"),
-        TC("167457751028870756383096012673692132664", 39, ROUND_TIES_TO_AWAY, "0"),
-        TC(
-            "1234567890123456789012345678901234567890123456789012345678901234567890", 40, ROUND_TIES_TO_EVEN, "123456789012345678901234567890"
-        ),
-        TC("74", 1, ROUND_TIES_TO_EVEN, "7"),
-        TC("94", 1, ROUND_TIES_TO_EVEN, "9"),
-        TC("14", 1, ROUND_TIES_TO_EVEN, "1"),
-        TC("84", 1, ROUND_TIES_TO_EVEN, "8"),
-        TC("95", 1, ROUND_TIES_TO_EVEN, "10"),
-        TC("96", 1, ROUND_TIES_TO_EVEN, "10"),
-        TC("0", 2, ROUND_TIES_TO_EVEN, "0"),
-        TC("1234567890", 1, ROUND_TIES_TO_EVEN, "123456789"),
-        TC("0", 1, ROUND_TIES_TO_EVEN, "0"),
-        TC("0", 1, ROUND_TIES_TO_EVEN, "0"),
-
-        TC("1", 1, ROUND_TIES_TO_EVEN, "0"),
-        TC("4", 1, ROUND_TIES_TO_EVEN, "0"),
-        TC("5", 1, ROUND_TIES_TO_EVEN, "0"),
-        TC("6", 1, ROUND_TIES_TO_EVEN, "1"),
-        TC("6", 1, ROUND_TIES_TO_EVEN, "1"),
-        TC("1234567890", 1, ROUND_TIES_TO_EVEN, "123456789"),
-        TC("1234567890", 2, ROUND_TIES_TO_EVEN, "12345679"),
-        TC("1234567890", 7, ROUND_TIES_TO_EVEN, "123"),
-        TC("1234500000", 6, ROUND_TIES_TO_EVEN, "1234"),
-        TC("1234500000", 6, ROUND_TIES_TO_AWAY, "1235"),
-
-        TC("1234567890123456789012345678901234567890", 30, ROUND_TIES_TO_EVEN, "1234567890"),
-        TC("1234567890123456789012345678901234567890", 39, ROUND_TIES_TO_EVEN, "1"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TIES_TO_EVEN, "1235"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TIES_TO_AWAY, "1235"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TOWARD_ZERO, "1234"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TOWARD_POSITIVE, "1235"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TOWARD_NEGATIVE, "1234"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TOWARD_POSITIVE, "1234"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TOWARD_NEGATIVE, "1235"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TOWARD_ZERO, "1234"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TIES_TO_EVEN, "1235"),
-        TC("1234567890123456789012345678901234567890", 36, ROUND_TIES_TO_AWAY, "1235"),
-
-        TC(
-            "1234567890123456789012345678901234567890123456789012345678901234567890", 40, ROUND_TIES_TO_EVEN, "123456789012345678901234567890"
-        ),
-        TC(
-            "1234567890123456789012345678901234567890123456789012345678901234567890", 1, ROUND_TIES_TO_EVEN, "123456789012345678901234567890123456789012345678901234567890123456789"
-        ),
-
+        TC("3482748081595369130101", 16, false, ROUND_TIES_TO_EVEN),
+        TC("167457751028870756383096012673692132664", 39, false, ROUND_TIES_TO_AWAY),
+        TC("74", 1, false, ROUND_TIES_TO_EVEN),
     )
 
     @Test
@@ -183,16 +110,12 @@ class TestCoeffScaleDown {
 
     }
 
+
     fun buildTestCase(bi:BigInteger, xPow10:Int) : TC {
-        val roundingDirection = RoundingDirection.fromValue(random.nextInt(5))
         val sign = random.nextBoolean()
-        val bd = if (sign) BigDecimal(bi).negate() else BigDecimal(bi)
-        val bdScaled = bd.scaleByPowerOfTen(-xPow10)
-        val bdRounded = bdScaled.setScale(0, roundingDirection.mapToRoundingMode())
-        val inexact = bdScaled.compareTo(bdRounded) != 0
-        val biRoundedAbs = bdRounded.toBigIntegerExact().abs()
-        val case = TC(bi, xPow10, roundingDirection, biRoundedAbs)
-        return case
+        val roundingDirection = RoundingDirection.fromValue(random.nextInt(5))
+        val tc = TC(bi, xPow10, sign, roundingDirection)
+        return tc
     }
 
     fun randPow(bi: BigInteger) : Int {
@@ -219,17 +142,18 @@ class TestCoeffScaleDown {
             println("product would overflow ... skipped")
             return
         }
+        val sign = case.sign
         val coeffA = Coeff(case.biA)
         val coeffObserved = Coeff()
         val pow10 = case.pow10
         val ctx = Decimal128Context(case.roundingDirection)
         if (verbose)
-            println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = ${case.roundingDirection} expected:$expected")
+            println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = sign:$sign ${case.roundingDirection} expected:$expected")
         coeffObserved.scaleDownPow10(coeffA, pow10)
         val observed = coeffObserved.toBigInteger()
         if (! observed.equals(expected))
-            println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitCount}) ${case.roundingDirection} expected:$expected")
-        //assertEquals(observed, expected)
+            println("$coeffA (${coeffA.digitCount}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitCount}) sign:$sign ${case.roundingDirection} expected:$expected")
+        assertEquals(expected, observed)
     }
 
 }

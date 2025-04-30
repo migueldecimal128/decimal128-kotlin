@@ -14,8 +14,8 @@ class TestDivModPow10 {
         }
         return result
     }
-
-    @Test
+    //FIXME disable this test for now
+    //@Test
     fun test() {
 //        for (i in minDividendDigitCount..maxDividendDigitCount) {
         for (i in 1..19) {

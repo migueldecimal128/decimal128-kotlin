@@ -2,40 +2,62 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.CoeffDigitCount.POW10
+import com.decimal128.CoeffSet.coeffSet
+import com.decimal128.CoeffSet.coeffSetShiftLeft
+import com.decimal128.CoeffSet.coeffSetZero
 
 object CoeffMul {
 
     fun coeffMul(z:Coeff, x:Coeff, y:Coeff) {
         assert(x.isValidDigitCount())
         assert(y.isValidDigitCount())
-        if (x.digitCount <= 1) {
-            if (x.digitCount == 0) {
-                z.setZero()
-                return
-            }
-            if (x.dw0 == 1L) {
-                z.set(y)
-                return
-            }
-        }
+
+        val xBitLenX = CoeffBits.bitLength(x)
+        val yBitLenX = CoeffBits.bitLength(y)
+
+        val flipFlop = xBitLenX >= yBitLenX
+        val mBitLen = if (flipFlop) xBitLenX else yBitLenX
+        val nBitLen = if (flipFlop) yBitLenX else xBitLenX
+        val m = if (flipFlop) x else y
+        val n = if (flipFlop) y else x
+
+        // mBitLen >= nBitLen
+
+        val m0 = m.dw0
+        val n0 = n.dw0
         when {
-            ((y.dw3 or y.dw2) == 0L) -> {
-                if (y.dw1 == 0L) {
-                    if ((y.dw0 ushr 1) == 0L) {
-                        if (y.dw0 == 1L) z.set(x) else z.setZero()
-                        return
+            (mBitLen <= 64) -> {
+                val pHi = unsignedMultiplyHigh(m0, n0)
+                val pLo = m0 * n0
+                coeffSet(z, pHi, pLo)
+            }
+            nBitLen <= 64 -> {
+                when {
+                    ((n0 ushr 1) == 0L) -> {
+                        if (n0 == 0L)
+                            coeffSetZero(z)
+                        else
+                            coeffSet(z, m)
                     }
-                    mulCoeff(z, x, y.digitCount, y.dw0)
-                } else {
-                    mulCoeff(z, x, y.digitCount, y.dw1, y.dw0)
+                    (n0 and (n0 - 1) == 0L) -> {
+                        // even power of 2 ... just shift
+                        val ntz = java.lang.Long.numberOfTrailingZeros(n0)
+                        coeffSetShiftLeft(z, m, ntz)
+                    }
+                    else ->
+                        mulCoeff(z, m, n.digitCount, n0)
                 }
             }
-            (y.dw3 == 0L) -> mulCoeff(z, x, y.digitCount, y.dw2, y.dw1, y.dw0)
-            else -> mulCoeff(z, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
+            nBitLen <= 128 -> {
+                mulCoeff(z, m, n.digitCount, n.dw1, n.dw0)
+            }
+            nBitLen <= 192 -> {
+                mulCoeff(z, x, y.digitCount, y.dw2, y.dw1, y.dw0)
+            }
+            else ->
+                mulCoeff(z, x, y.digitCount, y.dw3, y.dw2, y.dw1, y.dw0)
         }
     }
-
-
 
     fun mulCoeff(product: Coeff, x: Coeff, yDigitCount: Int, y0: Long) {
         when {
@@ -467,6 +489,10 @@ object CoeffMul {
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
+        val p1 = unsignedMultiplyHigh(x0, y0)
+        val p0 = x0 * y0
+        coeffSet(p, p1, p0)
+        /*
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.setZero()
             return
@@ -487,6 +513,7 @@ object CoeffMul {
         p.dw1 = p1
         p.dw2 = 0L; p.dw3 = 0L;
         CoeffDigitCount.setDigitCount128(p)
+         */
     }
 
     fun mulCoeff4x5shr320(
