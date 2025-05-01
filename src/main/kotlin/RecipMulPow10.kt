@@ -11,7 +11,6 @@ import java.math.BigInteger.ONE
 import java.math.BigInteger.TWO
 import java.math.BigInteger.TEN
 import kotlin.math.ceil
-import com.decimal128.CoeffDigitLen.setDigitLen
 
 val MIN_DIVIDEND_DIGIT_COUNT = 2
 val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
@@ -533,7 +532,7 @@ object RecipMulPow10 {
                 }
             }
         }
-        CoeffDigitLen.setDigitLen(q)
+        q.updateLengths()
         val inexact = residue != EXACT
         ctx.setInexact(inexact)
     }
@@ -599,7 +598,7 @@ object RecipMulPow10 {
             else -> throw RuntimeException("why am I here?")
         }
 
-        setDigitLen(z)
+        z.updateLengths()
         return residue
     }
 

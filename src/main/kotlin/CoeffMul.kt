@@ -136,7 +136,7 @@ object CoeffMul {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitLen.setDigitLen64(p)
+            p.updateLengths64()
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -147,7 +147,7 @@ object CoeffMul {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen128(p)
+            p.updateLengths128()
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
@@ -162,7 +162,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen192(p)
+            p.updateLengths192()
             return
         }
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
@@ -180,7 +180,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitLen.setDigitLen256(p)
+            p.updateLengths256()
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo)
@@ -197,7 +197,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitLen.setDigitLen256(p)
+            p.updateLengths256()
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -224,7 +224,7 @@ object CoeffMul {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitLen.setDigitLen64(p)
+            p.updateLengths64()
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -234,7 +234,7 @@ object CoeffMul {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen128(p)
+            p.updateLengths128()
             return
         }
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
@@ -246,7 +246,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen192(p)
+            p.updateLengths192()
             return
         }
         val pp20Hi = unsignedMultiplyHigh(x2, y0)
@@ -259,7 +259,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitLen.setDigitLen256(p)
+            p.updateLengths256()
             return
         }
         val pp30Hi = unsignedMultiplyHigh(x3, y0)
@@ -272,7 +272,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitLen.setDigitLen256(p)
+            p.updateLengths256()
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -299,7 +299,7 @@ object CoeffMul {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitLen.setDigitLen64(p)
+            p.updateLengths64()
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -310,7 +310,7 @@ object CoeffMul {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen128(p)
+            p.updateLengths128()
             return
         }
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
@@ -324,7 +324,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen192(p)
+            p.updateLengths192()
             return
         }
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
@@ -338,7 +338,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitLen.setDigitLen256(p)
+            p.updateLengths256()
             return
         }
         val pp21Hi = unsignedMultiplyHigh(x2, y1)
@@ -351,7 +351,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            CoeffDigitLen.setDigitLen256(p)
+            p.updateLengths256()
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -369,7 +369,7 @@ object CoeffMul {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitLen.setDigitLen64(p)
+            p.updateLengths64()
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -379,7 +379,7 @@ object CoeffMul {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen128(p)
+            p.updateLengths128()
             return
         }
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
@@ -391,7 +391,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen192(p)
+            p.updateLengths192()
             return
         }
         val pp20Hi = unsignedMultiplyHigh(x2, y0)
@@ -401,7 +401,7 @@ object CoeffMul {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = p3
-        CoeffDigitLen.setDigitLen256(p)
+        p.updateLengths256()
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
@@ -416,7 +416,7 @@ object CoeffMul {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitLen.setDigitLen64(p)
+            p.updateLengths64()
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -427,7 +427,7 @@ object CoeffMul {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen128(p)
+            p.updateLengths128()
             return
         }
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
@@ -440,7 +440,7 @@ object CoeffMul {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen192(p)
+            p.updateLengths192()
             return
         }
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
@@ -450,7 +450,7 @@ object CoeffMul {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = p3
-        CoeffDigitLen.setDigitLen256(p)
+        p.updateLengths256()
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
@@ -465,7 +465,7 @@ object CoeffMul {
         if (maxMulDigitCount < POW10_128_OFFSET) {
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            CoeffDigitLen.setDigitLen64(p)
+            p.updateLengths64()
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -475,7 +475,7 @@ object CoeffMul {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            CoeffDigitLen.setDigitLen128(p)
+            p.updateLengths128()
             return
         }
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
@@ -485,7 +485,7 @@ object CoeffMul {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = 0L;
-        CoeffDigitLen.setDigitLen192(p)
+        p.updateLengths192()
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {

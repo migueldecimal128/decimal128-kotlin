@@ -1,10 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.setDigitLen64
-import com.decimal128.CoeffDigitLen.setDigitLen128
-import com.decimal128.CoeffDigitLen.setDigitLen192
-import com.decimal128.CoeffDigitLen.setDigitLen256
-import com.decimal128.CoeffDigitLen.setDigitLen
 import com.decimal128.CoeffDigitLen.isValidDigitLen
 import java.math.BigInteger
 
@@ -23,7 +18,7 @@ object CoeffSet {
     fun coeffSet(c: Coeff, bi: BigInteger) {
         require(bi.bitLength() <= 256)
         c.setCoeff256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
-        setDigitLen(c)
+        c.updateLengths()
     }
 
     fun coeffSet(c: Coeff, x:Coeff) {
@@ -47,20 +42,20 @@ object CoeffSet {
         when (nonZeroIndex) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal; setDigitLen64(c)
+                c.dw0 = nonZeroVal; c.updateLengths64()
             }
 
             1 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = nonZeroVal; setDigitLen128(c)
+                c.dw0 = x[xOff + 0]; c.dw1 = nonZeroVal; c.updateLengths128()
             }
 
             2 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1]; c.dw2 = nonZeroVal; setDigitLen192(c)
+                c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1]; c.dw2 = nonZeroVal; c.updateLengths192()
             }
 
             3 -> {
                 c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1];
-                c.dw2 = x[xOff + 2]; c.dw3 = nonZeroVal; setDigitLen256(c)
+                c.dw2 = x[xOff + 2]; c.dw3 = nonZeroVal; c.updateLengths256()
             }
 
             else -> throw RuntimeException("overflow")
@@ -79,20 +74,20 @@ object CoeffSet {
         when (nonZeroIndex2) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal ; setDigitLen64(c)
+                c.dw0 = nonZeroVal ; c.updateLengths64()
             }
 
             1 -> {
                 c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
                 c.dw1 = nonZeroVal
-                setDigitLen128(c)
+                c.updateLengths128()
             }
 
             2 -> {
                 c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
                 c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
                 c.dw2 = nonZeroVal
-                setDigitLen192(c)
+                c.updateLengths192()
             }
 
             3 -> {
@@ -100,7 +95,7 @@ object CoeffSet {
                 c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
                 c.dw2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
                 c.dw3 = nonZeroVal;
-                setDigitLen256(c)
+                c.updateLengths256()
             }
 
             else -> throw RuntimeException("overflow")
@@ -128,7 +123,7 @@ object CoeffSet {
                     //FIXME less than one digit change going on here
                     // tweak the digit count instead of recalculating
                 }
-                setDigitLen(z)
+                z.updateLengths()
             }
 
             1 -> {
@@ -209,7 +204,7 @@ object CoeffSet {
                 return
             }
         }
-        setDigitLen(z)
+        z.updateLengths()
     }
 
     fun coeffSetShiftRight(c: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
@@ -230,20 +225,20 @@ object CoeffSet {
             0 -> {}
             1 -> {
                 c.dw0 = x[shiftOff + 0] ushr innerShift
-                setDigitLen64(c)
+                c.updateLengths64()
             }
 
             2 -> {
                 c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
                 c.dw1 = x[shiftOff + 1] ushr innerShift
-                setDigitLen128(c)
+                c.updateLengths128()
             }
 
             3 -> {
                 c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
                 c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
                 c.dw2 = x[shiftOff + 2] ushr innerShift
-                setDigitLen192(c)
+                c.updateLengths192()
             }
 
             4 -> {
@@ -251,7 +246,7 @@ object CoeffSet {
                 c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
                 c.dw2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
                 c.dw3 = x[shiftOff + 3] ushr innerShift
-                setDigitLen256(c)
+                c.updateLengths256()
             }
 
             5 -> {
@@ -262,7 +257,7 @@ object CoeffSet {
                 val dw4 = x[shiftOff + 4] ushr innerShift
                 if (dw4 != 0L)
                     throw RuntimeException("overflow")
-                setDigitLen256(c)
+                c.updateLengths256()
             }
 
             else -> {
@@ -288,20 +283,20 @@ object CoeffSet {
         when (nonZeroIndex2) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal ; setDigitLen64(c)
+                c.dw0 = nonZeroVal ; c.updateLengths64()
             }
 
             1 -> {
                 c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
                 c.dw1 = nonZeroVal
-                setDigitLen128(c)
+                c.updateLengths128()
             }
 
             2 -> {
                 c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
                 c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
                 c.dw2 = nonZeroVal
-                setDigitLen192(c)
+                c.updateLengths192()
             }
 
             3 -> {
@@ -309,7 +304,7 @@ object CoeffSet {
                 c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
                 c.dw2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
                 c.dw3 = nonZeroVal;
-                setDigitLen256(c)
+                c.updateLengths256()
             }
 
             else -> throw RuntimeException("overflow")

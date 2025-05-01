@@ -157,33 +157,33 @@ object CoeffDigitLen {
 
     fun isValidDigitLen(c: Coeff): Boolean {
         val prevDigitLen = c.digitLen
-        setDigitLen(c)
+        c.updateLengths()
         val t = c.digitLen
         c.digitLen = prevDigitLen
         return t == prevDigitLen
     }
 
 
-    fun setDigitLen64(c: Coeff) {
+    private fun setDigitLen64(c: Coeff) {
         assert((c.dw3 or c.dw2 or c.dw1) == 0L)
         c.digitLen = calcDigitLen64(c.dw0)
     }
 
-    fun setDigitLen128(c: Coeff) {
+    private fun setDigitLen128(c: Coeff) {
         assert((c.dw3 or c.dw2) == 0L)
         c.digitLen = calcDigitLen128(c.dw1, c.dw0)
     }
 
-    fun setDigitLen192(c: Coeff) {
+    private fun setDigitLen192(c: Coeff) {
         assert(c.dw3 == 0L)
         c.digitLen = calcDigitLen192(c.dw2, c.dw1, c.dw0)
     }
 
-    fun setDigitLen256(c: Coeff) {
+    private fun setDigitLen256(c: Coeff) {
         c.digitLen = calcDigitLen256(c.dw3, c.dw2, c.dw1, c.dw0)
     }
 
-    fun setDigitLen(c: Coeff) {
+    private fun setDigitLen(c: Coeff) {
         c.digitLen = (
                 if ((c.dw3 or c.dw2) == 0L) {
                     if (c.dw1 == 0L)
