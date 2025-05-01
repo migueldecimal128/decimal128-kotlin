@@ -201,9 +201,7 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -212,10 +210,7 @@ object CoeffFma {
         val pp10Lo = x1 * y0
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1 // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -226,11 +221,7 @@ object CoeffFma {
         val pp20Lo = x2 * y0
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo + a2
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
@@ -244,11 +235,7 @@ object CoeffFma {
 
         if (hiSumDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo + a3
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo, a3)
@@ -261,11 +248,7 @@ object CoeffFma {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(loSumDigitCount == 77 || loSumDigitCount == 78)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
