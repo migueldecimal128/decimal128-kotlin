@@ -199,15 +199,6 @@ object CoeffDigitLen {
     }
 
 
-    fun calcDigitLen64(dw0: Long) = calcDigitLen64nlz(dw0)
-
-    fun calcDigitLen64(dw0: ULong) = calcDigitLen64(dw0.toLong())
-
-    fun calcDigitLen128(dw1: Long, dw0: Long) = calcDigitLen128nlz(dw1, dw0)
-
-    fun calcDigitLen192(dw2: Long, dw1: Long, dw0: Long) = calcDigitLen192nlz(dw2, dw1, dw0)
-
-    fun calcDigitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) = calcDigitLen256nlz(dw3, dw2, dw1, dw0)
 
     fun calcDigitLen(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         return (
@@ -218,7 +209,7 @@ object CoeffDigitLen {
                 )
     }
 
-    private fun calcDigitLen64nlz(dw0: Long): Int {
+    fun calcDigitLen64(dw0: Long): Int {
         if ((dw0 ushr 13) == 0L) { // fast path for small numbers
             val gt0 = -dw0 ushr 63
             val gt9 = ((9 - dw0) ushr 63)
@@ -240,7 +231,7 @@ object CoeffDigitLen {
         return digitCount
     }
 
-    private fun calcDigitLen128nlz(dw1: Long, dw0: Long): Int {
+    fun calcDigitLen128(dw1: Long, dw0: Long): Int {
         if (dw1 == 0L)
             return calcDigitLen64(dw0)
         val nlz = numberOfLeadingZeros(dw1)
@@ -258,9 +249,9 @@ object CoeffDigitLen {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    private fun calcDigitLen192nlz(dw2: Long, dw1: Long, dw0: Long): Int {
+    fun calcDigitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw2 == 0L)
-            return calcDigitLen128nlz(dw1, dw0)
+            return calcDigitLen128(dw1, dw0)
         val nlz = numberOfLeadingZeros(dw2)
         val bitLength = 192 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -279,9 +270,9 @@ object CoeffDigitLen {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    private fun calcDigitLen256nlz(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+    fun calcDigitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         if (dw3 == 0L)
-            return calcDigitLen192nlz(dw2, dw1, dw0)
+            return calcDigitLen192(dw2, dw1, dw0)
         val nlz = numberOfLeadingZeros(dw3)
         val bitLength = 256 - nlz
         val loDigitCount = (bitLength * 1233) shr 12
@@ -301,122 +292,6 @@ object CoeffDigitLen {
             return if (compareUnsigned(dw1, m1) < 0) loDigitCount else hiDigitCount
         val m0 = POW10[index + 0]
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
-    }
-
-    @Suppress("unused")
-    private fun calcDigitCount64binarySearch(dw0: Long): Int {
-        var lo = 0
-        var hi = POW10_64_COUNT
-        do {
-            val mid = (lo + hi) / 2
-            val index = mid + POW10_64_DWORD_INDEX
-            val m0 = POW10[index + 0]
-            if (compareUnsigned(dw0, m0) >= 0)
-                lo = mid + 1
-            else
-                hi = mid
-        } while (lo < hi)
-        val digitCount = POW10_64_OFFSET + lo
-        return digitCount
-    }
-
-    @Suppress("unused")
-    private fun calcDigitCount128binarySearch(dw1: Long, dw0: Long): Int {
-        if (dw1 == 0L)
-            return calcDigitCount64binarySearch(dw0)
-        var lo = 0
-        var hi = POW10_128_COUNT
-        do {
-            val mid = (lo + hi) / 2
-            val index = mid * 2 + POW10_128_DWORD_INDEX
-            val m1 = POW10[index + 1]
-            if (compareUnsigned(dw1, m1) > 0) {
-                lo = mid + 1
-            } else if (dw1 != m1) {
-                hi = mid
-            } else {
-                val m0 = POW10[index + 0]
-                if (compareUnsigned(dw0, m0) >= 0)
-                    lo = mid + 1
-                else
-                    hi = mid
-            }
-        } while (lo < hi)
-        val digitCount = POW10_128_OFFSET + lo
-        return digitCount
-    }
-
-    @Suppress("unused")
-    private fun calcDigitCount192binarySearch(dw2: Long, dw1: Long, dw0: Long): Int {
-        if (dw2 == 0L)
-            return calcDigitCount128binarySearch(dw1, dw0)
-        var lo = 0
-        var hi = POW10_192_COUNT
-        do {
-            val mid = (lo + hi) / 2
-            val index = mid * 3 + POW10_192_DWORD_INDEX
-            val m2 = POW10[index + 2]
-            if (compareUnsigned(dw2, m2) > 0) {
-                lo = mid + 1
-            } else if (dw2 != m2) {
-                hi = mid
-            } else {
-                val m1 = POW10[index + 1]
-                if (compareUnsigned(dw1, m1) > 0) {
-                    lo = mid + 1
-                } else if (dw1 != m1) {
-                    hi = mid
-                } else {
-                    val m0 = POW10[index + 0]
-                    if (compareUnsigned(dw0, m0) >= 0)
-                        lo = mid + 1
-                    else
-                        hi = mid
-                }
-            }
-        } while (lo < hi)
-        val digitCount = POW10_192_OFFSET + lo
-        return digitCount
-    }
-
-    @Suppress("unused")
-    fun calcDigitCount256binarySearch(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
-        if (dw3 == 0L)
-            return calcDigitCount192binarySearch(dw2, dw1, dw0)
-        var lo = 0
-        var hi = POW10_256_COUNT
-        do {
-            val mid = (lo + hi) / 2
-            val index = mid * 4 + POW10_256_DWORD_INDEX
-            val m3 = POW10[index + 3]
-            if (compareUnsigned(dw3, m3) > 0) {
-                lo = mid + 1
-            } else if (dw3 != m3) {
-                hi = mid
-            } else {
-                val m2 = POW10[index + 2]
-                if (compareUnsigned(dw2, m2) > 0) {
-                    lo = mid + 1
-                } else if (dw2 != m2) {
-                    hi = mid
-                } else {
-                    val m1 = POW10[index + 1]
-                    if (compareUnsigned(dw1, m1) > 0) {
-                        lo = mid + 1
-                    } else if (dw1 != m1) {
-                        hi = mid
-                    } else {
-                        val m0 = POW10[index + 0]
-                        if (compareUnsigned(dw0, m0) >= 0)
-                            lo = mid + 1
-                        else
-                            hi = mid
-                    }
-                }
-            }
-        } while (lo < hi)
-        val digitCount = POW10_256_OFFSET + lo
-        return digitCount
     }
 
     fun tweakDigitLenAfterRoundUp(c: Coeff) {
