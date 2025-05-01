@@ -18,10 +18,6 @@ import com.decimal128.CoeffDigitLen.calcDigitLen128
 import com.decimal128.CoeffDigitLen.calcDigitLen192
 import com.decimal128.CoeffDigitLen.calcDigitLen256
 import com.decimal128.CoeffDigitLen.calcDigitLen64
-import com.decimal128.CoeffDigitLen.setDigitLen
-import com.decimal128.CoeffDigitLen.setDigitLen128
-import com.decimal128.CoeffDigitLen.setDigitLen192
-import com.decimal128.CoeffDigitLen.setDigitLen64
 import com.decimal128.CoeffDivide.coeffDiv
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10

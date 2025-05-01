@@ -22,7 +22,7 @@ object FiniteSet {
         assert(exponent in MIN_EXPONENT..MAX_EXPONENT)
         f.sign = sign
         f.exp = exponent
-        coeffSet(f.c, dw0)
+        f.c.setCoeff64(dw0)
     }
 
     fun finiteSet(f: Finite, bd: BigDecimal) {

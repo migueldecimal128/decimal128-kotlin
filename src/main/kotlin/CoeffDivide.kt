@@ -4,6 +4,9 @@ import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffGT
 import com.decimal128.CoeffCompare.coeffGTOne
 import com.decimal128.CoeffSet.coeffSet
+import com.decimal128.CoeffSet.coeffSet256
+import com.decimal128.CoeffSet.coeffSet192
+import com.decimal128.CoeffSet.coeffSet128
 import com.decimal128.CoeffSet.coeffSetOne
 import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.CoeffSet.coeffSetZero
@@ -44,7 +47,7 @@ object CoeffDivide {
                     2 * rem == y0 -> HALF
                     else -> GT_HALF
                 }
-                coeffSet(z, quot)
+                z.setCoeff64(quot)
                 return residue
             }
             if ((y0 and (y0 - 1)) == 0L) {
@@ -158,7 +161,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet(z, q3, q2, q1, q0)
+        coeffSet256(z, q3, q2, q1, q0)
         return residue
     }
 
@@ -201,7 +204,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet(z, q2, q1, q0)
+        coeffSet192(z, q2, q1, q0)
         return residue
     }
 
@@ -235,7 +238,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet(z, q1, q0)
+        coeffSet128(z, q1, q0)
         return residue
     }
 
@@ -260,7 +263,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet(z, q0)
+        z.setCoeff64(q0)
         return residue
     }
 
@@ -301,7 +304,7 @@ object CoeffDivide {
             } else {
                 mod256x32(z, x.dw3, x.dw2, x.dw1, x.dw0, y0)
             }
-        coeffSet(z, rem)
+        z.setCoeff64(rem)
     }
 
     fun mod256x32(z: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {

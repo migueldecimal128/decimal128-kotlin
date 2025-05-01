@@ -3,6 +3,7 @@ package com.decimal128
 import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.CoeffDigitLen.POW10
 import com.decimal128.CoeffSet.coeffSet
+import com.decimal128.CoeffSet.coeffSet128
 import com.decimal128.CoeffSet.coeffSetShiftLeft
 import com.decimal128.CoeffSet.coeffSetZero
 
@@ -29,7 +30,7 @@ object CoeffMul {
             (mBitLen <= 64) -> {
                 val pHi = unsignedMultiplyHigh(m0, n0)
                 val pLo = m0 * n0
-                coeffSet(z, pHi, pLo)
+                coeffSet128(z, pHi, pLo)
             }
             nBitLen <= 64 -> {
                 when {
@@ -491,7 +492,7 @@ object CoeffMul {
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
         val p1 = unsignedMultiplyHigh(x0, y0)
         val p0 = x0 * y0
-        coeffSet(p, p1, p0)
+        coeffSet128(p, p1, p0)
         /*
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.setZero()
