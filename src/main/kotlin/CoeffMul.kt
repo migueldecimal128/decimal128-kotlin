@@ -8,7 +8,7 @@ import com.decimal128.CoeffSet.coeffSetZero
 
 object CoeffMul {
 
-    fun coeffMul(z:Coeff, x:Coeff, y:Coeff) {
+    fun coeffMul(z: Coeff, x: Coeff, y: Coeff) {
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
 
@@ -31,6 +31,7 @@ object CoeffMul {
                 val pLo = m0 * n0
                 z.setCoeff128(pHi, pLo)
             }
+
             nBitLen <= 64 -> {
                 when {
                     ((n0 ushr 1) == 0L) -> {
@@ -39,21 +40,26 @@ object CoeffMul {
                         else
                             coeffSet(z, m)
                     }
+
                     (n0 and (n0 - 1) == 0L) -> {
                         // even power of 2 ... just shift
                         val ntz = java.lang.Long.numberOfTrailingZeros(n0)
                         coeffSetShiftLeft(z, m, ntz)
                     }
+
                     else ->
                         mulCoeff(z, m, n.digitLen, n0)
                 }
             }
+
             nBitLen <= 128 -> {
                 mulCoeff(z, m, n.digitLen, n.dw1, n.dw0)
             }
+
             nBitLen <= 192 -> {
                 mulCoeff(z, x, y.digitLen, y.dw2, y.dw1, y.dw0)
             }
+
             else ->
                 mulCoeff(z, x, y.digitLen, y.dw3, y.dw2, y.dw1, y.dw0)
         }
@@ -134,9 +140,7 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -144,10 +148,7 @@ object CoeffMul {
         val pp10Lo = x1 * y0
         if (maxMulDigitCount < POW10_192_OFFSET) {
             val p1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
@@ -158,11 +159,7 @@ object CoeffMul {
         val pp20Lo = x2 * y0
         if (maxMulDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
@@ -176,11 +173,7 @@ object CoeffMul {
 
         if (maxMulDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo)
@@ -193,11 +186,7 @@ object CoeffMul {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(maxMulDigitCount == 78 || maxMulDigitCount == 79)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -222,19 +211,14 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp10Lo = x1 * y0
         if (maxMulDigitCount < POW10_192_OFFSET) {
             val p1 = pp00Hi + pp10Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
@@ -242,11 +226,7 @@ object CoeffMul {
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
         if (maxMulDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp10Hi + pp20Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val pp20Hi = unsignedMultiplyHigh(x2, y0)
@@ -255,11 +235,7 @@ object CoeffMul {
 
         if (maxMulDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp20Hi + pp30Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val pp30Hi = unsignedMultiplyHigh(x3, y0)
@@ -268,11 +244,7 @@ object CoeffMul {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(maxMulDigitCount == 78 || maxMulDigitCount == 79)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -297,9 +269,7 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -307,10 +277,7 @@ object CoeffMul {
         val pp10Lo = x1 * y0
         if (maxMulDigitCount < POW10_192_OFFSET) {
             val p1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
@@ -320,11 +287,7 @@ object CoeffMul {
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
         if (maxMulDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp20Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
@@ -334,11 +297,7 @@ object CoeffMul {
 
         if (maxMulDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp11Hi + pp20Hi + pp21Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val pp21Hi = unsignedMultiplyHigh(x2, y1)
@@ -347,11 +306,7 @@ object CoeffMul {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(maxMulDigitCount == 78 || maxMulDigitCount == 79)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -367,19 +322,17 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp10Lo = x1 * y0
         if (maxMulDigitCount < POW10_192_OFFSET) {
             val p1 = pp00Hi + pp10Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+
+
+
+            p.setCoeff128(p1, p0)
             return
         }
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
@@ -387,21 +340,17 @@ object CoeffMul {
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
         if (maxMulDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp10Hi + pp20Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
-            p.updateLengths192()
+
+
+
+
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val pp20Hi = unsignedMultiplyHigh(x2, y0)
         val (carry2, p2) = sumU64(carry1, pp10Hi, pp20Lo)
         val p3 = carry2 + pp20Hi
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = p2
-        p.dw3 = p3
-        p.updateLengths256()
+        p.setCoeff256(p3, p2, p1, p0)
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
@@ -414,9 +363,7 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
@@ -424,10 +371,7 @@ object CoeffMul {
         val pp10Lo = x1 * y0
         if (maxMulDigitCount < POW10_192_OFFSET) {
             val p1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
@@ -436,21 +380,13 @@ object CoeffMul {
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
         if (maxMulDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
         val p3 = carry2 + pp11Hi
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = p2
-        p.dw3 = p3
-        p.updateLengths256()
+        p.setCoeff256(p3, p2, p1, p0)
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
@@ -463,29 +399,20 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp10Lo = x1 * y0
         if (maxMulDigitCount < POW10_192_OFFSET) {
             val p1 = pp00Hi + pp10Lo // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
         val p2 = carry1 + pp10Hi
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = p2
-        p.dw3 = 0L;
-        p.updateLengths192()
+        p.setCoeff192(p2, p1, p0)
     }
 
     private fun _mulCoeff(p: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
@@ -502,16 +429,16 @@ object CoeffMul {
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxMulDigitCount < POW10_128_OFFSET) {
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
+            
+            
             CoeffDigitCount.setDigitCount64(p)
             return
         }
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val p1 = pp00Hi
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = 0L; p.dw3 = 0L;
+        
+        
+        
         CoeffDigitCount.setDigitCount128(p)
          */
     }

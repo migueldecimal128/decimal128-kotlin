@@ -26,44 +26,4 @@ object CoeffBits {
         }
     }
 
-    fun coeffShiftRight(c: Coeff, bitShift: Int) {
-        val wholeDwordCount = bitShift ushr 6
-        val innerShift = bitShift and 0x3F
-        val nonZeroMask = -innerShift.toLong() shr 63
-        val leftShift = -innerShift
-        when (wholeDwordCount) {
-            0 -> {
-                c.dw0 = (nonZeroMask and (c.dw1 shl leftShift)) or (c.dw0 ushr innerShift)
-                c.dw1 = (nonZeroMask and (c.dw2 shl leftShift)) or (c.dw1 ushr innerShift)
-                c.dw2 = (nonZeroMask and (c.dw3 shl leftShift)) or (c.dw2 ushr innerShift)
-                c.dw3 = c.dw3 ushr innerShift
-                c.updateLengths()
-            }
-
-            1 -> {
-                c.dw0 = (nonZeroMask and (c.dw2 shl leftShift)) or (c.dw1 ushr innerShift)
-                c.dw1 = (nonZeroMask and (c.dw3 shl leftShift)) or (c.dw2 ushr innerShift)
-                c.dw2 = c.dw3 ushr innerShift
-                c.dw3 = 0L
-                c.updateLengths192()
-            }
-
-            2 -> {
-                c.dw0 = (nonZeroMask and (c.dw3 shl leftShift)) or (c.dw2 ushr innerShift)
-                c.dw1 = c.dw3 ushr innerShift
-                c.dw2 = 0L; c.dw3 = 0L
-                c.updateLengths128()
-            }
-
-            3 -> {
-                c.dw0 = c.dw3 ushr innerShift
-                c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                c.updateLengths64()
-            }
-
-            else -> coeffSetZero(c)
-        }
-    }
-
-
 }

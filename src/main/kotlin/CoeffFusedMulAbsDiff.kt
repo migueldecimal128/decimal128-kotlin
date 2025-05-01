@@ -56,7 +56,7 @@ object CoeffFusedMulAbsDiff {
                 if ((a.dw3 or a.dw2) == 0L) {
                     coeffFusedMulAbsDiff(z, x, yDigitCount, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
-                    fusedMulAbsDiff(
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, 0L, y0,
                         a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
@@ -69,7 +69,7 @@ object CoeffFusedMulAbsDiff {
                 if ((a.dw3 or a.dw2) == 0L) {
                     coeffFusedMulAbsDiff(z, x, yDigitCount, y1, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
-                    fusedMulAbsDiff(
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, y1, y0,
                         a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
@@ -82,7 +82,7 @@ object CoeffFusedMulAbsDiff {
                 if ((a.dw3 or a.dw2) == 0L) {
                     coeffFusedMulAbsDiff(z, x, yDigitCount, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
-                    fusedMulAbsDiff(
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, y2, y1, y0,
                         a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
@@ -100,7 +100,7 @@ object CoeffFusedMulAbsDiff {
                 if ((a.dw3 or a.dw2) == 0L) {
                     coeffFusedMulAbsDiff(z, x, yDigitCount, y3, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
                 } else {
-                    fusedMulAbsDiff(
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, y3, y2, y1, y0,
                         a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
@@ -115,17 +115,18 @@ object CoeffFusedMulAbsDiff {
         aDigitCount: Int, a1: Long, a0: Long
     ): Residue {
         return (
-                if ((x.dw3 or x.dw2) == 0L) {
-                    if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
-                    else
-                        fusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
-                } else {
-                    fusedMulAbsDiff(
+                //if ((x.dw3 or x.dw2) == 0L) {
+                //    if (x.dw1 == 0L)
+                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
+                //    else
+                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
+                //} else {
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, 0L, y0, aDigitCount, 0L, 0L, a1, a0
                     )
-                })
+                //}
+                )
 
     }
 
@@ -136,17 +137,18 @@ object CoeffFusedMulAbsDiff {
         aDigitCount: Int, a1: Long, a0: Long
     ): Residue {
         return (
-                if ((x.dw3 or x.dw2) == 0L) {
-                    if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
-                    else
-                        fusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
-                } else {
-                    fusedMulAbsDiff(
+                //if ((x.dw3 or x.dw2) == 0L) {
+                //    if (x.dw1 == 0L)
+                //     coeffFusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
+                //    else
+                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y1, y0, aDigitCount, a1, a0)
+                //} else {
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, 0L, y1, y0, aDigitCount, 0L, 0L, a1, a0
                     )
-                })
+                //}
+                )
     }
 
     fun coeffFusedMulAbsDiff(
@@ -155,17 +157,18 @@ object CoeffFusedMulAbsDiff {
         aDigitCount: Int, a1: Long, a0: Long
     ): Residue {
         return (
-                if ((x.dw3 or x.dw2) == 0L) {
-                    if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
-                    else
-                        fusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
-                } else {
-                    fusedMulAbsDiff(
+                //if ((x.dw3 or x.dw2) == 0L) {
+                //    if (x.dw1 == 0L)
+                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
+                //    else
+                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y2, y1, y0, aDigitCount, a1, a0)
+                //} else {
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, 0L, y2, y1, y0, aDigitCount, 0L, 0L, a1, a0
                     )
-                })
+                //}
+                )
     }
 
     fun coeffFusedMulAbsDiff(
@@ -174,24 +177,25 @@ object CoeffFusedMulAbsDiff {
         aDigitCount: Int, a1: Long, a0: Long
     ): Residue {
         return (
-                if ((x.dw3 or x.dw2) == 0L) {
-                    if (x.dw1 == 0L)
-                        fusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, a1, a0)
-                    else
-                        fusedMulAbsDiff(
-                            z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                            yDigitCount, y3, y2, y1, y0,
-                            aDigitCount, 0L, 0L, a1, a0
-                        )
-                } else {
-                    fusedMulAbsDiff(
+                //if ((x.dw3 or x.dw2) == 0L) {
+                //    if (x.dw1 == 0L)
+                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y3, y2, y1, y0, aDigitCount, a1, a0)
+                //    else
+                //        coeffFusedMulAbsDiff(
+                //            z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
+                //            yDigitCount, y3, y2, y1, y0,
+                //            aDigitCount, 0L, 0L, a1, a0
+                //        )
+                //} else {
+                    coeffFusedMulAbsDiff(
                         z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
                         yDigitCount, y3, y2, y1, y0, aDigitCount, 0L, 0L, a1, a0
                     )
-                })
+                //}
+                )
     }
 
-    private fun fusedMulAbsDiff(
+    private fun coeffFusedMulAbsDiff(
         z: Coeff,
         xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
         yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long,
@@ -208,9 +212,8 @@ object CoeffFusedMulAbsDiff {
         assert(borrow0 in 0..1)
         if (hiDiffDigitCount < POW10_128_OFFSET) {
             val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
+            val z0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
+            z.setCoeff64(z0)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -226,15 +229,12 @@ object CoeffFusedMulAbsDiff {
         assert(borrow1 in 0..1)
         if (hiDiffDigitCount < POW10_192_OFFSET) {
             val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
+            var z1 = d1 xor negBorrow1
+            val z0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
+            if (negBorrow1 < 0L && z0 == 0L) {
+                ++z1
             }
-            z.updateLengths128()
+            z.setCoeff128(z1, z0)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -252,17 +252,16 @@ object CoeffFusedMulAbsDiff {
         assert(borrow2 in 0..1)
         if (hiDiffDigitCount < POW10_256_OFFSET) {
             val negBorrow2 = -borrow2
-            z.dw3 = 0L
-            z.dw2 = d2 xor negBorrow2
-            z.dw1 = d1 xor negBorrow2
-            z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-            if (negBorrow2 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L) {
-                    ++z.dw2
+            var z2 = d2 xor negBorrow2
+            var z1 = d1 xor negBorrow2
+            val z0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
+            if (negBorrow2 < 0L && z0 == 0L) {
+                ++z1
+                if (z1 == 0L) {
+                    ++z2
                 }
             }
-            z.updateLengths192()
+            z.setCoeff192(z2, z1, z0)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -281,555 +280,30 @@ object CoeffFusedMulAbsDiff {
         if (p4 == 0L || p4 == 1L && borrow3 == 1L) {
             if (p4 == 0L) {
                 val negBorrow3 = -borrow3
-                z.dw3 = d3 xor negBorrow3
-                z.dw2 = d2 xor negBorrow3
-                z.dw1 = d1 xor negBorrow3
-                z.dw0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
-                if (negBorrow3 < 0L && z.dw0 == 0L) {
-                    ++z.dw1
-                    if (z.dw1 == 0L) {
-                        ++z.dw2
-                        if (z.dw2 == 0L)
-                            ++z.dw3
+                var z3 = d3 xor negBorrow3
+                var z2 = d2 xor negBorrow3
+                var z1 = d1 xor negBorrow3
+                val z0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
+                if (negBorrow3 < 0L && z0 == 0L) {
+                    ++z1
+                    if (z1 == 0L) {
+                        ++z2
+                        if (z2 == 0L)
+                            ++z3
                     }
                 }
+                z.setCoeff256(z3, z2, z1, z0)
             } else {
                 // dw4 == 1L && borrow3 == 1L
                 // the multiply carry and the borrow out the top cancel each other out
-                z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
+                z.setCoeff256(d3, d2, d1, d0)
             }
-            z.updateLengths256()
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
     }
 
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x1: Long, x0: Long,
-        yDigitCount: Int, y2: Long, y1: Long, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
+    /////////
 
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp01Lo = x0 * y1
-        val pp10Lo = x1 * y0
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-        val pp01Hi = unsignedMultiplyHigh(x0, y1)
-        val pp10Hi = unsignedMultiplyHigh(x1, y0)
-        val pp11Lo = x1 * y1
-        val pp02Lo = x0 * y2
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
-            val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
-            }
-            z.updateLengths128()
-            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo)
-        val pp11Hi = unsignedMultiplyHigh(x1, y1)
-        val pp02Hi = unsignedMultiplyHigh(x0, y2)
-        val pp12Lo = x1 * y2
-        val (borrow2, d2) = diffU64(p2, borrow1)
-        assert(borrow2 in 0..1)
-        if (hiDiffDigitCount < POW10_256_OFFSET) {
-            val negBorrow2 = -borrow2
-            z.dw3 = 0L
-            z.dw2 = d2 xor negBorrow2
-            z.dw1 = d1 xor negBorrow2
-            z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-            if (negBorrow2 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L) {
-                    ++z.dw2
-                }
-            }
-            z.updateLengths192()
-            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp12Lo)
-        val pp12Hi = unsignedMultiplyHigh(x1, y2)
-        val (borrow3, d3) = diffU64(p3, borrow2)
-        assert(borrow3 in 0..1)
-
-        val p4 = carry3 + pp12Hi
-        if (p4 == 0L || p4 == 1L && borrow3 == 1L) {
-            if (p4 == 0L) {
-                val negBorrow3 = -borrow3
-                z.dw3 = d3 xor negBorrow3
-                z.dw2 = d2 xor negBorrow3
-                z.dw1 = d1 xor negBorrow3
-                z.dw0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
-                if (negBorrow3 < 0L && z.dw0 == 0L) {
-                    ++z.dw1
-                    if (z.dw1 == 0L) {
-                        ++z.dw2
-                        if (z.dw2 == 0L)
-                            ++z.dw3
-                    }
-                }
-            } else {
-                // dw4 == 1L && borrow3 == 1L
-                // the multiply carry and the borrow out the top cancel each other out
-                z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
-            }
-            z.updateLengths256()
-            return if (borrow3 > 0) EXACT_NEGATED else EXACT
-        }
-        throw RuntimeException("coefficient multiply overflow")
-    }
-
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x1: Long, x0: Long,
-        yDigitCount: Int, y1: Long, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
-
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp01Lo = x0 * y1
-        val pp10Lo = x1 * y0
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-        val pp01Hi = unsignedMultiplyHigh(x0, y1)
-        val pp10Hi = unsignedMultiplyHigh(x1, y0)
-        val pp11Lo = x1 * y1
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
-            val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
-            }
-            z.updateLengths128()
-            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
-        val pp11Hi = unsignedMultiplyHigh(x1, y1)
-        val (borrow2, d2) = diffU64(p2, borrow1)
-        assert(borrow2 in 0..1)
-        if (hiDiffDigitCount < POW10_256_OFFSET) {
-            val negBorrow2 = -borrow2
-            z.dw3 = 0L
-            z.dw2 = d2 xor negBorrow2
-            z.dw1 = d1 xor negBorrow2
-            z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-            if (negBorrow2 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L) {
-                    ++z.dw2
-                }
-            }
-            z.updateLengths192()
-            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val p3 = carry2 + pp11Hi
-        val (borrow3, d3) = diffU64(p3, borrow2)
-        assert(borrow3 in 0..1)
-
-        val negBorrow3 = -borrow3
-        z.dw3 = d3 xor negBorrow3
-        z.dw2 = d2 xor negBorrow3
-        z.dw1 = d1 xor negBorrow3
-        z.dw0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
-        if (negBorrow3 < 0L && z.dw0 == 0L) {
-            ++z.dw1
-            if (z.dw1 == 0L) {
-                ++z.dw2
-                if (z.dw2 == 0L)
-                    ++z.dw3
-            }
-        }
-        z.updateLengths256()
-        return if (borrow3 > 0) EXACT_NEGATED else EXACT
-    }
-
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x1: Long, x0: Long,
-        yDigitCount: Int, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
-
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp10Lo = x1 * y0
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-        val pp10Hi = unsignedMultiplyHigh(x1, y0)
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
-            val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
-            }
-            z.updateLengths128()
-            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val p2 = carry1 + pp10Hi
-        val (borrow2, d2) = diffU64(p2, borrow1)
-        assert(borrow2 in 0..1)
-
-        val negBorrow2 = -borrow2
-        z.dw3 = 0L
-        z.dw2 = d2 xor negBorrow2
-        z.dw1 = d1 xor negBorrow2
-        z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-        if (negBorrow2 < 0L && z.dw0 == 0L) {
-            ++z.dw1
-            if (z.dw1 == 0L) {
-                ++z.dw2
-            }
-        }
-        z.updateLengths192()
-        return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
-    }
-
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x0: Long,
-        yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
-
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp01Lo = x0 * y1
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry1, p1) = sumU64(pp00Hi, pp01Lo)
-        val pp01Hi = unsignedMultiplyHigh(x0, y1)
-        val pp02Lo = x0 * y2
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
-            val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
-            }
-            z.updateLengths128()
-            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
-        val pp02Hi = unsignedMultiplyHigh(x0, y2)
-        val pp03Lo = x0 * y3
-        val (borrow2, d2) = diffU64(p2, borrow1)
-        assert(borrow2 in 0..1)
-        if (hiDiffDigitCount < POW10_256_OFFSET) {
-            val negBorrow2 = -borrow2
-            z.dw3 = 0L
-            z.dw2 = d2 xor negBorrow2
-            z.dw1 = d1 xor negBorrow2
-            z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-            if (negBorrow2 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L) {
-                    ++z.dw2
-                }
-            }
-            z.updateLengths192()
-            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry3, p3) = sumU64(carry2, pp02Hi, pp03Lo)
-        val pp03Hi = unsignedMultiplyHigh(x0, y3)
-        val (borrow3, d3) = diffU64(p3, borrow2)
-        assert(borrow3 in 0..1)
-
-        val p4 = carry3 + pp03Hi
-        if (p4 == 0L || p4 == 1L && borrow3 == 1L) {
-            if (p4 == 0L) {
-                val negBorrow3 = -borrow3
-                z.dw3 = d3 xor negBorrow3
-                z.dw2 = d2 xor negBorrow3
-                z.dw1 = d1 xor negBorrow3
-                z.dw0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
-                if (negBorrow3 < 0L && z.dw0 == 0L) {
-                    ++z.dw1
-                    if (z.dw1 == 0L) {
-                        ++z.dw2
-                        if (z.dw2 == 0L)
-                            ++z.dw3
-                    }
-                }
-            } else {
-                // dw4 == 1L && borrow3 == 1L
-                // the multiply carry and the borrow out the top cancel each other out
-                z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
-            }
-            z.updateLengths256()
-            return if (borrow3 > 0) EXACT_NEGATED else EXACT
-        }
-        throw RuntimeException("coefficient multiply overflow")
-    }
-
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x0: Long,
-        yDigitCount: Int, y2: Long, y1: Long, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
-
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp01Lo = x0 * y1
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry1, p1) = sumU64(pp00Hi, pp01Lo)
-        val pp01Hi = unsignedMultiplyHigh(x0, y1)
-        val pp02Lo = x0 * y2
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
-            val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
-            }
-            z.updateLengths128()
-            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
-        val pp02Hi = unsignedMultiplyHigh(x0, y2)
-        val (borrow2, d2) = diffU64(p2, borrow1)
-        assert(borrow2 in 0..1)
-        if (hiDiffDigitCount < POW10_256_OFFSET) {
-            val negBorrow2 = -borrow2
-            z.dw3 = 0L
-            z.dw2 = d2 xor negBorrow2
-            z.dw1 = d1 xor negBorrow2
-            z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-            if (negBorrow2 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L) {
-                    ++z.dw2
-                }
-            }
-            z.updateLengths192()
-            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val p3 = carry2 + pp02Hi
-        val (borrow3, d3) = diffU64(p3, borrow2)
-        assert(borrow3 in 0..1)
-
-        val negBorrow3 = -borrow3
-        z.dw3 = d3 xor negBorrow3
-        z.dw2 = d2 xor negBorrow3
-        z.dw1 = d1 xor negBorrow3
-        z.dw0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
-        if (negBorrow3 < 0L && z.dw0 == 0L) {
-            ++z.dw1
-            if (z.dw1 == 0L) {
-                ++z.dw2
-                if (z.dw2 == 0L)
-                    ++z.dw3
-            }
-        }
-        z.updateLengths256()
-        return if (borrow3 > 0) EXACT_NEGATED else EXACT
-    }
-
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x0: Long,
-        yDigitCount: Int, y1: Long, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
-
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp01Lo = x0 * y1
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val (carry1, p1) = sumU64(pp00Hi, pp01Lo)
-        val pp01Hi = unsignedMultiplyHigh(x0, y1)
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
-            val negBorrow1 = -borrow1
-            z.dw3 = 0L; z.dw2 = 0L
-            z.dw1 = d1 xor negBorrow1
-            z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-            if (negBorrow1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L)
-                    ++z.dw2
-            }
-            z.updateLengths128()
-            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val p2 = carry1 + pp01Hi
-        val (borrow2, d2) = diffU64(p2, borrow1)
-        assert(borrow2 in 0..1)
-
-        val negBorrow2 = -borrow2
-        z.dw3 = 0L
-        z.dw2 = d2 xor negBorrow2
-        z.dw1 = d1 xor negBorrow2
-        z.dw0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
-        if (negBorrow2 < 0L && z.dw0 == 0L) {
-            ++z.dw1
-            if (z.dw1 == 0L) {
-                ++z.dw2
-            }
-        }
-        z.updateLengths192()
-        return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
-    }
-
-    private fun fusedMulAbsDiff(
-        z: Coeff,
-        xDigitCount: Int, x0: Long,
-        yDigitCount: Int, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        val hiMulDigitCount = xDigitCount + yDigitCount
-        val hiDiffDigitCount = max(hiMulDigitCount, aDigitCount)
-
-        val pp00Lo = x0 * y0
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val (borrow0, d0) = diffU64(pp00Lo, a0)
-        assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
-            val negBorrow0 = -borrow0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-            z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.updateLengths64()
-            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
-        }
-
-        val p1 = pp00Hi
-        val (carry1s, s1) = sumU64(borrow0, a1)
-        val (borrow1d, d1) = diffU64(p1, s1)
-        val borrow1 = carry1s + borrow1d
-        assert(borrow1 in 0..1)
-
-        val negBorrow1 = -borrow1
-        z.dw3 = 0L; z.dw2 = 0L
-        z.dw1 = d1 xor negBorrow1
-        z.dw0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
-        if (negBorrow1 < 0L && z.dw0 == 0L) {
-            ++z.dw1
-            if (z.dw1 == 0L)
-                ++z.dw2
-        }
-        z.updateLengths128()
-        return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
-    }
 
 }
