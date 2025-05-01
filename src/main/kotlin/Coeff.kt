@@ -18,6 +18,10 @@ import com.decimal128.CoeffDigitLen.calcDigitLen128
 import com.decimal128.CoeffDigitLen.calcDigitLen192
 import com.decimal128.CoeffDigitLen.calcDigitLen256
 import com.decimal128.CoeffDigitLen.calcDigitLen64
+import com.decimal128.CoeffDigitLen.setDigitLen
+import com.decimal128.CoeffDigitLen.setDigitLen128
+import com.decimal128.CoeffDigitLen.setDigitLen192
+import com.decimal128.CoeffDigitLen.setDigitLen64
 import com.decimal128.CoeffDivide.coeffDiv
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
@@ -166,17 +170,29 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     fun setLoBit(dw0: Long) = setLoBit(this, dw0)
 
-    fun set(dw0: Long) = coeffSet(this, dw0)
+    fun setCoeff64(d0: Long) {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L
+        dw0 = d0
+        digitLen = calcDigitLen64(d0)
+    }
 
-    fun set(dw1: Long, dw0: Long) = coeffSet(this, dw1, dw0)
+    fun setCoeff128(d1: Long, d0: Long) {
+        dw3 = 0L; dw2 = 0L
+        dw1 = d1;dw0 = d0
+        digitLen = calcDigitLen128(d1, d0)
+    }
 
-    fun set(dw2: Long, dw1: Long, dw0: Long) = coeffSet(this, dw2, dw1, dw0)
+    fun setCoeff192(d2: Long, d1: Long, d0: Long) {
+        dw3 = 0L
+        dw2 = d2; dw1 = d1; dw0 = d0
+        digitLen = calcDigitLen192(d2, d1, d0)
+    }
 
 
-    fun set(dw3: Long, dw2: Long, dw1: Long, dw0: Long) = coeffSet(this, dw3, dw2, dw1, dw0)
-
-    fun set(digitCount: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) =
-        coeffSet(this, digitCount, dw3, dw2, dw1, dw0)
+    fun setCoeff256(d3: Long, d2: Long, d1: Long, d0: Long){
+        dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
+        digitLen = calcDigitLen256(d3, d2, d1, d0)
+    }
 
     fun set(bi: BigInteger) = coeffSet(this, bi)
 
