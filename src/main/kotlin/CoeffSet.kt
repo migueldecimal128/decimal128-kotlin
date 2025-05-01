@@ -7,30 +7,19 @@ private const val MASK32 = 0xFFFFFFFFL
 
 object CoeffSet {
 
-    fun coeffSetZero(c: Coeff) {
-        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 0L; c.digitLen = 0
-    }
-
-    fun coeffSetOne(c: Coeff) {
-        c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 1L; c.digitLen = 1
-    }
-
     fun coeffSet(c: Coeff, bi: BigInteger) {
         require(bi.bitLength() <= 256)
         c.setCoeff256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
     }
 
     fun coeffSet(c: Coeff, x:Coeff) {
-        if (c != x) {
-            c.digitLen = x.digitLen; c.dw3 = x.dw3; c.dw2 = x.dw2; c.dw1 = x.dw1; c.dw0 = x.dw0
-        }
-        assert(isValidDigitLen(c))
+        c.set(x)
     }
 
     fun coeffSet(c: Coeff, str: String) = coeffSet(c, BigInteger(str))
 
     fun coeffSet(c: Coeff, x: LongArray, xOff: Int, xLen: Int) {
-        coeffSetZero(c)
+        c.setZero()
         if (xLen == 0)
             return
         var nonZeroIndex = xLen
@@ -71,7 +60,7 @@ object CoeffSet {
     }
 
     fun coeffSet(c: Coeff, x: IntArray, xLen: Int) {
-        coeffSetZero(c)
+        c.setZero()
         if (xLen == 0)
             return
         var nonZeroIndex2 = (xLen + 1) ushr 1
@@ -153,7 +142,7 @@ object CoeffSet {
                 z.setCoeff64(z0)
             }
 
-            else -> coeffSetZero(z)
+            else -> z.setZero()
         }
     }
 
@@ -204,7 +193,7 @@ object CoeffSet {
             }
 
             else -> {
-                coeffSetZero(z)
+                z.setZero()
                 return
             }
         }
@@ -213,7 +202,7 @@ object CoeffSet {
 
     fun coeffSetShiftRight(z: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
 
-        coeffSetZero(z)
+        z.setZero()
         // strip leading zeros from x
         var nonZeroLen = xLen
         while (nonZeroLen > 0 && x[xOff + nonZeroLen - 1] == 0L)
@@ -276,7 +265,7 @@ object CoeffSet {
             coeffSet(z, x, xLen)
             return
         }
-        coeffSetZero(z)
+        z.setZero()
         if (xLen == 0)
             return
         var nonZeroIndex2 = (xLen + 1) ushr 1

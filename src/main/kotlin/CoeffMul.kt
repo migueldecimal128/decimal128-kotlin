@@ -4,7 +4,6 @@ import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.CoeffDigitLen.POW10
 import com.decimal128.CoeffSet.coeffSet
 import com.decimal128.CoeffSet.coeffSetShiftLeft
-import com.decimal128.CoeffSet.coeffSetZero
 
 object CoeffMul {
 
@@ -36,7 +35,7 @@ object CoeffMul {
                 when {
                     ((n0 ushr 1) == 0L) -> {
                         if (n0 == 0L)
-                            coeffSetZero(z)
+                            z.setZero()
                         else
                             coeffSet(z, m)
                     }
@@ -513,11 +512,7 @@ object CoeffMul {
 
         val dw8T = carry7 + pp34Hi
 
-        prodShifted.dw3 = dw8T
-        prodShifted.dw2 = dw7T
-        prodShifted.dw1 = dw6T
-        prodShifted.dw0 = dw5T
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw8T, dw7T, dw6T, dw5T)
     }
 
     fun mulCoeff4x5shr256(
@@ -591,11 +586,7 @@ object CoeffMul {
         val dw8T = carry7 + pp34Hi
 
         assert(dw8T == 0L)
-        prodShifted.dw3 = dw7T
-        prodShifted.dw2 = dw6T
-        prodShifted.dw1 = dw5T
-        prodShifted.dw0 = dw4T
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw7T, dw6T, dw5T, dw4T)
     }
 
     fun mulCoeff4x4shr256(
@@ -657,11 +648,7 @@ object CoeffMul {
 
         val dw7T = carry6 + pp33Hi
 
-        prodShifted.dw3 = dw7T
-        prodShifted.dw2 = dw6T
-        prodShifted.dw1 = dw5T
-        prodShifted.dw0 = dw4T
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw7T, dw6T, dw5T, dw4T)
     }
 
     fun mulCoeff4x4shr192(
@@ -725,11 +712,7 @@ object CoeffMul {
 
         assert(dw7T == 0L)
 
-        prodShifted.dw3 = dw6T
-        prodShifted.dw2 = dw5T
-        prodShifted.dw1 = dw4T
-        prodShifted.dw0 = p3
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw6T, dw5T, dw4T, p3)
     }
 
     fun mulCoeff4x3shr192(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y2: Long, y1: Long, y0: Long) {
@@ -771,11 +754,7 @@ object CoeffMul {
 
         val dw6T = carry5 + pp32Hi
 
-        prodShifted.dw3 = dw6T
-        prodShifted.dw2 = dw5T
-        prodShifted.dw1 = dw4T
-        prodShifted.dw0 = p3
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw6T, dw5T, dw4T, p3)
     }
 
     fun mulCoeff3x3shr128(prodShifted: Coeff, x2: Long, x1: Long, x0: Long, y2: Long, y1: Long, y0: Long) {
@@ -809,12 +788,7 @@ object CoeffMul {
 
         val dw5T = carry4 + pp22Hi
 
-
-        prodShifted.dw3 = dw5T
-        prodShifted.dw2 = dw4T
-        prodShifted.dw1 = p3
-        prodShifted.dw0 = p2
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw5T, dw4T, p3, p2)
     }
 
     fun mulCoeff4x2shr128(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y1: Long, y0: Long) {
@@ -847,11 +821,7 @@ object CoeffMul {
         val dw5T = carry4 + pp31Hi
 
 
-        prodShifted.dw3 = dw5T
-        prodShifted.dw2 = dw4T
-        prodShifted.dw1 = p3
-        prodShifted.dw0 = p2
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw5T, dw4T, p3, p2)
     }
 
     fun mulCoeff4x1shr64(prodShifted: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long) {
@@ -873,12 +843,7 @@ object CoeffMul {
 
         val dw4T = carry3 + pp30Hi
 
-
-        prodShifted.dw3 = dw4T
-        prodShifted.dw2 = p3
-        prodShifted.dw1 = p2
-        prodShifted.dw0 = p1
-        prodShifted.digitLen = -1
+        prodShifted.setCoeff256(dw4T, p3, p2, p1)
     }
 
 }

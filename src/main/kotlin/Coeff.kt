@@ -8,7 +8,6 @@ import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
 import com.decimal128.CoeffAdd.coeffAddUnscaled
 import com.decimal128.CoeffAbsDiff.coeffAbsDiffUnscaled
 import com.decimal128.CoeffAdd.coeffAdd
-import com.decimal128.CoeffBits.setLoBit
 import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffEQ
@@ -19,14 +18,13 @@ import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
-import com.decimal128.CoeffSet.coeffSetZero
 
 const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
+class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -42,11 +40,29 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     constructor(str: String) : this(BigInteger(str))
     constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
+    var dw3 = d3
+        //private set
+    var dw2 = d2
+        //private set
+    var dw1 = d1
+        //private set
+    var dw0 = d0
+        //private set
     var digitLen = run { CoeffDigitLen.calcDigitLen256(dw3, dw2, dw1, dw0) }
 
-    fun setZero() = coeffSetZero(this)
+    fun setZero() {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; digitLen = 0
+    }
 
     fun isZero() = digitLen == 0
+
+    fun setOne() {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; digitLen = 1
+    }
+
+    fun setZeroOneMasked(d0: Long) {
+        dw3 = 0; dw2 = 0; dw1 = 0; dw0 = d0 and 1; digitLen = (dw0 and 1).toInt()
+    }
 
     fun isOne() = digitLen == 1 && dw0 == 1L
 
@@ -145,8 +161,6 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
         }
     }
 
-    fun setLoBit(dw0: Long) = setLoBit(this, dw0)
-
     fun setCoeff64(d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
@@ -173,7 +187,9 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     fun set(bi: BigInteger) = coeffSet(this, bi)
 
-    fun set(c: Coeff) = coeffSet(this, c)
+    fun set(x: Coeff) {
+            digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
+    }
 
     fun set(str: String) = coeffSet(this, str)
 

@@ -273,8 +273,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -284,9 +282,6 @@ object CoeffFma {
         val pp10Lo = x1 * y0
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1 // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
@@ -297,10 +292,6 @@ object CoeffFma {
         val pp02Lo = x0 * y2
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
             p.setCoeff192(p2, p1, p0)
             return
         }
@@ -311,10 +302,6 @@ object CoeffFma {
 
         if (hiSumDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp11Hi + pp02Hi + pp12Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -324,10 +311,6 @@ object CoeffFma {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(loSumDigitCount == 77 || loSumDigitCount == 78)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -353,8 +336,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -364,9 +345,6 @@ object CoeffFma {
         val pp10Lo = x1 * y0
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1 // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
@@ -376,10 +354,6 @@ object CoeffFma {
         val pp11Lo = x1 * y1
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
             p.setCoeff192(p2, p1, p0)
             return
         }
@@ -388,10 +362,6 @@ object CoeffFma {
 
         if (hiSumDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp11Hi
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -400,10 +370,6 @@ object CoeffFma {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(loSumDigitCount == 77 || loSumDigitCount == 78)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -429,8 +395,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -439,9 +403,6 @@ object CoeffFma {
         val pp10Lo = x1 * y0
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp10Lo + a1 // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
@@ -449,10 +410,6 @@ object CoeffFma {
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp10Hi
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
             p.setCoeff192(p2, p1, p0)
             return
         }
@@ -460,19 +417,11 @@ object CoeffFma {
 
         if (hiSumDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val p3 = carry2
         assert(loSumDigitCount == 77 || loSumDigitCount == 78)
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = p2
-        p.dw3 = p3
         p.setCoeff256(p3, p2, p1, p0)
     }
 
@@ -495,8 +444,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -505,9 +452,6 @@ object CoeffFma {
         val pp01Lo = x0 * y1
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp01Lo + a1
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
@@ -516,10 +460,6 @@ object CoeffFma {
         val pp02Lo = x0 * y2
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp02Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
             p.setCoeff192(p2, p1, p0)
             return
         }
@@ -529,10 +469,6 @@ object CoeffFma {
 
         if (hiSumDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp02Hi + pp03Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -542,10 +478,6 @@ object CoeffFma {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(loSumDigitCount == 77 || loSumDigitCount == 78)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -571,8 +503,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -581,9 +511,6 @@ object CoeffFma {
         val pp01Lo = x0 * y1
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp01Lo + a1
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
@@ -592,10 +519,6 @@ object CoeffFma {
         val pp02Lo = x0 * y2
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi + pp02Lo
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
             p.setCoeff192(p2, p1, p0)
             return
         }
@@ -604,10 +527,6 @@ object CoeffFma {
 
         if (hiSumDigitCount < POW10_MAX_OFFSET) {
             val p3 = carry2 + pp02Hi
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -616,10 +535,6 @@ object CoeffFma {
         if (dw4 == 0L) {
             // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
             assert(loSumDigitCount == 77 || loSumDigitCount == 78)
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = p3
             p.setCoeff256(p3, p2, p1, p0)
             return
         }
@@ -645,8 +560,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -655,9 +568,6 @@ object CoeffFma {
         val pp01Lo = x0 * y1
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + pp01Lo + a1 // no carry possible because of maxMulDigitCount
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
@@ -665,20 +575,12 @@ object CoeffFma {
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
         if (hiSumDigitCount < POW10_256_OFFSET) {
             val p2 = carry1 + pp01Hi
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = p2
-            p.dw3 = 0L;
             p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi)
 
         val p3 = carry2
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = p2
-        p.dw3 = p3
         p.setCoeff256(p3, p2, p1, p0)
     }
 
@@ -701,8 +603,6 @@ object CoeffFma {
         val pp00Lo = x0 * y0
         if (hiSumDigitCount < POW10_128_OFFSET) {
             val p0 = pp00Lo + a0
-            p.dw0 = p0
-            p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
             p.setCoeff64(p0)
             return
         }
@@ -710,18 +610,11 @@ object CoeffFma {
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         if (hiSumDigitCount < POW10_192_OFFSET) {
             val p1 = carry0 + pp00Hi + a1
-            p.dw0 = p0
-            p.dw1 = p1
-            p.dw2 = 0L; p.dw3 = 0L;
             p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, a1)
         val p2 = carry1
-        p.dw0 = p0
-        p.dw1 = p1
-        p.dw2 = p2
-        p.dw3 = 0L;
         p.setCoeff192(p2, p1, p0)
     }
 

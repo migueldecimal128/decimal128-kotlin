@@ -4,9 +4,7 @@ import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffGT
 import com.decimal128.CoeffCompare.coeffGTOne
 import com.decimal128.CoeffSet.coeffSet
-import com.decimal128.CoeffSet.coeffSetOne
 import com.decimal128.CoeffSet.coeffSetShiftRight
-import com.decimal128.CoeffSet.coeffSetZero
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.HALF
@@ -71,7 +69,7 @@ object CoeffDivide {
                 yBitLen - xBitLen >= 2 -> LT_HALF
                 else -> Residue.residueFromRemainderDivisor(x, y)
             }
-            coeffSetZero(z)
+            z.setZero()
             return residue
         }
         if (xBitLen == yBitLen) {
@@ -82,7 +80,7 @@ object CoeffDivide {
                 return residue
             }
             if (cmp == 0) {
-                coeffSetOne(z)
+                z.setOne()
                 return EXACT
             }
         }

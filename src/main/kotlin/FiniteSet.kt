@@ -1,7 +1,6 @@
 package com.decimal128
 
 import com.decimal128.CoeffSet.coeffSet
-import com.decimal128.CoeffSet.coeffSetZero
 import java.math.BigDecimal
 import java.math.MathContext
 import kotlin.math.abs
@@ -11,7 +10,7 @@ object FiniteSet {
     fun finiteSetZero(f: Finite) {
         f.sign = false
         f.exp = 0
-        coeffSetZero(f.c)
+        f.c.setZero()
     }
 
     fun finiteSet(f: Finite, l: Long) = finiteSet(f, l < 0, 0, abs(l))

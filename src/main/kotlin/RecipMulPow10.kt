@@ -421,7 +421,7 @@ object RecipMulPow10 {
             // otherwise, non-zero residue ... round it
             val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
             val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), x.dw0)
-            q.setLoBit(roundUp)
+            q.setZeroOneMasked(roundUp)
             ctx.setInexact()
             return
         }
