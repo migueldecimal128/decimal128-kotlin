@@ -24,21 +24,21 @@ object CoeffSet {
         c.setCoeff64(dw0)
     }
 
-    fun coeffSet128(c: Coeff, dw1: Long, dw0: Long) {
+    private fun setCoeff128(c: Coeff, dw1: Long, dw0: Long) {
         c.setCoeff128(dw1, dw0)
     }
 
-    fun coeffSet192(c: Coeff, dw2: Long, dw1: Long, dw0: Long) {
+    private fun setCoeff192(c: Coeff, dw2: Long, dw1: Long, dw0: Long) {
         c.setCoeff192(dw2, dw1, dw0)
     }
 
-    fun coeffSet256(c: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
+    private fun setCoeff256(c: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         c.setCoeff256(dw3,dw2, dw1, dw0)
     }
 
     fun coeffSet(c: Coeff, bi: BigInteger) {
         require(bi.bitLength() <= 256)
-        coeffSet256(c, bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+        setCoeff256(c, bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
         setDigitLen(c)
     }
 

@@ -4,9 +4,6 @@ import com.decimal128.CoeffCompare.coeffCompare
 import com.decimal128.CoeffCompare.coeffGT
 import com.decimal128.CoeffCompare.coeffGTOne
 import com.decimal128.CoeffSet.coeffSet
-import com.decimal128.CoeffSet.coeffSet256
-import com.decimal128.CoeffSet.coeffSet192
-import com.decimal128.CoeffSet.coeffSet128
 import com.decimal128.CoeffSet.coeffSetOne
 import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.CoeffSet.coeffSetZero
@@ -161,7 +158,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet256(z, q3, q2, q1, q0)
+        z.setCoeff256(q3, q2, q1, q0)
         return residue
     }
 
@@ -204,7 +201,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet192(z, q2, q1, q0)
+        z.setCoeff192(q2, q1, q0)
         return residue
     }
 
@@ -238,7 +235,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        coeffSet128(z, q1, q0)
+        z.setCoeff128(q1, q0)
         return residue
     }
 
