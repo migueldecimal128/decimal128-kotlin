@@ -32,8 +32,8 @@ object CoeffAbsDiff {
         if (maxDigitCount < POW10_128_OFFSET) {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry0 = -carry0
-            z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = (d0 xor negCarry0) - negCarry0
-            z.updateLengths64()
+            val z0 = (d0 xor negCarry0) - negCarry0
+            z.setCoeff64(z0)
             return if (negCarry0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -44,14 +44,12 @@ object CoeffAbsDiff {
         if (maxDigitCount < POW10_192_OFFSET) {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry1 = -carry1
-            z.dw3 = 0L
-            z.dw2 = 0L
-            z.dw1 = d1 xor negCarry1
-            z.dw0 = (d0 xor negCarry1) - negCarry1
-            if (negCarry1 < 0L && z.dw0 == 0L) {
-                ++z.dw1
+            var z1 = d1 xor negCarry1
+            val z0 = (d0 xor negCarry1) - negCarry1
+            if (negCarry1 < 0L && z0 == 0L) {
+                ++z1
             }
-            z.updateLengths128()
+            z.setCoeff128(z1, z0)
             return if (negCarry1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -62,17 +60,16 @@ object CoeffAbsDiff {
         if (maxDigitCount < POW10_256_OFFSET) {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry2 = -carry2
-            z.dw3 = 0L
-            z.dw2 = d2 xor negCarry2
-            z.dw1 = d1 xor negCarry2
-            z.dw0 = (d0 xor negCarry2) - negCarry2 // complement and increment
-            if (negCarry2 < 0L && z.dw0 == 0L) {
-                ++z.dw1
-                if (z.dw1 == 0L) {
-                    ++z.dw2
+            var z2 = d2 xor negCarry2
+            var z1 = d1 xor negCarry2
+            val z0 = (d0 xor negCarry2) - negCarry2 // complement and increment
+            if (negCarry2 < 0L && z0 == 0L) {
+                ++z1
+                if (z1 == 0L) {
+                    ++z2
                 }
             }
-            z.updateLengths192()
+            z.setCoeff192(z2, z1, z0)
             return if (negCarry2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -83,19 +80,19 @@ object CoeffAbsDiff {
 
         // if carry == 1 then complement-and-increment else NOOP
         val negCarry3 = -carry3
-        z.dw3 = d3 xor negCarry3
-        z.dw2 = d2 xor negCarry3
-        z.dw1 = d1 xor negCarry3
-        z.dw0 = (d0 xor negCarry3) - negCarry3 // complement and increment
-        if (negCarry3 < 0L && z.dw0 == 0L) {
-            ++z.dw1
-            if (z.dw1 == 0L) {
-                ++z.dw2
-                if (z.dw2 == 0L)
-                    ++z.dw3
+        var z3 = d3 xor negCarry3
+        var z2 = d2 xor negCarry3
+        var z1 = d1 xor negCarry3
+        val z0 = (d0 xor negCarry3) - negCarry3 // complement and increment
+        if (negCarry3 < 0L && z0 == 0L) {
+            ++z1
+            if (z1 == 0L) {
+                ++z2
+                if (z2 == 0L)
+                    ++z3
             }
         }
-        z.updateLengths256()
+        z.setCoeff256(z3, z2, z1, z0)
         return if (negCarry3 < 0) EXACT_NEGATED else EXACT
     }
 
