@@ -1,6 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.isValidDigitLen
 import java.math.BigInteger
 
 private const val MASK32 = 0xFFFFFFFFL

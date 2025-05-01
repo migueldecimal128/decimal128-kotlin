@@ -155,6 +155,7 @@ object CoeffDigitLen {
     @Suppress("unused")
     private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX); true }
 
+    /*
     fun isValidDigitLen(c: Coeff): Boolean {
         val prevDigitLen = c.digitLen
         c.updateLengths()
@@ -162,6 +163,7 @@ object CoeffDigitLen {
         c.digitLen = prevDigitLen
         return t == prevDigitLen
     }
+     */
 
 
     private fun setDigitLen64(c: Coeff) {

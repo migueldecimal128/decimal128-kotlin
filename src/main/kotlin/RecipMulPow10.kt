@@ -461,7 +461,7 @@ object RecipMulPow10 {
         require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
         require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
         // clear coeff without worrying about aliasing
-        q.setZero()
+        q.enableIndexSetAndZeroOut()
 
         val index = indexOf(xDigitCount, pow10)
         val paramsIndex = INDEXES[index]
@@ -532,7 +532,7 @@ object RecipMulPow10 {
                 }
             }
         }
-        q.updateLengths()
+        q.disableIndexSetAndUpdateLengths()
         val inexact = residue != EXACT
         ctx.setInexact(inexact)
     }
@@ -543,7 +543,7 @@ object RecipMulPow10 {
         require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
         require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
         // clear coeff without worrying about aliasing
-        z.setZero()
+        z.enableIndexSetAndZeroOut()
 
         val index = indexOf(xDigitCount, pow10)
         val paramsIndex = INDEXES[index]
@@ -598,7 +598,7 @@ object RecipMulPow10 {
             else -> throw RuntimeException("why am I here?")
         }
 
-        z.updateLengths()
+        z.disableIndexSetAndUpdateLengths()
         return residue
     }
 

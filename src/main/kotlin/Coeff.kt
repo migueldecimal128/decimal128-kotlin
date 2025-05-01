@@ -70,7 +70,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun isGTOne() = digitLen > 1 || (dw0 and 0x0F) > 1
 
-    fun updateLengths() {
+    private fun updateLengths() {
         //FIXME note that this is only used after multiplies that need
         // index access to the coefficient ...
         // where we don't want to keep the lengths
@@ -152,6 +152,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
 
     operator fun set(index: Int, value: Long) {
+        assert(digitLen == -1)
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -159,6 +160,16 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
             3 -> dw3 = value
             else -> throw RuntimeException("indexOutOfBounds")
         }
+    }
+
+    fun enableIndexSetAndZeroOut() {
+        digitLen = -1
+        dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
+    }
+
+    fun disableIndexSetAndUpdateLengths() {
+        assert(digitLen == -1)
+        updateLengths()
     }
 
     fun setCoeff64(d0: Long) {
