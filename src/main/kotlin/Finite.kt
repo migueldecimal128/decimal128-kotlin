@@ -14,22 +14,6 @@ class Finite {
     var exp = 0
     var sign = false
 
-    fun roundUp(ctx: Decimal128Context) {
-        c.dw0 += 1
-        if (c.dw0 == 0L) {
-            c.dw1 += 1
-            if (c.dw1 == 0L) {
-                c.dw2 += 1
-                if (c.dw2 == 0L) {
-                    c.dw3 += 1
-                    if (c.dw3 == 0L)
-                        throw RuntimeException("overflow")
-                }
-            }
-        }
-        tweakDigitLenAfterRoundUp(c)
-
-    }
 
 
     fun finalize(ctx: Decimal128Context) {
@@ -39,8 +23,10 @@ class Finite {
             if (residue != EXACT) {
                 val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (roundUp) {
-                    roundUp(ctx)
+                    c.roundUp()
                     if (c.digitLen > PRECISION_34) {
+                        // if we rolled into another digit because of roundup
+                        // then the result is definitely divisible by 10
                         val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, 1)
                         assert(residue2 == Residue.EXACT)
                         ++scaleDelta

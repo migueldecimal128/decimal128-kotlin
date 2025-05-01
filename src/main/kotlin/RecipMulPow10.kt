@@ -421,7 +421,7 @@ object RecipMulPow10 {
             // otherwise, non-zero residue ... round it
             val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
             val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), x.dw0)
-            q.setZeroOneMasked(roundUp)
+            q.setZeroOrOneMasked(roundUp)
             ctx.setInexact()
             return
         }
@@ -518,20 +518,8 @@ object RecipMulPow10 {
 
         val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
         val ulpRoundUp = residue.ulpRoundUp(effectiveRoundingDirection, q.dw0)
-        if (ulpRoundUp) {
-            q.dw0 += 1
-            if (q.dw0 == 0L) {
-                q.dw1 += 1
-                if (q.dw1 == 0L) {
-                    q.dw2 += 1
-                    if (q.dw2 == 0L) {
-                        q.dw3 += 1
-                        if (q.dw3 == 0L)
-                            throw RuntimeException("overflow")
-                    }
-                }
-            }
-        }
+        q.roundUp(ulpRoundUp)
+
         q.disableIndexSetAndUpdateLengths()
         val inexact = residue != EXACT
         ctx.setInexact(inexact)

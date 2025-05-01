@@ -8,23 +8,6 @@ import com.decimal128.Residue.Companion.EXACT
 
 object FiniteAdd {
 
-    fun roundUp(f: Finite, ctx: Decimal128Context) {
-        val c = f.c
-        c.dw0 += 1
-        if (c.dw0 == 0L) {
-            c.dw1 += 1
-            if (c.dw1 == 0L) {
-                c.dw2 += 1
-                if (c.dw2 == 0L) {
-                    c.dw3 += 1
-                    if (c.dw3 == 0L)
-                        throw RuntimeException("overflow")
-                }
-            }
-        }
-        tweakDigitLenAfterRoundUp(c)
-    }
-
     fun finiteAdd(z: Finite, x: Finite, y: Finite, ctx: Decimal128Context) {
         val zSign = x.sign xor y.sign
         if (x.exp >= y.exp) {
@@ -49,7 +32,7 @@ object FiniteAdd {
             val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.c.dw0)
             finiteSet(z, x)
             if (roundUp)
-                roundUp(z, ctx)
+                z.c.roundUp()
             z.sign = sign
             if (residue.withoutNegate() != EXACT)
                 ctx.setInexact()

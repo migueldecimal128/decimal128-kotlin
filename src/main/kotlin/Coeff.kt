@@ -41,13 +41,13 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
     var dw3 = d3
-        //private set
+        private set
     var dw2 = d2
-        //private set
+        private set
     var dw1 = d1
-        //private set
+        private set
     var dw0 = d0
-        //private set
+        private set
     var digitLen = run { CoeffDigitLen.calcDigitLen256(dw3, dw2, dw1, dw0) }
 
     fun setZero() {
@@ -60,7 +60,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; digitLen = 1
     }
 
-    fun setZeroOneMasked(d0: Long) {
+    fun setZeroOrOneMasked(d0: Long) {
         dw3 = 0; dw2 = 0; dw1 = 0; dw0 = d0 and 1; digitLen = (dw0 and 1).toInt()
     }
 
@@ -89,8 +89,9 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
                 })
     }
 
-
-    private fun setDigitCount() = updateLengths()
+    //FIXME this case can probably be accelerated because
+    // of bitLen delta <= 1 and digitLen delta <= 1
+    private fun updateLengthsAfterRoundUp() = updateLengths()
 
     fun hasValidLengths(): Boolean {
         val prevDigitLen = digitLen
@@ -230,6 +231,30 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         bi = bi or BigInteger(dw3Hi.toString()).shiftLeft(224)
         return bi
     }
+
+    fun roundUp(doRoundUp: Boolean) {
+        if (doRoundUp)
+            roundUp()
+    }
+
+    fun roundUp() {
+        ++dw0
+        if (dw0 == 0L) {
+            ++dw1
+            if (dw1 == 0L) {
+                ++dw2
+                if (dw2 == 0L) {
+                    ++dw3
+                    if (dw3 == 0L)
+                        throw RuntimeException("overflow")
+                }
+            }
+        }
+        // roundup occurs during multiplies while enableIndexSet is active
+        if (digitLen >= 0)
+            updateLengthsAfterRoundUp()
+    }
+
 
     override fun toString() = toBigInteger().toString()
 

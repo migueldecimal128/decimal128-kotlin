@@ -64,11 +64,7 @@ object MagScalePow10 {
         if (productDigitCount <= 0) {
             val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
             val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), 0L)
-            p.setZero()
-            if (roundUp > 0) {
-                p.dw0 = 1
-                p.digitLen = 1
-            }
+            p.setZeroOrOneMasked(roundUp)
             ctx.setInexact()
             return
         }
