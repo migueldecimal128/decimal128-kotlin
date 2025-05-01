@@ -89,7 +89,7 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
     }
 
 
-    private fun setDigitCount() = CoeffDigitLen.setDigitLen(this)
+    private fun setDigitCount() = updateLengths()
 
     fun hasValidLengths(): Boolean {
         val prevDigitLen = digitLen

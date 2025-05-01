@@ -1,9 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.setDigitLen64
-import com.decimal128.CoeffDigitLen.setDigitLen128
-import com.decimal128.CoeffDigitLen.setDigitLen192
-import com.decimal128.CoeffDigitLen.setDigitLen256
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Math.unsignedMultiplyHigh
@@ -214,7 +210,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -238,7 +234,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -266,7 +262,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitLen192(z)
+            z.updateLengths192()
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -302,7 +298,7 @@ object CoeffFusedMulAbsDiff {
                 // the multiply carry and the borrow out the top cancel each other out
                 z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
             }
-            setDigitLen256(z)
+            z.updateLengths256()
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -327,7 +323,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -350,7 +346,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -372,7 +368,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitLen192(z)
+            z.updateLengths192()
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -402,7 +398,7 @@ object CoeffFusedMulAbsDiff {
                 // the multiply carry and the borrow out the top cancel each other out
                 z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
             }
-            setDigitLen256(z)
+            z.updateLengths256()
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -427,7 +423,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -449,7 +445,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -469,7 +465,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitLen192(z)
+            z.updateLengths192()
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -490,7 +486,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw3
             }
         }
-        setDigitLen256(z)
+        z.updateLengths256()
         return if (borrow3 > 0) EXACT_NEGATED else EXACT
     }
 
@@ -512,7 +508,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -532,7 +528,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -551,7 +547,7 @@ object CoeffFusedMulAbsDiff {
                 ++z.dw2
             }
         }
-        setDigitLen192(z)
+        z.updateLengths192()
         return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
     }
 
@@ -573,7 +569,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -594,7 +590,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -615,7 +611,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitLen192(z)
+            z.updateLengths192()
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -645,7 +641,7 @@ object CoeffFusedMulAbsDiff {
                 // the multiply carry and the borrow out the top cancel each other out
                 z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
             }
-            setDigitLen256(z)
+            z.updateLengths256()
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -669,7 +665,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -690,7 +686,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -710,7 +706,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitLen192(z)
+            z.updateLengths192()
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -731,7 +727,7 @@ object CoeffFusedMulAbsDiff {
                     ++z.dw3
             }
         }
-        setDigitLen256(z)
+        z.updateLengths256()
         return if (borrow3 > 0) EXACT_NEGATED else EXACT
     }
 
@@ -753,7 +749,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -773,7 +769,7 @@ object CoeffFusedMulAbsDiff {
                 if (z.dw1 == 0L)
                     ++z.dw2
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -792,7 +788,7 @@ object CoeffFusedMulAbsDiff {
                 ++z.dw2
             }
         }
-        setDigitLen192(z)
+        z.updateLengths192()
         return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
     }
 
@@ -813,7 +809,7 @@ object CoeffFusedMulAbsDiff {
             val negBorrow0 = -borrow0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
             z.dw0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -832,7 +828,7 @@ object CoeffFusedMulAbsDiff {
             if (z.dw1 == 0L)
                 ++z.dw2
         }
-        setDigitLen128(z)
+        z.updateLengths128()
         return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
     }
 

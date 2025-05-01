@@ -136,20 +136,20 @@ object CoeffSet {
                 z.dw1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 z.dw2 = x.dw3 ushr innerShift
                 z.dw3 = 0L
-                setDigitLen192(z)
+                z.updateLengths192()
             }
 
             2 -> {
                 z.dw0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 z.dw1 = x.dw3 ushr innerShift
                 z.dw2 = 0L; z.dw3 = 0L
-                setDigitLen128(z)
+                z.updateLengths128()
             }
 
             3 -> {
                 z.dw0 = x.dw3 ushr innerShift
                 z.dw1 = 0L; z.dw2 = 0L; z.dw3 = 0L
-                setDigitLen64(z)
+                z.updateLengths64()
             }
 
             else -> coeffSetZero(z)

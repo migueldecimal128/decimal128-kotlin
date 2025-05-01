@@ -1,9 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.setDigitLen
-import com.decimal128.CoeffDigitLen.setDigitLen64
-import com.decimal128.CoeffDigitLen.setDigitLen128
-import com.decimal128.CoeffDigitLen.setDigitLen192
 import com.decimal128.CoeffSet.coeffSetZero
 import java.lang.Long.numberOfLeadingZeros
 
@@ -41,7 +37,7 @@ object CoeffBits {
                 c.dw1 = (nonZeroMask and (c.dw2 shl leftShift)) or (c.dw1 ushr innerShift)
                 c.dw2 = (nonZeroMask and (c.dw3 shl leftShift)) or (c.dw2 ushr innerShift)
                 c.dw3 = c.dw3 ushr innerShift
-                setDigitLen(c)
+                c.updateLengths()
             }
 
             1 -> {
@@ -49,20 +45,20 @@ object CoeffBits {
                 c.dw1 = (nonZeroMask and (c.dw3 shl leftShift)) or (c.dw2 ushr innerShift)
                 c.dw2 = c.dw3 ushr innerShift
                 c.dw3 = 0L
-                setDigitLen192(c)
+                c.updateLengths192()
             }
 
             2 -> {
                 c.dw0 = (nonZeroMask and (c.dw3 shl leftShift)) or (c.dw2 ushr innerShift)
                 c.dw1 = c.dw3 ushr innerShift
                 c.dw2 = 0L; c.dw3 = 0L
-                setDigitLen128(c)
+                c.updateLengths128()
             }
 
             3 -> {
                 c.dw0 = c.dw3 ushr innerShift
                 c.dw1 = 0L; c.dw2 = 0L; c.dw3 = 0L
-                setDigitLen64(c)
+                c.updateLengths64()
             }
 
             else -> coeffSetZero(c)

@@ -1,9 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.setDigitLen128
-import com.decimal128.CoeffDigitLen.setDigitLen192
-import com.decimal128.CoeffDigitLen.setDigitLen256
-import com.decimal128.CoeffDigitLen.setDigitLen64
 import com.decimal128.CoeffScalePow10.coeffScaleFusedMulAbsDiffPow10
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
@@ -37,7 +33,7 @@ object CoeffAbsDiff {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry0 = -carry0
             z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = (d0 xor negCarry0) - negCarry0
-            setDigitLen64(z)
+            z.updateLengths64()
             return if (negCarry0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -55,7 +51,7 @@ object CoeffAbsDiff {
             if (negCarry1 < 0L && z.dw0 == 0L) {
                 ++z.dw1
             }
-            setDigitLen128(z)
+            z.updateLengths128()
             return if (negCarry1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -76,7 +72,7 @@ object CoeffAbsDiff {
                     ++z.dw2
                 }
             }
-            setDigitLen192(z)
+            z.updateLengths192()
             return if (negCarry2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -99,7 +95,7 @@ object CoeffAbsDiff {
                     ++z.dw3
             }
         }
-        setDigitLen256(z)
+        z.updateLengths256()
         return if (negCarry3 < 0) EXACT_NEGATED else EXACT
     }
 
