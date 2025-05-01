@@ -20,25 +20,9 @@ object CoeffSet {
         c.dw3 = 0L; c.dw2 = 0L; c.dw1 = 0L; c.dw0 = 1L; c.digitLen = 1
     }
 
-    private fun coeffSet64(c: Coeff, dw0: Long) {
-        c.setCoeff64(dw0)
-    }
-
-    private fun setCoeff128(c: Coeff, dw1: Long, dw0: Long) {
-        c.setCoeff128(dw1, dw0)
-    }
-
-    private fun setCoeff192(c: Coeff, dw2: Long, dw1: Long, dw0: Long) {
-        c.setCoeff192(dw2, dw1, dw0)
-    }
-
-    private fun setCoeff256(c: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
-        c.setCoeff256(dw3,dw2, dw1, dw0)
-    }
-
     fun coeffSet(c: Coeff, bi: BigInteger) {
         require(bi.bitLength() <= 256)
-        setCoeff256(c, bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+        c.setCoeff256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
         setDigitLen(c)
     }
 
@@ -127,7 +111,7 @@ object CoeffSet {
         if (x.digitLen < POW10_128_OFFSET) {
             val le63Mask = if (bitShift <= 63) -1L else 0L
             val r = (x.dw0 ushr bitShift) and le63Mask
-            coeffSet64(z, r)
+            z.setCoeff64(r)
             return
         }
         val wholeDwordCount = bitShift ushr 6
