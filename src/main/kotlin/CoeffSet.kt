@@ -18,7 +18,6 @@ object CoeffSet {
     fun coeffSet(c: Coeff, bi: BigInteger) {
         require(bi.bitLength() <= 256)
         c.setCoeff256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
-        c.updateLengths()
     }
 
     fun coeffSet(c: Coeff, x:Coeff) {
@@ -42,20 +41,29 @@ object CoeffSet {
         when (nonZeroIndex) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal; c.updateLengths64()
+                val c0 = nonZeroVal
+                c.setCoeff64(c0)
             }
 
             1 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = nonZeroVal; c.updateLengths128()
+                val c0 = x[xOff + 0]
+                val c1 = nonZeroVal
+                c.setCoeff128(c1, c0)
             }
 
             2 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1]; c.dw2 = nonZeroVal; c.updateLengths192()
+                val c0 = x[xOff + 0]
+                val c1 = x[xOff + 1]
+                val c2 = nonZeroVal
+                c.setCoeff192(c2, c1, c0)
             }
 
             3 -> {
-                c.dw0 = x[xOff + 0]; c.dw1 = x[xOff + 1];
-                c.dw2 = x[xOff + 2]; c.dw3 = nonZeroVal; c.updateLengths256()
+                val c0 = x[xOff + 0]
+                val c1 = x[xOff + 1]
+                val c2 = x[xOff + 2]
+                val c3 = nonZeroVal
+                c.setCoeff256(c3, c2, c1, c0)
             }
 
             else -> throw RuntimeException("overflow")
@@ -74,28 +82,29 @@ object CoeffSet {
         when (nonZeroIndex2) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal ; c.updateLengths64()
+                val c0 = nonZeroVal
+                c.setCoeff64(c0)
             }
 
             1 -> {
-                c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
-                c.dw1 = nonZeroVal
-                c.updateLengths128()
+                val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32)
+                val c1 = nonZeroVal
+                c.setCoeff128(c1, c0)
             }
 
             2 -> {
-                c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
-                c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
-                c.dw2 = nonZeroVal
-                c.updateLengths192()
+                val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32)
+                val c1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32)
+                val c2 = nonZeroVal
+                c.setCoeff192(c2, c1, c0)
             }
 
             3 -> {
-                c.dw0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
-                c.dw1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
-                c.dw2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
-                c.dw3 = nonZeroVal;
-                c.updateLengths256()
+                val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32);
+                val c1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
+                val c2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
+                val c3 = nonZeroVal;
+                c.setCoeff256(c3, c2, c1, c0)
             }
 
             else -> throw RuntimeException("overflow")
@@ -115,36 +124,33 @@ object CoeffSet {
         val leftShift = -innerShift
         when (wholeDwordCount) {
             0 -> {
-                z.dw0 = (nonZeroMask and (x.dw1 shl leftShift)) or (x.dw0 ushr innerShift)
-                z.dw1 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
-                z.dw2 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
-                z.dw3 = x.dw3 ushr innerShift
+                val z0 = (nonZeroMask and (x.dw1 shl leftShift)) or (x.dw0 ushr innerShift)
+                val z1 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
+                val z2 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                val z3 = x.dw3 ushr innerShift
                 if (innerShift <= 3) {
                     //FIXME less than one digit change going on here
                     // tweak the digit count instead of recalculating
                 }
-                z.updateLengths()
+                z.setCoeff256(z3, z2, z1, z0)
             }
 
             1 -> {
-                z.dw0 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
-                z.dw1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
-                z.dw2 = x.dw3 ushr innerShift
-                z.dw3 = 0L
-                z.updateLengths192()
+                val z0 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
+                val z1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                val z2 = x.dw3 ushr innerShift
+                z.setCoeff192(z2, z1, z0)
             }
 
             2 -> {
-                z.dw0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
-                z.dw1 = x.dw3 ushr innerShift
-                z.dw2 = 0L; z.dw3 = 0L
-                z.updateLengths128()
+                val z0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                val z1 = x.dw3 ushr innerShift
+                z.setCoeff128(z1, z0)
             }
 
             3 -> {
-                z.dw0 = x.dw3 ushr innerShift
-                z.dw1 = 0L; z.dw2 = 0L; z.dw3 = 0L
-                z.updateLengths64()
+                val z0 = x.dw3 ushr innerShift
+                z.setCoeff64(z0)
             }
 
             else -> coeffSetZero(z)
@@ -158,14 +164,18 @@ object CoeffSet {
         val innerR = -innerL
         val topBitsMask = nonZeroMask shl innerR
         //FIXME need to check for non-zero bit overflow out the top
+        var z3 = 0L
+        var z2 = 0L
+        var z1 = 0L
+        var z0 = 0L
         when (wholeDwordCount) {
             0 -> {
                 if (x.dw3 and topBitsMask != 0L)
                     throw RuntimeException("coefficientOverflow")
-                z.dw3 = (x.dw3 shl innerL) or ((x.dw2 ushr innerR) and nonZeroMask)
-                z.dw2 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
-                z.dw1 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                z.dw0 = (x.dw0 shl innerL)
+                z3 = (x.dw3 shl innerL) or ((x.dw2 ushr innerR) and nonZeroMask)
+                z2 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
+                z1 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                z0 = (x.dw0 shl innerL)
                 if (innerL <= 3) {
                     //FIXME less than one digit change going on here
                     // tweak the digit count instead of recalculating
@@ -175,28 +185,22 @@ object CoeffSet {
             1 -> {
                 if ((x.dw3 or (x.dw2 and topBitsMask)) != 0L)
                     throw RuntimeException("coefficientOverflow")
-                z.dw3 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
-                z.dw2 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                z.dw1 = (x.dw0 shl innerL)
-                z.dw0 = 0L
+                z3 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
+                z2 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                z1 = (x.dw0 shl innerL)
             }
 
             2 -> {
                 if ((x.dw3 or x.dw2 or (x.dw1 and topBitsMask)) != 0L)
                     throw RuntimeException("coefficientOverflow")
-                z.dw3 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                z.dw2 = (x.dw0 shl innerL)
-                z.dw1 = 0L
-                z.dw0 = 0L
+                z3 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                z2 = (x.dw0 shl innerL)
             }
 
             3 -> {
                 if ((x.dw3 or x.dw2 or x.dw1 or (x.dw0 and topBitsMask)) != 0L)
                     throw RuntimeException("coefficientOverflow")
-                z.dw3 = (x.dw0 shl innerL)
-                z.dw2 = 0L
-                z.dw1 = 0L
-                z.dw0 = 0L
+                z3 = (x.dw0 shl innerL)
             }
 
             else -> {
@@ -204,12 +208,12 @@ object CoeffSet {
                 return
             }
         }
-        z.updateLengths()
+        z.setCoeff256(z3, z2, z1, z0)
     }
 
-    fun coeffSetShiftRight(c: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
+    fun coeffSetShiftRight(z: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
 
-        coeffSetZero(c)
+        coeffSetZero(z)
         // strip leading zeros from x
         var nonZeroLen = xLen
         while (nonZeroLen > 0 && x[xOff + nonZeroLen - 1] == 0L)
@@ -224,40 +228,40 @@ object CoeffSet {
         when (newLen) {
             0 -> {}
             1 -> {
-                c.dw0 = x[shiftOff + 0] ushr innerShift
-                c.updateLengths64()
+                val z0 = x[shiftOff + 0] ushr innerShift
+                z.setCoeff64(z0)
             }
 
             2 -> {
-                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                c.dw1 = x[shiftOff + 1] ushr innerShift
-                c.updateLengths128()
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = x[shiftOff + 1] ushr innerShift
+                z.setCoeff128(z1, z0)
             }
 
             3 -> {
-                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
-                c.dw2 = x[shiftOff + 2] ushr innerShift
-                c.updateLengths192()
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                val z2 = x[shiftOff + 2] ushr innerShift
+                z.setCoeff192(z2, z1, z0)
             }
 
             4 -> {
-                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
-                c.dw2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
-                c.dw3 = x[shiftOff + 3] ushr innerShift
-                c.updateLengths256()
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
+                val z3 = x[shiftOff + 3] ushr innerShift
+                z.setCoeff256(z3, z2, z1, z0)
             }
 
             5 -> {
-                c.dw0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                c.dw1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
-                c.dw2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
-                c.dw3 = (innerShiftNonZeroMask and (x[shiftOff + 4] shl leftShift)) or (x[shiftOff + 3] ushr innerShift)
-                val dw4 = x[shiftOff + 4] ushr innerShift
-                if (dw4 != 0L)
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
+                val z3 = (innerShiftNonZeroMask and (x[shiftOff + 4] shl leftShift)) or (x[shiftOff + 3] ushr innerShift)
+                val z4 = x[shiftOff + 4] ushr innerShift
+                if (z4 != 0L)
                     throw RuntimeException("overflow")
-                c.updateLengths256()
+                z.setCoeff256(z3, z2, z1, z0)
             }
 
             else -> {
@@ -266,13 +270,13 @@ object CoeffSet {
         }
     }
 
-    fun coeffSetShiftRight(c: Coeff, x: IntArray, xLen: Int, s: Int) {
+    fun coeffSetShiftRight(z: Coeff, x: IntArray, xLen: Int, s: Int) {
         assert(s < 32)
         if (s == 0) {
-            coeffSet(c, x, xLen)
+            coeffSet(z, x, xLen)
             return
         }
-        coeffSetZero(c)
+        coeffSetZero(z)
         if (xLen == 0)
             return
         var nonZeroIndex2 = (xLen + 1) ushr 1
@@ -283,28 +287,29 @@ object CoeffSet {
         when (nonZeroIndex2) {
             -1 -> {}
             0 -> {
-                c.dw0 = nonZeroVal ; c.updateLengths64()
+                val z0 = nonZeroVal
+                z.setCoeff64(z0)
             }
 
             1 -> {
-                c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
-                c.dw1 = nonZeroVal
-                c.updateLengths128()
+                val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
+                val z1 = nonZeroVal
+                z.setCoeff128(z1, z0)
             }
 
             2 -> {
-                c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
-                c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
-                c.dw2 = nonZeroVal
-                c.updateLengths192()
+                val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
+                val z1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
+                val z2 = nonZeroVal
+                z.setCoeff192(z2, z1, z0)
             }
 
             3 -> {
-                c.dw0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
-                c.dw1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
-                c.dw2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
-                c.dw3 = nonZeroVal;
-                c.updateLengths256()
+                val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
+                val z1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
+                val z2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
+                val z3 = nonZeroVal;
+                z.setCoeff256(z3, z2, z1, z0)
             }
 
             else -> throw RuntimeException("overflow")

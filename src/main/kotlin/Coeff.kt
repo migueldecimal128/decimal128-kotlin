@@ -54,26 +54,11 @@ class Coeff(var dw3: Long, var dw2: Long, var dw1: Long, var dw0: Long) {
 
     fun isGTOne() = digitLen > 1 || (dw0 and 0x0F) > 1
 
-    fun updateLengths64() {
-        assert((dw3 or dw2 or dw1) == 0L)
-        digitLen = CoeffDigitLen.calcDigitLen64(dw0)
-    }
-
-    fun updateLengths128() {
-        assert((dw3 or dw2) == 0L)
-        digitLen = CoeffDigitLen.calcDigitLen128(dw1, dw0)
-    }
-
-    fun updateLengths192() {
-        assert(dw3 == 0L)
-        digitLen = CoeffDigitLen.calcDigitLen192(dw2, dw1, dw0)
-    }
-
-    fun updateLengths256() {
-        digitLen = CoeffDigitLen.calcDigitLen256(dw3, dw2, dw1, dw0)
-    }
-
     fun updateLengths() {
+        //FIXME note that this is only used after multiplies that need
+        // index access to the coefficient ...
+        // where we don't want to keep the lengths
+        // updated until the end
         digitLen = (
                 if ((dw3 or dw2) == 0L) {
                     if (dw1 == 0L)

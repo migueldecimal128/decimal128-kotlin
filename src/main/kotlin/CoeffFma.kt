@@ -275,7 +275,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -287,7 +287,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -301,7 +301,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo)
@@ -315,7 +315,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp12Lo)
@@ -328,7 +328,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -355,7 +355,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -367,7 +367,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -380,7 +380,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
@@ -392,7 +392,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi)
@@ -404,7 +404,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -431,7 +431,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -442,7 +442,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
@@ -453,7 +453,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp10Hi)
@@ -464,7 +464,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val p3 = carry2
@@ -473,7 +473,7 @@ object CoeffFma {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = p3
-        p.updateLengths256()
+        p.setCoeff256(p3, p2, p1, p0)
     }
 
     private fun _fma(
@@ -497,7 +497,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -508,7 +508,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -520,7 +520,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
@@ -533,7 +533,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp02Hi, pp03Lo)
@@ -546,7 +546,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -573,7 +573,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -584,7 +584,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -596,7 +596,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
@@ -608,7 +608,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         val (carry3, p3) = sumU64(carry2, pp02Hi)
@@ -620,7 +620,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = p3
-            p.updateLengths256()
+            p.setCoeff256(p3, p2, p1, p0)
             return
         }
         throw RuntimeException("coefficient multiply overflow")
@@ -647,7 +647,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -658,7 +658,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
@@ -669,7 +669,7 @@ object CoeffFma {
             p.dw1 = p1
             p.dw2 = p2
             p.dw3 = 0L;
-            p.updateLengths192()
+            p.setCoeff192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi)
@@ -679,7 +679,7 @@ object CoeffFma {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = p3
-        p.updateLengths256()
+        p.setCoeff256(p3, p2, p1, p0)
     }
 
     private fun _fma(
@@ -703,7 +703,7 @@ object CoeffFma {
             val p0 = pp00Lo + a0
             p.dw0 = p0
             p.dw1 = 0L; p.dw2 = 0L; p.dw3 = 0L
-            p.updateLengths64()
+            p.setCoeff64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
@@ -713,7 +713,7 @@ object CoeffFma {
             p.dw0 = p0
             p.dw1 = p1
             p.dw2 = 0L; p.dw3 = 0L;
-            p.updateLengths128()
+            p.setCoeff128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, a1)
@@ -722,7 +722,7 @@ object CoeffFma {
         p.dw1 = p1
         p.dw2 = p2
         p.dw3 = 0L;
-        p.updateLengths192()
+        p.setCoeff192(p2, p1, p0)
     }
 
 }
