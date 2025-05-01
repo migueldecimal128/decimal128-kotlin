@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
-import com.decimal128.CoeffDigitLen.tweakDigitLenAfterRoundUp
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
 import com.decimal128.FiniteSet.finiteSet
 import com.decimal128.Residue.Companion.EXACT

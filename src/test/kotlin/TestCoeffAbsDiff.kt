@@ -7,6 +7,8 @@ import java.util.*
 
 class TestCoeffAbsDiff {
 
+    val verbose = false
+
     class TC(val biA:BigInteger, val biB:BigInteger) {
         val biAbsDiff = biA.subtract(biB).abs()
         val isEqual = biA == biB
@@ -16,6 +18,8 @@ class TestCoeffAbsDiff {
     }
 
     val cases = arrayOf(
+        TC(BigInteger.ONE, BigInteger.ONE.shiftLeft(192)),
+
         TC(BigInteger.ONE.shiftLeft(32).subtract(BigInteger.ONE), BigInteger.ONE.shiftLeft(32).subtract(BigInteger.ONE)),
         TC(BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE), BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE)),
         TC(BigInteger.ONE.shiftLeft(96).subtract(BigInteger.ONE), BigInteger.ONE.shiftLeft(96).subtract(BigInteger.ONE)),
@@ -75,7 +79,8 @@ class TestCoeffAbsDiff {
         val coeffB = Coeff(case.biB)
         val yin = Coeff()
         val yang = Coeff()
-        //println("$coeffA - $coeffB = expected:$biExpected")
+        if (verbose)
+            println("$coeffA - $coeffB = expected:$biExpected")
         val yinResidue = yin.absDiff(coeffA, coeffB)
         val yangResidue = yang.absDiff(coeffB, coeffA)
 

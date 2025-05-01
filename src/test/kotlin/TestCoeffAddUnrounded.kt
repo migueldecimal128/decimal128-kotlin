@@ -6,6 +6,8 @@ import java.util.*
 
 class TestCoeffAddUnrounded {
 
+    val verbose = false
+
     class TC(val biA:BigInteger, val biB:BigInteger) {
         val biSum = biA.add(biB)
 
@@ -13,6 +15,8 @@ class TestCoeffAddUnrounded {
     }
 
     val cases = arrayOf(
+        TC("96391704742582514987", "0"),
+
         TC("10000000000000000000000000000000000000000000000000000000000000000000000000000", "1"),
         TC("11002044283145426452", "83"),
         TC("9898648910501246606", "8919245473293500599"),
@@ -58,6 +62,8 @@ class TestCoeffAddUnrounded {
         val coeffB = Coeff(case.biB)
         val coeffC = Coeff()
         coeffC.add(coeffA, coeffB)
+        if (verbose)
+            println("$coeffA + $coeffB = $coeffC   expected:$expected")
         val oldDigitCount = coeffC.digitLen
         if (! coeffC.hasValidLengths()) {
             val digitCount = coeffC.digitLen

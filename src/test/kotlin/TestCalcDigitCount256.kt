@@ -29,7 +29,8 @@ class TestCalcDigitCount256 {
         val dw1 = bi.shiftRight(64).toLong()
         val dw2 = bi.shiftRight(128).toLong()
         val dw3 = bi.shiftRight(192).toLong()
-        val observed = CoeffDigitLen.calcDigitLen256(dw3, dw2, dw1, dw0)
+        val bitLen = bi.bitLength()
+        val observed = CoeffDigitLen.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
         assertEquals(expected, observed)
     }
 

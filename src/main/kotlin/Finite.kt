@@ -1,6 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.tweakDigitLenAfterRoundUp
 import com.decimal128.Residue.Companion.EXACT
 
 const val MIN_EXPONENT = -6143
