@@ -22,8 +22,79 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
 private const val MASK32 = 0xFFFF_FFFFL
 
 object CoeffDivide {
+    fun coeffDiv(z: Coeff, x: Coeff, y: Coeff) =
+        coeffDiv_bit(z, x, y)
 
-    fun coeffDiv(z: Coeff, x: Coeff, y: Coeff): Residue {
+    fun coeffDiv_bit(z: Coeff, x: Coeff, y: Coeff): Residue {
+        if (y.bitLen < 64) {
+            val y0 = y.dw0
+            if (y.bitLen <= 1) {
+                if (y.bitLen == 0)
+                    throw RuntimeException("div by zero")
+                z.coeffSet(x)
+                return EXACT
+            }
+            val x0 = x.dw0
+            if (x.bitLen < 64) {
+                val quot = x0 / y0
+                val rem = x0 % y0
+                val residue = when {
+                    rem == 0L -> EXACT
+                    compareUnsigned(2 * rem, y0) < 0 -> LT_HALF // we are doubling the remainder here
+                    2 * rem == y0 -> HALF   // so make sure divisor is small enough
+                    else -> GT_HALF
+                }
+                z.coeffSet64(quot)
+                return residue
+            }
+            if ((y0 and (y0 - 1)) == 0L) {
+                // y0 is an exact power of 2 ... just shift right.
+                // 0 and 1 cases handled above, so if we are here then ntz >= 1
+                val ntz = numberOfTrailingZeros(y0)
+                val mask = (1L shl ntz) - 1L
+                val rem = x0 and mask
+                val residue = when {
+                    rem == 0L -> EXACT
+                    2 * rem < y0 -> LT_HALF
+                    2 * rem == y0 -> HALF
+                    else -> GT_HALF
+                }
+                coeffSetShiftRight(z, x, ntz)
+                return residue
+            }
+        }
+        val bitLenDelta = x.bitLen - y.bitLen
+        if (bitLenDelta < 0) {
+            val residue = when {
+                x.bitLen == 0 -> EXACT
+                bitLenDelta <= -2 -> LT_HALF
+                else -> Residue.residueFromRemainderDivisor(x, y)
+            }
+            z.coeffSetZero()
+            return residue
+        }
+        if (bitLenDelta == 0) {
+            val cmp = coeffCompare(x, y)
+            if (cmp < 0) {
+                val residue = Residue.residueFromRemainderDivisor(x, y)
+                z.coeffSetZero()
+                return residue
+            }
+            if (cmp == 0) {
+                z.setOne()
+                return EXACT
+            }
+        }
+        assert(bitLenDelta >= 0)
+        //TODO at this point I know that x.bitLen >= y.bitLen and x > y
+        // if (bitLenDelta < some-small-number) then I should use repeated subtraction
+        if (y.bitLen <= 32) {
+            return divx32(z, x, y.dw0)
+        }
+        return knuthDivideWrapper(z, x, y, false)
+    }
+
+    fun coeffDiv_digit(z: Coeff, x: Coeff, y: Coeff): Residue {
         if (y.digitLen <= 18) { // use 18 instead of 19 to ensure that hi bit is not set
             val y0 = y.dw0
             if (y0 <= 1L) {
