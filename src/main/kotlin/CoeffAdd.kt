@@ -15,11 +15,11 @@ object CoeffAdd {
 
     fun coeffAddUnscaled(z: Coeff, x: Coeff, y: Coeff) {
         if (x.digitLen == 0) {
-            z.set(y)
+            z.coeffSet(y)
             return
         }
         if (y.digitLen == 0) {
-            z.set(x)
+            z.coeffSet(x)
             return
         }
         val maxDigitCount = Math.max(x.digitLen, y.digitLen)
@@ -34,7 +34,7 @@ object CoeffAdd {
         // perhaps this test should be:
         // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
         if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
-            z.setCoeff64(p0)
+            z.coeffSet64(p0)
             return
         }
 
@@ -45,7 +45,7 @@ object CoeffAdd {
         val p1 = p1a + carry0
         val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
         if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
-            z.setCoeff128(p1, p0)
+            z.coeffSet128(p1, p0)
             return
         }
 
@@ -56,7 +56,7 @@ object CoeffAdd {
         val p2 = p2a + carry1
         val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
         if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
-            z.setCoeff192(p2, p1, p0)
+            z.coeffSet192(p2, p1, p0)
             return
         }
 
@@ -68,7 +68,7 @@ object CoeffAdd {
         val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
         if (carry3 != 0L)
             throw RuntimeException("coefficient add overflow x:$x y:$y")
-        z.setCoeff256(p3, p2, p1, p0)
+        z.coeffSet256(p3, p2, p1, p0)
     }
 
 

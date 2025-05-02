@@ -9,7 +9,7 @@ object MagScalePow10 {
 
     fun scalePow10Coeff(p: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
         if (x.digitLen == 0 || pow10 == 0) {
-            p.set(x)
+            p.coeffSet(x)
             return
         }
         if (pow10 > 0)

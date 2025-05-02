@@ -29,7 +29,7 @@ object CoeffDivide {
             if (y0 <= 1L) {
                 if (y0 == 0L)
                     throw RuntimeException("div by zero")
-                coeffSet(z, x)
+                z.coeffSet(x)
                 return EXACT
             }
             val x0 = x.dw0
@@ -42,7 +42,7 @@ object CoeffDivide {
                     2 * rem == y0 -> HALF
                     else -> GT_HALF
                 }
-                z.setCoeff64(quot)
+                z.coeffSet64(quot)
                 return residue
             }
             if ((y0 and (y0 - 1)) == 0L) {
@@ -69,14 +69,14 @@ object CoeffDivide {
                 yBitLen - xBitLen >= 2 -> LT_HALF
                 else -> Residue.residueFromRemainderDivisor(x, y)
             }
-            z.setZero()
+            z.coeffSetZero()
             return residue
         }
         if (xBitLen == yBitLen) {
             val cmp = coeffCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
-                z.setZero()
+                z.coeffSetZero()
                 return residue
             }
             if (cmp == 0) {
@@ -156,7 +156,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.setCoeff256(q3, q2, q1, q0)
+        z.coeffSet256(q3, q2, q1, q0)
         return residue
     }
 
@@ -199,7 +199,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.setCoeff192(q2, q1, q0)
+        z.coeffSet192(q2, q1, q0)
         return residue
     }
 
@@ -233,7 +233,7 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.setCoeff128(q1, q0)
+        z.coeffSet128(q1, q0)
         return residue
     }
 
@@ -258,25 +258,25 @@ object CoeffDivide {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.setCoeff64(q0)
+        z.coeffSet64(q0)
         return residue
     }
 
     fun coeffMod(z: Coeff, x: Coeff, y: Coeff) {
         assert(y.isGTOne())
         if (x.digitLen < y.digitLen) {
-            z.set(x)
+            z.coeffSet(x)
             return
         }
         if (x.digitLen == y.digitLen) {
             val cmp = coeffCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
-                z.set(x)
+                z.coeffSet(x)
                 return
             }
             if (cmp == 0) {
-                z.setZero()
+                z.coeffSetZero()
                 return
             }
         }
@@ -299,7 +299,7 @@ object CoeffDivide {
             } else {
                 mod256x32(z, x.dw3, x.dw2, x.dw1, x.dw0, y0)
             }
-        z.setCoeff64(rem)
+        z.coeffSet64(rem)
     }
 
     fun mod256x32(z: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {

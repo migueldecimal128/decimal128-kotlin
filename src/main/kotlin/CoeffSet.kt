@@ -6,19 +6,8 @@ private const val MASK32 = 0xFFFFFFFFL
 
 object CoeffSet {
 
-    fun coeffSet(c: Coeff, bi: BigInteger) {
-        require(bi.bitLength() <= 256)
-        c.setCoeff256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
-    }
-
-    fun coeffSet(c: Coeff, x:Coeff) {
-        c.set(x)
-    }
-
-    fun coeffSet(c: Coeff, str: String) = coeffSet(c, BigInteger(str))
-
     fun coeffSet(c: Coeff, x: LongArray, xOff: Int, xLen: Int) {
-        c.setZero()
+        c.coeffSetZero()
         if (xLen == 0)
             return
         var nonZeroIndex = xLen
@@ -30,20 +19,20 @@ object CoeffSet {
             -1 -> {}
             0 -> {
                 val c0 = nonZeroVal
-                c.setCoeff64(c0)
+                c.coeffSet64(c0)
             }
 
             1 -> {
                 val c0 = x[xOff + 0]
                 val c1 = nonZeroVal
-                c.setCoeff128(c1, c0)
+                c.coeffSet128(c1, c0)
             }
 
             2 -> {
                 val c0 = x[xOff + 0]
                 val c1 = x[xOff + 1]
                 val c2 = nonZeroVal
-                c.setCoeff192(c2, c1, c0)
+                c.coeffSet192(c2, c1, c0)
             }
 
             3 -> {
@@ -51,7 +40,7 @@ object CoeffSet {
                 val c1 = x[xOff + 1]
                 val c2 = x[xOff + 2]
                 val c3 = nonZeroVal
-                c.setCoeff256(c3, c2, c1, c0)
+                c.coeffSet256(c3, c2, c1, c0)
             }
 
             else -> throw RuntimeException("overflow")
@@ -59,7 +48,7 @@ object CoeffSet {
     }
 
     fun coeffSet(c: Coeff, x: IntArray, xLen: Int) {
-        c.setZero()
+        c.coeffSetZero()
         if (xLen == 0)
             return
         var nonZeroIndex2 = (xLen + 1) ushr 1
@@ -71,20 +60,20 @@ object CoeffSet {
             -1 -> {}
             0 -> {
                 val c0 = nonZeroVal
-                c.setCoeff64(c0)
+                c.coeffSet64(c0)
             }
 
             1 -> {
                 val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32)
                 val c1 = nonZeroVal
-                c.setCoeff128(c1, c0)
+                c.coeffSet128(c1, c0)
             }
 
             2 -> {
                 val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32)
                 val c1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32)
                 val c2 = nonZeroVal
-                c.setCoeff192(c2, c1, c0)
+                c.coeffSet192(c2, c1, c0)
             }
 
             3 -> {
@@ -92,7 +81,7 @@ object CoeffSet {
                 val c1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
                 val c2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
                 val c3 = nonZeroVal;
-                c.setCoeff256(c3, c2, c1, c0)
+                c.coeffSet256(c3, c2, c1, c0)
             }
 
             else -> throw RuntimeException("overflow")
@@ -103,7 +92,7 @@ object CoeffSet {
         if (x.digitLen < POW10_128_OFFSET) {
             val le63Mask = if (bitShift <= 63) -1L else 0L
             val r = (x.dw0 ushr bitShift) and le63Mask
-            z.setCoeff64(r)
+            z.coeffSet64(r)
             return
         }
         val wholeDwordCount = bitShift ushr 6
@@ -120,28 +109,28 @@ object CoeffSet {
                     //FIXME less than one digit change going on here
                     // tweak the digit count instead of recalculating
                 }
-                z.setCoeff256(z3, z2, z1, z0)
+                z.coeffSet256(z3, z2, z1, z0)
             }
 
             1 -> {
                 val z0 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
                 val z1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 val z2 = x.dw3 ushr innerShift
-                z.setCoeff192(z2, z1, z0)
+                z.coeffSet192(z2, z1, z0)
             }
 
             2 -> {
                 val z0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
                 val z1 = x.dw3 ushr innerShift
-                z.setCoeff128(z1, z0)
+                z.coeffSet128(z1, z0)
             }
 
             3 -> {
                 val z0 = x.dw3 ushr innerShift
-                z.setCoeff64(z0)
+                z.coeffSet64(z0)
             }
 
-            else -> z.setZero()
+            else -> z.coeffSetZero()
         }
     }
 
@@ -192,16 +181,16 @@ object CoeffSet {
             }
 
             else -> {
-                z.setZero()
+                z.coeffSetZero()
                 return
             }
         }
-        z.setCoeff256(z3, z2, z1, z0)
+        z.coeffSet256(z3, z2, z1, z0)
     }
 
     fun coeffSetShiftRight(z: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
 
-        z.setZero()
+        z.coeffSetZero()
         // strip leading zeros from x
         var nonZeroLen = xLen
         while (nonZeroLen > 0 && x[xOff + nonZeroLen - 1] == 0L)
@@ -217,20 +206,20 @@ object CoeffSet {
             0 -> {}
             1 -> {
                 val z0 = x[shiftOff + 0] ushr innerShift
-                z.setCoeff64(z0)
+                z.coeffSet64(z0)
             }
 
             2 -> {
                 val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
                 val z1 = x[shiftOff + 1] ushr innerShift
-                z.setCoeff128(z1, z0)
+                z.coeffSet128(z1, z0)
             }
 
             3 -> {
                 val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
                 val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
                 val z2 = x[shiftOff + 2] ushr innerShift
-                z.setCoeff192(z2, z1, z0)
+                z.coeffSet192(z2, z1, z0)
             }
 
             4 -> {
@@ -238,7 +227,7 @@ object CoeffSet {
                 val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
                 val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
                 val z3 = x[shiftOff + 3] ushr innerShift
-                z.setCoeff256(z3, z2, z1, z0)
+                z.coeffSet256(z3, z2, z1, z0)
             }
 
             5 -> {
@@ -249,7 +238,7 @@ object CoeffSet {
                 val z4 = x[shiftOff + 4] ushr innerShift
                 if (z4 != 0L)
                     throw RuntimeException("overflow")
-                z.setCoeff256(z3, z2, z1, z0)
+                z.coeffSet256(z3, z2, z1, z0)
             }
 
             else -> {
@@ -264,7 +253,7 @@ object CoeffSet {
             coeffSet(z, x, xLen)
             return
         }
-        z.setZero()
+        z.coeffSetZero()
         if (xLen == 0)
             return
         var nonZeroIndex2 = (xLen + 1) ushr 1
@@ -276,20 +265,20 @@ object CoeffSet {
             -1 -> {}
             0 -> {
                 val z0 = nonZeroVal
-                z.setCoeff64(z0)
+                z.coeffSet64(z0)
             }
 
             1 -> {
                 val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
                 val z1 = nonZeroVal
-                z.setCoeff128(z1, z0)
+                z.coeffSet128(z1, z0)
             }
 
             2 -> {
                 val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
                 val z1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
                 val z2 = nonZeroVal
-                z.setCoeff192(z2, z1, z0)
+                z.coeffSet192(z2, z1, z0)
             }
 
             3 -> {
@@ -297,7 +286,7 @@ object CoeffSet {
                 val z1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
                 val z2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
                 val z3 = nonZeroVal;
-                z.setCoeff256(z3, z2, z1, z0)
+                z.coeffSet256(z3, z2, z1, z0)
             }
 
             else -> throw RuntimeException("overflow")

@@ -392,12 +392,12 @@ object RecipMulPow10 {
         initialize()
         if (pow10 <= 0) {
             assert(pow10 == 0)
-            z.set(x)
+            z.coeffSet(x)
             return EXACT
         }
         if (x.digitLen <= pow10) {
             if (x.digitLen == 0) {
-                z.setZero()
+                z.coeffSetZero()
                 return EXACT
             }
             val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
@@ -410,12 +410,12 @@ object RecipMulPow10 {
         initialize()
         if (pow10 <= 0) {
             assert(pow10 == 0)
-            q.set(x)
+            q.coeffSet(x)
             return
         }
         if (x.digitLen <= pow10) {
             if (x.digitLen == 0) {
-                q.setZero()
+                q.coeffSetZero()
                 return
             }
             // otherwise, non-zero residue ... round it

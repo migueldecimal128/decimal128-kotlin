@@ -33,7 +33,7 @@ object CoeffAbsDiff {
             // if carry == 1 then complement-and-increment else NOOP
             val negCarry0 = -carry0
             val z0 = (d0 xor negCarry0) - negCarry0
-            z.setCoeff64(z0)
+            z.coeffSet64(z0)
             return if (negCarry0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -49,7 +49,7 @@ object CoeffAbsDiff {
             if (negCarry1 < 0L && z0 == 0L) {
                 ++z1
             }
-            z.setCoeff128(z1, z0)
+            z.coeffSet128(z1, z0)
             return if (negCarry1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -69,7 +69,7 @@ object CoeffAbsDiff {
                     ++z2
                 }
             }
-            z.setCoeff192(z2, z1, z0)
+            z.coeffSet192(z2, z1, z0)
             return if (negCarry2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -92,7 +92,7 @@ object CoeffAbsDiff {
                     ++z3
             }
         }
-        z.setCoeff256(z3, z2, z1, z0)
+        z.coeffSet256(z3, z2, z1, z0)
         return if (negCarry3 < 0) EXACT_NEGATED else EXACT
     }
 

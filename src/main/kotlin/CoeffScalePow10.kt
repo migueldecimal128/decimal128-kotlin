@@ -12,7 +12,7 @@ object CoeffScalePow10 {
 
     fun coeffScaleUpPow10(z: Coeff, x: Coeff, pow10: Int) {
         if (x.digitLen == 0 || pow10 == 0) {
-            z.set(x)
+            z.coeffSet(x)
             return
         }
 
@@ -52,7 +52,7 @@ object CoeffScalePow10 {
 
     fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         if (x.digitLen == 0 || pow10 == 0) {
-            z.set(x)
+            z.coeffSet(x)
             return EXACT
         }
         val productDigitCount = x.digitLen - pow10

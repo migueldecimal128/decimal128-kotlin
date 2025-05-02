@@ -15,7 +15,7 @@ object CoeffFusedMulAbsDiff {
         if (x.digitLen <= 1) {
             // FIXME I think precision is wrong in these cases
             if (x.digitLen == 0) {
-                z.set(a)
+                z.coeffSet(a)
                 return EXACT
             }
             if (x.dw0 == 1L) {
@@ -24,7 +24,7 @@ object CoeffFusedMulAbsDiff {
         }
         if (y.digitLen <= 1) {
             if (y.digitLen == 0) {
-                z.set(a)
+                z.coeffSet(a)
                 return EXACT
             }
             if (y.dw0 == 1L) {
@@ -213,7 +213,7 @@ object CoeffFusedMulAbsDiff {
         if (hiDiffDigitCount < POW10_128_OFFSET) {
             val negBorrow0 = -borrow0
             val z0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
-            z.setCoeff64(z0)
+            z.coeffSet64(z0)
             return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -234,7 +234,7 @@ object CoeffFusedMulAbsDiff {
             if (negBorrow1 < 0L && z0 == 0L) {
                 ++z1
             }
-            z.setCoeff128(z1, z0)
+            z.coeffSet128(z1, z0)
             return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -261,7 +261,7 @@ object CoeffFusedMulAbsDiff {
                     ++z2
                 }
             }
-            z.setCoeff192(z2, z1, z0)
+            z.coeffSet192(z2, z1, z0)
             return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
         }
 
@@ -292,11 +292,11 @@ object CoeffFusedMulAbsDiff {
                             ++z3
                     }
                 }
-                z.setCoeff256(z3, z2, z1, z0)
+                z.coeffSet256(z3, z2, z1, z0)
             } else {
                 // dw4 == 1L && borrow3 == 1L
                 // the multiply carry and the borrow out the top cancel each other out
-                z.setCoeff256(d3, d2, d1, d0)
+                z.coeffSet256(d3, d2, d1, d0)
             }
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }

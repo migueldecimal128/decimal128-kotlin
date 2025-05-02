@@ -2,24 +2,16 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
-import com.decimal128.FiniteSet.finiteSet
 import com.decimal128.Residue.Companion.EXACT
 
-object FiniteAdd {
+object MagAdd {
 
-    fun finiteAdd(z: Finite, x: Finite, y: Finite, ctx: Decimal128Context) {
-        val zSign = x.sign xor y.sign
-        if (x.exp >= y.exp) {
-            if (!zSign) magAdd(z, x.sign, x, y, ctx) else magSub(z, x.sign, x, y, ctx)
-        } else {
-            if (!zSign) magAdd(z, y.sign, y, x, ctx) else magSub(z, y.sign, y, x, ctx)
-        }
-        z.finalize(ctx)
-    }
-
-    fun magAdd(z: Finite, sign: Boolean, x: Finite, y: Finite, ctx: Decimal128Context) {
+    fun magAdd(z: Mag, a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
+        val flipFlop = a.exp >= b.exp
+        val x = if (flipFlop) a else b
+        val y = if (flipFlop) b else a
         assert(x.exp >= y.exp)
-        val exp = y.exp
+        val minExp = y.exp
         val expDelta = x.exp - y.exp
         if (expDelta >= PRECISION_34) {
             val residue = (
@@ -29,10 +21,9 @@ object FiniteAdd {
                         Residue.LT_HALF
                     )
             val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.c.dw0)
-            finiteSet(z, x)
+            z.magSet(x)
             if (roundUp)
                 z.c.roundUp()
-            z.sign = sign
             if (residue.withoutNegate() != EXACT)
                 ctx.setInexact()
             return
@@ -42,17 +33,16 @@ object FiniteAdd {
             expDelta > 0 -> coeffAddScaled(z.c, x.c, expDelta, y.c)
             else -> coeffAddScaled(z.c, y.c, -expDelta, x.c)
         }
-        z.exp = exp
-        z.sign = sign
+        z.exp = minExp
     }
 
     fun coeffAddUnscaled(z: Coeff, x: Coeff, y: Coeff) {
         if (x.digitLen == 0) {
-            z.set(y)
+            z.coeffSet(y)
             return
         }
         if (y.digitLen == 0) {
-            z.set(x)
+            z.coeffSet(x)
             return
         }
         val maxDigitCount = Math.max(x.digitLen, y.digitLen)
@@ -67,7 +57,7 @@ object FiniteAdd {
         // perhaps this test should be:
         // maxDigitCount <= 20 && (x.dw1 or y.dw1 or carry0) == 0
         if (maxDigitCount <= POW10_128_OFFSET && (x.dw1 or y.dw1 or carry0) == 0L) {
-            z.setCoeff64(p0)
+            z.coeffSet64(p0)
             return
         }
 
@@ -78,7 +68,7 @@ object FiniteAdd {
         val p1 = p1a + carry0
         val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
         if (maxDigitCount <= POW10_192_OFFSET && (x.dw2 or y.dw2 or carry1) == 0L) {
-            z.setCoeff128(p1, p0)
+            z.coeffSet128(p1, p0)
             return
         }
 
@@ -89,7 +79,7 @@ object FiniteAdd {
         val p2 = p2a + carry1
         val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
         if (maxDigitCount <= POW10_256_OFFSET && (x.dw3 or y.dw3 or carry2) == 0L) {
-            z.setCoeff192(p2, p1, p0)
+            z.coeffSet192(p2, p1, p0)
             return
         }
 
@@ -101,7 +91,7 @@ object FiniteAdd {
         val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
         if (carry3 != 0L)
             throw RuntimeException("coefficient add overflow x:$x y:$y")
-        z.setCoeff256(p3, p2, p1, p0)
+        z.coeffSet256(p3, p2, p1, p0)
     }
 
 
@@ -118,7 +108,7 @@ object FiniteAdd {
         coeffScaleFmaPow10(z, x, scaleDelta, y)
     }
 
-    fun magSub(z: Finite, sign: Boolean, x: Finite, y: Finite, ctx: Decimal128Context) {
+    fun magSub(z: Mag, sign: Boolean, x: Mag, y: Mag, ctx: Decimal128Context) {
         throw RuntimeException("not impl")
     }
 }

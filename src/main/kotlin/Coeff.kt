@@ -54,7 +54,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     var digitLen = run { CoeffDigitLen.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0) }
         private set
 
-    fun setZero() {
+    fun coeffSetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; bitLen = 0; digitLen = 0
     }
 
@@ -163,7 +163,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         }
     }
 
-    operator fun set(index: Int, value: Long) {
+    fun coeffSet(index: Int, value: Long) {
         assert(digitLen == -1)
         when (index) {
             0 -> dw0 = value
@@ -184,21 +184,21 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         updateLengths()
     }
 
-    fun setCoeff64(d0: Long) {
+    fun coeffSet64(d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
         bitLen = calcBitLen()
         digitLen = CoeffDigitLen.calcDigitLen64(bitLen, d0)
     }
 
-    fun setCoeff128(d1: Long, d0: Long) {
+    fun coeffSet128(d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen()
         digitLen = CoeffDigitLen.calcDigitLen128(bitLen, d1, d0)
     }
 
-    fun setCoeff192(d2: Long, d1: Long, d0: Long) {
+    fun coeffSet192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen()
@@ -206,21 +206,24 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
 
 
-    fun setCoeff256(d3: Long, d2: Long, d1: Long, d0: Long){
+    fun coeffSet256(d3: Long, d2: Long, d1: Long, d0: Long){
         dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen()
         digitLen = CoeffDigitLen.calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
-    fun set(bi: BigInteger) = coeffSet(this, bi)
+    fun coeffSet(bi: BigInteger) {
+        require(bi.bitLength() <= 256)
+        coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+    }
 
-    fun set(x: Coeff) {
+    fun coeffSet(x: Coeff) {
             bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
     }
 
-    fun set(str: String) = coeffSet(this, str)
+    fun coeffSet(str: String) = coeffSet(BigInteger(str))
 
-    fun set(x: LongArray, xOff: Int, xLen: Int) = coeffSet(this, x, xOff, xLen)
+    fun coeffSet(x: LongArray, xOff: Int, xLen: Int) = coeffSet(this, x, xOff, xLen)
 
     fun setShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         coeffSetShiftRight(this, x, xOff, xLen, bitCount)

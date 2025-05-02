@@ -95,7 +95,7 @@ class UlarRecipMul {
                     }
                 } else {
                     val q0 = (z_0 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
-                    q[quotientIndex++] = q0
+                    q.coeffSet(quotientIndex++, q0)
                 }
 
                 z_1 = z_0
@@ -143,7 +143,7 @@ class UlarRecipMul {
                 }
             } else {
                 val q0 =  (z1 shl leftModulusShift) or ((z_1 ushr shiftRightModulus) and shiftRightMask)
-                q[quotientIndex++] = q0
+                q.coeffSet(quotientIndex++, q0)
             }
             ++zI
             val (carry2, z2) = sumU64(pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
@@ -162,7 +162,7 @@ class UlarRecipMul {
                 }
             } else {
                 val q0 =  (z2 shl leftModulusShift) or ((z1 ushr shiftRightModulus) and shiftRightMask)
-                q[quotientIndex++] = q0
+                q.coeffSet(quotientIndex++, q0)
             }
             ++zI
             val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
@@ -181,7 +181,7 @@ class UlarRecipMul {
                 }
             } else {
                 val q0 =  (z3 shl leftModulusShift) or ((z2 ushr shiftRightModulus) and shiftRightMask)
-                q[quotientIndex++] = q0
+                q.coeffSet(quotientIndex++, q0)
             }
             ++zI
             //val (carry4, z4) = sumU64(pp31_1, carry3)
@@ -203,14 +203,14 @@ class UlarRecipMul {
                     }
                 } else {
                     val q0 =  (z4 shl leftModulusShift) or ((z3 ushr shiftRightModulus) and shiftRightMask)
-                    q[quotientIndex++] = q0
+                    q.coeffSet(quotientIndex++, q0)
                 }
                 ++zI
   //          }
             assert(fractionBitsRemaining <= 0)
             val q4 = ((z4 ushr shiftRightModulus) and shiftRightMask)
             if (q4 != 0L)
-                q[quotientIndex] = q4
+                q.coeffSet(quotientIndex, q4)
             while (zI < zLen) {
                 z[zOff + zI] = 0L
                 ++zI
