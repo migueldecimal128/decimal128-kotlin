@@ -461,7 +461,7 @@ object RecipMulPow10 {
         require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
         require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
         // clear coeff without worrying about aliasing
-        q.enableIndexSetAndZeroOut()
+        q.coeffEnableIndexSetAndZeroOut()
 
         val index = indexOf(xDigitCount, pow10)
         val paramsIndex = INDEXES[index]
@@ -518,9 +518,9 @@ object RecipMulPow10 {
 
         val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
         val ulpRoundUp = residue.ulpRoundUp(effectiveRoundingDirection, q.dw0)
-        q.roundUp(ulpRoundUp)
+        q.coeffRoundUp(ulpRoundUp)
 
-        q.disableIndexSetAndUpdateLengths()
+        q.coeffDisableIndexSetAndUpdateLengths()
         val inexact = residue != EXACT
         ctx.setInexact(inexact)
     }
@@ -531,7 +531,7 @@ object RecipMulPow10 {
         require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
         require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
         // clear coeff without worrying about aliasing
-        z.enableIndexSetAndZeroOut()
+        z.coeffEnableIndexSetAndZeroOut()
 
         val index = indexOf(xDigitCount, pow10)
         val paramsIndex = INDEXES[index]
@@ -586,7 +586,7 @@ object RecipMulPow10 {
             else -> throw RuntimeException("why am I here?")
         }
 
-        z.disableIndexSetAndUpdateLengths()
+        z.coeffDisableIndexSetAndUpdateLengths()
         return residue
     }
 

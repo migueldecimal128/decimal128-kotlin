@@ -28,7 +28,7 @@ class TestCoeffRoundTrip {
     fun test1(bi: BigInteger) {
         val coeff = Coeff()
         coeff.coeffSet(bi)
-        val observed = coeff.toBigInteger()
+        val observed = coeff.coeffToBigInteger()
         assert (bi.equals(observed))
     }
 

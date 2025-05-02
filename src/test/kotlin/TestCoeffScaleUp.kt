@@ -94,7 +94,7 @@ class TestCoeffScaleUp {
         val ctx = Decimal128Context()
         //println("$coeffA (${coeffA.digitCount}) * 10**$pow10 = expected:$expected")
         coeffObserved.scaleUpPow10(coeffA, pow10)
-        val observed = coeffObserved.toBigInteger()
+        val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = $coeffObserved (${coeffObserved.digitLen})  expected:$expected")
         assert (observed.equals(expected))

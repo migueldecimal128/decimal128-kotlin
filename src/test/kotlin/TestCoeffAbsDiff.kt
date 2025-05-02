@@ -84,8 +84,8 @@ class TestCoeffAbsDiff {
         val yinResidue = yin.absDiff(coeffA, coeffB)
         val yangResidue = yang.absDiff(coeffB, coeffA)
 
-        val biYin = yin.toBigInteger()
-        val biYang = yang.toBigInteger()
+        val biYin = yin.coeffToBigInteger()
+        val biYang = yang.coeffToBigInteger()
         if (! biYin.equals(biExpected))
             println("$coeffA - $coeffB = yin:$biYin yinResidue:$yinResidue expected:$biExpected")
         if (! biYang.equals(biExpected))

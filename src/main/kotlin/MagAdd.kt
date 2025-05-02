@@ -23,7 +23,7 @@ object MagAdd {
             val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.c.dw0)
             z.magSet(x)
             if (roundUp)
-                z.c.roundUp()
+                z.c.coeffRoundUp()
             if (residue.withoutNegate() != EXACT)
                 ctx.setInexact()
             return

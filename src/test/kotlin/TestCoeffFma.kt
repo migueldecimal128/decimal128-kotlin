@@ -80,7 +80,7 @@ class TestCoeffFma {
         val coeffProd = Coeff()
         //println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) + $coeffA (${coeffA.digitCount}) = expected:$expected")
         coeffProd.fma(coeffX, coeffY, coeffA)
-        val biProd = coeffProd.toBigInteger()
+        val biProd = coeffProd.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) + $coeffA (${coeffA.digitLen}) = $coeffProd (${coeffProd.digitLen})  expected:$expected")
         assert (biProd.equals(expected))
@@ -95,13 +95,13 @@ class TestCoeffFma {
         val rnd = random.nextInt(3)
         if (rnd == 0) {
             coeffX.fma(coeffX, coeffY, coeffA)
-            assert(coeffX.toBigInteger().equals(expected))
+            assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
             coeffY.fma(coeffX, coeffY, coeffA)
-            assert(coeffY.toBigInteger().equals(expected))
+            assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
             coeffA.fma(coeffX, coeffY, coeffA)
-            assert(coeffA.toBigInteger().equals(expected))
+            assert(coeffA.coeffToBigInteger().equals(expected))
         }
 
     }

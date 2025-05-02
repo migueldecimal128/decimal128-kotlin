@@ -70,13 +70,13 @@ class TestCoeffAddUnrounded {
             println("bad digit count $coeffA + $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()
         }
-        val biC = coeffC.toBigInteger()
+        val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         assert (biC.equals(expected))
 
         coeffA.add(coeffA, coeffB)
-        assert (coeffA.toBigInteger().equals(expected))
+        assert (coeffA.coeffToBigInteger().equals(expected))
     }
 
 }

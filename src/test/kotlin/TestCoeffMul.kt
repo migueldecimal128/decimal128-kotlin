@@ -101,7 +101,7 @@ class TestCoeffMul {
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = expected:$expected")
         coeffC.mul(coeffA, coeffB)
-        val biC = coeffC.toBigInteger()
+        val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
         assert (biC.equals(expected))
@@ -114,7 +114,7 @@ class TestCoeffMul {
         }
 
         coeffA.mul(coeffA, coeffB)
-        assert (coeffA.toBigInteger().equals(expected))
+        assert (coeffA.coeffToBigInteger().equals(expected))
     }
 
 }

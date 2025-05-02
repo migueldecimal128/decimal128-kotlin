@@ -113,8 +113,8 @@ class TestRecipMulPow10 {
             assertEquals(case.biQuotient, recipQuotient)
 
         divModPow10(coeffQ, coeffR, coeffA, pow10)
-        val biQ = coeffQ.toBigInteger()
-        val biR = coeffR.toBigInteger()
+        val biQ = coeffQ.coeffToBigInteger()
+        val biR = coeffR.coeffToBigInteger()
         if (! (biQ.equals(case.biQuotient) && biR.equals(case.biRemainder)))
             println("observed $biQ : $biR  expected ${case.biQuotient} : ${case.biRemainder}")
         assert (biQ.equals(case.biQuotient) && biR.equals(case.biRemainder))

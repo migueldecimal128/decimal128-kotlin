@@ -1,6 +1,5 @@
 package com.decimal128
 
-import com.decimal128.CoeffSet.coeffSet
 import com.decimal128.Residue.Companion.EXACT
 import java.math.BigDecimal
 import java.math.MathContext
@@ -22,7 +21,7 @@ class Mag {
             if (residue != EXACT) {
                 val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (roundUp) {
-                    c.roundUp()
+                    c.coeffRoundUp()
                     if (c.digitLen > PRECISION_34) {
                         // if we rolled into another digit because of roundup
                         // then the result is definitely divisible by 10

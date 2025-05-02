@@ -163,7 +163,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         }
     }
 
-    fun coeffSet(index: Int, value: Long) {
+    operator fun set(index: Int, value: Long) {
         assert(digitLen == -1)
         when (index) {
             0 -> dw0 = value
@@ -174,12 +174,12 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         }
     }
 
-    fun enableIndexSetAndZeroOut() {
+    fun coeffEnableIndexSetAndZeroOut() {
         digitLen = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
-    fun disableIndexSetAndUpdateLengths() {
+    fun coeffDisableIndexSetAndUpdateLengths() {
         assert(digitLen == -1)
         updateLengths()
     }
@@ -225,10 +225,10 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffSet(x: LongArray, xOff: Int, xLen: Int) = coeffSet(this, x, xOff, xLen)
 
-    fun setShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
+    fun coeffSetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         coeffSetShiftRight(this, x, xOff, xLen, bitCount)
 
-    fun toBigInteger(): BigInteger {
+    fun coeffToBigInteger(): BigInteger {
 //        assert(validateDigitCount())
         var bi = BigInteger.ZERO
         val dw0Lo = dw0 and 0xFFFFFFFFL
@@ -250,12 +250,12 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return bi
     }
 
-    fun roundUp(doRoundUp: Boolean) {
+    fun coeffRoundUp(doRoundUp: Boolean) {
         if (doRoundUp)
-            roundUp()
+            coeffRoundUp()
     }
 
-    fun roundUp() {
+    fun coeffRoundUp() {
         ++dw0
         if (dw0 == 0L) {
             ++dw1
@@ -274,6 +274,6 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
 
 
-    override fun toString() = toBigInteger().toString()
+    override fun toString() = coeffToBigInteger().toString()
 
 }
