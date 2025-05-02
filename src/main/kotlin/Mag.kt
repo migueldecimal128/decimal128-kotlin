@@ -2,6 +2,7 @@ package com.decimal128
 
 import com.decimal128.Residue.Companion.EXACT
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.MathContext
 
 const val MIN_EXPONENT = -6143
@@ -52,10 +53,18 @@ class Mag {
         c.coeffSet64(dw0)
     }
 
+    fun magSet(exponent: Int, bi: BigInteger) =
+        magSet(exponent, bi, false, Decimal128Context())
+
+    fun magSet(exponent: Int, bi: BigInteger, sign: Boolean, ctx: Decimal128Context) {
+        c.coeffSet(bi)
+        exp = exponent
+        finalize(sign, ctx)
+    }
+
     fun magSet(bd: BigDecimal) {
         val bdRounded = bd.round(MathContext.DECIMAL128)
-        c.coeffSet(bdRounded.unscaledValue())
-        exp = -bdRounded.scale()
+        magSet(-bdRounded.scale(), bdRounded.unscaledValue())
     }
 
     fun magSet(x:Mag) {
@@ -63,7 +72,10 @@ class Mag {
         c.coeffSet(x.c)
     }
 
+    override fun toString(): String = c.toString() + "E" + exp
+
     fun magSet(str: String) = magSet(BigDecimal(str))
 
+    fun magAdd(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) = MagAdd.magAdd(this, a, b, sign, ctx)
 
 }
