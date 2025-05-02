@@ -16,8 +16,11 @@ fun getDigitCount(n: Int) : Int {
 @OptIn(ExperimentalUnsignedTypes::class)
 class TestCalcDigitCount64 {
 
+    val verbose = false
+
     @Test
     fun test() {
+        test1(ULong.MAX_VALUE)
         test1(Long.MAX_VALUE.toULong())
         test1(Long.MIN_VALUE.toULong())
         test1(ULong.MAX_VALUE)
@@ -40,6 +43,8 @@ class TestCalcDigitCount64 {
     fun test1(ul: ULong) {
         val ulStrLen = ul.toString().length
         val expected = if (ul == 0uL) 0 else ulStrLen
+        if (verbose)
+            println("ul:$ul expected:$expected")
         val l = ul.toLong()
         val bitLen = 64 - java.lang.Long.numberOfLeadingZeros(l)
         val observed = CoeffDigitLen.calcDigitLen64(bitLen, l)

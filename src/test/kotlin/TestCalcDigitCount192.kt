@@ -8,6 +8,17 @@ import java.util.*
 
 class TestCalcDigitCount192 {
 
+    val verbose = false
+
+    val tcs = arrayOf(
+        BigInteger.TEN.pow(39)
+    )
+    @Test
+    fun testCases() {
+        for (tc in tcs)
+            test1(tc)
+    }
+
     @Test
     fun test() {
         test1(BigInteger.ONE.shiftLeft(128))
@@ -30,6 +41,8 @@ class TestCalcDigitCount192 {
     fun test1(bi: BigInteger) {
         val biStrLen = bi.toString().length
         val expected = biStrLen
+        if (verbose)
+            println("val:$bi expected:$expected")
         val dw0 = bi.toLong()
         val dw1 = bi.shiftRight(64).toLong()
         val dw2 = bi.shiftRight(128).toLong()
