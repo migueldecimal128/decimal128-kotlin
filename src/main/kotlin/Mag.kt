@@ -10,7 +10,9 @@ const val MIN_ADJUSTED_EXPONENT = -6143
 const val TINY_EXPONENT = MIN_ADJUSTED_EXPONENT - (PRECISION_34 - 1)
 
 const val NON_FINITE_MIN = 1000000
-const val NON_FINITE_INFINITY = 1000000
+const val NON_FINITE_INF = 1000000
+const val NON_FINITE_QNAN = 1000001
+const val NON_FINITE_SNAN = 1000002
 
 class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     val c:Coeff = Coeff()
@@ -33,9 +35,9 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
             ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
 
         var totalResidue = inboundResidue
-        var scaleDelta = c.digitLen - PRECISION_34
-        if (scaleDelta > 0) {
-            val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(c, c, scaleDelta)
+        var excessDigits = c.digitLen - PRECISION_34
+        if (excessDigits > 0) {
+            val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(c, c, excessDigits)
             totalResidue = scaleResidue.merge(inboundResidue)
         }
         if (totalResidue != EXACT) {
@@ -47,20 +49,20 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
                     // then the result is definitely divisible by 10
                     val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, 1)
                     assert(residue2 == Residue.EXACT)
-                    ++scaleDelta
+                    ++excessDigits
                 }
             }
             ctx.setInexact()
         }
-        if (scaleDelta > 0) {
-            exp += scaleDelta
+        if (excessDigits > 0) {
+            exp += excessDigits
         }
         val postRoundAdjustedExp = exp + (c.digitLen - 1)
         if (postRoundAdjustedExp > MAX_ADJUSTED_EXPONENT) {
             // overflow IEEE754-2008 7.4 Overflow page 37
             if (ctx.roundingDirection.overflowsToInfinity(sign)) {
                 c.coeffSetZero()
-                exp = NON_FINITE_INFINITY
+                exp = NON_FINITE_INF
             } else {
                 magSetMaxFinite()
             }
@@ -71,12 +73,19 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         if (exp >= TINY_EXPONENT)
             return
         // 7.5.1: subnormal rounding (tiny result stays nonzero)
-        val tinyScaleDown = TINY_EXPONENT - exp
-        if ((c.digitLen - 1) >= tinyScaleDown) {
+        var tinyScaleDown = TINY_EXPONENT - exp
+        if (c.digitLen >= tinyScaleDown) {
             val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, tinyScaleDown)
-            if (residue2 != EXACT)
+            exp += tinyScaleDown
+            if (residue2 != EXACT) {
                 ctx.setInexact()
-            assert(exp + (c.digitLen - 1) >= MIN_ADJUSTED_EXPONENT)
+                val roundUp2 = residue2.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
+                if (roundUp2) {
+                    val digitLenBeforeRoundUp = c.digitLen
+                    c.coeffRoundUp()
+                }
+            }
+            assert(exp == TINY_EXPONENT)
             return
         }
         // underflow to zero
@@ -123,15 +132,12 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     fun magSet(bd: BigDecimal, ctx: Decimal128Context) {
         val bdRounded = bd.round(MathContext.DECIMAL128)
         magSet(-bdRounded.scale(), bdRounded.unscaledValue(), ctx)
-        finalize(EXACT, bdRounded.signum() == -1, ctx)
     }
 
     fun magSet(x:Mag) {
         exp = x.exp
         c.coeffSet(x.c)
     }
-
-    override fun toString(): String = c.toString() + "E" + exp
 
     fun magSet(str: String) = magSet(BigDecimal(str))
 
@@ -142,4 +148,15 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         exp = e
         finalize(Residue.EXACT, sign, ctx)
     }
+
+    override fun toString(): String {
+        return when {
+            (exp < NON_FINITE_MIN) -> c.toString() + "E" + exp
+            exp == NON_FINITE_INF -> "Inf"
+            exp == NON_FINITE_QNAN -> "NaN" + c.toNaNString()
+            exp == NON_FINITE_SNAN -> "sNaN" + c.toNaNString()
+            else -> "?que? $exp"
+        }
+    }
+
 }

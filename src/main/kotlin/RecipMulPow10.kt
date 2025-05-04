@@ -389,6 +389,8 @@ object RecipMulPow10 {
     }
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+        //FIXME ... optimize the case where we can accomplish it all
+        // right here when x.bitLen is small
         initialize()
         if (pow10 <= 0) {
             assert(pow10 == 0)

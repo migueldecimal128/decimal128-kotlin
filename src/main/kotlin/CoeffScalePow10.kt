@@ -58,6 +58,7 @@ object CoeffScalePow10 {
         val productDigitCount = x.digitLen - pow10
         if (productDigitCount <= 0) {
             val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
+            z.coeffSetZero()
             return residue
         }
         return RecipMulPow10.divPow10(z, x, pow10)
