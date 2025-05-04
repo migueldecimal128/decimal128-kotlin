@@ -358,6 +358,36 @@ import java.lang.Long.compareUnsigned
         }
     }
 
+    /*
+                previous
+                exact lt_half half    gt_half
+    exact       exact lt_half lt_half lt_half
+    lt_half     lt_half lt_half lt_half lt_half
+    half        half, gt_half, gt_half, gtHalf
+    gt_half     gt_half gt_half gt_half gt_half
+
+     */
+    //FIXME turn this into a map
+    // it is really just just merging the sticky bit
+
+    //FIXME what to do about _NEGATED residues
+    fun merge(stickyResidue: Residue): Residue {
+        val mergedResidue = when (this.value) {
+            EXACT.value -> if (stickyResidue.value and 3 == EXACT.value) EXACT else LT_HALF
+            LT_HALF.value -> LT_HALF
+            HALF.value -> if (stickyResidue.value and 3 == EXACT.value) HALF else GT_HALF
+            GT_HALF.value -> GT_HALF
+
+            EXACT_NEGATED.value -> if (stickyResidue.value and 3 == EXACT.value) EXACT_NEGATED else LT_HALF_NEGATED
+            LT_HALF_NEGATED.value -> LT_HALF_NEGATED
+            HALF_NEGATED.value -> if (stickyResidue.value and 3 == EXACT.value) HALF_NEGATED else GT_HALF_NEGATED
+            GT_HALF_NEGATED.value -> GT_HALF_NEGATED
+
+            else -> throw RuntimeException("unrecognized Residue.value")
+        }
+        return mergedResidue
+    }
+
     override fun toString() : String {
         return if (this.value in STRING_NAMES.indices) STRING_NAMES[this.value] else "invalid Residue:$value"
     }

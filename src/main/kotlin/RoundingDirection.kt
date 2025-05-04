@@ -40,6 +40,18 @@ value class RoundingDirection private constructor(val value:Int) {
 
     fun mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
+    fun overflowsToInfinity(sign: Boolean): Boolean {
+        val toInfinity = when (this.value) {
+            ROUND_TIES_TO_EVEN.value -> true
+            ROUND_TIES_TO_AWAY.value -> true
+            ROUND_TOWARD_ZERO.value -> false
+            ROUND_TOWARD_POSITIVE.value -> ! sign
+            ROUND_TOWARD_NEGATIVE.value -> sign
+            else -> throw RuntimeException("unrecognized RoundingDirection value:$value")
+        }
+        return toInfinity
+    }
+
     override fun toString() = TO_STRING_MAP[value]
 
 }
