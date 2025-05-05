@@ -15,6 +15,7 @@ class TestCoeffMul {
     }
 
     val cases = arrayOf(
+        TC("143005781744313106762286640808689760291381", "680117584506250987821428704491240734"),
         TC("18446744073709551616", "0"),
         TC("9999999999999999919", "9999999999999999919"),
         TC("9999999999999999918", "99999999999999999920"),
@@ -75,8 +76,8 @@ class TestCoeffMul {
     }
 
     @Test
-    fun testRandoma() {
-        for (i in 0..<100000) {
+    fun testRandom() {
+        for (i in 0..<10000000) {
             val case = TC(randBi(), randBi())
             test1(case)
         }

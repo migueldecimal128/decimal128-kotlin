@@ -132,8 +132,8 @@ object CoeffDivide {
                 return residue
             }
         }
-        val xBitLen = CoeffBits.bitLength(x)
-        val yBitLen = CoeffBits.bitLength(y)
+        val xBitLen = x.bitLen
+        val yBitLen = y.bitLen
         if (xBitLen < yBitLen) {
             val residue = when {
                 xBitLen == 0 -> EXACT

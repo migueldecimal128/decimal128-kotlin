@@ -153,6 +153,25 @@ object CoeffDigitLen {
         // we can represent all 77 decimal digit numbers
     )
 
+    val POW10_BIT_LEN = ShortArray(78) {
+        i ->
+        when {
+            i < POW10_128_OFFSET -> 64 - numberOfLeadingZeros(POW10[i])
+            i < POW10_192_OFFSET -> {
+                val j = POW10_128_DWORD_INDEX + i - POW10_128_OFFSET
+                128 - numberOfLeadingZeros(POW10[j])
+            }
+            i < POW10_256_OFFSET -> {
+                val j = POW10_192_DWORD_INDEX + i - POW10_192_OFFSET
+                192 - numberOfLeadingZeros(POW10[j])
+            }
+            else -> {
+                val j = POW10_256_DWORD_INDEX + i - POW10_256_OFFSET
+                256 - numberOfLeadingZeros(POW10[j])
+            }
+        }.toShort()
+    }
+
     @Suppress("unused")
     private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX); true }
 
@@ -608,7 +627,6 @@ object CoeffDigitLen {
         val digitCount = POW10_256_OFFSET + lo
         return digitCount
     }
-
 
     /*
     fun tweakDigitLenAfterRoundUp(c: Coeff) {
