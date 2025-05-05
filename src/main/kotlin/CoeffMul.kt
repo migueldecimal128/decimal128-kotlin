@@ -118,16 +118,8 @@ object CoeffMul {
 
     private fun _mulCoeff(
         p: Coeff,
-        xDigitCount: Int,
-        x3: Long,
-        x2: Long,
-        x1: Long,
-        x0: Long,
-        yDigitCount: Int,
-        y3: Long,
-        y2: Long,
-        y1: Long,
-        y0: Long
+        xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
+        yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long
     ) {
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.coeffSetZero()
@@ -192,13 +184,8 @@ object CoeffMul {
 
     private fun _mulCoeff(
         p: Coeff,
-        xDigitCount: Int,
-        x3: Long,
-        x2: Long,
-        x1: Long,
-        x0: Long,
-        yDigitCount: Int,
-        y0: Long
+        xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
+        yDigitCount: Int, y0: Long
     ) {
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.coeffSetZero()
@@ -250,13 +237,8 @@ object CoeffMul {
 
     private fun _mulCoeff(
         p: Coeff,
-        xDigitCount: Int,
-        x2: Long,
-        x1: Long,
-        x0: Long,
-        yDigitCount: Int,
-        y1: Long,
-        y0: Long
+        xDigitCount: Int, x2: Long, x1: Long, x0: Long,
+        yDigitCount: Int, y1: Long, y0: Long
     ) {
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.coeffSetZero()
@@ -310,7 +292,10 @@ object CoeffMul {
         throw RuntimeException("coefficient multiply overflow")
     }
 
-    private fun _mulCoeff(p: Coeff, xDigitCount: Int, x2: Long, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+    private fun _mulCoeff(
+        p: Coeff,
+        xDigitCount: Int, x2: Long, x1: Long, x0: Long,
+        yDigitCount: Int, y0: Long) {
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.coeffSetZero()
             return
@@ -351,7 +336,11 @@ object CoeffMul {
         p.coeffSet256(p3, p2, p1, p0)
     }
 
-    private fun _mulCoeff(p: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y1: Long, y0: Long) {
+    private fun _mulCoeff(
+        p: Coeff, xDigitCount:
+        Int, x1: Long, x0: Long,
+        yDigitCount: Int, y1: Long, y0: Long
+    ) {
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.coeffSetZero()
             return
@@ -387,7 +376,11 @@ object CoeffMul {
         p.coeffSet256(p3, p2, p1, p0)
     }
 
-    private fun _mulCoeff(p: Coeff, xDigitCount: Int, x1: Long, x0: Long, yDigitCount: Int, y0: Long) {
+    private fun _mulCoeff(
+        p: Coeff,
+        xDigitCount: Int, x1: Long, x0: Long,
+        yDigitCount: Int, y0: Long
+    ) {
         if (xDigitCount == 0 || yDigitCount == 0) {
             p.coeffSetZero()
             return
@@ -413,7 +406,11 @@ object CoeffMul {
         p.coeffSet192(p2, p1, p0)
     }
 
-    private fun _mulCoeff(p: Coeff, xDigitCount: Int, x0: Long, yDigitCount: Int, y0: Long) {
+    private fun _mulCoeff(
+        p: Coeff,
+        xDigitCount: Int, x0: Long,
+        yDigitCount: Int, y0: Long
+    ) {
         val p1 = unsignedMultiplyHigh(x0, y0)
         val p0 = x0 * y0
         p.coeffSet128(p1, p0)

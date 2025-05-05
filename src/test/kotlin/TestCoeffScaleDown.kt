@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import java.math.BigDecimal
@@ -11,7 +12,7 @@ import java.math.RoundingMode
 
 class TestCoeffScaleDown {
 
-    val verbose = false
+    val verbose = true
 
     class TC(
         val biA: BigInteger, val pow10: Int, val sign: Boolean, val roundingDirection: RoundingDirection)
@@ -35,6 +36,9 @@ class TestCoeffScaleDown {
     }
 
     val cases = arrayOf(
+        TC("1087", 2, true, ROUND_TOWARD_ZERO),
+        TC("1087", 2, false, ROUND_TIES_TO_EVEN),
+        TC("18010334491269082087", 2, true, ROUND_TOWARD_ZERO),
         TC("3482748081595369130101", 16, false, ROUND_TIES_TO_EVEN),
         TC("167457751028870756383096012673692132664", 39, false, ROUND_TIES_TO_AWAY),
         TC("74", 1, false, ROUND_TIES_TO_EVEN),

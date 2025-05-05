@@ -270,6 +270,12 @@ import java.lang.Long.compareUnsigned
             return residueX
         }
 
+        fun residueFrom(roundBit: Int, stickyBit: Int, stickyBitPow2: Int) : Residue {
+            val residueValue = ((roundBit and 1) shl 1) or ((stickyBit or stickyBitPow2) and 1)
+            val residueX = Residue(residueValue)
+            return residueX
+        }
+
         fun residueFromRemainderDivisor(r: Coeff, d: Coeff): Residue {
             if (r.dw3 < 0L) {
                 // high bit of residue is set
