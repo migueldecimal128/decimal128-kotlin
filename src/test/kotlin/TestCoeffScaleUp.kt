@@ -6,6 +6,8 @@ import java.util.*
 
 class TestCoeffScaleUp {
 
+    val verbose = false
+
     class TC(val biA: BigInteger, val pow10: Int) {
         val biProduct = biA.multiply(BigInteger.TEN.pow(pow10))
 
@@ -13,6 +15,8 @@ class TestCoeffScaleUp {
     }
 
     val cases = arrayOf(
+        TC("2", 59),
+        TC("2", 58),
         TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE), 1),
         TC("0", 60),
         TC("1", 1),
@@ -92,7 +96,8 @@ class TestCoeffScaleUp {
         val coeffObserved = Coeff()
         val pow10 = case.pow10
         val ctx = Decimal128Context()
-        //println("$coeffA (${coeffA.digitCount}) * 10**$pow10 = expected:$expected")
+        if (verbose)
+            println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = expected:$expected")
         coeffObserved.scaleUpPow10(coeffA, pow10)
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))

@@ -3,6 +3,7 @@ package com.decimal128
 import com.decimal128.CoeffMul.mulCoeff
 import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffDigitLen.POW10
+import com.decimal128.CoeffDigitLen.POW10_BIT_LEN
 import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
 import com.decimal128.Residue.Companion.EXACT
 import kotlin.math.max
@@ -16,32 +17,30 @@ object CoeffScalePow10 {
             return
         }
 
-        // note that this is a litle lie
-        // digitCount is actually pow10 + 1
-        // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
-        val pow10DigitCount = pow10
+        val pow10BitLen = POW10_BIT_LEN[pow10].toInt()
 
         val productDigitCount = x.digitLen + pow10
         if (productDigitCount >= MAX_COEFF_DIGIT_COUNT)
             throw RuntimeException("coefficient overflow")
         when {
-            (pow10 < POW10_128_OFFSET) -> {
-                val index = pow10; mulCoeff(z, x, pow10DigitCount, POW10[index + 0])
+            (pow10BitLen <= 64) -> {
+                val index = pow10;
+                mulCoeff(z, x, pow10BitLen, POW10[index + 0])
             }
 
-            (pow10 < POW10_192_OFFSET) -> {
+            (pow10BitLen <= 128) -> {
                 val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
-                mulCoeff(z, x, pow10DigitCount, POW10[index + 1], POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[index + 1], POW10[index + 0])
             }
 
-            (pow10 < POW10_256_OFFSET) -> {
+            (pow10BitLen <= 192) -> {
                 val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
-                mulCoeff(z, x, pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[index + 2], POW10[index + 1], POW10[index + 0])
             }
 
-            (pow10 < POW10_MAX_OFFSET) -> {
+            (pow10BitLen <= 256) -> {
                 val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_256_OFFSET);
-                mulCoeff(z, x, pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0])
             }
 
             else -> throw RuntimeException("?que?")
