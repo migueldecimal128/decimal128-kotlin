@@ -36,8 +36,10 @@ class TestMagicU64 {
         var p       = (N - 1).toLong()
         var q1      = twoNm1.divide(anc)
         var r1      = twoNm1.remainder(anc)
-        var q2      = twoNm1.add(BigInteger.ONE).divide(biD)
-        var r2      = twoNm1.add(BigInteger.ONE).remainder(biD)
+        var q2 = twoNm1.divide(biD)
+        var r2 = twoNm1.remainder(biD)
+        //var q2      = twoNm1.add(BigInteger.ONE).divide(biD)
+        //var r2      = twoNm1.add(BigInteger.ONE).remainder(biD)
         var delta: BigInteger
 
         do {
@@ -62,23 +64,26 @@ class TestMagicU64 {
         for (k in 1..19) this[k] = this[k-1] * 10
     }
     val MAGIC_POW10_64 = LongArray(20)
-    val ADD_FLAG_AND_SHIFT_POW10_64 = ByteArray(20)
+    val SHIFT_POW10_64 = IntArray(20)
+    val ADD_FLAG_POW10_64 = BooleanArray(20)
 
     fun initialize() {
         MAGIC_POW10_64[0] = 1
-        ADD_FLAG_AND_SHIFT_POW10_64[0] = Byte.MIN_VALUE
+        SHIFT_POW10_64[0] = 0
+        ADD_FLAG_POW10_64[0] = true
         for (k in 1..19) {
             val d     = POW10[k]
             val magic = magicu64(d)
             MAGIC_POW10_64[k]   = magic.m
-            ADD_FLAG_AND_SHIFT_POW10_64[k] =
-                (if (magic.add) 0x80 or magic.s else magic.s).toByte()
+            SHIFT_POW10_64[k] = magic.s
+            ADD_FLAG_POW10_64[k] = magic.add
         }
     }
 
     data class TC(val l: Long, val pow10: Int)
 
     val cases = arrayOf(
+        TC(7179907454500972459, 1),
         TC(123, 0),
         TC(1004957002449959557, 15),
         TC(123, 1),
@@ -97,8 +102,8 @@ class TestMagicU64 {
     @Test
     fun testRandom() {
         initialize()
-        for (i in 0..<100000000) {
-            val l = (random.nextLong() and Long.MIN_VALUE) ushr random.nextInt(0, 62)
+        for (i in 0..<1000000) {
+            val l = random.nextLong() ushr random.nextInt(0, 62)
             val p = random.nextInt(20)
             val tc = TC(l, p)
             test1(tc)
@@ -109,22 +114,42 @@ class TestMagicU64 {
         test1(tc.l, tc.pow10)
     }
 
-    fun test1(l: Long, pow10: Int) {
-        if (l < 0)
-            return
-        val divisor = POW10[pow10]
+    fun test1(u: Long, k: Int) {
+        val divisor = POW10[k]
 
-        val expected = java.lang.Long.divideUnsigned(l, divisor)
+        val expected = java.lang.Long.divideUnsigned(u, divisor)
 
         if (verbose)
-            println("$l / 10**$pow10 => $expected")
+            println("$u / 10**$k => $expected")
 
-        val m = MAGIC_POW10_64[pow10]
-        val flagAndShift = ADD_FLAG_AND_SHIFT_POW10_64[pow10]
-        val s = flagAndShift.toInt() and 0x3F
-        val add = (flagAndShift.toLong() shr 63) and l
-        val beforeShift = Math.unsignedMultiplyHigh(l, m) + add
-        val observed = beforeShift ushr s
+        val m = MAGIC_POW10_64[k]
+        val s = SHIFT_POW10_64[k]
+        val addFlag = ADD_FLAG_POW10_64[k]
+        val toAdd = if (addFlag) u else 0L
+        val hi = Math.unsignedMultiplyHigh(u, m)
+        val sumLo = hi + toAdd
+        val carryAdd = if (java.lang.Long.compareUnsigned(sumLo, hi) < 0) (1L shl -s) else 0L
+        val observed = carryAdd or (sumLo ushr s)
+
+        if (observed != expected) {
+            error("""
+      |––– Division by 10^$k failed –––
+      |  u          = $u
+      |  expected   = $expected
+      |  observed   = $observed
+      |  
+      |  m          = $m
+      |  addFlag    = $addFlag
+      |  shift      = $s
+      |  
+      |  hi         = $hi
+      |  toAdd      = $toAdd
+      |  sumLo      = $sumLo
+      |  carryAdd   = $carryAdd
+      |  
+      |  POW10[k]   = ${POW10[k]}
+      """.trimMargin())
+        }
 
         assertEquals(expected, observed)
     }

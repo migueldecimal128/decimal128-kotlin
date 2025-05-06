@@ -420,8 +420,8 @@ object RecipMulPow10 {
         var p       = (N - 1).toLong()
         var q1      = twoNm1.divide(anc)
         var r1      = twoNm1.remainder(anc)
-        var q2      = twoNm1.add(BigInteger.ONE).divide(biD)
-        var r2      = twoNm1.add(BigInteger.ONE).remainder(biD)
+        var q2      = twoNm1.divide(biD)
+        var r2      = twoNm1.remainder(biD)
         var delta: BigInteger
 
         do {
@@ -464,7 +464,7 @@ object RecipMulPow10 {
                 z.coeffSet(x)
                 return EXACT
             }
-            if (x.bitLen < 64) { // must be strictly less than 64
+            if (x.bitLen <= 64) {
                 initializeMagicPow10_64()
                 val m = MAGIC_POW10_64[pow10]
                 val flagShift = FLAG_SHIFT_POW10_64[pow10].toInt()
@@ -675,13 +675,15 @@ object RecipMulPow10 {
         flagShift: Int,
     ): Residue {
         val s = flagShift and 0x3F
+        val qLostCarry = 1L shl -s
         val addMask = (flagShift shr 31).toLong()
         val pp00Hi = unsignedMultiplyHigh(x0, m)
         val pp00Lo = x0 * m
         val p0 = pp00Lo
         val p1 = pp00Hi
-        val qT = p1 + (x0 and addMask)
-        val q0 = (qT ushr s)
+        val qLo = p1 + (x0 and addMask)
+        val qCarryAdd = if (compareUnsigned(qLo, p1) < 0) qLostCarry else 0L
+        val q0 = qCarryAdd + (qLo ushr s)
         q.coeffSet64(q0)
 
         val roundBit = (p1 shr (s - 1)).toInt() and 1
