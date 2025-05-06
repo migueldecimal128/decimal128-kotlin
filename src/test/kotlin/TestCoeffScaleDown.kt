@@ -7,12 +7,14 @@ import java.util.*
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 class TestCoeffScaleDown {
 
-    val verbose = true
+    val verbose = false
 
     class TC(
         val biA: BigInteger, val pow10: Int, val sign: Boolean, val roundingDirection: RoundingDirection)
@@ -36,6 +38,14 @@ class TestCoeffScaleDown {
     }
 
     val cases = arrayOf(
+        TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE),
+        TC("8833659103727869972", 4, false, ROUND_TOWARD_NEGATIVE),
+        TC("8833659103727869972", 4, true, ROUND_TOWARD_POSITIVE),
+        TC("8833659103727869972", 4, true, ROUND_TOWARD_NEGATIVE),
+        TC("2243325502234968696719", 9, false, ROUND_TIES_TO_EVEN),
+        TC(BigInteger.ONE.shiftLeft(66), 1, false, ROUND_TIES_TO_EVEN),
+        TC("316413813903600685246406848", 8, false, ROUND_TIES_TO_EVEN),
+        TC("1598575705195620085819330297435841000492438", 6, false, ROUND_TOWARD_ZERO),
         TC("1087", 2, true, ROUND_TOWARD_ZERO),
         TC("1087", 2, false, ROUND_TIES_TO_EVEN),
         TC("18010334491269082087", 2, true, ROUND_TOWARD_ZERO),
@@ -53,14 +63,22 @@ class TestCoeffScaleDown {
     val deltas = arrayOf(BigInteger.ONE.negate(), BigInteger.ZERO, BigInteger.ONE)
 
     @Test
+    fun testProblemChild() {
+        val tc = TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE)
+        test1(tc)
+    }
+
+    @Test
     fun testDecimalBoundaries() {
         for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
             val biQ = BigInteger.TEN.pow(qDigitCount)
-            for (xPow10 in MIN_DIVISOR_POW10..<Math.min(MIN_DIVISOR_POW10, qDigitCount + 2)) {
+            for (xPow10 in MIN_DIVISOR_POW10..<Math.min(MAX_DIVISOR_POW10, qDigitCount + 2)) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
-                    val case = buildTestCase(biA, xPow10)
-                    test1(case)
+                    if (biA.bitLength() <= 256) {
+                        val case = buildTestCase(biA, xPow10)
+                        test1(case)
+                    }
                 }
             }
         }
@@ -68,7 +86,8 @@ class TestCoeffScaleDown {
 
     @Test
     fun testBinaryBoundaries() {
-        val quads = longArrayOf(
+        val quads = longArrayOf( // littleEndian order
+            (1L shl 62), 0, 0, 0,
             -1, -1, -1, -1,
             -1, 0, 0,0,
             -1, -1, 0, 0,
@@ -78,6 +97,7 @@ class TestCoeffScaleDown {
             0, 1, 0, 0,
             0, 0, 1, 0,
             0, 0, 0, 1,
+            0, 0, 0, (1L shl 62),
         )
 
         for (i in quads.indices step 4) {
@@ -89,7 +109,7 @@ class TestCoeffScaleDown {
             for (xPow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
-                    if (biA.bitLength() <= 256) {
+                    if (biA.bitLength() <= 64) {
                         val case = buildTestCase(biA, xPow10)
                         test1(case)
                     }

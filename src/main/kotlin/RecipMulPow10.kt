@@ -1,5 +1,8 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128
 
+import com.decimal128.CoeffDigitLen.POW10
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
@@ -390,79 +393,86 @@ object RecipMulPow10 {
         throw RuntimeException("not impl")
     }
 
-    // for pow10 = 0..19
-    val MAX_POW10_64 = 20 // max exclusive
-    val MULTIPLIERS_POW5_64 = LongArray(MAX_POW10_64)
-    val SHIFTS_POW5_64       = ByteArray(MAX_POW10_64)
+    data class Magic(val m: Long, val add: Boolean, val s: Int)
 
-    private var isInitialized = false
-    private fun computeMagicTables() {
-        if (isInitialized)
-            return
-        isInitialized = true
-        // divide by 1
-        MULTIPLIERS_POW5_64[0] = 1L
-        SHIFTS_POW5_64[0]       = 0
-        val W = 64
-        for (pow10 in 1..19) {
-            // divisor5 = 5^pow10
-            val divisor5 = FIVE.pow(pow10)
-            var found = false
+    /**
+     * Compute magic number and shift for unsigned division by d (any 1 ≤ d < 2^64).
+     * Returns:
+     *   m   = low 64 bits of the “true” multiplier,
+     *   add = true if the true multiplier had bit-64 set (i.e. needed 65 bits),
+     *   s   = the right-shift amount beyond 64.
+     */
+    fun magicu64(d: Long): Magic {
+        require(d != 0L) { "divisor must be nonzero" }
+        val N      = 64
+        val twoToN = BigInteger.ONE.shiftLeft(N)           // 2^64
+        // Reconstruct the unsigned 64-bit divisor in a BigInteger:
+        val hi32 = d ushr 32                             // logical shift, bits 63–32
+        val lo32  = d and 0xFFFFFFFFL                     // bits 31–0
+        val biD    = BigInteger.valueOf(hi32)
+            .shiftLeft(32)
+            .or(BigInteger.valueOf(lo32))
+        // anc = 2^N - 1 - ((2^N - 1) mod d)
+        val biN1   = twoToN - BigInteger.ONE
+        val anc    = biN1 - biN1.mod(biD)
 
-            // search p = 64..64+127 so that m = ceil(2^p / divisor5) fits in 64 bits
-            for (p in (W + 1)..(W + 127)) {
-                val twoToP = BigInteger.ONE.shiftLeft(p)
-                // m = ceil(2^p / 5^pow10)
-                val m = (twoToP + divisor5 - BigInteger.ONE).divide(divisor5)
-                if (m.bitLength() <= W) {
-                    MULTIPLIERS_POW5_64[pow10] = m.toLong()
-                    // store only the excess shift beyond the 64-bit high-mul
-                    SHIFTS_POW5_64[pow10]       = (p - W).toByte()
-                    found = true
-                    break
-                }
-            }
-            require(found) { "No magic multiplier found for 5^$pow10" }
+        val twoNm1 = BigInteger.ONE.shiftLeft(N - 1)       // 2^(N-1)
+        var p       = (N - 1).toLong()
+        var q1      = twoNm1.divide(anc)
+        var r1      = twoNm1.remainder(anc)
+        var q2      = twoNm1.add(BigInteger.ONE).divide(biD)
+        var r2      = twoNm1.add(BigInteger.ONE).remainder(biD)
+        var delta: BigInteger
+
+        do {
+            p += 1
+            q1 = q1.shiftLeft(1); r1 = r1.shiftLeft(1)
+            if (r1 >= anc) { q1 += BigInteger.ONE; r1 -= anc }
+            q2 = q2.shiftLeft(1); r2 = r2.shiftLeft(1)
+            if (r2 >= biD)  { q2 += BigInteger.ONE; r2 -= biD }
+            delta = biD - r2
+        } while (q1 < delta || (q1 == delta && r1 == BigInteger.ZERO))
+
+        val Mtrue   = q2 + BigInteger.ONE
+        val addFlag = Mtrue.testBit(N)                    // was bit-64 set?
+        val m_mod   = Mtrue.clearBit(N).toLong()           // low 64 bits as signed Long
+        val s        = (p - N).toInt()
+
+        return Magic(m_mod, addFlag, s)
+    }
+
+    val MAX_POW10_64 = 20
+    val MAGIC_POW10_64 = LongArray(20)
+    val FLAG_SHIFT_POW10_64 = ByteArray(20)
+
+    fun initializeMagicPow10_64() {
+        MAGIC_POW10_64[0] = 1
+        FLAG_SHIFT_POW10_64[0] = Byte.MIN_VALUE
+        for (k in 1..<MAX_POW10_64) {
+            val d     = POW10[k]
+            val magic = magicu64(d)
+            MAGIC_POW10_64[k]   = magic.m
+            FLAG_SHIFT_POW10_64[k] =
+                (if (magic.add) 0x80 or magic.s else magic.s).toByte()
         }
     }
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        computeMagicTables()
-        if (false && pow10 < MAX_POW10_64) {
-            //FIXME ... optimize the case where we can accomplish it all
-            // right here when x.bitLen is small
+        if (pow10 < MAX_POW10_64) {
             if (pow10 <= 0) {
                 assert(pow10 == 0)
                 z.coeffSet(x)
                 return EXACT
             }
-            val m = MULTIPLIERS_POW5_64[pow10]
-            val s = SHIFTS_POW5_64[pow10].toInt()
-            when {
-                x.bitLen < 64 -> {
-                    val x0 = x.dw0
-                    val stickyBitPow2 = if (x0 and ((1L shl pow10) - 1L) == 0L) 0 else 1
-                    val x5 = x0 ushr pow10
-                    // val y = (x * MULTIPLIERS_64[pow10]).ushr(SHIFTS64[pow10].toInt())
-                    val pHi = unsignedMultiplyHigh(x5, m)
-                    val pLo = x.dw0 * m
-                    val q = pHi ushr s
-                    val roundBit = (pHi shr (s - 1)).toInt() and 1
-                    val cmpLo = compareUnsigned(pLo, m)
-                    val hiFracMask = (1L shl (s - 1)) - 1L
-                    val stickyBit = if ((cmpLo >= 0) or ((pHi and hiFracMask) != 0L)) 1 else 0
-                    val residue = Residue.residueFrom(roundBit, stickyBit, stickyBitPow2)
-
-                    z.coeffSet64(q)
-                    return residue
-                }
+            if (x.bitLen < 64) { // must be strictly less than 64
+                initializeMagicPow10_64()
+                val m = MAGIC_POW10_64[pow10]
+                val flagShift = FLAG_SHIFT_POW10_64[pow10].toInt()
+                val residue = _recipMul1x1(z, x.dw0, m, flagShift)
+                return residue
             }
         }
         initialize()
-        //FIXME calculate bitLen for each power of 10 in a
-        // ByteArray that lives alongside the POW10 table
-        // use it to determine if a dividend is smaller than
-        // a pow10 divider
         if (x.digitLen <= pow10) {
             if (x.digitLen == 0) {
                 z.coeffSetZero()
@@ -658,97 +668,28 @@ object RecipMulPow10 {
         return residue
     }
 
-    private fun _divSmallPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        computeMagicTables()
-        assert(pow10 < MAX_POW10_64)
-        if (pow10 <= 0) {
-            assert(pow10 == 0)
-            z.coeffSet(x)
-            return EXACT
-        }
-        val m = MULTIPLIERS_POW5_64[pow10]
-        val s = SHIFTS_POW5_64[pow10].toInt()
-        val x0 = x.dw0
-        val x1 = x.dw1
-        val x2 = x.dw2
-        when {
-            x.bitLen <= 64 + pow10 - 1 -> { // subtract 1 to leave room for the round bit
-                val stickyBitPow2 = if (x0 and ((1L shl pow10) - 1L) == 0L) 0 else 1
-                val x0_5 = (x1 ushr -pow10) or (x0 ushr pow10)
-                // val y = (x * MULTIPLIERS_64[pow10]).ushr(SHIFTS64[pow10].toInt())
-                val p0Hi = unsignedMultiplyHigh(x0_5, m)
-                val p0Lo = x0_5 * m
-                val q = p0Hi ushr s
-                val roundBit = (p0Hi shr (s - 1)).toInt() and 1
-                val cmpLo = compareUnsigned(p0Lo, m)
-                val hiFracMask = (1L shl (s - 1)) - 1L
-                val stickyBit = if ((cmpLo >= 0) or ((p0Hi and hiFracMask) != 0L)) 1 else 0
-                val residue = Residue.residueFrom(roundBit, stickyBit, stickyBitPow2)
-
-                z.coeffSet64(q)
-                return residue
-            }
-            x.bitLen <= 128 + pow10 - 1 -> {
-                val x1_5 = (x2 ushr -pow10) or (x1 ushr pow10)
-                val x0_5 = (x1 ushr -pow10) or (x1 ushr pow10)
-                val p0Hi = unsignedMultiplyHigh(x0_5, m)
-                val p0Lo = x0_5 * m
-
-            }
-        }
-        throw RuntimeException("not impl")
-    }
-
-    private fun _mulCoeff(
-        p: Coeff,
-        xBitLen: Int, x3: Long, x2: Long, x1: Long, x0: Long,
-        yBitLen: Int, y0: Long
-    ) {
-        if (xBitLen == 0 || yBitLen == 0) {
-            p.coeffSetZero()
-            return
-        }
-        val hiBitLen = xBitLen + yBitLen
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp00Lo = x0 * y0
+    private inline fun _recipMul1x1(
+        q: Coeff,
+        x0: Long,
+        m: Long,
+        flagShift: Int,
+    ): Residue {
+        val s = flagShift and 0x3F
+        val addMask = (flagShift shr 31).toLong()
+        val pp00Hi = unsignedMultiplyHigh(x0, m)
+        val pp00Lo = x0 * m
         val p0 = pp00Lo
-        if (hiBitLen <= 64) {
-            p.coeffSet64(p0)
-            return
-        }
-        val pp10Hi = unsignedMultiplyHigh(x1, y0)
-        val pp10Lo = x1 * y0
-        if (hiBitLen <= 128) {
-            val p1 = pp00Hi + pp10Lo
-            p.coeffSet128(p1, p0)
-            return
-        }
-        val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-        val pp20Hi = unsignedMultiplyHigh(x2, y0)
-        val pp20Lo = x2 * y0
-        if (hiBitLen <= 192) {
-            val p2 = carry1 + pp10Hi + pp20Lo
-            p.coeffSet192(p2, p1, p0)
-            return
-        }
-        val (carry2, p2) = sumU64(carry1, pp10Hi, pp20Lo)
-        val pp30Hi = unsignedMultiplyHigh(x3, y0)
-        val pp30Lo = x3 * y0
+        val p1 = pp00Hi
+        val qT = p1 + (x0 and addMask)
+        val q0 = (qT ushr s)
+        q.coeffSet64(q0)
 
-        if (hiBitLen <= 256) {
-            val p3 = carry2 + pp20Hi + pp30Lo
-            p.coeffSet256(p3, p2, p1, p0)
-            return
-        }
-        val (carry3, p3) = sumU64(carry2, pp20Hi, pp30Lo)
-        val dw4 = carry3 + pp30Hi
-        if (dw4 == 0L) {
-            // when you multiply (10**256-1 * 1) you have 78+1 = 79, but result is 78
-            assert(hiBitLen == 257)
-            p.coeffSet256(p3, p2, p1, p0)
-            return
-        }
-        throw RuntimeException("coefficient multiply overflow")
+        val roundBit = (p1 shr (s - 1)).toInt() and 1
+        val cmpLo = compareUnsigned(p0, m)
+        val hiFracMask = (1L shl (s - 1)) - 1L
+        val stickyBit = if ((cmpLo >= 0) or ((p1 and hiFracMask) != 0L)) 1 else 0
+        val residue = Residue.residueFrom(roundBit, stickyBit)
+        return residue
     }
 
 }

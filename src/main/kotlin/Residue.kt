@@ -270,8 +270,13 @@ import java.lang.Long.compareUnsigned
             return residueX
         }
 
-        fun residueFrom(roundBit: Int, stickyBit: Int, stickyBitPow2: Int) : Residue {
-            val residueValue = ((roundBit and 1) shl 1) or ((stickyBit or stickyBitPow2) and 1)
+        fun residueFrom(roundBit: Int, stickyBit: Int, stickyBitPow2: Int) =
+            residueFrom(roundBit, stickyBit or stickyBitPow2)
+
+        fun residueFrom(roundBit: Int, stickyBit: Int) : Residue {
+            assert(roundBit in 0..1)
+            assert(stickyBit in 0..1)
+            val residueValue = (roundBit shl 1) or stickyBit
             val residueX = Residue(residueValue)
             return residueX
         }
