@@ -435,7 +435,7 @@ object CoeffDigitLen {
             return 0
         val loDigitCount = (bitLen * 1233) shr 12
         val hiDigitCount = loDigitCount + 1
-        val m0 = POW10[loDigitCount]
+        val m0 = POW10[loDigitCount and 0x1F]
         val digitCount =
             if (compareUnsigned(dw0, m0) < 0)
                 loDigitCount
@@ -456,7 +456,7 @@ object CoeffDigitLen {
         if (loDigitCount < POW10_128_OFFSET)
             return POW10_128_OFFSET
         val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_128_OFFSET
+        val i = (loDigitCount - POW10_128_OFFSET) and 0x1F
         val index = i * 2 + POW10_128_DWORD_INDEX
         val m1 = POW10[index + 1]
         if (dw1 != m1)
@@ -480,7 +480,7 @@ object CoeffDigitLen {
         if (loDigitCount < POW10_192_OFFSET)
             return POW10_192_OFFSET
         val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_192_OFFSET
+        val i = (loDigitCount - POW10_192_OFFSET) and 0x1F
         val index = i * 3 + POW10_192_DWORD_INDEX
         val m2 = POW10[index + 2]
         if (dw2 != m2)
@@ -505,7 +505,7 @@ object CoeffDigitLen {
         if (loDigitCount < POW10_256_OFFSET)
             return POW10_256_OFFSET
         val hiDigitCount = loDigitCount + 1
-        val i = loDigitCount - POW10_256_OFFSET
+        val i = (loDigitCount - POW10_256_OFFSET) and 0x1F
         val index = i * 4 + POW10_256_DWORD_INDEX
         val m3 = POW10[index + 3]
         if (dw3 != m3)

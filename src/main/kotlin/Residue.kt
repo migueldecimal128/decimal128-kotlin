@@ -39,20 +39,15 @@ import java.lang.Long.compareUnsigned
             "EXACT_NEGATED", "LT_HALF_NEGATED", "HALF_NEGATED", "GT_HALF_NEGATED")
 
         fun residueFrom(c:Coeff) :Residue {
-            return (
-                    if (( c.dw3 or c.dw2) == 0L) {
-                        if (c.dw1 == 0L)
-                            residueFrom(c.digitLen, c.dw0)
-                        else
-                            residueFrom(c.digitLen, c.dw1, c.dw0)
-                    } else {
-                        if (c.dw3 == 0L)
-                            residueFrom(c.digitLen, c.dw2, c.dw1, c.dw0)
-                        else
-                            residueFrom(c.digitLen, c.dw3, c.dw2, c.dw1, c.dw0)
-                    }
-                    )
-
+            val bitLen = c.bitLen
+            val digitLen = c.digitLen
+            return when {
+                bitLen == 0 -> EXACT
+                bitLen <= 64 -> residueFrom(digitLen, c.dw0)
+                bitLen <= 128 -> residueFrom(digitLen, c.dw1, c.dw0)
+                bitLen <= 192 -> residueFrom(digitLen, c.dw2, c.dw1, c.dw0)
+                else -> residueFrom(digitLen, c.dw3, c.dw2, c.dw1, c.dw0)
+            }
         }
 
         private fun residueFrom(digitCount:Int, dw0: Long) : Residue {

@@ -276,6 +276,6 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     override fun toString() = coeffToBigInteger().toString()
 
-    fun toNaNString() = if (isZero()) "" else toString()
+    fun toNaNDiagnosticString() = if (isZero()) "" else toString()
 
 }

@@ -153,8 +153,8 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         return when {
             (exp < NON_FINITE_MIN) -> c.toString() + "E" + exp
             exp == NON_FINITE_INF -> "Inf"
-            exp == NON_FINITE_QNAN -> "NaN" + c.toNaNString()
-            exp == NON_FINITE_SNAN -> "sNaN" + c.toNaNString()
+            exp == NON_FINITE_QNAN -> "NaN" + c.toNaNDiagnosticString()
+            exp == NON_FINITE_SNAN -> "sNaN" + c.toNaNDiagnosticString()
             else -> "?que? $exp"
         }
     }

@@ -8,6 +8,18 @@ import com.decimal128.Residue.Companion.EXACT
 
 object MagAdd {
 
+    private fun addAbsorbSmallOperand(z: Mag, x: Mag, y: Mag, sign: Boolean, ctx: Decimal128Context) {
+        val expDelta = x.exp - y.exp
+        val residue = (
+                if (expDelta == PRECISION_34)
+                    Residue.residueFrom(y.c)
+                else
+                    Residue.LT_HALF
+                )
+        z.magSet(x)
+        z.finalize(residue, sign, ctx)
+    }
+
     fun magAdd(z: Mag, a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
         val flipFlop = a.exp >= b.exp
         val x = if (flipFlop) a else b
@@ -16,18 +28,7 @@ object MagAdd {
         val minExp = y.exp
         val expDelta = x.exp - y.exp
         if (expDelta >= PRECISION_34) {
-            val residue = (
-                    if (expDelta == PRECISION_34)
-                        Residue.residueFrom(y.c)
-                    else
-                        Residue.LT_HALF
-                    )
-            val roundUp = residue.ulpRoundUp(ctx.roundingDirection.negate(sign), x.c.dw0)
-            z.magSet(x)
-            if (roundUp)
-                z.c.coeffRoundUp()
-            if (residue.withoutNegate() != EXACT)
-                ctx.setInexact()
+            addAbsorbSmallOperand(z, x, y, sign, ctx)
             return
         }
         when {
