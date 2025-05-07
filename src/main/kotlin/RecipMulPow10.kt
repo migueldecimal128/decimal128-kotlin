@@ -4,6 +4,9 @@ package com.decimal128
 
 import com.decimal128.CoeffDigitLen.POW10
 import com.decimal128.Residue.Companion.EXACT
+import com.decimal128.Residue.Companion.LT_HALF
+import com.decimal128.Residue.Companion.HALF
+import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
@@ -441,6 +444,7 @@ object RecipMulPow10 {
         return Magic(m_mod, addFlag, s)
     }
 
+    val MAX_POW10_32 = 10
     val MAX_POW10_64 = 20
     val MAGIC_POW10_64 = LongArray(20)
     val FLAG_SHIFT_POW10_64 = ByteArray(20)
@@ -458,6 +462,9 @@ object RecipMulPow10 {
     }
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+        if (pow10 < MAX_POW10_32 && x.bitLen <= 32) {
+            return _recip32Pow10(z, x.dw0, pow10)
+        }
         if (pow10 < MAX_POW10_64) {
             if (pow10 <= 0) {
                 assert(pow10 == 0)
@@ -468,7 +475,7 @@ object RecipMulPow10 {
                 initializeMagicPow10_64()
                 val m = MAGIC_POW10_64[pow10]
                 val flagShift = FLAG_SHIFT_POW10_64[pow10].toInt()
-                val residue = _recipMul1x1(z, x.dw0, m, flagShift)
+                val residue = _magicDivide1x1(z, x.dw0, m, flagShift)
                 return residue
             }
         }
@@ -668,7 +675,32 @@ object RecipMulPow10 {
         return residue
     }
 
-    private inline fun _recipMul1x1(
+    private val RECIP64_32 = LongArray(MAX_POW10_32) { k ->
+        if (k == 0) 0L
+        else java.lang.Long.divideUnsigned(-1L, POW10[k]) + 1L
+    }
+
+    private /*inline*/ fun _recip32Pow10(q: Coeff, x0: Long, pow10: Int): Residue {
+        assert((x0 ushr 32) == 0L)
+        assert(pow10 in 0..<MAX_POW10_32)
+        // when pow10 == 0 then M64 will be
+        val divisor = POW10[pow10]
+        val half = divisor ushr 1
+        val M64 = RECIP64_32[pow10]
+        val p = Math.unsignedMultiplyHigh(x0, M64)
+        val q0 = if (pow10 == 0) x0 else p
+        q.coeffSet64(q0)
+        val r   = x0 - (q0 * divisor)
+        val residue = when {
+            r == 0L -> EXACT
+            r < half -> LT_HALF
+            r == half -> HALF
+            else -> GT_HALF
+        }
+        return residue
+    }
+
+    private inline fun _magicDivide1x1(
         q: Coeff,
         x0: Long,
         m: Long,

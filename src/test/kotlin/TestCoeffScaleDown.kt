@@ -38,6 +38,7 @@ class TestCoeffScaleDown {
     }
 
     val cases = arrayOf(
+        TC("1087", 2, true, ROUND_TOWARD_ZERO),
         TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE),
         TC("8833659103727869972", 4, false, ROUND_TOWARD_NEGATIVE),
         TC("8833659103727869972", 4, true, ROUND_TOWARD_POSITIVE),
