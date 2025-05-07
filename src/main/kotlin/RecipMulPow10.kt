@@ -462,8 +462,14 @@ object RecipMulPow10 {
     }
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        if (pow10 < MAX_POW10_32 && x.bitLen <= 32) {
-            return _recip32Pow10(z, x.dw0, pow10)
+        if (pow10 < MAX_POW10_32) {
+            when {
+                x.bitLen <= 32 -> return _recipPow10_32(z, x.dw0, pow10)
+                x.bitLen <= 64 -> return _recipPow10_64(z, x.dw0, pow10)
+                x.bitLen <= 96 -> return _recipPow10_96(z, x.dw1, x.dw0, pow10)
+                x.bitLen <= 128 -> return _recipPow10_128(z, x.dw1, x.dw0, pow10)
+            }
+
         }
         if (pow10 < MAX_POW10_64) {
             if (pow10 <= 0) {
@@ -680,25 +686,158 @@ object RecipMulPow10 {
         else java.lang.Long.divideUnsigned(-1L, POW10[k]) + 1L
     }
 
-    private /*inline*/ fun _recip32Pow10(q: Coeff, x0: Long, pow10: Int): Residue {
-        assert((x0 ushr 32) == 0L)
+    private /*inline*/ fun _recipPow10_32(q: Coeff, x0_0: Long, pow10: Int): Residue {
+        assert((x0_0 ushr 32) == 0L)
         assert(pow10 in 0..<MAX_POW10_32)
         // when pow10 == 0 then M64 will be
         val divisor = POW10[pow10]
         val half = divisor ushr 1
         val M64 = RECIP64_32[pow10]
-        val p = Math.unsignedMultiplyHigh(x0, M64)
-        val q0 = if (pow10 == 0) x0 else p
-        q.coeffSet64(q0)
-        val r   = x0 - (q0 * divisor)
+
+        val p = Math.unsignedMultiplyHigh(x0_0, M64)
+        val q0 = if (pow10 == 0) x0_0 else p
+        val r   = x0_0 - (q0 * divisor)
         val residue = when {
             r == 0L -> EXACT
             r < half -> LT_HALF
             r == half -> HALF
             else -> GT_HALF
         }
+        q.coeffSet64(q0)
         return residue
     }
+
+    private fun _recipPow10_64(q: Coeff, x0: Long, pow10: Int): Residue {
+        assert(pow10 in 0..<MAX_POW10_32)
+        // when pow10 == 0 then M64 will be
+        val x0_1 = x0 ushr 32
+        val x0_0 = x0 and 0xFFFF_FFFFL
+        val divisor = POW10[pow10]
+        val half = divisor ushr 1
+        val M64 = RECIP64_32[pow10]
+
+        val p0_1 = Math.unsignedMultiplyHigh(x0_1, M64)
+        val q0_1 = if (pow10 == 0) x0_1 else p0_1
+        val r0_1 = x0_1 - (q0_1 * divisor)
+
+        val t0_0 = (r0_1 shl 32) or x0_0
+        var q0_0 = unsignedMultiplyHigh(t0_0, M64)
+        val p0_0 = q0_0 * divisor
+        var r0_0 = t0_0 - p0_0
+        val overshoot0_0 = r0_0 shr 63 // 0 or -1
+        q0_0 += overshoot0_0
+        r0_0 += divisor and overshoot0_0
+
+        val q0 = (q0_1 shl 32) or q0_0
+        val r = r0_0
+        val residue = when {
+            r == 0L -> EXACT
+            r < half -> LT_HALF
+            r == half -> HALF
+            else -> GT_HALF
+        }
+        q.coeffSet64(q0)
+        return residue
+    }
+
+    private fun _recipPow10_96(q: Coeff, x1_0:Long, x0: Long, pow10: Int): Residue {
+        assert((x1_0 ushr 32) == 0L)
+        assert(pow10 in 0..<MAX_POW10_32)
+        // when pow10 == 0 then M64 will be
+
+        val x0_1 = x0 ushr 32
+        val x0_0 = x0 and 0xFFFF_FFFFL
+        val divisor = POW10[pow10]
+        val half = divisor ushr 1
+        val M64 = RECIP64_32[pow10]
+
+        val p1_0 = Math.unsignedMultiplyHigh(x1_0, M64)
+        val q1_0 = if (pow10 == 0) x1_0 else p1_0
+        val r1_0 = x1_0 - (q1_0 * divisor)
+
+        val t0_1 = (r1_0 shl 32) or x0_1
+        var q0_1 = unsignedMultiplyHigh(t0_1, M64)
+        val p0_1 = q0_1 * divisor
+        var r0_1 = t0_1 - p0_1
+        val overshoot0_1 = r0_1 shr 63 // 0 or -1
+        q0_1 += overshoot0_1
+        r0_1 += divisor and overshoot0_1
+
+        val t0_0 = (r0_1 shl 32) or x0_0
+        var q0_0 = unsignedMultiplyHigh(t0_0, M64)
+        val p0_0 = q0_0 * divisor
+        var r0_0 = t0_0 - p0_0
+        val overshoot0_0 = r0_0 shr 63 // 0 or -1
+        q0_0 += overshoot0_0
+        r0_0 += divisor and overshoot0_0
+
+        val q1 = q1_0
+        val q0 = (q0_1 shl 32) or q0_0
+        val r = r0_0
+        val residue = when {
+            r == 0L -> EXACT
+            r < half -> LT_HALF
+            r == half -> HALF
+            else -> GT_HALF
+        }
+        q.coeffSet128(q1, q0)
+        return residue
+    }
+
+    private fun _recipPow10_128(q: Coeff, x1:Long, x0: Long, pow10: Int): Residue {
+        assert(pow10 in 0..<MAX_POW10_32)
+        // when pow10 == 0 then M64 will be
+
+        val x1_1 = x1 ushr 32
+        val x1_0 = x1 and 0xFFFF_FFFFL
+        val x0_1 = x0 ushr 32
+        val x0_0 = x0 and 0xFFFF_FFFFL
+        val divisor = POW10[pow10]
+        val half = divisor ushr 1
+        val M64 = RECIP64_32[pow10]
+
+        val p1_1 = Math.unsignedMultiplyHigh(x1_1, M64)
+        val q1_1 = if (pow10 == 0) x1_1 else p1_1
+        val r1_1 = x1_1 - (q1_1 * divisor)
+
+        val t1_0 = (r1_1 shl 32) or x1_0
+        var q1_0 = unsignedMultiplyHigh(t1_0, M64)
+        val p1_0 = q1_0 * divisor
+        var r1_0 = t1_0 - p1_0
+        val overshoot1_0 = r1_0 shr 63 // 0 or -1
+        q1_0 += overshoot1_0
+        r1_0 += divisor and overshoot1_0
+
+        val t0_1 = (r1_0 shl 32) or x0_1
+        var q0_1 = unsignedMultiplyHigh(t0_1, M64)
+        val p0_1 = q0_1 * divisor
+        var r0_1 = t0_1 - p0_1
+        val overshoot0_1 = r0_1 shr 63 // 0 or -1
+        q0_1 += overshoot0_1
+        r0_1 += divisor and overshoot0_1
+
+        val t0_0 = (r0_1 shl 32) or x0_0
+        var q0_0 = unsignedMultiplyHigh(t0_0, M64)
+        val p0_0 = q0_0 * divisor
+        var r0_0 = t0_0 - p0_0
+        val overshoot0_0 = r0_0 shr 63 // 0 or -1
+        q0_0 += overshoot0_0
+        r0_0 += divisor and overshoot0_0
+
+        val q1 = (q1_1 shl 32) or q1_0
+        val q0 = (q0_1 shl 32) or q0_0
+        val r = r0_0
+        val residue = when {
+            r == 0L -> EXACT
+            r < half -> LT_HALF
+            r == half -> HALF
+            else -> GT_HALF
+        }
+        q.coeffSet128(q1, q0)
+        return residue
+    }
+
+
 
     private inline fun _magicDivide1x1(
         q: Coeff,
