@@ -46,10 +46,10 @@ import java.lang.Long.compareUnsigned
             val bitLen = c.bitLen
             return when {
                 bitLen == 0 -> EXACT
-                bitLen <= 64 -> RESIDUE_MAP[compareWithHalfPow10_64(bitLen, c.dw0) + 2]
-                bitLen <= 128 -> RESIDUE_MAP[compareWithHalfPow10_128(bitLen, c.dw1, c.dw0) + 2]
-                bitLen <= 192 -> RESIDUE_MAP[compareWithHalfPow10_192(bitLen, c.dw2, c.dw1, c.dw0) + 2]
-                else -> RESIDUE_MAP[compareWithHalfPow10_256(bitLen, c.dw3, c.dw2, c.dw1, c.dw0) + 2]
+                bitLen <= 64 -> RESIDUE_MAP[(compareWithHalfPow10_64(bitLen, c.dw0) + 2) and 0x03]
+                bitLen <= 128 -> RESIDUE_MAP[(compareWithHalfPow10_128(bitLen, c.dw1, c.dw0) + 2) and 0x03]
+                bitLen <= 192 -> RESIDUE_MAP[(compareWithHalfPow10_192(bitLen, c.dw2, c.dw1, c.dw0) + 2) and 0x03]
+                else -> RESIDUE_MAP[(compareWithHalfPow10_256(bitLen, c.dw3, c.dw2, c.dw1, c.dw0) + 2) and 0x03]
             }
         }
 
