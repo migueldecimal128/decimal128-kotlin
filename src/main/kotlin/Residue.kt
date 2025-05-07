@@ -63,6 +63,8 @@ import java.lang.Long.compareUnsigned
             } else {
                 //10**19 has the msb set
                 //so if we have our msb set then we compare with 1E19
+                //if we are smaller than oneE19 then we are a 19 digit GT_HALF
+                //if we are larger than oneE19 then we are a 20 digit LT_HALF
                 val oneE19 = POW10[19]
                 val cmp0 = compareUnsigned(dw0, oneE19)
                 val residue = if (cmp0 < 0) GT_HALF else LT_HALF
