@@ -5,6 +5,10 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.CoeffDigitLen.POW10
+import com.decimal128.CoeffDigitLen.compareWithHalfPow10_128
+import com.decimal128.CoeffDigitLen.compareWithHalfPow10_192
+import com.decimal128.CoeffDigitLen.compareWithHalfPow10_256
+import com.decimal128.CoeffDigitLen.compareWithHalfPow10_64
 
 import java.lang.Long.compareUnsigned
 
@@ -40,13 +44,12 @@ import java.lang.Long.compareUnsigned
 
         fun residueFrom(c:Coeff) :Residue {
             val bitLen = c.bitLen
-            val digitLen = c.digitLen
             return when {
                 bitLen == 0 -> EXACT
-                bitLen <= 64 -> residueFrom(digitLen, c.dw0)
-                bitLen <= 128 -> residueFrom(digitLen, c.dw1, c.dw0)
-                bitLen <= 192 -> residueFrom(digitLen, c.dw2, c.dw1, c.dw0)
-                else -> residueFrom(digitLen, c.dw3, c.dw2, c.dw1, c.dw0)
+                bitLen <= 64 -> RESIDUE_MAP[compareWithHalfPow10_64(bitLen, c.dw0) + 2]
+                bitLen <= 128 -> RESIDUE_MAP[compareWithHalfPow10_128(bitLen, c.dw1, c.dw0) + 2]
+                bitLen <= 192 -> RESIDUE_MAP[compareWithHalfPow10_192(bitLen, c.dw2, c.dw1, c.dw0) + 2]
+                else -> RESIDUE_MAP[compareWithHalfPow10_256(bitLen, c.dw3, c.dw2, c.dw1, c.dw0) + 2]
             }
         }
 
