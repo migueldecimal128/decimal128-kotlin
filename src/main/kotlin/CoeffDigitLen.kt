@@ -281,8 +281,6 @@ object CoeffDigitLen {
         return if (compareUnsigned(dw0, m0) < 0) loDigitCount else hiDigitCount
     }
 
-    private val ONE_E19_dw0 = POW10[19]
-
     fun compareWithHalfPow10_64(bitLen: Int, dw0: Long): Int {
         val cmp = if (dw0 > 0) {
             val dw0x2 = dw0 shl 1
@@ -302,28 +300,6 @@ object CoeffDigitLen {
         }
         return cmp
     }
-
-    private val ONE_E20_dw1 = POW10[ONE_E20_INDEX + 1]
-    private val ONE_E20_dw0 = POW10[ONE_E20_INDEX + 0]
-    private val ONE_E38_dw1 = POW10[ONE_E38_INDEX + 1]
-    private val ONE_E38_dw0 = POW10[ONE_E38_INDEX + 0]
-    private val ONE_E58_dw3 = POW10[ONE_E58_INDEX + 3]
-    private val ONE_E58_dw2 = POW10[ONE_E58_INDEX + 2]
-    private val ONE_E58_dw1 = POW10[ONE_E58_INDEX + 1]
-    private val ONE_E58_dw0 = POW10[ONE_E58_INDEX + 0]
-
-    private val FIVE_E19_dw1 = (ONE_E20_dw1 ushr 1)
-    private val FIVE_E19_dw0 = (ONE_E20_dw1 shl -1) or (ONE_E20_dw0 ushr 1)
-    private val FIVE_E57_dw2 = (ONE_E58_dw3 shl -1) or (ONE_E58_dw2 ushr 1)
-    private val FIVE_E57_dw1 = (ONE_E58_dw2 shl -1) or (ONE_E58_dw1 ushr 1)
-    private val FIVE_E57_dw0 = (ONE_E58_dw1 shl -1) or (ONE_E58_dw0 ushr 1)
-    private val FIVE_E38_dw2 = (POW10[ONE_E39_INDEX + 2] ushr 1)
-    private val FIVE_E38_dw1 = (POW10[ONE_E39_INDEX + 2] shl -1) or (POW10[ONE_E39_INDEX + 1] ushr 1)
-    private val FIVE_E38_dw0 = (POW10[ONE_E39_INDEX + 1] shl -1) or (POW10[ONE_E39_INDEX + 0] ushr 1)
-    private val ONE_E77_dw3 = POW10[ONE_E77_INDEX + 3]
-    private val ONE_E77_dw2 = POW10[ONE_E77_INDEX + 2]
-    private val ONE_E77_dw1 = POW10[ONE_E77_INDEX + 1]
-    private val ONE_E77_dw0 = POW10[ONE_E77_INDEX + 0]
 
     fun compareWithHalfPow10_128(bitLen: Int, dw1: Long, dw0: Long): Int {
         assert(bitLen in 65..128 && dw1 != 0L)
