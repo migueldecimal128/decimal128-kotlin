@@ -51,7 +51,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         private set
     var bitLen = run { calcBitLen() }
         private set
-    var digitLen = run { CoeffDigitLen.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0) }
+    var digitLen = run { CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0) }
         private set
 
     fun coeffSetZero() {
@@ -88,10 +88,10 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     private fun calcDigitLen(): Int {
         return when {
-            (bitLen <= 64) -> CoeffDigitLen.calcDigitLen64(bitLen, dw0)
-            (bitLen <= 128) -> CoeffDigitLen.calcDigitLen128(bitLen, dw1, dw0)
-            (bitLen <= 192) -> CoeffDigitLen.calcDigitLen192(bitLen, dw2, dw1, dw0)
-            else -> CoeffDigitLen.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+            (bitLen <= 64) -> CoeffPow10.calcDigitLen64(bitLen, dw0)
+            (bitLen <= 128) -> CoeffPow10.calcDigitLen128(bitLen, dw1, dw0)
+            (bitLen <= 192) -> CoeffPow10.calcDigitLen192(bitLen, dw2, dw1, dw0)
+            else -> CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
         }
     }
 
@@ -107,7 +107,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun hasValidLengths(): Boolean {
         //if (bitLen != calcBitLen())
         //    return false
-        if (digitLen != CoeffDigitLen.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
+        if (digitLen != CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
             return false;
         return true
     }
@@ -188,28 +188,28 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
         bitLen = calcBitLen()
-        digitLen = CoeffDigitLen.calcDigitLen64(bitLen, d0)
+        digitLen = CoeffPow10.calcDigitLen64(bitLen, d0)
     }
 
     fun coeffSet128(d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen()
-        digitLen = CoeffDigitLen.calcDigitLen128(bitLen, d1, d0)
+        digitLen = CoeffPow10.calcDigitLen128(bitLen, d1, d0)
     }
 
     fun coeffSet192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen()
-        digitLen = CoeffDigitLen.calcDigitLen192(bitLen, d2, d1, d0)
+        digitLen = CoeffPow10.calcDigitLen192(bitLen, d2, d1, d0)
     }
 
 
     fun coeffSet256(d3: Long, d2: Long, d1: Long, d0: Long){
         dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen()
-        digitLen = CoeffDigitLen.calcDigitLen256(bitLen, d3, d2, d1, d0)
+        digitLen = CoeffPow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
     fun coeffSet(bi: BigInteger) {

@@ -49,7 +49,7 @@ class TestCalcDigitCount64 {
             println("ul:$ul expected:$expected")
         val l = ul.toLong()
         val bitLen = 64 - java.lang.Long.numberOfLeadingZeros(l)
-        val observed = CoeffDigitLen.calcDigitLen64(bitLen, l)
+        val observed = CoeffPow10.calcDigitLen64(bitLen, l)
         if (expected != observed)
             println("expected:$expected  observed:$observed  ul:$ul")
         assertEquals(expected, observed)

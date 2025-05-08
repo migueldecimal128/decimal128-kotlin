@@ -40,7 +40,7 @@ class TestCalcDigitCount128 {
         val dw0 = bi.toLong()
         val dw1 = bi.shiftRight(64).toLong()
         val bitLen = bi.bitLength()
-        val observed = CoeffDigitLen.calcDigitLen128(bitLen, dw1, dw0)
+        val observed = CoeffPow10.calcDigitLen128(bitLen, dw1, dw0)
         if (! expected.equals(observed))
             println("$bi expected:$expected observed:$observed")
         assertEquals(expected, observed)

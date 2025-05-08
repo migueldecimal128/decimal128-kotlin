@@ -4,11 +4,10 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.CoeffDigitLen.POW10
-import com.decimal128.CoeffDigitLen.compareWithHalfPow10_128
-import com.decimal128.CoeffDigitLen.compareWithHalfPow10_192
-import com.decimal128.CoeffDigitLen.compareWithHalfPow10_256
-import com.decimal128.CoeffDigitLen.compareWithHalfPow10_64
+import com.decimal128.CoeffPow10.compareWithHalfPow10_128
+import com.decimal128.CoeffPow10.compareWithHalfPow10_192
+import com.decimal128.CoeffPow10.compareWithHalfPow10_256
+import com.decimal128.CoeffPow10.compareWithHalfPow10_64
 
 import java.lang.Long.compareUnsigned
 

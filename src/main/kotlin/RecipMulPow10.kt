@@ -2,7 +2,6 @@
 
 package com.decimal128
 
-import com.decimal128.CoeffDigitLen.POW10
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.LT_HALF
 import com.decimal128.Residue.Companion.HALF
