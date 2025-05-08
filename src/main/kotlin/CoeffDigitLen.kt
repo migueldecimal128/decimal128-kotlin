@@ -2,35 +2,6 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import java.lang.Long.numberOfLeadingZeros
-import java.math.BigInteger.ONE
-
-const val POW10_64_OFFSET = 0
-private const val POW10_64_DWORD_INDEX = 0
-
-const val POW10_128_OFFSET = 20
-private const val POW10_64_COUNT = POW10_128_OFFSET - POW10_64_OFFSET
-private const val POW10_128_DWORD_INDEX = POW10_64_DWORD_INDEX + (1 * POW10_64_COUNT)
-private const val ONE_E20_INDEX = POW10_128_DWORD_INDEX
-
-const val POW10_192_OFFSET = 39
-private const val POW10_128_COUNT = POW10_192_OFFSET - POW10_128_OFFSET
-private const val POW10_192_DWORD_INDEX = POW10_128_DWORD_INDEX + (2 * POW10_128_COUNT)
-private const val ONE_E39_INDEX = POW10_192_DWORD_INDEX
-private const val ONE_E38_INDEX = POW10_192_DWORD_INDEX - 2
-
-
-const val POW10_256_OFFSET = 58
-private const val POW10_192_COUNT = POW10_256_OFFSET - POW10_192_OFFSET
-private const val POW10_256_DWORD_INDEX = POW10_192_DWORD_INDEX + (3 * POW10_192_COUNT)
-private const val ONE_E58_INDEX = POW10_256_DWORD_INDEX
-private const val ONE_E_57_INDEX = POW10_256_DWORD_INDEX - 3
-
-const val POW10_MAX_OFFSET = 78
-private const val POW10_256_COUNT = POW10_MAX_OFFSET - POW10_256_OFFSET
-private const val POW10_MAX_DWORD_INDEX = POW10_256_DWORD_INDEX + (4 * POW10_256_COUNT)
-private const val ONE_E77_INDEX = POW10_MAX_DWORD_INDEX - 4
-
-const val MAX_COEFF_DIGIT_COUNT = POW10_MAX_OFFSET
 
 object CoeffDigitLen {
 
@@ -195,7 +166,7 @@ object CoeffDigitLen {
     }
 
     @Suppress("unused")
-    private val validatePow10Size = run { assert(POW10.size == 195 && POW10.size == POW10_MAX_DWORD_INDEX); true }
+    private val validatePow10Size = run { assert(POW10.size == 195); true }
 
     fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
 
@@ -221,8 +192,8 @@ object CoeffDigitLen {
             println("bitLen:$bitLen != nlz:$nlz")
         assert(bitLen == 128 - numberOfLeadingZeros(dw1))
         val loDigitCount = (bitLen * 1233) shr 12
-        if (loDigitCount < POW10_128_OFFSET)
-            return POW10_128_OFFSET
+        if (loDigitCount < MIN_POW10_DIGIT_LEN_128)
+            return MIN_POW10_DIGIT_LEN_128
         val hiDigitCount = loDigitCount + 1
         val pow10Offset = pow10Offset(loDigitCount)
         val m1 = POW10[pow10Offset + 1]
@@ -240,8 +211,8 @@ object CoeffDigitLen {
                 calcDigitLen64(bitLen, dw0)
         }
         val loDigitCount = (bitLen * 1233) shr 12
-        if (loDigitCount < POW10_192_OFFSET)
-            return POW10_192_OFFSET
+        if (loDigitCount < MIN_POW10_DIGIT_LEN_192)
+            return MIN_POW10_DIGIT_LEN_192
         val hiDigitCount = loDigitCount + 1
         val pow10Offset = pow10Offset(loDigitCount)
         val m2 = POW10[pow10Offset + 2]
@@ -264,8 +235,8 @@ object CoeffDigitLen {
                 calcDigitLen64(bitLen, dw0)
         }
         val loDigitCount = (bitLen * 1233) shr 12
-        if (loDigitCount < POW10_256_OFFSET)
-            return POW10_256_OFFSET
+        if (loDigitCount < MIN_POW10_DIGIT_LEN_256)
+            return MIN_POW10_DIGIT_LEN_256
         val hiDigitCount = loDigitCount + 1
         val pow10Offset = pow10Offset(loDigitCount)
         val m3 = POW10[pow10Offset + 3]

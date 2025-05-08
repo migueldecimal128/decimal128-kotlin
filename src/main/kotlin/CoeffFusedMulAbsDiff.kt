@@ -210,7 +210,7 @@ object CoeffFusedMulAbsDiff {
         val pp10Lo = x1 * y0
         val (borrow0, d0) = diffU64(pp00Lo, a0)
         assert(borrow0 in 0..1)
-        if (hiDiffDigitCount < POW10_128_OFFSET) {
+        if (hiDiffDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val negBorrow0 = -borrow0
             val z0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
             z.coeffSet64(z0)
@@ -227,7 +227,7 @@ object CoeffFusedMulAbsDiff {
         val (borrow1d, d1) = diffU64(p1, s1)
         val borrow1 = carry1s + borrow1d
         assert(borrow1 in 0..1)
-        if (hiDiffDigitCount < POW10_192_OFFSET) {
+        if (hiDiffDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val negBorrow1 = -borrow1
             var z1 = d1 xor negBorrow1
             val z0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
@@ -250,7 +250,7 @@ object CoeffFusedMulAbsDiff {
         val (borrow2d, d2) = diffU64(p2, s2)
         val borrow2 = carry2s + borrow2d
         assert(borrow2 in 0..1)
-        if (hiDiffDigitCount < POW10_256_OFFSET) {
+        if (hiDiffDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val negBorrow2 = -borrow2
             var z2 = d2 xor negBorrow2
             var z1 = d1 xor negBorrow2

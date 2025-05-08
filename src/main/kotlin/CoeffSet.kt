@@ -1,7 +1,5 @@
 package com.decimal128
 
-import java.math.BigInteger
-
 private const val MASK32 = 0xFFFFFFFFL
 
 object CoeffSet {
@@ -89,7 +87,7 @@ object CoeffSet {
     }
 
     fun coeffSetShiftRight(z: Coeff, x: Coeff, bitShift: Int) {
-        if (x.digitLen < POW10_128_OFFSET) {
+        if (x.digitLen < MIN_POW10_DIGIT_LEN_128) {
             val le63Mask = if (bitShift <= 63) -1L else 0L
             val r = (x.dw0 ushr bitShift) and le63Mask
             z.coeffSet64(r)

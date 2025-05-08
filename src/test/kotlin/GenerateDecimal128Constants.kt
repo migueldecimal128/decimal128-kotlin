@@ -11,7 +11,11 @@ class GenerateDecimal128Constants {
     data class Constant(val rootName: String, val dwordCount: Int, val bi: BigInteger)
 
     val constants = arrayOf(
-        Constant("Automatically generated", 0, ZERO),
+        Constant("Automatically generated", -1, ZERO),
+        Constant("MIN_POW10_DIGIT_LEN_128", 0, BigInteger("20")),
+        Constant("MIN_POW10_DIGIT_LEN_192", 0, BigInteger("39")),
+        Constant("MIN_POW10_DIGIT_LEN_256", 0, BigInteger("58")),
+        Constant("MAX_DIGIT_LEN", 0, BigInteger("78")),
         Constant("ONE_E19", 1, TEN.pow(19)),
         Constant("FIVE_E19", 2, TEN.pow(20).shiftRight(1)),
         Constant("ONE_E20", 2, TEN.pow(20)),
@@ -33,7 +37,8 @@ class GenerateDecimal128Constants {
 
     fun generateHexConstant(constant: Constant) {
         when (constant.dwordCount) {
-            0 -> dumpComment(constant.rootName)
+            -1 -> dumpComment(constant.rootName)
+            0 -> dumpInt(constant.rootName, constant.bi)
             1 -> dump64(constant.rootName, constant.bi)
             2 -> dump128(constant.rootName, constant.bi)
             3 -> dump192(constant.rootName, constant.bi)
@@ -43,6 +48,17 @@ class GenerateDecimal128Constants {
 
     fun dumpComment(str: String) {
         println("// $str")
+    }
+
+    fun dumpInt(name: String, bi: BigInteger) {
+        val bdStr = BigDecimal(bi).stripTrailingZeros()
+        val w0 = bi.toInt()
+        val s0 = String.format("%-11s", w0)
+        val hex0 = w0.toHexString(HexFormat.UpperCase)
+        println("""
+            |
+            |const val ${name} = $s0 // 0x$hex0 $bdStr
+        """.trimMargin())
     }
 
     fun dump64(name: String, bi: BigInteger) {
@@ -56,6 +72,7 @@ class GenerateDecimal128Constants {
             |const val ${name}_dw0 = $s0 // 0x$hex0
         """.trimMargin())
     }
+
     fun dump128(name: String, bi: BigInteger) {
         val bdStr = BigDecimal(bi).stripTrailingZeros()
         val dw0 = bi.toLong()

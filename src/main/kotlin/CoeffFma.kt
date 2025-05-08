@@ -195,7 +195,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -204,7 +204,7 @@ object CoeffFma {
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp01Lo = x0 * y1
         val pp10Lo = x1 * y0
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1 // no carry possible because of maxMulDigitCount
             p.coeffSet128(p1, p0)
             return
@@ -215,7 +215,7 @@ object CoeffFma {
         val pp11Lo = x1 * y1
         val pp02Lo = x0 * y2
         val pp20Lo = x2 * y0
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo + a2
             p.coeffSet192(p2, p1, p0)
             return
@@ -229,7 +229,7 @@ object CoeffFma {
         val pp03Lo = x0 * y3
         val pp30Lo = x3 * y0
 
-        if (hiSumDigitCount < POW10_MAX_OFFSET) {
+        if (hiSumDigitCount < MAX_DIGIT_LEN) {
             val p3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo + a3
             p.coeffSet256(p3, p2, p1, p0)
             return
@@ -267,7 +267,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -276,7 +276,7 @@ object CoeffFma {
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp01Lo = x0 * y1
         val pp10Lo = x1 * y0
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1 // no carry possible because of maxMulDigitCount
             p.coeffSet128(p1, p0)
             return
@@ -286,7 +286,7 @@ object CoeffFma {
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
         val pp11Lo = x1 * y1
         val pp02Lo = x0 * y2
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo
             p.coeffSet192(p2, p1, p0)
             return
@@ -296,7 +296,7 @@ object CoeffFma {
         val pp02Hi = unsignedMultiplyHigh(x0, y2)
         val pp12Lo = x1 * y2
 
-        if (hiSumDigitCount < POW10_MAX_OFFSET) {
+        if (hiSumDigitCount < MAX_DIGIT_LEN) {
             val p3 = carry2 + pp11Hi + pp02Hi + pp12Lo
             p.coeffSet256(p3, p2, p1, p0)
             return
@@ -330,7 +330,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -339,7 +339,7 @@ object CoeffFma {
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp01Lo = x0 * y1
         val pp10Lo = x1 * y0
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1 // no carry possible because of maxMulDigitCount
             p.coeffSet128(p1, p0)
             return
@@ -348,7 +348,7 @@ object CoeffFma {
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
         val pp11Lo = x1 * y1
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo
             p.coeffSet192(p2, p1, p0)
             return
@@ -356,7 +356,7 @@ object CoeffFma {
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
 
-        if (hiSumDigitCount < POW10_MAX_OFFSET) {
+        if (hiSumDigitCount < MAX_DIGIT_LEN) {
             val p3 = carry2 + pp11Hi
             p.coeffSet256(p3, p2, p1, p0)
             return
@@ -389,7 +389,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -397,21 +397,21 @@ object CoeffFma {
         val (carry0, p0) = sumU64(pp00Lo, a0)
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp10Lo = x1 * y0
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp10Lo + a1 // no carry possible because of maxMulDigitCount
             p.coeffSet128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp10Hi
             p.coeffSet192(p2, p1, p0)
             return
         }
         val (carry2, p2) = sumU64(carry1, pp10Hi)
 
-        if (hiSumDigitCount < POW10_MAX_OFFSET) {
+        if (hiSumDigitCount < MAX_DIGIT_LEN) {
             val p3 = carry2
             p.coeffSet256(p3, p2, p1, p0)
             return
@@ -438,7 +438,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -446,7 +446,7 @@ object CoeffFma {
         val (carry0, p0) = sumU64(pp00Lo, a0)
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp01Lo = x0 * y1
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp01Lo + a1
             p.coeffSet128(p1, p0)
             return
@@ -454,7 +454,7 @@ object CoeffFma {
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
         val pp02Lo = x0 * y2
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp01Hi + pp02Lo
             p.coeffSet192(p2, p1, p0)
             return
@@ -463,7 +463,7 @@ object CoeffFma {
         val pp02Hi = unsignedMultiplyHigh(x0, y2)
         val pp03Lo = x0 * y3
 
-        if (hiSumDigitCount < POW10_MAX_OFFSET) {
+        if (hiSumDigitCount < MAX_DIGIT_LEN) {
             val p3 = carry2 + pp02Hi + pp03Lo
             p.coeffSet256(p3, p2, p1, p0)
             return
@@ -497,7 +497,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -505,7 +505,7 @@ object CoeffFma {
         val (carry0, p0) = sumU64(pp00Lo, a0)
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp01Lo = x0 * y1
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp01Lo + a1
             p.coeffSet128(p1, p0)
             return
@@ -513,7 +513,7 @@ object CoeffFma {
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
         val pp02Lo = x0 * y2
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp01Hi + pp02Lo
             p.coeffSet192(p2, p1, p0)
             return
@@ -521,7 +521,7 @@ object CoeffFma {
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp02Lo)
         val pp02Hi = unsignedMultiplyHigh(x0, y2)
 
-        if (hiSumDigitCount < POW10_MAX_OFFSET) {
+        if (hiSumDigitCount < MAX_DIGIT_LEN) {
             val p3 = carry2 + pp02Hi
             p.coeffSet256(p3, p2, p1, p0)
             return
@@ -554,7 +554,7 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
@@ -562,14 +562,14 @@ object CoeffFma {
         val (carry0, p0) = sumU64(pp00Lo, a0)
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp01Lo = x0 * y1
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + pp01Lo + a1 // no carry possible because of maxMulDigitCount
             p.coeffSet128(p1, p0)
             return
         }
         val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, a1)
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
-        if (hiSumDigitCount < POW10_256_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_256) {
             val p2 = carry1 + pp01Hi
             p.coeffSet192(p2, p1, p0)
             return
@@ -597,14 +597,14 @@ object CoeffFma {
         val loSumDigitCount = Math.max(loMulDigitCount, aDigitCount)
         val hiSumDigitCount = loSumDigitCount + 1
         val pp00Lo = x0 * y0
-        if (hiSumDigitCount < POW10_128_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_128) {
             val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
         }
         val (carry0, p0) = sumU64(pp00Lo, a0)
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        if (hiSumDigitCount < POW10_192_OFFSET) {
+        if (hiSumDigitCount < MIN_POW10_DIGIT_LEN_192) {
             val p1 = carry0 + pp00Hi + a1
             p.coeffSet128(p1, p0)
             return

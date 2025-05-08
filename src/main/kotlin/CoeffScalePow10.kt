@@ -66,7 +66,7 @@ object CoeffScalePow10 {
         assert((a.dw3 or a.dw2) == 0L)
 
         val minProductDigitCount = if (x.digitLen == 0) a.digitLen else max(x.digitLen + pow10, a.digitLen)
-        assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
+        assert(minProductDigitCount < MAX_DIGIT_LEN)
 
         val aDigitCount = a.digitLen
         val a1 = a.dw1
@@ -85,22 +85,22 @@ object CoeffScalePow10 {
         val pow10Offset = pow10Offset(pow10)
 
         when {
-            (pow10 < POW10_128_OFFSET) -> {
+            (pow10 < MIN_POW10_DIGIT_LEN_128) -> {
                 coeffFma(p, x, pow10DigitCount, POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
-            (pow10 < POW10_192_OFFSET) -> {
+            (pow10 < MIN_POW10_DIGIT_LEN_192) -> {
                 coeffFma(p, x, pow10DigitCount, POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
-            (pow10 < POW10_256_OFFSET) -> {
+            (pow10 < MIN_POW10_DIGIT_LEN_256) -> {
                 coeffFma(
                     p, x,
                     pow10DigitCount, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0
                 )
             }
 
-            (pow10 < POW10_MAX_OFFSET) -> {
+            (pow10 < MAX_DIGIT_LEN) -> {
                 coeffFma(
                     p, x,
                     pow10DigitCount, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0],
@@ -118,7 +118,7 @@ object CoeffScalePow10 {
         assert((a.dw3 or a.dw2) == 0L)
 
         val minProductDigitCount = Math.max(x.digitLen + pow10, a.digitLen)
-        assert(minProductDigitCount < MAX_COEFF_DIGIT_COUNT)
+        assert(minProductDigitCount < MAX_DIGIT_LEN)
 
         val aDigitCount = a.digitLen
         val a1 = a.dw1
@@ -136,22 +136,22 @@ object CoeffScalePow10 {
         val pow10Offset = pow10Offset(pow10)
 
         return when {
-            (pow10 < POW10_128_OFFSET) -> {
+            (pow10 < MIN_POW10_DIGIT_LEN_128) -> {
                 coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
-            (pow10 < POW10_192_OFFSET) -> {
+            (pow10 < MIN_POW10_DIGIT_LEN_192) -> {
                 coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
-            (pow10 < POW10_256_OFFSET) -> {
+            (pow10 < MIN_POW10_DIGIT_LEN_256) -> {
                 coeffFusedMulAbsDiff(
                     z, x,
                     pow10DigitCount, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0
                 )
             }
 
-            (pow10 < POW10_MAX_OFFSET) -> {
+            (pow10 < MAX_DIGIT_LEN) -> {
                 coeffFusedMulAbsDiff(
                     z, x,
                     pow10DigitCount, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0],

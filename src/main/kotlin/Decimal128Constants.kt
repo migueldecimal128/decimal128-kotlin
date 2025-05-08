@@ -2,6 +2,14 @@ package com.decimal128
 
 // Automatically generated
 
+const val MIN_POW10_DIGIT_LEN_128 = 20          // 0x00000014 2E+1
+
+const val MIN_POW10_DIGIT_LEN_192 = 39          // 0x00000027 39
+
+const val MIN_POW10_DIGIT_LEN_256 = 58          // 0x0000003A 58
+
+const val MAX_DIGIT_LEN = 78          // 0x0000004E 78
+
 // 1E+19
 const val ONE_E19_dw0 = -8446744073709551616L // 0x8AC7230489E80000
 
