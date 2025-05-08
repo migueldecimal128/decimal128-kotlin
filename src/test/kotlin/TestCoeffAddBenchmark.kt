@@ -32,7 +32,7 @@ class TestCoeffAddBenchmark {
         for (i in 0..<size-1) {
             val x = data[i]
             val y = data[i + 1]
-            CoeffAdd.coeffAddUnscaled_bit(s, x, y)
+            CoeffAdd.coeffAddUnscaled(s, x, y)
         }
         return s.bitLen
     }

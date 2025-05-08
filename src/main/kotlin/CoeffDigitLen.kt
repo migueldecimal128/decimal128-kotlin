@@ -161,7 +161,7 @@ object CoeffDigitLen {
         // we can represent all 77 decimal digit numbers
     )
 
-    val POW10_BIT_LEN = ShortArray(78) {
+    private val POW10_BIT_LEN = ShortArray(78) {
         i ->
         val k = i
         val bl = when {
@@ -186,6 +186,28 @@ object CoeffDigitLen {
             }
         }.toShort()
         bl
+    }
+
+    fun pow10BitLen(pow10: Int): Int {
+        return POW10_BIT_LEN[pow10 and 0x7F].toInt()
+    }
+
+    fun pow10Offset(pow10: Int): Int {
+        val p = pow10 - 1
+        val t = (p * 431) ushr 13
+        val i = p - 19 * t
+        val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
+        val mask = -pow10 shr 31
+        return offset and mask
+    }
+
+    fun pow10Offset(pow10: Int, bitLen: Int): Int {
+        val p = pow10 - 1
+        val t = (bitLen - 1) ushr 6
+        val i = p - 19 * t
+        val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
+        val mask = -pow10 shr 31
+        return offset and mask
     }
 
     @Suppress("unused")

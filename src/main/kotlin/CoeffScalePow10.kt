@@ -3,7 +3,8 @@ package com.decimal128
 import com.decimal128.CoeffMul.mulCoeff
 import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffDigitLen.POW10
-import com.decimal128.CoeffDigitLen.POW10_BIT_LEN
+import com.decimal128.CoeffDigitLen.pow10BitLen
+import com.decimal128.CoeffDigitLen.pow10Offset
 import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
 import com.decimal128.Residue.Companion.EXACT
 import kotlin.math.max
@@ -17,35 +18,31 @@ object CoeffScalePow10 {
             return
         }
 
-        val pow10BitLen = POW10_BIT_LEN[pow10].toInt()
+        val pow10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
 
-        val productDigitCount = x.digitLen + pow10
-        if (productDigitCount >= MAX_COEFF_DIGIT_COUNT)
+        val productBitLen = x.bitLen + pow10BitLen
+        if (productBitLen > 257) // 257 is OK, because it might come in at 256
             throw RuntimeException("coefficient overflow")
         when {
             (pow10BitLen <= 64) -> {
-                val index = pow10;
-                mulCoeff(z, x, pow10BitLen, POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 0])
             }
 
             (pow10BitLen <= 128) -> {
-                val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
-                mulCoeff(z, x, pow10BitLen, POW10[index + 1], POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 1], POW10[pow10Offset + 0])
             }
 
             (pow10BitLen <= 192) -> {
-                val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
-                mulCoeff(z, x, pow10BitLen, POW10[index + 2], POW10[index + 1], POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
             }
 
             (pow10BitLen <= 256) -> {
-                val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_256_OFFSET);
-                mulCoeff(z, x, pow10BitLen, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0])
+                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
             }
 
             else -> throw RuntimeException("?que?")
         }
-        assert(z.digitLen == productDigitCount)
         assert(z.hasValidLengths())
     }
 

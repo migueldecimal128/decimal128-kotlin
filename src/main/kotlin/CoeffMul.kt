@@ -2,7 +2,6 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.CoeffDigitLen.POW10
-import com.decimal128.CoeffDigitLen.POW10_BIT_LEN
 import com.decimal128.CoeffSet.coeffSetShiftLeft
 
 object CoeffMul {
