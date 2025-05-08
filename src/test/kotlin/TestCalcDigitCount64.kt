@@ -16,7 +16,7 @@ fun getDigitCount(n: Int) : Int {
 @OptIn(ExperimentalUnsignedTypes::class)
 class TestCalcDigitCount64 {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun test() {
