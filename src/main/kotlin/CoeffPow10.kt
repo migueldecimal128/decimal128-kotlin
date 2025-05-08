@@ -268,22 +268,22 @@ object CoeffPow10 {
     }
 
     fun compareWithHalfPow10_64(bitLen: Int, dw0: Long): Int {
-        val cmp = if (dw0 > 0) {
-            val dw0x2 = dw0 shl 1
-            val loDigitLen = ((bitLen * 1233) shr 12) and 0x1F
-            val hiDigitLen = loDigitLen + 1
-            val pow10LoDigitLen = POW10[loDigitLen]
-            val pow10HiDigitLen = POW10[hiDigitLen]
-            val pow10 = if (compareUnsigned(dw0, pow10LoDigitLen) < 0) pow10LoDigitLen else pow10HiDigitLen
-            compareUnsigned(dw0x2, pow10)
-        } else {
-            //10**19 has the msb set
-            //so if we have our msb set then we compare with 1E19
-            //if we are smaller than oneE19 then we are a 19 digit GT_HALF
-            //if we are larger than oneE19 then we are a 20 digit LT_HALF
-            val cmp0 = -compareUnsigned(dw0, ONE_E19_dw0)
-            if (dw0 == 0L) -1 else cmp0
-        }
+        // normal path with hi bit not set ... double dw0
+        val dw0x2 = dw0 shl 1
+        val loDigitLen = ((bitLen * 1233) shr 12) and 0x1F
+        val hiDigitLen = loDigitLen + 1
+        val pow10LoDigitLen = POW10[loDigitLen]
+        val pow10HiDigitLen = POW10[hiDigitLen]
+        val pow10 = if (compareUnsigned(dw0, pow10LoDigitLen) < 0) pow10LoDigitLen else pow10HiDigitLen
+        val cmp2xPath = compareUnsigned(dw0x2, pow10)
+        val is2xMask = if (dw0 > 0) -1 else 0
+        // hiBitWas set ... so we compare directly against ONE_E19_dw0
+        val cmpHiBitPath = -compareUnsigned(dw0, ONE_E19_dw0)
+        val isHiBitMask = (dw0 shr 63).toInt()
+        // if dw0 == 0L then we will swamp everything to -1
+        val isZeroMask = if (dw0 == 0L) -1 else 0
+
+        val cmp = (cmp2xPath and is2xMask) or (cmpHiBitPath and isHiBitMask) or isZeroMask
         return cmp
     }
 
