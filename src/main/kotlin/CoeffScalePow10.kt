@@ -81,31 +81,29 @@ object CoeffScalePow10 {
         // digitCount is actually pow10 + 1
         // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
         val pow10DigitCount = pow10
+        val pow10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
 
         when {
             (pow10 < POW10_128_OFFSET) -> {
-                val index = pow10;
-                coeffFma(p, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0)
+                coeffFma(p, x, pow10DigitCount, POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
             (pow10 < POW10_192_OFFSET) -> {
-                val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
-                coeffFma(p, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0)
+                coeffFma(p, x, pow10DigitCount, POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
             (pow10 < POW10_256_OFFSET) -> {
-                val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
                 coeffFma(
                     p, x,
-                    pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0
+                    pow10DigitCount, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0
                 )
             }
 
             (pow10 < POW10_MAX_OFFSET) -> {
-                val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_192_OFFSET);
                 coeffFma(
                     p, x,
-                    pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0],
+                    pow10DigitCount, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0],
                     aDigitCount, a1, a0
                 )
             }
@@ -134,31 +132,29 @@ object CoeffScalePow10 {
         // digitCount is actually pow10 + 1
         // but this works OK because multiplying by a power of 10 will increase the productDigitCount by exactly pow10
         val pow10DigitCount = pow10
+        val pow10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
 
         return when {
             (pow10 < POW10_128_OFFSET) -> {
-                val index = pow10;
-                coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[index + 0], aDigitCount, a1, a0)
+                coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
             (pow10 < POW10_192_OFFSET) -> {
-                val index = POW10_128_DWORD_INDEX + 2 * (pow10 - POW10_128_OFFSET);
-                coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0)
+                coeffFusedMulAbsDiff(z, x, pow10DigitCount, POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0)
             }
 
             (pow10 < POW10_256_OFFSET) -> {
-                val index = POW10_192_DWORD_INDEX + 3 * (pow10 - POW10_192_OFFSET);
                 coeffFusedMulAbsDiff(
                     z, x,
-                    pow10DigitCount, POW10[index + 2], POW10[index + 1], POW10[index + 0], aDigitCount, a1, a0
+                    pow10DigitCount, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0], aDigitCount, a1, a0
                 )
             }
 
             (pow10 < POW10_MAX_OFFSET) -> {
-                val index = POW10_256_DWORD_INDEX + 4 * (pow10 - POW10_192_OFFSET);
                 coeffFusedMulAbsDiff(
                     z, x,
-                    pow10DigitCount, POW10[index + 3], POW10[index + 2], POW10[index + 1], POW10[index + 0],
+                    pow10DigitCount, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0],
                     aDigitCount, a1, a0
                 )
             }
