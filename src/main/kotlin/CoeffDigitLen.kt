@@ -162,27 +162,12 @@ object CoeffDigitLen {
 
     private val POW10_BIT_LEN = ShortArray(78) {
         i ->
-        val k = i
+        val pow10Offset = pow10Offset(i)
         val bl = when {
-            i < POW10_128_OFFSET -> 64 - numberOfLeadingZeros(POW10[i])
-            i < POW10_192_OFFSET -> {
-                val j = POW10_128_DWORD_INDEX + (i - POW10_128_OFFSET) * 2
-                val msdw = POW10[j + 1]
-                val bitLen = 128 - numberOfLeadingZeros(msdw)
-                bitLen
-            }
-            i < POW10_256_OFFSET -> {
-                val j = POW10_192_DWORD_INDEX + (i - POW10_192_OFFSET) * 3
-                val msdw = POW10[j + 2]
-                val bitLen = 192 - numberOfLeadingZeros(msdw)
-                bitLen
-            }
-            else -> {
-                val j = POW10_256_DWORD_INDEX + (i - POW10_256_OFFSET) * 4
-                val msdw = POW10[j + 3]
-                val bitLen = 256 - numberOfLeadingZeros(msdw)
-                bitLen
-            }
+            i < 20 -> 64 - numberOfLeadingZeros(POW10[pow10Offset + 0])
+            i < 39 -> 128 - numberOfLeadingZeros(POW10[pow10Offset + 1])
+            i < 58 -> 192 - numberOfLeadingZeros(POW10[pow10Offset + 2])
+            else -> 256 - numberOfLeadingZeros(POW10[pow10Offset + 3])
         }.toShort()
         bl
     }
