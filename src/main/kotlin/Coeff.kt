@@ -250,12 +250,12 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return bi
     }
 
-    fun coeffRoundUp(doRoundUp: Boolean) {
+    fun coeffIncrement(doRoundUp: Boolean) {
         if (doRoundUp)
-            coeffRoundUp()
+            coeffIncrement()
     }
 
-    fun coeffRoundUp() {
+    fun coeffIncrement() {
         ++dw0
         if (dw0 == 0L) {
             ++dw1

@@ -43,7 +43,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         if (totalResidue != EXACT) {
             val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
             if (roundUp) {
-                c.coeffRoundUp()
+                c.coeffIncrement()
                 if (c.digitLen > PRECISION_34) {
                     // if we rolled into another digit because of roundup
                     // then the result is definitely divisible by 10
@@ -82,7 +82,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
                 val roundUp2 = residue2.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (roundUp2) {
                     val digitLenBeforeRoundUp = c.digitLen
-                    c.coeffRoundUp()
+                    c.coeffIncrement()
                 }
             }
             assert(exp == TINY_EXPONENT)

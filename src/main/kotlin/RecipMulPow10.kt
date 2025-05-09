@@ -608,7 +608,7 @@ object RecipMulPow10 {
 
         val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
         val ulpRoundUp = residue.ulpRoundUp(effectiveRoundingDirection, q.dw0)
-        q.coeffRoundUp(ulpRoundUp)
+        q.coeffIncrement(ulpRoundUp)
 
         q.coeffDisableIndexSetAndUpdateLengths()
         val inexact = residue != EXACT
