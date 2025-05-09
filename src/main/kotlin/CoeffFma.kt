@@ -34,7 +34,7 @@ object CoeffFma {
                 return
             }
         }
-        _fmaCoeff4x4x4(z, maxProdBitLen,
+        _fma4x4x4(z, maxProdBitLen,
             m.dw3, m.dw2, m.dw1, m.dw0,
             n.dw3, n.dw2, n.dw1, n.dw0,
             a.dw3, a.dw2, a.dw1, a.dw0)
@@ -604,7 +604,7 @@ object CoeffFma {
         p.coeffSet192(p2, p1, p0)
     }
 
-    private fun _fmaCoeff4x4x4(
+    private fun _fma4x4x4(
         p: Coeff,
         maxBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
@@ -613,31 +613,34 @@ object CoeffFma {
     ) {
         val pp00Hi = unsignedMultiplyHigh(x0, y0)
         val pp00Lo = x0 * y0
-        val (carry0, p0) = sumU64(pp00Lo, a0)
         if (maxBitLen <= 64) {
+            val p0 = pp00Lo + a0
             p.coeffSet64(p0)
             return
         }
+        val (carry0, p0) = sumU64(pp00Lo, a0)
         val pp01Hi = unsignedMultiplyHigh(x0, y1)
         val pp01Lo = x0 * y1
         val pp10Hi = unsignedMultiplyHigh(x1, y0)
         val pp10Lo = x1 * y0
-        val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
         if (maxBitLen <= 128) {
+            val p1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
             p.coeffSet128(p1, p0)
             return
         }
+        val (carry1, p1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
         val pp11Hi = unsignedMultiplyHigh(x1, y1)
         val pp11Lo = x1 * y1
         val pp02Hi = unsignedMultiplyHigh(x0, y2)
         val pp02Lo = x0 * y2
         val pp20Hi = unsignedMultiplyHigh(x2, y0)
         val pp20Lo = x2 * y0
-        val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
         if (maxBitLen <= 192) {
+            val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo + a2
             p.coeffSet192(p2, p1, p0)
             return
         }
+        val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
         val pp12Hi = unsignedMultiplyHigh(x1, y2)
         val pp12Lo = x1 * y2
         val pp21Hi = unsignedMultiplyHigh(x2, y1)
@@ -646,12 +649,13 @@ object CoeffFma {
         val pp03Lo = x0 * y3
         val pp30Hi = unsignedMultiplyHigh(x3, y0)
         val pp30Lo = x3 * y0
-        val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo, a3)
 
         if (maxBitLen <= 256) {
+            val p3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo + a3
             p.coeffSet256(p3, p2, p1, p0)
             return
         }
+        val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo, a3)
         val pp22Lo = x2 * y2
         val (carry4, p4) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         if ((carry4 or p4) == 0L) {
