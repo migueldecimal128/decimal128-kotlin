@@ -15,146 +15,106 @@ object CoeffMul {
         val mBitLen = m.bitLen
         val nBitLen = n.bitLen
         val maxProdBitLen = mBitLen + nBitLen
-
-        assert(m.bitLen >= n.bitLen)
         // mBitLen >= nBitLen
-
+        assert(m.bitLen >= n.bitLen)
         val m0 = m.dw0
         val n0 = n.dw0
         when {
-            (nBitLen <= 0) -> { // can't actually go negative
-                z.coeffSetZero()
-            }
-            (maxProdBitLen > 257) -> {
-                throw RuntimeException("coeff mul overflow")
-            }
             (mBitLen <= 64) -> {
                 val pHi = unsignedMultiplyHigh(m0, n0)
                 val pLo = m0 * n0
                 z.coeffSet128(pHi, pLo)
+                return
             }
-            nBitLen <= 64 -> {
+
+            (nBitLen <= 64) -> {
                 when {
-                    (n0 == 1L) -> {
-                        z.coeffSet(m)
-                    }
+                    (nBitLen == 0) -> z.coeffSetZero()
                     (n0 and (n0 - 1) == 0L) -> {
+                        // also handles n0 == 1
                         // even power of 2 ... just shift
                         val ntz = java.lang.Long.numberOfTrailingZeros(n0)
                         coeffSetShiftLeft(z, m, ntz)
                     }
-                    else ->
-                        _mulCoeff(z, m, nBitLen, n0)
+
+                    (m.bitLen <= 128) -> _mulCoeff2x1(z, maxProdBitLen, m.dw1, m.dw0, n0)
+                    (m.bitLen <= 192) -> _mulCoeff3x1(z, maxProdBitLen, m.dw2, m.dw1, m.dw0, n0)
+                    else -> _mulCoeff4x1(z, maxProdBitLen, m.dw3, m.dw2, m.dw1, m.dw0, n0)
                 }
+                return
             }
 
-            nBitLen <= 128 -> {
-                _mulCoeff(z, m, nBitLen, n.dw1, n.dw0)
+            (nBitLen <= 128 && m.bitLen <= 192) -> {
+                _mulCoeff3x2(z, maxProdBitLen, m.dw2, m.dw1, m.dw0, n.dw1, n0)
+                return
             }
+        }
+        throw RuntimeException("coeff mul overflow")
+    }
 
-            else -> throw RuntimeException("why wasn't this overflow caught earlier with 257 bitLen test?")
+    fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y0: Long) {
+        val xBitLen = x.bitLen
+        val maxBitLen = xBitLen + yBitLen
+        when {
+            (xBitLen <= 64) -> {
+                val x0 = x.dw0
+                val pHi = unsignedMultiplyHigh(x0, y0)
+                val pLo = x0 * y0
+                z.coeffSet128(pHi, pLo)
+                return
+            }
+            (xBitLen <= 128) -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0)
+            (xBitLen <= 192) -> _mulCoeff3x1(z, maxBitLen, x.dw2, x.dw1, x.dw0, y0)
+            else -> _mulCoeff4x1(z, maxBitLen, x.dw3, x.dw2, x.dw1, x.dw0, y0)
         }
     }
 
-    fun mulCoeff(product: Coeff, x: Coeff, yBitLen: Int, y0: Long) {
-        val maxBitLen = x.bitLen + yBitLen
-        if (maxBitLen <= 257) {
-            when {
-                (x.bitLen <= 64) -> _mulCoeff1x1(product, x.dw0, y0)
-                (x.bitLen <= 128) -> _mulCoeff2x1(product, maxBitLen, x.dw1, x.dw0, y0)
-                (x.bitLen <= 192) -> _mulCoeff3x1(product, maxBitLen, x.dw2, x.dw1, x.dw0, y0)
-                else -> _mulCoeff4x1(product, maxBitLen, x.dw3, x.dw2, x.dw1, x.dw0, y0)
-            }
-        } else {
-            throw RuntimeException("coeff mul overflow")
-        }
-    }
-
-    fun mulCoeff(product: Coeff, x: Coeff, yBitLen: Int, y1: Long, y0: Long) {
+    fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y1: Long, y0: Long) {
         assert(yBitLen in 65..128)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-        do {
-            if (maxBitLen <= 257) {
-                when {
-                    (xBitLen <= 64) -> when {
-                        (xBitLen > 1) -> _mulCoeff2x1(product, maxBitLen, y1, y0, x.dw0)
-                        (xBitLen == 1) -> product.coeffSet128(y1, y0)
-                        else -> product.coeffSetZero()
-                    }
-                    (xBitLen <= 128) -> _mulCoeff2x2(product, maxBitLen, x.dw1, x.dw0, y1, y0)
-                    (xBitLen <= 192) -> _mulCoeff3x2(product, maxBitLen, x.dw2, x.dw1, x.dw0, y1, y0)
-                    else -> break
-                }
-                return
+        when {
+            (xBitLen <= 64) -> when {
+                (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
+                (xBitLen == 1) -> z.coeffSet128(y1, y0)
+                else -> z.coeffSetZero()
             }
-        } while (false)
-        throw RuntimeException("coeff overflow")
+            (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0)
+            (xBitLen <= 192) -> _mulCoeff3x2(z, maxBitLen, x.dw2, x.dw1, x.dw0, y1, y0)
+            else -> throw RuntimeException("coeff overflow")
+        }
     }
 
-    fun mulCoeff(product: Coeff, x: Coeff, yBitLen: Int, y2: Long, y1: Long, y0: Long) {
+    fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y2: Long, y1: Long, y0: Long) {
         assert(yBitLen in 129..192)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-        do {
-            if (maxBitLen <= 257) {
-                when {
-                    (xBitLen <= 64) -> when {
-                        (xBitLen > 1) -> _mulCoeff3x1(product, maxBitLen, y2, y1, y0, x.dw0)
-                        (xBitLen == 1) -> product.coeffSet192(y2, y1, y0)
-                        else -> product.coeffSetZero()
-                    }
-                    (xBitLen <= 128) -> _mulCoeff3x2(product, maxBitLen, y2, y1, y0, x.dw1, x.dw0)
-                    else -> break
-                }
-                return
+        when {
+            (xBitLen <= 64) -> when {
+                (xBitLen > 1) -> _mulCoeff3x1(z, maxBitLen, y2, y1, y0, x.dw0)
+                (xBitLen == 1) -> z.coeffSet192(y2, y1, y0)
+                else -> z.coeffSetZero()
             }
-        } while (false)
-        throw RuntimeException("coeff overflow")
+            (xBitLen <= 128) -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0)
+            else -> throw RuntimeException("coeff overflow")
+        }
     }
 
-    fun mulCoeff(product: Coeff, x: Coeff, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
+    fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
         assert(yBitLen in 193..256)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-        do {
-            if (maxBitLen <= 257) {
-                when {
-                    (xBitLen <= 64) -> when {
-                        (xBitLen > 1) -> _mulCoeff4x1(product, maxBitLen, y3, y2, y1, y0, x.dw0)
-                        (xBitLen == 1) -> product.coeffSet256(y3, y2, y1, y0)
-                        else -> product.coeffSetZero()
-                    }
-                    else -> break
-                }
-                return
+        when {
+            (xBitLen <= 64) -> when {
+                (xBitLen > 1) -> _mulCoeff4x1(z, maxBitLen, y3, y2, y1, y0, x.dw0)
+                (xBitLen == 1) -> z.coeffSet256(y3, y2, y1, y0)
+                else -> z.coeffSetZero()
             }
-        } while (false)
-        throw RuntimeException("coeff overflow")
-    }
-
-    private fun _mulCoeff(product: Coeff, m: Coeff, nBitLen: Int, n0: Long) {
-        assert(nBitLen in 1..64)
-        assert(m.bitLen >= nBitLen)
-        val maxBitLen = m.bitLen+ nBitLen
-        when {
-            (m.bitLen <=  64) -> _mulCoeff1x1(product, m.dw0, n0)
-            (m.bitLen <= 128) -> _mulCoeff2x1(product, maxBitLen, m.dw1, m.dw0, n0)
-            (m.bitLen <= 192) -> _mulCoeff3x1(product, maxBitLen, m.dw2, m.dw1, m.dw0, n0)
-            else -> _mulCoeff4x1(product, maxBitLen, m.dw3, m.dw2, m.dw1, m.dw0, n0)
+            else -> throw RuntimeException("coeff overflow")
         }
     }
 
-    private fun _mulCoeff(product: Coeff, m: Coeff, nBitLen: Int, n1: Long, n0: Long) {
-        assert(nBitLen in 65..128)
-        assert(m.bitLen >= nBitLen)
-        val maxBitLen = m.bitLen+ nBitLen
-        when {
-            (m.bitLen <= 192) -> _mulCoeff3x2(product, maxBitLen, m.dw2, m.dw1, m.dw0, n1, n0)
-            else -> throw RuntimeException("?que? overflow")
-        }
-    }
-
+    @Suppress("UNUSED")
     private fun _mulCoeff4x4(
         p: Coeff,
         maxBitLen: Int,
@@ -404,19 +364,6 @@ object CoeffMul {
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
         val p2 = carry1 + pp10Hi
         p.coeffSet192(p2, p1, p0)
-    }
-
-    private fun _mulCoeff1x1(
-        p: Coeff,
-        /* maxBitLen: Int, */
-        x0: Long,
-        y0: Long
-    ) {
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
-        val pp00Lo = x0 * y0
-        val p0 = pp00Lo
-        val p1 = pp00Hi
-        p.coeffSet128(p1, p0)
     }
 
 }
