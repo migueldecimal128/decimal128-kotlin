@@ -12,35 +12,39 @@ import kotlin.math.max
 object CoeffScalePow10 {
 
     fun coeffScaleUpPow10(z: Coeff, x: Coeff, pow10: Int) {
-        if (x.digitLen == 0 || pow10 == 0) {
-            z.coeffSet(x)
-            return
-        }
-
-        val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
-
-        val productBitLen = x.bitLen + pow10BitLen
-        if (productBitLen > 257) // 257 is OK, because it might come in at 256
-            throw RuntimeException("coefficient overflow")
         when {
-            (pow10BitLen <= 64) -> {
-                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 0])
-            }
+            pow10 > 0 -> {
+                val pow10BitLen = pow10BitLen(pow10)
+                val pow10Offset = pow10Offset(pow10)
 
-            (pow10BitLen <= 128) -> {
-                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 1], POW10[pow10Offset + 0])
-            }
+                val productBitLen = x.bitLen + pow10BitLen
+                if (productBitLen > 257) // 257 is OK, because it might come in at 256
+                    throw RuntimeException("coefficient overflow")
+                when {
+                    (pow10BitLen <= 64) -> {
+                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 0])
+                    }
 
-            (pow10BitLen <= 192) -> {
-                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
-            }
+                    (pow10BitLen <= 128) -> {
+                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 1], POW10[pow10Offset + 0])
+                    }
 
-            (pow10BitLen <= 256) -> {
-                mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
-            }
+                    (pow10BitLen <= 192) -> {
+                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
+                    }
 
-            else -> throw RuntimeException("?que?")
+                    (pow10BitLen <= 256) -> {
+                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
+                    }
+
+                    else -> throw RuntimeException("?que?")
+                }
+
+            }
+            pow10 == 0 -> {
+                z.coeffSet(x)
+            }
+            else -> throw RuntimeException()
         }
         assert(z.hasValidLengths())
     }

@@ -6,7 +6,7 @@ import java.util.*
 
 class TestCoeffMul {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val biA: BigInteger, val biB: BigInteger) {
         val biProduct = biA.multiply(biB)
@@ -15,6 +15,7 @@ class TestCoeffMul {
     }
 
     val cases = arrayOf(
+        TC("18446744073709551616", "0"),
         TC("143005781744313106762286640808689760291381", "680117584506250987821428704491240734"),
         TC("18446744073709551616", "0"),
         TC("9999999999999999919", "9999999999999999919"),

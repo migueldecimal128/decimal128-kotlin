@@ -42,55 +42,6 @@ object CoeffFma {
     }
 
 
-    fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y0: Long, a: Coeff) {
-        if (a.bitLen <= 128) {
-            coeffFma(p, x, yDigitCount, y0, a.digitLen, a.dw1, a.dw0)
-        } else {
-            _fma(
-                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                yDigitCount, 0L, 0L, 0L, y0,
-                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
-            )
-
-        }
-    }
-
-    fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long, a: Coeff) {
-        if (a.bitLen <= 128) {
-            coeffFma(p, x, yDigitCount, y1, y0, a.digitLen, a.dw1, a.dw0)
-        } else {
-            _fma(
-                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                yDigitCount, 0L, 0L, y1, y0,
-                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
-            )
-        }
-    }
-
-    fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long, a: Coeff) {
-        if (a.bitLen <= 128) {
-            coeffFma(p, x, yDigitCount, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
-        } else {
-            _fma(
-                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                yDigitCount, 0L, y2, y1, y0,
-                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
-            )
-        }
-    }
-
-    fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long, a: Coeff) {
-        if (a.bitLen <= 128) {
-            coeffFma(p, x, yDigitCount, y3, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
-        } else {
-            _fma(
-                p, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                yDigitCount, y3, y2, y1, y0,
-                a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
-            )
-        }
-    }
-
     fun coeffFma(p: Coeff, x: Coeff, yDigitCount: Int, y0: Long, aDigitCount: Int, a1: Long, a0: Long) {
         when {
             x.bitLen <= 64 ->
