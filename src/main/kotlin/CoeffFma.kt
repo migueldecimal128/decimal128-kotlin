@@ -45,6 +45,7 @@ object CoeffFma {
     }
 
     fun coeffFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
+        assert(pow10 >= 0)
         assert(z.hasValidLengths())
         assert(x.hasValidLengths())
         assert(a.hasValidLengths())
