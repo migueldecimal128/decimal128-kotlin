@@ -8,7 +8,7 @@ import java.util.*
 
 class TestCoeffAddScaledFullOverlap {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val biX: BigInteger, val scaleDelta: Int, val biY: BigInteger) {
         val biZ = biX.multiply(TEN.pow(scaleDelta)).add(biY)
