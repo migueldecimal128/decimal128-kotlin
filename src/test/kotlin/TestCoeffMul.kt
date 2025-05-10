@@ -6,7 +6,7 @@ import java.util.*
 
 class TestCoeffMul {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val biA: BigInteger, val biB: BigInteger) {
         val biProduct = biA.multiply(biB)

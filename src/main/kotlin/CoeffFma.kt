@@ -114,17 +114,24 @@ object CoeffFma {
         }
         val p2 = POW10[pow10Offset + 2]
         if (p10BitLen <= 192) {
-            if (xBitLen <= 128) {
-                _fma3x2x4(
-                    z, maxProdBitLen,
-                    p2, p1, p0,
-                    x.dw1, x0,
-                    a.dw3, a.dw2, a.dw1, a0
-                )
-                return
-            } else {
-                throw RuntimeException("coeff overflow")
+            when {
+                (xBitLen <= 64) ->
+                    _fma3x1x4(
+                        z, maxProdBitLen,
+                        p2, p1, p0,
+                        x0,
+                        a.dw3, a.dw2, a.dw1, a0
+                    )
+                (xBitLen <= 128) ->
+                    _fma3x2x4(
+                        z, maxProdBitLen,
+                        p2, p1, p0,
+                        x.dw1, x0,
+                        a.dw3, a.dw2, a.dw1, a0
+                    )
+                else -> throw RuntimeException("coeff overflow")
             }
+            return
         }
         val p3 = POW10[pow10Offset + 3]
         if (xBitLen <= 64) {
@@ -946,7 +953,8 @@ object CoeffFma {
         f.coeffSet256(f3, f2, f1, f0)
     }
 
-    private fun _fma1x1x2(
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun _fma1x1x2(
         f: Coeff,
         maxBitLen: Int,
         x0: Long,

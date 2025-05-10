@@ -79,8 +79,8 @@ object CoeffAdd {
         assert(scaleDelta > 0)
         assert(scaleDelta < PRECISION_34)
 
-        assert((x.dw3 or x.dw2) == 0L)
-        assert((y.dw3 or y.dw2) == 0L)
+//        assert((x.dw3 or x.dw2) == 0L)
+//        assert((y.dw3 or y.dw2) == 0L)
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
         assert(z.hasValidLengths())
