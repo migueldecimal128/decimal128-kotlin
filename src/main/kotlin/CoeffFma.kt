@@ -1,11 +1,13 @@
 package com.decimal128
 
+import com.decimal128.CoeffPow10.pow10BitLen
+import com.decimal128.CoeffPow10.pow10Offset
 import java.lang.Math.max
 import java.lang.Math.unsignedMultiplyHigh
 
 object CoeffFma {
 
-    fun coeffFma(z:Coeff, x:Coeff, y:Coeff, a:Coeff) {
+    fun coeffFma(z: Coeff, x: Coeff, y: Coeff, a: Coeff) {
         assert(z.hasValidLengths())
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
@@ -34,11 +36,50 @@ object CoeffFma {
                 return
             }
         }
+
         _fma4x4x4(z, maxProdBitLen,
             m.dw3, m.dw2, m.dw1, m.dw0,
             n.dw3, n.dw2, n.dw1, n.dw0,
             a.dw3, a.dw2, a.dw1, a.dw0)
 
+    }
+
+    fun coeffFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
+        assert(z.hasValidLengths())
+        assert(x.hasValidLengths())
+        assert(a.hasValidLengths())
+        val xBitLen = x.bitLen
+        val p10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
+        val x0 = x.dw0
+        val p0 = POW10[pow10Offset + 0]
+        val a0 = a.dw0
+        val maxProdBitLen = max(xBitLen + p10BitLen, a.bitLen) + 1
+        if (xBitLen <= 64 && p10BitLen <= 64) {
+            val pp1 = unsignedMultiplyHigh(x0, p0)
+            val pp0 = x0 * p0
+            val (carry0, z0) = sumU64(pp0, a0)
+            val (carry1, z1) = sumU64(carry0, pp1, a.dw1)
+            if (maxProdBitLen <= 192) {
+                val z2 = carry1 + a.dw2
+                z.coeffSet192(z2, z1, z0)
+                return
+            }
+            val (carry2, z2) = sumU64(carry1, a.dw2)
+            val (carry3, z3) = sumU64(carry2, a.dw3)
+            if (carry3 == 0L) {
+                z.coeffSet256(z3, z2, z1, z0)
+                return
+            }
+            throw RuntimeException("coeff overflow")
+        }
+        val p1 = if (p10BitLen > 64) POW10[pow10Offset + 1] else 0
+        val p2 = if (p10BitLen > 128) POW10[pow10Offset + 2] else 0
+        val p3 = if (p10BitLen > 192) POW10[pow10Offset + 3] else 0
+        _fma4x4x4(z, maxProdBitLen,
+            x.dw3, x.dw2, x.dw1, x0,
+            p3, p2, p1, p0,
+            a.dw3, a.dw2, a.dw1, a0)
     }
 
 

@@ -115,7 +115,7 @@ object CoeffMul {
     }
 
     @Suppress("UNUSED")
-    private fun _mulCoeff4x4(
+    fun _mulCoeff4x4(
         p: Coeff,
         maxBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
@@ -175,7 +175,7 @@ object CoeffMul {
         throw RuntimeException("coeff multiply overflow")
     }
 
-    private fun _mulCoeff4x1(
+    fun _mulCoeff4x1(
         p: Coeff,
         maxBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
