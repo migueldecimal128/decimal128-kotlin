@@ -55,13 +55,33 @@ object CoeffFma {
         val x0 = x.dw0
         val a0 = a.dw0
         val maxProdBitLen = max(xBitLen + p10BitLen, aBitLen) + 1
-        val hiBitXA = xBitLen or aBitLen
         val p0 = POW10[pow10Offset + 0]
         if (p10BitLen <= 64) {
-            _fma4x1x4(z, maxProdBitLen,
-                x.dw3, x.dw2, x.dw1, x0,
-                p0,
-                a.dw3, a.dw2, a.dw1, a0)
+            when {
+                (xBitLen <= 64 && aBitLen <= 128) ->
+                    _fma1x1x2(z, maxProdBitLen,
+                        x0,
+                        p0,
+                        a.dw1, a0
+                    )
+                (xBitLen <= 128 && aBitLen <= 192) ->
+                    _fma2x1x3(z, maxProdBitLen,
+                        x.dw1, x0,
+                        p0,
+                        a.dw2, a.dw1, a0
+                    )
+                (xBitLen <= 192) ->
+                    _fma3x1x4(z, maxProdBitLen,
+                        x.dw2, x.dw1, x0,
+                        p0,
+                        a.dw3, a.dw2, a.dw1, a0
+                    )
+                else ->
+                    _fma4x1x4(z, maxProdBitLen,
+                        x.dw3, x.dw2, x.dw1, x0,
+                        p0,
+                        a.dw3, a.dw2, a.dw1, a0)
+            }
             return
         }
         val p1 = POW10[pow10Offset + 1]
@@ -785,5 +805,109 @@ object CoeffFma {
         throw RuntimeException("coeff multiply overflow")
     }
 
+    private fun _fma3x1x4(
+        f: Coeff,
+        maxBitLen: Int,
+        x2: Long, x1: Long, x0: Long,
+        y0: Long,
+        a3: Long, a2: Long, a1: Long, a0: Long
+    ) {
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp00Lo = x0 * y0
+        if (maxBitLen <= 64) {
+            val f0 = pp00Lo + a0
+            f.coeffSet64(f0)
+            return
+        }
+        val (carry0, f0) = sumU64(pp00Lo, a0)
+        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val pp10Lo = x1 * y0
+        if (maxBitLen <= 128) {
+            val f1 = carry0 + pp00Hi + pp10Lo + a1
+            f.coeffSet128(f1, f0)
+            return
+        }
+        val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
+        val pp20Hi = unsignedMultiplyHigh(x2, y0)
+        val pp20Lo = x2 * y0
+        if (maxBitLen <= 192) {
+            val f2 = carry1 + pp10Hi + pp20Lo + a2
+            f.coeffSet192(f2, f1, f0)
+            return
+        }
+        val (carry2, f2) = sumU64(carry1, pp10Hi, pp20Lo, a2)
+
+        if (maxBitLen <= 256) {
+            val f3 = carry2 + pp20Hi + a3
+            f.coeffSet256(f3, f2, f1, f0)
+            return
+        }
+        val (carry3, f3) = sumU64(carry2, pp20Hi, a3)
+        if (carry3 == 0L) {
+            assert(maxBitLen in 257..258)
+            f.coeffSet256(f3, f2, f1, f0)
+            return
+        }
+        throw RuntimeException("coeff multiply overflow")
+    }
+
+    private fun _fma2x1x3(
+        f: Coeff,
+        maxBitLen: Int,
+        x1: Long, x0: Long,
+        y0: Long,
+        a2: Long, a1: Long, a0: Long
+    ) {
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp00Lo = x0 * y0
+        if (maxBitLen <= 64) {
+            val f0 = pp00Lo + a0
+            f.coeffSet64(f0)
+            return
+        }
+        val (carry0, f0) = sumU64(pp00Lo, a0)
+        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val pp10Lo = x1 * y0
+        if (maxBitLen <= 128) {
+            val f1 = carry0 + pp00Hi + pp10Lo + a1
+            f.coeffSet128(f1, f0)
+            return
+        }
+        val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
+        if (maxBitLen <= 192) {
+            val f2 = carry1 + pp10Hi + a2
+            f.coeffSet192(f2, f1, f0)
+            return
+        }
+        val (carry2, f2) = sumU64(carry1, pp10Hi, a2)
+        val f3 = carry2
+        f.coeffSet256(f3, f2, f1, f0)
+    }
+
+    private fun _fma1x1x2(
+        f: Coeff,
+        maxBitLen: Int,
+        x0: Long,
+        y0: Long,
+        a1: Long, a0: Long
+    ) {
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp00Lo = x0 * y0
+        if (maxBitLen <= 64) {
+            val f0 = pp00Lo + a0
+            f.coeffSet64(f0)
+            return
+        }
+        val (carry0, f0) = sumU64(pp00Lo, a0)
+        if (maxBitLen <= 128) {
+            val f1 = carry0 + pp00Hi + a1
+            f.coeffSet128(f1, f0)
+            return
+        }
+        val (carry1, f1) = sumU64(carry0, pp00Hi, a1)
+        val f2 = carry1
+        f.coeffSet192(f2, f1, f0)
+        return
+    }
 
 }
