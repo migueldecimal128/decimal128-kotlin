@@ -27,6 +27,42 @@ object CoeffFusedMulAbsDiff {
         val a1 = a.dw1
 
         val maxProdBitLen = mBitLen + nBitLen
+        if (nBitLen <= 64) {
+            val residue = when {
+                (mBitLen <= 64 && aBitLen <= 128) ->
+                    _fmad1x1x2(
+                        z, maxProdBitLen,
+                        m0,
+                        n0,
+                        aBitLen, a1, a0
+                    )
+
+                (mBitLen <= 128 && aBitLen <= 192) ->
+                    _fmad2x1x3(
+                        z, maxProdBitLen,
+                        m1, m0,
+                        n0,
+                        aBitLen, a.dw2, a1, a0
+                    )
+
+                (mBitLen <= 192) ->
+                    _fmad3x1x4(
+                        z, maxProdBitLen,
+                        m.dw2, m1, m0,
+                        n0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
+                    )
+
+                else ->
+                    _fmad4x1x4(
+                        z, maxProdBitLen,
+                        m.dw3, m.dw2, m1, m0,
+                        n0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
+                    )
+            }
+            return residue
+        }
 
         val residue = _fmad4x4x4(z, maxProdBitLen,
             m.dw3, m.dw2, m1, m0,
@@ -396,6 +432,284 @@ object CoeffFusedMulAbsDiff {
             return if (borrow3 > 0) EXACT_NEGATED else EXACT
         }
         throw RuntimeException("coeff overflow")
+    }
+
+    private fun _fmad4x1x4(
+        f: Coeff,
+        maxProdBitLen: Int,
+        x3: Long, x2: Long, x1: Long, x0: Long,
+        y0: Long,
+        aBitLen: Int, a3: Long, a2: Long, a1: Long, a0: Long
+    ): Residue {
+        val maxDiffBitLen = max(maxProdBitLen, aBitLen)
+
+        val pp00Lo = x0 * y0
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp10Lo = x1 * y0
+        val (borrow0, d0) = diffU64(pp00Lo, a0)
+        assert(borrow0 in 0..1)
+        if (maxDiffBitLen <= 64) {
+            val negBorrow0 = -borrow0
+            val f0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
+            f.coeffSet64(f0)
+            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val pp20Lo = x2 * y0
+        val (carry1s, s1) = sumU64(borrow0, a1)
+        val (borrow1d, d1) = diffU64(p1, s1)
+        val borrow1 = carry1s + borrow1d
+        assert(borrow1 in 0..1)
+        if (maxDiffBitLen <= 128) {
+            val negBorrow1 = -borrow1
+            var f1 = d1 xor negBorrow1
+            val f0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
+            if (negBorrow1 < 0L && f0 == 0L) {
+                ++f1
+            }
+            f.coeffSet128(f1, f0)
+            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry2, p2) = sumU64(carry1, pp10Hi, pp20Lo)
+        val pp20Hi = unsignedMultiplyHigh(x2, y0)
+        val pp30Lo = x3 * y0
+        val (carry2s, s2) = sumU64(borrow1, a2)
+        val (borrow2d, d2) = diffU64(p2, s2)
+        val borrow2 = carry2s + borrow2d
+        assert(borrow2 in 0..1)
+        if (maxDiffBitLen <= 192) {
+            val negBorrow2 = -borrow2
+            var f2 = d2 xor negBorrow2
+            var f1 = d1 xor negBorrow2
+            val f0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
+            if (negBorrow2 < 0L && f0 == 0L) {
+                ++f1
+                if (f1 == 0L) {
+                    ++f2
+                }
+            }
+            f.coeffSet192(f2, f1, f0)
+            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry3, p3) = sumU64(carry2, pp20Hi, pp30Lo)
+        val pp30Hi = unsignedMultiplyHigh(x3, y0)
+        val (carry3s, s3) = sumU64(borrow2, a3)
+        val (borrow3d, d3) = diffU64(p3, s3)
+        val borrow3 = carry3s + borrow3d
+        assert(borrow3 in 0..1)
+
+        val p4 = carry3 + pp30Hi
+        if (p4 == 0L || p4 == 1L && borrow3 == 1L) {
+            if (p4 == 0L) {
+                val negBorrow3 = -borrow3
+                var f3 = d3 xor negBorrow3
+                var f2 = d2 xor negBorrow3
+                var f1 = d1 xor negBorrow3
+                val f0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
+                if (negBorrow3 < 0L && f0 == 0L) {
+                    ++f1
+                    if (f1 == 0L) {
+                        ++f2
+                        if (f2 == 0L)
+                            ++f3
+                    }
+                }
+                f.coeffSet256(f3, f2, f1, f0)
+            } else {
+                // dw4 == 1L && borrow3 == 1L
+                // the multiply carry and the borrow out the top cancel each other out
+                f.coeffSet256(d3, d2, d1, d0)
+            }
+            return if (borrow3 > 0) EXACT_NEGATED else EXACT
+        }
+        throw RuntimeException("coeff overflow")
+    }
+
+    private fun _fmad3x1x4(
+        f: Coeff,
+        maxProdBitLen: Int,
+        x2: Long, x1: Long, x0: Long,
+        y0: Long,
+        aBitLen: Int, a3: Long, a2: Long, a1: Long, a0: Long
+    ): Residue {
+        val maxDiffBitLen = max(maxProdBitLen, aBitLen)
+
+        val pp00Lo = x0 * y0
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp10Lo = x1 * y0
+        val (borrow0, d0) = diffU64(pp00Lo, a0)
+        assert(borrow0 in 0..1)
+        if (maxDiffBitLen <= 64) {
+            val negBorrow0 = -borrow0
+            val f0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
+            f.coeffSet64(f0)
+            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val pp20Lo = x2 * y0
+        val (carry1s, s1) = sumU64(borrow0, a1)
+        val (borrow1d, d1) = diffU64(p1, s1)
+        val borrow1 = carry1s + borrow1d
+        assert(borrow1 in 0..1)
+        if (maxDiffBitLen <= 128) {
+            val negBorrow1 = -borrow1
+            var f1 = d1 xor negBorrow1
+            val f0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
+            if (negBorrow1 < 0L && f0 == 0L) {
+                ++f1
+            }
+            f.coeffSet128(f1, f0)
+            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry2, p2) = sumU64(carry1, pp10Hi, pp20Lo)
+        val pp20Hi = unsignedMultiplyHigh(x2, y0)
+        val (carry2s, s2) = sumU64(borrow1, a2)
+        val (borrow2d, d2) = diffU64(p2, s2)
+        val borrow2 = carry2s + borrow2d
+        assert(borrow2 in 0..1)
+        if (maxDiffBitLen <= 192) {
+            val negBorrow2 = -borrow2
+            var f2 = d2 xor negBorrow2
+            var f1 = d1 xor negBorrow2
+            val f0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
+            if (negBorrow2 < 0L && f0 == 0L) {
+                ++f1
+                if (f1 == 0L) {
+                    ++f2
+                }
+            }
+            f.coeffSet192(f2, f1, f0)
+            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry3, p3) = sumU64(carry2, pp20Hi)
+        val (carry3s, s3) = sumU64(borrow2, a3)
+        val (borrow3d, d3) = diffU64(p3, s3)
+        val borrow3 = carry3s + borrow3d
+        assert(borrow3 in 0..1)
+
+        val p4 = carry3
+        assert(p4 == 0L || p4 == 1L && borrow3 == 1L)
+        if (p4 == 0L) {
+            val negBorrow3 = -borrow3
+            var f3 = d3 xor negBorrow3
+            var f2 = d2 xor negBorrow3
+            var f1 = d1 xor negBorrow3
+            val f0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
+            if (negBorrow3 < 0L && f0 == 0L) {
+                ++f1
+                if (f1 == 0L) {
+                        ++f2
+                    if (f2 == 0L)
+                        ++f3
+                }
+            }
+            f.coeffSet256(f3, f2, f1, f0)
+        } else {
+            // dw4 == 1L && borrow3 == 1L
+            // the multiply carry and the borrow out the top cancel each other out
+            f.coeffSet256(d3, d2, d1, d0)
+        }
+        return if (borrow3 > 0) EXACT_NEGATED else EXACT
+    }
+
+    private fun _fmad2x1x3(
+        f: Coeff,
+        maxProdBitLen: Int,
+        x1: Long, x0: Long,
+        y0: Long,
+        aBitLen: Int, a2: Long, a1: Long, a0: Long
+    ): Residue {
+        val maxDiffBitLen = max(maxProdBitLen, aBitLen)
+
+        val pp00Lo = x0 * y0
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp10Lo = x1 * y0
+        val (borrow0, d0) = diffU64(pp00Lo, a0)
+        assert(borrow0 in 0..1)
+        if (maxDiffBitLen <= 64) {
+            val negBorrow0 = -borrow0
+            val f0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
+            f.coeffSet64(f0)
+            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val (carry1s, s1) = sumU64(borrow0, a1)
+        val (borrow1d, d1) = diffU64(p1, s1)
+        val borrow1 = carry1s + borrow1d
+        assert(borrow1 in 0..1)
+        if (maxDiffBitLen <= 128) {
+            val negBorrow1 = -borrow1
+            var f1 = d1 xor negBorrow1
+            val f0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
+            if (negBorrow1 < 0L && f0 == 0L) {
+                ++f1
+            }
+            f.coeffSet128(f1, f0)
+            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry2, p2) = sumU64(carry1, pp10Hi)
+        val (carry2s, s2) = sumU64(borrow1, a2)
+        val (borrow2d, d2) = diffU64(p2, s2)
+        val borrow2 = carry2s + borrow2d
+        assert(borrow2 in 0..1)
+        val negBorrow2 = -borrow2
+        var f2 = d2 xor negBorrow2
+        var f1 = d1 xor negBorrow2
+        val f0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
+        if (negBorrow2 < 0L && f0 == 0L) {
+            ++f1
+            if (f1 == 0L) {
+                ++f2
+            }
+        }
+        f.coeffSet192(f2, f1, f0)
+        return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
+    }
+
+    private fun _fmad1x1x2(
+        f: Coeff,
+        maxProdBitLen: Int,
+        x0: Long,
+        y0: Long,
+        aBitLen: Int, a1: Long, a0: Long
+    ): Residue {
+        val maxDiffBitLen = max(maxProdBitLen, aBitLen)
+
+        val pp00Lo = x0 * y0
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val (borrow0, d0) = diffU64(pp00Lo, a0)
+        assert(borrow0 in 0..1)
+        if (maxDiffBitLen <= 64) {
+            val negBorrow0 = -borrow0
+            val f0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
+            f.coeffSet64(f0)
+            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val p1 = pp00Hi
+        val (carry1s, s1) = sumU64(borrow0, a1)
+        val (borrow1d, d1) = diffU64(p1, s1)
+        val borrow1 = carry1s + borrow1d
+        assert(borrow1 in 0..1)
+        val negBorrow1 = -borrow1
+        var f1 = d1 xor negBorrow1
+        val f0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
+        if (negBorrow1 < 0L && f0 == 0L) {
+            ++f1
+        }
+        f.coeffSet128(f1, f0)
+        return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
     }
 
 
