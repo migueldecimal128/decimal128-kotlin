@@ -12,42 +12,27 @@ object CoeffFusedMulAbsDiff {
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
         assert(a.hasValidLengths())
-        if (x.digitLen <= 1) {
-            // FIXME I think precision is wrong in these cases
-            if (x.digitLen == 0) {
-                z.coeffSet(a)
-                return EXACT
-            }
-            if (x.dw0 == 1L) {
-                return z.absDiff(y, a)
-            }
-        }
-        if (y.digitLen <= 1) {
-            if (y.digitLen == 0) {
-                z.coeffSet(a)
-                return EXACT
-            }
-            if (y.dw0 == 1L) {
-                return z.absDiff(x, a)
-            }
-        }
-        return when {
-            ((y.dw3 or y.dw2) == 0L) -> {
-                if (y.dw1 == 0L) {
-                    coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw0, a)
-                } else {
-                    coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw1, y.dw0, a)
-                }
-            }
 
-            (y.dw3 == 0L) -> {
-                coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw2, y.dw1, y.dw0, a)
-            }
+        val flipFlop = x.bitLen >= y.bitLen
+        val m = if (flipFlop) x else y
+        val n = if (flipFlop) y else x
+        val mBitLen = m.bitLen
+        val nBitLen = n.bitLen
+        assert(mBitLen >= nBitLen)
+        val aBitLen = a.bitLen
+        val m0 = m.dw0
+        val m1 = m.dw1
+        val n0 = n.dw0
+        val a0 = a.dw0
+        val a1 = a.dw1
 
-            else -> {
-                coeffFusedMulAbsDiff(z, x, y.digitLen, y.dw3, y.dw2, y.dw1, y.dw0, a)
-            }
-        }
+        val maxProdBitLen = mBitLen + nBitLen
+
+        val residue = _fmad4x4x4(z, maxProdBitLen,
+            m.dw3, m.dw2, m1, m0,
+            n.dw3, n.dw2, n.dw1, n0,
+            aBitLen, a.dw3, a.dw2, a1, a0)
+        return residue
     }
 
 
@@ -304,6 +289,114 @@ object CoeffFusedMulAbsDiff {
     }
 
     /////////
+
+    private fun _fmad4x4x4(
+        f: Coeff,
+        maxProdBitLen: Int,
+        x3: Long, x2: Long, x1: Long, x0: Long,
+        y3: Long, y2: Long, y1: Long, y0: Long,
+        aBitLen: Int, a3: Long, a2: Long, a1: Long, a0: Long
+    ): Residue {
+        val maxDiffBitLen = max(maxProdBitLen, aBitLen)
+
+        val pp00Lo = x0 * y0
+        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp01Lo = x0 * y1
+        val pp10Lo = x1 * y0
+        val (borrow0, d0) = diffU64(pp00Lo, a0)
+        assert(borrow0 in 0..1)
+        if (maxDiffBitLen <= 64) {
+            val negBorrow0 = -borrow0
+            val f0 = (d0 xor negBorrow0) - negBorrow0 // complement and increment
+            f.coeffSet64(f0)
+            return if (negBorrow0 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
+        val pp01Hi = unsignedMultiplyHigh(x0, y1)
+        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val pp11Lo = x1 * y1
+        val pp02Lo = x0 * y2
+        val pp20Lo = x2 * y0
+        val (carry1s, s1) = sumU64(borrow0, a1)
+        val (borrow1d, d1) = diffU64(p1, s1)
+        val borrow1 = carry1s + borrow1d
+        assert(borrow1 in 0..1)
+        if (maxDiffBitLen <= 128) {
+            val negBorrow1 = -borrow1
+            var f1 = d1 xor negBorrow1
+            val f0 = (d0 xor negBorrow1) - negBorrow1 // complement and increment
+            if (negBorrow1 < 0L && f0 == 0L) {
+                ++f1
+            }
+            f.coeffSet128(f1, f0)
+            return if (negBorrow1 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo)
+        val pp11Hi = unsignedMultiplyHigh(x1, y1)
+        val pp02Hi = unsignedMultiplyHigh(x0, y2)
+        val pp20Hi = unsignedMultiplyHigh(x2, y0)
+        val pp12Lo = x1 * y2
+        val pp21Lo = x2 * y1
+        val pp03Lo = x0 * y3
+        val pp30Lo = x3 * y0
+        val (carry2s, s2) = sumU64(borrow1, a2)
+        val (borrow2d, d2) = diffU64(p2, s2)
+        val borrow2 = carry2s + borrow2d
+        assert(borrow2 in 0..1)
+        if (maxDiffBitLen <= 192) {
+            val negBorrow2 = -borrow2
+            var f2 = d2 xor negBorrow2
+            var f1 = d1 xor negBorrow2
+            val f0 = (d0 xor negBorrow2) - negBorrow2 // complement and increment
+            if (negBorrow2 < 0L && f0 == 0L) {
+                ++f1
+                if (f1 == 0L) {
+                    ++f2
+                }
+            }
+            f.coeffSet192(f2, f1, f0)
+            return if (negBorrow2 < 0) EXACT_NEGATED else EXACT
+        }
+
+        val (carry3, p3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo)
+        val pp12Hi = unsignedMultiplyHigh(x1, y2)
+        val pp21Hi = unsignedMultiplyHigh(x2, y1)
+        val pp03Hi = unsignedMultiplyHigh(x0, y3)
+        val pp30Hi = unsignedMultiplyHigh(x3, y0)
+        val pp22Lo = x2 * y2
+        val (carry3s, s3) = sumU64(borrow2, a3)
+        val (borrow3d, d3) = diffU64(p3, s3)
+        val borrow3 = carry3s + borrow3d
+        assert(borrow3 in 0..1)
+
+        val p4 = carry3 + pp12Hi + pp21Hi + pp03Hi + pp30Hi + pp22Lo
+        if (p4 == 0L || p4 == 1L && borrow3 == 1L) {
+            if (p4 == 0L) {
+                val negBorrow3 = -borrow3
+                var f3 = d3 xor negBorrow3
+                var f2 = d2 xor negBorrow3
+                var f1 = d1 xor negBorrow3
+                val f0 = (d0 xor negBorrow3) - negBorrow3 // complement and increment
+                if (negBorrow3 < 0L && f0 == 0L) {
+                    ++f1
+                    if (f1 == 0L) {
+                        ++f2
+                        if (f2 == 0L)
+                            ++f3
+                    }
+                }
+                f.coeffSet256(f3, f2, f1, f0)
+            } else {
+                // dw4 == 1L && borrow3 == 1L
+                // the multiply carry and the borrow out the top cancel each other out
+                f.coeffSet256(d3, d2, d1, d0)
+            }
+            return if (borrow3 > 0) EXACT_NEGATED else EXACT
+        }
+        throw RuntimeException("coeff overflow")
+    }
 
 
 }
