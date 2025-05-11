@@ -1,5 +1,7 @@
 package com.decimal128
 
+import com.decimal128.CoeffPow10.pow10BitLen
+import com.decimal128.CoeffPow10.pow10Offset
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Math.unsignedMultiplyHigh
@@ -87,84 +89,110 @@ object CoeffFusedMulAbsDiff {
         throw RuntimeException("coeff overflow")
     }
 
-
-    fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, yDigitCount: Int, y0: Long, a: Coeff): Residue {
-        return (
-                if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y0, a.digitLen, a.dw1, a.dw0)
-                } else {
-                    coeffFusedMulAbsDiff(
-                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                        yDigitCount, 0L, 0L, 0L, y0,
-                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
+    fun coeffFmadPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff): Residue {
+        assert(pow10 >= 0)
+        assert(z.hasValidLengths())
+        assert(x.hasValidLengths())
+        assert(a.hasValidLengths())
+        val xBitLen = x.bitLen
+        val aBitLen = a.bitLen
+        val p10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
+        val x0 = x.dw0
+        val a0 = a.dw0
+        val a1 = a.dw1
+        val maxProdBitLen = xBitLen + p10BitLen
+        val maxDiffBitlen = max(maxProdBitLen, aBitLen)
+        val p0 = POW10[pow10Offset + 0]
+        if (p10BitLen <= 64) {
+            val residue = when {
+                (xBitLen <= 64 && aBitLen <= 128) ->
+                    _fmad1x1x2(z, maxProdBitLen,
+                        x0,
+                        p0,
+                        aBitLen, a1, a0
                     )
-                })
-    }
-
-    fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, yDigitCount: Int, y1: Long, y0: Long, a: Coeff): Residue {
-        return (
-                if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y1, y0, a.digitLen, a.dw1, a.dw0)
-                } else {
-                    coeffFusedMulAbsDiff(
-                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                        yDigitCount, 0L, 0L, y1, y0,
-                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
+                (xBitLen <= 128 && aBitLen <= 192) ->
+                    _fmad2x1x3(z, maxProdBitLen,
+                        x.dw1, x0,
+                        p0,
+                        aBitLen, a.dw2, a1, a0
                     )
-                })
-    }
-
-    fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, yDigitCount: Int, y2: Long, y1: Long, y0: Long, a: Coeff): Residue {
-        return (
-                if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
-                } else {
-                    coeffFusedMulAbsDiff(
-                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                        yDigitCount, 0L, y2, y1, y0,
-                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
+                (xBitLen <= 192) ->
+                    _fmad3x1x4(z, maxProdBitLen,
+                        x.dw2, x.dw1, x0,
+                        p0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
                     )
-                })
-    }
-
-    fun coeffFusedMulAbsDiff(
-        z: Coeff,
-        x: Coeff,
-        yDigitCount: Int, y3: Long, y2: Long, y1: Long, y0: Long,
-        a: Coeff
-    ): Residue {
-        return (
-                if ((a.dw3 or a.dw2) == 0L) {
-                    coeffFusedMulAbsDiff(z, x, yDigitCount, y3, y2, y1, y0, a.digitLen, a.dw1, a.dw0)
-                } else {
-                    coeffFusedMulAbsDiff(
-                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                        yDigitCount, y3, y2, y1, y0,
-                        a.digitLen, a.dw3, a.dw2, a.dw1, a.dw0
+                else ->
+                    _fmad4x1x4(z, maxProdBitLen,
+                        x.dw3, x.dw2, x.dw1, x0,
+                        p0,
+                        aBitLen, a.dw3, a.dw2, a1, a0)
+            }
+            return residue
+        }
+        val p1 = POW10[pow10Offset + 1]
+        if (p10BitLen <= 128) {
+            val residue = when {
+                (xBitLen <= 64 && aBitLen <= 128) ->
+                    _fmad2x1x3(
+                        z, maxProdBitLen,
+                        p1, p0,
+                        x0,
+                        aBitLen, a.dw2, a1, a0
                     )
-                })
-    }
-
-    fun coeffFusedMulAbsDiff(
-        z: Coeff,
-        x: Coeff,
-        yDigitCount: Int, y0: Long,
-        aDigitCount: Int, a1: Long, a0: Long
-    ): Residue {
-        return (
-                //if ((x.dw3 or x.dw2) == 0L) {
-                //    if (x.dw1 == 0L)
-                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
-                //    else
-                //        coeffFusedMulAbsDiff(z, x.digitLen, x.dw1, x.dw0, yDigitCount, y0, aDigitCount, a1, a0)
-                //} else {
-                    coeffFusedMulAbsDiff(
-                        z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0,
-                        yDigitCount, 0L, 0L, 0L, y0, aDigitCount, 0L, 0L, a1, a0
+                (xBitLen <= 128) ->
+                    _fmad2x2x4(
+                        z, maxProdBitLen,
+                        x.dw1, x0,
+                        p1, p0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
                     )
-                //}
-                )
-
+                (xBitLen <= 192) ->
+                    _fmad3x2x4(
+                        z, maxProdBitLen,
+                        x.dw2, x.dw1, x0,
+                        p1, p0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
+                    )
+                else ->  throw RuntimeException("coeff overflow")
+            }
+            return residue
+        }
+        val p2 = POW10[pow10Offset + 2]
+        if (p10BitLen <= 192) {
+            val residue = when {
+                (xBitLen <= 64) ->
+                    _fmad3x1x4(
+                        z, maxProdBitLen,
+                        p2, p1, p0,
+                        x0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
+                    )
+                (xBitLen <= 128) ->
+                    _fmad3x2x4(
+                        z, maxProdBitLen,
+                        p2, p1, p0,
+                        x.dw1, x0,
+                        aBitLen, a.dw3, a.dw2, a1, a0
+                    )
+                else -> throw RuntimeException("coeff overflow")
+            }
+            return residue
+        }
+        val p3 = POW10[pow10Offset + 3]
+        if (xBitLen <= 64) {
+            val residue = _fmad4x1x4(
+                z, maxProdBitLen,
+                p3, p2, p1, p0,
+                x0,
+                aBitLen, a.dw3, a.dw2, a1, a0
+            )
+            return residue
+        } else {
+            throw RuntimeException("coeff overflow")
+        }
     }
 
     fun coeffFusedMulAbsDiff(
