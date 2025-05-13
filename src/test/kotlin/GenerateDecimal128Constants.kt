@@ -8,14 +8,20 @@ import kotlin.math.ceil
 
 @OptIn(ExperimentalStdlibApi::class)
 class GenerateDecimal128Constants {
-    data class Constant(val rootName: String, val dwordCount: Int, val bi: BigInteger)
+    class Constant(val rootName: String, val dwordCount: Int, val bi: BigInteger) {
+        constructor(rootName: String, n: Long) : this(rootName, 0, BigInteger.valueOf(n))
+    }
 
     val constants = arrayOf(
         Constant("Automatically generated", -1, ZERO),
-        Constant("MIN_POW10_DIGIT_LEN_128", 0, BigInteger("20")),
-        Constant("MIN_POW10_DIGIT_LEN_192", 0, BigInteger("39")),
-        Constant("MIN_POW10_DIGIT_LEN_256", 0, BigInteger("58")),
-        Constant("MAX_DIGIT_LEN", 0, BigInteger("78")),
+        Constant("POW10_64_COUNT", 20),
+        Constant("POW10_128_COUNT", 19),
+        Constant("POW10_192_COUNT", 19),
+        Constant("POW10_256_COUNT", 20),
+        Constant("MIN_POW10_DIGIT_LEN_128", 20),
+        Constant("MIN_POW10_DIGIT_LEN_192", 39),
+        Constant("MIN_POW10_DIGIT_LEN_256", 58),
+        Constant("MAX_DIGIT_LEN", 78),
         Constant("ONE_E19", 1, TEN.pow(19)),
         Constant("FIVE_E19", 2, TEN.pow(20).shiftRight(1)),
         Constant("ONE_E20", 2, TEN.pow(20)),

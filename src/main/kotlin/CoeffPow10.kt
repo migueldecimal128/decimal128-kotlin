@@ -3,8 +3,11 @@ package com.decimal128
 import java.lang.Long.compareUnsigned
 import java.math.BigInteger
 
-internal val POW10 = LongArray(195)
-private val POW10_BIT_LEN = ShortArray(78)
+private const val POW10_DWORD_COUNT =
+    POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
+
+internal val POW10 = LongArray(POW10_DWORD_COUNT)
+private val POW10_BIT_LEN = ShortArray(MAX_DIGIT_LEN)
 
 object CoeffPow10 {
     /*
