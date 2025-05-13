@@ -114,6 +114,15 @@ import java.lang.Long.compareUnsigned
             return EXACT
         }
 
+        fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue {
+            val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
+            val pow10div2 = POW10[pow10] ushr 1
+            val cmp = compareUnsigned(remainder, pow10div2)
+            val index = (cmp + 2) and nonZeroMask
+            val residue = RESIDUE_MAP[index and 0x03]
+            return residue
+        }
+
     }
 
     fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =

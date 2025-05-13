@@ -1,12 +1,18 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
+import java.math.BigInteger.ONE
 import java.math.BigInteger
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
 
-internal val POW10 = LongArray(POW10_DWORD_COUNT)
+internal const val SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET = POW10_DWORD_COUNT
+internal const val SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT = 6
+
+private const val TOTAL_ALLOCATION = SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT
+
+internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN = ShortArray(MAX_DIGIT_LEN)
 
 object CoeffPow10 {
@@ -137,6 +143,7 @@ object CoeffPow10 {
     */
 
     init {
+        // initialize POW10
         for (pow10 in 0..<MAX_DIGIT_LEN) {
             val bi = BigInteger.TEN.pow(pow10)
             val bitLen = bi.bitLength()
@@ -167,6 +174,15 @@ object CoeffPow10 {
                 }
             }
         }
+
+        // initialize SMALL_SIMPLE_RECIP_POW10sDIV2
+        val twoPow64 = ONE.shiftLeft(64)
+        for (i in 1..<SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT) {
+            val pow10Div2 = POW10[i] ushr 1
+            val biM = twoPow64.divide(BigInteger(pow10Div2.toString()))
+            val m = biM.toLong()
+            POW10[SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + i] = m
+        }
     }
 
     fun pow10BitLen(pow10: Int): Int {
@@ -190,9 +206,6 @@ object CoeffPow10 {
         val mask = -pow10 shr 31
         return offset and mask
     }
-
-    @Suppress("unused")
-    private val validatePow10Size = run { assert(POW10.size == 195); true }
 
     fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
         val loDigitCount = (bitLen * 1233) shr 12

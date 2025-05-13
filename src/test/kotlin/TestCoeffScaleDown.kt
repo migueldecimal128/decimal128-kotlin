@@ -37,19 +37,28 @@ class TestCoeffScaleDown {
          val biExpected = biUnrounded
     }
 
+    val bi1 = BigInteger(0x111111111111L.toString())
+    val bi2 = BigInteger(0x222222222222L.toString())
+    val bi3 = BigInteger(0x333333333333L.toString())
+    val bi4 = BigInteger(0x444444444444L.toString())
+    val bi5 = BigInteger(0x5555555555555555L.toString())
+    val bi54321 = bi5.shiftLeft(192).or(bi4.shiftLeft(144)).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
+
     val cases = arrayOf(
-        TC("218013830959062861903198505440629832955", 9, false, ROUND_TIES_TO_EVEN),
+        TC(bi54321, 1, true, ROUND_TIES_TO_EVEN),
+        TC("1087", 2, true, ROUND_TOWARD_ZERO),
+        TC("18010334491269082087", 2, true, ROUND_TOWARD_ZERO),
+        TC(BigInteger.ONE.shiftLeft(66), 1, false, ROUND_TIES_TO_EVEN),
+        TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE),
         TC("2155134570088770723972178854394", 3, false, ROUND_TIES_TO_EVEN),
         TC("78694514899641471", 8, false, ROUND_TOWARD_ZERO),
-        TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE),
+        TC("218013830959062861903198505440629832955", 9, false, ROUND_TIES_TO_EVEN),
         TC("8833659103727869972", 4, false, ROUND_TOWARD_NEGATIVE),
         TC("8833659103727869972", 4, true, ROUND_TOWARD_POSITIVE),
         TC("8833659103727869972", 4, true, ROUND_TOWARD_NEGATIVE),
         TC("2243325502234968696719", 9, false, ROUND_TIES_TO_EVEN),
-        TC(BigInteger.ONE.shiftLeft(66), 1, false, ROUND_TIES_TO_EVEN),
         TC("316413813903600685246406848", 8, false, ROUND_TIES_TO_EVEN),
         TC("1598575705195620085819330297435841000492438", 6, false, ROUND_TOWARD_ZERO),
-        TC("1087", 2, true, ROUND_TOWARD_ZERO),
         TC("1087", 2, true, ROUND_TOWARD_ZERO),
         TC("1087", 2, false, ROUND_TIES_TO_EVEN),
         TC("18010334491269082087", 2, true, ROUND_TOWARD_ZERO),
