@@ -462,23 +462,29 @@ object RecipMulPow10 {
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         if (pow10 < MAX_POW10_SIMPLE_RECIP_MUL) {
-            return when {
-                x.bitLen <= 112 ->
-                    simpleRecipMulSmallPow10_112(z, x.dw1, x.dw0, pow10)
-                x.bitLen <= 160 ->
-                    simpleRecipMulSmallPow10_160(z, x.dw2, x.dw1, x.dw0, pow10)
-                x.bitLen <= 208 ->
-                    simpleRecipMulSmallPow10_208(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
-                else ->
-                    simpleRecipMulSmallPow10_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
-            }
-        }
-        if (pow10 < MAX_POW10_64) {
             if (pow10 <= 0) {
                 assert(pow10 == 0)
                 z.coeffSet(x)
                 return EXACT
             }
+            return when {
+                x.bitLen <= 64 ->
+                    simpleRecipMulSmallPow10_64(z, x.dw0, pow10)
+
+                x.bitLen <= 112 ->
+                    simpleRecipMulSmallPow10_112(z, x.dw1, x.dw0, pow10)
+
+                x.bitLen <= 160 ->
+                    simpleRecipMulSmallPow10_160(z, x.dw2, x.dw1, x.dw0, pow10)
+
+                x.bitLen <= 208 ->
+                    simpleRecipMulSmallPow10_208(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+
+                else ->
+                    simpleRecipMulSmallPow10_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+            }
+        }
+        if (pow10 < MAX_POW10_64) {
             if (x.bitLen <= 64) {
                 initializeMagicPow10_64()
                 val m = MAGIC_POW10_64[pow10]
@@ -887,6 +893,28 @@ object RecipMulPow10 {
         val q1 = (qE ushr 16)
         val q0 = (qE shl 48) or qA
         q.coeffSet128(q1, q0)
+        return residue
+    }
+
+    fun simpleRecipMulSmallPow10_64(q: Coeff, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..5)
+
+        val dwE = (dw0 ushr 1)
+
+        val denom = POW10[pow10] ushr 1
+        val M = POW10[(SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + pow10) and 0xFF]
+
+        val qEhat = unsignedMultiplyHigh(dwE, M)
+        val rEhat = dwE - (qEhat * denom)
+        val adjustE = rEhat >= denom
+        val qE = qEhat + if (adjustE) 1L else 0L
+        val rE = rEhat - if (adjustE) denom else 0L
+
+        val remainder = (rE shl 1) or (dw0 and 1)
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q0 = qE
+        q.coeffSet64(q0)
         return residue
     }
 
