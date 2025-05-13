@@ -462,7 +462,16 @@ object RecipMulPow10 {
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         if (pow10 < MAX_POW10_SIMPLE_RECIP_MUL) {
-            return simpleRecipMulSmallPow10_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+            return when {
+                x.bitLen <= 112 ->
+                    simpleRecipMulSmallPow10_112(z, x.dw1, x.dw0, pow10)
+                x.bitLen <= 160 ->
+                    simpleRecipMulSmallPow10_160(z, x.dw2, x.dw1, x.dw0, pow10)
+                x.bitLen <= 208 ->
+                    simpleRecipMulSmallPow10_208(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+                else ->
+                    simpleRecipMulSmallPow10_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+            }
         }
         if (pow10 < MAX_POW10_64) {
             if (pow10 <= 0) {
@@ -755,6 +764,129 @@ object RecipMulPow10 {
         val q1 = (qC shl 32) or (qB ushr 16)
         val q0 = (qB shl 48) or qA
         q.coeffSet256(q3, q2, q1, q0)
+        return residue
+    }
+
+    fun simpleRecipMulSmallPow10_208(q: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..5)
+
+        val mask48= (1L shl 48) - 1
+        val dwA = (dw0 ushr 1) and mask48
+        val dwB = ((dw1 shl -49) or (dw0 ushr 49)) and mask48
+        val dwC = ((dw2 shl -33) or (dw1 ushr 33)) and mask48
+        val dwE = (dw3 shl -17) or (dw2 ushr 17)
+
+        val denom = POW10[pow10] ushr 1
+        val M = POW10[(SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + pow10) and 0xFF]
+
+        val qEhat = unsignedMultiplyHigh(dwE, M)
+        val rEhat = dwE - (qEhat * denom)
+        val adjustE = rEhat >= denom
+        val qE = qEhat + if (adjustE) 1L else 0L
+        val rE = rEhat - if (adjustE) denom else 0L
+
+        val ppC = (rE shl 48) or dwC
+        val qChat = unsignedMultiplyHigh(ppC, M)
+        val rChat = ppC - (qChat * denom)
+        val adjustC = rChat >= denom
+        val qC = qChat + if (adjustC) 1L else 0L
+        val rC = rChat - if (adjustC) denom else 0L
+
+        val ppB = (rC shl 48) or dwB
+        val qBhat = unsignedMultiplyHigh(ppB, M)
+        val rBhat = ppB - (qBhat * denom)
+        val adjustB = rBhat >= denom
+        val qB = qBhat + if (adjustB) 1L else 0L
+        val rB = rBhat - if (adjustB) denom else 0L
+
+        val ppA = (rB shl 48) or dwA
+        val qAhat = unsignedMultiplyHigh(ppA, M)
+        val rAhat = ppA - (qAhat * denom)
+        val adjustA = rAhat >= denom
+        val qA = qAhat + if (adjustA) 1L else 0L
+        val rA = rAhat - if (adjustA) denom else 0L
+
+        val remainder = (rA shl 1) or (dw0 and 1)
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q3 = (qE ushr 48)
+        val q2 = (qE shl 16) or (qC ushr 32)
+        val q1 = (qC shl 32) or (qB ushr 16)
+        val q0 = (qB shl 48) or qA
+        q.coeffSet256(q3, q2, q1, q0)
+        return residue
+    }
+
+    fun simpleRecipMulSmallPow10_160(q: Coeff, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..5)
+
+        val mask48= (1L shl 48) - 1
+        val dwA = (dw0 ushr 1) and mask48
+        val dwB = ((dw1 shl -49) or (dw0 ushr 49)) and mask48
+        val dwE = ((dw2 shl -33) or (dw1 ushr 33))
+
+        val denom = POW10[pow10] ushr 1
+        val M = POW10[(SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + pow10) and 0xFF]
+
+        val qEhat = unsignedMultiplyHigh(dwE, M)
+        val rEhat = dwE - (qEhat * denom)
+        val adjustE = rEhat >= denom
+        val qE = qEhat + if (adjustE) 1L else 0L
+        val rE = rEhat - if (adjustE) denom else 0L
+
+        val ppB = (rE shl 48) or dwB
+        val qBhat = unsignedMultiplyHigh(ppB, M)
+        val rBhat = ppB - (qBhat * denom)
+        val adjustB = rBhat >= denom
+        val qB = qBhat + if (adjustB) 1L else 0L
+        val rB = rBhat - if (adjustB) denom else 0L
+
+        val ppA = (rB shl 48) or dwA
+        val qAhat = unsignedMultiplyHigh(ppA, M)
+        val rAhat = ppA - (qAhat * denom)
+        val adjustA = rAhat >= denom
+        val qA = qAhat + if (adjustA) 1L else 0L
+        val rA = rAhat - if (adjustA) denom else 0L
+
+        val remainder = (rA shl 1) or (dw0 and 1)
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q2 = (qE ushr 32)
+        val q1 = (qE shl 32) or (qB ushr 16)
+        val q0 = (qB shl 48) or qA
+        q.coeffSet192(q2, q1, q0)
+        return residue
+    }
+
+    fun simpleRecipMulSmallPow10_112(q: Coeff, dw1: Long, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..5)
+
+        val mask48= (1L shl 48) - 1
+        val dwA = (dw0 ushr 1) and mask48
+        val dwE = ((dw1 shl -49) or (dw0 ushr 49))
+
+        val denom = POW10[pow10] ushr 1
+        val M = POW10[(SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + pow10) and 0xFF]
+
+        val qEhat = unsignedMultiplyHigh(dwE, M)
+        val rEhat = dwE - (qEhat * denom)
+        val adjustE = rEhat >= denom
+        val qE = qEhat + if (adjustE) 1L else 0L
+        val rE = rEhat - if (adjustE) denom else 0L
+
+        val ppA = (rE shl 48) or dwA
+        val qAhat = unsignedMultiplyHigh(ppA, M)
+        val rAhat = ppA - (qAhat * denom)
+        val adjustA = rAhat >= denom
+        val qA = qAhat + if (adjustA) 1L else 0L
+        val rA = rAhat - if (adjustA) denom else 0L
+
+        val remainder = (rA shl 1) or (dw0 and 1)
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q1 = (qE ushr 16)
+        val q0 = (qE shl 48) or qA
+        q.coeffSet128(q1, q0)
         return residue
     }
 
