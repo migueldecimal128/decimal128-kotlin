@@ -2,6 +2,7 @@
 
 package com.decimal128
 
+import com.decimal128.CoeffPow10.pow10BitLen
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
@@ -500,15 +501,16 @@ object RecipMulPow10 {
             }
         }
         initialize()
-        if (x.digitLen <= pow10) {
-            if (x.digitLen == 0) {
+        val xDigitLen = x.digitLen
+        if (xDigitLen <= pow10) {
+            if (xDigitLen == 0) {
                 z.coeffSetZero()
                 return EXACT
             }
-            val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
+            val residue = if (xDigitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
             return residue
         }
-        return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+        return _divPow10(z, xDigitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
     }
 
     fun divPow10(q: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
