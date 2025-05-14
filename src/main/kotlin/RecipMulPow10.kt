@@ -3,9 +3,6 @@
 package com.decimal128
 
 import com.decimal128.Residue.Companion.EXACT
-import com.decimal128.Residue.Companion.LT_HALF
-import com.decimal128.Residue.Companion.HALF
-import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
@@ -461,7 +458,7 @@ object RecipMulPow10 {
     }
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        if (pow10 < MAX_POW10_SIMPLE_RECIP_MUL) {
+        if (pow10 < BARRETT_MU_MAX) {
             if (pow10 <= 0) {
                 assert(pow10 == 0)
                 z.coeffSet(x)
@@ -469,19 +466,16 @@ object RecipMulPow10 {
             }
             return when {
                 x.bitLen <= 64 ->
-                    simpleRecipMulSmallPow10_64(z, x.dw0, pow10)
+                    barrettDivPow10_64(z, x.dw0, pow10)
 
-                x.bitLen <= 112 ->
-                    simpleRecipMulSmallPow10_112(z, x.dw1, x.dw0, pow10)
+                x.bitLen <= 128 ->
+                    barrettDivPow10_32_128(z, x.dw1, x.dw0, pow10)
 
-                x.bitLen <= 160 ->
-                    simpleRecipMulSmallPow10_160(z, x.dw2, x.dw1, x.dw0, pow10)
-
-                x.bitLen <= 208 ->
-                    simpleRecipMulSmallPow10_208(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+                x.bitLen <= 192 ->
+                    barrettDivPow10_32_192(z, x.dw2, x.dw1, x.dw0, pow10)
 
                 else ->
-                    simpleRecipMulSmallPow10_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+                    barrettDivPow10_32_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
             }
         }
         if (pow10 < MAX_POW10_64) {
@@ -914,6 +908,196 @@ object RecipMulPow10 {
         val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q0 = qE
+        q.coeffSet64(q0)
+        return residue
+    }
+
+    fun barrettDivPow10_32_256(q: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..9)
+
+        val dwA = dw0 and 0xFFFF_FFFFL
+        val dwB = dw0 ushr 32
+        val dwC = dw1 and 0xFFFF_FFFFL
+        val dwD = dw1 ushr 32
+        val dwE = dw2 and 0xFFFF_FFFFL
+        val dwF = dw2 ushr 32
+        val dwG = dw3
+
+        val denom = POW10[pow10]
+        val mu = POW10[(BARRETT_MU_OFFSET + pow10) and 0xFF]
+
+        val qGhat = unsignedMultiplyHigh(dwG, mu)
+        val rGhat = dwG - (qGhat * denom)
+        val adjustG = rGhat >= denom
+        val qG = qGhat + if (adjustG) 1L else 0L
+        val rG = rGhat - if (adjustG) denom else 0L
+
+        val ppF = (rG shl 32) or dwF
+        val qFhat = unsignedMultiplyHigh(ppF, mu)
+        val rFhat = ppF - (qFhat * denom)
+        val adjustF = rFhat >= denom
+        val qF = qFhat + if (adjustF) 1L else 0L
+        val rF = rFhat - if (adjustF) denom else 0L
+
+        val ppE = (rF shl 32) or dwE
+        val qEhat = unsignedMultiplyHigh(ppE, mu)
+        val rEhat = ppE - (qEhat * denom)
+        val adjustE = rEhat >= denom
+        val qE = qEhat + if (adjustE) 1L else 0L
+        val rE = rEhat - if (adjustE) denom else 0L
+
+        val ppD = (rE shl 32) or dwD
+        val qDhat = unsignedMultiplyHigh(ppD, mu)
+        val rDhat = ppD - (qDhat * denom)
+        val adjustD = rDhat >= denom
+        val qD = qDhat + if (adjustD) 1L else 0L
+        val rD = rDhat - if (adjustD) denom else 0L
+
+        val ppC = (rD shl 32) or dwC
+        val qChat = unsignedMultiplyHigh(ppC, mu)
+        val rChat = ppC - (qChat * denom)
+        val adjustC = rChat >= denom
+        val qC = qChat + if (adjustC) 1L else 0L
+        val rC = rChat - if (adjustC) denom else 0L
+
+        val ppB = (rC shl 32) or dwB
+        val qBhat = unsignedMultiplyHigh(ppB, mu)
+        val rBhat = ppB - (qBhat * denom)
+        val adjustB = rBhat >= denom
+        val qB = qBhat + if (adjustB) 1L else 0L
+        val rB = rBhat - if (adjustB) denom else 0L
+
+        val ppA = (rB shl 32) or dwA
+        val qAhat = unsignedMultiplyHigh(ppA, mu)
+        val rAhat = ppA - (qAhat * denom)
+        val adjustA = rAhat >= denom
+        val qA = qAhat + if (adjustA) 1L else 0L
+        val rA = rAhat - if (adjustA) denom else 0L
+
+        val remainder = rA
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q3 = qG
+        val q2 = (qF shl 32) or qE
+        val q1 = (qD shl 32) or qC
+        val q0 = (qB shl 32) or qA
+        q.coeffSet256(q3, q2, q1, q0)
+        return residue
+    }
+
+    fun barrettDivPow10_32_192(q: Coeff, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..9)
+
+        val dwA = dw0 and 0xFFFF_FFFFL
+        val dwB = dw0 ushr 32
+        val dwC = dw1 and 0xFFFF_FFFFL
+        val dwD = dw1 ushr 32
+        val dwG = dw2
+
+        val denom = POW10[pow10]
+        val mu = POW10[(BARRETT_MU_OFFSET + pow10) and 0xFF]
+
+        val qGhat = unsignedMultiplyHigh(dwG, mu)
+        val rGhat = dwG - (qGhat * denom)
+        val adjustG = rGhat >= denom
+        val qG = qGhat + if (adjustG) 1L else 0L
+        val rG = rGhat - if (adjustG) denom else 0L
+
+        val ppD = (rG shl 32) or dwD
+        val qDhat = unsignedMultiplyHigh(ppD, mu)
+        val rDhat = ppD - (qDhat * denom)
+        val adjustD = rDhat >= denom
+        val qD = qDhat + if (adjustD) 1L else 0L
+        val rD = rDhat - if (adjustD) denom else 0L
+
+        val ppC = (rD shl 32) or dwC
+        val qChat = unsignedMultiplyHigh(ppC, mu)
+        val rChat = ppC - (qChat * denom)
+        val adjustC = rChat >= denom
+        val qC = qChat + if (adjustC) 1L else 0L
+        val rC = rChat - if (adjustC) denom else 0L
+
+        val ppB = (rC shl 32) or dwB
+        val qBhat = unsignedMultiplyHigh(ppB, mu)
+        val rBhat = ppB - (qBhat * denom)
+        val adjustB = rBhat >= denom
+        val qB = qBhat + if (adjustB) 1L else 0L
+        val rB = rBhat - if (adjustB) denom else 0L
+
+        val ppA = (rB shl 32) or dwA
+        val qAhat = unsignedMultiplyHigh(ppA, mu)
+        val rAhat = ppA - (qAhat * denom)
+        val adjustA = rAhat >= denom
+        val qA = qAhat + if (adjustA) 1L else 0L
+        val rA = rAhat - if (adjustA) denom else 0L
+
+        val remainder = rA
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q2 = qG
+        val q1 = (qD shl 32) or qC
+        val q0 = (qB shl 32) or qA
+        q.coeffSet192(q2, q1, q0)
+        return residue
+    }
+
+    fun barrettDivPow10_32_128(q: Coeff, dw1: Long, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..9)
+
+        val dwA = dw0 and 0xFFFF_FFFFL
+        val dwB = dw0 ushr 32
+        val dwG = dw1
+
+        val denom = POW10[pow10]
+        val mu = POW10[(BARRETT_MU_OFFSET + pow10) and 0xFF]
+
+        val qGhat = unsignedMultiplyHigh(dwG, mu)
+        val rGhat = dwG - (qGhat * denom)
+        val adjustG = rGhat >= denom
+        val qG = qGhat + if (adjustG) 1L else 0L
+        val rG = rGhat - if (adjustG) denom else 0L
+
+        val ppB = (rG shl 32) or dwB
+        val qBhat = unsignedMultiplyHigh(ppB, mu)
+        val rBhat = ppB - (qBhat * denom)
+        val adjustB = rBhat >= denom
+        val qB = qBhat + if (adjustB) 1L else 0L
+        val rB = rBhat - if (adjustB) denom else 0L
+
+        val ppA = (rB shl 32) or dwA
+        val qAhat = unsignedMultiplyHigh(ppA, mu)
+        val rAhat = ppA - (qAhat * denom)
+        val adjustA = rAhat >= denom
+        val qA = qAhat + if (adjustA) 1L else 0L
+        val rA = rAhat - if (adjustA) denom else 0L
+
+        val remainder = rA
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q1 = qG
+        val q0 = (qB shl 32) or qA
+        q.coeffSet128(q1, q0)
+        return residue
+    }
+
+    fun barrettDivPow10_64(q: Coeff, dw0: Long, pow10: Int): Residue {
+        require(pow10 in 1..9)
+
+        val dwG = dw0
+
+        val denom = POW10[pow10]
+        val mu = POW10[(BARRETT_MU_OFFSET + pow10) and 0xFF]
+
+        val qGhat = unsignedMultiplyHigh(dwG, mu)
+        val rGhat = dwG - (qGhat * denom)
+        val adjustG = rGhat >= denom
+        val qG = qGhat + if (adjustG) 1L else 0L
+        val rG = rGhat - if (adjustG) denom else 0L
+
+        val remainder = rG
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+
+        val q0 = qG
         q.coeffSet64(q0)
         return residue
     }
