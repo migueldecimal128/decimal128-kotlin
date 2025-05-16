@@ -469,13 +469,9 @@ object RecipMulPow10 {
         val xBitLen = x.bitLen
         if (pow10 < BARRETT_POW10_MAX)
             return DivBarrett.barrettDivPow10(z, x, pow10)
-        if (pow10 < MAX_POW10_64) {
+        if (pow10 < MAGIC_POW10_MAX) {
             if (xBitLen <= 64) {
-                initializeMagicPow10_64()
-                val m = MAGIC_POW10_64[pow10]
-                val flagShift = FLAG_SHIFT_POW10_64[pow10].toInt()
-                val residue = _magicDivide1x1(z, x.dw0, m, flagShift)
-                return residue
+                return DivMagic.magicDivPow10(z, x, pow10)
             }
         }
         initialize()

@@ -1,12 +1,9 @@
 package com.decimal128
 
 import com.decimal128.CoeffMul.mulCoeff
-import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffPow10.pow10BitLen
 import com.decimal128.CoeffPow10.pow10Offset
-import com.decimal128.CoeffFusedMulAbsDiff.coeffFusedMulAbsDiff
 import com.decimal128.Residue.Companion.EXACT
-import kotlin.math.max
 
 
 object CoeffScalePow10 {
