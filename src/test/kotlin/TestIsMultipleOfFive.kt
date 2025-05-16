@@ -1,6 +1,5 @@
 package com.decimal128
 
-import com.decimal128.TestCoeffMul.TC
 import org.junit.jupiter.api.Test
 import java.lang.Long.bitCount
 import java.math.BigInteger
@@ -8,20 +7,25 @@ import java.math.BigInteger.ONE
 import java.util.*
 import kotlin.test.assertEquals
 
-const val mask0 = 0x1111111111111111L
-const val mask1 = mask0 shl 1
-const val mask2 = mask0 shl 2
-const val mask3 = mask0 shl 3
-
 class TestisMultipleOfFive {
 
     val verbose = true
 
+    val MASK_BITS_0_MOD_4 = 0x1111111111111111L
+    val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
+    val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
+    val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
+
     fun isMultipleOfFive_64(dw0: Long): Boolean {
-        val count0 = bitCount(dw0 and mask0)
-        val count1 = bitCount(dw0 and mask1)
-        val count2 = bitCount(dw0 and mask2)
-        val count3 = bitCount(dw0 and mask3)
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw0 and m0)
+        val count1 = bitCount(dw0 and m1)
+        val count2 = bitCount(dw0 and m2)
+        val count3 = bitCount(dw0 and m3)
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
@@ -29,10 +33,15 @@ class TestisMultipleOfFive {
     }
 
     fun isMultipleOfFive_128(dw1:Long, dw0: Long): Boolean {
-        val count0 = bitCount(dw1 and mask0) + bitCount(dw0 and mask0)
-        val count1 = bitCount(dw1 and mask1) + bitCount(dw0 and mask1)
-        val count2 = bitCount(dw1 and mask2) + bitCount(dw0 and mask2)
-        val count3 = bitCount(dw1 and mask3) + bitCount(dw0 and mask3)
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw1 and m0) + bitCount(dw0 and m0)
+        val count1 = bitCount(dw1 and m1) + bitCount(dw0 and m1)
+        val count2 = bitCount(dw1 and m2) + bitCount(dw0 and m2)
+        val count3 = bitCount(dw1 and m3) + bitCount(dw0 and m3)
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
@@ -40,10 +49,15 @@ class TestisMultipleOfFive {
     }
 
     fun isMultipleOfFive_192(dw2: Long, dw1:Long, dw0: Long): Boolean {
-        val count0 = bitCount(dw2 and mask0) + bitCount(dw1 and mask0) + bitCount(dw0 and mask0)
-        val count1 = bitCount(dw2 and mask1) + bitCount(dw1 and mask1) + bitCount(dw0 and mask1)
-        val count2 = bitCount(dw2 and mask2) + bitCount(dw1 and mask2) + bitCount(dw0 and mask2)
-        val count3 = bitCount(dw2 and mask3) + bitCount(dw1 and mask3) + bitCount(dw0 and mask3)
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw2 and m0) + bitCount(dw1 and m0) + bitCount(dw0 and m0)
+        val count1 = bitCount(dw2 and m1) + bitCount(dw1 and m1) + bitCount(dw0 and m1)
+        val count2 = bitCount(dw2 and m2) + bitCount(dw1 and m2) + bitCount(dw0 and m2)
+        val count3 = bitCount(dw2 and m3) + bitCount(dw1 and m3) + bitCount(dw0 and m3)
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
@@ -51,14 +65,19 @@ class TestisMultipleOfFive {
     }
 
     fun isMultipleOfFive_256(dw3:Long, dw2: Long, dw1:Long, dw0: Long): Boolean {
-        val count0 = bitCount(dw3 and mask0) + bitCount(dw2 and mask0) +
-                bitCount(dw1 and mask0) + bitCount(dw0 and mask0)
-        val count1 = bitCount(dw3 and mask1) + bitCount(dw2 and mask1) +
-                bitCount(dw1 and mask1) + bitCount(dw0 and mask1)
-        val count2 = bitCount(dw3 and mask2) + bitCount(dw2 and mask2) +
-                bitCount(dw1 and mask2) + bitCount(dw0 and mask2)
-        val count3 = bitCount(dw3 and mask3) + bitCount(dw2 and mask3) +
-                bitCount(dw1 and mask3) + bitCount(dw0 and mask3)
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw3 and m0) + bitCount(dw2 and m0) +
+                bitCount(dw1 and m0) + bitCount(dw0 and m0)
+        val count1 = bitCount(dw3 and m1) + bitCount(dw2 and m1) +
+                bitCount(dw1 and m1) + bitCount(dw0 and m1)
+        val count2 = bitCount(dw3 and m2) + bitCount(dw2 and m2) +
+                bitCount(dw1 and m2) + bitCount(dw0 and m2)
+        val count3 = bitCount(dw3 and m3) + bitCount(dw2 and m3) +
+                bitCount(dw1 and m3) + bitCount(dw0 and m3)
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum

@@ -223,6 +223,10 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffSet(str: String) = coeffSet(BigInteger(str))
 
+    fun coeffSetShiftRight(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftRight(this, x, bitShift)
+
+    fun coeffSetShiftLeft(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftLeft(this, x, bitShift)
+
     fun coeffSet(x: LongArray, xOff: Int, xLen: Int) = coeffSet(this, x, xOff, xLen)
 
     fun coeffSetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
@@ -273,6 +277,9 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
             updateLengthsAfterRoundUp()
     }
 
+    fun coeffNumberOfTrailingZeros() = CoeffBits.numberOfTrailingZeros(this)
+
+    fun coeffDwordAtBitIndex(bitIndex: Int) = CoeffBits.getDwordAtBitIndex(this, bitIndex)
 
     override fun toString() = coeffToBigInteger().toString()
 

@@ -96,29 +96,24 @@ object CoeffSet {
         val wholeDwordCount = bitShift ushr 6
         val innerShift = bitShift and 0x3F
         val nonZeroMask = -innerShift.toLong() shr 63
-        val leftShift = -innerShift
         when (wholeDwordCount) {
             0 -> {
-                val z0 = (nonZeroMask and (x.dw1 shl leftShift)) or (x.dw0 ushr innerShift)
-                val z1 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
-                val z2 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
-                val z3 = x.dw3 ushr innerShift
-                if (innerShift <= 3) {
-                    //FIXME less than one digit change going on here
-                    // tweak the digit count instead of recalculating
-                }
+                val z0 = (nonZeroMask and (x.dw1 shl -innerShift)) or (x.dw0 ushr innerShift)
+                val z1 = (nonZeroMask and (x.dw2 shl -innerShift)) or (x.dw1 ushr innerShift)
+                val z2 = (nonZeroMask and (x.dw3 shl -innerShift)) or (x.dw2 ushr innerShift)
+                val z3 =                                            (x.dw3 ushr innerShift)
                 z.coeffSet256(z3, z2, z1, z0)
             }
 
             1 -> {
-                val z0 = (nonZeroMask and (x.dw2 shl leftShift)) or (x.dw1 ushr innerShift)
-                val z1 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                val z0 = (nonZeroMask and (x.dw2 shl -innerShift)) or (x.dw1 ushr innerShift)
+                val z1 = (nonZeroMask and (x.dw3 shl -innerShift)) or (x.dw2 ushr innerShift)
                 val z2 = x.dw3 ushr innerShift
                 z.coeffSet192(z2, z1, z0)
             }
 
             2 -> {
-                val z0 = (nonZeroMask and (x.dw3 shl leftShift)) or (x.dw2 ushr innerShift)
+                val z0 = (nonZeroMask and (x.dw3 shl -innerShift)) or (x.dw2 ushr innerShift)
                 val z1 = x.dw3 ushr innerShift
                 z.coeffSet128(z1, z0)
             }
@@ -199,7 +194,6 @@ object CoeffSet {
         val innerShiftNonZeroMask = -innerShift.toLong() shr 63
         val newLen = nonZeroLen - dwordShift
         val shiftOff = xOff + dwordShift
-        val leftShift = -innerShift // only bottom 6 bits are used
         when (newLen) {
             0 -> {}
             1 -> {
@@ -208,31 +202,31 @@ object CoeffSet {
             }
 
             2 -> {
-                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
                 val z1 = x[shiftOff + 1] ushr innerShift
                 z.coeffSet128(z1, z0)
             }
 
             3 -> {
-                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl -innerShift)) or (x[shiftOff + 1] ushr innerShift)
                 val z2 = x[shiftOff + 2] ushr innerShift
                 z.coeffSet192(z2, z1, z0)
             }
 
             4 -> {
-                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
-                val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl -innerShift)) or (x[shiftOff + 1] ushr innerShift)
+                val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl -innerShift)) or (x[shiftOff + 2] ushr innerShift)
                 val z3 = x[shiftOff + 3] ushr innerShift
                 z.coeffSet256(z3, z2, z1, z0)
             }
 
             5 -> {
-                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl leftShift)) or (x[shiftOff + 0] ushr innerShift)
-                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl leftShift)) or (x[shiftOff + 1] ushr innerShift)
-                val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl leftShift)) or (x[shiftOff + 2] ushr innerShift)
-                val z3 = (innerShiftNonZeroMask and (x[shiftOff + 4] shl leftShift)) or (x[shiftOff + 3] ushr innerShift)
+                val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+                val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl -innerShift)) or (x[shiftOff + 1] ushr innerShift)
+                val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl -innerShift)) or (x[shiftOff + 2] ushr innerShift)
+                val z3 = (innerShiftNonZeroMask and (x[shiftOff + 4] shl -innerShift)) or (x[shiftOff + 3] ushr innerShift)
                 val z4 = x[shiftOff + 4] ushr innerShift
                 if (z4 != 0L)
                     throw RuntimeException("overflow")
