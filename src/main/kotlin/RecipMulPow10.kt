@@ -2,7 +2,6 @@
 
 package com.decimal128
 
-import com.decimal128.CoeffPow10.pow10BitLen
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
@@ -468,37 +467,8 @@ object RecipMulPow10 {
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         val xBitLen = x.bitLen
-        if (pow10 < BARRETT_MU_MAX) {
-            if (pow10 < 4) {
-                if (pow10 <= 0) {
-                    assert(pow10 == 0)
-                    z.coeffSet(x)
-                    return EXACT
-                }
-                return when {
-                    xBitLen <= 64 ->
-                        barrettDivPow10_64(z, x.dw0, pow10)
-                    xBitLen <= 114 ->
-                        barrettDivPow10_50_114(z, x, pow10)
-                    xBitLen <= 164 ->
-                        barrettDivPow10_50_164(z, x, pow10)
-                    xBitLen <= 214 ->
-                        barrettDivPow10_50_214(z, x, pow10)
-                    else ->
-                        barrettDivPow10_50_256(z, x, pow10)
-                }
-            }
-            return when {
-                xBitLen <= 64 ->
-                    barrettDivPow10_64(z, x.dw0, pow10)
-                xBitLen <= 128 ->
-                    barrettDivPow10_32_128(z, x, pow10)
-                xBitLen <= 192 ->
-                    barrettDivPow10_32_192(z, x, pow10)
-                else ->
-                    barrettDivPow10_32_256(z, x, pow10)
-            }
-        }
+        if (pow10 < BARRETT_POW10_MAX)
+            return DivBarrett.barrettDivPow10(z, x, pow10)
         if (pow10 < MAX_POW10_64) {
             if (xBitLen <= 64) {
                 initializeMagicPow10_64()

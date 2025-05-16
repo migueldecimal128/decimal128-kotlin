@@ -10,10 +10,10 @@ private const val POW10_DWORD_COUNT =
 internal const val SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET = POW10_DWORD_COUNT
 internal const val SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT = 6
 
-internal const val BARRETT_MU_OFFSET = SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT
-internal const val BARRETT_MU_MAX = 10
+internal const val BARRETT_POW10_MU_OFFSET = SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT
+internal const val BARRETT_POW10_MAX = 10
 
-private const val TOTAL_ALLOCATION = BARRETT_MU_OFFSET + BARRETT_MU_MAX
+private const val TOTAL_ALLOCATION = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAX
 
 internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN = ShortArray(MAX_DIGIT_LEN)
@@ -187,11 +187,11 @@ object CoeffPow10 {
             POW10[SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + i] = m
         }
 
-        for (i in 1..<BARRETT_MU_MAX) {
+        for (i in 1..<BARRETT_POW10_MAX) {
             val pow10 = POW10[i]
             val biMu = twoPow64.divide(BigInteger.valueOf(pow10))
             val mu = biMu.toLong()
-            POW10[BARRETT_MU_OFFSET + i] = mu
+            POW10[BARRETT_POW10_MU_OFFSET + i] = mu
         }
     }
 
