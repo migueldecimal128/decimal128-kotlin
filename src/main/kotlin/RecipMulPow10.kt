@@ -391,6 +391,7 @@ object RecipMulPow10 {
     }
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+        assert(pow10 >= 0)
         val xBitLen = x.bitLen
         if (pow10 < BARRETT_POW10_MAX)
             return DivBarrett.barrettDivPow10(z, x, pow10)

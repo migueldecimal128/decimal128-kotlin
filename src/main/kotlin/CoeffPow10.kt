@@ -191,6 +191,7 @@ object CoeffPow10 {
 
         // initialize Barrett division
         val twoPow64 = ONE.shiftLeft(64)
+        // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAX) {
             val pow10 = POW10[i]
             val biMu10 = twoPow64.divide(BigInteger.valueOf(pow10))

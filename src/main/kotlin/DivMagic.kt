@@ -107,8 +107,9 @@ object DivMagic {
         val q0 = qCarryAdd + (qLo ushr s)
         q.coeffSet64(q0)
 
+        val divisorNotOneMask = (m - 2) shr 63.inv() // use this to cover the 10**0 case
         val roundBit = (p1 shr (s - 1)).toInt() and 1
-        val cmpLo = compareUnsigned(p0, m)
+        val cmpLo = compareUnsigned(p0 and divisorNotOneMask, m)
         val hiFracMask = (1L shl (s - 1)) - 1L
         val stickyBit = if ((cmpLo >= 0) or ((p1 and hiFracMask) != 0L)) 1 else 0
         val residue = Residue.residueFrom(roundBit, stickyBit)

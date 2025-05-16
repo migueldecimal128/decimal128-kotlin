@@ -47,6 +47,8 @@ class TestCoeffScaleDown {
     val bi5321 = bi5.shiftLeft(144).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
 
     val cases = arrayOf(
+        TC("8399566454088370176858046088293", 0, true, ROUND_TIES_TO_EVEN),
+        TC("511", 0, true, ROUND_TIES_TO_EVEN),
         TC(bi5321.shiftLeft(1), 1, true, ROUND_TIES_TO_EVEN),
         TC("99999999999999999999999999999999999999999999", 1, true, ROUND_TIES_TO_EVEN),
         TC(bi54321, 1, true, ROUND_TIES_TO_EVEN),

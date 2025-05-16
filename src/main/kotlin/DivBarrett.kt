@@ -14,93 +14,110 @@ object DivBarrett {
     }
 
     fun barrettDivModPow10(z: Coeff, x: Coeff, pow10: Int): Long {
-        assert(pow10 < BARRETT_POW10_MAX)
-        val denom = POW10[pow10]
-        val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
-        val xBitLen = x.bitLen
-        val remainder = when {
-            pow10 <= 3 -> when {
-                (pow10 <= 0) -> {
-                    assert(pow10 == 0)
-                    z.coeffSet(x)
-                    return 0L
+        when {
+            pow10 > 0 && pow10 < BARRETT_POW10_MAX -> {
+                val denom = POW10[pow10]
+                val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
+                val xBitLen = x.bitLen
+                val remainder = when {
+                    xBitLen <= 64 ->
+                        barrettDivMod_64(z, x.dw0, denom, mu)
+
+                    pow10 <= 3 -> when {
+                        xBitLen <= 118 ->
+                            barrettDivMod_54_118(z, x, denom, mu)
+
+                        xBitLen <= 172 ->
+                            barrettDivMod_54_172(z, x, denom, mu)
+
+                        xBitLen <= 226 ->
+                            barrettDivMod_54_226(z, x, denom, mu)
+
+                        else ->
+                            barrettDivMod_54_256(z, x, denom, mu)
+                    }
+
+                    xBitLen <= 128 ->
+                        barrettDivMod_32_128(z, x, denom, mu)
+
+                    xBitLen <= 192 ->
+                        barrettDivMod_32_192(z, x, denom, mu)
+
+                    else ->
+                        barrettDivMod_32_256(z, x, denom, mu)
                 }
-
-                xBitLen <= 64 ->
-                    barrettDivMod_64(z, x.dw0, denom, mu)
-
-                xBitLen <= 118 ->
-                    barrettDivMod_54_118(z, x, denom, mu)
-
-                xBitLen <= 172 ->
-                    barrettDivMod_54_172(z, x, denom, mu)
-
-                xBitLen <= 226 ->
-                    barrettDivMod_54_226(z, x, denom, mu)
-
-                else ->
-                    barrettDivMod_54_256(z, x, denom, mu)
+                return remainder
             }
-
-            xBitLen <= 64 ->
-                barrettDivMod_64(z, x.dw0, denom, mu)
-
-            xBitLen <= 128 ->
-                barrettDivMod_32_128(z, x, denom, mu)
-
-            xBitLen <= 192 ->
-                barrettDivMod_32_192(z, x, denom, mu)
-
+            pow10 == 0 -> {
+                z.coeffSet(x)
+                return 0L
+            }
             else ->
-                barrettDivMod_32_256(z, x, denom, mu)
+                throw RuntimeException()
         }
-        return remainder
     }
 
     fun barrettDivModPow5(z: Coeff, x: Coeff, pow5: Int): Long {
-        assert(pow5 < BARRETT_POW5_MAX)
-        val denom = POW10[POW5_64_OFFSET + pow5]
-        val mu = POW10[BARRETT_POW5_MU_OFFSET + pow5]
-        val xBitLen = x.bitLen
-        val remainder = when {
-            pow5 <= 6 -> when {
-                (pow5 <= 0) -> {
-                    assert(pow5 == 0)
-                    z.coeffSet(x)
-                    return 0L
+        when {
+            pow5 > 0 && pow5 < BARRETT_POW5_MAX -> {
+                val denom = POW10[POW5_64_OFFSET + pow5]
+                val mu = POW10[BARRETT_POW5_MU_OFFSET + pow5]
+                val xBitLen = x.bitLen
+                val remainder = when {
+                    xBitLen <= 64 ->
+                        barrettDivMod_64(z, x.dw0, denom, mu)
+
+                    pow5 <= 4 -> when {
+
+                        xBitLen <= 118 ->
+                            barrettDivMod_54_118(z, x, denom, mu)
+
+                        xBitLen <= 172 ->
+                            barrettDivMod_54_172(z, x, denom, mu)
+
+                        xBitLen <= 226 ->
+                            barrettDivMod_54_226(z, x, denom, mu)
+
+                        else ->
+                            barrettDivMod_54_256(z, x, denom, mu)
+                    }
+
+                    xBitLen <= 128 ->
+                        barrettDivMod_32_128(z, x, denom, mu)
+
+                    xBitLen <= 192 ->
+                        barrettDivMod_32_192(z, x, denom, mu)
+
+                    else ->
+                        barrettDivMod_32_256(z, x, denom, mu)
                 }
-
-                xBitLen <= 64 ->
-                    barrettDivMod_64(z, x.dw0, denom, mu)
-
-                xBitLen <= 118 ->
-                    barrettDivMod_54_118(z, x, denom, mu)
-
-                xBitLen <= 172 ->
-                    barrettDivMod_54_172(z, x, denom, mu)
-
-                xBitLen <= 226 ->
-                    barrettDivMod_54_226(z, x, denom, mu)
-
-                else ->
-                    barrettDivMod_54_256(z, x, denom, mu)
+                return remainder
             }
 
-            xBitLen <= 64 ->
-                barrettDivMod_64(z, x.dw0, denom, mu)
+            pow5 == 0 -> {
+                z.coeffSet(x)
+                return 0L
+            }
 
-            xBitLen <= 128 ->
-                barrettDivMod_32_128(z, x, denom, mu)
-
-            xBitLen <= 192 ->
-                barrettDivMod_32_192(z, x, denom, mu)
-
-            else ->
-                barrettDivMod_32_256(z, x, denom, mu)
+            else -> throw RuntimeException()
         }
-        return remainder
     }
 
+    private fun barrettDivMod_64(q: Coeff, dw0: Long, denom: Long, mu: Long): Long {
+        val dwG = dw0
+
+        val qGhat = unsignedMultiplyHigh(dwG, mu)
+        val rGhat = dwG - (qGhat * denom)
+        val adjustG = rGhat >= denom
+        val qG = qGhat + if (adjustG) 1L else 0L
+        val rG = rGhat - if (adjustG) denom else 0L
+
+        val remainder = rG
+
+        val q0 = qG
+        q.coeffSet64(q0)
+        return remainder
+    }
 
     private fun barrettDivMod_32_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
@@ -258,23 +275,6 @@ object DivBarrett {
         val q1 = qG
         val q0 = (qB shl 32) or qA
         q.coeffSet128(q1, q0)
-        return remainder
-    }
-
-    private fun barrettDivMod_64(q: Coeff, dw0: Long, denom: Long, mu: Long): Long {
-
-        val dwG = dw0
-
-        val qGhat = unsignedMultiplyHigh(dwG, mu)
-        val rGhat = dwG - (qGhat * denom)
-        val adjustG = rGhat >= denom
-        val qG = qGhat + if (adjustG) 1L else 0L
-        val rG = rGhat - if (adjustG) denom else 0L
-
-        val remainder = rG
-
-        val q0 = qG
-        q.coeffSet64(q0)
         return remainder
     }
 
