@@ -10,46 +10,48 @@ object DivBarrett {
     fun barrettDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         assert(pow10 < BARRETT_POW10_MAX)
         val xBitLen = x.bitLen
-        if (pow10 < 4) {
-            if (pow10 <= 0) {
-                assert(pow10 == 0)
-                z.coeffSet(x)
-                return EXACT
-            }
-            return when {
+        val remainder = when {
+            pow10 < 4 -> when {
+                (pow10 <= 0) -> {
+                    assert(pow10 == 0)
+                    z.coeffSet(x)
+                    return EXACT
+                }
+
                 xBitLen <= 64 ->
-                    barrettDivPow10_64(z, x.dw0, pow10)
+                    barrettDivModPow10_64(z, x.dw0, pow10)
 
                 xBitLen <= 114 ->
-                    barrettDivPow10_50_114(z, x, pow10)
+                    barrettDivModPow10_50_114(z, x, pow10)
 
                 xBitLen <= 164 ->
-                    barrettDivPow10_50_164(z, x, pow10)
+                    barrettDivModPow10_50_164(z, x, pow10)
 
                 xBitLen <= 214 ->
-                    barrettDivPow10_50_214(z, x, pow10)
+                    barrettDivModPow10_50_214(z, x, pow10)
 
                 else ->
-                    barrettDivPow10_50_256(z, x, pow10)
+                    barrettDivModPow10_50_256(z, x, pow10)
             }
-        }
-        return when {
+
             xBitLen <= 64 ->
-                barrettDivPow10_64(z, x.dw0, pow10)
+                barrettDivModPow10_64(z, x.dw0, pow10)
 
             xBitLen <= 128 ->
-                barrettDivPow10_32_128(z, x, pow10)
+                barrettDivModPow10_32_128(z, x, pow10)
 
             xBitLen <= 192 ->
-                barrettDivPow10_32_192(z, x, pow10)
+                barrettDivModPow10_32_192(z, x, pow10)
 
             else ->
-                barrettDivPow10_32_256(z, x, pow10)
+                barrettDivModPow10_32_256(z, x, pow10)
         }
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+        return residue
     }
 
 
-    fun barrettDivPow10_32_256(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_32_256(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
@@ -114,17 +116,16 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q3 = qG
         val q2 = (qF shl 32) or qE
         val q1 = (qD shl 32) or qC
         val q0 = (qB shl 32) or qA
         q.coeffSet256(q3, q2, q1, q0)
-        return residue
+        return rA
     }
 
-    fun barrettDivPow10_32_192(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_32_192(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
@@ -173,16 +174,15 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q2 = qG
         val q1 = (qD shl 32) or qC
         val q0 = (qB shl 32) or qA
         q.coeffSet192(q2, q1, q0)
-        return residue
+        return remainder
     }
 
-    fun barrettDivPow10_32_128(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_32_128(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
@@ -215,15 +215,14 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q1 = qG
         val q0 = (qB shl 32) or qA
         q.coeffSet128(q1, q0)
-        return residue
+        return remainder
     }
 
-    fun barrettDivPow10_64(q: Coeff, dw0: Long, pow10: Int): Residue {
+    fun barrettDivModPow10_64(q: Coeff, dw0: Long, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dwG = dw0
@@ -238,14 +237,13 @@ object DivBarrett {
         val rG = rGhat - if (adjustG) denom else 0L
 
         val remainder = rG
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q0 = qG
         q.coeffSet64(q0)
-        return residue
+        return remainder
     }
 
-    fun barrettDivPow10_50_256(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_50_256(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
@@ -294,17 +292,16 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q3 = (qG shl  8) or (qD ushr 42)
         val q2 = (qD shl 22) or (qC ushr 28)
         val q1 = (qC shl 36) or (qB ushr 14)
         val q0 = (qB shl 50) or (qA ushr  0)
         q.coeffSet256(q3, q2, q1, q0)
-        return residue
+        return remainder
     }
 
-    fun barrettDivPow10_50_214(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_50_214(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
@@ -345,17 +342,16 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q3 =                (qG ushr 42)
         val q2 = (qG shl 22) or (qC ushr 28)
         val q1 = (qC shl 36) or (qB ushr 14)
         val q0 = (qB shl 50) or (qA ushr  0)
         q.coeffSet256(q3, q2, q1, q0)
-        return residue
+        return remainder
     }
 
-    fun barrettDivPow10_50_164(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_50_164(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
@@ -388,16 +384,15 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q2 =                (qG ushr 28)
         val q1 = (qG shl 36) or (qB ushr 14)
         val q0 = (qB shl 50) or (qA ushr  0)
         q.coeffSet192(q2, q1, q0)
-        return residue
+        return remainder
     }
 
-    fun barrettDivPow10_50_114(q: Coeff, x: Coeff, pow10: Int): Residue {
+    fun barrettDivModPow10_50_114(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1
@@ -422,12 +417,11 @@ object DivBarrett {
         val rA = rAhat - if (adjustA) denom else 0L
 
         val remainder = rA
-        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
 
         val q1 = (qG ushr 14)
         val q0 = (qG shl 50) or qA
         q.coeffSet128(q1, q0)
-        return residue
+        return remainder
     }
 
 }

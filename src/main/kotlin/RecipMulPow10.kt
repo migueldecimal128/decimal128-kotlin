@@ -7,16 +7,6 @@ import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul1
-import com.decimal128.DivBarrett.barrettDivPow10_32_128
-import com.decimal128.DivBarrett.barrettDivPow10_32_192
-import com.decimal128.DivBarrett.barrettDivPow10_32_256
-import com.decimal128.DivBarrett.barrettDivPow10_50_114
-import com.decimal128.DivBarrett.barrettDivPow10_50_164
-import com.decimal128.DivBarrett.barrettDivPow10_50_214
-import com.decimal128.DivBarrett.barrettDivPow10_50_256
-import com.decimal128.DivBarrett.barrettDivPow10_64
-import java.lang.Long.compareUnsigned
-import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
 import java.math.BigInteger.ZERO
 import java.math.BigInteger.ONE
