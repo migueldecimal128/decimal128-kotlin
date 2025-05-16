@@ -19,7 +19,7 @@ object DivBarrett {
         val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
         val xBitLen = x.bitLen
         val remainder = when {
-            pow10 <= 4 -> when {
+            pow10 <= 3 -> when {
                 (pow10 <= 0) -> {
                     assert(pow10 == 0)
                     z.coeffSet(x)
@@ -27,32 +27,32 @@ object DivBarrett {
                 }
 
                 xBitLen <= 64 ->
-                    barrettDivModPow10_64(z, x.dw0, denom, mu)
+                    barrettDivMod_64(z, x.dw0, denom, mu)
 
-                xBitLen <= 114 ->
-                    barrettDivModPow10_50_114(z, x, denom, mu)
+                xBitLen <= 118 ->
+                    barrettDivMod_54_118(z, x, denom, mu)
 
-                xBitLen <= 164 ->
-                    barrettDivModPow10_50_164(z, x, denom, mu)
+                xBitLen <= 172 ->
+                    barrettDivMod_54_172(z, x, denom, mu)
 
-                xBitLen <= 214 ->
-                    barrettDivModPow10_50_214(z, x, denom, mu)
+                xBitLen <= 226 ->
+                    barrettDivMod_54_226(z, x, denom, mu)
 
                 else ->
-                    barrettDivModPow10_50_256(z, x, denom, mu)
+                    barrettDivMod_54_256(z, x, denom, mu)
             }
 
             xBitLen <= 64 ->
-                barrettDivModPow10_64(z, x.dw0, denom, mu)
+                barrettDivMod_64(z, x.dw0, denom, mu)
 
             xBitLen <= 128 ->
-                barrettDivModPow10_32_128(z, x, denom, mu)
+                barrettDivMod_32_128(z, x, denom, mu)
 
             xBitLen <= 192 ->
-                barrettDivModPow10_32_192(z, x, denom, mu)
+                barrettDivMod_32_192(z, x, denom, mu)
 
             else ->
-                barrettDivModPow10_32_256(z, x, denom, mu)
+                barrettDivMod_32_256(z, x, denom, mu)
         }
         return remainder
     }
@@ -71,38 +71,38 @@ object DivBarrett {
                 }
 
                 xBitLen <= 64 ->
-                    barrettDivModPow10_64(z, x.dw0, denom, mu)
+                    barrettDivMod_64(z, x.dw0, denom, mu)
 
-                xBitLen <= 114 ->
-                    barrettDivModPow10_50_114(z, x, denom, mu)
+                xBitLen <= 118 ->
+                    barrettDivMod_54_118(z, x, denom, mu)
 
-                xBitLen <= 164 ->
-                    barrettDivModPow10_50_164(z, x, denom, mu)
+                xBitLen <= 172 ->
+                    barrettDivMod_54_172(z, x, denom, mu)
 
-                xBitLen <= 214 ->
-                    barrettDivModPow10_50_214(z, x, denom, mu)
+                xBitLen <= 226 ->
+                    barrettDivMod_54_226(z, x, denom, mu)
 
                 else ->
-                    barrettDivModPow10_50_256(z, x, denom, mu)
+                    barrettDivMod_54_256(z, x, denom, mu)
             }
 
             xBitLen <= 64 ->
-                barrettDivModPow10_64(z, x.dw0, denom, mu)
+                barrettDivMod_64(z, x.dw0, denom, mu)
 
             xBitLen <= 128 ->
-                barrettDivModPow10_32_128(z, x, denom, mu)
+                barrettDivMod_32_128(z, x, denom, mu)
 
             xBitLen <= 192 ->
-                barrettDivModPow10_32_192(z, x, denom, mu)
+                barrettDivMod_32_192(z, x, denom, mu)
 
             else ->
-                barrettDivModPow10_32_256(z, x, denom, mu)
+                barrettDivMod_32_256(z, x, denom, mu)
         }
         return remainder
     }
 
 
-    private fun barrettDivModPow10_32_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_32_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
@@ -172,7 +172,7 @@ object DivBarrett {
         return rA
     }
 
-    private fun barrettDivModPow10_32_192(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_32_192(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
@@ -225,7 +225,7 @@ object DivBarrett {
         return remainder
     }
 
-    private fun barrettDivModPow10_32_128(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_32_128(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
@@ -261,7 +261,7 @@ object DivBarrett {
         return remainder
     }
 
-    private fun barrettDivModPow10_64(q: Coeff, dw0: Long, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_64(q: Coeff, dw0: Long, denom: Long, mu: Long): Long {
 
         val dwG = dw0
 
@@ -278,15 +278,15 @@ object DivBarrett {
         return remainder
     }
 
-    private fun barrettDivModPow10_50_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
-        val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
-        val dwB = ((dw1 shl 14) or (dw0 ushr 50)) and 0x3_FFFF_FFFF_FFFFL
-        val dwC = ((dw2 shl 28) or (dw1 ushr 36)) and 0x3_FFFF_FFFF_FFFFL
-        val dwD = ((dw3 shl 42) or (dw2 ushr 22)) and 0x3_FFFF_FFFF_FFFFL
-        val dwG = (dw3 ushr 8)
+        val dwA = dw0 and 0x003F_FFFF_FFFF_FFFFL
+        val dwB = ((dw1 shl 10) or (dw0 ushr 54)) and 0x003F_FFFF_FFFF_FFFFL
+        val dwC = ((dw2 shl 20) or (dw1 ushr 44)) and 0x003F_FFFF_FFFF_FFFFL
+        val dwD = ((dw3 shl 30) or (dw2 ushr 34)) and 0x003F_FFFF_FFFF_FFFFL
+        val dwG =                  (dw3 ushr 24)
 
         val qGhat = unsignedMultiplyHigh(dwG, mu)
         val rGhat = dwG - (qGhat * denom)
@@ -294,28 +294,28 @@ object DivBarrett {
         val qG = qGhat + if (adjustG) 1L else 0L
         val rG = rGhat - if (adjustG) denom else 0L
 
-        val ppD = (rG shl 50) or dwD
+        val ppD = (rG shl 54) or dwD
         val qDhat = unsignedMultiplyHigh(ppD, mu)
         val rDhat = ppD - (qDhat * denom)
         val adjustD = rDhat >= denom
         val qD = qDhat + if (adjustD) 1L else 0L
         val rD = rDhat - if (adjustD) denom else 0L
 
-        val ppC = (rD shl 50) or dwC
+        val ppC = (rD shl 54) or dwC
         val qChat = unsignedMultiplyHigh(ppC, mu)
         val rChat = ppC - (qChat * denom)
         val adjustC = rChat >= denom
         val qC = qChat + if (adjustC) 1L else 0L
         val rC = rChat - if (adjustC) denom else 0L
 
-        val ppB = (rC shl 50) or dwB
+        val ppB = (rC shl 54) or dwB
         val qBhat = unsignedMultiplyHigh(ppB, mu)
         val rBhat = ppB - (qBhat * denom)
         val adjustB = rBhat >= denom
         val qB = qBhat + if (adjustB) 1L else 0L
         val rB = rBhat - if (adjustB) denom else 0L
 
-        val ppA = (rB shl 50) or dwA
+        val ppA = (rB shl 54) or dwA
         val qAhat = unsignedMultiplyHigh(ppA, mu)
         val rAhat = ppA - (qAhat * denom)
         val adjustA = rAhat >= denom
@@ -324,22 +324,22 @@ object DivBarrett {
 
         val remainder = rA
 
-        val q3 = (qG shl  8) or (qD ushr 42)
-        val q2 = (qD shl 22) or (qC ushr 28)
-        val q1 = (qC shl 36) or (qB ushr 14)
-        val q0 = (qB shl 50) or (qA ushr  0)
+        val q3 = (qG shl 24) or (qD ushr 30)
+        val q2 = (qD shl 34) or (qC ushr 20)
+        val q1 = (qC shl 44) or (qB ushr 10)
+        val q0 = (qB shl 54) or (qA ushr  0)
         q.coeffSet256(q3, q2, q1, q0)
         return remainder
     }
 
-    private fun barrettDivModPow10_50_214(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_226(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
-        val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
-        val dwB = ((dw1 shl 14) or (dw0 ushr 50)) and 0x3_FFFF_FFFF_FFFFL
-        val dwC = ((dw2 shl 28) or (dw1 ushr 36)) and 0x3_FFFF_FFFF_FFFFL
-        val dwG = (dw3 shl 42) or (dw2 ushr 22)
+        val dwA = dw0 and 0x003F_FFFF_FFFF_FFFFL
+        val dwB = ((dw1 shl 10) or (dw0 ushr 54)) and 0x003F_FFFF_FFFF_FFFFL
+        val dwC = ((dw2 shl 20) or (dw1 ushr 44)) and 0x003F_FFFF_FFFF_FFFFL
+        val dwG =  (dw3 shl 30) or (dw2 ushr 34)
 
         val qGhat = unsignedMultiplyHigh(dwG, mu)
         val rGhat = dwG - (qGhat * denom)
@@ -347,21 +347,21 @@ object DivBarrett {
         val qG = qGhat + if (adjustG) 1L else 0L
         val rG = rGhat - if (adjustG) denom else 0L
 
-        val ppC = (rG shl 50) or dwC
+        val ppC = (rG shl 54) or dwC
         val qChat = unsignedMultiplyHigh(ppC, mu)
         val rChat = ppC - (qChat * denom)
         val adjustC = rChat >= denom
         val qC = qChat + if (adjustC) 1L else 0L
         val rC = rChat - if (adjustC) denom else 0L
 
-        val ppB = (rC shl 50) or dwB
+        val ppB = (rC shl 54) or dwB
         val qBhat = unsignedMultiplyHigh(ppB, mu)
         val rBhat = ppB - (qBhat * denom)
         val adjustB = rBhat >= denom
         val qB = qBhat + if (adjustB) 1L else 0L
         val rB = rBhat - if (adjustB) denom else 0L
 
-        val ppA = (rB shl 50) or dwA
+        val ppA = (rB shl 54) or dwA
         val qAhat = unsignedMultiplyHigh(ppA, mu)
         val rAhat = ppA - (qAhat * denom)
         val adjustA = rAhat >= denom
@@ -370,21 +370,21 @@ object DivBarrett {
 
         val remainder = rA
 
-        val q3 =                (qG ushr 42)
-        val q2 = (qG shl 22) or (qC ushr 28)
-        val q1 = (qC shl 36) or (qB ushr 14)
-        val q0 = (qB shl 50) or (qA ushr  0)
+        val q3 =                (qG ushr 30)
+        val q2 = (qG shl 34) or (qC ushr 20)
+        val q1 = (qC shl 44) or (qB ushr 10)
+        val q0 = (qB shl 54) or (qA ushr  0)
         q.coeffSet256(q3, q2, q1, q0)
         return remainder
     }
 
-    private fun barrettDivModPow10_50_164(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_172(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
-        val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
-        val dwB = ((dw1 shl 14) or (dw0 ushr 50)) and 0x3_FFFF_FFFF_FFFFL
-        val dwG = (dw2 shl 28) or (dw1 ushr 36)
+        val dwA = dw0 and 0x003F_FFFF_FFFF_FFFFL
+        val dwB = ((dw1 shl 10) or (dw0 ushr 54)) and 0x003F_FFFF_FFFF_FFFFL
+        val dwG =  (dw2 shl 20) or (dw1 ushr 44)
 
         val qGhat = unsignedMultiplyHigh(dwG, mu)
         val rGhat = dwG - (qGhat * denom)
@@ -392,14 +392,14 @@ object DivBarrett {
         val qG = qGhat + if (adjustG) 1L else 0L
         val rG = rGhat - if (adjustG) denom else 0L
 
-        val ppB = (rG shl 50) or dwB
+        val ppB = (rG shl 54) or dwB
         val qBhat = unsignedMultiplyHigh(ppB, mu)
         val rBhat = ppB - (qBhat * denom)
         val adjustB = rBhat >= denom
         val qB = qBhat + if (adjustB) 1L else 0L
         val rB = rBhat - if (adjustB) denom else 0L
 
-        val ppA = (rB shl 50) or dwA
+        val ppA = (rB shl 54) or dwA
         val qAhat = unsignedMultiplyHigh(ppA, mu)
         val rAhat = ppA - (qAhat * denom)
         val adjustA = rAhat >= denom
@@ -408,19 +408,19 @@ object DivBarrett {
 
         val remainder = rA
 
-        val q2 =                (qG ushr 28)
-        val q1 = (qG shl 36) or (qB ushr 14)
-        val q0 = (qB shl 50) or (qA ushr  0)
+        val q2 =                (qG ushr 20)
+        val q1 = (qG shl 44) or (qB ushr 10)
+        val q0 = (qB shl 54) or (qA ushr  0)
         q.coeffSet192(q2, q1, q0)
         return remainder
     }
 
-    private fun barrettDivModPow10_50_114(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_118(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1
 
-        val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
-        val dwG = (dw1 shl 14) or (dw0 ushr 50)
+        val dwA = dw0 and 0x003F_FFFF_FFFF_FFFFL
+        val dwG =  (dw1 shl 10) or (dw0 ushr 54)
 
         val qGhat = unsignedMultiplyHigh(dwG, mu)
         val rGhat = dwG - (qGhat * denom)
@@ -428,7 +428,7 @@ object DivBarrett {
         val qG = qGhat + if (adjustG) 1L else 0L
         val rG = rGhat - if (adjustG) denom else 0L
 
-        val ppA = (rG shl 50) or dwA
+        val ppA = (rG shl 54) or dwA
         val qAhat = unsignedMultiplyHigh(ppA, mu)
         val rAhat = ppA - (qAhat * denom)
         val adjustA = rAhat >= denom
@@ -437,8 +437,8 @@ object DivBarrett {
 
         val remainder = rA
 
-        val q1 = (qG ushr 14)
-        val q0 = (qG shl 50) or qA
+        val q1 =                (qG ushr 10)
+        val q0 = (qG shl 54) or (qA ushr  0)
         q.coeffSet128(q1, q0)
         return remainder
     }

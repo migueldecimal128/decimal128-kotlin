@@ -184,9 +184,13 @@ object CoeffPow10 {
             }
         }
 
-        val twoPow64 = ONE.shiftLeft(64)
+        // initialize powers of 5 that fit in 64 bits
+        POW10[POW5_64_OFFSET] = 1L
+        for (i in 1..<POW5_64_MAX)
+            POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
         // initialize Barrett division
+        val twoPow64 = ONE.shiftLeft(64)
         for (i in 1..<BARRETT_POW10_MAX) {
             val pow10 = POW10[i]
             val biMu10 = twoPow64.divide(BigInteger.valueOf(pow10))
