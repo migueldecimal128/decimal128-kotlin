@@ -471,24 +471,24 @@ object RecipMulPow10 {
                     xBitLen <= 64 ->
                         barrettDivPow10_64(z, x.dw0, pow10)
                     xBitLen <= 114 ->
-                        barrettDivPow10_50_114(z, x.dw1, x.dw0, pow10)
+                        barrettDivPow10_50_114(z, x, pow10)
                     xBitLen <= 164 ->
-                        barrettDivPow10_50_164(z, x.dw2, x.dw1, x.dw0, pow10)
+                        barrettDivPow10_50_164(z, x, pow10)
                     xBitLen <= 214 ->
-                        barrettDivPow10_50_214(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+                        barrettDivPow10_50_214(z, x, pow10)
                     else ->
-                        barrettDivPow10_50_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+                        barrettDivPow10_50_256(z, x, pow10)
                 }
             }
             return when {
                 xBitLen <= 64 ->
                     barrettDivPow10_64(z, x.dw0, pow10)
                 xBitLen <= 128 ->
-                    barrettDivPow10_32_128(z, x.dw1, x.dw0, pow10)
+                    barrettDivPow10_32_128(z, x, pow10)
                 xBitLen <= 192 ->
-                    barrettDivPow10_32_192(z, x.dw2, x.dw1, x.dw0, pow10)
+                    barrettDivPow10_32_192(z, x, pow10)
                 else ->
-                    barrettDivPow10_32_256(z, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+                    barrettDivPow10_32_256(z, x, pow10)
             }
         }
         if (pow10 < MAX_POW10_64) {
@@ -926,8 +926,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_32_256(q: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_32_256(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..9)
+
+        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
         val dwA = dw0 and 0xFFFF_FFFFL
         val dwB = dw0 ushr 32
@@ -999,8 +1001,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_32_192(q: Coeff, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_32_192(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..9)
+
+        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
         val dwA = dw0 and 0xFFFF_FFFFL
         val dwB = dw0 ushr 32
@@ -1055,8 +1059,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_32_128(q: Coeff, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_32_128(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..9)
+
+        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
         val dwA = dw0 and 0xFFFF_FFFFL
         val dwB = dw0 ushr 32
@@ -1116,8 +1122,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_50_256(q: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_50_256(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..4)
+
+        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
         val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
         val dwB = ((dw1 shl 14) or (dw0 ushr 50)) and 0x3_FFFF_FFFF_FFFFL
@@ -1173,8 +1181,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_50_214(q: Coeff, dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_50_214(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..4)
+
+        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
         val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
         val dwB = ((dw1 shl 14) or (dw0 ushr 50)) and 0x3_FFFF_FFFF_FFFFL
@@ -1222,8 +1232,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_50_164(q: Coeff, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_50_164(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..4)
+
+        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
         val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
         val dwB = ((dw1 shl 14) or (dw0 ushr 50)) and 0x3_FFFF_FFFF_FFFFL
@@ -1262,8 +1274,10 @@ object RecipMulPow10 {
         return residue
     }
 
-    fun barrettDivPow10_50_114(q: Coeff, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10_50_114(q: Coeff, x: Coeff, pow10: Int): Residue {
         require(pow10 in 1..4)
+
+        val dw0 = x.dw0; val dw1 = x.dw1
 
         val dwA = dw0 and 0x3_FFFF_FFFF_FFFFL
         val dwG = (dw1 shl 14) or (dw0 ushr 50)

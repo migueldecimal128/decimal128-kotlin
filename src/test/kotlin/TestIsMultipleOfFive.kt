@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 
 class TestisMultipleOfFive {
 
-    val verbose = true
+    val verbose = false
 
     val MASK_BITS_0_MOD_4 = 0x1111111111111111L
     val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
