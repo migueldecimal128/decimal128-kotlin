@@ -7,10 +7,7 @@ import java.math.BigInteger
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
 
-internal const val SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET = POW10_DWORD_COUNT
-internal const val SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT = 6
-
-internal const val BARRETT_POW10_MU_OFFSET = SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT
+internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
 internal const val BARRETT_POW10_MAX = 10
 
 internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAX
@@ -181,14 +178,8 @@ object CoeffPow10 {
             }
         }
 
-        // initialize SMALL_SIMPLE_RECIP_POW10sDIV2
         val twoPow64 = ONE.shiftLeft(64)
-        for (i in 1..<SMALL_SIMPLE_RECIP_POW10sDIV2_COUNT) {
-            val pow10Div2 = POW10[i] ushr 1
-            val biM = twoPow64.divide(BigInteger.valueOf(pow10Div2))
-            val m = biM.toLong()
-            POW10[SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + i] = m
-        }
+
         // initialize Barrett division
         for (i in 1..<BARRETT_POW10_MAX) {
             val pow10 = POW10[i]
