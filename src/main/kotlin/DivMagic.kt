@@ -6,6 +6,8 @@ import java.lang.Long.compareUnsigned
 import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
 
+const val MAGIC_MAX_DIVISOR_BITLEN = 64
+
 object DivMagic {
 
     data class Magic(val m: Long, val add: Boolean, val s: Int)
@@ -83,11 +85,11 @@ object DivMagic {
         assert(initialized)
         val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
         val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
-        val residue = _magicDivide1x1(z, x.dw0, m, flagAndShift)
+        val residue = magicDiv_64(z, x.dw0, m, flagAndShift)
         return residue
     }
 
-    private inline fun _magicDivide1x1(
+    private inline fun magicDiv_64(
         q: Coeff,
         x0: Long,
         m: Long,
