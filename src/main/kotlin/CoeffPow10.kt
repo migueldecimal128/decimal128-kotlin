@@ -189,13 +189,14 @@ object CoeffPow10 {
             val m = biM.toLong()
             POW10[SMALL_SIMPLE_RECIP_POW10sDIV2_OFFSET + i] = m
         }
-
+        // initialize Barrett division
         for (i in 1..<BARRETT_POW10_MAX) {
             val pow10 = POW10[i]
             val biMu = twoPow64.divide(BigInteger.valueOf(pow10))
             val mu = biMu.toLong()
             POW10[BARRETT_POW10_MU_OFFSET + i] = mu
         }
+        // initialization of Magic multipliers M is in DivMagic
     }
 
     fun pow10BitLen(pow10: Int): Int {

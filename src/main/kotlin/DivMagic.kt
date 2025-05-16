@@ -2,19 +2,9 @@
 
 package com.decimal128
 
-import com.decimal128.Residue.Companion.EXACT
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul1
 import java.lang.Long.compareUnsigned
 import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
-import java.math.BigInteger.ZERO
-import java.math.BigInteger.ONE
-import java.math.BigInteger.TWO
-import java.math.BigInteger.TEN
-import kotlin.math.ceil
 
 object DivMagic {
 
@@ -29,24 +19,24 @@ object DivMagic {
      */
     fun magicu64(d: Long): Magic {
         require(d != 0L) { "divisor must be nonzero" }
-        val N      = 64
-        val twoToN = BigInteger.ONE.shiftLeft(N)           // 2^64
+        val N = 64
+        val twoPowN = BigInteger.ONE.shiftLeft(N)           // 2^64
         // Reconstruct the unsigned 64-bit divisor in a BigInteger:
         val hi32 = d ushr 32                             // logical shift, bits 63–32
-        val lo32  = d and 0xFFFFFFFFL                     // bits 31–0
-        val biD    = BigInteger.valueOf(hi32)
+        val lo32 = d and 0xFFFFFFFFL                     // bits 31–0
+        val biD = BigInteger.valueOf(hi32)
             .shiftLeft(32)
             .or(BigInteger.valueOf(lo32))
         // anc = 2^N - 1 - ((2^N - 1) mod d)
-        val biN1   = twoToN - BigInteger.ONE
+        val biN1   = twoPowN - BigInteger.ONE
         val anc    = biN1 - biN1.mod(biD)
 
-        val twoNm1 = BigInteger.ONE.shiftLeft(N - 1)       // 2^(N-1)
+        val twoPowNminus1 = BigInteger.ONE.shiftLeft(N - 1)       // 2^(N-1)
         var p       = (N - 1).toLong()
-        var q1      = twoNm1.divide(anc)
-        var r1      = twoNm1.remainder(anc)
-        var q2      = twoNm1.divide(biD)
-        var r2      = twoNm1.remainder(biD)
+        var q1      = twoPowNminus1.divide(anc)
+        var r1      = twoPowNminus1.remainder(anc)
+        var q2      = twoPowNminus1.divide(biD)
+        var r2      = twoPowNminus1.remainder(biD)
         var delta: BigInteger
 
         do {
@@ -66,27 +56,34 @@ object DivMagic {
         return Magic(m_mod, addFlag, s)
     }
 
-    val MAX_POW10_64 = 20
-    val MAGIC_POW10_64 = LongArray(20)
-    val FLAG_SHIFT_POW10_64 = ByteArray(20)
+    private var initialized = false
+    val MAGIC_FLAG_AND_SHIFT_POW10 = ByteArray(MAGIC_POW10_MAX)
 
     fun initializeMagicPow10_64() {
-        MAGIC_POW10_64[0] = 1
-        FLAG_SHIFT_POW10_64[0] = Byte.MIN_VALUE
-        for (k in 1..<MAX_POW10_64) {
+        if (initialized)
+            return
+        initialized = true
+        POW10[MAGIC_POW10_M_OFFSET + 0] = 1
+        MAGIC_FLAG_AND_SHIFT_POW10[0] = Byte.MIN_VALUE
+        for (k in 1..<MAGIC_POW10_MAX) {
             val d     = POW10[k]
             val magic = magicu64(d)
-            MAGIC_POW10_64[k]   = magic.m
-            FLAG_SHIFT_POW10_64[k] =
+            POW10[MAGIC_POW10_M_OFFSET + k]   = magic.m
+            MAGIC_FLAG_AND_SHIFT_POW10[k] =
                 (if (magic.add) 0x80 or magic.s else magic.s).toByte()
         }
     }
 
-    fun magicDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+    init {
         initializeMagicPow10_64()
-        val m = MAGIC_POW10_64[pow10]
-        val flagShift = FLAG_SHIFT_POW10_64[pow10].toInt()
-        val residue = _magicDivide1x1(z, x.dw0, m, flagShift)
+    }
+
+    fun magicDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+        assert(pow10 in 0..<MAGIC_POW10_MAX)
+        assert(initialized)
+        val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
+        val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
+        val residue = _magicDivide1x1(z, x.dw0, m, flagAndShift)
         return residue
     }
 
@@ -94,11 +91,11 @@ object DivMagic {
         q: Coeff,
         x0: Long,
         m: Long,
-        flagShift: Int,
+        flagAndShift: Int,
     ): Residue {
-        val s = flagShift and 0x3F
+        val s = flagAndShift and 0x3F
         val qLostCarry = 1L shl -s
-        val addMask = (flagShift shr 31).toLong()
+        val addMask = (flagAndShift shr 31).toLong()
         val pp00Hi = unsignedMultiplyHigh(x0, m)
         val pp00Lo = x0 * m
         val p0 = pp00Lo
