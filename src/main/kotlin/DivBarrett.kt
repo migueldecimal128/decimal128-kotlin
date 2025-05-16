@@ -51,7 +51,7 @@ object DivBarrett {
     }
 
 
-    fun barrettDivModPow10_32_256(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_32_256(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
@@ -125,7 +125,7 @@ object DivBarrett {
         return rA
     }
 
-    fun barrettDivModPow10_32_192(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_32_192(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
@@ -182,7 +182,7 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivModPow10_32_128(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_32_128(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
@@ -222,7 +222,7 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivModPow10_64(q: Coeff, dw0: Long, pow10: Int): Long {
+    private fun barrettDivModPow10_64(q: Coeff, dw0: Long, pow10: Int): Long {
         require(pow10 in 1..9)
 
         val dwG = dw0
@@ -243,7 +243,7 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivModPow10_50_256(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_50_256(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
@@ -301,7 +301,7 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivModPow10_50_214(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_50_214(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
@@ -351,7 +351,7 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivModPow10_50_164(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_50_164(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
@@ -392,7 +392,7 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivModPow10_50_114(q: Coeff, x: Coeff, pow10: Int): Long {
+    private fun barrettDivModPow10_50_114(q: Coeff, x: Coeff, pow10: Int): Long {
         require(pow10 in 1..4)
 
         val dw0 = x.dw0; val dw1 = x.dw1
