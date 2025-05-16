@@ -10,7 +10,10 @@ private const val POW10_DWORD_COUNT =
 internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
 internal const val BARRETT_POW10_MAX = 10
 
-internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAX
+internal const val BARRETT_POW5_MU_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAX
+internal const val BARRETT_POW5_MAX = 14
+
+internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAX
 internal const val MAGIC_POW10_MAX = 20
 
 private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAX
@@ -183,9 +186,15 @@ object CoeffPow10 {
         // initialize Barrett division
         for (i in 1..<BARRETT_POW10_MAX) {
             val pow10 = POW10[i]
-            val biMu = twoPow64.divide(BigInteger.valueOf(pow10))
-            val mu = biMu.toLong()
-            POW10[BARRETT_POW10_MU_OFFSET + i] = mu
+            val biMu10 = twoPow64.divide(BigInteger.valueOf(pow10))
+            val mu10 = biMu10.toLong()
+            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10
+
+            val pow5 = pow10 ushr i
+            val biMu5 = twoPow64.divide(BigInteger.valueOf(pow10))
+            val mu5 = biMu5.toLong()
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5
+
         }
         // initialization of Magic multipliers M is in DivMagic
     }
