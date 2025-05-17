@@ -393,12 +393,12 @@ object RecipMulPow10 {
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         assert(pow10 >= 0)
         val xBitLen = x.bitLen
-        if (pow10 < BARRETT_POW10_MAX)
-            return DivBarrett.barrettDivPow10(z, x, pow10)
+        //if (pow10 < BARRETT_POW10_MAX)
+        //    return DivBarrett.barrettDivPow10(z, x, pow10)
         //FIXME - get magic to work properly to widen range
-        // if (pow10 < MAGIC_POW10_MAX && xBitLen <= MAGIC_MAX_DIVISOR_BITLEN) {
-        //    return DivMagic.magicDivPow10(z, x, pow10)
-       // }
+        if (pow10 < MAGIC_POW10_MAX && xBitLen <= MAGIC_MAX_DIVISOR_BITLEN) {
+            return DivMagic.magicDivPow10(z, x, pow10)
+         }
         initialize()
         val xDigitLen = x.digitLen
         if (xDigitLen <= pow10) {

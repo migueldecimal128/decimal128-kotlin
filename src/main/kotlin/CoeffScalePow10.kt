@@ -35,18 +35,17 @@ object CoeffScalePow10 {
     }
 
     fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        // the code below covers the pow10 == 0 case
-        //if (x.digitLen == 0 || pow10 == 0) {
-        //    z.coeffSet(x)
-        //    return EXACT
-        //}
-        val productDigitCount = x.digitLen - pow10
-        if (productDigitCount <= 0) {
-            val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
-            z.coeffSetZero()
-            return residue
+        if (x.digitLen > 0 && pow10 > 0) {
+            val productDigitCount = x.digitLen - pow10
+            if (productDigitCount <= 0) {
+                val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
+                z.coeffSetZero()
+                return residue
+            }
+            return RecipMulPow10.divPow10(z, x, pow10)
         }
-        return RecipMulPow10.divPow10(z, x, pow10)
+        z.coeffSet(x)
+        return EXACT
     }
 
     fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {

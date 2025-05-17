@@ -80,41 +80,103 @@ object DivMagic {
         initializeMagicPow10_64()
     }
 
+
     fun magicDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         assert(pow10 in 0..<MAGIC_POW10_MAX)
         assert(initialized)
-        val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
-        val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
-        val residue = magicDiv_64(z, x.dw0, m, flagAndShift)
+        val remainder = magicDivModPow10(z, x, pow10)
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
         return residue
     }
 
-    private /* inline */ fun magicDiv_64(
+    fun magicDivModPow10(z: Coeff, x: Coeff, pow10: Int): Long {
+        when {
+            pow10 > 0 && pow10 < MAGIC_POW10_MAX -> {
+                val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
+                val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toLong()
+                val denom = POW10[pow10]
+                val xBitLen = x.bitLen
+                val remainder = when {
+                    xBitLen <= 64 ->
+                        magicDivMod_64(z, x.dw0, denom, m, flagAndShift)
+
+                    xBitLen <= 128 ->
+                        magicDivMod_128(z, x, denom, m, flagAndShift)
+
+                    xBitLen <= 192 ->
+                        magicDivMod_192(z, x, denom, m, flagAndShift)
+
+                    else ->
+                        magicDivMod_256(z, x, denom, m, flagAndShift)
+                }
+                return remainder
+            }
+            pow10 == 0 -> {
+                z.coeffSet(x)
+                return 0L
+            }
+            else ->
+                throw RuntimeException()
+        }
+    }
+
+    private fun magicDivMod_256(
+        q: Coeff,
+        x: Coeff,
+        denom: Long,
+        m: Long,
+        flagAndShift: Long
+    ): Long {
+        throw RuntimeException("not impl")
+    }
+
+    private fun magicDivMod_192(
+        q: Coeff,
+        x: Coeff,
+        denom: Long,
+        m: Long,
+        flagAndShift: Long
+    ): Long {
+        throw RuntimeException("not impl")
+    }
+
+    private fun magicDivMod_128(
+        q: Coeff,
+        x: Coeff,
+        denom: Long,
+        m: Long,
+        flagAndShift: Long
+    ): Long {
+        throw RuntimeException("not impl")
+    }
+
+    private fun magicDivMod_64(
         q: Coeff,
         x0: Long,
+        denom: Long,
         m: Long,
-        flagAndShift: Int,
-    ): Residue {
+        flagAndShift: Long
+    ): Long {
         val biX0 = BigInteger.valueOf(x0 ushr 32).shiftLeft(32).or(BigInteger.valueOf(x0 and 0xFFFFFFFFL))
-        val s = flagAndShift and 0x3F
-        val qLostCarry = 1L shl -s
-        val addMask = (flagAndShift shr 31).toLong()
+        val s = flagAndShift.toInt() and 0x3F
+        val qPotentialCarry = 1L shl -s
+        val addMask = flagAndShift shr 63
         val pHiUncorrected = unsignedMultiplyHigh(x0, m)
         val pLo = x0 * m
         val pHiCorrected = pHiUncorrected + (x0 and addMask)
-        val qCarryAdd = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) qLostCarry else 0L
-        val q0 = qCarryAdd + (pHiCorrected ushr s)
-        q.coeffSet64(q0)
+        val qCarryAdd = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) qPotentialCarry else 0L
+        val qHat = pHiCorrected ushr s
+        val q0 = qCarryAdd + qHat
 
-        val roundBitMask = 1L shl (s - 1)
-        val roundBit = ((pHiCorrected and roundBitMask) ushr (s - 1)).toInt()
-        val upperFractionalBitsMask = roundBitMask - 1
-        val upperFractionalBits = pHiCorrected and upperFractionalBitsMask
-        val lowerFractionalBitsCompare = compareUnsigned(pLo, m)
-        val isSticky = (upperFractionalBits or (lowerFractionalBitsCompare + 1).toLong()) != 0L
-        val residue = Residue.residueFrom(roundBit, if (isSticky) 1 else 0)
-        val oneCorrectedResidue = if (m == 1L) Residue.EXACT else residue
-        return oneCorrectedResidue
+        val reconstructedHi = unsignedMultiplyHigh(q0, denom)
+        if (reconstructedHi == 1L)
+            throw RuntimeException("Kilroy was here!")
+        val reconstructedLo = q0 * denom
+        val rHat = x0 - reconstructedLo
+        val r = rHat + (-reconstructedHi and x0)
+
+        q.coeffSet64(q0)
+        return r
     }
 
 }
