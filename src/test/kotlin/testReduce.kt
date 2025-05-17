@@ -2,7 +2,6 @@ package com.decimal128
 
 import org.junit.jupiter.api.Test
 import java.lang.Long.bitCount
-import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
 import java.math.BigInteger.ONE
@@ -68,35 +67,50 @@ class TestReduce {
         return ret
     }
 
-    fun calcReduction_64(dw: Long): Int {
+    fun calcReductionPow5_64(dw: Long, pow2Limit: Int): Int {
         assert(dw != 0L)
         var k = 0
-        while (true) {
-            val div5 = unsignedMultiplyHigh(dw, 0xCCCC_CCCC_CCCC_CCCDuL.toLong()) ushr 3
-            if ((div5 * 5) != dw)
+        var d = dw
+        while (k < pow2Limit) {
+            val m = 0xCCCC_CCCC_CCCC_CCCDuL.toLong()
+            val hi = unsignedMultiplyHigh(d, m)
+            val div5 = hi ushr 2
+            if ((div5 * 5) != d)
                 return k
             ++k
+            d = div5
         }
+        return k
     }
 
-    val coeffReduceDivT = Coeff()
-    val coeffReduceModT = Coeff()
+    val coeffReduceDivTmp = Coeff()
 
-    fun calcReduction(x: Coeff): Int {
+    fun calcReductionPow10(x: Coeff): Int {
         val ntz = x.coeffNumberOfTrailingZeros()
         if ((x.bitLen - ntz) <= 64) {
             val dw = x.coeffDwordAtBitIndex(ntz)
-            return calcReduction_64(dw)
+            return calcReductionPow5_64(dw, ntz)
         }
         var ntzRemaining = ntz
-        var thisStride = min(ntzRemaining, 18)
-        //FIXME ... to be continued ...
-        return -1
+        coeffReduceDivTmp.coeffSetShiftRight(x, ntz)
+        var r = 0L // remainder
+        do {
+            val powStep = min(ntzRemaining, BARRETT_POW5_MAX - 1)
+            r = DivBarrett.barrettDivModPow5(coeffReduceDivTmp, coeffReduceDivTmp, powStep)
+            if (r != 0L) {
+                val rReduction = calcReductionPow5_64(r, ntzRemaining)
+                ntzRemaining -= rReduction
+                break;
+            }
+            ntzRemaining -= powStep
+        } while (ntzRemaining > 0)
+        val k = ntz - ntzRemaining
+        return k
     }
 
     fun reduce(z: Coeff, x: Coeff): Int {
         if (x.bitLen > 0 && isMultipleOfFive_256(x.dw3, x.dw2, x.dw1, x.dw0)) {
-            val k = calcReduction(x)
+            val k = calcReductionPow10(x)
             if (k > 0) {
                 val residue = z.scaleDownPow10(x, k)
                 assert(residue == Residue.EXACT)
@@ -129,9 +143,14 @@ class TestReduce {
     }
 
     val tcs = arrayOf(
+        TC("14600000000000000000"), // 14600000000000000000
+        TC("5000000000000000"),
+        TC("582239057842592488800"),
+        TC("572135574136166865449429225266381990144000000000000"),
+        TC("4000000000000"),
+        TC(15),
         TC("42288349021474833586838254686343304246565023760693060"),
         TC(10),
-        TC(15),
         TC(1),
         TC(4),
         TC(5),

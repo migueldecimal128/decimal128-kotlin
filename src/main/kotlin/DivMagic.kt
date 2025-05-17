@@ -89,31 +89,32 @@ object DivMagic {
         return residue
     }
 
-    private inline fun magicDiv_64(
+    private /* inline */ fun magicDiv_64(
         q: Coeff,
         x0: Long,
         m: Long,
         flagAndShift: Int,
     ): Residue {
+        val biX0 = BigInteger.valueOf(x0 ushr 32).shiftLeft(32).or(BigInteger.valueOf(x0 and 0xFFFFFFFFL))
         val s = flagAndShift and 0x3F
         val qLostCarry = 1L shl -s
         val addMask = (flagAndShift shr 31).toLong()
-        val pp00Hi = unsignedMultiplyHigh(x0, m)
-        val pp00Lo = x0 * m
-        val p0 = pp00Lo
-        val p1 = pp00Hi
-        val qLo = p1 + (x0 and addMask)
-        val qCarryAdd = if (compareUnsigned(qLo, p1) < 0) qLostCarry else 0L
-        val q0 = qCarryAdd + (qLo ushr s)
+        val pHiUncorrected = unsignedMultiplyHigh(x0, m)
+        val pLo = x0 * m
+        val pHiCorrected = pHiUncorrected + (x0 and addMask)
+        val qCarryAdd = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) qLostCarry else 0L
+        val q0 = qCarryAdd + (pHiCorrected ushr s)
         q.coeffSet64(q0)
 
-        val divisorNotOneMask = (m - 2) shr 63.inv() // use this to cover the 10**0 case
-        val roundBit = (p1 shr (s - 1)).toInt() and 1
-        val cmpLo = compareUnsigned(p0 and divisorNotOneMask, m)
-        val hiFracMask = (1L shl (s - 1)) - 1L
-        val stickyBit = if ((cmpLo >= 0) or ((p1 and hiFracMask) != 0L)) 1 else 0
-        val residue = Residue.residueFrom(roundBit, stickyBit)
-        return residue
+        val roundBitMask = 1L shl (s - 1)
+        val roundBit = ((pHiCorrected and roundBitMask) ushr (s - 1)).toInt()
+        val upperFractionalBitsMask = roundBitMask - 1
+        val upperFractionalBits = pHiCorrected and upperFractionalBitsMask
+        val lowerFractionalBitsCompare = compareUnsigned(pLo, m)
+        val isSticky = (upperFractionalBits or (lowerFractionalBitsCompare + 1).toLong()) != 0L
+        val residue = Residue.residueFrom(roundBit, if (isSticky) 1 else 0)
+        val oneCorrectedResidue = if (m == 1L) Residue.EXACT else residue
+        return oneCorrectedResidue
     }
 
 }

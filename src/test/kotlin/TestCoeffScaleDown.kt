@@ -9,6 +9,7 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.TestReduce.TC
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -47,6 +48,12 @@ class TestCoeffScaleDown {
     val bi5321 = bi5.shiftLeft(144).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
 
     val cases = arrayOf(
+        TC("2", 1, false, ROUND_TIES_TO_EVEN),
+        TC("10", 1, false, ROUND_TIES_TO_EVEN),
+        TC("5500000000000001", 15, false, ROUND_TIES_TO_EVEN),
+        TC("5000000000000000", 15, false, ROUND_TIES_TO_EVEN),
+        TC("5500000000000000", 14, false, ROUND_TIES_TO_EVEN),
+        TC("5500000000000000", 15, false, ROUND_TIES_TO_EVEN),
         TC("8399566454088370176858046088293", 0, true, ROUND_TIES_TO_EVEN),
         TC("511", 0, true, ROUND_TIES_TO_EVEN),
         TC(bi5321.shiftLeft(1), 1, true, ROUND_TIES_TO_EVEN),

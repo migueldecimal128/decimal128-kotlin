@@ -199,10 +199,16 @@ object CoeffPow10 {
             POW10[BARRETT_POW10_MU_OFFSET + i] = mu10
 
             val pow5 = pow10 ushr i
-            val biMu5 = twoPow64.divide(BigInteger.valueOf(pow10))
+            val biMu5 = twoPow64.divide(BigInteger.valueOf(pow5))
             val mu5 = biMu5.toLong()
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu5
 
+        }
+        for (i in 1..<BARRETT_POW5_MAX) {
+            val pow5 = POW10[POW5_64_OFFSET + i]
+            val biMu5 = twoPow64.divide(BigInteger.valueOf(pow5))
+            val mu5 = biMu5.toLong()
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5
         }
         // initialization of Magic multipliers M is in DivMagic
     }

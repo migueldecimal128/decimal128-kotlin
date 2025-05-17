@@ -99,7 +99,7 @@ object DivBarrett {
                 return 0L
             }
 
-            else -> throw RuntimeException()
+            else -> throw RuntimeException("pow5 out of range:" + pow5)
         }
     }
 
