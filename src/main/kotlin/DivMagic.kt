@@ -73,6 +73,8 @@ object DivMagic {
             POW10[MAGIC_POW10_M_OFFSET + k]   = magic.m
             MAGIC_FLAG_AND_SHIFT_POW10[k] =
                 (if (magic.add) 0x80 or magic.s else magic.s).toByte()
+            if (magic.add)
+                println("Kilroy was here! ... and so was a magic flag for k:$k")
         }
     }
 
@@ -94,20 +96,19 @@ object DivMagic {
             pow10 > 0 && pow10 < MAGIC_POW10_MAX -> {
                 val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
                 val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toLong()
-                val denom = POW10[pow10]
                 val xBitLen = x.bitLen
                 val remainder = when {
                     xBitLen <= 64 ->
-                        magicDivMod_64(z, x.dw0, denom, m, flagAndShift)
+                        magicDivModPow10_64(z, x.dw0, pow10, m, flagAndShift)
 
                     xBitLen <= 128 ->
-                        magicDivMod_128(z, x, denom, m, flagAndShift)
+                        magicDivModPow10_128(z, x, pow10, m, flagAndShift)
 
                     xBitLen <= 192 ->
-                        magicDivMod_192(z, x, denom, m, flagAndShift)
+                        magicDivModPow10_192(z, x, pow10, m, flagAndShift)
 
                     else ->
-                        magicDivMod_256(z, x, denom, m, flagAndShift)
+                        magicDivModPow10_256(z, x, pow10, m, flagAndShift)
                 }
                 return remainder
             }
@@ -120,44 +121,48 @@ object DivMagic {
         }
     }
 
-    private fun magicDivMod_256(
+    private fun magicDivModPow10_256(
         q: Coeff,
         x: Coeff,
-        denom: Long,
+        pow10: Int,
         m: Long,
         flagAndShift: Long
     ): Long {
         throw RuntimeException("not impl")
     }
 
-    private fun magicDivMod_192(
+    private fun magicDivModPow10_192(
         q: Coeff,
         x: Coeff,
-        denom: Long,
+        pow10: Int,
         m: Long,
         flagAndShift: Long
     ): Long {
         throw RuntimeException("not impl")
     }
 
-    private fun magicDivMod_128(
+    private fun magicDivModPow10_128(
         q: Coeff,
         x: Coeff,
-        denom: Long,
+        pow10: Int,
         m: Long,
         flagAndShift: Long
     ): Long {
         throw RuntimeException("not impl")
     }
 
-    private fun magicDivMod_64(
+    // Pow10 is in the name because it should
+    // only be used for powers of 10
+    // otherwise, there is risk of
+    private fun magicDivModPow10_64(
         q: Coeff,
         x0: Long,
-        denom: Long,
+        pow10: Int,
         m: Long,
         flagAndShift: Long
     ): Long {
-        val biX0 = BigInteger.valueOf(x0 ushr 32).shiftLeft(32).or(BigInteger.valueOf(x0 and 0xFFFFFFFFL))
+        //val biX0 = BigInteger.valueOf(x0 ushr 32).shiftLeft(32).or(BigInteger.valueOf(x0 and 0xFFFFFFFFL))
+        val denom = POW10[pow10]
         val s = flagAndShift.toInt() and 0x3F
         val qPotentialCarry = 1L shl -s
         val addMask = flagAndShift shr 63
@@ -168,12 +173,17 @@ object DivMagic {
         val qHat = pHiCorrected ushr s
         val q0 = qCarryAdd + qHat
 
-        val reconstructedHi = unsignedMultiplyHigh(q0, denom)
-        if (reconstructedHi == 1L)
-            throw RuntimeException("Kilroy was here!")
+        // NOTE ...
+        // this multiply will overflow only when Q0 is very large and denom is very small
+        // for denom = 10**1 the magic correction flag is not set, the multiply cannot overflow
+        // for denom = 10**2 the magic correction flag is set.
+        // with x0==2**64-1 and denom==100 the multiply stays in 64 bits
+        // therefore correction is not ever needed ...
+        // ... AS LONG AS THIS IS NEVER USED FOR ANYTHING SMALLER THAN 10**2 == 100
+        //val reconstructedHi = unsignedMultiplyHigh(q0, denom)
         val reconstructedLo = q0 * denom
         val rHat = x0 - reconstructedLo
-        val r = rHat + (-reconstructedHi and x0)
+        val r = rHat // + (-reconstructedHi and x0)
 
         q.coeffSet64(q0)
         return r
