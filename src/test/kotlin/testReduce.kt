@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 
 class TestReduce {
 
-    val verbose = true
+    val verbose = false
 
     val mask0 = 0x1111111111111111L
     val mask1 = mask0 shl 1

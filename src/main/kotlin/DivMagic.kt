@@ -1,5 +1,3 @@
-@file:Suppress("NOTHING_TO_INLINE")
-
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
@@ -71,8 +69,6 @@ object DivMagic {
             POW10[MAGIC_POW10_M_OFFSET + k]   = magic.m
             MAGIC_FLAG_AND_SHIFT_POW10[k] =
                 (if (magic.add) 0x80 or magic.s else magic.s).toByte()
-            if (magic.add)
-                println("Kilroy was here! ... and so was a magic flag for k:$k")
         }
     }
 

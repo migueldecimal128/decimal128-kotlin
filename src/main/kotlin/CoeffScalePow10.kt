@@ -42,7 +42,7 @@ object CoeffScalePow10 {
                 z.coeffSetZero()
                 return residue
             }
-            return RecipMulPow10.divPow10(z, x, pow10)
+            return CoeffDivPow10.divPow10(z, x, pow10)
         }
         z.coeffSet(x)
         return EXACT

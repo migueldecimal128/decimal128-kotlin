@@ -2,7 +2,6 @@
 
 package com.decimal128
 
-import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
@@ -390,145 +389,16 @@ object RecipMulPow10 {
         throw RuntimeException("not impl")
     }
 
-    fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+    fun rangeDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         assert(pow10 >= 0)
-        val xBitLen = x.bitLen
-        if (pow10 < BARRETT_POW10_MAX)
-            return DivBarrett.barrettDivPow10(z, x, pow10)
-        if (pow10 < MAGIC_POW10_MAX && xBitLen <= 64) {
-            return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
-         }
         initialize()
-        val xDigitLen = x.digitLen
-        if (xDigitLen <= pow10) {
-            if (xDigitLen == 0) {
-                z.coeffSetZero()
-                return EXACT
-            }
-            val residue = if (xDigitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
-            return residue
-        }
-        return _divPow10(z, xDigitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
-    }
-
-    fun divPow10(q: Coeff, x: Coeff, pow10: Int, sign: Boolean, ctx: Decimal128Context) {
-        initialize()
-        if (pow10 <= 0) {
-            assert(pow10 == 0)
-            q.coeffSet(x)
-            return
-        }
-        if (x.digitLen <= pow10) {
-            if (x.digitLen == 0) {
-                q.coeffSetZero()
-                return
-            }
-            // otherwise, non-zero residue ... round it
-            val residue = if (x.digitLen == pow10) Residue.residueFrom(x) else Residue.LT_HALF
-            val roundUp = residue.ulpBias(ctx.roundingDirection.negate(sign), x.dw0)
-            q.setZeroOrOneMasked(roundUp)
-            ctx.setInexact()
-            return
-        }
-        /*
-        when {
-            ((x.dw3 or x.dw2) == 0L) -> {
-                if (x.dw1 == 0L)
-                    _divPow10(q, x.digitCount, x.dw0, pow10, sign, ctx)
-                else
-                    _divPow10(q, x.digitCount, x.dw1, x.dw0, pow10, sign, ctx)
-            }
-            (x.dw3 == 0L) ->
-                _divPow10(q, x.digitCount, x.dw2, x.dw1, x.dw0, pow10, sign, ctx)
-            else ->
-
-         */
-        _divPow10(q, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10, sign, ctx)
-
-        //}
+        return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
     }
 
     private fun _divPow10(
         q: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
         pow10: Int) =
         _divPow10_miguel3(q, xDigitCount, x3, x2, x1, x0, pow10)
-
-    private fun _divPow10(
-        q: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
-        pow10: Int, sign: Boolean, ctx: Decimal128Context
-    ) =
-        _divPow10_miguel3(q, xDigitCount, x3, x2, x1, x0, pow10, sign, ctx)
-
-    private fun _divPow10_miguel3(
-        q: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
-        pow10: Int, sign: Boolean, ctx: Decimal128Context
-    ) {
-        require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT)
-        require(pow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10)
-        // clear coeff without worrying about aliasing
-        q.coeffEnableIndexSetAndZeroOut()
-
-        val index = indexOf(xDigitCount, pow10)
-        val paramsIndex = INDEXES[index]
-        if (paramsIndex == 0) {
-            //println("don't forget to check for rounding in this case")
-            throw RuntimeException("why am I here?")
-        }
-        val descriptor = PARAMS[paramsIndex].toInt()
-        val mulDwordCount = unpackMulDwordCount(descriptor)
-        val mulDigitCount = unpackMulDigitCount(descriptor)
-        val accDwordCount = unpackAccDwordCount(descriptor)
-        val shift = unpackShift(descriptor)
-        val fractionBitLen = shift + 1 // include the halfUlp bit
-        val quotDwordCount = unpackQuotDwordCount(descriptor)
-        assert(quotDwordCount <= 5)
-
-        val dividendShiftRight = pow10 - 1
-        val dividendShiftLeft = -dividendShiftRight
-        val shiftNonZeroMask = if (dividendShiftRight == 0) 0L else -1L
-        val stickyBitsPow2 = x0 and shiftNonZeroMask and ((1L shl dividendShiftRight) - 1)
-
-        val d0 = ((x1 shl dividendShiftLeft) and shiftNonZeroMask) or (x0 ushr dividendShiftRight)
-        val d1 = ((x2 shl dividendShiftLeft) and shiftNonZeroMask) or (x1 ushr dividendShiftRight)
-        val d2 = ((x3 shl dividendShiftLeft) and shiftNonZeroMask) or (x2 ushr dividendShiftRight)
-        val d3 = (x3 ushr dividendShiftRight)
-
-        val residue = when {
-            (d3 != 0L) ->
-                coeffRecipMul4(
-                    q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d3, d2, d1, d0, fractionBitLen, stickyBitsPow2
-                )
-
-            (d2 != 0L) ->
-                coeffRecipMul3(
-                    q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d2, d1, d0, fractionBitLen, stickyBitsPow2
-                )
-
-            (d1 != 0L) ->
-                coeffRecipMul2(
-                    q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d1, d0, fractionBitLen, stickyBitsPow2
-                )
-
-            (d0 != 0L) ->
-                coeffRecipMul1(
-                    q, PARAMS, paramsIndex + 1, mulDwordCount,
-                    d0, fractionBitLen, stickyBitsPow2
-                )
-
-            else -> throw RuntimeException("why am I here?")
-        }
-
-        val effectiveRoundingDirection = ctx.roundingDirection.negate(sign)
-        val ulpRoundUp = residue.ulpRoundUp(effectiveRoundingDirection, q.dw0)
-        q.coeffIncrement(ulpRoundUp)
-
-        q.coeffDisableIndexSetAndUpdateLengths()
-        val inexact = residue != EXACT
-        ctx.setInexact(inexact)
-    }
 
     private fun _divPow10_miguel3(
         z: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
