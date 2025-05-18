@@ -1,5 +1,7 @@
 package com.decimal128
 
+const val MASK32 = 0xFFFF_FFFFL
+
 // Automatically generated
 
 const val POW10_64_COUNT = 20          // 0x00000014 2E+1

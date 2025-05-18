@@ -2,8 +2,6 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 
-private const val MASK32 = 0xFFFF_FFFFL
-
 object CoeffCompare {
 
     fun coeffCompare(x:Coeff, y:Coeff) : Int {

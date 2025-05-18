@@ -1,7 +1,5 @@
 package com.decimal128
 
-private const val MASK32 = 0xFFFFFFFFL
-
 object CoeffSet {
 
     fun coeffSet(c: Coeff, x: LongArray, xOff: Int, xLen: Int) {
