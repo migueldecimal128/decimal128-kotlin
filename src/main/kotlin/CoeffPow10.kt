@@ -153,33 +153,35 @@ object CoeffPow10 {
 
     init {
         // initialize POW10
+        val coeffPow10 = Coeff()
+        val coeff10 = Coeff(10)
         for (pow10 in 0..<MAX_DIGIT_LEN) {
-            val bi = BigInteger.TEN.pow(pow10)
-            val bitLen = bi.bitLength()
+            if (pow10 == 0) coeffPow10.coeffSet64(1L) else coeffPow10.mul(coeffPow10, coeff10)
+            val bitLen = coeffPow10.bitLen
             POW10_BIT_LEN[pow10] = bitLen.toShort()
             val pow10Offset = pow10Offset(pow10)
             when {
                 bitLen <= 64 -> {
                     assert(pow10 in 0..<MIN_POW10_DIGIT_LEN_128)
-                    POW10[pow10Offset + 0] = bi.toLong()
+                    POW10[pow10Offset + 0] = coeffPow10.dw0
                 }
                 bitLen <= 128 -> {
                     assert(pow10 in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
-                    POW10[pow10Offset + 0] = bi.toLong()
-                    POW10[pow10Offset + 1] = bi.shiftRight(64).toLong()
+                    POW10[pow10Offset + 0] = coeffPow10.dw0
+                    POW10[pow10Offset + 1] = coeffPow10.dw1
                 }
                 bitLen <= 192 -> {
                     assert(pow10 in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
-                    POW10[pow10Offset + 0] = bi.toLong()
-                    POW10[pow10Offset + 1] = bi.shiftRight(64).toLong()
-                    POW10[pow10Offset + 2] = bi.shiftRight(128).toLong()
+                    POW10[pow10Offset + 0] = coeffPow10.dw0
+                    POW10[pow10Offset + 1] = coeffPow10.dw1
+                    POW10[pow10Offset + 2] = coeffPow10.dw2
                 }
                 bitLen <= 256 -> {
                     assert(pow10 in MIN_POW10_DIGIT_LEN_256..<MAX_DIGIT_LEN)
-                    POW10[pow10Offset + 0] = bi.toLong()
-                    POW10[pow10Offset + 1] = bi.shiftRight(64).toLong()
-                    POW10[pow10Offset + 2] = bi.shiftRight(128).toLong()
-                    POW10[pow10Offset + 3] = bi.shiftRight(192).toLong()
+                    POW10[pow10Offset + 0] = coeffPow10.dw0
+                    POW10[pow10Offset + 1] = coeffPow10.dw1
+                    POW10[pow10Offset + 2] = coeffPow10.dw2
+                    POW10[pow10Offset + 3] = coeffPow10.dw3
                 }
             }
         }
