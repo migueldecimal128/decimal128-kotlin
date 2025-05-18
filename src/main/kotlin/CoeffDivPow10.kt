@@ -18,7 +18,7 @@ object CoeffDivPow10 {
         assert(pow10 >= 0)
         val xBitLen = x.bitLen
         if (pow10 < MAGIC_POW10_MAX) {
-            if ((xBitLen ushr 6) == 0)
+            if (xBitLen <= 64)
                 return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
             if (pow10 < BARRETT_POW10_MAX)
                 return DivBarrett.barrettDivPow10(z, x, pow10)

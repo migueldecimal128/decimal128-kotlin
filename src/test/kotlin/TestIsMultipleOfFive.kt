@@ -7,14 +7,14 @@ import java.math.BigInteger.ONE
 import java.util.*
 import kotlin.test.assertEquals
 
-class TestisMultipleOfFive {
+class TestIsMultipleOfFive {
 
     val verbose = false
 
-    val MASK_BITS_0_MOD_4 = 0x1111111111111111L
-    val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
-    val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
-    val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
+    private val MASK_BITS_0_MOD_4 = 0x1111111111111111L
+    private val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
+    private val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
+    private val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
     fun isMultipleOfFive_64(dw0: Long): Boolean {
         val m0 = MASK_BITS_0_MOD_4
