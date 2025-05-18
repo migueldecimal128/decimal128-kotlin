@@ -17,10 +17,11 @@ object CoeffDivPow10 {
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         assert(pow10 >= 0)
         val xBitLen = x.bitLen
-        if (pow10 < BARRETT_POW10_MAX)
-            return DivBarrett.barrettDivPow10(z, x, pow10)
-        if (pow10 < MAGIC_POW10_MAX && xBitLen <= 64) {
-            return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
+        if (pow10 < MAGIC_POW10_MAX) {
+            if ((xBitLen ushr 6) == 0)
+                return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
+            if (pow10 < BARRETT_POW10_MAX)
+                return DivBarrett.barrettDivPow10(z, x, pow10)
         }
         val pow10BitLen = CoeffPow10.pow10BitLen(pow10)
         if (xBitLen < pow10BitLen) {
