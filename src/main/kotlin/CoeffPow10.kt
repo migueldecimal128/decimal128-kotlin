@@ -1,8 +1,6 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
-import java.math.BigInteger.ONE
-import java.math.BigInteger
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
@@ -153,35 +151,35 @@ object CoeffPow10 {
 
     init {
         // initialize POW10
-        val coeffPow10 = Coeff()
-        val coeff10 = Coeff(10)
-        for (pow10 in 0..<MAX_DIGIT_LEN) {
-            if (pow10 == 0) coeffPow10.coeffSet64(1L) else coeffPow10.mul(coeffPow10, coeff10)
-            val bitLen = coeffPow10.bitLen
-            POW10_BIT_LEN[pow10] = bitLen.toShort()
-            val pow10Offset = pow10Offset(pow10)
+        val pow10 = Coeff()
+        val ten = Coeff(10)
+        for (i in 0..<MAX_DIGIT_LEN) {
+            if (i == 0) pow10.coeffSet64(1L) else pow10.mul(pow10, ten)
+            val bitLen = pow10.bitLen
+            POW10_BIT_LEN[i] = bitLen.toShort()
+            val pow10Offset = pow10Offset(i)
             when {
                 bitLen <= 64 -> {
-                    assert(pow10 in 0..<MIN_POW10_DIGIT_LEN_128)
-                    POW10[pow10Offset + 0] = coeffPow10.dw0
+                    assert(i in 0..<MIN_POW10_DIGIT_LEN_128)
+                    POW10[pow10Offset + 0] = pow10.dw0
                 }
                 bitLen <= 128 -> {
-                    assert(pow10 in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
-                    POW10[pow10Offset + 0] = coeffPow10.dw0
-                    POW10[pow10Offset + 1] = coeffPow10.dw1
+                    assert(i in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
+                    POW10[pow10Offset + 0] = pow10.dw0
+                    POW10[pow10Offset + 1] = pow10.dw1
                 }
                 bitLen <= 192 -> {
-                    assert(pow10 in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
-                    POW10[pow10Offset + 0] = coeffPow10.dw0
-                    POW10[pow10Offset + 1] = coeffPow10.dw1
-                    POW10[pow10Offset + 2] = coeffPow10.dw2
+                    assert(i in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
+                    POW10[pow10Offset + 0] = pow10.dw0
+                    POW10[pow10Offset + 1] = pow10.dw1
+                    POW10[pow10Offset + 2] = pow10.dw2
                 }
                 bitLen <= 256 -> {
-                    assert(pow10 in MIN_POW10_DIGIT_LEN_256..<MAX_DIGIT_LEN)
-                    POW10[pow10Offset + 0] = coeffPow10.dw0
-                    POW10[pow10Offset + 1] = coeffPow10.dw1
-                    POW10[pow10Offset + 2] = coeffPow10.dw2
-                    POW10[pow10Offset + 3] = coeffPow10.dw3
+                    assert(i in MIN_POW10_DIGIT_LEN_256..<MAX_DIGIT_LEN)
+                    POW10[pow10Offset + 0] = pow10.dw0
+                    POW10[pow10Offset + 1] = pow10.dw1
+                    POW10[pow10Offset + 2] = pow10.dw2
+                    POW10[pow10Offset + 3] = pow10.dw3
                 }
             }
         }
@@ -192,25 +190,25 @@ object CoeffPow10 {
             POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
         // initialize Barrett division
-        val twoPow64 = ONE.shiftLeft(64)
+        val twoPow64 = Coeff()
+        val mu = Coeff()
+        val pow5 = Coeff()
+
+        twoPow64.coeffSet128(1L, 0L)
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAX) {
-            val pow10 = POW10[i]
-            val biMu10 = twoPow64.divide(BigInteger.valueOf(pow10))
-            val mu10 = biMu10.toLong()
-            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10
+            if (i == 1) pow10.coeffSet64(10L) else pow10.mul(pow10, ten)
+            mu.div(twoPow64, pow10)
+            POW10[BARRETT_POW10_MU_OFFSET + i] = mu.dw0
 
-            val pow5 = pow10 ushr i
-            val biMu5 = twoPow64.divide(BigInteger.valueOf(pow5))
-            val mu5 = biMu5.toLong()
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5
-
+            pow5.coeffSetShiftRight(pow10, i)
+            mu.div(twoPow64, pow5)
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
         }
         for (i in 1..<BARRETT_POW5_MAX) {
-            val pow5 = POW10[POW5_64_OFFSET + i]
-            val biMu5 = twoPow64.divide(BigInteger.valueOf(pow5))
-            val mu5 = biMu5.toLong()
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5
+            pow5.coeffSet64(POW10[POW5_64_OFFSET + i])
+            mu.div(twoPow64, pow5)
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
         }
         // initialization of Magic multipliers M is in DivMagic
     }
