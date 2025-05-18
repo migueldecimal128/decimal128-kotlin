@@ -6,10 +6,18 @@ import com.decimal128.CoeffSet.coeffSetShiftLeft
 object CoeffMul {
 
     fun coeffMul(z: Coeff, x: Coeff, y: Coeff) {
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
+        val xBitLen = x.bitLen
+        val yBitLen = y.bitLen
+        if (xBitLen <= 64 && yBitLen <= 64) {
+            val x0 = x.dw0
+            val y0 = y.dw0
+            val pHi = unsignedMultiplyHigh(x0, y0)
+            val pLo = x0 * y0
+            z.coeffSet128(pHi, pLo)
+            return
+        }
 
-        val flipFlop = x.bitLen >= y.bitLen
+        val flipFlop = xBitLen >= yBitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
         val mBitLen = m.bitLen
@@ -20,13 +28,6 @@ object CoeffMul {
         val m0 = m.dw0
         val n0 = n.dw0
         when {
-            (mBitLen <= 64) -> {
-                val pHi = unsignedMultiplyHigh(m0, n0)
-                val pLo = m0 * n0
-                z.coeffSet128(pHi, pLo)
-                return
-            }
-
             (nBitLen <= 64) -> {
                 when {
                     (nBitLen == 0) -> z.coeffSetZero()
