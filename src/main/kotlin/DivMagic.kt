@@ -6,8 +6,6 @@ import java.lang.Long.compareUnsigned
 import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
 
-const val MAGIC_MAX_DIVISOR_BITLEN = 64
-
 object DivMagic {
 
     data class Magic(val m: Long, val add: Boolean, val s: Int)
@@ -83,37 +81,59 @@ object DivMagic {
     }
 
 
-    fun magicDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+    // Magic division allows a 64-bit dividend and a 64-bit divisor
+    // However, on a 64-bit machine it cannot be used for multi-word
+    // division beyond 32-bit limbs because a 32-bit remainder has to
+    // get shifted up.
+    // 64-bit limbs would require a 128-bit divide operation
+    // Therefore, with a restriction of 32-bit limbs, Barrett Reduction
+    // is smaller, faster, cleaner than Magic division
+    //
+    // Magic is still the right thing to do for small divisors, since
+    // it has the 64-bit range in the divisor ... compared with Barrett
+    // 32-bit divisor
+
+    fun magicDivPow10_64(z: Coeff, x0: Long, pow10: Int): Residue {
         assert(pow10 in 0..<MAGIC_POW10_MAX)
         assert(initialized)
-        val remainder = magicDivModPow10(z, x, pow10)
+        val remainder = magicDivModPow10_64(z, x0, pow10)
         val residue = Residue.residueFromRemainderPow10(remainder, pow10)
         return residue
     }
 
-    fun magicDivModPow10(z: Coeff, x: Coeff, pow10: Int): Long {
+    private fun magicDivModPow10_64(z: Coeff, x0: Long, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < MAGIC_POW10_MAX -> {
                 val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
-                val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toLong()
-                val xBitLen = x.bitLen
-                val remainder = when {
-                    xBitLen <= 64 ->
-                        magicDivModPow10_64(z, x.dw0, pow10, m, flagAndShift)
+                val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
+                val denom = POW10[pow10]
+                val s = flagAndShift and 0x3F
+                val correctionMask = (flagAndShift shr 31).toLong()
 
-                    xBitLen <= 128 ->
-                        magicDivModPow10_128(z, x, pow10, m, flagAndShift)
+                val carryAmount = 1L shl -s
+                val pHiUncorrected = unsignedMultiplyHigh(x0, m)
+                val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
+                val carry = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) carryAmount else 0L
+                val qHat = pHiCorrected ushr s
+                val q0 = carry + qHat
 
-                    xBitLen <= 192 ->
-                        magicDivModPow10_192(z, x, pow10, m, flagAndShift)
+                // NOTE ...
+                // this multiply will overflow only when Q0 is very large and denom is very small
+                // for denom = 10**1 the magic correction flag is not set, the multiply cannot overflow
+                // for denom = 10**2 the magic correction flag is set.
+                // with x0==2**64-1 and denom==100 the multiply stays in 64 bits
+                // therefore correction is not ever needed ...
+                // ... AS LONG AS THIS IS NEVER USED FOR ANYTHING SMALLER THAN 10**2 == 100
+                //val reconstructedHi = unsignedMultiplyHigh(q0, denom)
+                val reconstructedLo = q0 * denom
+                val rHat = x0 - reconstructedLo
+                val remainder = rHat // + (-reconstructedHi and x0)
 
-                    else ->
-                        magicDivModPow10_256(z, x, pow10, m, flagAndShift)
-                }
+                z.coeffSet64(q0)
                 return remainder
             }
             pow10 == 0 -> {
-                z.coeffSet(x)
+                z.coeffSet64(x0)
                 return 0L
             }
             else ->
@@ -121,39 +141,6 @@ object DivMagic {
         }
     }
 
-    private fun magicDivModPow10_256(
-        q: Coeff,
-        x: Coeff,
-        pow10: Int,
-        m: Long,
-        flagAndShift: Long
-    ): Long {
-        throw RuntimeException("not impl")
-    }
-
-    private fun magicDivModPow10_192(
-        q: Coeff,
-        x: Coeff,
-        pow10: Int,
-        m: Long,
-        flagAndShift: Long
-    ): Long {
-        throw RuntimeException("not impl")
-    }
-
-    private fun magicDivModPow10_128(
-        q: Coeff,
-        x: Coeff,
-        pow10: Int,
-        m: Long,
-        flagAndShift: Long
-    ): Long {
-        throw RuntimeException("not impl")
-    }
-
-    // Pow10 is in the name because it should
-    // only be used for powers of 10
-    // otherwise, there is risk of
     private fun magicDivModPow10_64(
         q: Coeff,
         x0: Long,
