@@ -141,7 +141,10 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun magSet(str: String) = magSet(BigDecimal(str))
 
-    fun magAdd(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) = MagAdd.magAdd(this, a, b, sign, ctx)
+    fun magAdd(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
+        val residue = MagAdd.magAdd(this, a, b)
+        finalize(residue, sign, ctx)
+    }
 
     fun magScaleB(a: Mag, e: Int, sign: Boolean, ctx: Decimal128Context) {
         c.coeffSet(a.c)
