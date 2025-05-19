@@ -7,7 +7,7 @@ import java.math.MathContext
 
 const val MAX_ADJUSTED_EXPONENT = 6144
 const val MIN_ADJUSTED_EXPONENT = -6143
-const val TINY_EXPONENT = MIN_ADJUSTED_EXPONENT - (PRECISION_34 - 1)
+const val TINY_EXPONENT = MIN_ADJUSTED_EXPONENT - (PRECISION_34 - 1) // -6176
 
 const val NON_FINITE_MIN = 1000000
 const val NON_FINITE_INF = 1000000
@@ -27,6 +27,8 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     constructor(exp: Int, bi: BigInteger): this() {
         magSet(exp, bi)
     }
+
+    fun coeffToBigInteger() = c.coeffToBigInteger()
 
     fun finalize(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
         // IEEE754-2008 7.5: detect tininess on the unrounded result
@@ -130,8 +132,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     }
 
     fun magSet(bd: BigDecimal, ctx: Decimal128Context) {
-        val bdRounded = bd.round(MathContext.DECIMAL128)
-        magSet(-bdRounded.scale(), bdRounded.unscaledValue(), ctx)
+        magSet(-bd.scale(), bd.unscaledValue(), ctx)
     }
 
     fun magSet(x:Mag) {

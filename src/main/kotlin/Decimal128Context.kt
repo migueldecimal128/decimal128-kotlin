@@ -1,9 +1,21 @@
 package com.decimal128
 
 import java.math.MathContext
+import java.math.RoundingMode
 
 class Decimal128Context(val roundingDirection:RoundingDirection) {
     constructor() : this(RoundingDirection.ROUND_TIES_TO_EVEN)
+    companion object {
+        val MATH_CONTEXT_MAP = arrayOf(
+            MathContext.DECIMAL128, // HALF_EVEN
+            MathContext(PRECISION_34, RoundingMode.HALF_UP),
+            MathContext(PRECISION_34, RoundingMode.DOWN),
+            MathContext(PRECISION_34, RoundingMode.CEILING),
+            MathContext(PRECISION_34, RoundingMode.FLOOR),
+        )
+    }
+
+    fun getMathContext() = MATH_CONTEXT_MAP[roundingDirection.value]
 
     var invalid = false
         private set
