@@ -9,10 +9,8 @@ import com.decimal128.CoeffAdd.coeffAddUnscaled
 import com.decimal128.CoeffAbsDiff.coeffAbsDiffUnscaled
 import com.decimal128.CoeffAdd.coeffAdd
 import com.decimal128.CoeffSet.coeffSetShiftRight
-import com.decimal128.CoeffCompare.coeffCompare
-import com.decimal128.CoeffCompare.coeffEQ
-import com.decimal128.CoeffCompare.coeffGT
-import com.decimal128.CoeffCompare.coeffLT
+import com.decimal128.CoeffCompare.coeffUnscaledCompare
+import com.decimal128.CoeffCompare.coeffUnscaledEQ
 import com.decimal128.CoeffDivide.coeffDiv
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
@@ -112,19 +110,9 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return true
     }
 
-    fun compareTo(other: Coeff) = coeffCompare(this, other)
+    fun unscaledCompareTo(other: Coeff) = coeffUnscaledCompare(this, other)
 
-    fun EQ(other: Coeff) = coeffEQ(this, other)
-
-    fun NE(other: Coeff): Boolean = !EQ(other)
-
-    fun GE(other: Coeff): Boolean = !LT(other)
-
-    fun GT(other: Coeff) = coeffGT(this, other)
-
-    fun LE(other: Coeff): Boolean = !GT(other)
-
-    fun LT(other: Coeff) = coeffLT(this, other)
+    fun unscaledEQ(other: Coeff) = coeffUnscaledEQ(this, other)
 
     fun add(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
 

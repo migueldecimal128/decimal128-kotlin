@@ -1,9 +1,6 @@
 package com.decimal128
 
-import com.decimal128.CoeffCompare.coeffCompare
-import com.decimal128.CoeffCompare.coeffGT
-import com.decimal128.CoeffCompare.coeffGTOne
-import com.decimal128.CoeffSet.coeffSet
+import com.decimal128.CoeffCompare.coeffUnscaledCompare
 import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
@@ -70,7 +67,7 @@ object CoeffDivide {
             return residue
         }
         if (bitLenDelta == 0) {
-            val cmp = coeffCompare(x, y)
+            val cmp = coeffUnscaledCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
                 z.coeffSetZero()
@@ -97,7 +94,7 @@ object CoeffDivide {
             return
         }
         if (x.digitLen == y.digitLen) {
-            val cmp = coeffCompare(x, y)
+            val cmp = coeffUnscaledCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
                 z.coeffSet(x)

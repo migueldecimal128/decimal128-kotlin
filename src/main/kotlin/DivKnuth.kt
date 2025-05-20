@@ -1,7 +1,6 @@
 package com.decimal128
 
-import com.decimal128.CoeffCompare.coeffCompare
-import com.decimal128.CoeffCompare.coeffGT
+import com.decimal128.CoeffCompare.coeffUnscaledCompare
 import com.decimal128.CoeffCompare.coeffGTOne
 import com.decimal128.CoeffSet.coeffSet
 import com.decimal128.CoeffSet.coeffSetShiftRight
@@ -17,7 +16,7 @@ object DivKnuth {
 
     fun knuthDivideWrapper(z: Coeff, x: Coeff, y: Coeff, wantRemainder: Boolean): Residue {
         assert(coeffGTOne(y))
-        assert(coeffGT(x, y))
+        assert(x.unscaledCompareTo(y) > 0)
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()
@@ -93,7 +92,7 @@ object DivKnuth {
                         un[n - 1] = un[n - 1] ushr s1
                     }
                 }
-                val cmp = coeffCompare(y, un)
+                val cmp = coeffUnscaledCompare(y, un)
                 if (cmp < 0)
                     Residue.LT_HALF
                 else if (cmp == 0)
