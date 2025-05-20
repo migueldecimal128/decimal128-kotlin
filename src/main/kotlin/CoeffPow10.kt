@@ -20,7 +20,7 @@ internal const val MAGIC_POW10_MAX = 20
 private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAX
 
 internal val POW10 = LongArray(TOTAL_ALLOCATION)
-private val POW10_BIT_LEN = ShortArray(MAX_DIGIT_LEN)
+private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
 
 object CoeffPow10 {
     /*
@@ -156,7 +156,7 @@ object CoeffPow10 {
         for (i in 0..<MAX_DIGIT_LEN) {
             if (i == 0) pow10.coeffSet64(1L) else pow10.mul(pow10, ten)
             val bitLen = pow10.bitLen
-            POW10_BIT_LEN[i] = bitLen.toShort()
+            POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
             val pow10Offset = pow10Offset(i)
             when {
                 bitLen <= 64 -> {
@@ -214,7 +214,7 @@ object CoeffPow10 {
     }
 
     fun pow10BitLen(pow10: Int): Int {
-        return POW10_BIT_LEN[pow10 and 0x7F].toInt()
+        return (POW10_BIT_LEN_MINUS_1[pow10 and 0x7F].toInt() and 0xFF) + 1
     }
 
     fun pow10Offset(pow10: Int): Int {
