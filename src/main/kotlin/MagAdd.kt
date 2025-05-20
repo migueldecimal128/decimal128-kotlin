@@ -6,12 +6,12 @@ import com.decimal128.CoeffAdd.coeffAddUnscaled
 object MagAdd {
 
     fun magAdd(z: Mag, x: Mag, y: Mag): Residue {
-        val flipFlop = x.exp >= y.exp
+        val flipFlop = x.expQ >= y.expQ
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
-        assert(m.exp >= n.exp)
-        val minExp = n.exp
-        val expDelta = m.exp - n.exp
+        assert(m.expQ >= n.expQ)
+        val minExp = n.expQ
+        val expDelta = m.expQ - n.expQ
         when {
             (expDelta == 0) -> coeffAddUnscaled(z.c, m.c, n.c)
             (expDelta >= PRECISION_34) -> {
@@ -27,7 +27,7 @@ object MagAdd {
             (expDelta > 0) -> coeffAddScaled(z.c, m.c, expDelta, n.c)
             else -> coeffAddScaled(z.c, n.c, -expDelta, m.c)
         }
-        z.exp = minExp
+        z.expQ = minExp
         return Residue.EXACT
     }
 

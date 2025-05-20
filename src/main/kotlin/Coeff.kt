@@ -272,7 +272,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
                 }
             }
         }
-        // roundup occurs during multiplies while enableIndexSet is active
+        // flag for roundup which occurs during multiplies while enableIndexSet is active
         if (digitLen >= 0)
             updateLengthsAfterRoundUp()
     }

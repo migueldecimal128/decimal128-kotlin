@@ -1,9 +1,6 @@
 package com.decimal128
 
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -15,7 +12,7 @@ import java.util.*
 
 class TestMagSet {
 
-    val verbose = true
+    val verbose = false
 
     companion object {
         /**
@@ -34,6 +31,12 @@ class TestMagSet {
          * @throws ArithmeticException on overflow
          */
         fun toIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
+            if (bd.signum() == 0) {
+                val q = bd.scale()
+                val boundedQ = Math.max(Math.min(q, 6176), -6111)
+                val boundedZero = bd.setScale(boundedQ)
+                return boundedZero
+            }
             // Decimal128 constants
             val p34       = MathContext.DECIMAL128.precision  // 34
             val EMIN      = -6143
@@ -86,6 +89,7 @@ class TestMagSet {
             val zeroTiny = BigDecimal.ZERO.scaleByPowerOfTen(ETINY)
             return if (bd.signum() < 0) zeroTiny.negate() else zeroTiny
         }
+
         fun overflowsToInfinity(rm: RoundingMode, sign: Boolean): Boolean {
             val toInfinity = when (rm) {
                 RoundingMode.HALF_EVEN -> true
@@ -102,8 +106,8 @@ class TestMagSet {
    }
 
     class TC(val bdA: BigDecimal, val ctx: Decimal128Context) {
-        constructor(str: String, ctx: Decimal128Context) : this(BigDecimal(str), ctx)
-        constructor(str: String) : this(str, Decimal128Context())
+        constructor(str: String, rd: RoundingDirection) : this(BigDecimal(str), Decimal128Context(rd))
+        constructor(str: String) : this(BigDecimal(str), Decimal128Context())
         constructor(bdA: BigDecimal) : this(bdA, Decimal128Context())
         val biA = bdA.unscaledValue()
         val expA = -bdA.scale()
@@ -113,16 +117,22 @@ class TestMagSet {
     }
 
     val cases = arrayOf(
+        TC("0E+6145", ROUND_TIES_TO_AWAY),
+        TC("3.05079656515623149897192850E-6151", ROUND_TOWARD_ZERO),
+        TC("2.2170825345518895501686941901839130E-5813"),
+        TC("3.18227787914677743006698769411248000E+2275", ROUND_TIES_TO_AWAY),
+        TC("11e-6177"),
+
         TC("9.9999999999999999999999999999999994E+6144"),
         TC("9.9999999999999999999999999999999995E+6144"),
 
         TC("7.36956901257177558648652733739540513555E-6144"), // double rounding!
 
         TC("6.57913228239533914943656987782647149234312929384644E+6233"),
-        TC("6.57913228239533914943656987782647149234312929384644E+6233", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
+        TC("6.57913228239533914943656987782647149234312929384644E+6233", ROUND_TOWARD_ZERO),
 
-        TC("1.1111111112222222222333333333344446E+0", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
-        TC("1.362849775152463544468720357836334504420E+0", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
+        TC("1.1111111112222222222333333333344446E+0", ROUND_TOWARD_ZERO),
+        TC("1.362849775152463544468720357836334504420E+0", ROUND_TOWARD_ZERO),
 
         TC("1111111111222222222233333333334444e-6210"), // 34 digits =>
         TC("11111111112222222222333333333344444e-6211"), // 35 digits =>
@@ -205,14 +215,19 @@ class TestMagSet {
         val ctx = case.ctx
         val roundingMode = ctx.getMathContext().roundingMode
         val mag = Mag()
-        mag.magSet(bdA, ctx)
         if (verbose)
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
+        mag.magSet(bdA, ctx)
         val biCoeff = mag.coeffToBigInteger()
         if (verbose)
-            println("coeff:$biCoeff + exp:${mag.exp}")
-        assertEquals(biRounded, biCoeff)
-        assertEquals(expRounded, mag.exp)
+            println("coeff:$biCoeff + expQ:${mag.expQ}")
+        if (biRounded != biCoeff || expRounded != mag.expQ) {
+            println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
+            println("coeff:$biCoeff + expQ:${mag.expQ}")
+            assertEquals(biRounded, biCoeff)
+            assertEquals(expRounded, mag.expQ)
+
+        }
     }
 
 }
