@@ -3,11 +3,12 @@ package com.decimal128
 import com.decimal128.Residue.Companion.EXACT
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.MathContext
 
-const val MAX_ADJUSTED_EXPONENT = 6144
-const val MIN_ADJUSTED_EXPONENT = -6143
-const val TINY_EXPONENT = MIN_ADJUSTED_EXPONENT - (PRECISION_34 - 1) // -6176
+const val MAX_SCIENTIFIC_EXPONENT = 6144
+const val MAX_Q_EXPONENT = 6144 - (PRECISION_34 - 1) // 6111
+const val MIN_SCIENTIFIC_EXPONENT = -6143
+//const val TINY_EXPONENT = MIN_SCIENTIFIC_EXPONENT - (PRECISION_34 - 1) // -6176
+const val MIN_Q_EXPONENT = MIN_SCIENTIFIC_EXPONENT - (PRECISION_34 - 1) // -6176
 
 const val NON_FINITE_MIN = 1000000
 const val NON_FINITE_INF = 1000000
@@ -33,7 +34,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     fun finalize(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
         // IEEE754-2008 7.5: detect tininess on the unrounded result
         val preRoundAdjustedExp = exp + (c.digitLen - 1)
-        if (preRoundAdjustedExp < MIN_ADJUSTED_EXPONENT)
+        if (preRoundAdjustedExp < MIN_SCIENTIFIC_EXPONENT)
             ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
 
         var totalResidue = inboundResidue
@@ -60,7 +61,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
             exp += excessDigits
         }
         val postRoundAdjustedExp = exp + (c.digitLen - 1)
-        if (postRoundAdjustedExp > MAX_ADJUSTED_EXPONENT) {
+        if (postRoundAdjustedExp > MAX_SCIENTIFIC_EXPONENT) {
             // overflow IEEE754-2008 7.4 Overflow page 37
             if (ctx.roundingDirection.overflowsToInfinity(sign)) {
                 c.coeffSetZero()
@@ -72,10 +73,10 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
             ctx.setInexact()
             return
         }
-        if (exp >= TINY_EXPONENT)
+        if (exp >= MIN_Q_EXPONENT)
             return
         // 7.5.1: subnormal rounding (tiny result stays nonzero)
-        var tinyScaleDown = TINY_EXPONENT - exp
+        var tinyScaleDown = MIN_Q_EXPONENT - exp
         if (c.digitLen >= tinyScaleDown) {
             val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, tinyScaleDown)
             exp += tinyScaleDown
@@ -87,12 +88,12 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
                     c.coeffIncrement()
                 }
             }
-            assert(exp == TINY_EXPONENT)
+            assert(exp == MIN_Q_EXPONENT)
             return
         }
         // underflow to zero
         c.coeffSetZero()
-        exp = TINY_EXPONENT
+        exp = MIN_Q_EXPONENT
         ctx.setInexact()
     }
 
@@ -102,18 +103,18 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     }
 
     fun magSetMaxFinite() {
-        exp = MAX_ADJUSTED_EXPONENT
+        exp = MAX_Q_EXPONENT
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
         val dw1Nines = 0x0001ED09BEAD87C0L
-        val dw0Nines = 0x378D8E6400000000L
+        val dw0Nines = 0x378D8E6400000000L - 1L
         c.coeffSet128(dw1Nines, dw0Nines)
     }
 
     fun magSet(dw0: Long) = magSet(0, dw0)
 
     fun magSet(exponent: Int, dw0: Long) {
-        assert(exponent in TINY_EXPONENT..MAX_ADJUSTED_EXPONENT)
+        assert(exponent in MIN_Q_EXPONENT..MAX_SCIENTIFIC_EXPONENT)
         exp = exponent
         c.coeffSet64(dw0)
     }

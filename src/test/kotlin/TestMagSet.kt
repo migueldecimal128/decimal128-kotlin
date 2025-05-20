@@ -1,5 +1,10 @@
 package com.decimal128
 
+import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -30,26 +35,33 @@ class TestMagSet {
          */
         fun toIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
             // Decimal128 constants
-            val precision = MathContext.DECIMAL128.precision  // 34
+            val p34       = MathContext.DECIMAL128.precision  // 34
             val EMIN      = -6143
             val EMAX      =  6144
-            val ETINY     = EMIN - (precision - 1)            // -6176
+            val ETINY     = EMIN - (p34 - 1)            // -6176
 
             // Raw exponent and digit count
+            val sign = bd.signum() < 0
             val q       = -bd.scale()
-            val d       = bd.precision()
-            val excess  = Math.max(0, d - precision)
+            val p       = bd.precision()
+            val excess  = Math.max(0, p - p34)
             val qTiny   = ETINY - excess                      // threshold for normalized
-            val qMin    = ETINY - d                           // threshold for subnormal cohort
+            val qMin    = ETINY - p                           // threshold for subnormal cohort
 
             // 1) Overflow ⇒ ±Infinity
-            if (q + d - 1 > EMAX) {
-                return BigDecimal.ONE.scaleByPowerOfTen(9999)
+            if (q + p - 1 > EMAX) {
+                if (overflowsToInfinity(rm, sign))
+                    return BigDecimal.ONE.scaleByPowerOfTen(9999)
+                else {
+                    val maxFinite = BigDecimal.ONE.
+                    scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
+                    return if (sign) maxFinite.negate() else maxFinite
+                }
             }
 
             // 2) Normalized result: round only if bd has >34 digits
             if (q >= qTiny) {
-                return if (excess == 0) bd else bd.round(MathContext(precision, rm))
+                return if (excess == 0) bd else bd.round(MathContext(p34, rm))
             }
 
             // 3) Subnormal cohort: one rounding to ULP_sub = 10^ETINY
@@ -63,6 +75,17 @@ class TestMagSet {
             // 4) Underflow to zero
             val zeroTiny = BigDecimal.ZERO.scaleByPowerOfTen(ETINY)
             return if (bd.signum() < 0) zeroTiny.negate() else zeroTiny
+        }
+        fun overflowsToInfinity(rm: RoundingMode, sign: Boolean): Boolean {
+            val toInfinity = when (rm) {
+                RoundingMode.HALF_EVEN -> true
+                RoundingMode.HALF_UP -> true
+                RoundingMode.DOWN -> false
+                RoundingMode.CEILING -> ! sign
+                RoundingMode.FLOOR -> sign
+                else -> throw RuntimeException("unrecognized RoundingMode:$rm")
+            }
+            return toInfinity
         }
 
 
@@ -80,6 +103,13 @@ class TestMagSet {
     }
 
     val cases = arrayOf(
+        TC("7.36956901257177558648652733739540513555E-6144"),
+        TC("6.57913228239533914943656987782647149234312929384644E+6233"),
+        TC("6.57913228239533914943656987782647149234312929384644E+6233", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
+
+        TC("1.1111111112222222222333333333344446E+0", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
+        TC("1.362849775152463544468720357836334504420E+0", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
+
         TC("1111111111222222222233333333334444e-6210"), // 34 digits =>
         TC("11111111112222222222333333333344444e-6211"), // 35 digits =>
         TC("9999999999888888888877777777776666e-6210"), // 34 digits =>
@@ -131,7 +161,7 @@ class TestMagSet {
     @Test
     fun testRandom() {
         for (i in 0..<100000) {
-            val case = TC(randBd())
+            val case = TC(randBd(), randDecimal128Context())
             test1(case)
         }
 
@@ -147,15 +177,23 @@ class TestMagSet {
         return bd
     }
 
+    fun randDecimal128Context(): Decimal128Context {
+        val i = random.nextInt(4)
+        val ctx = Decimal128Context(RoundingDirection.fromValue(i))
+        return ctx
+    }
+
     fun test1(case: TC) {
         val bdA = case.bdA
         val bdRounded = case.bdRounded
         val biRounded = case.biRounded
         val expRounded = case.expRounded
+        val ctx = case.ctx
+        val roundingMode = ctx.getMathContext().roundingMode
         val mag = Mag()
-        mag.magSet(bdA)
+        mag.magSet(bdA, ctx)
         if (verbose)
-            println("bdA:$bdA => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
+            println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
         val biCoeff = mag.coeffToBigInteger()
         if (verbose)
             println("coeff:$biCoeff + exp:${mag.exp}")
