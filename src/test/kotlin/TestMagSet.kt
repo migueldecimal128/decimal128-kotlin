@@ -44,35 +44,29 @@ class TestMagSet {
             val sign = bd.signum() < 0
             val q       = -bd.scale()
             val p       = bd.precision()
-            val e       = q + p - 1
+            var e       = q + p - 1
             val excess  = Math.max(0, p - p34)
             val qTiny   = ETINY - excess                      // threshold for normalized
             val qMin    = ETINY - p                           // threshold for subnormal cohort
 
-            // 1) Overflow ⇒ ±Infinity
-            if (e > EMAX) {
-                if (overflowsToInfinity(rm, sign))
-                    return BigDecimal.ONE.scaleByPowerOfTen(9999)
-                else {
-                    val maxFinite = BigDecimal.ONE.
-                    scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
-                    return if (sign) maxFinite.negate() else maxFinite
-                }
-            }
-
             // 2) Normalized result: round only if bd has >34 digits
-            if (q >= qTiny) {
+            if (e <= EMAX && q >= qTiny) {
                 if (excess == 0)
                     return bd
                 val rounded = bd.round(MathContext(p34, rm))
                 val qRounded = -rounded.scale()
                 val pRounded = rounded.precision()
                 assert(pRounded == 34)
-                if (qRounded + 34 - 1 <= EMAX)
+                e = qRounded + 34 - 1
+                if (e <= EMAX)
                     return rounded
                 // rounding caused overflow
+                // fall into next conditional
+            }
+            // 1) Overflow ⇒ ±Infinity
+            if (e > EMAX) {
                 if (overflowsToInfinity(rm, sign))
-                    return BigDecimal.ONE.scaleByPowerOfTen(9999)
+                    return BigDecimal.ZERO.scaleByPowerOfTen(1000000)
                 else {
                     val maxFinite = BigDecimal.ONE.
                     scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
@@ -217,12 +211,8 @@ class TestMagSet {
         val biCoeff = mag.coeffToBigInteger()
         if (verbose)
             println("coeff:$biCoeff + exp:${mag.exp}")
-        if (expRounded == 9999) {
-            assert(mag.exp == NON_FINITE_INF)
-        } else {
-            assertEquals(biRounded, biCoeff)
-            assertEquals(expRounded, mag.exp)
-        }
+        assertEquals(biRounded, biCoeff)
+        assertEquals(expRounded, mag.exp)
     }
 
 }
