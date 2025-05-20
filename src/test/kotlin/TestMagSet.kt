@@ -44,12 +44,13 @@ class TestMagSet {
             val sign = bd.signum() < 0
             val q       = -bd.scale()
             val p       = bd.precision()
+            val e       = q + p - 1
             val excess  = Math.max(0, p - p34)
             val qTiny   = ETINY - excess                      // threshold for normalized
             val qMin    = ETINY - p                           // threshold for subnormal cohort
 
             // 1) Overflow ⇒ ±Infinity
-            if (q + p - 1 > EMAX) {
+            if (e > EMAX) {
                 if (overflowsToInfinity(rm, sign))
                     return BigDecimal.ONE.scaleByPowerOfTen(9999)
                 else {
@@ -61,7 +62,22 @@ class TestMagSet {
 
             // 2) Normalized result: round only if bd has >34 digits
             if (q >= qTiny) {
-                return if (excess == 0) bd else bd.round(MathContext(p34, rm))
+                if (excess == 0)
+                    return bd
+                val rounded = bd.round(MathContext(p34, rm))
+                val qRounded = -rounded.scale()
+                val pRounded = rounded.precision()
+                assert(pRounded == 34)
+                if (qRounded + 34 - 1 <= EMAX)
+                    return rounded
+                // rounding caused overflow
+                if (overflowsToInfinity(rm, sign))
+                    return BigDecimal.ONE.scaleByPowerOfTen(9999)
+                else {
+                    val maxFinite = BigDecimal.ONE.
+                    scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
+                    return if (sign) maxFinite.negate() else maxFinite
+                }
             }
 
             // 3) Subnormal cohort: one rounding to ULP_sub = 10^ETINY
@@ -103,7 +119,11 @@ class TestMagSet {
     }
 
     val cases = arrayOf(
-        TC("7.36956901257177558648652733739540513555E-6144"),
+        TC("9.9999999999999999999999999999999994E+6144"),
+        TC("9.9999999999999999999999999999999995E+6144"),
+
+        TC("7.36956901257177558648652733739540513555E-6144"), // double rounding!
+
         TC("6.57913228239533914943656987782647149234312929384644E+6233"),
         TC("6.57913228239533914943656987782647149234312929384644E+6233", Decimal128Context(RoundingDirection.ROUND_TOWARD_ZERO)),
 
