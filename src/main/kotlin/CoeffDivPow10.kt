@@ -34,7 +34,18 @@ object CoeffDivPow10 {
                         Residue.residueFrom(x)
                     })
         }
-        return RecipMulPow10.rangeDivPow10(z, x, pow10)
+        if (pow10 < MAX_DIVISOR_POW10)
+            return RecipMulPow10.rangeDivPow10(z, x, pow10)
+        // perform a two-step
+        val step1a = MAX_DIVISOR_POW10 - 1
+        val step2a = pow10 - step1a
+        assert(step2a < MAX_DIVISOR_POW10)
+        val step2 = Math.max(step2a, BARRETT_POW10_MAX - 1)
+        val step1 = pow10 - step2
+        val residue1 = RecipMulPow10.rangeDivPow10(z, x, step1)
+        val residue2 = divPow10(z, z, step2)
+        val residue = residue2.merge(residue1)
+        return residue
     }
 
 }

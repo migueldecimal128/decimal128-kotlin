@@ -248,6 +248,11 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         finalize(residue, sign, ctx)
     }
 
+    fun magMul(x: Mag, y: Mag, sign: Boolean, ctx: Decimal128Context) {
+        MagMul.magMul(this, x, y)
+        finalize(EXACT, sign, ctx)
+    }
+
     fun magScaleB(a: Mag, e: Int, sign: Boolean, ctx: Decimal128Context) {
         c.coeffSet(a.c)
         expQ = e

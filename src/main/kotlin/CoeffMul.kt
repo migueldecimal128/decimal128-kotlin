@@ -8,7 +8,7 @@ object CoeffMul {
     fun coeffMul(z: Coeff, x: Coeff, y: Coeff) {
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
-        if (xBitLen <= 64 && yBitLen <= 64) {
+        if ((xBitLen or yBitLen) <= 64) {
             val x0 = x.dw0
             val y0 = y.dw0
             val pHi = unsignedMultiplyHigh(x0, y0)
