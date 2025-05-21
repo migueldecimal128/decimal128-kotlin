@@ -29,6 +29,8 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         magSet(exp, bi)
     }
 
+    fun expSci() = expQ + (c.digitLen - 1)
+
     fun coeffToBigInteger() = c.coeffToBigInteger()
 
     fun finalize(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
@@ -250,6 +252,50 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         c.coeffSet(a.c)
         expQ = e
         finalize(Residue.EXACT, sign, ctx)
+    }
+
+    fun magCompareTo(other: Mag) : Int {
+        val thisIsZero = this.c.isZero()
+        val otherIsZero = other.c.isZero()
+        val eitherIsZero = thisIsZero or otherIsZero
+        when {
+            !eitherIsZero -> {
+                val cmpExpSci = this.expSci().compareTo(other.expSci())
+                if (cmpExpSci != 0)
+                    return cmpExpSci
+                val expDelta = this.expQ - other.expQ
+                val ret = when {
+                    expDelta == 0 -> this.c.unscaledCompareTo(other.c)
+                    expDelta > 0 -> -other.c.scaledCompareTo(this.c, expDelta)
+                    else -> this.c.scaledCompareTo(other.c, -expDelta)
+                }
+                return ret
+            }
+            thisIsZero -> {
+                return if (otherIsZero) 0 else -1
+            }
+            else -> {
+                return 1
+            }
+        }
+    }
+
+    fun magEQ(other: Mag) : Boolean {
+        val thisIsZero = this.c.isZero()
+        val otherIsZero = other.c.isZero()
+        val bothAreZero = thisIsZero and otherIsZero
+        val eitherIsZero = thisIsZero or otherIsZero
+        if (this.expSci() != other.expSci())
+            return bothAreZero
+        if (! eitherIsZero) {
+            val expDelta = this.expQ - other.expQ
+            return when {
+                expDelta == 0 -> this.c.unscaledEQ(other.c)
+                expDelta > 0 -> this.c.scaledEQ(other.c, expDelta)
+                else -> other.c.scaledEQ(this.c, -expDelta)
+            }
+        }
+        return bothAreZero
     }
 
     override fun toString(): String {

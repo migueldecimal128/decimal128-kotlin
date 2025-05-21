@@ -214,7 +214,7 @@ object CoeffPow10 {
     }
 
     fun pow10BitLen(pow10: Int): Int {
-        return (POW10_BIT_LEN_MINUS_1[pow10 and 0x7F].toInt() and 0xFF) + 1
+        return (POW10_BIT_LEN_MINUS_1[pow10].toInt() and 0xFF) + 1
     }
 
     fun pow10Offset(pow10: Int): Int {
