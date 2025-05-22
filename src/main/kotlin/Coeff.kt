@@ -271,6 +271,22 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
             updateLengthsAfterRoundUp()
     }
 
+    fun coeffDecrement() {
+        --dw0
+        if (dw0 == -1L) {
+            --dw1
+            if (dw1 == -1L) {
+                --dw2
+                if (dw2 == -1L) {
+                    --dw3
+                    if (dw3 == -1L)
+                        throw RuntimeException("decrement underflow")
+                }
+            }
+        }
+        updateLengths()
+    }
+
     fun coeffNumberOfTrailingZeros() = CoeffBits.numberOfTrailingZeros(this)
 
     fun coeffDwordAtBitIndex(bitIndex: Int) = CoeffBits.getDwordAtBitIndex(this, bitIndex)

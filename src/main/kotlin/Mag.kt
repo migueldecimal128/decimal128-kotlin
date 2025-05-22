@@ -29,7 +29,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         magSet(exp, bi)
     }
 
-    fun expSci() = qExp + (c.digitLen - 1)
+    fun sciExp() = qExp + (c.digitLen - 1)
 
     fun coeffToBigInteger() = c.coeffToBigInteger()
 
@@ -252,6 +252,12 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         finalize(residue, sign, ctx)
     }
 
+    fun magSub(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
+        assert(a.magCompareTo(b) >= 0)
+        val residue = MagAdd.magSub(this, a, b)
+        finalize(residue, sign, ctx)
+    }
+
     fun magMul(x: Mag, y: Mag, sign: Boolean, ctx: Decimal128Context) {
         MagMul.magMul(this, x, y)
         finalize(EXACT, sign, ctx)
@@ -269,7 +275,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         val eitherIsZero = thisIsZero or otherIsZero
         when {
             !eitherIsZero -> {
-                val cmpExpSci = this.expSci().compareTo(other.expSci())
+                val cmpExpSci = this.sciExp().compareTo(other.sciExp())
                 if (cmpExpSci != 0)
                     return cmpExpSci
                 val expDelta = this.qExp - other.qExp
@@ -294,7 +300,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         val otherIsZero = other.c.isZero()
         val bothAreZero = thisIsZero and otherIsZero
         val eitherIsZero = thisIsZero or otherIsZero
-        if (this.expSci() != other.expSci())
+        if (this.sciExp() != other.sciExp())
             return bothAreZero
         if (! eitherIsZero) {
             val expDelta = this.qExp - other.qExp

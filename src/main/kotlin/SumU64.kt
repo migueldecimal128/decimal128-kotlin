@@ -157,3 +157,13 @@ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
     return borrowAZ to diffAZ
 }
 
+fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
+    assert(borrowIn in 0..1)
+    // First subtract b from a:
+    val diffAB = dwA - dwB
+    val borrow1 = if (compareUnsigned(dwA, dwB) < 0) 1L else 0L
+    val totalDiff = diffAB - borrowIn
+    val totalBorrow = if (diffAB < borrowIn) 1L else borrow1
+    return totalBorrow to totalBorrow
+}
+
