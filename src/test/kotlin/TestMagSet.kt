@@ -220,12 +220,12 @@ class TestMagSet {
         mag.magSet(bdA, ctx)
         val biCoeff = mag.coeffToBigInteger()
         if (verbose)
-            println("coeff:$biCoeff + expQ:${mag.expQ}")
-        if (biRounded != biCoeff || expRounded != mag.expQ) {
+            println("coeff:$biCoeff + expQ:${mag.qExp}")
+        if (biRounded != biCoeff || expRounded != mag.qExp) {
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
-            println("coeff:$biCoeff + expQ:${mag.expQ}")
+            println("coeff:$biCoeff + expQ:${mag.qExp}")
             assertEquals(biRounded, biCoeff)
-            assertEquals(expRounded, mag.expQ)
+            assertEquals(expRounded, mag.qExp)
 
         }
     }

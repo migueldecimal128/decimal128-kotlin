@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
-import kotlin.test.expect
 
 class TestMagMul {
 
@@ -79,7 +78,7 @@ class TestMagMul {
         val magP = Mag()
         magP.magMul(magA, magB, false, ctx)
         assertEquals(expected.unscaledValue(), magP.coeffToBigInteger())
-        assertEquals(-expected.scale(), magP.expQ)
+        assertEquals(-expected.scale(), magP.qExp)
     }
 
 }

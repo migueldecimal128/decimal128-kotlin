@@ -78,6 +78,6 @@ private fun overflowsToInfinity(rm: RoundingMode, sign: Boolean): Boolean {
 
 fun bdIsFinite(bd: BigDecimal) : Boolean {
     val eExp = -bd.scale()
-    return eExp >= EXP_SCIENTIFIC_MIN && eExp <= EXP_SCIENTIFIC_MAX
+    return eExp >= SCIENTIFIC_EXP_MIN && eExp <= SCIENTIFIC_EXP_MAX
 }
 
