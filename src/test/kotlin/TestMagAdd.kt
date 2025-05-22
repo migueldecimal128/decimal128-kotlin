@@ -1,5 +1,6 @@
 package com.decimal128
 
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -26,6 +27,10 @@ class TestMagAdd {
     }
 
     val cases = arrayOf(
+        TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
+        TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),
+        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
+        TC("2.14402028641E+4038", "9.0688499219445651743894779402E-76", ROUND_TOWARD_POSITIVE),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
         TC("2", "3"),
         TC("0", "9e99"),
@@ -35,6 +40,12 @@ class TestMagAdd {
     fun testCases() {
         for (case in cases)
             test1(case)
+    }
+
+    @Test
+    fun testBigDecimalAddZero() {
+        val s0 = BigDecimal("0e-1").add(BigDecimal("0e-10"))
+        println(s0)
     }
 
     @Test

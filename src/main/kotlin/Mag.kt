@@ -46,16 +46,20 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
             // 2) Normalized result: round only if bd has >34 digits
             if (sciExp <= SCIENTIFIC_EXP_MAX && qExp >= qTiny) {
-                if (excess == 0)
-                    return
-                val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(c, c, excess)
-                qExp += excess
-                assert(c.digitLen == 34)
-                assert(sciExp == qExp + (c.digitLen - 1))
+                val totalResidue =
+                    if (excess == 0) {
+                        inboundResidue
+                    } else {
+                        val roundingResidue = CoeffScalePow10.coeffScaleDownPow10(c, c, excess)
+                        qExp += excess
+                        assert(c.digitLen == 34)
+                        assert(sciExp == qExp + (c.digitLen - 1))
+                        roundingResidue.merge(inboundResidue)
+                    }
 
-                val totalResidue = scaleResidue.merge(inboundResidue)
                 if (totalResidue == EXACT)
                     return
+
                 ctx.setInexact()
                 val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (!roundUp)
@@ -65,7 +69,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
                     return
                 assert(c.digitLen == 35)
                 // if we rolled into another digit because of roundup
-                // then the result is definitely divisible by 10
+                // then the result is EXACTly divisible by 10
                 val residueExact = CoeffScalePow10.coeffScaleDownPow10(c, c, 1)
                 assert(residueExact == Residue.EXACT)
                 ++qExp
