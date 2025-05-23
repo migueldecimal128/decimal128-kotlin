@@ -137,6 +137,8 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun fma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
 
+    fun fms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
+
     fun fusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) = coeffFusedMulAbsDiff(this, x, y, a)
 
     fun div(x: Coeff, y: Coeff) = coeffDiv(this, x, y)

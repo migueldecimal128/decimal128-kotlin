@@ -7,7 +7,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestMagAdd {
+class TestMagAddSub {
 
     val verbose = false
 

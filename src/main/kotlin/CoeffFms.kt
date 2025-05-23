@@ -2,9 +2,92 @@ package com.decimal128
 
 import com.decimal128.CoeffPow10.pow10BitLen
 import com.decimal128.CoeffPow10.pow10Offset
+import java.lang.Math.max
 import java.lang.Math.unsignedMultiplyHigh
 
 object CoeffFms {
+
+    fun coeffFms(z: Coeff, x: Coeff, y: Coeff, s: Coeff) {
+        assert(z.hasValidLengths())
+        assert(x.hasValidLengths())
+        assert(y.hasValidLengths())
+        assert(s.hasValidLengths())
+        val flipFlop = x.bitLen >= y.bitLen
+        val m = if (flipFlop) x else y
+        val n = if (flipFlop) y else x
+        val mBitLen = m.bitLen
+        val nBitLen = n.bitLen
+        assert(mBitLen >= nBitLen)
+        val m0 = m.dw0
+        val m1 = m.dw1
+        val n0 = n.dw0
+        val sBitLen = s.bitLen
+        require(sBitLen <= 128)
+        val s0 = s.dw0
+        val s1 = s.dw1
+
+        val maxFusedBitLen = max(mBitLen + nBitLen, s.bitLen) + 1
+        if (nBitLen <= 64) {
+            when {
+                (mBitLen <= 64) ->
+                    _fms1x1x2(
+                        z, maxFusedBitLen,
+                        m0,
+                        n0,
+                        s1, s0
+                    )
+
+                (mBitLen <= 128) ->
+                    _fms2x1x2(
+                        z, maxFusedBitLen,
+                        m1, m0,
+                        n0,
+                        s1, s0
+                    )
+
+                (mBitLen <= 192) ->
+                    _fms3x1x2(
+                        z, maxFusedBitLen,
+                        m.dw2, m1, m0,
+                        n0,
+                        s1, s0
+                    )
+
+                else ->
+                    _fms4x1x2(
+                        z, maxFusedBitLen,
+                        m.dw3, m.dw2, m1, m0,
+                        n0,
+                        s1, s0
+                    )
+            }
+            return
+        }
+        val n1 = n.dw1
+        if (nBitLen <= 128) {
+            when {
+                (mBitLen <= 128) ->
+                    _fms2x2x2(
+                        z, maxFusedBitLen,
+                        m1, m0,
+                        n1, n0,
+                        s1, s0
+                    )
+                (mBitLen <= 192) ->
+                    _fms3x2x2(
+                        z, maxFusedBitLen,
+                        m.dw2, m1, m0,
+                        n1, n0,
+                        s1, s0
+                    )
+                else ->  throw RuntimeException("coeff overflow")
+            }
+            return
+        }
+        throw RuntimeException("coeff overflow")
+    }
+
+
 
     fun coeffFmsPow10(z: Coeff, x: Coeff, pow10: Int, y: Coeff) {
         assert(pow10 > 0)

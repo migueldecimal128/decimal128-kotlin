@@ -248,14 +248,18 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     fun magSet(str: String) = magSet(BigDecimal(str))
 
     fun magAdd(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
-        val residue = MagAdd.magAdd(this, a, b)
+        val residue = MagAddSub.magAdd(this, a, b)
         finalize(residue, sign, ctx)
     }
 
     fun magSub(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
         assert(a.magCompareTo(b) >= 0)
-        val residue = MagAdd.magSub(this, a, b)
+        val residue = MagAddSub.magSub(this, a, b)
         finalize(residue, sign, ctx)
+        val z = this
+        val zDigitLen = z.c.digitLen
+        val zExp = z.qExp
+        val final = this
     }
 
     fun magMul(x: Mag, y: Mag, sign: Boolean, ctx: Decimal128Context) {

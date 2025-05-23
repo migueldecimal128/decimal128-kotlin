@@ -164,7 +164,7 @@ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
     val diffAB = dwA - dwB
     val borrow1 = if (compareUnsigned(dwA, dwB) < 0) 1L else 0L
     val totalDiff = diffAB - borrowIn
-    val totalBorrow = if (diffAB < borrowIn) 1L else borrow1
+    val totalBorrow = if (compareUnsigned(diffAB, borrowIn) < 0) 1L else borrow1
     return totalBorrow to totalDiff
 }
 

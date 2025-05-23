@@ -1,5 +1,6 @@
 package com.decimal128
 
+import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -29,11 +30,60 @@ class TestMagSub {
     }
 
     val cases = arrayOf(
+        TC("1.579E-3843", "2.12384601155035325007772872958E-3874"),
+
+        TC("1E35", "10E0"),
+        TC("3.4396855678324845813315E-5448", "3.0264730275769748987327314530281E-5479", ROUND_TOWARD_ZERO),
+        TC("1E35", "10E0"),
+        TC("1E35", "100E0"),
+        TC("1E35", "1000E0"),
+
+        TC("3.4396855678324845813315E-5448", "3.0264730275769748987327314530281E-5479", ROUND_TOWARD_ZERO),
+
+        TC("10E0", "1E1"),
+        TC("1111111111222222222233333333334444E0", "1E1"),
+        TC("1111111111222222222233333333334444E0", "1E2"),
+        TC("1111111111222222222233333333334444E0", "1E32"),
+        TC("1111111111222222222233333333334444E0", "1E33"),
+
+        TC("2E33", "1E0"),
+        TC("2E34", "1E0"),
+        TC("2E35", "1E0"),
+        TC("2E36", "1E0"),
+        TC("1E33", "1E0"),
+        TC("1E34", "1E0"),
+        TC("1E35", "1E0"),
+        TC("1E36", "1E0"),
+        TC("2E33", "1E0", ROUND_TIES_TO_AWAY),
+        TC("2E34", "1E0", ROUND_TIES_TO_AWAY),
+        TC("2E35", "1E0", ROUND_TIES_TO_AWAY),
+        TC("2E36", "1E0", ROUND_TIES_TO_AWAY),
+        TC("1E33", "1E0", ROUND_TIES_TO_AWAY),
+        TC("1E34", "1E0", ROUND_TIES_TO_AWAY),
+        TC("1E35", "1E0", ROUND_TIES_TO_AWAY),
+        TC("1E36", "1E0", ROUND_TIES_TO_AWAY),
+        TC("2E33", "1E0", ROUND_TOWARD_ZERO),
+        TC("2E34", "1E0", ROUND_TOWARD_ZERO),
+        TC("2E35", "1E0", ROUND_TOWARD_ZERO),
+        TC("2E36", "1E0", ROUND_TOWARD_ZERO),
+        TC("1E33", "1E0", ROUND_TOWARD_ZERO),
+        TC("1E34", "1E0", ROUND_TOWARD_ZERO),
+        TC("1E35", "1E0", ROUND_TOWARD_ZERO),
+        TC("1E36", "1E0", ROUND_TOWARD_ZERO),
+        TC("2E33", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("2E34", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("2E35", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("2E36", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("1E33", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("1E34", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("1E35", "1E0", ROUND_TOWARD_POSITIVE),
+        TC("1E36", "1E0", ROUND_TOWARD_POSITIVE),
         TC("3.4396855678324845813315E-5448", "3.0264730275769748987327314530281E-5479", ROUND_TOWARD_ZERO),
         TC("1.0E100", "1E0", ROUND_TOWARD_ZERO),
         TC("0E0", "0E1"),
         TC("0E+2565", "0E-2319"),
         TC("1E34", "1E0"),
+        TC("1E35", "10E0"),
         TC("1E35", "100E0"),
         TC("1E35", "1000E0"),
         TC("3E-5477", "1.146E-5509"),
