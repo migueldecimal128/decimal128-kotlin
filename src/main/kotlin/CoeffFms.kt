@@ -21,14 +21,17 @@ object CoeffFms {
         val p10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
         val p0 = POW10[pow10Offset + 0]
-        val p1 = POW10[pow10Offset + 0] and ((64 - p10BitLen) shr 31).toLong()
+        val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
         val maxFusedBitLen = xBitLen + p10BitLen
+        /*
         if (maxFusedBitLen <= 128) {
             val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
             val (d1, d0) = diffU128(f1, f0, y1, y0)
             z.coeffSet128(d1, d0)
             return
         }
+
+         */
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64) ->

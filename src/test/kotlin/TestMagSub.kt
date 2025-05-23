@@ -1,6 +1,7 @@
 package com.decimal128
 
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -9,7 +10,7 @@ import java.util.*
 
 class TestMagSub {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: Decimal128Context) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
@@ -24,17 +25,39 @@ class TestMagSub {
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(if (flipFlop) bdYraw else bdXraw, rm)
         val bdBIsFinite = bdIsFinite(bdB)
-        val bdP = bdToIeeeDecimal128(bdA.add(bdB), rm)
+        val bdP = bdToIeeeDecimal128(bdA.subtract(bdB), rm)
     }
 
     val cases = arrayOf(
-        TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
+        TC("3.4396855678324845813315E-5448", "3.0264730275769748987327314530281E-5479", ROUND_TOWARD_ZERO),
+        TC("1.0E100", "1E0", ROUND_TOWARD_ZERO),
+        TC("0E0", "0E1"),
+        TC("0E+2565", "0E-2319"),
+        TC("1E34", "1E0"),
+        TC("1E35", "100E0"),
+        TC("1E35", "1000E0"),
+        TC("3E-5477", "1.146E-5509"),
+        TC("1E35", "1E0"),
         TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),
+        TC("9e99", "0"),
+        TC("1E-2353", "1E-2373"),
+        TC("1E-2353", "1000000000000000000E-2373"),
+        TC("1E-2353", "2222222222222222222E-2373"),
+        TC("1111111111111E-2353", "222222222222222222E-2372"),
+        TC("1111111111111E-2353", "2222222222222222222E-2373"),
+        TC("1.111111111111E-2341", "2.22222222222222222E-2355"),
+        TC("1.111111111111E-2341", "2.222222222222222222E-2355"),
+        TC("1.111111111111111111111111111111111E-2341", "2.2222222222222222222222222222222E-2355"),
+        TC("1.287963674772144018606726951628158E-2341", "1.3886853281837524782330363161313E-2355"),
+        TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
+        TC("3.577396280843936609447212543753E4", "1e0", ROUND_TOWARD_POSITIVE),
+        TC("1", "1e-50", ROUND_TOWARD_POSITIVE),
         TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
         TC("2.14402028641E+4038", "9.0688499219445651743894779402E-76", ROUND_TOWARD_POSITIVE),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
+        TC("100", "1"),
         TC("2", "3"),
-        TC("0", "9e99"),
+        TC("9e99", "0"),
         )
 
     @Test
@@ -89,6 +112,12 @@ class TestMagSub {
         val magB = Mag(bdB)
         val magD = Mag()
         magD.magSub(magA, magB, false, ctx)
+        val expectedCoeff = expected.unscaledValue()
+        val expectedQExp = -expected.scale()
+        val observedCoeff = magD.coeffToBigInteger()
+        val observedQExp = magD.qExp
+        if (expectedCoeff != observedCoeff || expectedQExp != observedQExp)
+            println("expected:$expectedCoeff} e $expectedQExp observed:$observedCoeff e $observedQExp")
         assertEquals(expected.unscaledValue(), magD.coeffToBigInteger())
         assertEquals(-expected.scale(), magD.qExp)
     }

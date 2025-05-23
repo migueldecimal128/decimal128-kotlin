@@ -78,7 +78,6 @@ object MagAdd {
 
     fun magSub(z: Mag, x: Mag, y: Mag): Residue {
         assert(x.magCompareTo(y) >= 0)
-        assert(y.c.bitLen > 0)
         if (x.qExp == y.qExp) {
             assert(x.c.unscaledCompareTo(y.c) >= 0)
             z.qExp = x.qExp
@@ -88,24 +87,34 @@ object MagAdd {
         val qAlign = Math.min(x.qExp, y.qExp)
         val qDeltaX = x.qExp - qAlign
         if (qDeltaX > 0) {
-            if ((x.c.digitLen + qDeltaX - y.c.digitLen) >= PRECISION_34) {
-                // y is swamped
-                z.magSet(x)
-                if (y.c.isZero())
+            if ((x.c.digitLen + qDeltaX - y.c.digitLen) > PRECISION_34) {
+                // x completely swamps y
+                val guardDigitHeadroom = 1 + PRECISION_34 - x.c.digitLen
+                coeffScaleUpPow10(z.c, x.c, guardDigitHeadroom)
+                z.qExp = x.qExp - guardDigitHeadroom
+                if (y.c.isZero()) {
+                    if (z.c.isZero())
+                        z.qExp = qAlign
                     return EXACT
-                //FIXME - figure out how to round down when not exact
-                // I still think decrement to the next lowest level
-                // then let existing finalize() code push it back up
-                println("!!!!!!! WARNING - work in progress !!!!!!!!!")
+                }
+                z.c.coeffDecrement()
                 return GT_HALF
             }
             CoeffSub.coeffSubScaled(z.c, x.c, qDeltaX, y.c)
+            z.qExp = qAlign
             return EXACT
         } else {
+            if (y.c.isZero()) {
+                // subtracting zero with a larger exponent from x
+                // simply return x
+                z.magSet(x)
+                return EXACT
+            }
             // subtracting y from x, but the coefficient of y needs to be scaled
             val qDeltaY = y.qExp - qAlign
             assert(qDeltaY < PRECISION_34)
             CoeffSub.coeffSubScaled(z.c, x.c, y.c, qDeltaY)
+            z.qExp = qAlign
             return EXACT
         }
     }

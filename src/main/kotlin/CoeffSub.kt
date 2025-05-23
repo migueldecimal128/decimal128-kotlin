@@ -54,7 +54,8 @@ object CoeffSub {
 
     fun coeffSubScaled(z: Coeff, x: Coeff, scaleDelta: Int, y: Coeff) {
         assert(scaleDelta > 0)
-        assert(scaleDelta < 34)
+        assert(scaleDelta <= 40)
+        assert(x.digitLen + scaleDelta < 79)
 
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
