@@ -212,6 +212,17 @@ import java.lang.Long.compareUnsigned
         return mergedResidue
     }
 
+    fun subtractionInverse() : Residue {
+        val inverse = when (this.value) {
+            EXACT.value -> EXACT
+            LT_HALF.value -> GT_HALF
+            HALF.value -> HALF
+            GT_HALF.value -> LT_HALF
+            else -> throw RuntimeException("unrecognized Residue.value")
+        }
+        return inverse
+    }
+
     override fun toString() : String {
         return if (this.value in STRING_NAMES.indices) STRING_NAMES[this.value] else "invalid Residue:$value"
     }
