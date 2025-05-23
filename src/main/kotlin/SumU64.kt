@@ -1,5 +1,6 @@
 package com.decimal128
 import java.lang.Long.compareUnsigned
+import java.lang.Math.unsignedMultiplyHigh
 
 fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     val sumAB = dwA + dwB
@@ -165,5 +166,31 @@ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
     val totalDiff = diffAB - borrowIn
     val totalBorrow = if (diffAB < borrowIn) 1L else borrow1
     return totalBorrow to totalBorrow
+}
+
+fun sumU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
+    val s0 = x0 + y0
+    val carry0 = if (compareUnsigned(s0, x0) < 0) 1L else 0L
+    val s1 = carry0 + x1 + y1
+    return s1 to s0
+}
+
+fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
+    val d0 = x0 - y0
+    val borrow0 = if (compareUnsigned(x0, y0) < 0) 1L else 0L
+    val d1 = x1 - y1 - borrow0
+    return d1 to d0
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
+    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Lo = x0 * y0
+    val pp10Lo = x1 * y0
+    val pp01Lo = x0 * y1
+
+    val p0 = pp00Lo
+    val p1 = pp00Hi + pp10Lo + pp01Lo
+    return p1 to p0
 }
 

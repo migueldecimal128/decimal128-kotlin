@@ -95,11 +95,19 @@ object CoeffFma {
         val aBitLen = a.bitLen
         val p10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
+        val p0 = POW10[pow10Offset + 0]
+        val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
         val x0 = x.dw0
+        val x1 = x.dw1
         val a0 = a.dw0
         val a1 = a.dw1
         val maxFusedBitLen = max(xBitLen + p10BitLen, aBitLen) + 1
-        val p0 = POW10[pow10Offset + 0]
+        if (maxFusedBitLen <= 128) {
+            val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
+            val (s1, s0) = sumU128(f1, f0, a1, a0)
+            z.coeffSet128(s1, s0)
+            return
+        }
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64 && aBitLen <= 128) ->
@@ -110,25 +118,24 @@ object CoeffFma {
                     )
                 (xBitLen <= 128 && aBitLen <= 192) ->
                     _fma2x1x3(z, maxFusedBitLen,
-                        x.dw1, x0,
+                        x1, x0,
                         p0,
                         a.dw2, a1, a0
                     )
                 (xBitLen <= 192) ->
                     _fma3x1x4(z, maxFusedBitLen,
-                        x.dw2, x.dw1, x0,
+                        x.dw2, x1, x0,
                         p0,
                         a.dw3, a.dw2, a1, a0
                     )
                 else ->
                     _fma4x1x4(z, maxFusedBitLen,
-                        x.dw3, x.dw2, x.dw1, x0,
+                        x.dw3, x.dw2, x1, x0,
                         p0,
                         a.dw3, a.dw2, a1, a0)
             }
             return
         }
-        val p1 = POW10[pow10Offset + 1]
         if (p10BitLen <= 128) {
             when {
                 (xBitLen <= 64 && aBitLen <= 128) ->
@@ -141,14 +148,14 @@ object CoeffFma {
                 (xBitLen <= 128) ->
                     _fma2x2x4(
                         z, maxFusedBitLen,
-                        x.dw1, x0,
+                        x1, x0,
                         p1, p0,
                         a.dw3, a.dw2, a1, a0
                     )
                 (xBitLen <= 192) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
-                        x.dw2, x.dw1, x0,
+                        x.dw2, x1, x0,
                         p1, p0,
                         a.dw3, a.dw2, a1, a0
                     )
@@ -170,7 +177,7 @@ object CoeffFma {
                     _fma3x2x4(
                         z, maxFusedBitLen,
                         p2, p1, p0,
-                        x.dw1, x0,
+                        x1, x0,
                         a.dw3, a.dw2, a1, a0
                     )
                 else -> throw RuntimeException("coeff overflow")

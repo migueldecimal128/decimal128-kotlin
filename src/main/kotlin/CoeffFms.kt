@@ -14,13 +14,21 @@ object CoeffFms {
         assert(y.bitLen <= 128)
         assert(y.scaledCompareTo(x, pow10) <= 0)
         val xBitLen = x.bitLen
-        val p10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
         val x0 = x.dw0
+        val x1 = x.dw1
         val y0 = y.dw0
         val y1 = y.dw1
-        val maxFusedBitLen = xBitLen + p10BitLen
+        val p10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
         val p0 = POW10[pow10Offset + 0]
+        val p1 = POW10[pow10Offset + 0] and ((64 - p10BitLen) shr 31).toLong()
+        val maxFusedBitLen = xBitLen + p10BitLen
+        if (maxFusedBitLen <= 128) {
+            val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
+            val (d1, d0) = diffU128(f1, f0, y1, y0)
+            z.coeffSet128(d1, d0)
+            return
+        }
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64) ->
@@ -31,26 +39,25 @@ object CoeffFms {
                     )
                 (xBitLen <= 128) ->
                     _fms2x1x2(z, maxFusedBitLen,
-                        x.dw1, x0,
+                        x1, x0,
                         p0,
                         y1, y0
                     )
                 (xBitLen <= 192) ->
                     _fms3x1x2(z, maxFusedBitLen,
-                        x.dw2, x.dw1, x0,
+                        x.dw2, x1, x0,
                         p0,
                         y1, y0
                     )
                 else ->
                     _fms4x1x2(z, maxFusedBitLen,
-                        x.dw3, x.dw2, x.dw1, x0,
+                        x.dw3, x.dw2, x1, x0,
                         p0,
                         y1, y0
                     )
             }
             return
         }
-        val p1 = POW10[pow10Offset + 1]
         if (p10BitLen <= 128) {
             when {
                 (xBitLen <= 64) ->
@@ -63,14 +70,14 @@ object CoeffFms {
                 (xBitLen <= 128) ->
                     _fms2x2x2(
                         z, maxFusedBitLen,
-                        x.dw1, x0,
+                        x1, x0,
                         p1, p0,
                         y1, y0
                     )
                 (xBitLen <= 192) ->
                     _fms3x2x2(
                         z, maxFusedBitLen,
-                        x.dw2, x.dw1, x0,
+                        x.dw2, x1, x0,
                         p1, p0,
                         y1, y0
                     )
@@ -92,7 +99,7 @@ object CoeffFms {
                     _fms3x2x2(
                         z, maxFusedBitLen,
                         p2, p1, p0,
-                        x.dw1, x0,
+                        x1, x0,
                         y1, y0
                     )
                 else -> throw RuntimeException("coeff overflow")

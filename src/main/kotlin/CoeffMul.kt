@@ -9,19 +9,7 @@ object CoeffMul {
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
         if (xBitLen + yBitLen <= 128) {
-            val x0 = x.dw0
-            val x1 = x.dw1
-            val y0 = y.dw0
-            val y1 = y.dw1
-
-            val pp00Hi = unsignedMultiplyHigh(x0, y0)
-            val pp00Lo = x0 * y0
-            val pp10Lo = x1 * y0
-            val pp01Lo = x0 * y1
-
-            val p0 = pp00Lo
-            val p1 = pp00Hi + pp10Lo + pp01Lo
-
+            val (p1, p0) = umul128x128to128(x.dw1, x.dw0, y.dw1, y.dw0)
             z.coeffSet128(p1, p0)
             return
         }
