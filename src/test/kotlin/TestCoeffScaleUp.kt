@@ -15,6 +15,7 @@ class TestCoeffScaleUp {
     }
 
     val cases = arrayOf(
+        TC("17158008246618608233531190970817760693366", 17),
         TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE), 1),
         TC("2", 59),
         TC("2", 58),

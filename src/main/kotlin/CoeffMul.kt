@@ -14,6 +14,11 @@ internal object CoeffMul {
             z.coeffSet128(p1, p0)
             return
         }
+        if ((xBitLen or yBitLen) <= 128 && maxBitLen <= 192) {
+            val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, y.dw1, y.dw0)
+            z.coeffSet192(p2, p1, p0)
+            return
+        }
 
         val flipFlop = xBitLen >= yBitLen
         val m = if (flipFlop) x else y
@@ -54,9 +59,9 @@ internal object CoeffMul {
     fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y0: Long) {
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-        if (maxBitLen <= 128) {
-            val (p1, p0) = umul128x64to128(x.dw1, x.dw0, y0)
-            z.coeffSet128(p1, p0)
+        if (maxBitLen <= 192) {
+            val (p2, p1, p0) = umul192x64to192(x.dw2, x.dw1, x.dw0, y0)
+            z.coeffSet192(p2, p1, p0)
             return
         }
         when {
@@ -77,11 +82,11 @@ internal object CoeffMul {
         //assert(yBitLen in 65..128)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-        if (maxBitLen <= 128) {
-            val (p1, p0) = umul128x128to128(x.dw1, x.dw0, y1, y0)
-            z.coeffSet128(p1, p0)
-            return
-        }
+//        if (maxBitLen <= 192) {
+            val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, y1, y0)
+//            z.coeffSet192(p2, p1, p0)
+//            return
+//        }
         when {
             (yBitLen <= 64) -> mulCoeff(z, x, yBitLen, y0)
             (xBitLen <= 64) -> when {
