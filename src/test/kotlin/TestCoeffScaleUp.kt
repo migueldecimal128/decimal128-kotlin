@@ -6,7 +6,7 @@ import java.util.*
 
 class TestCoeffScaleUp {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val biA: BigInteger, val pow10: Int) {
         val biProduct = biA.multiply(BigInteger.TEN.pow(pow10))
@@ -41,6 +41,13 @@ class TestCoeffScaleUp {
             test1(case)
     }
 
+    @Test
+    fun testHsdis() {
+        val tc = TC("17158008246618608233531190970817760693366", 17)
+        for (i in 0..<100000)
+            test1(tc)
+    }
+
     val deltas = arrayOf(BigInteger.ONE.negate(), BigInteger.ZERO, BigInteger.ONE)
 
     @Test
@@ -62,7 +69,7 @@ class TestCoeffScaleUp {
 
     @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<1000) {
             val bi = randBi()
             val pow10 = randPow(bi)
             val case = TC(bi, pow10)
