@@ -6,7 +6,7 @@ import java.util.*
 
 class TestCoeffScaleUp {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val biA: BigInteger, val pow10: Int) {
         val biProduct = biA.multiply(BigInteger.TEN.pow(pow10))

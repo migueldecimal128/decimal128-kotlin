@@ -83,6 +83,7 @@ internal object CoeffMul {
             return
         }
         when {
+            (yBitLen <= 64) -> mulCoeff(z, x, yBitLen, y0)
             (xBitLen <= 64) -> when {
                 (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
                 (xBitLen == 1) -> z.coeffSet128(y1, y0)

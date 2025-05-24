@@ -13,12 +13,11 @@ object CoeffScalePow10 {
             pow10 > 0 -> {
                 val pow10BitLen = pow10BitLen(pow10)
                 val pow10Offset = pow10Offset(pow10)
+                val pow10dw0 = POW10[pow10Offset + 0]
+                val pow10dw1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
                 when {
-                    (pow10BitLen <= 64) -> {
-                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 0])
-                    }
                     (pow10BitLen <= 128) -> {
-                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 1], POW10[pow10Offset + 0])
+                        mulCoeff(z, x, pow10BitLen, pow10dw1, pow10dw0)
                     }
                     (pow10BitLen <= 192) -> {
                         mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset + 0])
