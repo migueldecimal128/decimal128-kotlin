@@ -33,7 +33,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun coeffToBigInteger() = c.coeffToBigInteger()
 
-    fun finalize(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
+    fun roundAndFinalize(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
         if (c.digitLen != 0) {
             var sciExp = qExp + (c.digitLen - 1)
             // IEEE754-2008 7.5: detect tininess on the unrounded result
@@ -229,7 +229,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     fun magSet(exponent: Int, bi: BigInteger, ctx: Decimal128Context) {
         c.coeffSet(bi)
         qExp = exponent
-        finalize(EXACT, bi.signum() == -1, ctx)
+        roundAndFinalize(EXACT, bi.signum() == -1, ctx)
     }
 
     fun magSet(bd: BigDecimal) {
@@ -249,13 +249,13 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun magAdd(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
         val residue = MagAddSub.magAdd(this, a, b)
-        finalize(residue, sign, ctx)
+        roundAndFinalize(residue, sign, ctx)
     }
 
     fun magSub(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
         assert(a.magCompareTo(b) >= 0)
         val residue = MagAddSub.magSub(this, a, b)
-        finalize(residue, sign, ctx)
+        roundAndFinalize(residue, sign, ctx)
         val z = this
         val zDigitLen = z.c.digitLen
         val zExp = z.qExp
@@ -264,13 +264,13 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun magMul(x: Mag, y: Mag, sign: Boolean, ctx: Decimal128Context) {
         MagMul.magMul(this, x, y)
-        finalize(EXACT, sign, ctx)
+        roundAndFinalize(EXACT, sign, ctx)
     }
 
     fun magScaleB(a: Mag, e: Int, sign: Boolean, ctx: Decimal128Context) {
         c.coeffSet(a.c)
         qExp = e
-        finalize(Residue.EXACT, sign, ctx)
+        roundAndFinalize(Residue.EXACT, sign, ctx)
     }
 
     fun magCompareTo(other: Mag) : Int {

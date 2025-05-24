@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.BigInteger.ONE
 import java.util.*
 
-class TestMagFinalize {
+class TestMagRoundAndFinalize {
 
     val verbose = false
 
