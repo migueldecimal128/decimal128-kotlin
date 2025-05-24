@@ -194,3 +194,14 @@ inline fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, 
     return p1 to p0
 }
 
+@Suppress("NOTHING_TO_INLINE")
+inline fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
+    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Lo = x0 * y0
+    val pp10Lo = x1 * y0
+
+    val p0 = pp00Lo
+    val p1 = pp00Hi + pp10Lo
+    return p1 to p0
+}
+
