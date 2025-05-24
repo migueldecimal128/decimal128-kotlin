@@ -3,12 +3,13 @@ package com.decimal128
 import java.lang.Math.unsignedMultiplyHigh
 import com.decimal128.CoeffSet.coeffSetShiftLeft
 
-object CoeffMul {
+internal object CoeffMul {
 
     fun coeffMul(z: Coeff, x: Coeff, y: Coeff) {
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
-        if (xBitLen + yBitLen <= 128) {
+        val maxBitLen = xBitLen + yBitLen
+        if (maxBitLen <= 128) {
             val (p1, p0) = umul128x128to128(x.dw1, x.dw0, y.dw1, y.dw0)
             z.coeffSet128(p1, p0)
             return
@@ -53,6 +54,11 @@ object CoeffMul {
     fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y0: Long) {
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
+        if (maxBitLen <= 128) {
+            val (p1, p0) = umul128x64to128(x.dw1, x.dw0, y0)
+            z.coeffSet128(p1, p0)
+            return
+        }
         when {
             (xBitLen <= 64) -> {
                 val x0 = x.dw0
@@ -68,9 +74,14 @@ object CoeffMul {
     }
 
     fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y1: Long, y0: Long) {
-        assert(yBitLen in 65..128)
+        //assert(yBitLen in 65..128)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
+        if (maxBitLen <= 128) {
+            val (p1, p0) = umul128x128to128(x.dw1, x.dw0, y1, y0)
+            z.coeffSet128(p1, p0)
+            return
+        }
         when {
             (xBitLen <= 64) -> when {
                 (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)

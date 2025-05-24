@@ -22,7 +22,7 @@ private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAX
 internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
 
-object CoeffPow10 {
+internal object CoeffPow10 {
     /*
     // minBitCount:0  maxBitCount:64
     1L, // 1 (0)
@@ -213,22 +213,15 @@ object CoeffPow10 {
         // initialization of Magic multipliers M is in DivMagic
     }
 
-    fun pow10BitLen(pow10: Int): Int {
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun pow10BitLen(pow10: Int): Int {
         return (POW10_BIT_LEN_MINUS_1[pow10].toInt() and 0xFF) + 1
     }
 
-    fun pow10Offset(pow10: Int): Int {
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun pow10Offset(pow10: Int): Int {
         val p = pow10 - 1
         val t = (p * 431) ushr 13
-        val i = p - 19 * t
-        val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
-        val mask = -pow10 shr 31
-        return offset and mask
-    }
-
-    fun pow10Offset(pow10: Int, bitLen: Int): Int {
-        val p = pow10 - 1
-        val t = (bitLen - 1) ushr 6
         val i = p - 19 * t
         val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
         val mask = -pow10 shr 31
