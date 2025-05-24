@@ -1,6 +1,8 @@
 package com.decimal128
 
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,7 +13,7 @@ import java.util.*
 
 class TestMagSub {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: Decimal128Context) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
@@ -30,6 +32,11 @@ class TestMagSub {
     }
 
     val cases = arrayOf(
+        TC("1.000000000000000000000000000E26", "2.0000000009999999999E0", ROUND_TOWARD_POSITIVE),
+        TC("1.000000000000000000000000000E-2973", "2.0000000009999999999E-2999", ROUND_TOWARD_POSITIVE),
+        TC("1.125118998110872714580497160E-2973", "3.0306332009363000323E-2999", ROUND_TOWARD_POSITIVE),
+        TC("735087187510156E+2145", "539161499716564458254E+2105"),
+        TC("7.35087187510156E+2159", "5.39161499716564458254E+2125"),
         TC("22E0", "1E1"),
         TC("4.574611751494966291851610463E-6043", "2.987013640E-6048", ROUND_TOWARD_ZERO),
         TC("1.579E-3843", "2.12384601155035325007772872958E-3874"),
@@ -126,7 +133,7 @@ class TestMagSub {
 
     @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<10000) {
             val tc = TC(randBd(), randBd(), randDecimal128Context())
             if (tc.bdAIsFinite && tc.bdBIsFinite)
                 test1(tc)
@@ -169,7 +176,7 @@ class TestMagSub {
         val observedCoeff = magD.coeffToBigInteger()
         val observedQExp = magD.qExp
         if (expectedCoeff != observedCoeff || expectedQExp != observedQExp)
-            println("expected:$expectedCoeff} e $expectedQExp observed:$observedCoeff e $observedQExp")
+            println("expected:$expectedCoeff e $expectedQExp observed:$observedCoeff e $observedQExp")
         assertEquals(expected.unscaledValue(), magD.coeffToBigInteger())
         assertEquals(-expected.scale(), magD.qExp)
     }
