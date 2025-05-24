@@ -76,7 +76,7 @@ class TestMagMul {
         val magA = Mag(bdA)
         val magB = Mag(bdB)
         val magP = Mag()
-        magP.magMul(magA, magB, false, ctx)
+        magP.magMul(magA, magB, 0, ctx)
         assertEquals(expected.unscaledValue(), magP.coeffToBigInteger())
         assertEquals(-expected.scale(), magP.qExp)
     }

@@ -33,7 +33,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun coeffToBigInteger() = c.coeffToBigInteger()
 
-    fun roundAndFinalize(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
+    fun roundAndFinalize(inboundResidue: Residue, sign: Int, ctx: Decimal128Context) {
         if (c.digitLen != 0) {
             var sciExp = qExp + (c.digitLen - 1)
             // IEEE754-2008 7.5: detect tininess on the unrounded result
@@ -135,72 +135,6 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     }
 
 
-    fun finalize_incorrect(inboundResidue: Residue, sign: Boolean, ctx: Decimal128Context) {
-        // IEEE754-2008 7.5: detect tininess on the unrounded result
-        val preRoundAdjustedExp = qExp + (c.digitLen - 1)
-        if (preRoundAdjustedExp < SCIENTIFIC_EXP_MIN)
-            ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
-
-        var totalResidue = inboundResidue
-        var excessDigits = c.digitLen - PRECISION_34
-        if (excessDigits > 0) {
-            val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(c, c, excessDigits)
-            totalResidue = scaleResidue.merge(inboundResidue)
-        }
-        if (totalResidue != EXACT) {
-            val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
-            if (roundUp) {
-                c.coeffIncrement()
-                if (c.digitLen > PRECISION_34) {
-                    // if we rolled into another digit because of roundup
-                    // then the result is definitely divisible by 10
-                    val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, 1)
-                    assert(residue2 == Residue.EXACT)
-                    ++excessDigits
-                }
-            }
-            ctx.setInexact()
-        }
-        if (excessDigits > 0) {
-            qExp += excessDigits
-        }
-        val postRoundAdjustedExp = qExp + (c.digitLen - 1)
-        if (postRoundAdjustedExp > SCIENTIFIC_EXP_MAX) {
-            // overflow IEEE754-2008 7.4 Overflow page 37
-            if (ctx.roundingDirection.overflowsToInfinity(sign)) {
-                c.coeffSetZero()
-                qExp = NON_FINITE_INF
-            } else {
-                magSetMaxFinite()
-            }
-            ctx.setOverflow()
-            ctx.setInexact()
-            return
-        }
-        if (qExp >= Q_EXP_TINY)
-            return
-        // 7.5.1: subnormal rounding (tiny result stays nonzero)
-        var tinyScaleDown = Q_EXP_TINY - qExp
-        if (c.digitLen >= tinyScaleDown) {
-            val residue2 = CoeffScalePow10.coeffScaleDownPow10(c, c, tinyScaleDown)
-            qExp += tinyScaleDown
-            if (residue2 != EXACT) {
-                ctx.setInexact()
-                val roundUp2 = residue2.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
-                if (roundUp2) {
-                    val digitLenBeforeRoundUp = c.digitLen
-                    c.coeffIncrement()
-                }
-            }
-            assert(qExp == Q_EXP_TINY)
-            return
-        }
-        // underflow to zero
-        c.coeffSetZero()
-        qExp = Q_EXP_TINY
-        ctx.setInexact()
-    }
-
     fun magSetZero() {
         qExp = 0
         c.coeffSetZero()
@@ -229,7 +163,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
     fun magSet(exponent: Int, bi: BigInteger, ctx: Decimal128Context) {
         c.coeffSet(bi)
         qExp = exponent
-        roundAndFinalize(EXACT, bi.signum() == -1, ctx)
+        roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
 
     fun magSet(bd: BigDecimal) {
@@ -247,12 +181,12 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun magSet(str: String) = magSet(BigDecimal(str))
 
-    fun magAdd(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
+    fun magAdd(a: Mag, b: Mag, sign: Int, ctx: Decimal128Context) {
         val residue = MagAddSub.magAdd(this, a, b)
         roundAndFinalize(residue, sign, ctx)
     }
 
-    fun magSub(a: Mag, b: Mag, sign: Boolean, ctx: Decimal128Context) {
+    fun magSub(a: Mag, b: Mag, sign: Int, ctx: Decimal128Context) {
         assert(a.magCompareTo(b) >= 0)
         val residue = MagAddSub.magSub(this, a, b)
         roundAndFinalize(residue, sign, ctx)
@@ -262,12 +196,12 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
         val final = this
     }
 
-    fun magMul(x: Mag, y: Mag, sign: Boolean, ctx: Decimal128Context) {
+    fun magMul(x: Mag, y: Mag, sign: Int, ctx: Decimal128Context) {
         MagMul.magMul(this, x, y)
         roundAndFinalize(EXACT, sign, ctx)
     }
 
-    fun magScaleB(a: Mag, e: Int, sign: Boolean, ctx: Decimal128Context) {
+    fun magScaleB(a: Mag, e: Int, sign: Int, ctx: Decimal128Context) {
         c.coeffSet(a.c)
         qExp = e
         roundAndFinalize(Residue.EXACT, sign, ctx)

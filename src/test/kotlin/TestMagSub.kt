@@ -172,7 +172,7 @@ class TestMagSub {
         val magA = Mag(bdA)
         val magB = Mag(bdB)
         val magD = Mag()
-        magD.magSub(magA, magB, false, ctx)
+        magD.magSub(magA, magB, 0, ctx)
         val expectedCoeff = expected.unscaledValue()
         val expectedQExp = -expected.scale()
         val observedCoeff = magD.coeffToBigInteger()

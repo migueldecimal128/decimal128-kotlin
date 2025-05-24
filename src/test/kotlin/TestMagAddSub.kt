@@ -87,7 +87,7 @@ class TestMagAddSub {
         val magA = Mag(bdA)
         val magB = Mag(bdB)
         val magP = Mag()
-        magP.magAdd(magA, magB, false, ctx)
+        magP.magAdd(magA, magB, 0, ctx)
         assertEquals(expected.unscaledValue(), magP.coeffToBigInteger())
         assertEquals(-expected.scale(), magP.qExp)
     }

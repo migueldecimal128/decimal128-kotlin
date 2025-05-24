@@ -57,15 +57,15 @@ class Dec34() {
             maxQ == NON_FINITE_INF -> setInfinite(x, y, ctx)
             maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
             (xSign xor y.sign) == 0 -> {
-                this.mag.magAdd(x.mag, y.mag, xSign == 1, ctx)
+                this.mag.magAdd(x.mag, y.mag, xSign, ctx)
                 this.sign = xSign
             }
             (x.mag.magCompareTo(y.mag) >= 0) -> {
-                this.mag.magSub(x.mag, y.mag, xSign == 1, ctx)
+                this.mag.magSub(x.mag, y.mag, xSign, ctx)
                 this.sign = xSign
             }
             else -> {
-                this.mag.magSub(y.mag, x.mag, y.sign == 1, ctx)
+                this.mag.magSub(y.mag, x.mag, y.sign, ctx)
                 this.sign = y.sign
             }
         }
@@ -80,15 +80,15 @@ class Dec34() {
             maxQ == NON_FINITE_INF -> setInfinite(x, y, ctx)
             maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
             (xSign xor y.sign) == 1 -> {
-                this.mag.magAdd(x.mag, y.mag, xSign == 1, ctx)
+                this.mag.magAdd(x.mag, y.mag, xSign, ctx)
                 this.sign = xSign
             }
             (x.mag.magCompareTo(y.mag) >= 0) -> {
-                this.mag.magSub(x.mag, y.mag, xSign == 1, ctx)
+                this.mag.magSub(x.mag, y.mag, xSign, ctx)
                 this.sign = xSign
             }
             else -> {
-                this.mag.magSub(y.mag, x.mag, y.sign == 1, ctx)
+                this.mag.magSub(y.mag, x.mag, y.sign, ctx)
                 this.sign = y.sign
             }
         }
@@ -103,7 +103,7 @@ class Dec34() {
             maxQ == NON_FINITE_INF -> setInfinite(x, y, ctx)
             maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
             else -> {
-                this.mag.magMul(x.mag, y.mag, resultSign == 1, ctx)
+                this.mag.magMul(x.mag, y.mag, resultSign, ctx)
                 this.sign = resultSign
             }
         }
