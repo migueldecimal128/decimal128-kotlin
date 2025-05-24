@@ -79,16 +79,10 @@ internal object CoeffMul {
     }
 
     fun mulCoeff(z: Coeff, x: Coeff, yBitLen: Int, y1: Long, y0: Long) {
-        //assert(yBitLen in 65..128)
+        assert(yBitLen in 65..128)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-//        if (maxBitLen <= 192) {
-            val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, y1, y0)
-//            z.coeffSet192(p2, p1, p0)
-//            return
-//        }
         when {
-            (yBitLen <= 64) -> mulCoeff(z, x, yBitLen, y0)
             (xBitLen <= 64) -> when {
                 (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
                 (xBitLen == 1) -> z.coeffSet128(y1, y0)
