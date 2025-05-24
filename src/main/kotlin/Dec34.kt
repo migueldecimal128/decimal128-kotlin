@@ -1,0 +1,120 @@
+package com.decimal128
+
+import java.math.BigDecimal
+
+class Dec34() {
+    val mag = Mag()
+    var sign = 0
+
+    constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
+        mag.c.coeffSet256(dw3, dw2, dw1, dw0)
+        mag.qExp = qExp
+        this.sign = if (sign) 1 else 0
+    }
+
+    constructor(bd: BigDecimal): this() {
+        mag.magSet(bd)
+        this.sign = bd.signum() shr 31
+    }
+
+    constructor(str: String): this(BigDecimal(str))
+
+    fun set(bd: BigDecimal) {
+        mag.magSet(bd)
+        this.sign = bd.signum() shr 31
+    }
+
+    fun set(x: Dec34) {
+        mag.magSet(x.mag)
+        this.sign = x.sign
+    }
+
+    private fun setNaN(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+        val xQ = x.mag.qExp
+        val yQ = y.mag.qExp
+        val maxQ = Math.max(xQ, yQ)
+        assert(maxQ >= NON_FINITE_QNAN)
+        mag.magSetZero()
+        mag.qExp = NON_FINITE_QNAN
+        //FIXME - see IEEE754r 6.2
+    }
+
+    private fun setInfinite(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+        val xQ = x.mag.qExp
+        val yQ = y.mag.qExp
+        val xSign = x.sign
+        val maxQ = Math.max(xQ, yQ)
+        set(if (xQ == maxQ) x else y)
+        mag.qExp = NON_FINITE_INF
+    }
+
+    fun add(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+        val xQ = x.mag.qExp
+        val yQ = y.mag.qExp
+        val xSign = x.sign
+        val maxQ = Math.max(xQ, yQ)
+        when {
+            maxQ == NON_FINITE_INF -> setInfinite(x, y, ctx)
+            maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
+            (xSign xor y.sign) == 0 -> {
+                this.mag.magAdd(x.mag, y.mag, xSign == 1, ctx)
+                this.sign = xSign
+            }
+            (x.mag.magCompareTo(y.mag) >= 0) -> {
+                this.mag.magSub(x.mag, y.mag, xSign == 1, ctx)
+                this.sign = xSign
+            }
+            else -> {
+                this.mag.magSub(y.mag, x.mag, y.sign == 1, ctx)
+                this.sign = y.sign
+            }
+        }
+    }
+
+    fun sub(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+        val xQ = x.mag.qExp
+        val yQ = y.mag.qExp
+        val xSign = x.sign
+        val maxQ = Math.max(xQ, yQ)
+        when {
+            maxQ == NON_FINITE_INF -> setInfinite(x, y, ctx)
+            maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
+            (xSign xor y.sign) == 1 -> {
+                this.mag.magAdd(x.mag, y.mag, xSign == 1, ctx)
+                this.sign = xSign
+            }
+            (x.mag.magCompareTo(y.mag) >= 0) -> {
+                this.mag.magSub(x.mag, y.mag, xSign == 1, ctx)
+                this.sign = xSign
+            }
+            else -> {
+                this.mag.magSub(y.mag, x.mag, y.sign == 1, ctx)
+                this.sign = y.sign
+            }
+        }
+    }
+
+    fun mul(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+        val xQ = x.mag.qExp
+        val yQ = y.mag.qExp
+        val resultSign = x.sign xor y.sign
+        val maxQ = Math.max(xQ, yQ)
+        when {
+            maxQ == NON_FINITE_INF -> setInfinite(x, y, ctx)
+            maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
+            else -> {
+                this.mag.magMul(x.mag, y.mag, resultSign == 1, ctx)
+                this.sign = resultSign
+            }
+        }
+    }
+
+    fun compareTo(x: Dec34, ctx: Decimal128Context) : Int {
+        if (sign != x.sign)
+            return 1 - (sign shl 1)
+        val cmp = mag.magCompareTo(x.mag)
+        val ret = (cmp xor -sign) + sign
+        return ret
+    }
+
+}

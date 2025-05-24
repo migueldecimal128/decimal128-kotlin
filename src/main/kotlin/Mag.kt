@@ -10,7 +10,7 @@ const val SCIENTIFIC_EXP_MIN = -6143
 //const val TINY_EXPONENT = MIN_SCIENTIFIC_EXPONENT - (PRECISION_34 - 1) // -6176
 const val Q_EXP_TINY = -6176 // EXP_SCIENTIFIC_MIN - (PRECISION_34 - 1)
 
-const val NON_FINITE_MIN = 1000000
+const val MIN_SPECIAL_VALUE = 1000000
 const val NON_FINITE_INF = 1000000
 const val NON_FINITE_QNAN = 1000001
 const val NON_FINITE_SNAN = 1000002
@@ -319,7 +319,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     override fun toString(): String {
         return when {
-            (qExp < NON_FINITE_MIN) -> c.toString() + "E" + qExp
+            (qExp < MIN_SPECIAL_VALUE) -> c.toString() + "E" + qExp
             qExp == NON_FINITE_INF -> "Inf"
             qExp == NON_FINITE_QNAN -> "NaN" + c.toNaNDiagnosticString()
             qExp == NON_FINITE_SNAN -> "sNaN" + c.toNaNDiagnosticString()
