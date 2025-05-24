@@ -33,6 +33,11 @@ internal object CoeffMul {
         when {
             (nBitLen <= 64) -> {
                 when {
+                    (maxProdBitLen <= 192) -> {
+                        val (p2, p1, p0) = umul192x64to192(m.dw2, m.dw1, m0, n0)
+                        z.coeffSet192(p2, p1, p0)
+                        return
+                    }
                     (nBitLen == 0) -> z.coeffSetZero()
                     (n0 and (n0 - 1) == 0L) -> {
                         // also handles n0 == 1
@@ -83,11 +88,16 @@ internal object CoeffMul {
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
-            (xBitLen <= 64) -> when {
-                (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
-                (xBitLen == 1) -> z.coeffSet128(y1, y0)
-                else -> z.coeffSetZero()
+            (maxBitLen <= 192) -> {
+                val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, y1, y0)
+                z.coeffSet192(p2, p1, p0)
+                return
             }
+            //(xBitLen <= 64) -> when {
+            //    (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
+            //    (xBitLen == 1) -> z.coeffSet128(y1, y0)
+            //    else -> z.coeffSetZero()
+            //}
             (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0)
             (xBitLen <= 192) -> _mulCoeff3x2(z, maxBitLen, x.dw2, x.dw1, x.dw0, y1, y0)
             else -> throw RuntimeException("coeff overflow")
