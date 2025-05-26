@@ -16,7 +16,7 @@ object DivKnuth {
 
     fun knuthDivideWrapper(z: Coeff, x: Coeff, y: Coeff, wantRemainder: Boolean): Residue {
         assert(coeffGTOne(y))
-        assert(x.unscaledCompareTo(y) > 0)
+        assert(x.coeffUnscaledCompareTo(y) > 0)
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()

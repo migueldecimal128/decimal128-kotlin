@@ -95,7 +95,7 @@ object CoeffFms {
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
         assert(y.bitLen <= 128)
-        assert(y.scaledCompareTo(x, pow10) <= 0)
+        assert(y.coeffScaledCompareTo(x, pow10) <= 0)
         val xBitLen = x.bitLen
         val x0 = x.dw0
         val x1 = x.dw1
@@ -212,7 +212,7 @@ object CoeffFms {
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
         assert(x.bitLen <= 128)
-        assert(x.scaledCompareTo(y, pow10) >= 0)
+        assert(x.coeffScaledCompareTo(y, pow10) >= 0)
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
         val p10BitLen = pow10BitLen(pow10)

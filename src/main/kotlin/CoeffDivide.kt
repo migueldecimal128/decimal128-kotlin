@@ -74,7 +74,7 @@ object CoeffDivide {
                 return residue
             }
             if (cmp == 0) {
-                z.setOne()
+                z.coeffSetOne()
                 return EXACT
             }
         }
@@ -88,7 +88,7 @@ object CoeffDivide {
     }
 
     fun coeffMod(z: Coeff, x: Coeff, y: Coeff) {
-        assert(y.isGTOne())
+        assert(y.coeffIsGTOne())
         if (x.digitLen < y.digitLen) {
             z.coeffSet(x)
             return

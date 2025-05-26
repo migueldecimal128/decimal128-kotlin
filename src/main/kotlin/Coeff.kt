@@ -25,7 +25,7 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
+open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -58,9 +58,9 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; bitLen = 0; digitLen = 0
     }
 
-    fun isZero() = digitLen == 0
+    fun coeffIsZero() = digitLen == 0
 
-    fun setOne() {
+    fun coeffSetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; bitLen = 1; digitLen = 1
     }
 
@@ -69,11 +69,11 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         dw3 = 0; dw2 = 0; dw1 = 0; dw0 = d0 and 1; bitLen = asInt; digitLen = asInt
     }
 
-    fun isOne() = bitLen == 1
+    fun coeffIsOne() = bitLen == 1
 
-    fun isLEOne() = bitLen <= 1
+    fun coeffIsLEOne() = bitLen <= 1
 
-    fun isGTOne() = bitLen > 1
+    fun coeffIsGTOne() = bitLen > 1
 
     private fun calcBitLen(): Int {
         val bitLen3 = 64 - numberOfLeadingZeros(dw3)
@@ -112,17 +112,17 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return true
     }
 
-    fun unscaledCompareTo(other: Coeff) = coeffUnscaledCompare(this, other)
+    fun coeffUnscaledCompareTo(other: Coeff) = coeffUnscaledCompare(this, other)
 
-    fun unscaledEQ(other: Coeff) = coeffUnscaledEQ(this, other)
+    fun coeffUnscaledEQ(other: Coeff) = coeffUnscaledEQ(this, other)
 
-    fun scaledCompareTo(other: Coeff, scaleDelta: Int)  = coeffScaledCompare(this, other, scaleDelta)
+    fun coeffScaledCompareTo(other: Coeff, scaleDelta: Int)  = coeffScaledCompare(this, other, scaleDelta)
 
-    fun scaledEQ(other: Coeff, scaleDelta: Int) = coeffScaledEQ(this, other, scaleDelta)
+    fun coeffScaledEQ(other: Coeff, scaleDelta: Int) = coeffScaledEQ(this, other, scaleDelta)
 
-    fun add(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
+    fun coeffAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
 
-    fun add(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
+    fun coeffAdd(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
 
     // absolute difference
     // if minuend < subtrahend then negate to return positive result
@@ -145,9 +145,9 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun mod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
 
-    fun scaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
+    fun coeffScaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
 
-    fun scaleDownPow10(x: Coeff, pow10: Int) = coeffScaleDownPow10(this, x, pow10)
+    fun coeffScaleDownPow10(x: Coeff, pow10: Int) = coeffScaleDownPow10(this, x, pow10)
 
     operator fun get(index: Int): Long {
         return when (index) {
@@ -228,7 +228,7 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffSetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         coeffSetShiftRight(this, x, xOff, xLen, bitCount)
 
-    fun coeffToBigInteger(): BigInteger {
+    open fun coeffToBigInteger(): BigInteger {
 //        assert(validateDigitCount())
         var bi = BigInteger.ZERO
         val dw0Lo = dw0 and 0xFFFFFFFFL
@@ -295,6 +295,6 @@ class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     override fun toString() = coeffToBigInteger().toString()
 
-    fun toNaNDiagnosticString() = if (isZero()) "" else toString()
+    fun toNaNDiagnosticString() = if (coeffIsZero()) "" else toString()
 
 }

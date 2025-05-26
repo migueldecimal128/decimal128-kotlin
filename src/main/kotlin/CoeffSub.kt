@@ -1,10 +1,6 @@
 package com.decimal128
 
-import com.decimal128.CoeffScalePow10.coeffScaleFusedMulAbsDiffPow10
-import com.decimal128.Residue.Companion.EXACT
-import com.decimal128.Residue.Companion.EXACT_NEGATED
 import java.lang.Long.compareUnsigned
-import kotlin.math.max
 
 object CoeffSub {
 
@@ -12,7 +8,7 @@ object CoeffSub {
         assert(z.hasValidLengths())
         assert(x.hasValidLengths())
         assert(y.hasValidLengths())
-        assert(x.unscaledCompareTo(y) >= 0)
+        assert(x.coeffUnscaledCompareTo(y) >= 0)
         val xBitLen = x.bitLen
         assert(xBitLen >= y.bitLen)
 
@@ -63,7 +59,7 @@ object CoeffSub {
         assert(y.hasValidLengths())
         assert(z.hasValidLengths())
 
-        assert(y.scaledCompareTo(x, scaleDelta) <= 0)
+        assert(y.coeffScaledCompareTo(x, scaleDelta) <= 0)
 
         CoeffFms.coeffFmsPow10(z, x, scaleDelta, y)
     }
@@ -78,7 +74,7 @@ object CoeffSub {
         assert(y.hasValidLengths())
         assert(z.hasValidLengths())
 
-        assert(x.scaledCompareTo(y, scaleDelta) >= 0)
+        assert(x.coeffScaledCompareTo(y, scaleDelta) >= 0)
 
         CoeffFms.coeffFmsPow10(z, x, y, scaleDelta)
     }

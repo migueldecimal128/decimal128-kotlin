@@ -12,7 +12,7 @@ object MagAddSub {
     fun magAdd(z: Mag, x: Mag, y: Mag): Residue {
         if (x.qExp == y.qExp) {
             z.qExp = x.qExp
-            coeffAddUnscaled(z.c, x.c, y.c)
+            coeffAddUnscaled(z, x, y)
             return Residue.EXACT
         }
         val flipFlop = x.qExp > y.qExp
@@ -20,25 +20,25 @@ object MagAddSub {
         val n = if (flipFlop) y else x
         assert(m.qExp > n.qExp)
         val qDelta = m.qExp - n.qExp
-        val headroom = PRECISION_34 - m.c.digitLen
+        val headroom = PRECISION_34 - m.digitLen
         val shiftLeft = Math.min(qDelta, headroom)
         val qAlign = m.qExp - shiftLeft
         when {
-            (m.c.bitLen > 0 && n.c.bitLen > 0) -> {
+            (m.bitLen > 0 && n.bitLen > 0) -> {
                 val shiftRight = qAlign - n.qExp
                 val residue = when {
                     shiftRight == 0 -> {
                         assert(shiftLeft > 0)
-                        coeffAddScaled(z.c, m.c, shiftLeft, n.c)
+                        coeffAddScaled(z, m, shiftLeft, n)
                         Residue.EXACT
                     }
 
-                    shiftRight >= n.c.digitLen -> {
-                        coeffScaleUpPow10(z.c, m.c, shiftLeft)
-                        if (shiftRight > n.c.digitLen)
+                    shiftRight >= n.digitLen -> {
+                        coeffScaleUpPow10(z, m, shiftLeft)
+                        if (shiftRight > n.digitLen)
                             Residue.LT_HALF
                         else
-                            Residue.residueFrom(n.c)
+                            Residue.residueFrom(n)
                     }
 
                     else -> {
@@ -46,11 +46,11 @@ object MagAddSub {
                         // shift right first into our destination
                         // then do a fused scaling, allowing us to
                         // perform this op without allocating of temp variables
-                        val residue = coeffScaleDownPow10(z.c, n.c, shiftRight)
+                        val residue = coeffScaleDownPow10(z, n, shiftRight)
                         if (shiftLeft > 0)
-                            coeffAddScaled(z.c, m.c, shiftLeft, z.c)
+                            coeffAddScaled(z, m, shiftLeft, z)
                         else
-                            coeffAddUnscaled(z.c, m.c, z.c)
+                            coeffAddUnscaled(z, m, z)
                         residue
                     }
                 }
@@ -59,9 +59,9 @@ object MagAddSub {
             }
             // one of the two is zero
             // return the value of the non-zero (if any), scaled to the smaller exponent
-            (m.c.bitLen > 0) -> {
+            (m.bitLen > 0) -> {
                 z.qExp = qAlign
-                coeffScaleUpPow10(z.c, m.c, shiftLeft)
+                coeffScaleUpPow10(z, m, shiftLeft)
                 return Residue.EXACT
             }
 
@@ -79,35 +79,35 @@ object MagAddSub {
         assert(x.magCompareTo(y) >= 0)
         if (x.qExp == y.qExp) {
             z.qExp = x.qExp
-            CoeffSub.coeffSubUnscaled(z.c, x.c, y.c)
+            CoeffSub.coeffSubUnscaled(z, x, y)
             return Residue.EXACT
         }
         val qDelta = Math.abs(x.qExp - y.qExp)
-        val headroomWithGuardRound = 2 + PRECISION_34 - x.c.digitLen
+        val headroomWithGuardRound = 2 + PRECISION_34 - x.digitLen
         val shiftLeft = Math.min(qDelta, headroomWithGuardRound)
         val qAlign = x.qExp - shiftLeft
         if (x.qExp > y.qExp) {
             when {
-                (x.c.bitLen > 0 && y.c.bitLen > 0) -> {
+                (x.bitLen > 0 && y.bitLen > 0) -> {
                     val shiftRight = qAlign - y.qExp
                     val residue = when {
                         shiftRight == 0 -> {
                             assert(shiftLeft > 0)
-                            coeffSubScaled(z.c, x.c, shiftLeft, y.c)
+                            coeffSubScaled(z, x, shiftLeft, y)
                             Residue.EXACT
                         }
 
-                        shiftRight >= y.c.digitLen -> {
+                        shiftRight >= y.digitLen -> {
                             // swamp cases
-                            coeffScaleUpPow10(z.c, x.c, shiftLeft)
+                            coeffScaleUpPow10(z, x, shiftLeft)
                             // we always decrement in this case because y is never zero
                             // so Residue.EXACT cannot occur because ZERO would have taken
                             // another path
-                            z.c.coeffMutateDecrement()
-                            if (shiftRight > y.c.digitLen)
+                            z.coeffMutateDecrement()
+                            if (shiftRight > y.digitLen)
                                 Residue.GT_HALF
                             else
-                                Residue.residueFrom(y.c).subtractionInverse()
+                                Residue.residueFrom(y).subtractionInverse()
                         }
 
                         else -> {
@@ -115,16 +115,16 @@ object MagAddSub {
                             // shift right first into our destination
                             // then do a fused scaling, allowing us to
                             // perform this op without allocating of temp variables
-                            val residue = coeffScaleDownPow10(z.c, y.c, shiftRight)
+                            val residue = coeffScaleDownPow10(z, y, shiftRight)
                             if (shiftLeft > 0)
-                                coeffSubScaled(z.c, x.c, shiftLeft, z.c)
+                                coeffSubScaled(z, x, shiftLeft, z)
                             else
-                                coeffAddUnscaled(z.c, x.c, z.c)
+                                coeffAddUnscaled(z, x, z)
                             // if ! EXACT then decrement,
                             // take the inverse of the residue,
                             // and the normal roundAndFinalize() will take care of it
                             if (residue != EXACT)
-                                z.c.coeffMutateDecrement()
+                                z.coeffMutateDecrement()
                             residue.subtractionInverse()
                         }
                     }
@@ -133,9 +133,9 @@ object MagAddSub {
                 }
                 // one of the two is zero
                 // return the value of the non-zero (if any), scaled to the smaller exponent
-                (x.c.bitLen > 0) -> {
+                (x.bitLen > 0) -> {
                     z.qExp = qAlign
-                    coeffScaleUpPow10(z.c, x.c, shiftLeft)
+                    coeffScaleUpPow10(z, x, shiftLeft)
                     return Residue.EXACT
                 }
 
@@ -148,7 +148,7 @@ object MagAddSub {
         } else {
             // TC("22E1", "2E2"),
             // x has a smaller q, but y needs to be scaled
-            if (y.c.isZero()) {
+            if (y.coeffIsZero()) {
                 // subtracting zero with a larger exponent from x
                 // simply return x
                 z.magSet(x)
@@ -156,9 +156,9 @@ object MagAddSub {
             }
             val qDeltaY = y.qExp - x.qExp
             assert(qDeltaY < PRECISION_34)
-            CoeffSub.coeffSubScaled(z.c, x.c, y.c, qDeltaY)
+            CoeffSub.coeffSubScaled(z, x, y, qDeltaY)
             z.qExp = x.qExp
-            val zDigitLen = z.c.digitLen
+            val zDigitLen = z.digitLen
             val zExp = z.qExp
             return EXACT
         }

@@ -9,7 +9,6 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.TestReduce.TC
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -198,7 +197,7 @@ class TestCoeffScaleDown {
         val ctx = Decimal128Context(case.roundingDirection)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.roundingDirection} expected:$expected")
-        coeffObserved.scaleDownPow10(coeffA, pow10)
+        coeffObserved.coeffScaleDownPow10(coeffA, pow10)
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.roundingDirection} expected:$expected")

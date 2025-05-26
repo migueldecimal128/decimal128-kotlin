@@ -64,7 +64,7 @@ class TestCoeffAddScaledFullOverlap {
         val coeffZ = Coeff()
         if (verbose)
             println("${case.biX} * 10**${case.scaleDelta} + ${case.biY} => expected:$expected")
-        coeffZ.add(coeffX, case.scaleDelta, coeffY)
+        coeffZ.coeffAdd(coeffX, case.scaleDelta, coeffY)
         val observed = coeffZ.coeffToBigInteger()
         assertEquals(expected, observed)
     }
