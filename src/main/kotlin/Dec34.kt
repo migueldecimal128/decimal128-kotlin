@@ -1,5 +1,10 @@
 package com.decimal128
 
+import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import java.math.BigDecimal
 
 class Dec34() {
@@ -116,5 +121,26 @@ class Dec34() {
         val ret = (cmp xor -sign) + sign
         return ret
     }
+
+    fun roundToIntegral(x: Dec34, rd: RoundingDirection, ctx: Decimal128Context) {
+        //FIXME - deal with special values
+        sign = x.sign
+        mag.coeffRoundToIntegral(x.mag, sign, rd, ctx)
+    }
+
+    fun roundToIntegralTiesToEven(x: Dec34, ctx: Decimal128Context) =
+        roundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
+
+    fun roundToIntegralTiesToAway(x: Dec34, ctx: Decimal128Context) =
+        roundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
+
+    fun roundToIntegralTowardZero(x: Dec34, ctx: Decimal128Context) =
+        roundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
+
+    fun roundToIntegralTowardPositive(x: Dec34, ctx: Decimal128Context) =
+        roundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
+
+    fun roundToIntegralTowardNegative(x: Dec34, ctx: Decimal128Context) =
+        roundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
 
 }

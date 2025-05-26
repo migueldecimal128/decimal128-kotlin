@@ -33,7 +33,10 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
 
     fun coeffToBigInteger() = c.coeffToBigInteger()
 
-    fun roundAndFinalize(inboundResidue: Residue, sign: Int, ctx: Decimal128Context) {
+    fun roundAndFinalize(inboundResidue: Residue, sign: Int, ctx: Decimal128Context) =
+        roundAndFinalize(inboundResidue, sign, ctx.roundingDirection, ctx)
+
+    fun roundAndFinalize(inboundResidue: Residue, sign: Int, rd: RoundingDirection, ctx: Decimal128Context) {
         if (c.digitLen != 0) {
             var sciExp = qExp + (c.digitLen - 1)
             // IEEE754-2008 7.5: detect tininess on the unrounded result
@@ -64,7 +67,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
                 val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (!roundUp)
                     return
-                c.coeffIncrement()
+                c.coeffMutateIncrement()
                 if (c.digitLen <= PRECISION_34)
                     return
                 assert(c.digitLen == 35)
@@ -112,7 +115,7 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
                 val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), c.dw0)
                 if (!roundUp)
                     return
-                c.coeffIncrement()
+                c.coeffMutateIncrement()
                 if (c.digitLen <= PRECISION_34)
                     return
                 assert(c.digitLen == 35)
@@ -249,6 +252,16 @@ class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) {
             }
         }
         return bothAreZero
+    }
+
+    internal fun coeffRoundToIntegral(x: Mag, sign: Int, rd: RoundingDirection, ctx: Decimal128Context) {
+        if (qExp < 0) {
+            val residue = c.scaleDownPow10(x.c, -qExp)
+            qExp = 0
+            roundAndFinalize(residue, sign, rd, ctx)
+        } else {
+            magSet(x)
+        }
     }
 
     override fun toString(): String {

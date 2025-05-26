@@ -103,7 +103,7 @@ object MagAddSub {
                             // we always decrement in this case because y is never zero
                             // so Residue.EXACT cannot occur because ZERO would have taken
                             // another path
-                            z.c.coeffDecrement()
+                            z.c.coeffMutateDecrement()
                             if (shiftRight > y.c.digitLen)
                                 Residue.GT_HALF
                             else
@@ -124,7 +124,7 @@ object MagAddSub {
                             // take the inverse of the residue,
                             // and the normal roundAndFinalize() will take care of it
                             if (residue != EXACT)
-                                z.c.coeffDecrement()
+                                z.c.coeffMutateDecrement()
                             residue.subtractionInverse()
                         }
                     }
