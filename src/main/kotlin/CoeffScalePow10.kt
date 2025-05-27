@@ -48,7 +48,7 @@ internal object CoeffScalePow10 {
     }
 
     fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
-        if (x.digitLen > 0 && pow10 > 0) {
+        if (x.bitLen > 0 && pow10 > 0) {
             val productDigitCount = x.digitLen - pow10
             if (productDigitCount <= 0) {
                 val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF

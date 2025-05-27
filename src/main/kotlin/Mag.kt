@@ -33,105 +33,107 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     fun roundAndFinalize(inboundResidue: Residue, sign: Int, ctx: Decimal128Context) =
         roundAndFinalize(inboundResidue, sign, ctx.roundingDirection, ctx)
 
-    fun roundAndFinalize(inboundResidue: Residue, sign: Int, rd: RoundingDirection, ctx: Decimal128Context) {
-        if (super.digitLen != 0) {
-            var sciExp = qExp + (super.digitLen - 1)
-            // IEEE754-2008 7.5: detect tininess on the unrounded result
-            if (sciExp < SCIENTIFIC_EXP_MIN) {
-                ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
-            }
-
-            val excess = Math.max(0, super.digitLen - PRECISION_34)
-            val qTiny = Q_EXP_TINY - excess      // threshold for normalized
-
-            // 2) Normalized result: round only if bd has >34 digits
-            if (sciExp <= SCIENTIFIC_EXP_MAX && qExp >= qTiny) {
-                val totalResidue =
-                    if (excess == 0) {
-                        inboundResidue
-                    } else {
-                        val roundingResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess)
-                        qExp += excess
-                        assert(super.digitLen == 34)
-                        assert(sciExp == qExp + (super.digitLen - 1))
-                        roundingResidue.merge(inboundResidue)
-                    }
-
-                if (totalResidue == EXACT)
-                    return
-
-                ctx.setInexact()
-                val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), super.dw0)
-                if (!roundUp)
-                    return
-                super.coeffMutateIncrement()
-                if (super.digitLen <= PRECISION_34)
-                    return
-                assert(super.digitLen == 35)
-                // if we rolled into another digit because of roundup
-                // then the result is EXACTly divisible by 10
-                val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
-                assert(residueExact == Residue.EXACT)
-                ++qExp
-                assert(qExp + (super.digitLen - 1) == sciExp + 1)
-                ++sciExp
-                if (sciExp <= SCIENTIFIC_EXP_MAX)
-                    return
-                // rounding caused overflow
-                // fall into next conditional and flow over
-            }
-
-            // 1) Overflow => +/- Infinity
-            if (sciExp > SCIENTIFIC_EXP_MAX) {
-                // overflow IEEE754-2008 7.4 Overflow page 37
-                if (ctx.roundingDirection.overflowsToInfinity(sign)) {
-                    super.coeffSetZero()
-                    qExp = NON_FINITE_INF
-                } else {
-                    magSetMaxFinite()
+    fun roundAndFinalize(inboundResidue: Residue, sign: Int, roundingDirection: RoundingDirection, ctx: Decimal128Context) {
+        if (qExp < NON_FINITE_INF) {
+            if (super.digitLen != 0) {
+                var sciExp = qExp + (super.digitLen - 1)
+                // IEEE754-2008 7.5: detect tininess on the unrounded result
+                if (sciExp < SCIENTIFIC_EXP_MIN) {
+                    ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
                 }
-                ctx.setOverflow()
+
+                val excess = Math.max(0, super.digitLen - PRECISION_34)
+                val qTiny = Q_EXP_TINY - excess      // threshold for normalized
+
+                // 2) Normalized result: round only if bd has >34 digits
+                if (sciExp <= SCIENTIFIC_EXP_MAX && qExp >= qTiny) {
+                    val totalResidue =
+                        if (excess == 0) {
+                            inboundResidue
+                        } else {
+                            val roundingResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess)
+                            qExp += excess
+                            assert(super.digitLen == 34)
+                            assert(sciExp == qExp + (super.digitLen - 1))
+                            roundingResidue.merge(inboundResidue)
+                        }
+
+                    if (totalResidue == EXACT)
+                        return
+
+                    ctx.setInexact()
+                    val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
+                    if (!roundUp)
+                        return
+                    super.coeffMutateIncrement()
+                    if (super.digitLen <= PRECISION_34)
+                        return
+                    assert(super.digitLen == 35)
+                    // if we rolled into another digit because of roundup
+                    // then the result is EXACTly divisible by 10
+                    val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
+                    assert(residueExact == Residue.EXACT)
+                    ++qExp
+                    assert(qExp + (super.digitLen - 1) == sciExp + 1)
+                    ++sciExp
+                    if (sciExp <= SCIENTIFIC_EXP_MAX)
+                        return
+                    // rounding caused overflow
+                    // fall into next conditional and flow over
+                }
+
+                // 1) Overflow => +/- Infinity
+                if (sciExp > SCIENTIFIC_EXP_MAX) {
+                    // overflow IEEE754-2008 7.4 Overflow page 37
+                    if (roundingDirection.overflowsToInfinity(sign)) {
+                        super.coeffSetZero()
+                        qExp = NON_FINITE_INF
+                    } else {
+                        magSetMaxFinite()
+                    }
+                    ctx.setOverflow()
+                    ctx.setInexact()
+                    return
+                }
+
+                // 7.5.1: subnormal rounding (tiny result stays nonzero)
+                val qMin = Q_EXP_TINY - super.digitLen           // threshold for subnormal cohort
+                val overlap = qExp - qMin
+                if (overlap >= 0) {
+                    val excess2 = super.digitLen - overlap
+                    val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess2)
+                    qExp += excess2
+                    assert(super.digitLen <= 34)
+                    assert(sciExp == qExp + (super.digitLen - 1))
+
+                    val totalResidue = scaleResidue.merge(inboundResidue)
+                    if (totalResidue == EXACT)
+                        return
+                    ctx.setInexact()
+                    val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
+                    if (!roundUp)
+                        return
+                    super.coeffMutateIncrement()
+                    if (super.digitLen <= PRECISION_34)
+                        return
+                    assert(super.digitLen == 35)
+                    // if we rolled into another digit because of roundup
+                    // then the result is definitely divisible by 10
+                    val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
+                    assert(residueExact == Residue.EXACT)
+                    ++qExp
+                    return
+                }
+
+                // underflow to zero
+                super.coeffSetZero()
+                qExp = Q_EXP_TINY
                 ctx.setInexact()
                 return
             }
-
-            // 7.5.1: subnormal rounding (tiny result stays nonzero)
-            val qMin = Q_EXP_TINY - super.digitLen           // threshold for subnormal cohort
-            val overlap = qExp - qMin
-            if (overlap >= 0) {
-                val excess2 = super.digitLen - overlap
-                val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess2)
-                qExp += excess2
-                assert(super.digitLen <= 34)
-                assert(sciExp == qExp + (super.digitLen - 1))
-
-                val totalResidue = scaleResidue.merge(inboundResidue)
-                if (totalResidue == EXACT)
-                    return
-                ctx.setInexact()
-                val roundUp = totalResidue.ulpRoundUp(ctx.roundingDirection.negate(sign), super.dw0)
-                if (!roundUp)
-                    return
-                super.coeffMutateIncrement()
-                if (super.digitLen <= PRECISION_34)
-                    return
-                assert(super.digitLen == 35)
-                // if we rolled into another digit because of roundup
-                // then the result is definitely divisible by 10
-                val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
-                assert(residueExact == Residue.EXACT)
-                ++qExp
-                return
-            }
-
-            // underflow to zero
-            super.coeffSetZero()
-            qExp = Q_EXP_TINY
-            ctx.setInexact()
-            return
+            // zero case
+            qExp = Math.max(Math.min(qExp, Q_EXP_MAX), Q_EXP_TINY)
         }
-        // zero case
-        qExp = Math.max(Math.min(qExp, Q_EXP_MAX), Q_EXP_TINY)
     }
 
 
@@ -144,10 +146,25 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         qExp = Q_EXP_MAX
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
-        val dw1Nines = 0x0001ED09BEAD87C0L
-        val dw0Nines = 0x378D8E6400000000L - 1L
-        super.coeffSet128(dw1Nines, dw0Nines)
+        super.coeffSet128(DW1_34_NINES, DW0_34_NINES)
     }
+
+    fun magIsMaxFinite(): Boolean {
+        return qExp == Q_EXP_MAX &&
+                bitLen == BITLEN_34_NINES &&
+                dw1 == DW1_34_NINES &&
+                dw0 == DW0_34_NINES
+    }
+
+    fun magSetMinFinite() {
+        qExp = Q_EXP_TINY
+        super.coeffSetOne()
+    }
+
+    fun magIsMinFinite(): Boolean {
+        return qExp == Q_EXP_TINY && bitLen == 1
+    }
+
 
     fun magSet(dw0: Long) = magSet(0, dw0)
 
@@ -244,8 +261,8 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
             val expDelta = this.qExp - other.qExp
             return when {
                 expDelta == 0 -> this.coeffUnscaledEQ(other)
-                expDelta > 0 -> this.coeffScaledEQ(other, expDelta)
-                else -> other.coeffScaledEQ(this, -expDelta)
+                expDelta > 0 -> other.coeffScaledEQ(this, expDelta)
+                else -> this.coeffScaledEQ(other, -expDelta)
             }
         }
         return bothAreZero
@@ -258,6 +275,14 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
             roundAndFinalize(residue, sign, rd, ctx)
         } else {
             magSet(x)
+        }
+    }
+
+    fun magMutateNextDown() {
+        coeffMutateDecrement()
+        if (coeffIsZero()) {
+            coeffSet64(9L)
+            --qExp
         }
     }
 

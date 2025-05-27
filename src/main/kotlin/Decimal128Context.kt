@@ -33,6 +33,6 @@ class Decimal128Context(val roundingDirection:RoundingDirection) {
     fun setOverflow() { overflow = true }
     fun setUnderflow() { underflow = true }
     fun setInexact() { inexact = true }
-    fun setInexact(inexact:Boolean) { this.inexact = inexact}
+    fun setInexact(inexact:Boolean) { this.inexact = this.inexact or inexact}
 
 }

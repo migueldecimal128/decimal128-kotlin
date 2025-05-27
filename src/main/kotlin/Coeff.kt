@@ -75,6 +75,12 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffIsGTOne() = bitLen > 1
 
+    fun coeffIsPow10() = CoeffPow10.coeffIsPow10(this)
+
+    fun coeffIs33Nines() : Boolean  {
+        return bitLen == BITLEN_33_NINES && dw1 == DW1_33_NINES && dw0 == DW0_33_NINES
+    }
+
     private fun calcBitLen(): Int {
         val bitLen3 = 64 - numberOfLeadingZeros(dw3)
         val bitLen2 = 64 - numberOfLeadingZeros(dw2)

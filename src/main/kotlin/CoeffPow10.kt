@@ -495,6 +495,20 @@ internal object CoeffPow10 {
         return cmp
     }
 
+    fun coeffIsPow10(x: Coeff) : Boolean {
+        val xBitLen = x.bitLen
+        val xDigitLen = x.digitLen
+        if (xDigitLen > 0) {
+            val pow10Offset = pow10Offset(xDigitLen)
+            val p0 = POW10[pow10Offset + 0]
+            val p1 = POW10[pow10Offset + 1] and (( 64 - xBitLen) shr 31).toLong()
+            val p2 = POW10[pow10Offset + 2] and ((128 - xBitLen) shr 31).toLong()
+            val p3 = POW10[pow10Offset + 3] and ((192 - xBitLen) shr 31).toLong()
+            return (p0 == x.dw0) and (p1 == x.dw1) and (p2 == x.dw2) and (p3 == x.dw3)
+        }
+        return false
+    }
+
 }
 
 
