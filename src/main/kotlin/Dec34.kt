@@ -284,6 +284,37 @@ open class Dec34() : Mag() {
         roundAndFinalize(EXACT, sign xor 1, ROUND_TOWARD_POSITIVE, ctx)
     }
 
+    fun minNum(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNum_helper(x, y, 0, ctx)
+    fun maxNum(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNum_helper(x, y, -1, ctx)
+
+    private fun minNum_helper(x: Dec34, y: Dec34, invertCompareZeroOrNeg1: Int, ctx: Decimal128Context) {
+        val qMax = Math.max(x.qExp, y.qExp)
+        when {
+            qMax <= NON_FINITE_INF -> {
+                val cmp = (x.compareTo(y, ctx) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
+                set(if (cmp <= 0) x else y)
+            }
+            qMax == NON_FINITE_QNAN -> {
+                set(if (x.qExp == NON_FINITE_QNAN) x else y)
+            }
+            else -> throw RuntimeException("somebody is a sNaN")
+        }
+    }
+
+    fun minNumMag(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNumMag_helper(x, y, 0, ctx)
+    fun maxNumMag(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNumMag_helper(x, y, -1, ctx)
+
+    private fun minNumMag_helper(x: Dec34, y: Dec34, invertCompareZeroOrNeg1: Int, ctx: Decimal128Context) {
+        val qMax = Math.max(x.qExp, y.qExp)
+        when {
+            qMax < NON_FINITE_INF -> {
+                val cmp = (x.magCompareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
+                set(if (cmp <= 0) x else y)
+            }
+            else -> minNum_helper(x, y, invertCompareZeroOrNeg1, ctx)
+        }
+    }
+
     override fun equals(other: Any?) : Boolean {
         if (other is Dec34) {
             val qMax = Math.max(qExp, other.qExp)
