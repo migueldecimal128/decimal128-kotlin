@@ -61,7 +61,7 @@ class TestCoeffAbsDiffScaled {
         val coeffZ = Coeff()
         if (verbose)
             println("${case.biX} * 10**${case.scaleDelta} - ${case.biY} => expected:$expected")
-        val observedResidue = coeffZ.coeffAbsDiff(coeffX, case.scaleDelta, coeffY)
+        val observedResidue = coeffZ.coeffSetAbsDiff(coeffX, case.scaleDelta, coeffY)
         val observed = coeffZ.coeffToBigInteger()
         assertEquals(expected, observed)
         assertEquals(case.expectedResidue, observedResidue)

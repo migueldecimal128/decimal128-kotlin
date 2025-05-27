@@ -229,7 +229,7 @@ open class Dec34() : Mag() {
                 if (! coeffIsZero()) {
                     if (! coeffIs33Nines()) {
                         val headroom = PRECISION_34 - digitLen
-                        this.coeffScaleUpPow10(this, headroom)
+                        this.coeffSetScaleUpPow10(this, headroom)
                         this.qExp -= headroom
                     }
                     if (sign == 0) {
@@ -260,7 +260,7 @@ open class Dec34() : Mag() {
                 if (! coeffIsZero()) {
                     if (! coeffIs33Nines()) {
                         val headroom = PRECISION_34 - digitLen + 1
-                        this.coeffScaleUpPow10(this, headroom)
+                        this.coeffSetScaleUpPow10(this, headroom)
                         this.qExp -= headroom
                     }
                     if ((sign xor 1) == 0) {

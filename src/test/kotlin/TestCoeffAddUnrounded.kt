@@ -61,7 +61,7 @@ class TestCoeffAddUnrounded {
         val coeffA = Coeff(case.biA)
         val coeffB = Coeff(case.biB)
         val coeffC = Coeff()
-        coeffC.coeffAdd(coeffA, coeffB)
+        coeffC.coeffSetAdd(coeffA, coeffB)
         if (verbose)
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         val oldDigitCount = coeffC.digitLen
@@ -75,7 +75,7 @@ class TestCoeffAddUnrounded {
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         assert (biC.equals(expected))
 
-        coeffA.coeffAdd(coeffA, coeffB)
+        coeffA.coeffSetAdd(coeffA, coeffB)
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 

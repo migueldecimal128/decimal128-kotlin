@@ -93,16 +93,16 @@ class TestCoeffDiv {
         val coeffC = Coeff()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / $coeffB (${coeffB.digitLen}) = expected:$expected")
-        coeffC.coeffDiv(coeffA, coeffB)
+        coeffC.coeffSetDiv(coeffA, coeffB)
         val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) / $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
         assert (biC.equals(expected))
         if (random.nextBoolean()) {
-            coeffA.coeffDiv(coeffA, coeffB)
+            coeffA.coeffSetDiv(coeffA, coeffB)
             assert(coeffA.coeffToBigInteger().equals(expected))
         } else {
-            coeffB.coeffDiv(coeffA, coeffB)
+            coeffB.coeffSetDiv(coeffA, coeffB)
             assert(coeffB.coeffToBigInteger().equals(expected))
 
         }

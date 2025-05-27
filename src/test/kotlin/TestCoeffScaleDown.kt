@@ -197,7 +197,7 @@ class TestCoeffScaleDown {
         val ctx = Decimal128Context(case.roundingDirection)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.roundingDirection} expected:$expected")
-        coeffObserved.coeffScaleDownPow10(coeffA, pow10)
+        coeffObserved.coeffSetScaleDownPow10(coeffA, pow10)
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.roundingDirection} expected:$expected")

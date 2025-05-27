@@ -270,7 +270,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
 
     internal fun coeffRoundToIntegral(x: Mag, sign: Int, rd: RoundingDirection, ctx: Decimal128Context) {
         if (qExp < 0) {
-            val residue = this.coeffScaleDownPow10(x, -qExp)
+            val residue = this.coeffSetScaleDownPow10(x, -qExp)
             qExp = 0
             roundAndFinalize(residue, sign, rd, ctx)
         } else {

@@ -102,7 +102,7 @@ class TestCoeffMul {
         val coeffC = Coeff()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = expected:$expected")
-        coeffC.coeffMul(coeffA, coeffB)
+        coeffC.coeffSetMul(coeffA, coeffB)
         val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
@@ -115,7 +115,7 @@ class TestCoeffMul {
             throw RuntimeException()
         }
 
-        coeffA.coeffMul(coeffA, coeffB)
+        coeffA.coeffSetMul(coeffA, coeffB)
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 

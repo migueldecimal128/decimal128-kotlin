@@ -126,35 +126,35 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffScaledEQ(other: Coeff, scaleDelta: Int) = coeffScaledEQ(this, other, scaleDelta)
 
-    fun coeffAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
+    fun coeffSetAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
 
-    fun coeffAdd(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
+    fun coeffSetAdd(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
 
     // absolute difference
     // if minuend < subtrahend then negate to return positive result
     // and return a _NEGATED residue
     // because it would have gone negative
-    fun coeffAbsDiff(x: Coeff, scaleDelta: Int, y: Coeff) = absDiff(this, x, scaleDelta, y)
+    fun coeffSetAbsDiff(x: Coeff, scaleDelta: Int, y: Coeff) = absDiff(this, x, scaleDelta, y)
 
-    fun coeffAbsDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
+    fun coeffSetAbsDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
 
 
-    fun coeffMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
+    fun coeffSetMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
 
-    fun coeffFma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
+    fun coeffSetFma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
 
-    fun coeffFms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
+    fun coeffSetFms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
 
-    fun coeffFusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) =
+    fun coeffSetFusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) =
         coeffFusedMulAbsDiff(this, x, y, a)
 
-    fun coeffDiv(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
+    fun coeffSetDiv(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
 
-    fun coeffMod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
+    fun coeffSetMod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
 
-    fun coeffScaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
+    fun coeffSetScaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
 
-    fun coeffScaleDownPow10(x: Coeff, pow10: Int) = coeffScaleDownPow10(this, x, pow10)
+    fun coeffSetScaleDownPow10(x: Coeff, pow10: Int) = coeffScaleDownPow10(this, x, pow10)
 
     operator fun get(index: Int): Long {
         return when (index) {
