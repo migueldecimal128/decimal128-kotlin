@@ -8,10 +8,10 @@ import java.lang.Math.unsignedMultiplyHigh
 object CoeffFms {
 
     fun coeffFms(z: Coeff, x: Coeff, y: Coeff, s: Coeff) {
-        assert(z.hasValidLengths())
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
-        assert(s.hasValidLengths())
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
+        assert(s.coeffHasValidLengths())
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
@@ -91,9 +91,9 @@ object CoeffFms {
 
     fun coeffFmsPow10(z: Coeff, x: Coeff, pow10: Int, y: Coeff) {
         assert(pow10 > 0)
-        assert(z.hasValidLengths())
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
         assert(y.bitLen <= 128)
         assert(y.coeffScaledCompareTo(x, pow10) <= 0)
         val xBitLen = x.bitLen
@@ -208,9 +208,9 @@ object CoeffFms {
 
     fun coeffFmsPow10(z: Coeff, x: Coeff, y: Coeff, pow10: Int) {
         assert(pow10 > 0)
-        assert(z.hasValidLengths())
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
         assert(x.bitLen <= 128)
         assert(x.coeffScaledCompareTo(y, pow10) >= 0)
         val xBitLen = x.bitLen

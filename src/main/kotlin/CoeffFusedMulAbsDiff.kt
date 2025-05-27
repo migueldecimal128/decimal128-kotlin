@@ -10,10 +10,10 @@ import kotlin.math.max
 object CoeffFusedMulAbsDiff {
 
     fun coeffFusedMulAbsDiff(z: Coeff, x: Coeff, y: Coeff, a: Coeff): Residue {
-        assert(z.hasValidLengths())
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
-        assert(a.hasValidLengths())
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
+        assert(a.coeffHasValidLengths())
 
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
@@ -91,9 +91,9 @@ object CoeffFusedMulAbsDiff {
 
     fun coeffFmadPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff): Residue {
         assert(pow10 >= 0)
-        assert(z.hasValidLengths())
-        assert(x.hasValidLengths())
-        assert(a.hasValidLengths())
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(a.coeffHasValidLengths())
         val xBitLen = x.bitLen
         val aBitLen = a.bitLen
         val p10BitLen = pow10BitLen(pow10)

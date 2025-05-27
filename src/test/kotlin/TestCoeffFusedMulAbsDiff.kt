@@ -86,13 +86,13 @@ class TestCoeffFusedMulAbsDiff {
         val coeffAbsDiff = Coeff()
         if (verbose)
             println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) - $coeffA (${coeffA.digitLen}) = expected:$expected")
-        coeffAbsDiff.fusedMulAbsDiff(coeffX, coeffY, coeffA)
+        coeffAbsDiff.coeffFusedMulAbsDiff(coeffX, coeffY, coeffA)
         val observed = coeffAbsDiff.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) - $coeffA (${coeffA.digitLen}) = $coeffAbsDiff (${coeffAbsDiff.digitLen})  expected:$expected")
         assert (observed.equals(expected))
 
-        coeffAbsDiff.fusedMulAbsDiff(coeffY, coeffX, coeffA)
+        coeffAbsDiff.coeffFusedMulAbsDiff(coeffY, coeffX, coeffA)
         val observed2 = coeffAbsDiff.coeffToBigInteger()
         if (! observed2.equals(expected))
             println("$coeffX ($coeffY (${coeffY.digitLen}) * ${coeffX.digitLen}) - $coeffA (${coeffA.digitLen}) = $coeffAbsDiff (${coeffAbsDiff.digitLen})  expected:$expected")
@@ -101,27 +101,27 @@ class TestCoeffFusedMulAbsDiff {
         val rnd = random.nextInt(6)
         when (rnd) {
             0 -> {
-                coeffX.fusedMulAbsDiff(coeffX, coeffY, coeffA); assert(coeffX.coeffToBigInteger().equals(expected))
+                coeffX.coeffFusedMulAbsDiff(coeffX, coeffY, coeffA); assert(coeffX.coeffToBigInteger().equals(expected))
             }
 
             1 -> {
-                coeffY.fusedMulAbsDiff(coeffX, coeffY, coeffA); assert(coeffY.coeffToBigInteger().equals(expected))
+                coeffY.coeffFusedMulAbsDiff(coeffX, coeffY, coeffA); assert(coeffY.coeffToBigInteger().equals(expected))
             }
 
             2 -> {
-                coeffA.fusedMulAbsDiff(coeffX, coeffY, coeffA); assert(coeffA.coeffToBigInteger().equals(expected))
+                coeffA.coeffFusedMulAbsDiff(coeffX, coeffY, coeffA); assert(coeffA.coeffToBigInteger().equals(expected))
             }
 
             3 -> {
-                coeffX.fusedMulAbsDiff(coeffY, coeffX, coeffA); assert(coeffX.coeffToBigInteger().equals(expected))
+                coeffX.coeffFusedMulAbsDiff(coeffY, coeffX, coeffA); assert(coeffX.coeffToBigInteger().equals(expected))
             }
 
             4 -> {
-                coeffY.fusedMulAbsDiff(coeffY, coeffX, coeffA); assert(coeffY.coeffToBigInteger().equals(expected))
+                coeffY.coeffFusedMulAbsDiff(coeffY, coeffX, coeffA); assert(coeffY.coeffToBigInteger().equals(expected))
             }
 
             5 -> {
-                coeffA.fusedMulAbsDiff(coeffY, coeffX, coeffA); assert(coeffA.coeffToBigInteger().equals(expected))
+                coeffA.coeffFusedMulAbsDiff(coeffY, coeffX, coeffA); assert(coeffA.coeffToBigInteger().equals(expected))
             }
         }
 

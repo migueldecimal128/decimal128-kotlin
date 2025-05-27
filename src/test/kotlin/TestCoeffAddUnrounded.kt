@@ -65,7 +65,7 @@ class TestCoeffAddUnrounded {
         if (verbose)
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         val oldDigitCount = coeffC.digitLen
-        if (! coeffC.hasValidLengths()) {
+        if (! coeffC.coeffHasValidLengths()) {
             val digitCount = coeffC.digitLen
             println("bad digit count $coeffA + $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()

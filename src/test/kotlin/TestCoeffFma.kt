@@ -80,14 +80,14 @@ class TestCoeffFma {
         val coeffExpected = Coeff(case.biProduct)
         val coeffProd = Coeff()
         //println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) + $coeffA (${coeffA.digitCount}) = expected:$expected")
-        coeffProd.fma(coeffX, coeffY, coeffA)
+        coeffProd.coeffFma(coeffX, coeffY, coeffA)
         val biProd = coeffProd.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) + $coeffA (${coeffA.digitLen}) = $coeffProd (${coeffProd.digitLen})  expected:$expected")
         assert (biProd.equals(expected))
 
         val oldDigitCount = coeffProd.digitLen
-        if (! coeffProd.hasValidLengths()) {
+        if (! coeffProd.coeffHasValidLengths()) {
             val digitCount = coeffProd.digitLen
             println("bad digit count $coeffX * $coeffY = $coeffProd was $oldDigitCount should be $digitCount")
             throw RuntimeException()
@@ -95,13 +95,13 @@ class TestCoeffFma {
 
         val rnd = random.nextInt(3)
         if (rnd == 0) {
-            coeffX.fma(coeffX, coeffY, coeffA)
+            coeffX.coeffFma(coeffX, coeffY, coeffA)
             assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
-            coeffY.fma(coeffX, coeffY, coeffA)
+            coeffY.coeffFma(coeffX, coeffY, coeffA)
             assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
-            coeffA.fma(coeffX, coeffY, coeffA)
+            coeffA.coeffFma(coeffX, coeffY, coeffA)
             assert(coeffA.coeffToBigInteger().equals(expected))
         }
 

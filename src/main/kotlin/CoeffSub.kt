@@ -5,9 +5,9 @@ import java.lang.Long.compareUnsigned
 object CoeffSub {
 
     fun coeffSubUnscaled(z: Coeff, x: Coeff, y: Coeff) { // minuend - subtrahend
-        assert(z.hasValidLengths())
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
         assert(x.coeffUnscaledCompareTo(y) >= 0)
         val xBitLen = x.bitLen
         assert(xBitLen >= y.bitLen)
@@ -55,9 +55,9 @@ object CoeffSub {
 
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
-        assert(z.hasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
+        assert(z.coeffHasValidLengths())
 
         assert(y.coeffScaledCompareTo(x, scaleDelta) <= 0)
 
@@ -70,9 +70,9 @@ object CoeffSub {
 
         assert((x.dw3 or x.dw2) == 0L)
         assert((y.dw3 or y.dw2) == 0L)
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
-        assert(z.hasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
+        assert(z.coeffHasValidLengths())
 
         assert(x.coeffScaledCompareTo(y, scaleDelta) >= 0)
 

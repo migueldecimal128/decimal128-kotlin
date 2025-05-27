@@ -64,7 +64,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; bitLen = 1; digitLen = 1
     }
 
-    fun setZeroOrOneMasked(d0: Long) {
+    fun coeffSetZeroOrOneMasked(d0: Long) {
         val asInt = (d0 and 1).toInt()
         dw3 = 0; dw2 = 0; dw1 = 0; dw0 = d0 and 1; bitLen = asInt; digitLen = asInt
     }
@@ -110,7 +110,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     // of bitLen delta <= 1 and digitLen delta <= 1
     private fun updateLengthsAfterRoundUp() = updateLengths()
 
-    fun hasValidLengths(): Boolean {
+    fun coeffHasValidLengths(): Boolean {
         //if (bitLen != calcBitLen())
         //    return false
         if (digitLen != CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
@@ -134,22 +134,23 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     // if minuend < subtrahend then negate to return positive result
     // and return a _NEGATED residue
     // because it would have gone negative
-    fun absDiff(x: Coeff, scaleDelta: Int, y: Coeff) = absDiff(this, x, scaleDelta, y)
+    fun coeffAbsDiff(x: Coeff, scaleDelta: Int, y: Coeff) = absDiff(this, x, scaleDelta, y)
 
-    fun absDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
+    fun coeffAbsDiff(x: Coeff, y: Coeff) = coeffAbsDiffUnscaled(this, x, y)
 
 
-    fun mul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
+    fun coeffMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
 
-    fun fma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
+    fun coeffFma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
 
-    fun fms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
+    fun coeffFms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
 
-    fun fusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) = coeffFusedMulAbsDiff(this, x, y, a)
+    fun coeffFusedMulAbsDiff(x: Coeff, y: Coeff, a: Coeff) =
+        coeffFusedMulAbsDiff(this, x, y, a)
 
-    fun div(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
+    fun coeffDiv(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
 
-    fun mod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
+    fun coeffMod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
 
     fun coeffScaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
 
@@ -301,6 +302,6 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     override fun toString() = coeffToBigInteger().toString()
 
-    fun toNaNDiagnosticString() = if (coeffIsZero()) "" else toString()
+    fun coeffToNaNDiagnosticString() = if (coeffIsZero()) "" else toString()
 
 }

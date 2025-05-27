@@ -2,7 +2,6 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
-import kotlin.Long.Companion.MIN_VALUE
 
 object CoeffAdd {
 
@@ -81,9 +80,9 @@ object CoeffAdd {
 
 //        assert((x.dw3 or x.dw2) == 0L)
 //        assert((y.dw3 or y.dw2) == 0L)
-        assert(x.hasValidLengths())
-        assert(y.hasValidLengths())
-        assert(z.hasValidLengths())
+        assert(x.coeffHasValidLengths())
+        assert(y.coeffHasValidLengths())
+        assert(z.coeffHasValidLengths())
 
         coeffScaleFmaPow10(z, x, scaleDelta, y)
     }

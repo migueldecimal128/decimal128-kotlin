@@ -290,8 +290,8 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         return when {
             (qExp < MIN_SPECIAL_VALUE) -> super.toString() + "E" + qExp
             qExp == NON_FINITE_INF -> "Inf"
-            qExp == NON_FINITE_QNAN -> "NaN" + super.toNaNDiagnosticString()
-            qExp == NON_FINITE_SNAN -> "sNaN" + super.toNaNDiagnosticString()
+            qExp == NON_FINITE_QNAN -> "NaN" + super.coeffToNaNDiagnosticString()
+            qExp == NON_FINITE_SNAN -> "sNaN" + super.coeffToNaNDiagnosticString()
             else -> "?que? $qExp"
         }
     }

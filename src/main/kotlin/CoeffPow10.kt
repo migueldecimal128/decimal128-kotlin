@@ -154,7 +154,7 @@ internal object CoeffPow10 {
         val pow10 = Coeff()
         val ten = Coeff(10)
         for (i in 0..<MAX_DIGIT_LEN) {
-            if (i == 0) pow10.coeffSet64(1L) else pow10.mul(pow10, ten)
+            if (i == 0) pow10.coeffSet64(1L) else pow10.coeffMul(pow10, ten)
             val bitLen = pow10.bitLen
             POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
             val pow10Offset = pow10Offset(i)
@@ -197,17 +197,17 @@ internal object CoeffPow10 {
         twoPow64.coeffSet128(1L, 0L)
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAX) {
-            if (i == 1) pow10.coeffSet64(10L) else pow10.mul(pow10, ten)
-            mu.div(twoPow64, pow10)
+            if (i == 1) pow10.coeffSet64(10L) else pow10.coeffMul(pow10, ten)
+            mu.coeffDiv(twoPow64, pow10)
             POW10[BARRETT_POW10_MU_OFFSET + i] = mu.dw0
 
             pow5.coeffSetShiftRight(pow10, i)
-            mu.div(twoPow64, pow5)
+            mu.coeffDiv(twoPow64, pow5)
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
         }
         for (i in 1..<BARRETT_POW5_MAX) {
             pow5.coeffSet64(POW10[POW5_64_OFFSET + i])
-            mu.div(twoPow64, pow5)
+            mu.coeffDiv(twoPow64, pow5)
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
         }
         // initialization of Magic multipliers M is in DivMagic
