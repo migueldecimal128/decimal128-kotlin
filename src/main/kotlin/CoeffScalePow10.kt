@@ -65,8 +65,4 @@ internal object CoeffScalePow10 {
         CoeffFma.coeffFmaPow10(z, x, pow10, a)
     }
 
-    fun coeffScaleFusedMulAbsDiffPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff): Residue {
-        return CoeffFusedMulAbsDiff.coeffFmadPow10(z, x, pow10, a)
-    }
-
 }
