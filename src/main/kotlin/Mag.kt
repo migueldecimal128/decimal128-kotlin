@@ -218,9 +218,38 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         roundAndFinalize(EXACT, sign, ctx)
     }
 
-    fun magScaleB(x: Mag, e: Int, sign: Int, ctx: Decimal128Context) {
-        super.coeffSet(x)
-        qExp = e
+    fun magMutateScalePow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
+        if (pow10 > 0)
+            magMutateScaleUpPow10(pow10, sign, ctx)
+        else if (pow10 < 0)
+            magMutateScaleDownPow10(-pow10, sign, ctx)
+    }
+
+    fun magMutateScaleUpPow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
+        val headroom = PRECISION_34 - digitLen
+        val scaleUp = Math.min(headroom, pow10)
+        val residue = this.coeffSetScaleUpPow10(this, scaleUp)
+        qExp += pow10 - scaleUp
+        if (qExp > Q_EXP_MAX)
+            roundAndFinalize(Residue.EXACT, sign, ctx)
+    }
+
+    fun magMutateScaleDownPow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
+        val residue: Residue
+        if (! coeffIsZero()) {
+            if (pow10 >= digitLen) {
+                residue = (
+                        if (pow10 == digitLen)
+                            Residue.residueFrom(this)
+                        else
+                            Residue.LT_HALF
+                        )
+                coeffSetZero()
+            }
+        } else {
+            residue = this.coeffSetScaleDownPow10(this, pow10)
+        }
+        qExp -= pow10
         roundAndFinalize(Residue.EXACT, sign, ctx)
     }
 

@@ -45,6 +45,10 @@ open class Dec34() : Mag() {
         //FIXME - see IEEE754r 6.2
     }
 
+    private fun sNaNOperand() {
+        throw RuntimeException("sNaN operand")
+    }
+
     private fun setNaN(x: Dec34, ctx: Decimal128Context) {
         val q = x.qExp
         assert(q >= NON_FINITE_QNAN)
@@ -63,6 +67,22 @@ open class Dec34() : Mag() {
         this.coeffSetZero()
         this.qExp = NON_FINITE_INF
         this.sign = sign
+    }
+
+    fun isInfinite() : Boolean {
+        return qExp == NON_FINITE_INF
+    }
+
+    fun isNegative() : Boolean {
+        return sign == 1
+    }
+
+    fun isFinite() : Boolean {
+        return qExp < NON_FINITE_INF
+    }
+
+    fun isNumber() : Boolean {
+        return qExp <= NON_FINITE_INF
     }
 
     fun add(x: Dec34, y: Dec34, ctx: Decimal128Context) {
@@ -312,6 +332,18 @@ open class Dec34() : Mag() {
                 set(if (cmp <= 0) x else y)
             }
             else -> minNum_helper(x, y, invertCompareZeroOrNeg1, ctx)
+        }
+    }
+
+    fun scaleB(x: Dec34, pow10: Int, ctx: Decimal128Context) {
+        set(x)
+        when {
+            x.qExp <= NON_FINITE_INF -> {
+                qExp += pow10 //FIXME ... check range on pow10
+                roundAndFinalize(Residue.EXACT, sign, ctx)
+            }
+            x.qExp <= NON_FINITE_QNAN -> {}
+            else -> sNaNOperand()
         }
     }
 
