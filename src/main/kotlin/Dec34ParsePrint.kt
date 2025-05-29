@@ -152,7 +152,8 @@ object Dec34ParsePrint {
         do {
             val limit = off + len
             val dw0 = x.dw0
-            bytes[off] = (if (x.sign == 0) '+' else '-').code.toByte()
+            val signChar = if (x.sign == 0) '+' else '-'
+            bytes[off] = signChar.code.toByte()
             var ib = off + x.sign
             if (q >= NON_FINITE_INF) {
                 val str = SPECIAL_NAMES[q - NON_FINITE_INF]
@@ -163,17 +164,22 @@ object Dec34ParsePrint {
             }
             val xDigitLen = x.digitLen
             var exp = q
+            val scale = -q
             val e = q + xDigitLen  + (-xDigitLen shr 31)
-            val useDecimalFraction = (e >= -6 && e < 0)
-            if (useDecimalFraction) {
+            val isInteger = scale == 0
+            // one more case here ... isSciInteger == is single digit significand with exponent
+            val isSciDecimal = !isInteger && (scale < 0 || e < -6) && xDigitLen > 1
+            val hasNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > q && e >= -6
+            val isNonSciDecimalLT1 = hasNonSciDecimal && scale >= xDigitLen
+            val isNonSciDecimalGE1 = hasNonSciDecimal && scale < xDigitLen
+            if (isNonSciDecimalLT1) {
                 bytes[ib++] = '0'.code.toByte()
                 bytes[ib++] = '.'.code.toByte()
                 for (i in 0..<-e - 1)
                     bytes[ib++] = '0'.code.toByte()
                 exp = 0
             }
-            val useSciNotation = (q > 0 || e < -6) && xDigitLen > 1
-            if (useSciNotation)
+            if (isSciDecimal)
                 ++ib
             // render integer coeff, including a single 0
             when {
@@ -182,11 +188,17 @@ object Dec34ParsePrint {
                 (x.bitLen <= 128) -> ib += u128ToChars(x.digitLen, x.dw1, dw0, bytes, ib, limit - ib)
                 else -> throw RuntimeException("coeff.bitLen > 128 not impl")
             }
-            if (useSciNotation) {
+            if (isSciDecimal) {
                 val coeffStart = off + x.sign
                 bytes[coeffStart] = bytes[coeffStart + 1]
                 bytes[coeffStart + 1] = '.'.code.toByte()
                 exp = e
+            }
+            if (isNonSciDecimalGE1) {
+                val decimalIndex = ib - scale
+                System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
+                bytes[decimalIndex] = '.'.code.toByte()
+                return ib + 1 - off
             }
             if (exp != 0) {
                 if (limit - ib < 3)
