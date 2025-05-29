@@ -81,3 +81,17 @@ fun bdIsFinite(bd: BigDecimal) : Boolean {
     return eExp >= SCIENTIFIC_EXP_MIN && eExp <= SCIENTIFIC_EXP_MAX
 }
 
+fun bdToDecimal128String(bd: BigDecimal): String {
+    val decimal128 = bdToIeeeDecimal128(bd, RoundingMode.HALF_EVEN)
+    val q = -bd.scale()
+    val magnitude = bd.unscaledValue()
+    val signChar = if (bd.signum() < 0) '-' else '+'
+    return when {
+        q < NON_FINITE_INF -> decimal128.toString()
+        q == NON_FINITE_INF -> signChar + "Inf"
+        q == NON_FINITE_QNAN -> signChar + "NaN" + if (magnitude.bitLength() == 0) "" else magnitude
+        q == NON_FINITE_SNAN -> signChar + "sNaN" + if (magnitude.bitLength() == 0) "" else magnitude
+        else -> throw RuntimeException("invalid exponent for ieee754r decimal128")
+    }
+}
+

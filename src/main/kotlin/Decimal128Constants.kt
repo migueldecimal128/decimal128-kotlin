@@ -15,6 +15,8 @@ const val DW1_33_NINES = 0x0000314DC6448D93L
 const val DW0_33_NINES = 0x38C15B0A00000000L - 1L
 const val BITLEN_33_NINES = 110
 
+const val MAX_DEC34_CHAR_LEN = 1 /*sign*/ + 34 + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
+
 // Automatically generated
 
 const val POW10_64_COUNT = 20          // 0x00000014 2E+1

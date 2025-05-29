@@ -244,7 +244,7 @@ object DivBarrett {
 
     private fun barrettDivMod_32_128(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
-        val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
+        val dw0 = x.dw0; val dw1 = x.dw1
 
         val dwA = dw0 and 0xFFFF_FFFFL
         val dwB = dw0 ushr 32

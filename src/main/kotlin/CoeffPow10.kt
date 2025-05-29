@@ -1,6 +1,7 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
+import java.lang.Long.numberOfLeadingZeros
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
@@ -226,6 +227,11 @@ internal object CoeffPow10 {
         val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
         val mask = -pow10 shr 31
         return offset and mask
+    }
+
+    fun calcDigitLen64(dw0: Long) : Int {
+        val bitLen = 64 - numberOfLeadingZeros(dw0)
+        return calcDigitLen64(bitLen, dw0)
     }
 
     fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
