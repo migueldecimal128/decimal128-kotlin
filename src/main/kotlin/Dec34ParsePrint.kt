@@ -173,13 +173,12 @@ object Dec34ParsePrint {
             val isNonSciDecimalLT1 = hasNonSciDecimal && scale >= xDigitLen
             val isNonSciDecimalGE1 = hasNonSciDecimal && scale < xDigitLen
             if (isNonSciDecimalLT1) {
-                bytes[ib++] = '0'.code.toByte()
-                bytes[ib++] = '.'.code.toByte()
-                for (i in 0..<-e - 1)
-                    bytes[ib++] = '0'.code.toByte()
+                val zeroCount = 2 + -e - 1
+                bytes.fill('0'.code.toByte(), ib, ib + zeroCount)
+                bytes[ib + 1] = '.'.code.toByte()
+                ib += zeroCount
                 exp = 0
-            }
-            if (isSciDecimal)
+            } else if (isSciDecimal)
                 ++ib
             // render integer coeff, including a single 0
             when {
