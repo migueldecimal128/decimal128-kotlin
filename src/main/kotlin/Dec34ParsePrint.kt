@@ -135,6 +135,10 @@ private inline fun barrettDivMod_32_128(dw1: Long, dw0: Long, denom: Long, mu: L
     return Triple(q1, q0, remainder)
 }
 
+private const val BYTE_ZERO = '0'.code.toByte()
+private const val BYTE_DOT = '.'.code.toByte()
+private const val BYTE_PLUS = '+'.code.toByte()
+private const val BYTE_MINUS = '-'.code.toByte()
 
 object Dec34ParsePrint {
 
@@ -152,8 +156,8 @@ object Dec34ParsePrint {
         do {
             val limit = off + len
             val dw0 = x.dw0
-            val signChar = if (x.sign == 0) '+' else '-'
-            bytes[off] = signChar.code.toByte()
+            val signByte = if (x.sign == 0) BYTE_PLUS else BYTE_MINUS
+            bytes[off] = signByte
             var ib = off + x.sign
             if (q >= NON_FINITE_INF) {
                 val str = SPECIAL_NAMES[q - NON_FINITE_INF]
@@ -169,15 +173,14 @@ object Dec34ParsePrint {
             val isInteger = scale == 0
             // one more case here ... isSciInteger == is single digit significand with exponent
             val isSciDecimal = !isInteger && (scale < 0 || e < -6) && xDigitLen > 1
-            val hasNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > q && e >= -6
-            val isNonSciDecimalLT1 = hasNonSciDecimal && scale >= xDigitLen
-            val isNonSciDecimalGE1 = hasNonSciDecimal && scale < xDigitLen
+            val isNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > q && e >= -6
+            val isNonSciDecimalLT1 = isNonSciDecimal && scale >= xDigitLen
+            val isNonSciDecimalGE1 = isNonSciDecimal && scale < xDigitLen
             if (isNonSciDecimalLT1) {
                 val zeroCount = 2 + -e - 1
-                bytes.fill('0'.code.toByte(), ib, ib + zeroCount)
-                bytes[ib + 1] = '.'.code.toByte()
+                bytes.fill(BYTE_ZERO, ib, ib + zeroCount)
+                bytes[ib + 1] = BYTE_DOT
                 ib += zeroCount
-                exp = 0
             } else if (isSciDecimal)
                 ++ib
             // render integer coeff, including a single 0
@@ -187,25 +190,28 @@ object Dec34ParsePrint {
                 (x.bitLen <= 128) -> ib += u128ToChars(x.digitLen, x.dw1, dw0, bytes, ib, limit - ib)
                 else -> throw RuntimeException("coeff.bitLen > 128 not impl")
             }
+            if (isNonSciDecimal) {
+                if (isNonSciDecimalGE1) {
+                    val decimalIndex = ib - scale
+                    System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
+                    bytes[decimalIndex] = BYTE_DOT
+                    ++ib
+                }
+                return ib - off
+            }
             if (isSciDecimal) {
                 val coeffStart = off + x.sign
                 bytes[coeffStart] = bytes[coeffStart + 1]
-                bytes[coeffStart + 1] = '.'.code.toByte()
+                bytes[coeffStart + 1] = BYTE_DOT
                 exp = e
-            }
-            if (isNonSciDecimalGE1) {
-                val decimalIndex = ib - scale
-                System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
-                bytes[decimalIndex] = '.'.code.toByte()
-                return ib + 1 - off
             }
             if (exp != 0) {
                 if (limit - ib < 3)
                     break@insufficient_buffer
                 bytes[ib++] = 'E'.code.toByte()
                 val expAbs = Math.abs(exp.toLong())
-                val expSign = (if (exp < 0) '-' else '+').code.toByte()
-                bytes[ib++] = expSign
+                val expByte = if (exp < 0) BYTE_MINUS else BYTE_PLUS
+                bytes[ib++] = expByte
                 val expDigitLen = CoeffPow10.calcDigitLen64(expAbs)
                 if (limit - ib < expDigitLen)
                     break@insufficient_buffer
