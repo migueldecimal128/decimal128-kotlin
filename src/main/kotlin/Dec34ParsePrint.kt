@@ -3,7 +3,9 @@ package com.decimal128
 import java.lang.Math.unsignedMultiplyHigh
 import java.nio.charset.StandardCharsets
 
-private val SPECIAL_NAMES = arrayOf("Inf", "NaN", "sNaN")
+private const val SPECIAL_NAMES =
+    ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16) or
+            ('s'.code.toLong() shl 24) or ('N'.code.toLong() shl 32) or ('a'.code.toLong() shl 40) or ('N'.code.toLong() shl 48)
 
 private fun copyBytes(str: String, bytes: ByteArray, off: Int, len: Int) : Int {
     val strLen = str.length
@@ -158,16 +160,23 @@ object Dec34ParsePrint {
             val dw0 = x.dw0
             val signByte = if (x.sign == 0) BYTE_PLUS else BYTE_MINUS
             bytes[off] = signByte
+            var exp = q
             var ib = off + x.sign
             if (q >= NON_FINITE_INF) {
-                val str = SPECIAL_NAMES[q - NON_FINITE_INF]
-                ib = off + 1 + copyBytes(str, bytes, off + 1, limit - ib)
-                if (x.qExp == NON_FINITE_INF || x.coeffIsZero())
+                val isSNaN = if (q == NON_FINITE_SNAN) 1 else 0
+                val shift = ((NON_FINITE_INF - q) shr 31) and (32 - (isSNaN shl 3))
+                val chars = SPECIAL_NAMES ushr shift
+                bytes[off + 1] = chars.toByte()
+                bytes[off + 2] = (chars ushr  8).toByte()
+                bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
+                bytes[off + 3] = (chars ushr 16).toByte()
+                ib = 4 + isSNaN
+                if (q == NON_FINITE_INF || x.coeffIsZero())
                     return ib - off
                 // drop thru to add NaN payload
+                exp = 0
             }
             val xDigitLen = x.digitLen
-            var exp = q
             val scale = -q
             val e = q + xDigitLen  + (-xDigitLen shr 31)
             val isInteger = scale == 0

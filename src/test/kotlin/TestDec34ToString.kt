@@ -14,10 +14,22 @@ class TestDec34ToString {
     class TC(val strVal: String) {
         constructor(bd: BigDecimal) : this(bdToDecimal128String(bd))
         val bd = bdToIeeeDecimal128(BigDecimal(strVal), RoundingMode.HALF_EVEN)
+        //val bd = BigDecimal(strVal)
         val expected = bdToDecimal128String(bd)
+        //val expected = bd.toString()
     }
 
     val tcs = arrayOf(
+        TC("0e1000002"),
+        TC("-0e1000002"),
+        TC("1e1000002"),
+        TC("-1e1000002"),
+        TC("1e1000001"),
+        TC("-1e1000001"),
+        TC("0e1000001"),
+        TC("-0e1000001"),
+        TC("-0e1000000"),
+        TC("0e1000000"),
         TC("0.000000"),
         TC("9"),
         TC("9e1"),

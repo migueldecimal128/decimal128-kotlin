@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 import java.util.*
 
 class TestMagMul {
@@ -26,10 +27,18 @@ class TestMagMul {
     }
 
     val cases = arrayOf(
+        TC("1", "0"),
+        TC("1", "0e-6176"),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
         TC("2", "3"),
         TC("0", "9e99"),
         )
+
+    @Test
+    fun testBrokenIeee() {
+        val bd = bdToIeeeDecimal128(BigDecimal.ZERO, RoundingMode.HALF_EVEN)
+        println("bd:$bd")
+    }
 
     @Test
     fun testCases() {

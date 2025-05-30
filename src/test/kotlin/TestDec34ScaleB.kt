@@ -16,6 +16,7 @@ class TestDec34ScaleB {
     }
 
     val tcs = arrayOf(
+        TC(ONE.scaleByPowerOfTen(34).subtract(ONE), 6112),
         TC(ONE, 0),
         TC(ONE, 1),
         TC(ONE, -1),
@@ -46,7 +47,7 @@ class TestDec34ScaleB {
                 if (s.isFinite())
                     BigDecimal(s.toString())
                 else
-                    BigDecimal("0e1000000")
+                    BigDecimal("1e1000000000")
                 )
         assertEquals(expected, observed)
     }

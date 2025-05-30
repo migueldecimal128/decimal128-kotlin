@@ -10,10 +10,10 @@ const val SCIENTIFIC_EXP_MIN = -6143
 //const val TINY_EXPONENT = MIN_SCIENTIFIC_EXPONENT - (PRECISION_34 - 1) // -6176
 const val Q_EXP_TINY = -6176 // EXP_SCIENTIFIC_MIN - (PRECISION_34 - 1)
 
-const val MIN_SPECIAL_VALUE = 1000000
-const val NON_FINITE_INF = 1000000
-const val NON_FINITE_QNAN = 1000001
-const val NON_FINITE_SNAN = 1000002
+const val MIN_SPECIAL_VALUE = 1000000000
+const val NON_FINITE_INF = 1000000000
+const val NON_FINITE_QNAN = 1000000001
+const val NON_FINITE_SNAN = 1000000002
 
 open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coeff() {
     var qExp = 0
@@ -86,7 +86,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
                 if (sciExp > SCIENTIFIC_EXP_MAX) {
                     // overflow IEEE754-2008 7.4 Overflow page 37
                     if (roundingDirection.overflowsToInfinity(sign)) {
-                        super.coeffSetZero()
+                        super.coeffSetOne()
                         qExp = NON_FINITE_INF
                     } else {
                         magSetMaxFinite()
@@ -188,7 +188,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     }
 
     fun magSet(bd: BigDecimal, ctx: Decimal128Context) {
-        magSet(-bd.scale(), bd.unscaledValue(), ctx)
+        magSet(-bd.scale(), bd.unscaledValue().abs(), ctx)
     }
 
     fun magSet(x:Mag) {

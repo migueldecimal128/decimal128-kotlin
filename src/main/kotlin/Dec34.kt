@@ -26,7 +26,7 @@ open class Dec34() : Mag() {
     constructor(str: String): this(BigDecimal(str))
 
     fun set(bd: BigDecimal) {
-        magSet(bd)
+        magSet(bd.abs())
         this.sign = bd.signum() shr 31
     }
 

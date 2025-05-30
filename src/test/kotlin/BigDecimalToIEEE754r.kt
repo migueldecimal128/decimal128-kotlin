@@ -4,11 +4,23 @@ import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 
+private val INFINITY_SCALE = 1000000000
+private val INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
+private val QNAN_SCALE = 1000000001
+private val SNAN_SCALE = 1000000002
+private val MAX_FINITE =
+    BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
+private val MIN_FINITE = MAX_FINITE.negate()
+
 fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
+    val q = -bd.scale()
+    when {
+        q == INFINITY_SCALE -> return INFINITY_SURROGATE
+        q in QNAN_SCALE..SNAN_SCALE -> return bd
+    }
     if (bd.signum() == 0) {
-        val q = bd.scale()
-        val boundedQ = Math.max(Math.min(q, 6176), -6111)
-        val boundedZero = bd.setScale(boundedQ)
+        val boundedQ = Math.max(Math.min(q, 6111), -6176)
+        val boundedZero = bd.setScale(-boundedQ)
         return boundedZero
     }
     // Decimal128 constants
@@ -19,7 +31,6 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
 
     // Raw exponent and digit count
     val sign = bd.signum() < 0
-    val q       = -bd.scale()
     val p       = bd.precision()
     var e       = q + p - 1
     val excess  = Math.max(0, p - p34)
@@ -43,11 +54,9 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     // 1) Overflow ⇒ ±Infinity
     if (e > EMAX) {
         if (overflowsToInfinity(rm, sign))
-            return BigDecimal.ZERO.scaleByPowerOfTen(1000000)
+            return INFINITY_SURROGATE
         else {
-            val maxFinite = BigDecimal.ONE.
-            scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
-            return if (sign) maxFinite.negate() else maxFinite
+            return if (sign) MIN_FINITE else MAX_FINITE
         }
     }
 
@@ -83,9 +92,9 @@ fun bdIsFinite(bd: BigDecimal) : Boolean {
 
 fun bdToDecimal128String(bd: BigDecimal): String {
     val decimal128 = bdToIeeeDecimal128(bd, RoundingMode.HALF_EVEN)
-    val q = -bd.scale()
-    val magnitude = bd.unscaledValue()
-    val signChar = if (bd.signum() < 0) '-' else '+'
+    val q = -decimal128.scale()
+    val magnitude = decimal128.unscaledValue().abs()
+    val signChar = if (decimal128.signum() < 0) '-' else '+'
     return when {
         q < NON_FINITE_INF -> decimal128.toString()
         q == NON_FINITE_INF -> signChar + "Inf"
