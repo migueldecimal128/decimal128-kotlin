@@ -144,7 +144,7 @@ private const val BYTE_MINUS = '-'.code.toByte()
 
 object Dec34ParsePrint {
 
-    fun toString(x: Dec34) : String {
+    fun decToString(x: Dec34) : String {
         val bytes = ByteArray(MAX_DEC34_CHAR_LEN)
         val cb = decToChars(x, bytes, 0, MAX_DEC34_CHAR_LEN)
         return String(bytes, 0, cb, StandardCharsets.UTF_8)
@@ -229,5 +229,136 @@ object Dec34ParsePrint {
             return ib - off
         } while (false)
         throw RuntimeException("insufficient buffer space")
+    }
+
+    fun decFromString(x: Dec34, str: String, ctx: Decimal128Context) {
+        var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
+        var significantDigitCount = 0 // does not count leading zeros
+        var ichDot = -1
+        var ichExp = -1
+        var ichExpFirstSignificantDigit = -1 // strips leading zeros, but not the last one
+        var expSignificantDigitCount = 0
+
+        val strLen = str.length
+        var ich = 0
+        var ch: Char
+
+        var sign = 0
+        var fractionalDigitCount = 0
+        var coeff19 = 0L
+        var coeff34 = 0L
+        var guardDigit = 0
+        var stickyBits = 0
+        var expSign = 0
+        var exp = 0
+
+        invalid_syntax@
+        do {
+            no_more_chars@
+            do {
+                if (ich == strLen)
+                    break@no_more_chars
+                ch = str[ich++]
+                if (ch == '+' || ch == '-') {
+                    sign = if (ch == '-') 1 else 0
+                    if (ich == strLen)
+                        break@no_more_chars
+                    ch = str[ich++]
+                }
+                while (ch in '0'..'9' || ch == '.' || ch == '_') {
+                    when {
+                        ch in '0'..'9' -> {
+                            val n = ch - '0'
+                            significantDigitCount +=
+                                (-(n or significantDigitCount)) ushr 31
+                            ichFirstSignificantDigit = (
+                                    if ((ichFirstSignificantDigit or -significantDigitCount) < 0)
+                                        ich
+                                    else
+                                        ichFirstSignificantDigit
+                                    )
+                            if (significantDigitCount <= 19) {
+                                coeff19 = coeff19 * 10L + n
+                            } else if (significantDigitCount <= 34) {
+                                coeff34 = coeff34 * 10 + n
+                            } else if (significantDigitCount == 35) {
+                                guardDigit = n
+                            } else {
+                                stickyBits = stickyBits or n
+                            }
+                            if (ichDot >= 0)
+                                ++fractionalDigitCount
+                        }
+                        ch == '.' -> {
+                            if (ichDot >= 0)
+                                break@invalid_syntax
+                            ichDot = ich
+                        }
+                    }
+                    if (ich == strLen)
+                        break@no_more_chars
+                    ch = str[ich++]
+                }
+                if (ch == 'E' || ch == 'e') {
+                    ichExp = ich
+                    if (ich == strLen)
+                        break@no_more_chars
+                    ch = str[ich++]
+                    if (ch == '+' || ch == '-') {
+                        expSign = if (ch == '-') 1 else 0
+                        if (ich == strLen)
+                            break@no_more_chars
+                        ch = str[ich++]
+                    }
+                    while (ch in '0'..'9' || ch == '_') {
+                        if (ch in '0'..'9') {
+                            expSignificantDigitCount +=
+                                (('0' - ch) or -expSignificantDigitCount) ushr 31
+                            ichExpFirstSignificantDigit = (
+                                    if ((ichExpFirstSignificantDigit or -expSignificantDigitCount) < 0)
+                                        ich
+                                    else
+                                        ichExpFirstSignificantDigit
+                                    )
+                            exp = exp * 10 + (ch - '0')
+                        }
+                        if (ich == strLen)
+                            break@no_more_chars
+                        ch = str[ich++]
+                    }
+                }
+                // extraneous chars ... invalid syntax
+                break@invalid_syntax
+            } while (false)
+            // no more chars
+            if ((ichFirstSignificantDigit < 0) ||
+                (ichExp > 0 && ichExpFirstSignificantDigit < 0) ||
+                (expSignificantDigitCount > 9)
+                )
+                break@invalid_syntax
+            // we have at least one digit
+            val coeffDigitCount = Math.min(34, significantDigitCount)
+            x.coeffSet64(coeff19)
+            if (coeffDigitCount > 19) {
+                val pow10 = coeffDigitCount - 19
+                x.coeffMutateFmaPow10(pow10, coeff34)
+                }
+            x.sign = sign
+            val signedExp = (exp xor -expSign) + expSign
+            val integerDigitCount = significantDigitCount - fractionalDigitCount
+            val discardedIntegerDigitCount = Math.max(0, integerDigitCount - 34)
+            val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
+            x.qExp = qExp
+            if (((guardDigit or stickyBits) == 0) && (qExp >= Q_EXP_TINY) && (qExp <= Q_EXP_MAX))
+                return
+            val roundBit = if (guardDigit < 5) 0 else 1
+            val stickyBit = (-stickyBits) ushr 31
+            val residue = Residue.residueFrom(roundBit, stickyBit)
+            x.roundAndFinalize(residue, sign, ctx)
+            return
+        } while (false)
+        // invalid syntax
+        x.setNaN(NAN_INVALID_SYNTAX, ctx)
+        return
     }
 }

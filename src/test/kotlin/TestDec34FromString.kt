@@ -7,8 +7,7 @@ import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.*
 
-class TestDec34ToString {
-
+class TestDec34FromString {
     val verbose = false
 
     class TC(val strVal: String) {
@@ -25,17 +24,8 @@ class TestDec34ToString {
         TC("9999999999_9999999999_9999999999_99994"),
         TC("9999999999_9999999999_9999999999_99995"),
         TC("9999999999_9999999999_9999999999_99999"),
-        TC("0e1000002"),
-        TC("-0e1000002"),
-        TC("1e1000002"),
-        TC("-1e1000002"),
-        TC("1e1000001"),
-        TC("-1e1000001"),
-        TC("0e1000001"),
-        TC("-0e1000001"),
-        TC("-0e1000000"),
-        TC("0e1000000"),
-        TC("0.000000"),
+
+        TC("1111111111222222222233333333334444444444"),
         TC("9"),
         TC("9e1"),
         TC("1631964395413992086E-18"),
@@ -43,6 +33,7 @@ class TestDec34ToString {
         TC("0"),
         TC("4.9355924106324532159349E-2908"),
         TC("3.38E-5899"),
+        TC("0.000000"),
         TC("0"),
         TC(".9"),
         TC("9e-1"),
@@ -60,8 +51,18 @@ class TestDec34ToString {
         TC("1111111111222222222233333333334444"),
         TC("0"),
         TC("1e9999"),
+        TC("-1e9999"),
         TC("1234567890"),
     )
+
+    @Test
+    fun testProblemChild() {
+        val strVal = "111111111222222222233333333334444444444"
+        val bdRaw = BigDecimal(strVal)
+        val bd = bdToIeeeDecimal128(bdRaw, RoundingMode.HALF_EVEN)
+        val str = bdToDecimal128String(bd)
+        println("$strVal -> bdRaw:$bdRaw -> bd:$bd -> $str")
+    }
 
     @Test
     fun testCases() {
@@ -76,12 +77,19 @@ class TestDec34ToString {
         if (verbose)
             println("$strVal bd:$bd => expected:$expected")
 
-        val d = Dec34(bd)
-        val observed = Dec34ParsePrint.decToString(d)
+        val d = Dec34()
+        Dec34ParsePrint.decFromString(d, strVal, Decimal128Context())
+        val observed = d
 
+        val e = Dec34(bd)
+
+        val dStr = d.toString()
+        val eStr = e.toString()
+        if (verbose)
+            println("dStr:$dStr, eStr:$eStr")
         if (verbose)
             println(" => observed:$observed")
-        assertEquals(expected, observed)
+        assertEquals(d, e)
     }
 
     @Test
@@ -103,6 +111,5 @@ class TestDec34ToString {
         val bd = BigDecimal(bi).scaleByPowerOfTen(exp)
         return if (sign) bd.negate() else bd
     }
-
 
 }

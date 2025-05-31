@@ -5,17 +5,23 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 private val INFINITY_SCALE = 1000000000
-private val INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
+private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
+private val NEG_INFINITY_SURROGATE = POS_INFINITY_SURROGATE.negate()
 private val QNAN_SCALE = 1000000001
 private val SNAN_SCALE = 1000000002
 private val MAX_FINITE =
     BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
 private val MIN_FINITE = MAX_FINITE.negate()
 
+fun strToBdIeeeDecimal128(str: String, rm: RoundingMode): BigDecimal {
+    val noUnderscores = str.replace("_", "")
+    return bdToIeeeDecimal128(BigDecimal(noUnderscores), rm)
+}
+
 fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     val q = -bd.scale()
     when {
-        q == INFINITY_SCALE -> return INFINITY_SURROGATE
+        q == INFINITY_SCALE -> return if (bd.signum() < 0) NEG_INFINITY_SURROGATE else POS_INFINITY_SURROGATE
         q in QNAN_SCALE..SNAN_SCALE -> return bd
     }
     if (bd.signum() == 0) {
@@ -54,7 +60,7 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     // 1) Overflow ⇒ ±Infinity
     if (e > EMAX) {
         if (overflowsToInfinity(rm, sign))
-            return INFINITY_SURROGATE
+            return if (sign) NEG_INFINITY_SURROGATE else POS_INFINITY_SURROGATE
         else {
             return if (sign) MIN_FINITE else MAX_FINITE
         }

@@ -171,6 +171,14 @@ import java.lang.Math.unsignedMultiplyHigh
 }
 
 @Suppress("NOTHING_TO_INLINE")
+/*inline*/ fun sumU128U64(x1: Long, x0: Long, y0: Long) : Pair<Long, Long> {
+    val s0 = x0 + y0
+    val carry0 = if (compareUnsigned(s0, x0) < 0) 1L else 0L
+    val s1 = carry0 + x1
+    return s1 to s0
+}
+
+@Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val d0 = x0 - y0
     val borrow0 = if (compareUnsigned(x0, y0) < 0) 1L else 0L

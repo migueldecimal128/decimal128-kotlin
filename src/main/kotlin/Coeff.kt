@@ -12,6 +12,7 @@ import com.decimal128.CoeffCompare.coeffUnscaledCompare
 import com.decimal128.CoeffCompare.coeffUnscaledEQ
 import com.decimal128.CoeffDivide.coeffDiv
 import com.decimal128.CoeffDivide.coeffMod
+import com.decimal128.CoeffFma.coeffFmaPow10
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
@@ -130,6 +131,12 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffSetMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
 
     fun coeffSetFma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
+
+    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a: Coeff) = coeffFmaPow10(this, x, pow10, a)
+
+    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a: Long) = coeffFmaPow10(this, x, pow10, a)
+
+    fun coeffMutateFmaPow10(pow10: Int, a: Long) = coeffFmaPow10(this, this, pow10, a)
 
     fun coeffSetFms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
 

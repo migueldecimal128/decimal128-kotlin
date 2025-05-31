@@ -35,6 +35,11 @@ open class Dec34() : Mag() {
         this.sign = x.sign
     }
 
+    fun setZero() {
+        magSetZero()
+        this.sign = 0
+    }
+
     private fun setNaN(x: Dec34, y: Dec34, ctx: Decimal128Context) {
         val xQ = x.qExp
         val yQ = y.qExp
@@ -57,8 +62,15 @@ open class Dec34() : Mag() {
         //FIXME - see IEEE754r 6.2
     }
 
-    private fun setNaN(ctx: Decimal128Context) {
+    fun setNaN(ctx: Decimal128Context) {
         magSetZero()
+        qExp = NON_FINITE_QNAN
+        //FIXME - see IEEE754r 6.2
+    }
+
+    fun setNaN(payload: Int, ctx: Decimal128Context) {
+        sign = 0
+        coeffSet64(payload.toLong())
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -386,10 +398,7 @@ open class Dec34() : Mag() {
     }
 
     override fun toString() : String {
-        if (sign == 0)
-            return super.toString()
-        else
-            return "-" + super.toString()
+        return (if (sign == 0) '+' else '-') + super.toString()
     }
 
 }
