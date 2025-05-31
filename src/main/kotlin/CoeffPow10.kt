@@ -2,6 +2,7 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import java.lang.Long.numberOfLeadingZeros
+import java.lang.Math.unsignedMultiplyHigh
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
@@ -152,18 +153,21 @@ internal object CoeffPow10 {
 
     init {
         // initialize POW10
-        val pow10 = Coeff()
-        val ten = Coeff(10)
-        for (i in 0..<MAX_DIGIT_LEN) {
-            if (i == 0) pow10.coeffSet64(1L) else pow10.coeffSetMul(pow10, ten)
+        var pow10_64 = 0L
+        for (i in 0..<MIN_POW10_DIGIT_LEN_128) {
+            pow10_64 = if (i == 0) 1L else pow10_64 * 10L
+            val bitLen = 64 - numberOfLeadingZeros(pow10_64)
+            POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
+            POW10[i] = pow10_64
+        }
+        val pow10 = Coeff(pow10_64)
+        val ten = Coeff(10L)
+        for (i in POW10_64_COUNT..<MAX_DIGIT_LEN) {
+            pow10.coeffSetMul(pow10, ten)
             val bitLen = pow10.bitLen
             POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
             val pow10Offset = pow10Offset(i)
             when {
-                bitLen <= 64 -> {
-                    assert(i in 0..<MIN_POW10_DIGIT_LEN_128)
-                    POW10[pow10Offset + 0] = pow10.dw0
-                }
                 bitLen <= 128 -> {
                     assert(i in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
                     POW10[pow10Offset + 0] = pow10.dw0
