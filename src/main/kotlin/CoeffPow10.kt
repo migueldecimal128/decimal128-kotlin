@@ -229,6 +229,11 @@ internal object CoeffPow10 {
         return offset and mask
     }
 
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun calcMinDigitLenForBitLen(bitLen: Int): Int {
+        return (((bitLen - 1) * 1233) shr 12) + 1
+    }
+
     fun calcDigitLen64(dw0: Long) : Int {
         val bitLen = 64 - numberOfLeadingZeros(dw0)
         return calcDigitLen64(bitLen, dw0)
