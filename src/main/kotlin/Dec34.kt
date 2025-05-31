@@ -347,19 +347,6 @@ open class Dec34() : Mag() {
         }
     }
 
-    fun scaleB(x: Dec34, pow10: Int, ctx: Decimal128Context) {
-        set(x)
-        when {
-            qExp <= NON_FINITE_INF -> {
-                qExp += pow10 //FIXME ... check range on pow10
-                if (qExp > Q_EXP_MAX || qExp < Q_EXP_TINY)
-                roundAndFinalize(Residue.EXACT, sign, ctx)
-            }
-            x.qExp <= NON_FINITE_QNAN -> {}
-            else -> sNaNOperand()
-        }
-    }
-
     fun setScale(x: Dec34, pow10: Int, ctx: Decimal128Context) {
         set(x)
         if (qExp < NON_FINITE_INF) {
@@ -371,9 +358,29 @@ open class Dec34() : Mag() {
             sNaNOperand()
     }
 
-    fun quantum(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+    // IEEE754-2008 5.3.2
+    fun quantize(x: Dec34, y: Dec34, ctx: Decimal128Context) {
         val targetQ = y.qExp
         setScale(x, -targetQ, ctx)
+    }
+
+    // IEEE754-2008 5.3.3
+    fun scaleB(x: Dec34, pow10: Int, ctx: Decimal128Context) {
+        set(x)
+        when {
+            qExp <= NON_FINITE_INF -> {
+                qExp += pow10 //FIXME ... check range on pow10
+                if (qExp > Q_EXP_MAX || qExp < Q_EXP_TINY)
+                    roundAndFinalize(Residue.EXACT, sign, ctx)
+            }
+            x.qExp <= NON_FINITE_QNAN -> {}
+            else -> sNaNOperand()
+        }
+    }
+
+    // IEEE754-2008 5.3.3
+    fun logB(): Int {
+        return qExp
     }
 
     override fun equals(other: Any?) : Boolean {

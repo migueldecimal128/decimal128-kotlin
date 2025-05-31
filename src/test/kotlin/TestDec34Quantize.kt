@@ -3,7 +3,9 @@ package com.decimal128
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
-class TestDec34Quantum {
+class TestDec34Quantize {
+
+    val verbose = true
 
     class TC(val bdX: BigDecimal, val bdY: BigDecimal, val ctx: Decimal128Context) {
         constructor(strX: String, strY: String) :
@@ -31,14 +33,16 @@ class TestDec34Quantum {
         val bdY = tc.bdY
         val targetQ = tc.targetQ
         val expected = tc.expected
-        println("$bdX targetQ:$targetQ => expected:$expected")
+        if (verbose)
+            println("bdX:$bdX bdY:$bdY targetQ:$targetQ => expected:$expected")
 
         val d = Dec34()
         val e = Dec34()
         val f = Dec34()
         d.set(bdX)
         e.set(bdY)
-        f.quantum(d,e, tc.ctx)
-        println("f:$f")
+        f.quantize(d,e, tc.ctx)
+        if (verbose)
+            println("f:$f")
     }
 }
