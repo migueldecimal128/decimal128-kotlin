@@ -9,7 +9,6 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import java.math.BigDecimal
 
 open class Dec34() : Mag() {
-
     var sign = 0
 
     constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
@@ -76,7 +75,7 @@ open class Dec34() : Mag() {
     }
 
     private fun setInfinite(sign: Int) {
-        this.coeffSetZero()
+        this.coeffSetOne()
         this.qExp = NON_FINITE_INF
         this.sign = sign
     }
@@ -97,6 +96,7 @@ open class Dec34() : Mag() {
         return qExp <= NON_FINITE_INF
     }
 
+    // IEEE754-2008 5.4.1
     fun add(x: Dec34, y: Dec34, ctx: Decimal128Context) {
         val xQ = x.qExp
         val yQ = y.qExp
@@ -136,6 +136,7 @@ open class Dec34() : Mag() {
         }
     }
 
+    // IEEE754-2008 5.4.1
     fun sub(x: Dec34, y: Dec34, ctx: Decimal128Context) {
         val qX = x.qExp
         val qY = y.qExp
@@ -172,27 +173,57 @@ open class Dec34() : Mag() {
         }
     }
 
+    // IEEE754-2008 5.4.1
     fun mul(x: Dec34, y: Dec34, ctx: Decimal128Context) {
         val qX = x.qExp
         val qY = y.qExp
-        val resultSign = x.sign xor y.sign
-        val qMax = Math.max(qX, qY)
-        val qMin = Math.min(qX, qY)
+        val productSign = x.sign xor y.sign
+        val qMaxXY = Math.max(qX, qY)
+        val qMinXY = Math.min(qX, qY)
         when {
-            qMax == NON_FINITE_INF -> {
-                if (qMin != NON_FINITE_INF && (x.coeffIsZero() || y.coeffIsZero())) {
+            qMaxXY < NON_FINITE_INF -> {
+                this.magMul(x, y, productSign, ctx)
+                this.sign = productSign
+            }
+            qMaxXY == NON_FINITE_INF -> {
+                if (qMinXY != NON_FINITE_INF && (x.coeffIsZero() || y.coeffIsZero())) {
                     setNaN(ctx)
                 } else {
-                    setInfinite(resultSign)
+                    setInfinite(productSign)
                 }
             }
-            qMax >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
-            else -> {
-                this.magMul(x, y, resultSign, ctx)
-                this.sign = resultSign
+            else -> setNaN(x, y, ctx)
+        }
+    }
+
+    // IEEE754-2008 5.4.1
+    fun fma(x: Dec34, y: Dec34, a: Dec34, ctx: Decimal128Context) {
+        val qX = x.qExp
+        val qY = y.qExp
+        val qMaxXY = Math.max(qX, qY)
+        val qMinXY = Math.min(qX, qY)
+        val qA = a.qExp
+        val productSign = x.sign xor y.sign
+        if (a.sign == productSign) {
+            val qMaxXYA = Math.max(qMaxXY, qA)
+            when {
+                qMaxXYA < NON_FINITE_INF -> {
+                    this.magFma(x, y, a, productSign, ctx)
+                    this.sign = productSign
+                }
+                qMaxXY == NON_FINITE_INF -> {
+                    if (qMinXY != NON_FINITE_INF && (x.coeffIsZero() || y.coeffIsZero())) {
+                        setNaN(ctx)
+                    } else {
+                        setInfinite(productSign)
+                    }
+                }
+                else -> setNaN(x, y, ctx)
             }
         }
     }
+
+
 
     fun compareTo(x: Dec34, ctx: Decimal128Context) : Int {
         val qMax = Math.max(qExp, x.qExp)

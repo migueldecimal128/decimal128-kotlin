@@ -218,6 +218,11 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         roundAndFinalize(EXACT, sign, ctx)
     }
 
+    fun magFma(x: Mag, y: Mag, a: Mag, sign: Int, ctx: Decimal128Context) {
+        val residue = MagMul.magFma(this, x, y, a)
+        roundAndFinalize(residue, sign, ctx)
+    }
+
     fun magMutateScalePow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
         if (pow10 > 0)
             magMutateScaleUpPow10(pow10, sign, ctx)

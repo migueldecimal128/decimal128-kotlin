@@ -7,4 +7,11 @@ object MagMul {
         z.qExp = x.qExp + y.qExp
     }
 
+    fun magFma(z: Mag, x: Mag, y: Mag, a: Mag): Residue {
+        // check the scaled to see what will happen
+        // prob check in base 10
+
+        throw RuntimeException("fma not impl")
+    }
+
 }
