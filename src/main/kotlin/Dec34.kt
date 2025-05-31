@@ -179,14 +179,13 @@ open class Dec34() : Mag() {
         val qY = y.qExp
         val productSign = x.sign xor y.sign
         val qMaxXY = Math.max(qX, qY)
-        val qMinXY = Math.min(qX, qY)
         when {
             qMaxXY < NON_FINITE_INF -> {
                 this.magMul(x, y, productSign, ctx)
                 this.sign = productSign
             }
             qMaxXY == NON_FINITE_INF -> {
-                if (qMinXY != NON_FINITE_INF && (x.coeffIsZero() || y.coeffIsZero())) {
+                if (x.coeffIsZero() || y.coeffIsZero()) {
                     setNaN(ctx)
                 } else {
                     setInfinite(productSign)
@@ -201,7 +200,6 @@ open class Dec34() : Mag() {
         val qX = x.qExp
         val qY = y.qExp
         val qMaxXY = Math.max(qX, qY)
-        val qMinXY = Math.min(qX, qY)
         val qA = a.qExp
         val productSign = x.sign xor y.sign
         if (a.sign == productSign) {
@@ -212,7 +210,7 @@ open class Dec34() : Mag() {
                     this.sign = productSign
                 }
                 qMaxXY == NON_FINITE_INF -> {
-                    if (qMinXY != NON_FINITE_INF && (x.coeffIsZero() || y.coeffIsZero())) {
+                    if (x.coeffIsZero() || y.coeffIsZero()) {
                         setNaN(ctx)
                     } else {
                         setInfinite(productSign)

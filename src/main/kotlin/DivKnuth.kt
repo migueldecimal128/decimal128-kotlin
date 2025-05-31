@@ -10,6 +10,7 @@ import java.lang.Long.*
 
 object DivKnuth {
 
+    //FIXME - allocate temp space in a way that this thread-safe
     private val q = IntArray(8)
     private val vn = IntArray(9)
     private val un = IntArray(9)

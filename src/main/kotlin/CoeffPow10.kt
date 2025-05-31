@@ -244,7 +244,13 @@ internal object CoeffPow10 {
     }
 
     fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
-        val loDigitCount = (bitLen * 1233) shr 12
+        // this formula of
+        // ((bitLen * 1233) ushr 12)
+        // usually underestimates by 1
+        // it is simpler than (((bitLen - 1) * 1233) ushr 12) + 1
+        // more importantly, it avoids boundary condition issues
+        // for 128 and 192 bits where they cross from 2->3->4 limbs
+        val loDigitCount = (bitLen * 1233) ushr 12
         val hiDigitCount = loDigitCount + 1
         val pow10Offset = pow10Offset(loDigitCount)
         val p0 = POW10[pow10Offset + 0]
@@ -256,7 +262,7 @@ internal object CoeffPow10 {
     fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 64 -> {
-                val loDigitCount = Math.max((bitLen * 1233) shr 12, MIN_POW10_DIGIT_LEN_128)
+                val loDigitCount = Math.max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_128)
                 val hiDigitCount = loDigitCount + 1
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p1 = POW10[pow10Offset + 1]
@@ -274,7 +280,7 @@ internal object CoeffPow10 {
     fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 128 -> {
-                val loDigitCount = Math.max((bitLen * 1233) shr 12, MIN_POW10_DIGIT_LEN_192)
+                val loDigitCount = Math.max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
                 val hiDigitCount = loDigitCount + 1
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p2 = POW10[pow10Offset + 2]
@@ -296,7 +302,7 @@ internal object CoeffPow10 {
     fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 192 -> {
-                val loDigitCount = Math.max((bitLen * 1233) shr 12, MIN_POW10_DIGIT_LEN_256)
+                val loDigitCount = Math.max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_256)
                 val hiDigitCount = loDigitCount + 1
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p3 = POW10[pow10Offset + 3]
@@ -322,7 +328,7 @@ internal object CoeffPow10 {
     fun compareWithHalfPow10_64(bitLen: Int, dw0: Long): Int {
         // normal path with hi bit not set ... double dw0
         val dw0x2 = dw0 shl 1
-        val loDigitLen = ((bitLen * 1233) shr 12) and 0x1F
+        val loDigitLen = ((bitLen * 1233) ushr 12) and 0x1F
         val hiDigitLen = loDigitLen + 1
         val pow10LoDigitLen = POW10[loDigitLen]
         val pow10HiDigitLen = POW10[hiDigitLen]
@@ -357,7 +363,7 @@ internal object CoeffPow10 {
             val cmp = if (cmp1 != 0) cmp1 else cmp0
             return cmp
         }
-        val loDigitLen = (bitLen * 1233) shr 12
+        val loDigitLen = (bitLen * 1233) ushr 12
         val pow10Offset = pow10Offset(loDigitLen)
         val loPow10dw1 = POW10[pow10Offset + 1]
         val loPow10dw0 = POW10[pow10Offset + 0]
@@ -400,7 +406,7 @@ internal object CoeffPow10 {
             val cmp = cmp210
             return cmp
         }
-        val loDigitLen = (bitLen * 1233) shr 12
+        val loDigitLen = (bitLen * 1233) ushr 12
         val pow10Offset = pow10Offset(loDigitLen)
         val loPow10dw2 = POW10[pow10Offset + 2]
         val loPow10dw1 = POW10[pow10Offset + 1]
@@ -462,7 +468,7 @@ internal object CoeffPow10 {
             val cmp = cmp3210
             return cmp
         }
-        val loDigitLen = (bitLen * 1233) shr 12
+        val loDigitLen = (bitLen * 1233) ushr 12
         val pow10Offset = pow10Offset(loDigitLen)
         val loPow10dw3 = POW10[pow10Offset + 3]
         val loPow10dw2 = POW10[pow10Offset + 2]

@@ -16,10 +16,16 @@ fun getDigitCount(n: Int) : Int {
 @OptIn(ExperimentalUnsignedTypes::class)
 class TestCalcDigitCount64 {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun test() {
+        test1(8uL)
+        test1(16uL)
+        test1(32uL)
+        test1(64uL)
+        test1(128uL)
+        test1(10uL)
         test1(1uL)
         test1(0uL)
         test1(ULong.MAX_VALUE)

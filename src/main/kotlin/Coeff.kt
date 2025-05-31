@@ -58,6 +58,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffIsZero() = digitLen == 0
 
+    fun coeffIsNotZero() = digitLen > 0
+
     fun coeffSetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; bitLen = 1; digitLen = 1
     }
@@ -134,7 +136,9 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffSetFmaPow10(x: Coeff, pow10: Int, a: Coeff) = coeffFmaPow10(this, x, pow10, a)
 
-    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a: Long) = coeffFmaPow10(this, x, pow10, a)
+    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a0: Long) = coeffFmaPow10(this, x, pow10, a0)
+
+    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a1: Long, a0: Long) = coeffFmaPow10(this, x, pow10, a1, a0)
 
     fun coeffMutateFmaPow10(pow10: Int, a: Long) = coeffFmaPow10(this, this, pow10, a)
 

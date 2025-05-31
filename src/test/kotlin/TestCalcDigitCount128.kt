@@ -9,13 +9,18 @@ import java.util.*
 class TestCalcDigitCount128 {
 
     val cases = arrayOf(
-        "67427991645008806127",
+        BigInteger("334678433873271195939566733567406432026"),
+        BigInteger.ONE.shiftLeft(64),
+        BigInteger.ONE.shiftLeft(65),
+        BigInteger.ONE.shiftLeft(66),
+        BigInteger.ONE.shiftLeft(67),
+        BigInteger("67427991645008806127"),
         )
 
     @Test
     fun testCases() {
         for (case in cases) {
-            val bi = BigInteger(case)
+            val bi = case
             test1(bi)
         }
     }

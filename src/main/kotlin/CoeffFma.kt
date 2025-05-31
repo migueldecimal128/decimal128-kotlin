@@ -198,6 +198,120 @@ object CoeffFma {
         }
     }
 
+    fun coeffFmaPow10(z: Coeff, x: Coeff, pow10: Int, a1: Long, a0: Long) {
+        assert(pow10 >= 0)
+        assert(z.coeffHasValidLengths())
+        assert(x.coeffHasValidLengths())
+        val xBitLen = x.bitLen
+        val aBitLen = (
+                if (a1 == 0L)
+                    64 - java.lang.Long.numberOfLeadingZeros(a0)
+                else
+                    128 - java.lang.Long.numberOfLeadingZeros(a1)
+                )
+        val p10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
+        val p0 = POW10[pow10Offset + 0]
+        val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
+        val x0 = x.dw0
+        val x1 = x.dw1
+        val maxFusedBitLen = max(xBitLen + p10BitLen, aBitLen) + 1
+        if (maxFusedBitLen <= 128) {
+            val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
+            val (s1, s0) = sumU128(f1, f0, a1, a0)
+            z.coeffSet128(s1, s0)
+            return
+        }
+        if (p10BitLen <= 64) {
+            when {
+                (xBitLen <= 64) ->
+                    _fma1x1x2(z, maxFusedBitLen,
+                        x0,
+                        p0,
+                        a1, a0
+                    )
+                (xBitLen <= 128) ->
+                    _fma2x1x3(z, maxFusedBitLen,
+                        x1, x0,
+                        p0,
+                        0L, a1, a0
+                    )
+                (xBitLen <= 192) ->
+                    _fma3x1x4(z, maxFusedBitLen,
+                        x.dw2, x1, x0,
+                        p0,
+                        0L, 0L, a1, a0
+                    )
+                else ->
+                    _fma4x1x4(z, maxFusedBitLen,
+                        x.dw3, x.dw2, x1, x0,
+                        p0,
+                        0L, 0L, a1, a0)
+            }
+            return
+        }
+        if (p10BitLen <= 128) {
+            when {
+                (xBitLen <= 64) ->
+                    _fma2x1x3(
+                        z, maxFusedBitLen,
+                        p1, p0,
+                        x0,
+                        0L, a1, a0
+                    )
+                (xBitLen <= 128) ->
+                    _fma2x2x4(
+                        z, maxFusedBitLen,
+                        x1, x0,
+                        p1, p0,
+                        0L, 0L, a1, a0
+                    )
+                (xBitLen <= 192) ->
+                    _fma3x2x4(
+                        z, maxFusedBitLen,
+                        x.dw2, x1, x0,
+                        p1, p0,
+                        0L, 0L, a1, a0
+                    )
+                else ->  throw RuntimeException("coeff overflow")
+            }
+            return
+        }
+        val p2 = POW10[pow10Offset + 2]
+        if (p10BitLen <= 192) {
+            when {
+                (xBitLen <= 64) ->
+                    _fma3x1x4(
+                        z, maxFusedBitLen,
+                        p2, p1, p0,
+                        x0,
+                        0L, 0L, a1, a0
+                    )
+                (xBitLen <= 128) ->
+                    _fma3x2x4(
+                        z, maxFusedBitLen,
+                        p2, p1, p0,
+                        x1, x0,
+                        0L, 0L, a1, a0
+                    )
+                else -> throw RuntimeException("coeff overflow")
+            }
+            return
+        }
+        val p3 = POW10[pow10Offset + 3]
+        if (xBitLen <= 64) {
+            _fma4x1x4(
+                z, maxFusedBitLen,
+                p3, p2, p1, p0,
+                x0,
+                0L, 0L, a1, a0
+            )
+            return
+        } else {
+            throw RuntimeException("coeff overflow")
+        }
+    }
+
     fun coeffFmaPow10(z: Coeff, x: Coeff, pow10: Int, a0: Long) {
         assert(pow10 >= 0)
         assert(z.coeffHasValidLengths())
