@@ -110,21 +110,39 @@ open class Dec34() : Mag() {
     }
 
     // IEEE754-2008 5.4.1
-    fun add(x: Dec34, y: Dec34, ctx: Decimal128Context) {
-        val xQ = x.qExp
-        val yQ = y.qExp
+    fun add(x: Dec34, y: Dec34, ctx: Decimal128Context) = addImpl(x, y.sign, y, ctx)
+
+    // IEEE754-2008 5.4.1
+    fun sub(x: Dec34, y: Dec34, ctx: Decimal128Context) = addImpl(x, y.sign xor 1, y, ctx)
+
+    private fun addImpl(x: Dec34, ySign: Int, y: Dec34, ctx: Decimal128Context) {
+        val qX = x.qExp
+        val qY = y.qExp
         val xSign = x.sign
-        val ySign = y.sign
-        val maxQ = Math.max(xQ, yQ)
-        val minQ = Math.min(xQ, yQ)
+        val qMax = Math.max(qX, qY)
+        val qMin = Math.min(qX, qY)
         when {
-            maxQ == NON_FINITE_INF -> when {
+            qMax < NON_FINITE_INF -> when {
+                (xSign xor y.sign) == 0 -> {
+                    this.magAdd(x, y, xSign, ctx)
+                    this.sign = xSign
+                }
+                (x.magCompareTo(y) >= 0) -> {
+                    this.magSub(x, y, xSign, ctx)
+                    this.sign = xSign
+                }
+                else -> {
+                    this.magSub(y, x, ySign, ctx)
+                    this.sign = ySign
+                }
+            }
+            qMax == NON_FINITE_INF -> when {
                 (xSign == ySign) -> {
                     setInfinite(xSign)
-                    ctx.setInexact(minQ != NON_FINITE_INF)
+                    ctx.setInexact(qMin != NON_FINITE_INF)
                 }
-                minQ == NON_FINITE_INF -> setNaN(ctx)
-                xQ == NON_FINITE_INF -> {
+                qMin == NON_FINITE_INF -> setNaN(ctx)
+                qX == NON_FINITE_INF -> {
                     setInfinite(xSign)
                     ctx.setInexact()
                 }
@@ -133,55 +151,8 @@ open class Dec34() : Mag() {
                     ctx.setInexact()
                 }
             }
-            maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
-            (xSign xor y.sign) == 0 -> {
-                this.magAdd(x, y, xSign, ctx)
-                this.sign = xSign
-            }
-            (x.magCompareTo(y) >= 0) -> {
-                this.magSub(x, y, xSign, ctx)
-                this.sign = xSign
-            }
             else -> {
-                this.magSub(y, x, y.sign, ctx)
-                this.sign = y.sign
-            }
-        }
-    }
-
-    // IEEE754-2008 5.4.1
-    fun sub(x: Dec34, y: Dec34, ctx: Decimal128Context) {
-        val qX = x.qExp
-        val qY = y.qExp
-        val xSign = x.sign
-        val ySign = y.sign
-        val maxQ = Math.max(qX, qY)
-        val minQ = Math.min(qX, qY)
-        when {
-            maxQ == NON_FINITE_INF -> {
-                if (qX == NON_FINITE_INF) {
-                    if (qY != NON_FINITE_INF || xSign != ySign) {
-                        setInfinite(xSign)
-                        ctx.setInexact(qY != NON_FINITE_INF)
-                    } else {
-                        setNaN(ctx)
-                    }
-                } else {
-                    setInfinite(ySign xor 1)
-                }
-            }
-            maxQ >= NON_FINITE_QNAN -> setNaN(x, y, ctx)
-            (xSign xor y.sign) == 1 -> {
-                this.magAdd(x, y, xSign, ctx)
-                this.sign = xSign
-            }
-            (x.magCompareTo(y) >= 0) -> {
-                this.magSub(x, y, xSign, ctx)
-                this.sign = xSign
-            }
-            else -> {
-                this.magSub(y, x, y.sign, ctx)
-                this.sign = y.sign
+                setNaN(x, y, ctx)
             }
         }
     }
