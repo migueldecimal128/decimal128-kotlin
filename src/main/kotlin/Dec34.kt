@@ -41,6 +41,11 @@ open class Dec34() : Mag() {
         this.sign = 0
     }
 
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun capExponentRange(e: Int): Int {
+        return Math.min(Math.max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
+    }
+
     private fun setNaN(x: Dec34, y: Dec34, ctx: Decimal128Context) {
         val xQ = x.qExp
         val yQ = y.qExp
@@ -369,11 +374,12 @@ open class Dec34() : Mag() {
 
     fun setScale(x: Dec34, pow10: Int, ctx: Decimal128Context) {
         set(x)
+        val p10 = capExponentRange(pow10)
         if (qExp < NON_FINITE_INF) {
-            if (pow10 > 0)  //FIXME ... check range on pow10
-                magMutateScaleUpPow10(pow10, sign, ctx)
-            else if (pow10 < 0)
-                magMutateScaleDownPow10(-pow10, sign, ctx)
+            if (p10 > 0)
+                magMutateScaleUpPow10(p10, sign, ctx)
+            else if (p10 < 0)
+                magMutateScaleDownPow10(-p10, sign, ctx)
         } else if (qExp == NON_FINITE_SNAN)
             sNaNOperand()
     }
@@ -389,7 +395,8 @@ open class Dec34() : Mag() {
         set(x)
         when {
             qExp <= NON_FINITE_INF -> {
-                qExp += pow10 //FIXME ... check range on pow10
+                val p10 = capExponentRange(pow10)
+                qExp += p10
                 if (qExp > Q_EXP_MAX || qExp < Q_EXP_TINY)
                     roundAndFinalize(Residue.EXACT, sign, ctx)
             }
