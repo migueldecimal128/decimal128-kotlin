@@ -15,6 +15,9 @@ const val NON_FINITE_INF = 1000000000
 const val NON_FINITE_QNAN = 1000000001
 const val NON_FINITE_SNAN = 1000000002
 
+const val CAPPED_EXP_MIN = -13000
+const val CAPPED_EXP_MAX = 13000
+
 open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coeff() {
     var qExp = 0
     constructor(exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): this() {
