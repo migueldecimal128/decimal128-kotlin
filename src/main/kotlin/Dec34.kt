@@ -11,10 +11,10 @@ import java.math.BigDecimal
 open class Dec34() : Mag() {
     var sign = 0
 
-    constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
+    constructor(sign: Int, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
         this.coeffSet256(dw3, dw2, dw1, dw0)
         this.qExp = qExp
-        this.sign = if (sign) 1 else 0
+        this.sign = sign and 1
     }
 
     constructor(bd: BigDecimal): this() {
@@ -23,6 +23,8 @@ open class Dec34() : Mag() {
     }
 
     constructor(str: String): this(BigDecimal(str))
+
+    constructor(other: Dec34) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
 
     fun set(bd: BigDecimal) {
         magSet(bd.abs())
@@ -44,6 +46,17 @@ open class Dec34() : Mag() {
         val yQ = y.qExp
         val maxQ = Math.max(xQ, yQ)
         assert(maxQ >= NON_FINITE_QNAN)
+        magSetZero()
+        qExp = NON_FINITE_QNAN
+        //FIXME - see IEEE754r 6.2
+    }
+
+    private fun setNaN(x: Dec34, y: Dec34, a: Dec34, ctx: Decimal128Context) {
+        val qX = x.qExp
+        val qY = y.qExp
+        val qA = a.qExp
+        val qMaxXYA = Math.max(Math.max(qX, qY), qA)
+        assert(qMaxXYA >= NON_FINITE_QNAN)
         magSetZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
@@ -199,24 +212,31 @@ open class Dec34() : Mag() {
     fun fma(x: Dec34, y: Dec34, a: Dec34, ctx: Decimal128Context) {
         val qX = x.qExp
         val qY = y.qExp
-        val qMaxXY = Math.max(qX, qY)
         val qA = a.qExp
+        val qMaxXY = Math.max(qX, qY)
+        val qMaxXYA = Math.max(qMaxXY, qA)
         val productSign = x.sign xor y.sign
-        if (a.sign == productSign) {
-            val qMaxXYA = Math.max(qMaxXY, qA)
-            when {
-                qMaxXYA < NON_FINITE_INF -> {
-                    this.magFma(x, y, a, productSign, ctx)
-                    this.sign = productSign
+        when {
+            qMaxXYA < NON_FINITE_INF -> {
+                var aT = if (this === a) Dec34(a) else a
+                // multiply without roundAndFinalize .. remains exact
+                MagMul.magMul(this, x, y)
+                this.sign = productSign
+                this.add(this, aT, ctx)
+            }
+            qMaxXYA == NON_FINITE_INF -> when {
+                (x.coeffIsZero() || y.coeffIsZero()) -> {
+                    setNaN(ctx)
                 }
-                qMaxXY == NON_FINITE_INF -> {
-                    if (x.coeffIsZero() || y.coeffIsZero()) {
-                        setNaN(ctx)
-                    } else {
-                        setInfinite(productSign)
-                    }
+                (qA == NON_FINITE_INF) -> {
+                    if ((qMaxXY < NON_FINITE_INF) || (productSign == a.sign))
+                        this.set(a)
+                    else
+                        this.setNaN(ctx)
                 }
-                else -> setNaN(x, y, ctx)
+            }
+            else -> {
+                this.setNaN(x, y, ctx)
             }
         }
     }

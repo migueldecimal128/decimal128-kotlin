@@ -235,7 +235,12 @@ internal object CoeffPow10 {
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun calcMinDigitLenForBitLen(bitLen: Int): Int {
-        return (((bitLen - 1) * 1233) shr 12) + 1
+        return (((bitLen - 1) * 1233) ushr 12) + 1
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun calcMaxDigitLenForBitLen(bitLen: Int): Int {
+        return ((bitLen * 19729) ushr 16) + 1
     }
 
     fun calcDigitLen64(dw0: Long) : Int {
