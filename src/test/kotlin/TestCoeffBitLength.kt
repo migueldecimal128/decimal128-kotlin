@@ -16,6 +16,9 @@ class TestCoeffBitLength {
     }
 
     val cases = arrayOf(
+        TC("170141183460469231731687303715884105728"),
+        TC("9999999999999999999999999999999999999999999999999999999999"),
+        TC("37303532557864644374188297275281322713417"),
         TC("0"),
         TC("1"),
         TC(ONE.shiftLeft(64).subtract(ONE)),
@@ -87,6 +90,24 @@ class TestCoeffBitLength {
         if (expected != observed)
             println("$coeffA (${coeffA.digitLen}) observed:$observed bitLength expected:$expected")
         assertEquals(expected, observed)
-    }
 
+        val bitLen2 = calcBitLen256(coeffA.dw3, coeffA.dw2, coeffA.dw1, coeffA.dw0)
+        assertEquals(expected, bitLen2)
+
+        if (expected <= 192) {
+            val bitLen3 = calcBitLen192(coeffA.dw2, coeffA.dw1, coeffA.dw0)
+            assertEquals(expected, bitLen3)
+
+            if (expected <= 128) {
+                val bitLen4 = calcBitLen128(coeffA.dw1, coeffA.dw0)
+                assertEquals(expected, bitLen4)
+
+                if (expected <= 64) {
+                    val bitLen5 = calcBitLen64(coeffA.dw0)
+                    assertEquals(expected, bitLen5)
+
+                }
+            }
+        }
+    }
 }

@@ -13,6 +13,7 @@ import com.decimal128.CoeffCompare.coeffUnscaledEQ
 import com.decimal128.CoeffDivide.coeffDiv
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffFma.coeffFmaPow10
+import com.decimal128.CoeffPow10.calcDigitLen256
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
@@ -47,9 +48,9 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         private set
     var dw0 = d0
         private set
-    var bitLen = run { calcBitLen() }
+    var bitLen = calcBitLen256(d3, d2, d1, d0)
         private set
-    var digitLen = run { CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0) }
+    var digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
         private set
 
     fun coeffSetZero() {
@@ -82,14 +83,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
 
     private fun calcBitLen(): Int {
-        val bitLen3 = 64 - numberOfLeadingZeros(dw3)
-        val bitLen2 = 64 - numberOfLeadingZeros(dw2)
-        val bitLen1 = 64 - numberOfLeadingZeros(dw1)
-        val bitLen0 = 64 - numberOfLeadingZeros(dw0)
-        val bitLen10 = bitLen1 + if (bitLen1 == 0) bitLen0 else 64
-        val bitLen32 = bitLen3 + if (bitLen3 == 0) bitLen2 else 64
-        val bitLen3210 = bitLen32 + if (bitLen32 == 0) bitLen10 else 128
-        return bitLen3210
+        return calcBitLen256(dw3, dw2, dw1, dw0)
     }
 
     private fun calcDigitLen(): Int {
@@ -97,13 +91,13 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
             (bitLen <= 64) -> CoeffPow10.calcDigitLen64(bitLen, dw0)
             (bitLen <= 128) -> CoeffPow10.calcDigitLen128(bitLen, dw1, dw0)
             (bitLen <= 192) -> CoeffPow10.calcDigitLen192(bitLen, dw2, dw1, dw0)
-            else -> CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+            else -> calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
         }
     }
 
     private fun updateLengths() {
-        bitLen = calcBitLen()
-        digitLen = calcDigitLen()
+        bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
+        digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
     }
 
     //FIXME this case can probably be accelerated because
@@ -111,9 +105,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     private fun updateLengthsAfterRoundUp() = updateLengths()
 
     fun coeffHasValidLengths(): Boolean {
-        //if (bitLen != calcBitLen())
-        //    return false
-        if (digitLen != CoeffPow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
+        if (digitLen != calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
             return false;
         return true
     }
@@ -186,29 +178,29 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffSet64(d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
-        bitLen = calcBitLen()
+        bitLen = calcBitLen64(d0)
         digitLen = CoeffPow10.calcDigitLen64(bitLen, d0)
     }
 
     fun coeffSet128(d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
-        bitLen = calcBitLen()
+        bitLen = calcBitLen128(d1, d0)
         digitLen = CoeffPow10.calcDigitLen128(bitLen, d1, d0)
     }
 
     fun coeffSet192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen()
+        bitLen = calcBitLen192(d2, d1, d0)
         digitLen = CoeffPow10.calcDigitLen192(bitLen, d2, d1, d0)
     }
 
 
     fun coeffSet256(d3: Long, d2: Long, d1: Long, d0: Long){
         dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen()
-        digitLen = CoeffPow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
+        bitLen = calcBitLen256(d3, d2, d1, d0)
+        digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
     fun coeffSet(bi: BigInteger) {
