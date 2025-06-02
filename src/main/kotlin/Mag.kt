@@ -38,7 +38,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
 
     fun roundAndFinalize(inboundResidue: Residue, sign: Int, roundingDirection: RoundingDirection, ctx: Decimal128Context) {
         if (qExp < NON_FINITE_INF) {
-            if (super.digitLen != 0) {
+            if (super.bitLen != 0) {
                 var sciExp = qExp + (super.digitLen - 1)
                 // IEEE754-2008 7.5: detect tininess on the unrounded result
                 if (sciExp < SCIENTIFIC_EXP_MIN) {
@@ -210,10 +210,6 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         assert(a.magCompareTo(b) >= 0)
         val residue = MagAddSub.magSub(this, a, b)
         roundAndFinalize(residue, sign, ctx)
-        val z = this
-        val zDigitLen = z.digitLen
-        val zExp = z.qExp
-        val final = this
     }
 
     fun magMul(x: Mag, y: Mag, sign: Int, ctx: Decimal128Context) {

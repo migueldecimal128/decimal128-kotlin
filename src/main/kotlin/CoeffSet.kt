@@ -85,7 +85,7 @@ object CoeffSet {
     }
 
     fun coeffSetShiftRight(z: Coeff, x: Coeff, bitShift: Int) {
-        if (x.digitLen < MIN_POW10_DIGIT_LEN_128) {
+        if (x.bitLen <= 64) {
             val le63Mask = if (bitShift <= 63) -1L else 0L
             val r = (x.dw0 ushr bitShift) and le63Mask
             z.coeffSet64(r)

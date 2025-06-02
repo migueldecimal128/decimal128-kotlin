@@ -89,11 +89,11 @@ object CoeffDivide {
 
     fun coeffMod(z: Coeff, x: Coeff, y: Coeff) {
         assert(y.coeffIsGTOne())
-        if (x.digitLen < y.digitLen) {
+        if (x.bitLen < y.bitLen) {
             z.coeffSet(x)
             return
         }
-        if (x.digitLen == y.digitLen) {
+        if (x.bitLen == y.bitLen) {
             val cmp = coeffUnscaledCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)

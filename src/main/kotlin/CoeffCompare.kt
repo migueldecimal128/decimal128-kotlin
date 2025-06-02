@@ -38,12 +38,12 @@ object CoeffCompare {
     }
 
     fun coeffUnscaledEQ(x:Coeff, y:Coeff) : Boolean {
-        return ((x.digitLen - y.digitLen).toLong() or
+        return ((x.bitLen - y.bitLen).toLong() or
                 (x.dw0 - y.dw0) or (x.dw1 - y.dw1) or
                 (x.dw2 - y.dw2) or (x.dw3 - y.dw3)) == 0L
     }
 
-    fun coeffGTOne(x: Coeff) = x.digitLen > 1 || x.digitLen == 1 && x.dw0 != 1L
+    fun coeffGTOne(x: Coeff) = x.bitLen > 1
 
     fun coeffScaledCompare(x:Coeff, y:Coeff, pow10Delta: Int) : Int {
         val pow10BitLen = pow10BitLen(pow10Delta)
