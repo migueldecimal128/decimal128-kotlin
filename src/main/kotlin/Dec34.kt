@@ -155,16 +155,8 @@ open class Dec34() : Mag() {
         magSet(x)
     }
 
-    fun isInfinite() : Boolean {
-        return qExp == NON_FINITE_INF
-    }
-
     fun isNegative() : Boolean {
         return sign == 1
-    }
-
-    fun isFinite() : Boolean {
-        return qExp < NON_FINITE_INF
     }
 
     fun isNumber() : Boolean {
@@ -505,6 +497,21 @@ open class Dec34() : Mag() {
             else ->
                 negativeNormal
         }
+    }
+
+    fun isSignMinus() = sign == 1
+    fun isNormal() = qExp < NON_FINITE_INF && sciExp() >= -6143
+    fun isFinite() = qExp < NON_FINITE_INF
+    fun isZero() = qExp < NON_FINITE_INF && coeffIsZero()
+    fun isSubnormal() = qExp < NON_FINITE_INF && sciExp() < -6143
+    fun isInfinite() = qExp == NON_FINITE_INF
+    fun isNaN() = qExp in NON_FINITE_QNAN..NON_FINITE_SNAN
+    fun isSignaling() = qExp == NON_FINITE_SNAN
+    fun isCanonical() = true
+    fun radix() = 10
+
+    fun totalOrder(x: Dec34) {
+        throw RuntimeException("not impl")
     }
     // 5.7.3 Decimal operation
     fun sameQuantum(x: Dec34) = (this.qExp == x.qExp)
