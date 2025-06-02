@@ -6,7 +6,9 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.ValueClass.*
 import java.math.BigDecimal
+import java.math.BigInteger
 
 open class Dec34() : Mag() {
     var sign = 0
@@ -25,16 +27,6 @@ open class Dec34() : Mag() {
     constructor(str: String): this(BigDecimal(str))
 
     constructor(other: Dec34) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
-
-    fun set(bd: BigDecimal) {
-        magSet(bd.abs())
-        this.sign = bd.signum() shr 31
-    }
-
-    fun set(x: Dec34) {
-        magSet(x)
-        this.sign = x.sign
-    }
 
     fun setZero() {
         magSetZero()
@@ -96,6 +88,71 @@ open class Dec34() : Mag() {
         this.coeffSetOne()
         this.qExp = NON_FINITE_INF
         this.sign = sign
+    }
+
+    fun setInt(l: Long) {
+        this.qExp = 0
+        this.sign = (l ushr 63).toInt()
+        val mask = l shr 63
+        val abs = (l xor mask) - mask
+        coeffSet64(abs)
+    }
+
+    fun setUInt(ul: Long) {
+        this.qExp = 0
+        this.sign = 0
+        coeffSet64(ul)
+    }
+
+    fun set(bi: BigInteger) {
+        if (bi.bitLength() <= 256) {
+            this.qExp = 0
+            val sign = bi.signum() ushr 31
+            this.sign = sign
+            val biT = if (sign == 0) bi else bi.abs()
+            val d0 = biT.toLong()
+            val d1 = biT.shiftRight( 64).toLong()
+            val d2 = biT.shiftRight(128).toLong()
+            val d3 = biT.shiftRight(192).toLong()
+            coeffSet256(d3, d2, d1, d0)
+        }
+        val bd = BigDecimal(bi)
+        set(bd)
+    }
+
+    fun set(bd: BigDecimal) {
+        magSet(bd.abs())
+        this.sign = bd.signum() shr 31
+    }
+
+    fun set(x: Dec34) {
+        magSet(x)
+        this.sign = x.sign
+    }
+
+    fun copy(x: Dec34) = set(x)
+
+    fun setNegate(x: Dec34) {
+        set(x)
+        this.sign = this.sign xor 1
+    }
+
+    fun mutateNegate() {
+        this.sign = this.sign xor 1
+    }
+
+    fun setAbs(x: Dec34) {
+        set(x)
+        this.sign = 0
+    }
+
+    fun mutateAbs() {
+        this.sign = 0
+    }
+
+    fun copySign(x: Dec34, y: Dec34) {
+        this.sign = y.sign
+        magSet(x)
     }
 
     fun isInfinite() : Boolean {
@@ -430,6 +487,27 @@ open class Dec34() : Mag() {
         }
         return false
     }
+
+    // 5.7.2 General operations
+
+    fun valueClass(): ValueClass {
+        return when {
+            qExp == NON_FINITE_SNAN -> signalingNaN
+            qExp == NON_FINITE_QNAN -> quiteNaN
+            qExp == NON_FINITE_INF ->
+                return if (sign == 0) positiveInfinity else negativeInfinity
+            coeffIsZero() ->
+                return if (sign == 0) positiveZero else negativeZero
+            sciExp() < -6143 ->
+                return if (sign == 0) positiveSubnormal else negativeSubnormal
+            sign == 0 ->
+                return positiveNormal
+            else ->
+                negativeNormal
+        }
+    }
+    // 5.7.3 Decimal operation
+    fun sameQuantum(x: Dec34) = (this.qExp == x.qExp)
 
     override fun toString() : String {
         return (if (sign == 0) '+' else '-') + super.toString()
