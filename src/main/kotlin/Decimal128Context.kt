@@ -35,4 +35,7 @@ class Decimal128Context(val roundingDirection:RoundingDirection) {
     fun setInexact() { inexact = true }
     fun setInexact(inexact:Boolean) { this.inexact = this.inexact or inexact}
 
+    fun operandIsSignalingNaN(dec34: Dec34) {
+        //FIXME - throw exception here unless trap is masked off
+    }
 }

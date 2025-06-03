@@ -6,7 +6,7 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.ValueClass.*
+import com.decimal128.Class754.*
 import java.math.BigDecimal
 import java.math.BigInteger
 
@@ -84,7 +84,12 @@ open class Dec34() : Mag() {
         //FIXME - see IEEE754r 6.2
     }
 
-    private fun setInfinite(sign: Int) {
+    fun setSNaN(ctx: Decimal128Context) {
+        magSetZero()
+        qExp = NON_FINITE_SNAN
+    }
+
+    fun setInfinite(sign: Int) {
         this.coeffSetOne()
         this.qExp = NON_FINITE_INF
         this.sign = sign
@@ -459,6 +464,63 @@ open class Dec34() : Mag() {
         return qExp
     }
 
+    fun compareQuiet754(other: Dec34, ctx: Decimal128Context): Compare754Result =
+        compare754(other, false, ctx)
+
+    fun compareSignaling754(other: Dec34, ctx: Decimal128Context): Compare754Result =
+        compare754(other, true, ctx)
+
+    fun compare754(other: Dec34, isSignaling: Boolean, ctx: Decimal128Context): Compare754Result {
+        val qMax = Math.max(qExp, other.qExp)
+        return when {
+            qMax < NON_FINITE_INF -> when {
+                coeffIsZero() -> when {
+                    other.coeffIsZero() -> IEEE754_EQ
+                    (other.sign != 0) -> IEEE754_LT
+                    else -> IEEE754_GT
+                }
+
+                other.coeffIsZero() -> when {
+                    sign != 0 -> IEEE754_GT
+                    else -> IEEE754_LT
+                }
+
+                else -> {
+                    val cmp = magCompareTo(other)
+                    Compare754Result(cmp + 1)
+                }
+            }
+
+            qMax == NON_FINITE_INF -> when {
+                qExp == NON_FINITE_INF -> when {
+                    other.qExp == NON_FINITE_INF -> when {
+                        sign == other.sign -> IEEE754_EQ
+                        sign == 0 -> IEEE754_GT
+                        else -> IEEE754_LT
+                    }
+
+                    sign == 0 -> IEEE754_GT
+                    else -> IEEE754_LT
+                }
+
+                other.sign == 0 -> IEEE754_LT
+                else -> IEEE754_GT
+            }
+
+            !isSignaling && qMax == NON_FINITE_QNAN -> IEEE754_UNORDERED
+            else -> {
+                val guiltyParty = when {
+                    qExp == NON_FINITE_SNAN -> this
+                    other.qExp == NON_FINITE_SNAN -> other
+                    qExp == NON_FINITE_QNAN -> this
+                    else -> other
+                }
+                ctx.operandIsSignalingNaN(guiltyParty)
+                IEEE754_UNORDERED
+            }
+        }
+    }
+
     override fun equals(other: Any?) : Boolean {
         if (other is Dec34) {
             val qMax = Math.max(qExp, other.qExp)
@@ -482,7 +544,7 @@ open class Dec34() : Mag() {
 
     // 5.7.2 General operations
 
-    fun valueClass(): ValueClass {
+    fun valueClass(): Class754 {
         return when {
             qExp == NON_FINITE_SNAN -> signalingNaN
             qExp == NON_FINITE_QNAN -> quiteNaN

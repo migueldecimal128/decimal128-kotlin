@@ -1,6 +1,6 @@
 package com.decimal128
 
-enum class ValueClass {
+enum class Class754 {
     signalingNaN,
     quiteNaN,
     negativeInfinity,

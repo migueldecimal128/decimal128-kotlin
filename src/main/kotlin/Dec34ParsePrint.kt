@@ -231,6 +231,13 @@ object Dec34ParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
+    val lcInfinityStrings = arrayOf(
+        "inf", "infinity", "+inf", "+infinity", "-inf", "-infinity"
+    )
+    val lcNanStrings = arrayOf(
+        "nan", "qnan", "snan"
+    )
+
     fun decFromString(x: Dec34, str: String, ctx: Decimal128Context) {
         var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
         var significantDigitCount = 0 // does not count leading zeros
@@ -357,8 +364,11 @@ object Dec34ParsePrint {
             x.roundAndFinalize(residue, sign, ctx)
             return
         } while (false)
-        // invalid syntax
-        x.setNaN(NAN_INVALID_SYNTAX, ctx)
-        return
+        val lc = str.lowercase()
+        when (lc) {
+            in lcInfinityStrings -> x.setInfinite(if (lc[0] == '-') 1 else 0)
+            in lcNanStrings -> if (lc[0] == 's') x.setSNaN(ctx) else x.setNaN(ctx)
+            else -> x.setNaN(NAN_INVALID_SYNTAX, ctx)
+        }
     }
 }
