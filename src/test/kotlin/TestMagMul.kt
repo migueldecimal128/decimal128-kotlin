@@ -9,7 +9,7 @@ import java.util.*
 
 class TestMagMul {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: Decimal128Context) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
@@ -27,6 +27,7 @@ class TestMagMul {
     }
 
     val cases = arrayOf(
+        TC("1.2967505698781432914870320E-3651", "bdB:5.56450878649625E-2965"),
         TC("1", "0"),
         TC("1", "0e-6176"),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),

@@ -52,6 +52,18 @@ value class RoundingDirection private constructor(val value:Int) {
         return toInfinity
     }
 
+    fun underflowsToZero(sign: Int): Boolean {
+        val toZero = when (this.value) {
+            ROUND_TIES_TO_EVEN.value -> true
+            ROUND_TIES_TO_AWAY.value -> true
+            ROUND_TOWARD_ZERO.value -> true
+            ROUND_TOWARD_POSITIVE.value -> sign != 0
+            ROUND_TOWARD_NEGATIVE.value -> sign == 0
+            else -> throw RuntimeException("unrecognized RoundingDirection value:$value")
+        }
+        return toZero
+    }
+
     override fun toString() = TO_STRING_MAP[value]
 
 }

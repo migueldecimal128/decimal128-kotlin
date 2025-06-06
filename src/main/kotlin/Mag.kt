@@ -128,9 +128,15 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
                     return
                 }
 
-                // underflow to zero
-                super.coeffSetZero()
+                // underflow ... swamped non-zero value
+                if (roundingDirection.underflowsToZero(sign)) {
+                    super.coeffSetZero()
+                    qExp = NON_FINITE_INF
+                } else {
+                    magSetMinFinite()
+                }
                 qExp = Q_EXP_TINY
+                ctx.setUnderflow()
                 ctx.setInexact()
                 return
             }

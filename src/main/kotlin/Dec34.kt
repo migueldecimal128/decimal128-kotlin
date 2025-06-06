@@ -44,6 +44,10 @@ open class Dec34() : Mag() {
         val maxQ = Math.max(xQ, yQ)
         assert(maxQ >= NON_FINITE_QNAN)
         magSetZero()
+        if (maxQ == NON_FINITE_SNAN) {
+            ctx.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
+            ctx.setInvalid()
+        }
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -182,7 +186,7 @@ open class Dec34() : Mag() {
         val qMin = Math.min(qX, qY)
         when {
             qMax < NON_FINITE_INF -> when {
-                (xSign xor y.sign) == 0 -> {
+                (xSign xor ySign) == 0 -> {
                     this.magAdd(x, y, xSign, ctx)
                     this.sign = xSign
                 }
@@ -198,16 +202,16 @@ open class Dec34() : Mag() {
             qMax == NON_FINITE_INF -> when {
                 (xSign == ySign) -> {
                     setInfinite(xSign)
-                    ctx.setInexact(qMin != NON_FINITE_INF)
                 }
-                qMin == NON_FINITE_INF -> setNaN(ctx)
+                qMin == NON_FINITE_INF -> {
+                    ctx.setInvalid()
+                    setNaN(ctx)
+                }
                 qX == NON_FINITE_INF -> {
                     setInfinite(xSign)
-                    ctx.setInexact()
                 }
                 else -> {
                     setInfinite(ySign)
-                    ctx.setInexact()
                 }
             }
             else -> {
@@ -229,6 +233,7 @@ open class Dec34() : Mag() {
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.coeffIsZero() || y.coeffIsZero()) {
+                    ctx.setInvalid()
                     setNaN(ctx)
                 } else {
                     setInfinite(productSign)
