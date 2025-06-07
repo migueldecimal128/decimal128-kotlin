@@ -6,6 +6,8 @@ import com.decimal128.CoeffSet.coeffSet
 import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
+import com.decimal128.Residue.Companion.HALF
+import com.decimal128.Residue.Companion.LT_HALF
 import java.lang.Long.*
 
 object DivKnuth {
@@ -29,11 +31,7 @@ object DivKnuth {
         un[7] = (x.dw3 ushr 32).toInt()
         un[8] = 0
 
-        var unNonZeroLen = 8
-        while (unNonZeroLen > 0 && un[unNonZeroLen - 1] == 0) {
-            --unNonZeroLen
-        }
-        val m = unNonZeroLen
+        val m = ((x.bitLen - 1) ushr 5) + 1
 
         vn[0] = y.dw0.toInt()
         vn[1] = (y.dw0 ushr 32).toInt()
@@ -44,11 +42,8 @@ object DivKnuth {
         vn[6] = y.dw3.toInt()
         vn[7] = (y.dw3 ushr 32).toInt()
 
-        var vnNonZeroIndex = 8
-        var vnNonZeroVal = 0
-        while (vnNonZeroVal == 0 && --vnNonZeroIndex >= 0) {
-            vnNonZeroVal = vn[vnNonZeroIndex]
-        }
+        val vnNonZeroIndex = ((y.bitLen - 1) ushr 5)
+        val vnNonZeroVal = vn[vnNonZeroIndex]
         val n = vnNonZeroIndex + 1
         val s = Integer.numberOfLeadingZeros(vnNonZeroVal)
 
@@ -74,17 +69,22 @@ object DivKnuth {
             return EXACT
         }
 
+        // shifting right by s will denormalize to normal remainder
+        // I will shift right by s-1
+        // this will give me 2*remainder that I can compare with y
         val residue =
-            if (s == 0 && un[n - 1] < 0) {
+            if (un[n - 1] < 0) {
                 // msb of remainder is set ... doubling it will make it bigger than the divisor
                 GT_HALF
             } else {
                 if (s == 0) {
+                    // note that this is shifting LEFT to double the remainder
                     for (i in n - 1 downTo 1) {
                         un[i] = (un[i] shl 1) or (un[i - 1] ushr -1)
                     }
                     un[0] = un[0] shl 1
                 } else {
+
                     val s1 = s - 1
                     if (s1 > 0) {
                         for (i in 0 until n - 1) {
@@ -93,9 +93,10 @@ object DivKnuth {
                         un[n - 1] = un[n - 1] ushr s1
                     }
                 }
+                // note that this compare is reversed ... y compare 2*remainder
                 val cmp = coeffUnscaledCompare(y, un)
-                if (cmp < 0)
-                    Residue.LT_HALF
+                if (cmp > 0)
+                    LT_HALF
                 else if (cmp == 0)
                     Residue.HALF
                 else
@@ -105,6 +106,61 @@ object DivKnuth {
         return residue
     }
 
+    fun knuthDivideWrapperx64(z: Coeff, x: Coeff, y0: Long, wantRemainder: Boolean): Residue {
+        assert((y0 ushr 32) != 0L)
+        assert(x.bitLen > 64)
+
+        un[0] = x.dw0.toInt()
+        un[1] = (x.dw0 ushr 32).toInt()
+        un[2] = x.dw1.toInt()
+        un[3] = (x.dw1 ushr 32).toInt()
+        un[4] = x.dw2.toInt()
+        un[5] = (x.dw2 ushr 32).toInt()
+        un[6] = x.dw3.toInt()
+        un[7] = (x.dw3 ushr 32).toInt()
+        un[8] = 0
+
+        val m = ((x.bitLen - 1) ushr 5) + 1
+
+        val s = numberOfLeadingZeros(y0)
+        val y0Normalized = y0 shl s
+
+        vn[0] = y0Normalized.toInt()
+        vn[1] = (y0Normalized ushr 32).toInt()
+        //val n = 2
+
+        if (s != 0) {
+            un[m] = un[m - 1] ushr -s
+            for (i in m - 1 downTo 1) {
+                un[i] = (un[i] shl s) or (un[i - 1] ushr -s)
+            }
+            un[0] = un[0] shl s
+        }
+
+        q.fill(0)
+
+        knuthDivideCore(m, 2)
+
+        val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
+        val remainder = remainderNormalized ushr s
+        if (wantRemainder) {
+            z.coeffSet64(remainder)
+            return EXACT
+        }
+
+        val residue = when {
+                remainder < 0 -> {
+                    assert(compareUnsigned(remainder, y0) < 0)
+                    // msb of remainder is set ... doubling it will make it bigger than the divisor
+                    GT_HALF
+                }
+                compareUnsigned(2 * remainder, y0) < 0 -> LT_HALF
+                2 * remainder == y0 -> HALF
+                else -> GT_HALF
+            }
+        coeffSet(z, q, m)
+        return residue
+    }
 
     /**
      * Multi‐word division (Knuth’s Algorithm D) in base 2^32.

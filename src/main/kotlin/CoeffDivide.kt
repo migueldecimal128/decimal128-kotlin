@@ -8,6 +8,7 @@ import com.decimal128.Residue.Companion.HALF
 import com.decimal128.Residue.Companion.LT_HALF
 import java.lang.Long.*
 
+@Suppress("NOTHING_TO_INLINE")
 private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
     return ((v[i] shl shift) or ((v[i - (-i ushr 31)] ushr -shift) and (-shift shr 31))).toLong() and MASK32
     //if (i == 0) {
@@ -18,44 +19,53 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
 
 object CoeffDivide {
 
-    fun coeffDiv(z: Coeff, x: Coeff, y: Coeff): Residue {
-        if (y.bitLen < 64) {
-            val y0 = y.dw0
-            if (y.bitLen <= 1) {
-                if (y.bitLen == 0)
-                    throw RuntimeException("div by zero")
-                z.coeffSet(x)
-                return EXACT
-            }
-            val x0 = x.dw0
-            if (x.bitLen < 64) {
-                val quot = x0 / y0
-                val rem = x0 % y0
-                val residue = when {
-                    rem == 0L -> EXACT
-                    compareUnsigned(2 * rem, y0) < 0 -> LT_HALF // we are doubling the remainder here
-                    2 * rem == y0 -> HALF   // so make sure divisor is small enough
-                    else -> GT_HALF
-                }
-                z.coeffSet64(quot)
-                return residue
-            }
-            if ((y0 and (y0 - 1)) == 0L) {
-                // y0 is an exact power of 2 ... just shift right.
-                // 0 and 1 cases handled above, so if we are here then ntz >= 1
-                val ntz = numberOfTrailingZeros(y0)
-                val mask = (1L shl ntz) - 1L
-                val rem = x0 and mask
-                val residue = when {
-                    rem == 0L -> EXACT
-                    2 * rem < y0 -> LT_HALF
-                    2 * rem == y0 -> HALF
-                    else -> GT_HALF
-                }
-                coeffSetShiftRight(z, x, ntz)
-                return residue
-            }
+    fun coeffDivx64(z: Coeff, x: Coeff, y0: Long): Residue {
+        if ((y0 shr 1) == 0L) {
+            if (y0 == 0L)
+                throw RuntimeException("div by zero")
+            z.coeffSet(x)
+            return EXACT
         }
+        val x0 = x.dw0
+        if (x.bitLen <= 64) {
+            val quot = divideUnsigned(x0, y0)
+            val rem = remainderUnsigned(x0, y0)
+            val residue = when {
+                rem == 0L -> EXACT
+                rem < 0L -> GT_HALF // hi bit set .. so doubling would be 65 bits ... GT y0
+                compareUnsigned(2 * rem, y0) < 0 -> LT_HALF // we are doubling the remainder here
+                2 * rem == y0 -> HALF   // so make sure divisor is small enough
+                else -> GT_HALF
+            }
+            z.coeffSet64(quot)
+            return residue
+        }
+        if ((y0 and (y0 - 1)) == 0L) {
+            // y0 is an exact power of 2 ... just shift right.
+            // 0 and 1 cases handled above, so if we are here then ntz >= 1
+            val ntz = numberOfTrailingZeros(y0)
+            val mask = (1L shl ntz) - 1L
+            val rem = x0 and mask
+            val residue = when {
+                rem == 0L -> EXACT
+                2 * rem < y0 -> LT_HALF
+                2 * rem == y0 -> HALF
+                else -> GT_HALF
+            }
+            coeffSetShiftRight(z, x, ntz)
+            return residue
+        }
+        //TODO at this point I know that x.bitLen >= y.bitLen and x > y
+        // if (bitLenDelta < some-small-number) then I should use repeated subtraction
+        if ((y0 ushr 32) == 0L) {
+            return DivDirect.divx32(z, x, y0)
+        }
+        return DivKnuth.knuthDivideWrapperx64(z, x, y0, false)
+    }
+
+    fun coeffDiv(z: Coeff, x: Coeff, y: Coeff): Residue {
+        if (y.bitLen <= 64)
+            return coeffDivx64(z, x, y.dw0)
         val bitLenDelta = x.bitLen - y.bitLen
         if (bitLenDelta < 0) {
             val residue = when {
@@ -81,9 +91,6 @@ object CoeffDivide {
         assert(bitLenDelta >= 0)
         //TODO at this point I know that x.bitLen >= y.bitLen and x > y
         // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-        if (y.bitLen <= 32) {
-            return DivDirect.divx32(z, x, y.dw0)
-        }
         return DivKnuth.knuthDivideWrapper(z, x, y, false)
     }
 

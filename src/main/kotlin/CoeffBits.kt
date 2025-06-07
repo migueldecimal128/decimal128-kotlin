@@ -1,7 +1,6 @@
 package com.decimal128
 
-import java.lang.Long.numberOfLeadingZeros
-import java.lang.Long.numberOfTrailingZeros
+import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen64(dw0: Long): Int {
@@ -48,6 +47,11 @@ inline fun calcBitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
     return bitLen
 }
 
+private const val MASK_BITS_0_MOD_4 = 0x1111111111111111L
+private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
+private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
+private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
+
 object CoeffBits {
 
     fun numberOfTrailingZeros(x: Coeff): Int {
@@ -73,4 +77,83 @@ object CoeffBits {
             else -> 0L
         }
     }
+
+    fun isMultipleOfFive_64(dw0: Long): Boolean {
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw0 and m0)
+        val count1 = bitCount(dw0 and m1)
+        val count2 = bitCount(dw0 and m2)
+        val count3 = bitCount(dw0 and m3)
+
+        val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
+        val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
+        return ret
+    }
+
+    fun isMultipleOfFive_128(dw1:Long, dw0: Long): Boolean {
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw1 and m0) + bitCount(dw0 and m0)
+        val count1 = bitCount(dw1 and m1) + bitCount(dw0 and m1)
+        val count2 = bitCount(dw1 and m2) + bitCount(dw0 and m2)
+        val count3 = bitCount(dw1 and m3) + bitCount(dw0 and m3)
+
+        val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
+        val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
+        return ret
+    }
+
+    fun isMultipleOfFive_192(dw2: Long, dw1:Long, dw0: Long): Boolean {
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw2 and m0) + bitCount(dw1 and m0) + bitCount(dw0 and m0)
+        val count1 = bitCount(dw2 and m1) + bitCount(dw1 and m1) + bitCount(dw0 and m1)
+        val count2 = bitCount(dw2 and m2) + bitCount(dw1 and m2) + bitCount(dw0 and m2)
+        val count3 = bitCount(dw2 and m3) + bitCount(dw1 and m3) + bitCount(dw0 and m3)
+
+        val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
+        val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
+        return ret
+    }
+
+    fun isMultipleOfFive_256(dw3:Long, dw2: Long, dw1:Long, dw0: Long): Boolean {
+        val m0 = MASK_BITS_0_MOD_4
+        val m1 = MASK_BITS_1_MOD_4
+        val m2 = MASK_BITS_2_MOD_4
+        val m3 = MASK_BITS_3_MOD_4
+
+        val count0 = bitCount(dw3 and m0) + bitCount(dw2 and m0) +
+                bitCount(dw1 and m0) + bitCount(dw0 and m0)
+        val count1 = bitCount(dw3 and m1) + bitCount(dw2 and m1) +
+                bitCount(dw1 and m1) + bitCount(dw0 and m1)
+        val count2 = bitCount(dw3 and m2) + bitCount(dw2 and m2) +
+                bitCount(dw1 and m2) + bitCount(dw0 and m2)
+        val count3 = bitCount(dw3 and m3) + bitCount(dw2 and m3) +
+                bitCount(dw1 and m3) + bitCount(dw0 and m3)
+
+        val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
+        val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
+        return ret
+    }
+
+    fun coeffIsMultipleOf5(x: Coeff): Boolean {
+        val bitLen = x.bitLen
+        return when {
+            bitLen <=  64 -> isMultipleOfFive_64(x.dw0)
+            bitLen <= 128 -> isMultipleOfFive_128(x.dw1, x.dw0)
+            bitLen <= 192 -> isMultipleOfFive_192(x.dw2, x.dw1, x.dw0)
+            else -> isMultipleOfFive_256(x.dw3, x.dw2, x.dw1, x.dw0)
+        }
+    }
+
 }

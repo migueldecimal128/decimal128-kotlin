@@ -4,14 +4,23 @@ import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 
-private val INFINITY_SCALE = 1000000000
+private const val P34       = 34
+private const val EMIN      = -6143
+private const val EMAX      =  6144
+private const val ETINY     = EMIN - (P34 - 1)            // -6176
+
+private const val INFINITY_SCALE = 1000000000
 private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
 private val NEG_INFINITY_SURROGATE = POS_INFINITY_SURROGATE.negate()
-private val QNAN_SCALE = 1000000001
-private val SNAN_SCALE = 1000000002
+private const val QNAN_SCALE = 1000000001
+private const val SNAN_SCALE = 1000000002
 private val MAX_FINITE =
     BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
-private val MIN_FINITE = MAX_FINITE.negate()
+private val NEG_MAX_FINITE = MAX_FINITE.negate()
+private val MIN_FINITE = BigDecimal.ONE.scaleByPowerOfTen(ETINY)
+private val NEG_MIN_FINITE = MIN_FINITE.negate()
+private val ZERO_TINY = BigDecimal.ZERO.scaleByPowerOfTen(ETINY)
+private val NEG_ZERO_TINY = ZERO_TINY.negate()
 
 fun strToBdIeeeDecimal128(str: String, rm: RoundingMode): BigDecimal {
     val noUnderscores = str.replace("_", "")
@@ -31,9 +40,6 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     }
     // Decimal128 constants
     val p34       = MathContext.DECIMAL128.precision  // 34
-    val EMIN      = -6143
-    val EMAX      =  6144
-    val ETINY     = EMIN - (p34 - 1)            // -6176
 
     // Raw exponent and digit count
     val sign = bd.signum() < 0
@@ -62,7 +68,7 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
         if (overflowsToInfinity(rm, sign))
             return if (sign) NEG_INFINITY_SURROGATE else POS_INFINITY_SURROGATE
         else {
-            return if (sign) MIN_FINITE else MAX_FINITE
+            return if (sign) NEG_MAX_FINITE else MAX_FINITE
         }
     }
 
@@ -75,8 +81,11 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     }
 
     // 4) Underflow to zero
-    val zeroTiny = BigDecimal.ZERO.scaleByPowerOfTen(ETINY)
-    return if (bd.signum() < 0) zeroTiny.negate() else zeroTiny
+    if (underflowsToZero(rm, sign)) {
+        return if (bd.signum() < 0) NEG_ZERO_TINY else ZERO_TINY
+    } else {
+        return if (bd.signum() < 0) NEG_MIN_FINITE else MIN_FINITE
+    }
 }
 
 private fun overflowsToInfinity(rm: RoundingMode, sign: Boolean): Boolean {
@@ -89,6 +98,18 @@ private fun overflowsToInfinity(rm: RoundingMode, sign: Boolean): Boolean {
         else -> throw RuntimeException("unrecognized RoundingMode:$rm")
     }
     return toInfinity
+}
+
+private fun underflowsToZero(rm: RoundingMode, sign: Boolean): Boolean {
+    val toZero = when (rm) {
+        RoundingMode.HALF_EVEN -> true
+        RoundingMode.HALF_UP -> true
+        RoundingMode.DOWN -> true
+        RoundingMode.CEILING -> sign
+        RoundingMode.FLOOR -> ! sign
+        else -> throw RuntimeException("unrecognized RoundingMode:$rm")
+    }
+    return toZero
 }
 
 fun bdIsFinite(bd: BigDecimal) : Boolean {

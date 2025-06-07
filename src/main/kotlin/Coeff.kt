@@ -11,13 +11,13 @@ import com.decimal128.CoeffSet.coeffSetShiftRight
 import com.decimal128.CoeffCompare.coeffUnscaledCompare
 import com.decimal128.CoeffCompare.coeffUnscaledEQ
 import com.decimal128.CoeffDivide.coeffDiv
+import com.decimal128.CoeffDivide.coeffDivx64
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffFma.coeffFmaPow10
 import com.decimal128.CoeffPow10.calcDigitLen256
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
-import java.lang.Long.numberOfLeadingZeros
 
 const val PRECISION_34 = 34
 
@@ -75,6 +75,14 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffIsLEOne() = bitLen <= 1
 
     fun coeffIsGTOne() = bitLen > 1
+
+    fun coeffIsMultipleOf5() = CoeffBits.coeffIsMultipleOf5(this)
+
+    fun coeffIsMultipleOf10(): Boolean {
+        if (bitLen < 4 || (dw0 and 1) != 0L)
+            return false
+        return coeffIsMultipleOf5()
+    }
 
     fun coeffIsPow10() = CoeffPow10.coeffIsPow10(this)
 
@@ -137,6 +145,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffSetFms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
 
     fun coeffSetDiv(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
+
+    fun coeffSetDivx64(x: Coeff, y0: Long) = coeffDivx64(this, x, y0)
 
     fun coeffSetMod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
 
