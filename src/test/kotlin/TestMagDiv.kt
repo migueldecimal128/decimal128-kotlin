@@ -11,7 +11,7 @@ import java.util.*
 
 class TestMagDiv {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: Decimal128Context) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
@@ -25,11 +25,14 @@ class TestMagDiv {
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
         val bdBIsFinite = bdIsFinite(bdB)
-        val bdDiv = bdA.divide(bdB, MathContext(36, rm))
+        val bdDiv = bdA.divide(bdB, MathContext(40, rm))
         val bdP = bdToIeeeDecimal128(bdDiv, rm)
     }
 
     val cases = arrayOf(
+        TC("0E+4519", "4.14999526830484824E+2722"),
+        TC("2.7710284E-1295", "2.912E-5964"),
+        TC("3.4648355837009412658250388928553E-289", "1.432458417443E-546"),
         TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", RoundingDirection.ROUND_TOWARD_POSITIVE),
         TC("1.221824056626775696489E-5049", "6.4667951153346922410790519767E-4095", RoundingDirection.ROUND_TIES_TO_AWAY),
         TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.ROUND_TIES_TO_EVEN),
@@ -46,16 +49,7 @@ class TestMagDiv {
 
     @Test
     fun testProblemChild() {
-        //FIXME - the problem is this
-        // I have stripped off trailing zeros before rounding
-        // ROUND_TOWARD_POSITIVE == CEILING
-        // I stripped off a zero that should have become a 1
-        // If the last zero had remained behind, then I would have been OK
-        // I think this says that if roundingDirection.roundUp()
-        // then stop stripping zeros at 34 digits?
-        // Expected :3349916004957623421475058406806671
-        // Actual   :334991600495762342147505840680668
-        val tc = TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", RoundingDirection.ROUND_TOWARD_POSITIVE)
+        val tc =        TC("0E+4519", "4.14999526830484824E+2722")
         test1(tc)
     }
 
