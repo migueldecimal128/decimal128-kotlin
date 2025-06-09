@@ -1,4 +1,8 @@
 package com.decimal128
+
+import java.lang.Long.numberOfTrailingZeros
+import java.lang.Math.unsignedMultiplyHigh
+
 object MagDiv {
 
     fun magDiv(z: Mag, x: Mag, y: Mag): Residue {
@@ -14,8 +18,40 @@ object MagDiv {
             }
             val qPreferred = x.qExp - y.qExp
             var qZ = x.qExp - y.qExp - numeratorScale
-            if (residue == Residue.EXACT) {
-                while (qZ < qPreferred && z.coeffIsMultipleOf10()) {
+            var ntz = numberOfTrailingZeros(z.dw0)
+            if (residue == Residue.EXACT && qZ < qPreferred && ntz > 0) {
+                if (qZ + 1 < qPreferred) {
+                    val quot = Coeff()
+                    do {
+                        val deltaQ = qPreferred - qZ
+                        val chunk = Math.min(Math.min(9, deltaQ), ntz)
+                        val chunkRemainder = DivBarrett.barrettDivModPow10(quot, z, chunk)
+                        if (chunkRemainder > 0) {
+                            var pow10Count = 0
+                            var t = chunkRemainder
+                            val M = 0xCCCCCCCCCCCCCCCDuL.toLong()
+                            while (true) {
+                                // val q = t / 10
+                                // val r = t % 10
+                                val q = unsignedMultiplyHigh(t, M) ushr 3
+                                val r = t - (q * 10)
+                                if (r != 0L)
+                                    break
+                                ++pow10Count
+                                t = q
+                            }
+                            if (pow10Count > 0) {
+                                z.coeffSetScaleDownPow10(z, pow10Count)
+                                qZ += pow10Count
+                            }
+                            break
+                        } else {
+                            z.coeffSet(quot)
+                            ntz -= chunk
+                            qZ += chunk
+                        }
+                    } while (qZ < qPreferred && ntz > 0)
+                } else if (z.coeffIsMultipleOf10()) {
                     z.coeffSetScaleDownPow10(z, 1)
                     ++qZ
                 }

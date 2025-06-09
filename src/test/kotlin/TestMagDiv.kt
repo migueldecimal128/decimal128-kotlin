@@ -30,6 +30,7 @@ class TestMagDiv {
     }
 
     val cases = arrayOf(
+        TC("1", "2"),
         TC("0E+4519", "4.14999526830484824E+2722"),
         TC("2.7710284E-1295", "2.912E-5964"),
         TC("3.4648355837009412658250388928553E-289", "1.432458417443E-546"),
@@ -49,7 +50,7 @@ class TestMagDiv {
 
     @Test
     fun testProblemChild() {
-        val tc =        TC("0E+4519", "4.14999526830484824E+2722")
+        val tc =         TC("1", "2")
         test1(tc)
     }
 
