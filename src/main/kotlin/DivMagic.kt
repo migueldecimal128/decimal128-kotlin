@@ -113,17 +113,10 @@ object DivMagic {
                 val qHat = pHiCorrected ushr s
                 val q0 = carry + qHat
 
-                // NOTE ...
-                // this multiply will overflow only when Q0 is very large and denom is very small
-                // for denom = 10**1 the magic correction flag is not set, the multiply cannot overflow
-                // for denom = 10**2 the magic correction flag is set.
-                // with x0==2**64-1 and denom==100 the multiply stays in 64 bits
-                // therefore correction is not ever needed ...
-                // ... AS LONG AS THIS IS NEVER USED FOR ANYTHING SMALLER THAN 10**2 == 100
-                //val reconstructedHi = unsignedMultiplyHigh(q0, denom)
+                val reconstructedHi = unsignedMultiplyHigh(q0, denom)
                 val reconstructedLo = q0 * denom
                 val rHat = x0 - reconstructedLo
-                val remainder = rHat // + (-reconstructedHi and x0)
+                val remainder = rHat + (-reconstructedHi and denom)
 
                 z.coeffSet64(q0)
                 return remainder
