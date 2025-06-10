@@ -73,7 +73,7 @@ object CoeffBits {
             0 -> (nonZeroMask and (x.dw1 shl -innerShift)) or (x.dw0 ushr innerShift)
             1 -> (nonZeroMask and (x.dw2 shl -innerShift)) or (x.dw1 ushr innerShift)
             2 -> (nonZeroMask and (x.dw3 shl -innerShift)) or (x.dw2 ushr innerShift)
-            3 ->                                                 (x.dw3 ushr innerShift)
+            3 ->                                              (x.dw3 ushr innerShift)
             else -> 0L
         }
     }

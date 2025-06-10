@@ -136,47 +136,48 @@ object CoeffSet {
         var z2 = 0L
         var z1 = 0L
         var z0 = 0L
-        when (wholeDwordCount) {
-            0 -> {
-                if (x.dw3 and topBitsMask != 0L)
-                    throw RuntimeException("coefficientOverflow")
-                z3 = (x.dw3 shl innerL) or ((x.dw2 ushr innerR) and nonZeroMask)
-                z2 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
-                z1 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                z0 = (x.dw0 shl innerL)
-                if (innerL <= 3) {
-                    //FIXME less than one digit change going on here
-                    // tweak the digit count instead of recalculating
+        coefficient_overflow@
+        do {
+            when (wholeDwordCount) {
+                0 -> {
+                    if (x.dw3 and topBitsMask != 0L)
+                        break@coefficient_overflow
+                    z3 = (x.dw3 shl innerL) or ((x.dw2 ushr innerR) and nonZeroMask)
+                    z2 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
+                    z1 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                    z0 = (x.dw0 shl innerL)
+                }
+
+                1 -> {
+                    if ((x.dw3 or (x.dw2 and topBitsMask)) != 0L)
+                        break@coefficient_overflow
+                    z3 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
+                    z2 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                    z1 = (x.dw0 shl innerL)
+                }
+
+                2 -> {
+                    if ((x.dw3 or x.dw2 or (x.dw1 and topBitsMask)) != 0L)
+                        break@coefficient_overflow
+                    z3 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
+                    z2 = (x.dw0 shl innerL)
+                }
+
+                3 -> {
+                    if ((x.dw3 or x.dw2 or x.dw1 or (x.dw0 and topBitsMask)) != 0L)
+                        break@coefficient_overflow
+                    z3 = (x.dw0 shl innerL)
+                }
+
+                else -> {
+                    if (x.bitLen > 0)
+                        break@coefficient_overflow
                 }
             }
-
-            1 -> {
-                if ((x.dw3 or (x.dw2 and topBitsMask)) != 0L)
-                    throw RuntimeException("coefficientOverflow")
-                z3 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
-                z2 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                z1 = (x.dw0 shl innerL)
-            }
-
-            2 -> {
-                if ((x.dw3 or x.dw2 or (x.dw1 and topBitsMask)) != 0L)
-                    throw RuntimeException("coefficientOverflow")
-                z3 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                z2 = (x.dw0 shl innerL)
-            }
-
-            3 -> {
-                if ((x.dw3 or x.dw2 or x.dw1 or (x.dw0 and topBitsMask)) != 0L)
-                    throw RuntimeException("coefficientOverflow")
-                z3 = (x.dw0 shl innerL)
-            }
-
-            else -> {
-                z.coeffSetZero()
-                return
-            }
-        }
-        z.coeffSet256(z3, z2, z1, z0)
+            z.coeffSet256(z3, z2, z1, z0)
+            return
+        } while (false)
+        throw RuntimeException("coefficientOverflow")
     }
 
     fun coeffSetShiftRight(z: Coeff, x: LongArray, xOff: Int, xLen: Int, bitCount: Int) {
