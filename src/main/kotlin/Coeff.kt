@@ -285,7 +285,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         coeffSetShiftLeft(this, exp - 52)
     }
 
-    open fun coeffToDoubleDouble(): DoubleDouble {
+    open fun coeffToNewDoubleDouble(): DoubleDouble {
         val hiBitsLen = Math.min(53, bitLen)
         val hiBitsIndex = bitLen - hiBitsLen
         val hiBits = getDwordAtBitIndex(hiBitsIndex)
