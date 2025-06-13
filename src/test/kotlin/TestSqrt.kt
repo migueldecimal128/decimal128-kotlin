@@ -22,6 +22,7 @@ class TestSqrt{
     }
 
     val tcs = arrayOf (
+        TC("+10E-1"),
         TC("+10E-1839"),
         TC("+0.0E4019"),
         TC("+2139362027"),
@@ -51,7 +52,7 @@ class TestSqrt{
 
     @Test
     fun testProblemChild() {
-        val tc = TC("+10E-1")
+        val tc = TC("+10E-3")
         test1(tc)
     }
 
