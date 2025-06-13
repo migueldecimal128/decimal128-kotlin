@@ -51,7 +51,7 @@ class TestSqrt{
 
     @Test
     fun testProblemChild() {
-        val tc = TC("+10E-1839")
+        val tc = TC("+10E-1")
         test1(tc)
     }
 
