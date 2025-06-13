@@ -10,7 +10,7 @@ import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
 
-class TestSqrt{
+class TestSqrtDoubleDouble{
 
     class TC(val bd: BigDecimal) {
         constructor(str: String) : this(BigDecimal(str))
@@ -22,9 +22,8 @@ class TestSqrt{
     }
 
     val tcs = arrayOf (
-        TC("625"),
-        //TC("+10E-1"),
-        //TC("+10E-1839"),
+        TC("+10E-1"),
+        TC("+10E-1839"),
         TC("+0.0E4019"),
         TC("+2139362027"),
         TC("+2139362027E-4288"),
@@ -39,6 +38,7 @@ class TestSqrt{
         TC("40000"),
         TC("4000000"),
         TC("2"),
+        TC("625"),
         TC("900"),
         TC("10000"),
         TC("1234567890123456789012345678901234"),
@@ -100,7 +100,10 @@ class TestSqrt{
         radicandScaled.coeffSetScaleUpPow10(radicand, scaleUp)
         println("radicand:$radicand radicandScaled:$radicandScaled")
 
-        val dbl0 = radicandScaled.coeffToFloorDouble()
+        val bitCount0 = Math.min(53, radicandScaled.bitLen)
+        val bitIndex0 = radicandScaled.bitLen - bitCount0
+        val topBits0 = CoeffBits.getDwordAtBitIndex(radicandScaled, bitIndex0)
+        val dbl0 = Math.scalb(topBits0.toDouble(), bitIndex0)
         // g == guess
         val guess0Double = Math.sqrt(dbl0)
         val rawGuess0 = guess0Double.toRawBits()
@@ -121,13 +124,10 @@ class TestSqrt{
         CoeffSub.coeffSubUnscaled(residual0, radicandScaled, guess0Squared)
         println(" --> residual0:$residual0")
 
-        /*
         val residual0BitCount = Math.min(53, residual0.bitLen)
         val residual0BitIndex = residual0.bitLen - residual0BitCount
         val residualTopBits = CoeffBits.getDwordAtBitIndex(residual0, residual0BitIndex)
         val residual0Double = Math.scalb(residualTopBits.toDouble(), residual0BitIndex)
-         */
-        val residual0Double = residual0.coeffToFloorDouble()
 
         val inv2Guess0 = 0.5 / guess0Double
         val delta0Double = residual0Double * inv2Guess0

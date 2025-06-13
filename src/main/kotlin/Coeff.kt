@@ -255,6 +255,17 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return bi
     }
 
+    fun getDwordAtBitIndex(bitIndex: Int): Long =
+        CoeffBits.getDwordAtBitIndex(this, bitIndex)
+
+    open fun coeffToFloorDouble(): Double {
+        val bitCount = Math.min(53, bitLen)
+        val bitIndex = bitLen - bitCount
+        val topBits = getDwordAtBitIndex(bitIndex)
+        val d = Math.scalb(topBits.toDouble(), bitIndex)
+        return d
+    }
+
     fun coeffMutateIncrement(doRoundUp: Boolean) {
         if (doRoundUp)
             coeffMutateIncrement()

@@ -31,6 +31,14 @@ class DoubleDouble(a: Double, b: Double) {
             dd.setBigInteger(n)
             return dd
         }
+/*
+        fun newFromCoeff(c: Coeff): DoubleDouble {
+            val dd = DoubleDouble()
+            dd.setCoeff(c)
+            return dd;
+        }
+
+ */
 
         fun newAdd(x: DoubleDouble, y:DoubleDouble): DoubleDouble {
             val s = newTwoSum(x.hi, y.hi)
@@ -276,6 +284,33 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(hi, lo0)
     }
 
+    /*
+    fun setCoeff(c: Coeff) {
+        hi = 0.0
+        lo = 0.0
+        val d = c.coeffToFloorDouble()
+        val L     = c.bitLen
+        if (L <= 53) {
+            if (L == 0)
+                return
+            hi = c.coeffToFloorDouble()
+            return
+        }
+        val shift = L - 53
+        val top53 = abs.shiftRight(shift)
+        val m     = top53.toLong() and ((1L shl 53) - 1)
+        val exp   = L - 1
+        val mant  = m and ((1L shl 52) - 1)
+        val bits  = ((if (sign<0)1L else 0L) shl 63) or
+                ((exp+1023).toLong() shl 52) or
+                mant
+        val hi    = Double.fromBits(bits)
+        val rem   = abs.subtract(top53.shiftLeft(shift))
+        val lo0   = sign * rem.toDouble()
+        // final normalization!
+        setQuickTwoSum(hi, lo0)
+    }
+*/
     @Suppress("NOTHING_TO_INLINE")
     inline fun compareTo(other: DoubleDouble): Int {
         val cmpHi = hi.compareTo(other.hi)
