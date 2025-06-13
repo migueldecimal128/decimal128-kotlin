@@ -18,6 +18,8 @@ import com.decimal128.CoeffPow10.calcDigitLen256
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
+import java.lang.Long.numberOfLeadingZeros
+import kotlin.math.absoluteValue
 
 const val PRECISION_34 = 34
 
@@ -129,6 +131,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffSetAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
 
     fun coeffSetAdd(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
+
+    fun coeffSetSub(x: Coeff, y: Coeff) = CoeffSub.coeffSubUnscaled(this, x, y)
 
     fun coeffSetMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
 
@@ -259,11 +263,64 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         CoeffBits.getDwordAtBitIndex(this, bitIndex)
 
     open fun coeffToFloorDouble(): Double {
-        val bitCount = Math.min(53, bitLen)
-        val bitIndex = bitLen - bitCount
-        val topBits = getDwordAtBitIndex(bitIndex)
-        val d = Math.scalb(topBits.toDouble(), bitIndex)
-        return d
+        val hiBitLen = Math.min(53, bitLen)
+        val hiBitIndex = bitLen - hiBitLen
+        val hiBits = getDwordAtBitIndex(hiBitIndex)
+        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitIndex)
+        return dHiBits
+    }
+
+    fun coeffSet(d: Double) {
+        val dRaw = d.toRawBits()
+        val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
+        if (exp <= 63) {
+            coeffSet64(Math.abs(d).toLong())
+            return
+        }
+        if (exp > 255) {
+            throw RuntimeException("coefficient overflow")
+        }
+        val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
+        coeffSet64(significand)
+        coeffSetShiftLeft(this, exp - 52)
+    }
+
+    open fun coeffToDoubleDouble(): DoubleDouble {
+        val hiBitsLen = Math.min(53, bitLen)
+        val hiBitsIndex = bitLen - hiBitsLen
+        val hiBits = getDwordAtBitIndex(hiBitsIndex)
+        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitsIndex)
+        if (hiBitsIndex == 0)
+            return DoubleDouble(dHiBits, 0.0)
+        var loBits64Index: Int = Math.max(0, hiBitsIndex - 64)
+        var loBitsMask = -1L ushr Math.max(0, 64 - hiBitsIndex)
+        var loBits: Long
+        var nlz: Int
+        while (true) {
+            loBits = getDwordAtBitIndex(loBits64Index) and loBitsMask
+            nlz = numberOfLeadingZeros(loBits)
+            if (loBits64Index == 0 || nlz <= 11)
+                break
+            loBits64Index = Math.max(loBits64Index - nlz, 0)
+            loBitsMask = -1
+        }
+        val extraBits = Math.max(0, 11 - nlz)
+        loBits = loBits ushr extraBits
+        val loBits53Index = loBits64Index + extraBits
+        val dLoBits = Math.scalb(loBits.toDouble(), loBits53Index)
+        return DoubleDouble(dHiBits, dLoBits)
+    }
+
+    fun coeffSet(dd: DoubleDouble) {
+        coeffSet(dd.hi)
+        if (dd.lo == 0.0)
+            return
+        val coeffLo = Coeff()
+        coeffLo.coeffSet(dd.lo)
+        if (dd.lo > 0)
+            coeffSetAdd(this, coeffLo)
+        else
+            coeffSetSub(this, coeffLo)
     }
 
     fun coeffMutateIncrement(doRoundUp: Boolean) {
@@ -310,6 +367,9 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffDwordAtBitIndex(bitIndex: Int) = CoeffBits.getDwordAtBitIndex(this, bitIndex)
 
     override fun toString() = coeffToBigInteger().toString()
+
+    override fun equals(other: Any?) = other is Coeff && coeffUnscaledEQ(this, other)
+
 
     fun coeffToNaNDiagnosticString() = if (coeffIsZero()) "" else toString()
 
