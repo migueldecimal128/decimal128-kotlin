@@ -77,30 +77,44 @@ object DivKnuth {
                 // msb of remainder is set ... doubling it will make it bigger than the divisor
                 GT_HALF
             } else {
+                var isZero = 0
                 if (s == 0) {
                     // note that this is shifting LEFT to double the remainder
                     for (i in n - 1 downTo 1) {
                         un[i] = (un[i] shl 1) or (un[i - 1] ushr -1)
+                        isZero = isZero or un[i]
                     }
                     un[0] = un[0] shl 1
+                    isZero = isZero or un[0]
                 } else {
-
                     val s1 = s - 1
                     if (s1 > 0) {
                         for (i in 0 until n - 1) {
                             un[i] = (un[i + 1] shl -s1) or (un[i] ushr s1)
+                            isZero = isZero or un[i]
                         }
                         un[n - 1] = un[n - 1] ushr s1
+                        isZero = isZero or un[n - 1]
+                    } else {
+                        // still need to test for isZero
+                        var i = 0
+                        do {
+                            isZero = isZero or un[i]
+                        } while (isZero == 0 && ++i < n)
                     }
                 }
-                // note that this compare is reversed ... y compare 2*remainder
-                val cmp = coeffUnscaledCompare(y, un)
-                if (cmp > 0)
-                    LT_HALF
-                else if (cmp == 0)
-                    Residue.HALF
-                else
-                    GT_HALF
+                if (isZero == 0) {
+                    Residue.EXACT
+                } else {
+                    // note that this compare is reversed ... y compare 2*remainder
+                    val cmp = coeffUnscaledCompare(y, un)
+                    if (cmp > 0)
+                        LT_HALF
+                    else if (cmp == 0)
+                        Residue.HALF
+                    else
+                        GT_HALF
+                }
             }
         coeffSet(z, q, m)
         return residue
@@ -149,15 +163,16 @@ object DivKnuth {
         }
 
         val residue = when {
-                remainder < 0 -> {
-                    assert(compareUnsigned(remainder, y0) < 0)
-                    // msb of remainder is set ... doubling it will make it bigger than the divisor
-                    GT_HALF
-                }
-                compareUnsigned(2 * remainder, y0) < 0 -> LT_HALF
-                2 * remainder == y0 -> HALF
-                else -> GT_HALF
+            remainder < 0 -> {
+                assert(compareUnsigned(remainder, y0) < 0)
+                // msb of remainder is set ... doubling it will make it bigger than the divisor
+                GT_HALF
             }
+            remainder == 0L -> EXACT
+            compareUnsigned(2 * remainder, y0) < 0 -> LT_HALF
+            2 * remainder == y0 -> HALF
+            else -> GT_HALF
+        }
         coeffSet(z, q, m)
         return residue
     }

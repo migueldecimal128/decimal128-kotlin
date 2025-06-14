@@ -33,6 +33,11 @@ open class Dec34() : Mag() {
         this.sign = 0
     }
 
+    fun setZero(sign: Int) {
+        assert((sign shr 1) == 0)
+        this.sign = sign
+    }
+
     @Suppress("NOTHING_TO_INLINE")
     inline fun capExponentRange(e: Int): Int {
         return Math.min(Math.max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
@@ -287,6 +292,50 @@ open class Dec34() : Mag() {
             else -> {
                 this.setNaN(x, y, ctx)
             }
+        }
+    }
+
+    fun div(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+        val qX = x.qExp
+        val qY = y.qExp
+        val quotientSign = x.sign xor y.sign
+        val qMaxXY = Math.max(qX, qY)
+        when {
+            qMaxXY < NON_FINITE_INF -> {
+                when {
+                    (y.bitLen > 0) -> {
+                        this.magDiv(x, y, quotientSign, ctx)
+                        this.sign = quotientSign
+                    }
+                    (x.bitLen > 0) -> {
+                        // finite division by zero
+                        setInfinite(quotientSign)
+                        ctx.setDivByZero()
+                    }
+                    else -> {
+                        // zero divided by zero
+                        setNaN(ctx)
+                        ctx.setInvalid()
+                    }
+                }
+            }
+            qMaxXY == NON_FINITE_INF -> {
+                when {
+                    (qX == NON_FINITE_INF && qY == NON_FINITE_INF) -> {
+                        ctx.setInvalid()
+                        setNaN(ctx)
+                    }
+
+                    (qX == NON_FINITE_INF) -> {
+                        setInfinite(quotientSign)
+                    }
+
+                    else -> {
+                        setZero(quotientSign)
+                    }
+                }
+            }
+            else -> setNaN(x, y, ctx)
         }
     }
 
