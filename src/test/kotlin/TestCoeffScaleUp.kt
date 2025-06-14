@@ -103,7 +103,7 @@ class TestCoeffScaleUp {
         val coeffA = Coeff(case.biA)
         val coeffObserved = Coeff()
         val pow10 = case.pow10
-        val ctx = Decimal128Context()
+        val ctx = DecimalContext()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = expected:$expected")
         coeffObserved.coeffSetScaleUpPow10(coeffA, pow10)

@@ -1,8 +1,6 @@
 package com.decimal128
 
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -15,12 +13,12 @@ class TestMagSub {
 
     val verbose = false
 
-    class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: Decimal128Context) {
+    class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: DecimalContext) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
-                this(BigDecimal(strA), BigDecimal(strB), Decimal128Context(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), Decimal128Context())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, Decimal128Context())
+                this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecimalContext())
 
         val flipFlop = bdXraw.compareTo(bdYraw) >= 0
         val rm = ctx.roundingDirection.mapToRoundingMode()
@@ -153,9 +151,9 @@ class TestMagSub {
         return bd
     }
 
-    fun randDecimal128Context(): Decimal128Context {
+    fun randDecimal128Context(): DecimalContext {
         val i = random.nextInt(4)
-        val ctx = Decimal128Context(RoundingDirection.fromValue(i))
+        val ctx = DecimalContext(RoundingDirection.fromValue(i))
         return ctx
     }
 

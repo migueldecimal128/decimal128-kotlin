@@ -7,9 +7,9 @@ class TestDec34Quantize {
 
     val verbose = true
 
-    class TC(val bdX: BigDecimal, val bdY: BigDecimal, val ctx: Decimal128Context) {
+    class TC(val bdX: BigDecimal, val bdY: BigDecimal, val ctx: DecimalContext) {
         constructor(strX: String, strY: String) :
-                this(BigDecimal(strX), BigDecimal(strY), Decimal128Context())
+                this(BigDecimal(strX), BigDecimal(strY), DecimalContext())
         val targetScale = bdY.scale()
         val targetQ = -targetScale
         val expected =

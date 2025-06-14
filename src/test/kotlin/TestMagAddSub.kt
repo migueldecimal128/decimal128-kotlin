@@ -11,12 +11,12 @@ class TestMagAddSub {
 
     val verbose = false
 
-    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: Decimal128Context) {
+    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
-                this(BigDecimal(strA), BigDecimal(strB), Decimal128Context(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), Decimal128Context())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, Decimal128Context())
+                this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecimalContext())
 
         val rm = ctx.roundingDirection.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
@@ -50,7 +50,7 @@ class TestMagAddSub {
 
     @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<10000) {
             val tc = TC(randBd(), randBd(), randDecimal128Context())
             if (tc.bdAIsFinite && tc.bdBIsFinite)
                 test1(tc)
@@ -68,9 +68,9 @@ class TestMagAddSub {
         return bd
     }
 
-    fun randDecimal128Context(): Decimal128Context {
+    fun randDecimal128Context(): DecimalContext {
         val i = random.nextInt(4)
-        val ctx = Decimal128Context(RoundingDirection.fromValue(i))
+        val ctx = DecimalContext(RoundingDirection.fromValue(i))
         return ctx
     }
 

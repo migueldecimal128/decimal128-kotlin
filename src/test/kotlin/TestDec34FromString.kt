@@ -78,7 +78,7 @@ class TestDec34FromString {
             println("$strVal bd:$bd => expected:$expected")
 
         val d = Dec34()
-        Dec34ParsePrint.decFromString(d, strVal, Decimal128Context())
+        Dec34ParsePrint.decFromString(d, strVal, DecimalContext())
         val observed = d
 
         val e = Dec34(bd)

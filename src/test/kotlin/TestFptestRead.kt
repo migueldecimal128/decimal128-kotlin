@@ -73,7 +73,7 @@ class TestFptestRead {
         "d128+ =0 xu +0e-4290 +6e-6176 -> +6e3040 u",
     )
 
-    fun isBadCase(fptest: Fptest, ctx: Decimal128Context): Boolean {
+    fun isBadCase(fptest: Fptest, ctx: DecimalContext): Boolean {
         if (badCases.contains(fptest.fptestStr))
             return true
         val result = fptest.result()
@@ -168,7 +168,7 @@ class TestFptestRead {
             if (result == "#")
                 return null
             val dec = Dec34()
-            val ctx = Decimal128Context()
+            val ctx = DecimalContext()
             when (result) {
                 "Q" -> dec.setNaN(ctx)
                 "S" -> dec.setSNaN(ctx)
@@ -179,7 +179,7 @@ class TestFptestRead {
 
         fun decOperands(): ArrayList<Dec34> {
             val ret = ArrayList<Dec34>(operands.size)
-            val ctx = Decimal128Context()
+            val ctx = DecimalContext()
             for (t in operands) {
                 val d = Dec34()
                 when (t) {
@@ -215,7 +215,7 @@ class TestFptestRead {
 
     fun test1(fptest: Fptest) {
         val operands = fptest.decOperands()
-        val ctx = Decimal128Context(fptest.roundingDirection())
+        val ctx = DecimalContext(fptest.roundingDirection())
         val observed = Dec34()
         if (verbose)
             println(fptest.fptestStr)

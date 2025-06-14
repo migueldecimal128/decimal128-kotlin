@@ -1,20 +1,18 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.BigInteger.ONE
 import java.util.*
 
 class TestMagRoundAndFinalize {
 
     val verbose = false
 
-    class TC(val bdA: BigDecimal, val ctx: Decimal128Context) {
-        constructor(str: String, ctx: Decimal128Context) : this(BigDecimal(str), ctx)
-        constructor(str: String) : this(str, Decimal128Context())
-        constructor(bdA: BigDecimal) : this(bdA, Decimal128Context())
+    class TC(val bdA: BigDecimal, val ctx: DecimalContext) {
+        constructor(str: String, ctx: DecimalContext) : this(BigDecimal(str), ctx)
+        constructor(str: String) : this(str, DecimalContext())
+        constructor(bdA: BigDecimal) : this(bdA, DecimalContext())
     }
 
     val cases = arrayOf(

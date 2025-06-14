@@ -4,12 +4,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigDecimal.ONE
-import java.math.BigDecimal.TWO
 
 class TestDec34ScaleB {
 
-    class TC(val bd: BigDecimal, val pow10: Int, val ctx: Decimal128Context) {
-        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, Decimal128Context())
+    class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecimalContext) {
+        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecimalContext())
         val expected =
             bdToIeeeDecimal128(bd.scaleByPowerOfTen(pow10),
                         ctx.roundingDirection.mapToRoundingMode())

@@ -43,7 +43,7 @@ open class Dec34() : Mag() {
         return Math.min(Math.max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
 
-    private fun setNaN(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+    private fun setNaN(x: Dec34, y: Dec34, ctx: DecimalContext) {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = Math.max(xQ, yQ)
@@ -57,7 +57,7 @@ open class Dec34() : Mag() {
         //FIXME - see IEEE754r 6.2
     }
 
-    private fun setNaN(x: Dec34, y: Dec34, a: Dec34, ctx: Decimal128Context) {
+    private fun setNaN(x: Dec34, y: Dec34, a: Dec34, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -72,7 +72,7 @@ open class Dec34() : Mag() {
         throw RuntimeException("sNaN operand")
     }
 
-    private fun setNaN(x: Dec34, ctx: Decimal128Context) {
+    private fun setNaN(x: Dec34, ctx: DecimalContext) {
         val q = x.qExp
         assert(q >= NON_FINITE_QNAN)
         magSetZero()
@@ -80,20 +80,20 @@ open class Dec34() : Mag() {
         //FIXME - see IEEE754r 6.2
     }
 
-    fun setNaN(ctx: Decimal128Context) {
+    fun setNaN(ctx: DecimalContext) {
         magSetZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
 
-    fun setNaN(payload: Int, ctx: Decimal128Context) {
+    fun setNaN(payload: Int, ctx: DecimalContext) {
         sign = 0
         coeffSet64(payload.toLong())
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
 
-    fun setSNaN(ctx: Decimal128Context) {
+    fun setSNaN(ctx: DecimalContext) {
         magSetZero()
         qExp = NON_FINITE_SNAN
     }
@@ -178,12 +178,12 @@ open class Dec34() : Mag() {
     }
 
     // IEEE754-2008 5.4.1
-    fun add(x: Dec34, y: Dec34, ctx: Decimal128Context) = addImpl(x, y.sign, y, ctx)
+    fun add(x: Dec34, y: Dec34, ctx: DecimalContext) = addImpl(x, y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun sub(x: Dec34, y: Dec34, ctx: Decimal128Context) = addImpl(x, y.sign xor 1, y, ctx)
+    fun sub(x: Dec34, y: Dec34, ctx: DecimalContext) = addImpl(x, y.sign xor 1, y, ctx)
 
-    private fun addImpl(x: Dec34, ySign: Int, y: Dec34, ctx: Decimal128Context) {
+    private fun addImpl(x: Dec34, ySign: Int, y: Dec34, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val xSign = x.sign
@@ -226,7 +226,7 @@ open class Dec34() : Mag() {
     }
 
     // IEEE754-2008 5.4.1
-    fun mul(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+    fun mul(x: Dec34, y: Dec34, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
@@ -248,7 +248,7 @@ open class Dec34() : Mag() {
         }
     }
 
-    fun sqr(x: Dec34, ctx: Decimal128Context) {
+    fun sqr(x: Dec34, ctx: DecimalContext) {
         val qX = x.qExp
         when {
             qX < NON_FINITE_INF -> {
@@ -263,7 +263,7 @@ open class Dec34() : Mag() {
     }
 
     // IEEE754-2008 5.4.1
-    fun fma(x: Dec34, y: Dec34, a: Dec34, ctx: Decimal128Context) {
+    fun fma(x: Dec34, y: Dec34, a: Dec34, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -295,7 +295,7 @@ open class Dec34() : Mag() {
         }
     }
 
-    fun div(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+    fun div(x: Dec34, y: Dec34, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign
@@ -341,7 +341,7 @@ open class Dec34() : Mag() {
 
 
 
-    fun compareTo(x: Dec34, ctx: Decimal128Context) : Int {
+    fun compareTo(x: Dec34, ctx: DecimalContext) : Int {
         val qMax = Math.max(qExp, x.qExp)
         when {
             (qMax < NON_FINITE_INF) -> {
@@ -380,28 +380,28 @@ open class Dec34() : Mag() {
         }
     }
 
-    fun roundToIntegral(x: Dec34, rd: RoundingDirection, ctx: Decimal128Context) {
+    fun roundToIntegral(x: Dec34, rd: RoundingDirection, ctx: DecimalContext) {
         //FIXME - deal with special values
         sign = x.sign
         coeffRoundToIntegral(x, sign, rd, ctx)
     }
 
-    fun roundToIntegralTiesToEven(x: Dec34, ctx: Decimal128Context) =
+    fun roundToIntegralTiesToEven(x: Dec34, ctx: DecimalContext) =
         roundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
 
-    fun roundToIntegralTiesToAway(x: Dec34, ctx: Decimal128Context) =
+    fun roundToIntegralTiesToAway(x: Dec34, ctx: DecimalContext) =
         roundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
 
-    fun roundToIntegralTowardZero(x: Dec34, ctx: Decimal128Context) =
+    fun roundToIntegralTowardZero(x: Dec34, ctx: DecimalContext) =
         roundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
 
-    fun roundToIntegralTowardPositive(x: Dec34, ctx: Decimal128Context) =
+    fun roundToIntegralTowardPositive(x: Dec34, ctx: DecimalContext) =
         roundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
 
-    fun roundToIntegralTowardNegative(x: Dec34, ctx: Decimal128Context) =
+    fun roundToIntegralTowardNegative(x: Dec34, ctx: DecimalContext) =
         roundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
 
-    fun setNextUp(x: Dec34, ctx: Decimal128Context) {
+    fun setNextUp(x: Dec34, ctx: DecimalContext) {
         set(x)
         when {
             (qExp < NON_FINITE_INF) -> {
@@ -432,7 +432,7 @@ open class Dec34() : Mag() {
         roundAndFinalize(EXACT, sign, ROUND_TOWARD_POSITIVE, ctx)
     }
 
-    fun setNextDown(x: Dec34, ctx: Decimal128Context) {
+    fun setNextDown(x: Dec34, ctx: DecimalContext) {
         set(x)
         when {
             (qExp < NON_FINITE_INF) -> {
@@ -463,10 +463,10 @@ open class Dec34() : Mag() {
         roundAndFinalize(EXACT, sign xor 1, ROUND_TOWARD_POSITIVE, ctx)
     }
 
-    fun minNum(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNum_helper(x, y, 0, ctx)
-    fun maxNum(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNum_helper(x, y, -1, ctx)
+    fun minNum(x: Dec34, y: Dec34, ctx: DecimalContext) = minNum_helper(x, y, 0, ctx)
+    fun maxNum(x: Dec34, y: Dec34, ctx: DecimalContext) = minNum_helper(x, y, -1, ctx)
 
-    private fun minNum_helper(x: Dec34, y: Dec34, invertCompareZeroOrNeg1: Int, ctx: Decimal128Context) {
+    private fun minNum_helper(x: Dec34, y: Dec34, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
         val qMax = Math.max(x.qExp, y.qExp)
         when {
             qMax <= NON_FINITE_INF -> {
@@ -480,10 +480,10 @@ open class Dec34() : Mag() {
         }
     }
 
-    fun minNumMag(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNumMag_helper(x, y, 0, ctx)
-    fun maxNumMag(x: Dec34, y: Dec34, ctx: Decimal128Context) = minNumMag_helper(x, y, -1, ctx)
+    fun minNumMag(x: Dec34, y: Dec34, ctx: DecimalContext) = minNumMag_helper(x, y, 0, ctx)
+    fun maxNumMag(x: Dec34, y: Dec34, ctx: DecimalContext) = minNumMag_helper(x, y, -1, ctx)
 
-    private fun minNumMag_helper(x: Dec34, y: Dec34, invertCompareZeroOrNeg1: Int, ctx: Decimal128Context) {
+    private fun minNumMag_helper(x: Dec34, y: Dec34, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
         val qMax = Math.max(x.qExp, y.qExp)
         when {
             qMax < NON_FINITE_INF -> {
@@ -494,7 +494,7 @@ open class Dec34() : Mag() {
         }
     }
 
-    fun setScale(x: Dec34, pow10: Int, ctx: Decimal128Context) {
+    fun setScale(x: Dec34, pow10: Int, ctx: DecimalContext) {
         set(x)
         val p10 = capExponentRange(pow10)
         if (qExp < NON_FINITE_INF) {
@@ -507,13 +507,13 @@ open class Dec34() : Mag() {
     }
 
     // IEEE754-2008 5.3.2
-    fun quantize(x: Dec34, y: Dec34, ctx: Decimal128Context) {
+    fun quantize(x: Dec34, y: Dec34, ctx: DecimalContext) {
         val targetQ = y.qExp
         setScale(x, -targetQ, ctx)
     }
 
     // IEEE754-2008 5.3.3
-    fun scaleB(x: Dec34, pow10: Int, ctx: Decimal128Context) {
+    fun scaleB(x: Dec34, pow10: Int, ctx: DecimalContext) {
         set(x)
         when {
             qExp <= NON_FINITE_INF -> {
@@ -532,13 +532,13 @@ open class Dec34() : Mag() {
         return qExp
     }
 
-    fun compareQuiet754(other: Dec34, ctx: Decimal128Context): Compare754Result =
+    fun compareQuiet754(other: Dec34, ctx: DecimalContext): Compare754Result =
         compare754(other, false, ctx)
 
-    fun compareSignaling754(other: Dec34, ctx: Decimal128Context): Compare754Result =
+    fun compareSignaling754(other: Dec34, ctx: DecimalContext): Compare754Result =
         compare754(other, true, ctx)
 
-    fun compare754(other: Dec34, isSignaling: Boolean, ctx: Decimal128Context): Compare754Result {
+    fun compare754(other: Dec34, isSignaling: Boolean, ctx: DecimalContext): Compare754Result {
         val qMax = Math.max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {

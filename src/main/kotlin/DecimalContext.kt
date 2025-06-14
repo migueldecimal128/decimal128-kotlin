@@ -3,8 +3,13 @@ package com.decimal128
 import java.math.MathContext
 import java.math.RoundingMode
 
-class Decimal128Context(val roundingDirection:RoundingDirection) {
-    constructor() : this(RoundingDirection.ROUND_TIES_TO_EVEN)
+val DECIMAL_128 = DecimalContext(34, RoundingDirection.ROUND_TIES_TO_EVEN)
+val DECIMAL_64 = DecimalContext(16, RoundingDirection.ROUND_TIES_TO_EVEN)
+val DECIMAL_128_EXTENDED = DecimalContext(38, RoundingDirection.ROUND_TIES_TO_EVEN)
+
+class DecimalContext(val precision: Int, val roundingDirection:RoundingDirection) {
+    constructor() : this(34, RoundingDirection.ROUND_TIES_TO_EVEN)
+    constructor(rd: RoundingDirection) : this(34, rd)
 
     companion object {
         val MATH_CONTEXT_MAP = arrayOf(

@@ -31,7 +31,7 @@ class TestNextUpDown {
         val n = Dec34(bd)
         val up = Dec34()
         val down = Dec34()
-        val ctx = Decimal128Context()
+        val ctx = DecimalContext()
         up.setNextUp(n, ctx)
         down.setNextDown(n, ctx)
 

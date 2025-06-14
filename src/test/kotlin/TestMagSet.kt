@@ -6,18 +6,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.RoundingMode
-import java.math.MathContext
 import java.util.*
 
 class TestMagSet {
 
     val verbose = false
 
-    class TC(val bdA: BigDecimal, val ctx: Decimal128Context) {
-        constructor(str: String, rd: RoundingDirection) : this(BigDecimal(str), Decimal128Context(rd))
-        constructor(str: String) : this(BigDecimal(str), Decimal128Context())
-        constructor(bdA: BigDecimal) : this(bdA, Decimal128Context())
+    class TC(val bdA: BigDecimal, val ctx: DecimalContext) {
+        constructor(str: String, rd: RoundingDirection) : this(BigDecimal(str), DecimalContext(rd))
+        constructor(str: String) : this(BigDecimal(str), DecimalContext())
+        constructor(bdA: BigDecimal) : this(bdA, DecimalContext())
         val biA = bdA.unscaledValue()
         val expA = -bdA.scale()
         val bdRounded = bdToIeeeDecimal128(bdA, ctx.getMathContext().roundingMode)
@@ -110,9 +108,9 @@ class TestMagSet {
         return bd
     }
 
-    fun randDecimal128Context(): Decimal128Context {
+    fun randDecimal128Context(): DecimalContext {
         val i = random.nextInt(4)
-        val ctx = Decimal128Context(RoundingDirection.fromValue(i))
+        val ctx = DecimalContext(RoundingDirection.fromValue(i))
         return ctx
     }
 

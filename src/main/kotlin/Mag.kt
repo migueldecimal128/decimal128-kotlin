@@ -33,10 +33,10 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
 
     fun sciExp() = qExp + (digitLen - 1)
 
-    fun roundAndFinalize(inboundResidue: Residue, sign: Int, ctx: Decimal128Context) =
+    fun roundAndFinalize(inboundResidue: Residue, sign: Int, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, sign, ctx.roundingDirection, ctx)
 
-    fun roundAndFinalize(inboundResidue: Residue, sign: Int, roundingDirection: RoundingDirection, ctx: Decimal128Context) {
+    fun roundAndFinalize(inboundResidue: Residue, sign: Int, roundingDirection: RoundingDirection, ctx: DecimalContext) {
         if (qExp < NON_FINITE_INF) {
             if (super.bitLen != 0) {
                 var sciExp = qExp + (super.digitLen - 1)
@@ -184,19 +184,19 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     }
 
     fun magSet(exponent: Int, bi: BigInteger) =
-        magSet(exponent, bi, Decimal128Context())
+        magSet(exponent, bi, DecimalContext())
 
-    fun magSet(exponent: Int, bi: BigInteger, ctx: Decimal128Context) {
+    fun magSet(exponent: Int, bi: BigInteger, ctx: DecimalContext) {
         super.coeffSet(bi)
         qExp = exponent
         roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
 
     fun magSet(bd: BigDecimal) {
-        magSet(bd, Decimal128Context())
+        magSet(bd, DecimalContext())
     }
 
-    fun magSet(bd: BigDecimal, ctx: Decimal128Context) {
+    fun magSet(bd: BigDecimal, ctx: DecimalContext) {
         magSet(-bd.scale(), bd.unscaledValue().abs(), ctx)
     }
 
@@ -207,40 +207,40 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
 
     fun magSet(str: String) = magSet(BigDecimal(str))
 
-    fun magAdd(a: Mag, b: Mag, sign: Int, ctx: Decimal128Context) {
+    fun magAdd(a: Mag, b: Mag, sign: Int, ctx: DecimalContext) {
         val residue = MagAddSub.magAdd(this, a, b)
         roundAndFinalize(residue, sign, ctx)
     }
 
-    fun magSub(a: Mag, b: Mag, sign: Int, ctx: Decimal128Context) {
+    fun magSub(a: Mag, b: Mag, sign: Int, ctx: DecimalContext) {
         assert(a.magCompareTo(b) >= 0)
         val residue = MagAddSub.magSub(this, a, b)
         roundAndFinalize(residue, sign, ctx)
     }
 
-    fun magMul(x: Mag, y: Mag, sign: Int, ctx: Decimal128Context) {
+    fun magMul(x: Mag, y: Mag, sign: Int, ctx: DecimalContext) {
         MagMul.magMul(this, x, y)
         roundAndFinalize(EXACT, sign, ctx)
     }
 
-    fun magSqr(x: Mag, ctx: Decimal128Context) {
+    fun magSqr(x: Mag, ctx: DecimalContext) {
         MagMul.magSqr(this, x)
         roundAndFinalize(EXACT, 0, ctx)
     }
 
-    fun magDiv(x: Mag, y: Mag, sign: Int, ctx: Decimal128Context) {
+    fun magDiv(x: Mag, y: Mag, sign: Int, ctx: DecimalContext) {
         val residue = MagDiv.magDiv(this, x, y)
         roundAndFinalize(residue, sign, ctx)
     }
 
-    fun magMutateScalePow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
+    fun magMutateScalePow10(pow10: Int, sign: Int, ctx: DecimalContext) {
         if (pow10 > 0)
             magMutateScaleUpPow10(pow10, sign, ctx)
         else if (pow10 < 0)
             magMutateScaleDownPow10(-pow10, sign, ctx)
     }
 
-    fun magMutateScaleUpPow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
+    fun magMutateScaleUpPow10(pow10: Int, sign: Int, ctx: DecimalContext) {
         val headroom = PRECISION_34 - digitLen
         val scaleUp = Math.min(headroom, pow10)
         val residue = this.coeffSetScaleUpPow10(this, scaleUp)
@@ -249,7 +249,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
             roundAndFinalize(Residue.EXACT, sign, ctx)
     }
 
-    fun magMutateScaleDownPow10(pow10: Int, sign: Int, ctx: Decimal128Context) {
+    fun magMutateScaleDownPow10(pow10: Int, sign: Int, ctx: DecimalContext) {
         val residue: Residue
         if (! coeffIsZero()) {
             if (pow10 >= digitLen) {
@@ -312,7 +312,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         return bothAreZero
     }
 
-    internal fun coeffRoundToIntegral(x: Mag, sign: Int, rd: RoundingDirection, ctx: Decimal128Context) {
+    internal fun coeffRoundToIntegral(x: Mag, sign: Int, rd: RoundingDirection, ctx: DecimalContext) {
         if (qExp < 0) {
             val residue = this.coeffSetScaleDownPow10(x, -qExp)
             qExp = 0

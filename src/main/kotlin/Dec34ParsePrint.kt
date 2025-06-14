@@ -238,7 +238,7 @@ object Dec34ParsePrint {
         "nan", "qnan", "snan"
     )
 
-    fun decFromString(x: Dec34, str: String, ctx: Decimal128Context) {
+    fun decFromString(x: Dec34, str: String, ctx: DecimalContext) {
         var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
         var significantDigitCount = 0 // does not count leading zeros
         var ichDot = -1
