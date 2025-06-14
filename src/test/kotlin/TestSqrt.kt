@@ -166,7 +166,7 @@ class TestSqrt{
         println(" --> guess2:$guess2")
 
         val guess2Squared = Coeff()
-        guess2Squared.coeffSetMul(guess2, guess2)
+        guess2Squared.coeffSetSqr(guess2)
         val residual2 = Coeff()
         CoeffSub.coeffSubUnscaled(residual2, radicandScaled, guess2Squared)
         println(" --> residual2:$residual2")

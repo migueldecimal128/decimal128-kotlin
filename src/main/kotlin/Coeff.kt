@@ -136,6 +136,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffSetMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
 
+    fun coeffSetSqr(x: Coeff) = CoeffSqr.coeffSqr(this, x)
+
     fun coeffSetFma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
 
     fun coeffSetFmaPow10(x: Coeff, pow10: Int, a: Coeff) = coeffFmaPow10(this, x, pow10, a)

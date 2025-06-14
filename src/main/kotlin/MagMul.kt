@@ -7,4 +7,9 @@ object MagMul {
         z.qExp = x.qExp + y.qExp
     }
 
+    fun magSqr(z: Mag, x: Mag) {
+        z.coeffSetSqr(x)
+        z.qExp = x.qExp shl 1
+    }
+
 }

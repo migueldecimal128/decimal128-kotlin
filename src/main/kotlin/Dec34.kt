@@ -243,6 +243,20 @@ open class Dec34() : Mag() {
         }
     }
 
+    fun sqr(x: Dec34, ctx: Decimal128Context) {
+        val qX = x.qExp
+        when {
+            qX < NON_FINITE_INF -> {
+                this.magSqr(x, ctx)
+                this.sign = 0
+            }
+            qX == NON_FINITE_INF -> {
+                setInfinite(0)
+            }
+            else -> setNaN(x, ctx)
+        }
+    }
+
     // IEEE754-2008 5.4.1
     fun fma(x: Dec34, y: Dec34, a: Dec34, ctx: Decimal128Context) {
         val qX = x.qExp

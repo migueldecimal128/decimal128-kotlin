@@ -24,6 +24,7 @@ class TestSqrtDoubleDouble{
     val tcs = arrayOf (
         TC("625"),
         //TC("+10E-1"),
+        //TC("+1000E-3"),
         //TC("+10E-1839"),
         TC("+0.0E4019"),
         TC("+2139362027"),
@@ -112,7 +113,7 @@ class TestSqrtDoubleDouble{
         println(" --> dbl0:$dRadicandScaled doubleGuess0:$dGuess0 coeffGuess0:$coeffGuess0")
 
         val coeffGuess0Squared = Coeff()
-        coeffGuess0Squared.coeffSetMul(coeffGuess0, coeffGuess0)
+        coeffGuess0Squared.coeffSetSqr(coeffGuess0)
         require(coeffRadicandScaled.coeffUnscaledCompareTo(coeffGuess0Squared) >= 0)
 
         val coeffResidual0 = Coeff()
