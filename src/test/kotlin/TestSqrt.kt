@@ -9,6 +9,7 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
+import kotlin.math.nextDown
 
 class TestSqrt{
 
@@ -102,17 +103,21 @@ class TestSqrt{
 
         val dbl0 = radicandScaled.coeffToFloorDouble()
         // g == guess
-        val guess0Double = Math.sqrt(dbl0)
-        val rawGuess0 = guess0Double.toRawBits()
-        val guess0Mantissa = ((rawGuess0 and ((1L shl 52) - 1)) or (1L shl 52)) - 1 // ensure floor
-        val guess0Exp = ((rawGuess0 ushr 52).toInt() and 0x7FF) - 1023
+        val guess0Double = Math.sqrt(dbl0).nextDown()
+        //val rawGuess0 = guess0Double.toRawBits()
+        //val guess0Mantissa = ((rawGuess0 and ((1L shl 52) - 1)) or (1L shl 52)) - 1 // ensure floor
+        //val guess0Exp = ((rawGuess0 ushr 52).toInt() and 0x7FF) - 1023
 
-        val guess0Coeff = Coeff(guess0Mantissa)
-        guess0Coeff.coeffSetShiftLeft(guess0Coeff, Math.max(guess0Exp - 52, 0))
+        //val guess0Coeff = Coeff(guess0Mantissa)
+        //guess0Coeff.coeffSetShiftLeft(guess0Coeff, Math.max(guess0Exp - 52, 0))
+        val guess0Coeff = Coeff()
+        guess0Coeff.coeffSet(guess0Double)
         println(" --> dbl0:$dbl0 doubleGuess0:$guess0Double coeffGuess0:$guess0Coeff")
+        guess0Coeff.coeffMutateDecrement()
 
         val guess0Squared = Coeff()
         guess0Squared.coeffSetMul(guess0Coeff, guess0Coeff)
+        println(" --> coeffGuess0:$guess0Coeff guess0Squared:$guess0Squared")
         while (guess0Squared.coeffUnscaledCompareTo(radicandScaled) > 0) {
             guess0Coeff.coeffMutateDecrement()
             guess0Squared.coeffSetMul(guess0Coeff, guess0Coeff)

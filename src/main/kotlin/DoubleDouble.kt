@@ -256,6 +256,52 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(q1, q2)
     }
 
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun setInvFast(x: DoubleDouble) {
+        // 1) first guess q1 = 1/x.hi
+        val q1 = 1.0 / x.hi
+
+        // 2) form p = x * q1  (double-word product)
+        //    high-word
+        val pH = x.hi * q1
+        //    error of that product
+        val pL = Math.fma(x.hi, q1, -pH)
+        //    include x.lo*q1 in the remainder
+        val remH = 1.0 - pH
+        val remL = -(pL + x.lo * q1)
+
+        // 3) correction term q2 = (remH + remL) * q1
+        val q2 = (remH + remL) * q1
+
+        // 4) final QuickTwoSum(q1, q2) → in-place hi/lo
+        val hi2 = q1 + q2
+        lo = q2 - (hi2 - q1)
+        hi = hi2
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun mutateInvFast() {
+        // 1) first guess q1 = 1/x.hi
+        val q1 = 1.0 / hi
+
+        // 2) form p = x * q1  (double-word product)
+        //    high-word
+        val pH = hi * q1
+        //    error of that product
+        val pL = Math.fma(hi, q1, -pH)
+        //    include x.lo*q1 in the remainder
+        val remH = 1.0 - pH
+        val remL = -(pL + lo * q1)
+
+        // 3) correction term q2 = (remH + remL) * q1
+        val q2 = (remH + remL) * q1
+
+        // 4) final QuickTwoSum(q1, q2) → in-place hi/lo
+        val hi2 = q1 + q2
+        lo = q2 - (hi2 - q1)
+        hi = hi2
+    }
+
     fun setBigInteger(n: BigInteger) {
         hi = 0.0
         lo = 0.0
@@ -282,6 +328,11 @@ class DoubleDouble(a: Double, b: Double) {
         val lo0   = sign * rem.toDouble()
         // final normalization!
         setQuickTwoSum(hi, lo0)
+    }
+
+    fun mutateDouble() {
+        hi *= 2
+        lo *= 2
     }
 
     /*

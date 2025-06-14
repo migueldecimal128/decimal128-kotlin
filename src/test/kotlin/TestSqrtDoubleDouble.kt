@@ -2,6 +2,8 @@ package com.decimal128
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
+import java.lang.Long.numberOfTrailingZeros
+import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
@@ -125,6 +127,7 @@ class TestSqrtDoubleDouble{
         val delta0Significand = ((delta0Raw and ((1L shl 52) - 1)) or (1L shl 52))
         val delta0Exp = ((delta0Raw ushr 52).toInt() and 0x7FF) - 1023
         val coeffDelta0 = Coeff(delta0Significand)
+        coeffDelta0.coeffMutateDecrement()
         coeffDelta0.coeffSetShiftLeft(coeffDelta0, Math.max(delta0Exp - 52, 0))
 
         val coeffGuess1 = Coeff()
@@ -133,38 +136,41 @@ class TestSqrtDoubleDouble{
 
         val coeffGuess1Squared = Coeff()
         coeffGuess1Squared.coeffSetMul(coeffGuess1, coeffGuess1)
+        println(" ==> coeffRadicandScaled:$coeffRadicandScaled coeffGuess1Squared:$coeffGuess1Squared")
         require(coeffRadicandScaled.coeffUnscaledCompareTo(coeffGuess1Squared) >= 0)
         val coeffResidual1 = Coeff()
         CoeffSub.coeffSubUnscaled(coeffResidual1, coeffRadicandScaled, coeffGuess1Squared)
         println(" --> residual1:$coeffResidual1")
 
-        val coeffGuess1X2 = Coeff()
-        coeffGuess1X2.coeffSetShiftLeft(coeffGuess1, 1)
+        val ddT = coeffGuess1.coeffToNewDoubleDouble()
+        ddT.mutateDouble()
+        ddT.mutateInvFast()
+        val ddResidual1 = coeffResidual1.coeffToNewDoubleDouble()
+        val ddDelta1 = DoubleDouble.newMulApprox(ddResidual1, ddT)
         val coeffDelta1 = Coeff()
-        val residue1 = coeffDelta1.coeffSetDiv(coeffResidual1, coeffGuess1X2)
+        coeffDelta1.coeffSet(ddDelta1)
 
         val coeffGuess2 = Coeff()
         coeffGuess2.coeffSetAdd(coeffGuess1, coeffDelta1)
-        println(" --> guess2:$coeffGuess2")
 
-        val guess2Squared = Coeff()
-        guess2Squared.coeffSetMul(coeffGuess2, coeffGuess2)
-        val coeffResidual2 = Coeff()
-        CoeffSub.coeffSubUnscaled(coeffResidual2, coeffRadicandScaled, guess2Squared)
-        println(" --> residual2:$coeffResidual2")
+        println(" ==> coeffGuess2:$coeffGuess2")
 
+        val coeffGuess2Squared = Coeff()
+        coeffGuess2Squared.coeffSetMul(coeffGuess2, coeffGuess2)
+        val residual2 = Coeff()
+        residual2.coeffSetSub(coeffRadicandScaled, coeffGuess2Squared)
 
+        println(" ==> residual2:$residual2")
 
         println(" --> scaleUp:$scaleUp preferred:$qPreferred")
 
-        /*
         sqrt.coeffSet(coeffGuess2)
         sqrt.qExp = -scaleUp / 2
         sqrt.sign = 0
 
         println(" --> sqrt:$sqrt")
 
-        val residue2 = if (coeffResidual2.coeffIsZero()) Residue.EXACT else Residue.LT_HALF
+        val residue2 = if (residual2.coeffIsZero()) Residue.EXACT else Residue.LT_HALF
         var qZ = (radicand.qExp - scaleUp) / 2
         var ntz = numberOfTrailingZeros(sqrt.dw0)
         if (residue2 == Residue.EXACT && qZ < qPreferred && ntz > 0) {
@@ -209,7 +215,7 @@ class TestSqrtDoubleDouble{
 
         println(" --> sqrt:$sqrt")
 
-         */
+
     }
 
 }
