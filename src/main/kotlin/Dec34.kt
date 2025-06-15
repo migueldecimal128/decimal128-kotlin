@@ -418,12 +418,12 @@ open class Dec34() : Mag() {
                     }
                 } else {
                     sign = 0
-                    magSetMinFinite()
+                    magSetMinFinite(ctx)
                 }
             }
             (qExp == NON_FINITE_INF) -> {
                 if (sign != 0)
-                    magSetMaxFinite()
+                    magSetMaxFinite(ctx)
             }
             else -> {
                 setNaN(ctx)
@@ -449,12 +449,12 @@ open class Dec34() : Mag() {
                     }
                 } else {
                     sign = 1
-                    magSetMinFinite()
+                    magSetMinFinite(ctx)
                 }
             }
             (qExp == NON_FINITE_INF) -> {
                 if (sign != 1)
-                    magSetMaxFinite()
+                    magSetMaxFinite(ctx)
             }
             else -> {
                 setNaN(ctx)
@@ -519,7 +519,7 @@ open class Dec34() : Mag() {
             qExp <= NON_FINITE_INF -> {
                 val p10 = capExponentRange(pow10)
                 qExp += p10
-                if (qExp > Q_EXP_MAX || qExp < Q_EXP_TINY)
+                if (qExp > ctx.qMax || qExp < ctx.qTiny)
                     roundAndFinalize(Residue.EXACT, sign, ctx)
             }
             x.qExp <= NON_FINITE_QNAN -> {}

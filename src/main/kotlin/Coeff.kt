@@ -15,6 +15,7 @@ import com.decimal128.CoeffDivide.coeffDivx64
 import com.decimal128.CoeffDivide.coeffMod
 import com.decimal128.CoeffFma.coeffFmaPow10
 import com.decimal128.CoeffPow10.calcDigitLen256
+import com.decimal128.CoeffPow10.pow10Offset
 import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
@@ -90,6 +91,18 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffIs33Nines() : Boolean  {
         return bitLen == BITLEN_33_NINES && dw1 == DW1_33_NINES && dw0 == DW0_33_NINES
+    }
+
+    fun coeffIsAllNines(ctx: DecimalContext) : Boolean  {
+        val pow10BitLen = CoeffPow10.pow10BitLen(ctx.precision)
+        if (bitLen != pow10BitLen)
+            return false
+        val offset = pow10Offset(ctx.precision)
+        if (dw0 != POW10[offset] - 1)
+            return false
+        if (ctx.precision < MIN_POW10_DIGIT_LEN_128 || dw1 != POW10[offset])
+            return false
+        return true
     }
 
     private fun calcBitLen(): Int {

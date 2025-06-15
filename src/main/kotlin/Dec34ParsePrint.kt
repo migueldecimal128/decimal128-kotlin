@@ -356,7 +356,7 @@ object Dec34ParsePrint {
             val discardedIntegerDigitCount = Math.max(0, integerDigitCount - 34)
             val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
             x.qExp = qExp
-            if (((guardDigit or stickyBits) == 0) && (qExp >= Q_EXP_TINY) && (qExp <= Q_EXP_MAX))
+            if (((guardDigit or stickyBits) == 0) && (qExp >= ctx.qTiny) && (qExp <= ctx.qMax))
                 return
             val roundBit = if (guardDigit < 5) 0 else 1
             val stickyBit = (-stickyBits) ushr 31

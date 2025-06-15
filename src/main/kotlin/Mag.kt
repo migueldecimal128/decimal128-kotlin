@@ -4,11 +4,11 @@ import com.decimal128.Residue.Companion.EXACT
 import java.math.BigDecimal
 import java.math.BigInteger
 
-const val SCIENTIFIC_EXP_MAX = 6144
-const val Q_EXP_MAX = 6111 // 6144 - (PRECISION_34 - 1)
-const val SCIENTIFIC_EXP_MIN = -6143
+//const val SCIENTIFIC_EXP_MAX = 6144
+//const val Q_EXP_MAX = 6111 // 6144 - (PRECISION_34 - 1)
+//const val SCIENTIFIC_EXP_MIN = -6143
 //const val TINY_EXPONENT = MIN_SCIENTIFIC_EXPONENT - (PRECISION_34 - 1) // -6176
-const val Q_EXP_TINY = -6176 // EXP_SCIENTIFIC_MIN - (PRECISION_34 - 1)
+//const val Q_EXP_TINY = -6176 // EXP_SCIENTIFIC_MIN - (PRECISION_34 - 1)
 
 const val MIN_SPECIAL_VALUE = 1000000000
 const val NON_FINITE_INF = 1000000000
@@ -95,7 +95,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
                         super.coeffSetOne()
                         qExp = NON_FINITE_INF
                     } else {
-                        magSetMaxFinite()
+                        magSetMaxFinite(ctx)
                     }
                     ctx.setOverflow()
                     ctx.setInexact()
@@ -136,7 +136,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
                     super.coeffSetZero()
                     qExp = NON_FINITE_INF
                 } else {
-                    magSetMinFinite()
+                    magSetMinFinite(ctx)
                 }
                 qExp = ctx.qTiny
                 ctx.setUnderflow()
@@ -154,34 +154,38 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         super.coeffSetZero()
     }
 
-    fun magSetMaxFinite() {
-        qExp = Q_EXP_MAX
+    fun magSetMaxFinite(ctx: DecimalContext) {
+        qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
-        super.coeffSet128(DW1_34_NINES, DW0_34_NINES)
+        val offset = CoeffPow10.pow10Offset(ctx.precision)
+        if (ctx.precision < MIN_POW10_DIGIT_LEN_128) {
+            super.coeffSet64(POW10[offset] - 1)
+        } else if (ctx.precision < MIN_POW10_DIGIT_LEN_192) {
+            super.coeffSet128(POW10[offset + 1], POW10[offset] - 1)
+        } else
+            throw IllegalArgumentException()
     }
 
-    fun magIsMaxFinite(): Boolean {
-        return qExp == Q_EXP_MAX &&
-                bitLen == BITLEN_34_NINES &&
-                dw1 == DW1_34_NINES &&
-                dw0 == DW0_34_NINES
+    fun magIsMaxFinite(ctx: DecimalContext): Boolean {
+        if (qExp < ctx.qMax)
+            return false
+        return coeffIsAllNines(ctx)
     }
 
-    fun magSetMinFinite() {
-        qExp = Q_EXP_TINY
+    fun magSetMinFinite(ctx: DecimalContext) {
+        qExp = ctx.qTiny
         super.coeffSetOne()
     }
 
-    fun magIsMinFinite(): Boolean {
-        return qExp == Q_EXP_TINY && bitLen == 1
+    fun magIsMinFinite(ctx: DecimalContext): Boolean {
+        return qExp == ctx.qTiny && bitLen == 1
     }
 
 
     fun magSet(dw0: Long) = magSet(0, dw0)
 
     fun magSet(exponent: Int, dw0: Long) {
-        assert(exponent in Q_EXP_TINY..SCIENTIFIC_EXP_MAX)
         qExp = exponent
         super.coeffSet64(dw0)
     }
@@ -248,7 +252,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         val scaleUp = Math.min(headroom, pow10)
         val residue = this.coeffSetScaleUpPow10(this, scaleUp)
         qExp += pow10 - scaleUp
-        if (qExp > Q_EXP_MAX)
+        if (qExp > ctx.qMax)
             roundAndFinalize(Residue.EXACT, sign, ctx)
     }
 
