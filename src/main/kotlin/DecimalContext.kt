@@ -23,12 +23,6 @@ class DecimalContext(val precision: Int, val eMax: Int, val roundingDirection:Ro
     val eMin = -(eMax - 1)
     val qMax = eMax - (precision - 1)
     val qTiny = eMin - (precision - 1)
-    init {
-        assert(eMax == 6144)
-        assert(eMin == -6143)
-        assert(qMax == 6111)
-        assert(qTiny == -6176)
-    }
 
     fun getMathContext() = MATH_CONTEXT_MAP[roundingDirection.value]
 
@@ -57,7 +51,7 @@ class DecimalContext(val precision: Int, val eMax: Int, val roundingDirection:Ro
     fun setDivByZero() { divByZero = true }
     fun setInvalid() { invalid = true }
 
-    fun operandIsSignalingNaN(dec34: Dec34) {
+    fun operandIsSignalingNaN(decimal: Decimal) {
         if (trapInvalid)
             throw RuntimeException("invalid sNaN seen")
     }
