@@ -525,7 +525,7 @@ internal object CoeffPow10 {
         val xBitLen = x.bitLen
         val xDigitLen = x.digitLen
         if (xDigitLen > 0) {
-            val pow10Offset = pow10Offset(xDigitLen)
+            val pow10Offset = pow10Offset(xDigitLen - 1)
             val p0 = POW10[pow10Offset + 0]
             val p1 = POW10[pow10Offset + 1] and (( 64 - xBitLen) shr 31).toLong()
             val p2 = POW10[pow10Offset + 2] and ((128 - xBitLen) shr 31).toLong()

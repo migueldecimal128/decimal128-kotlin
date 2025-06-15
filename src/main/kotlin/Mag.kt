@@ -170,7 +170,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     fun magIsMaxFinite(ctx: DecimalContext): Boolean {
         if (qExp < ctx.qMax)
             return false
-        return coeffIsAllNines(ctx)
+        return coeffIsAllNines(ctx.precision)
     }
 
     fun magSetMinFinite(ctx: DecimalContext) {

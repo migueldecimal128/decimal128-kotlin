@@ -87,20 +87,16 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return coeffIsMultipleOf5()
     }
 
-    fun coeffIsPow10() = CoeffPow10.coeffIsPow10(this)
+    fun coeffIsPowerOf10() = CoeffPow10.coeffIsPow10(this)
 
-    fun coeffIs33Nines() : Boolean  {
-        return bitLen == BITLEN_33_NINES && dw1 == DW1_33_NINES && dw0 == DW0_33_NINES
-    }
-
-    fun coeffIsAllNines(ctx: DecimalContext) : Boolean  {
-        val pow10BitLen = CoeffPow10.pow10BitLen(ctx.precision)
+    fun coeffIsAllNines(nineCount: Int) : Boolean  {
+        val pow10BitLen = CoeffPow10.pow10BitLen(nineCount)
         if (bitLen != pow10BitLen)
             return false
-        val offset = pow10Offset(ctx.precision)
+        val offset = pow10Offset(nineCount)
         if (dw0 != POW10[offset] - 1)
             return false
-        if (ctx.precision < MIN_POW10_DIGIT_LEN_128 || dw1 != POW10[offset])
+        if (nineCount < MIN_POW10_DIGIT_LEN_128 || dw1 != POW10[offset])
             return false
         return true
     }

@@ -7,6 +7,11 @@ import java.math.BigDecimal
 class TestNextUpDown {
 
     val tcs = arrayOf(
+        BigDecimal("1e-6176"),
+        BigDecimal("-1e-6176"),
+        BigDecimal("-9999999999999999999999999999999999e6111"),
+        BigDecimal("9999999999999999999999999999999999e6111"),
+        BigDecimal("1"),
         BigDecimal("8"),
         BigDecimal("-8"),
         BigDecimal("0.1"),
@@ -19,6 +24,27 @@ class TestNextUpDown {
         BigDecimal("1e-6176"),
         BigDecimal("-1e-6176"),
         BigDecimal.ZERO,
+        BigDecimal("10"),
+        BigDecimal("100"),
+        BigDecimal("1000"),
+        BigDecimal("10000"),
+        BigDecimal("100000"),
+        BigDecimal("100000000000000000000000000000"),
+        BigDecimal("1000000000000000000000000000000"),
+        BigDecimal("10000000000000000000000000000000"),
+        BigDecimal("100000000000000000000000000000000"),
+        BigDecimal("1000000000000000000000000000000000"),
+        BigDecimal("1E0"),
+        BigDecimal("1E1"),
+        BigDecimal("1E2"),
+        BigDecimal("1E3"),
+        BigDecimal("1E4"),
+        BigDecimal("1E5"),
+        BigDecimal("1E-1"),
+        BigDecimal("1E-2"),
+        BigDecimal("1E-3"),
+        BigDecimal("1E-4"),
+        BigDecimal("1E-5"),
     )
 
     @Test

@@ -404,30 +404,19 @@ open class Dec34() : Mag() {
     fun setNextUp(x: Dec34, ctx: DecimalContext) {
         set(x)
         when {
-            (qExp < NON_FINITE_INF) -> {
-                if (! coeffIsZero()) {
-                    if (! coeffIs33Nines()) {
-                        val headroom = PRECISION_34 - digitLen
-                        this.coeffSetScaleUpPow10(this, headroom)
-                        this.qExp -= headroom
-                    }
-                    if (sign == 0) {
-                        coeffMutateIncrement()
-                    } else {
-                        coeffMutateDecrement()
-                    }
-                } else {
-                    sign = 0
-                    magSetMinFinite(ctx)
-                }
-            }
-            (qExp == NON_FINITE_INF) -> {
-                if (sign != 0)
+            qExp > NON_FINITE_INF -> { return }
+            qExp == NON_FINITE_INF -> {
+                if (sign == 1)
                     magSetMaxFinite(ctx)
+                return
             }
-            else -> {
-                setNaN(ctx)
+            coeffIsZero() -> {
+                magSetMinFinite(ctx)
+                sign = 0
+                return
             }
+            sign == 0 -> mutateNextAwayFromZero(ctx)
+            else -> mutateNextTowardZero(ctx)
         }
         roundAndFinalize(EXACT, sign, ROUND_TOWARD_POSITIVE, ctx)
     }
@@ -435,32 +424,42 @@ open class Dec34() : Mag() {
     fun setNextDown(x: Dec34, ctx: DecimalContext) {
         set(x)
         when {
-            (qExp < NON_FINITE_INF) -> {
-                if (! coeffIsZero()) {
-                    if (! coeffIs33Nines()) {
-                        val headroom = PRECISION_34 - digitLen + 1
-                        this.coeffSetScaleUpPow10(this, headroom)
-                        this.qExp -= headroom
-                    }
-                    if ((sign xor 1) == 0) {
-                        coeffMutateIncrement()
-                    } else {
-                        coeffMutateDecrement()
-                    }
-                } else {
-                    sign = 1
-                    magSetMinFinite(ctx)
-                }
-            }
-            (qExp == NON_FINITE_INF) -> {
-                if (sign != 1)
+            qExp > NON_FINITE_INF -> { return }
+            qExp == NON_FINITE_INF -> {
+                if (sign == 0)
                     magSetMaxFinite(ctx)
+                return
             }
-            else -> {
-                setNaN(ctx)
+            coeffIsZero() -> {
+                magSetMinFinite(ctx)
+                sign = 1
+                return
             }
+
+            sign != 0 -> mutateNextAwayFromZero(ctx)
+
+            else -> mutateNextTowardZero(ctx)
         }
-        roundAndFinalize(EXACT, sign xor 1, ROUND_TOWARD_POSITIVE, ctx)
+        roundAndFinalize(EXACT, sign, ROUND_TOWARD_NEGATIVE, ctx)
+    }
+
+    private fun mutateNextAwayFromZero(ctx: DecimalContext) {
+        val headroom = Math.min(ctx.precision - digitLen, qExp - ctx.qTiny)
+        if (headroom > 1 || headroom == 1 && !coeffIsAllNines(ctx.precision-1)) {
+            this.coeffSetScaleUpPow10(this, headroom)
+            this.qExp -= headroom
+        }
+        coeffMutateIncrement()
+    }
+
+    private fun mutateNextTowardZero(ctx: DecimalContext) {
+        val headroom =
+            Math.min(ctx.precision - digitLen + if (coeffIsPowerOf10()) 1 else 0, qExp - ctx.qTiny)
+        if (headroom > 0) {
+            this.coeffSetScaleUpPow10(this, headroom)
+            this.qExp -= headroom
+        }
+        coeffMutateDecrement()
     }
 
     fun minNum(x: Dec34, y: Dec34, ctx: DecimalContext) = minNum_helper(x, y, 0, ctx)
