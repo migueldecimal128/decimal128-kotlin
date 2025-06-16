@@ -18,7 +18,7 @@ val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
 val MIN_DIVISOR_POW10 = 1
 val MAX_DIVISOR_POW10 = MAX_DIVIDEND_DIGIT_COUNT - 34
 
-object RecipMulPow10 {
+object DivRangeRecipMulPow10 {
 
     val THREE = BigInteger.valueOf(3)
     val FIVE = BigInteger.valueOf(5)

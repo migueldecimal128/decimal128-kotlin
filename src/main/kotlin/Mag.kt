@@ -24,12 +24,16 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         super.coeffSet256(dw3, dw2, dw1, dw0)
         this.qExp = exp
     }
-    constructor(bd: BigDecimal): this() {
-        magSet(bd)
+
+    constructor(exponent: Int, bi: BigInteger, ctx: DecimalContext): this() {
+        super.coeffSet(bi)
+        qExp = exponent
+        roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
-    constructor(exp: Int, bi: BigInteger): this() {
-        magSet(exp, bi)
-    }
+
+    constructor(bd: BigDecimal, ctx: DecimalContext) : this(-bd.scale(), bd.unscaledValue().abs(), ctx)
+
+    constructor(bd: BigDecimal) : this(bd, DecimalContext.newDecimal128Context())
 
     fun sciExp() = qExp + (digitLen - 1)
 
@@ -190,18 +194,13 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         super.coeffSet64(dw0)
     }
 
-    fun magSet(exponent: Int, bi: BigInteger) =
-        magSet(exponent, bi, DecimalContext())
-
     fun magSet(exponent: Int, bi: BigInteger, ctx: DecimalContext) {
         super.coeffSet(bi)
         qExp = exponent
         roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
 
-    fun magSet(bd: BigDecimal) {
-        magSet(bd, DecimalContext())
-    }
+    fun magSet(bd: BigDecimal) = magSet(bd, DecimalContext.newDecimal128Context())
 
     fun magSet(bd: BigDecimal, ctx: DecimalContext) {
         magSet(-bd.scale(), bd.unscaledValue().abs(), ctx)
@@ -212,7 +211,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         super.coeffSet(x)
     }
 
-    fun magSet(str: String) = magSet(BigDecimal(str))
+    fun magSet(str: String) = magSet(BigDecimal(str), DecimalContext.newDecimal128Context())
 
     fun magAdd(a: Mag, b: Mag, sign: Int, ctx: DecimalContext) {
         val residue = MagAddSub.magAdd(this, a, b)

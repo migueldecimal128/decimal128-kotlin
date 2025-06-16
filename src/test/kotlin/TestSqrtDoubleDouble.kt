@@ -9,7 +9,6 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
-import kotlin.math.nextDown
 
 class TestSqrtDoubleDouble{
 
@@ -92,8 +91,8 @@ class TestSqrtDoubleDouble{
     }
 
     fun test1(tc: TC) {
-        val dec = Dec34()
-        val decSqrt = Dec34()
+        val dec = Decimal()
+        val decSqrt = Decimal()
         dec.set(tc.bd)
         setSqrt(decSqrt, dec)
         val expected = tc.sqrt
@@ -105,7 +104,7 @@ class TestSqrtDoubleDouble{
     var corrections1 = 0L
     var correctionsGT1 = 0L
 
-    fun setSqrt(sqrt: Dec34, radicand: Dec34) {
+    fun setSqrt(sqrt: Decimal, radicand: Decimal) {
         ++total
         val qPreferred = radicand.qExp shr 1
         if (radicand.coeffIsZero()) {

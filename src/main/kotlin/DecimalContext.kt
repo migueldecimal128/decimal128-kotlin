@@ -3,28 +3,26 @@ package com.decimal128
 import java.math.MathContext
 import java.math.RoundingMode
 
-val DECIMAL_128 = DecimalContext(34, 6144, RoundingDirection.ROUND_TIES_TO_EVEN)
-val DECIMAL_64 = DecimalContext(16, 384, RoundingDirection.ROUND_TIES_TO_EVEN)
-val DECIMAL_128_EXTENDED = DecimalContext(38, 9999, RoundingDirection.ROUND_TIES_TO_EVEN)
-
-class DecimalContext(val precision: Int, val eMax: Int, val roundingDirection:RoundingDirection) {
-    constructor() : this(34, 6144, RoundingDirection.ROUND_TIES_TO_EVEN)
-    constructor(rd: RoundingDirection) : this(34, 6144, rd)
+class DecimalContext(val decimalConfig: DecimalConfig) {
+    constructor() : this(DecimalConfig.DECIMAL_128_CONFIG)
+    constructor(roundingDirection: RoundingDirection) : this(DecimalConfig(roundingDirection))
 
     companion object {
-        val MATH_CONTEXT_MAP = arrayOf(
-            MathContext.DECIMAL128, // HALF_EVEN
-            MathContext(PRECISION_34, RoundingMode.HALF_UP),
-            MathContext(PRECISION_34, RoundingMode.DOWN),
-            MathContext(PRECISION_34, RoundingMode.CEILING),
-            MathContext(PRECISION_34, RoundingMode.FLOOR),
-        )
-    }
-    val eMin = -(eMax - 1)
-    val qMax = eMax - (precision - 1)
-    val qTiny = eMin - (precision - 1)
 
-    fun getMathContext() = MATH_CONTEXT_MAP[roundingDirection.value]
+        fun newDecimal64Context() = DecimalContext(DecimalConfig.DECIMAL_64_CONFIG)
+        fun newDecimal128Context() = DecimalContext(DecimalConfig.DECIMAL_128_CONFIG)
+        fun newDecimal128ExtendedContext() = DecimalContext(DecimalConfig.DECIMAL_128_EXTENDED_CONFIG)
+    }
+    val precision = decimalConfig.precision
+    val roundingDirection = decimalConfig.roundingDirection
+    val eMax = decimalConfig.eMax
+    val eMin = decimalConfig.eMin
+    val qMax = decimalConfig.qMax
+    val qTiny = decimalConfig.qTiny
+
+    fun getMathContext() : MathContext {
+        return MathContext(precision, roundingDirection.mapToRoundingMode())
+    }
 
     var invalid = false
         private set

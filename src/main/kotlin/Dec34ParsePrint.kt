@@ -144,13 +144,13 @@ private const val BYTE_MINUS = '-'.code.toByte()
 
 object Dec34ParsePrint {
 
-    fun decToString(x: Dec34) : String {
+    fun decToString(x: Decimal) : String {
         val bytes = ByteArray(MAX_DEC34_CHAR_LEN)
         val cb = decToChars(x, bytes, 0, MAX_DEC34_CHAR_LEN)
         return String(bytes, 0, cb, StandardCharsets.UTF_8)
     }
 
-    fun decToChars(x: Dec34, bytes: ByteArray, off: Int, len: Int) : Int {
+    fun decToChars(x: Decimal, bytes: ByteArray, off: Int, len: Int) : Int {
         if (off < 0 || len < 0)
             throw IllegalArgumentException()
         val q = x.qExp
@@ -238,7 +238,7 @@ object Dec34ParsePrint {
         "nan", "qnan", "snan"
     )
 
-    fun decFromString(x: Dec34, str: String, ctx: DecimalContext) {
+    fun decFromString(x: Decimal, str: String, ctx: DecimalContext) {
         var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
         var significantDigitCount = 0 // does not count leading zeros
         var ichDot = -1

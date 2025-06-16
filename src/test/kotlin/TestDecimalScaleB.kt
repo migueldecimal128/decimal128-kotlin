@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigDecimal.ONE
 
-class TestDec34ScaleB {
+class TestDecimalScaleB {
 
     class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecimalContext) {
         constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecimalContext())
@@ -38,9 +38,9 @@ class TestDec34ScaleB {
         val expected = tc.expected
         println("$bd pow10:$pow10 => $expected")
 
-        val d = Dec34()
+        val d = Decimal()
         d.set(bd)
-        val s = Dec34()
+        val s = Decimal()
         s.scaleB(d, pow10, tc.ctx)
         val observed = (
                 if (s.isFinite())

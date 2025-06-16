@@ -84,8 +84,9 @@ class TestMagAddSub {
         if (verbose)
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
 
-        val magA = Mag(bdA)
-        val magB = Mag(bdB)
+        val ctx2 = DecimalContext()
+        val magA = Mag(bdA, ctx2)
+        val magB = Mag(bdB, ctx2)
         val magP = Mag()
         magP.magAdd(magA, magB, 0, ctx)
         assertEquals(expected.unscaledValue(), magP.coeffToBigInteger())

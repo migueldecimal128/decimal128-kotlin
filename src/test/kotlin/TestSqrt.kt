@@ -88,8 +88,8 @@ class TestSqrt{
     }
 
     fun test1(tc: TC) {
-        val dec = Dec34()
-        val decSqrt = Dec34()
+        val dec = Decimal()
+        val decSqrt = Decimal()
         dec.set(tc.bd)
         setSqrt(decSqrt, dec)
         val expected = tc.sqrt
@@ -97,7 +97,7 @@ class TestSqrt{
         assertEquals(-expected.scale(), decSqrt.qExp)
     }
 
-    fun setSqrt(sqrt: Dec34, radicand: Dec34) {
+    fun setSqrt(sqrt: Decimal, radicand: Decimal) {
         val qPreferred = radicand.qExp shr 1
         if (radicand.coeffIsZero()) {
             val sciExp = radicand.sciExp()

@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.*
 
-class TestDec34FromString {
+class TestDecimalFromString {
     val verbose = false
 
     class TC(val strVal: String) {
@@ -77,11 +77,11 @@ class TestDec34FromString {
         if (verbose)
             println("$strVal bd:$bd => expected:$expected")
 
-        val d = Dec34()
+        val d = Decimal()
         Dec34ParsePrint.decFromString(d, strVal, DecimalContext())
         val observed = d
 
-        val e = Dec34(bd)
+        val e = Decimal(bd)
 
         val dStr = d.toString()
         val eStr = e.toString()

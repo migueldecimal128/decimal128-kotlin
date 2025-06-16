@@ -54,16 +54,16 @@ class TestNextUpDown {
     }
 
     fun test1(bd: BigDecimal) {
-        val n = Dec34(bd)
-        val up = Dec34()
-        val down = Dec34()
+        val n = Decimal(bd)
+        val up = Decimal()
+        val down = Decimal()
         val ctx = DecimalContext()
         up.setNextUp(n, ctx)
         down.setNextDown(n, ctx)
 
         println("n:$n up:$up down:$down")
 
-        val t = Dec34()
+        val t = Decimal()
 
         t.setNextUp(down, ctx)
         assertEquals(n, t)

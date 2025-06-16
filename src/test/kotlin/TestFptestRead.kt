@@ -164,10 +164,10 @@ class TestFptestRead {
             }
         }
 
-        fun result(): Dec34? {
+        fun result(): Decimal? {
             if (result == "#")
                 return null
-            val dec = Dec34()
+            val dec = Decimal()
             val ctx = DecimalContext()
             when (result) {
                 "Q" -> dec.setNaN(ctx)
@@ -177,11 +177,11 @@ class TestFptestRead {
             return dec
         }
 
-        fun decOperands(): ArrayList<Dec34> {
-            val ret = ArrayList<Dec34>(operands.size)
+        fun decOperands(): ArrayList<Decimal> {
+            val ret = ArrayList<Decimal>(operands.size)
             val ctx = DecimalContext()
             for (t in operands) {
-                val d = Dec34()
+                val d = Decimal()
                 when (t) {
                     "Q" -> d.setNaN(ctx)
                     "S" -> d.setSNaN(ctx)
@@ -216,7 +216,7 @@ class TestFptestRead {
     fun test1(fptest: Fptest) {
         val operands = fptest.decOperands()
         val ctx = DecimalContext(fptest.roundingDirection())
-        val observed = Dec34()
+        val observed = Decimal()
         if (verbose)
             println(fptest.fptestStr)
         when (fptest.op) {
