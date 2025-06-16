@@ -228,10 +228,10 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
-    fun coeffSet(bi: BigInteger) {
-        require(bi.bitLength() <= 256)
-        coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
-    }
+    //fun coeffSet(bi: BigInteger) {
+    //    require(bi.bitLength() <= 256)
+    //    coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+    //}
 
     fun coeffSet(x: Coeff) {
             bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
@@ -248,8 +248,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffSetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         coeffSetShiftRight(this, x, xOff, xLen, bitCount)
 
+    /*
     open fun coeffToBigInteger(): BigInteger {
-//        assert(validateDigitCount())
         var bi = BigInteger.ZERO
         val dw0Lo = dw0 and 0xFFFFFFFFL
         val dw0Hi = dw0 ushr 32
@@ -269,6 +269,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         bi = bi or BigInteger(dw3Hi.toString()).shiftLeft(224)
         return bi
     }
+
+     */
 
     fun getDwordAtBitIndex(bitIndex: Int): Long =
         CoeffBits.getDwordAtBitIndex(this, bitIndex)

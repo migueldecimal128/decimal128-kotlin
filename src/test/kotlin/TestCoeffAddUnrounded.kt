@@ -58,8 +58,8 @@ class TestCoeffAddUnrounded {
         val expected = case.biSum
         if (expected.bitLength() > 256)
             return
-        val coeffA = Coeff(case.biA)
-        val coeffB = Coeff(case.biB)
+        val coeffA = newCoeff(case.biA)
+        val coeffB = newCoeff(case.biB)
         val coeffC = Coeff()
         coeffC.coeffSetAdd(coeffA, coeffB)
         if (verbose)

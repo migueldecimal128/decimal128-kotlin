@@ -2,28 +2,28 @@ package com.decimal128
 
 import java.math.BigInteger
 
-fun setCoeffFromBigInteger(c: Coeff, bi: BigInteger) {
+fun Coeff.coeffSet(bi: BigInteger) {
     require(bi.signum() >= 0)
     require(bi.bitLength() <= 256)
-    c.coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+    this.coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
 }
 
-fun newCoeffFromBigInteger(bi: BigInteger): Coeff {
+fun newCoeff(bi: BigInteger): Coeff {
     val c = Coeff()
-    setCoeffFromBigInteger(c, bi)
+    c.coeffSet(bi)
     return c
 }
 
-fun bigIntegerFromCoeff(c: Coeff): BigInteger {
+fun Coeff.coeffToBigInteger(): BigInteger {
     var bi = BigInteger.ZERO
-    val dw0Lo = c.dw0 and 0xFFFFFFFFL
-    val dw0Hi = c.dw0 ushr 32
-    val dw1Lo = c.dw1 and 0xFFFFFFFFL
-    val dw1Hi = c.dw1 ushr 32
-    val dw2Lo = c.dw2 and 0xFFFFFFFFL
-    val dw2Hi = c.dw2 ushr 32
-    val dw3Lo = c.dw3 and 0xFFFFFFFFL
-    val dw3Hi = c.dw3 ushr 32
+    val dw0Lo = this.dw0 and 0xFFFFFFFFL
+    val dw0Hi = this.dw0 ushr 32
+    val dw1Lo = this.dw1 and 0xFFFFFFFFL
+    val dw1Hi = this.dw1 ushr 32
+    val dw2Lo = this.dw2 and 0xFFFFFFFFL
+    val dw2Hi = this.dw2 ushr 32
+    val dw3Lo = this.dw3 and 0xFFFFFFFFL
+    val dw3Hi = this.dw3 ushr 32
     bi = bi or BigInteger(dw0Lo.toString()).shiftLeft(0)
     bi = bi or BigInteger(dw0Hi.toString()).shiftLeft(32)
     bi = bi or BigInteger(dw1Lo.toString()).shiftLeft(64)

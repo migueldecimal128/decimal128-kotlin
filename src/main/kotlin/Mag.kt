@@ -26,7 +26,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     }
 
     constructor(exponent: Int, bi: BigInteger, ctx: DecimalContext): this() {
-        super.coeffSet(bi)
+        coeffSet(bi)
         qExp = exponent
         roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
@@ -195,7 +195,7 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     }
 
     fun magSet(exponent: Int, bi: BigInteger, ctx: DecimalContext) {
-        super.coeffSet(bi)
+        coeffSet(bi)
         qExp = exponent
         roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
