@@ -90,10 +90,10 @@ class TestCoeffFms {
             return
         //if (case.biS.bitLength() > 128)
          //   return
-        val coeffX = Coeff(case.biX)
-        val coeffY = Coeff(case.biY)
-        val coeffS = Coeff(case.biS)
-        val coeffExpected = Coeff(case.biResult)
+        val coeffX = newCoeff(case.biX)
+        val coeffY = newCoeff(case.biY)
+        val coeffS = newCoeff(case.biS)
+        val coeffExpected = newCoeff(case.biResult)
         val coeffResult = Coeff()
         if (verbose)
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = expected:$expected (${expected.bitLength()} bits)")

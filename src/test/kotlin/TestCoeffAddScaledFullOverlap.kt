@@ -59,8 +59,8 @@ class TestCoeffAddScaledFullOverlap {
         val expected = case.biZ
         if (expected.bitLength() > 256)
             return
-        val coeffX = Coeff(case.biX)
-        val coeffY = Coeff(case.biY)
+        val coeffX = newCoeff(case.biX)
+        val coeffY = newCoeff(case.biY)
         val coeffZ = Coeff()
         if (verbose)
             println("${case.biX} * 10**${case.scaleDelta} + ${case.biY} => expected:$expected")

@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.math.BigInteger
 import com.decimal128.CoeffMul.coeffMul
 import com.decimal128.CoeffFma.coeffFma
 import com.decimal128.CoeffAdd.coeffAddUnscaled
@@ -34,13 +33,9 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(dw0: Long) : this(0L, 0L, 0L, dw0)
     constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
-    constructor(bi: BigInteger) : this(
-        bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong()
-    ) {
-        require(bi.bitLength() <= 256)
+    constructor(str: String) : this() {
+        CoeffPrintParse.coeffFromString(this, str)
     }
-
-    constructor(str: String) : this(BigInteger(str))
     constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
     var dw3 = d3
@@ -228,49 +223,24 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
-    //fun coeffSet(bi: BigInteger) {
-    //    require(bi.bitLength() <= 256)
-    //    coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
-    //}
-
     fun coeffSet(x: Coeff) {
             bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
     }
 
-    fun coeffSet(str: String) = coeffSet(BigInteger(str))
+    fun coeffSet(str: String) = CoeffPrintParse.coeffFromString(this, str)
 
     fun coeffSetShiftRight(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftRight(this, x, bitShift)
 
-    fun coeffSetShiftLeft(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftLeft(this, x, bitShift)
+    fun coeffSetShiftLeft(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftLeftOr(this, x, bitShift, 0L)
+
+    fun coeffMutateShiftLeft(bitShift: Int) = CoeffSet.coeffSetShiftLeftOr(this, this, bitShift, 0L)
+
+    fun coeffMutateShiftLeftOr(bitShift: Int, d0: Long) = CoeffSet.coeffSetShiftLeftOr(this, this, bitShift, d0)
 
     fun coeffSet(x: LongArray, xOff: Int, xLen: Int) = coeffSet(this, x, xOff, xLen)
 
     fun coeffSetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         coeffSetShiftRight(this, x, xOff, xLen, bitCount)
-
-    /*
-    open fun coeffToBigInteger(): BigInteger {
-        var bi = BigInteger.ZERO
-        val dw0Lo = dw0 and 0xFFFFFFFFL
-        val dw0Hi = dw0 ushr 32
-        val dw1Lo = dw1 and 0xFFFFFFFFL
-        val dw1Hi = dw1 ushr 32
-        val dw2Lo = dw2 and 0xFFFFFFFFL
-        val dw2Hi = dw2 ushr 32
-        val dw3Lo = dw3 and 0xFFFFFFFFL
-        val dw3Hi = dw3 ushr 32
-        bi = bi or BigInteger(dw0Lo.toString()).shiftLeft(0)
-        bi = bi or BigInteger(dw0Hi.toString()).shiftLeft(32)
-        bi = bi or BigInteger(dw1Lo.toString()).shiftLeft(64)
-        bi = bi or BigInteger(dw1Hi.toString()).shiftLeft(96)
-        bi = bi or BigInteger(dw2Lo.toString()).shiftLeft(128)
-        bi = bi or BigInteger(dw2Hi.toString()).shiftLeft(160)
-        bi = bi or BigInteger(dw3Lo.toString()).shiftLeft(192)
-        bi = bi or BigInteger(dw3Hi.toString()).shiftLeft(224)
-        return bi
-    }
-
-     */
 
     fun getDwordAtBitIndex(bitIndex: Int): Long =
         CoeffBits.getDwordAtBitIndex(this, bitIndex)

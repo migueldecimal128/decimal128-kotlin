@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
-import com.decimal128.CoeffSet.coeffSetShiftLeft
 
 internal object CoeffMul {
 
@@ -43,7 +42,7 @@ internal object CoeffMul {
                         // also handles n0 == 1
                         // even power of 2 ... just shift
                         val ntz = java.lang.Long.numberOfTrailingZeros(n0)
-                        coeffSetShiftLeft(z, m, ntz)
+                        z.coeffSetShiftLeft(m, ntz)
                     }
 
                     (m.bitLen <= 128) -> _mulCoeff2x1(z, maxProdBitLen, m.dw1, m.dw0, n0)

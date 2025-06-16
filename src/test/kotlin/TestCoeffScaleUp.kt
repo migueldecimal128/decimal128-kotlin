@@ -100,7 +100,7 @@ class TestCoeffScaleUp {
             println("product would overflow ... skipped")
             return
         }
-        val coeffA = Coeff(case.biA)
+        val coeffA = newCoeff(case.biA)
         val coeffObserved = Coeff()
         val pow10 = case.pow10
         val ctx = DecimalContext()

@@ -18,7 +18,7 @@ class TestResidueUlpResidue {
     class UlpResidueCase(val bi: BigInteger) {
         constructor(str: String) : this(BigInteger(str))
 
-        val coeff = Coeff(bi)
+        val coeff = newCoeff(bi)
         val pow10 = BigInteger.TEN.pow(coeff.digitLen)
         val bix2 = bi.shiftLeft(1)
         val cmp = bix2.compareTo(pow10)

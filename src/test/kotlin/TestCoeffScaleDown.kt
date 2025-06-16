@@ -191,7 +191,7 @@ class TestCoeffScaleDown {
             return
         }
         val sign = case.sign
-        val coeffA = Coeff(case.biA)
+        val coeffA = newCoeff(case.biA)
         val coeffObserved = Coeff()
         val pow10 = case.pow10
         val ctx = DecimalContext(case.roundingDirection)

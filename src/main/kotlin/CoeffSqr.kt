@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
-import com.decimal128.CoeffSet.coeffSetShiftLeft
 
 internal object CoeffSqr {
 

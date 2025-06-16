@@ -91,7 +91,7 @@ class TestRecipMulPow10 {
 
     fun test1(case: TC) {
 
-        val coeffA = Coeff(case.biA)
+        val coeffA = newCoeff(case.biA)
         val pow10 = case.pow10
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) divMod 10**$pow10 = expected:${case.biQuotient} ${case.biRemainder}")

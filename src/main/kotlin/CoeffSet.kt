@@ -125,7 +125,7 @@ object CoeffSet {
         }
     }
 
-    fun coeffSetShiftLeft(z: Coeff, x: Coeff, s: Int) {
+    fun coeffSetShiftLeftOr(z: Coeff, x: Coeff, s: Int, d0: Long) {
         val wholeDwordCount = s ushr 6
         val innerL = s and 0x3F
         val nonZeroMask = -innerL.toLong() shr 63
@@ -135,7 +135,7 @@ object CoeffSet {
         var z3 = 0L
         var z2 = 0L
         var z1 = 0L
-        var z0 = 0L
+        var z0 = d0
         coefficient_overflow@
         do {
             when (wholeDwordCount) {
@@ -145,7 +145,7 @@ object CoeffSet {
                     z3 = (x.dw3 shl innerL) or ((x.dw2 ushr innerR) and nonZeroMask)
                     z2 = (x.dw2 shl innerL) or ((x.dw1 ushr innerR) and nonZeroMask)
                     z1 = (x.dw1 shl innerL) or ((x.dw0 ushr innerR) and nonZeroMask)
-                    z0 = (x.dw0 shl innerL)
+                    z0 = (x.dw0 shl innerL) or d0
                 }
 
                 1 -> {

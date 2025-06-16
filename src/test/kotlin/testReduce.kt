@@ -197,7 +197,7 @@ class TestReduce {
         val expected = tc.reductionPow10
         if (verbose)
             println("$bi ($bitLen) reductionPow10:$expected")
-        val c = Coeff(bi)
+        val c = newCoeff(bi)
         val z = Coeff()
         val observed = reduce(z, c)
         assertEquals(expected, observed)

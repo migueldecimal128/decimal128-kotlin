@@ -74,10 +74,10 @@ class TestCoeffFma {
         val expected = case.biProduct
         if (expected.bitLength() > 256)
             return
-        val coeffX = Coeff(case.biX)
-        val coeffY = Coeff(case.biY)
-        val coeffA = Coeff(case.biA)
-        val coeffExpected = Coeff(case.biProduct)
+        val coeffX = newCoeff(case.biX)
+        val coeffY = newCoeff(case.biY)
+        val coeffA = newCoeff(case.biA)
+        val coeffExpected = newCoeff(case.biProduct)
         val coeffProd = Coeff()
         //println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) + $coeffA (${coeffA.digitCount}) = expected:$expected")
         coeffProd.coeffSetFma(coeffX, coeffY, coeffA)

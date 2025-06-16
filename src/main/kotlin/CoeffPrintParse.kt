@@ -70,4 +70,74 @@ object CoeffPrintParse {
         } while (i >= 0)
     }
 
+    fun coeffFromString(c: Coeff, str: String) {
+        c.coeffSetZero()
+        val strLen = str.length
+        when {
+            (strLen == 0) ->
+                throw IllegalArgumentException("cannot parse empty string")
+            str.startsWith("0x") -> {
+                coeffFromHexString(c, str)
+                return
+            }
+        }
+
+        var totalDigitCount = 0
+        var accumulator = 0L
+        var accumulatorDigitCount = 0
+        var i = 0
+        while (i < strLen && str[i] == '0')
+            ++i
+        while (i < strLen) {
+            val ch = str[i++]
+            if (ch !in '0'..'9') {
+                if (ch == '_' && i > 0)
+                    continue
+                throw RuntimeException("unsigned integer parse error")
+            }
+            val n = ch - '0'
+            ++totalDigitCount
+            accumulator = accumulator * 10 + n
+            ++accumulatorDigitCount
+            if (accumulatorDigitCount < 19)
+                continue
+            c.coeffMutateFmaPow10(19, accumulator)
+            accumulator = 0L
+            accumulatorDigitCount = 0
+        }
+        if (accumulatorDigitCount > 0)
+            c.coeffMutateFmaPow10(accumulatorDigitCount, accumulator)
+    }
+
+    private fun coeffFromHexString(c:Coeff, str: String) {
+        val strLen = str.length
+        if (strLen < 3)
+            throw IllegalArgumentException("hex string too short")
+        var accumulator = 0L
+        var accumulatorHexitCount = 0
+        var ich = 3
+        while (ich < strLen) {
+            val ch = str[ich++]
+            if (ch == '_')
+                continue
+            val n = (
+                    if (ch in '0'..'9')
+                        ch - '0'
+                    else if ((ch.code or 0x20) in 'a'.code .. 'f'.code)
+                        (ch.code or 0x20) - 'a'.code + 10
+                    else
+                        throw IllegalArgumentException("invalid hex:" + str)
+                    )
+            accumulator = (accumulator shl 4) or n.toLong()
+            ++accumulatorHexitCount
+            if (accumulatorHexitCount < 16)
+                continue
+            c.coeffMutateShiftLeftOr(64, accumulator)
+            accumulator = 0
+            accumulatorHexitCount = 0
+        }
+        if (accumulatorHexitCount > 0)
+            c.coeffMutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
+    }
+
 }
