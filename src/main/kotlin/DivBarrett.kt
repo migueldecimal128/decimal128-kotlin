@@ -119,7 +119,7 @@ object DivBarrett {
         return remainder
     }
 
-    private fun barrettDivMod_32_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    fun barrettDivMod_32_256(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
@@ -189,7 +189,7 @@ object DivBarrett {
         return rA
     }
 
-    private fun barrettDivMod_32_192(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    fun barrettDivMod_32_192(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
@@ -242,7 +242,7 @@ object DivBarrett {
         return remainder
     }
 
-    private fun barrettDivMod_32_128(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
+    fun barrettDivMod_32_128(q: Coeff, x: Coeff, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1
 

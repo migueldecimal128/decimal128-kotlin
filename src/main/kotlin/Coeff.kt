@@ -377,7 +377,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffDwordAtBitIndex(bitIndex: Int) = CoeffBits.getDwordAtBitIndex(this, bitIndex)
 
-    override fun toString() = coeffToBigInteger().toString()
+    //override fun toString() = coeffToBigInteger().toString()
+    override fun toString() = CoeffPrintParse.coeffToString(this)
 
     override fun equals(other: Any?) = other is Coeff && coeffUnscaledEQ(this, other)
 

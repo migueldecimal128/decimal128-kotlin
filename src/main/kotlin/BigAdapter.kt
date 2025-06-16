@@ -1,0 +1,36 @@
+package com.decimal128
+
+import java.math.BigInteger
+
+fun setCoeffFromBigInteger(c: Coeff, bi: BigInteger) {
+    require(bi.signum() >= 0)
+    require(bi.bitLength() <= 256)
+    c.coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+}
+
+fun newCoeffFromBigInteger(bi: BigInteger): Coeff {
+    val c = Coeff()
+    setCoeffFromBigInteger(c, bi)
+    return c
+}
+
+fun bigIntegerFromCoeff(c: Coeff): BigInteger {
+    var bi = BigInteger.ZERO
+    val dw0Lo = c.dw0 and 0xFFFFFFFFL
+    val dw0Hi = c.dw0 ushr 32
+    val dw1Lo = c.dw1 and 0xFFFFFFFFL
+    val dw1Hi = c.dw1 ushr 32
+    val dw2Lo = c.dw2 and 0xFFFFFFFFL
+    val dw2Hi = c.dw2 ushr 32
+    val dw3Lo = c.dw3 and 0xFFFFFFFFL
+    val dw3Hi = c.dw3 ushr 32
+    bi = bi or BigInteger(dw0Lo.toString()).shiftLeft(0)
+    bi = bi or BigInteger(dw0Hi.toString()).shiftLeft(32)
+    bi = bi or BigInteger(dw1Lo.toString()).shiftLeft(64)
+    bi = bi or BigInteger(dw1Hi.toString()).shiftLeft(96)
+    bi = bi or BigInteger(dw2Lo.toString()).shiftLeft(128)
+    bi = bi or BigInteger(dw2Hi.toString()).shiftLeft(160)
+    bi = bi or BigInteger(dw3Lo.toString()).shiftLeft(192)
+    bi = bi or BigInteger(dw3Hi.toString()).shiftLeft(224)
+    return bi
+}
