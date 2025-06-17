@@ -156,6 +156,24 @@ class Decimal() : Mag() {
         this.qExp = x.qExp
     }
 
+    fun setMaxFiniteMagnitude(ctx: DecimalContext) {
+        qExp = ctx.qMax
+        // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
+        // 10000000000000000000000000000000000 (10**34)
+        val offset = CoeffPow10.pow10Offset(ctx.precision)
+        if (ctx.precision < MIN_POW10_DIGIT_LEN_128) {
+            super.coeffSet64(POW10[offset] - 1)
+        } else if (ctx.precision < MIN_POW10_DIGIT_LEN_192) {
+            super.coeffSet128(POW10[offset + 1], POW10[offset] - 1)
+        } else
+            throw IllegalArgumentException()
+    }
+
+    fun setMinFiniteMagnitude(ctx: DecimalContext) {
+        qExp = ctx.qTiny
+        super.coeffSetOne()
+    }
+
     fun copy(x: Decimal) = set(x)
 
     fun setNegate(x: Decimal) {
@@ -474,11 +492,11 @@ class Decimal() : Mag() {
             qExp > NON_FINITE_INF -> { return }
             qExp == NON_FINITE_INF -> {
                 if (sign == 1)
-                    magSetMaxFinite(ctx)
+                    setMaxFiniteMagnitude(ctx)
                 return
             }
             coeffIsZero() -> {
-                magSetMinFinite(ctx)
+                setMinFiniteMagnitude(ctx)
                 sign = 0
                 return
             }
@@ -494,11 +512,11 @@ class Decimal() : Mag() {
             qExp > NON_FINITE_INF -> { return }
             qExp == NON_FINITE_INF -> {
                 if (sign == 0)
-                    magSetMaxFinite(ctx)
+                    setMaxFiniteMagnitude(ctx)
                 return
             }
             coeffIsZero() -> {
-                magSetMinFinite(ctx)
+                setMinFiniteMagnitude(ctx)
                 sign = 1
                 return
             }
@@ -715,8 +733,16 @@ class Decimal() : Mag() {
     fun sameQuantum(x: Decimal) = (this.qExp == x.qExp)
 
     override fun toString() : String {
-        return (if (sign == 0) '+' else '-') + super.toString()
+        return (if (sign == 0) '+' else '-') +
+                when {
+                    (qExp < MIN_SPECIAL_VALUE) -> super.toString() + "E" + qExp
+                    qExp == NON_FINITE_INF -> "Inf"
+                    qExp == NON_FINITE_QNAN -> "NaN" + super.coeffToNaNDiagnosticString()
+                    qExp == NON_FINITE_SNAN -> "sNaN" + super.coeffToNaNDiagnosticString()
+                    else -> "?que? $qExp"
+                }
     }
+
 
 
     fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
@@ -781,7 +807,7 @@ class Decimal() : Mag() {
                         super.coeffSetOne()
                         qExp = NON_FINITE_INF
                     } else {
-                        magSetMaxFinite(ctx)
+                        setMaxFiniteMagnitude(ctx)
                     }
                     ctx.setOverflow()
                     ctx.setInexact()
@@ -822,7 +848,7 @@ class Decimal() : Mag() {
                     super.coeffSetZero()
                     qExp = NON_FINITE_INF
                 } else {
-                    magSetMinFinite(ctx)
+                    setMinFiniteMagnitude(ctx)
                 }
                 qExp = ctx.qTiny
                 ctx.setUnderflow()

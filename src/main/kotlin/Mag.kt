@@ -19,24 +19,6 @@ inline fun capExponentRange(e: Int): Int {
 open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coeff() {
     var qExp = 0
 
-    fun magSetMaxFinite(ctx: DecimalContext) {
-        qExp = ctx.qMax
-        // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
-        // 10000000000000000000000000000000000 (10**34)
-        val offset = CoeffPow10.pow10Offset(ctx.precision)
-        if (ctx.precision < MIN_POW10_DIGIT_LEN_128) {
-            super.coeffSet64(POW10[offset] - 1)
-        } else if (ctx.precision < MIN_POW10_DIGIT_LEN_192) {
-            super.coeffSet128(POW10[offset + 1], POW10[offset] - 1)
-        } else
-            throw IllegalArgumentException()
-    }
-
-    fun magSetMinFinite(ctx: DecimalContext) {
-        qExp = ctx.qTiny
-        super.coeffSetOne()
-    }
-
     fun magMutateScaleUpPow10(pow10: Int, sign: Int, ctx: DecimalContext): Residue {
         val headroom = PRECISION_34 - digitLen
         val scaleUp = min(headroom, pow10)
@@ -62,16 +44,6 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         }
         qExp -= pow10
         return residue
-    }
-
-    override fun toString(): String {
-        return when {
-            (qExp < MIN_SPECIAL_VALUE) -> super.toString() + "E" + qExp
-            qExp == NON_FINITE_INF -> "Inf"
-            qExp == NON_FINITE_QNAN -> "NaN" + super.coeffToNaNDiagnosticString()
-            qExp == NON_FINITE_SNAN -> "sNaN" + super.coeffToNaNDiagnosticString()
-            else -> "?que? $qExp"
-        }
     }
 
 }
