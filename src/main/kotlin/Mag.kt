@@ -18,10 +18,6 @@ inline fun capExponentRange(e: Int): Int {
 
 open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coeff() {
     var qExp = 0
-    constructor(exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): this() {
-        super.coeffSet256(dw3, dw2, dw1, dw0)
-        this.qExp = exp
-    }
 
     fun sciExp() = qExp + (digitLen - 1)
 
@@ -41,37 +37,6 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
     fun magSetMinFinite(ctx: DecimalContext) {
         qExp = ctx.qTiny
         super.coeffSetOne()
-    }
-
-    /*
-    fun magSet(x:Mag) {
-        qExp = x.qExp
-        super.coeffSet(x)
-    }
-     */
-
-    fun magAdd(a: Mag, b: Mag, sign: Int, ctx: DecimalContext): Residue {
-        val residue = MagAddSub.magAdd(this, a, b)
-        return residue
-    }
-
-    fun magSub(a: Mag, b: Mag, sign: Int, ctx: DecimalContext): Residue {
-        assert(a.magCompareTo(b) >= 0)
-        val residue = MagAddSub.magSub(this, a, b)
-        return residue
-    }
-
-    fun magMul(x: Mag, y: Mag, sign: Int, ctx: DecimalContext) {
-        MagMul.magMul(this, x, y)
-    }
-
-    fun magSqr(x: Mag, ctx: DecimalContext) {
-        MagMul.magSqr(this, x)
-    }
-
-    fun magDiv(x: Mag, y: Mag, sign: Int, ctx: DecimalContext): Residue {
-        val residue = MagDiv.magDiv(this, x, y)
-        return residue
     }
 
     fun magMutateScaleUpPow10(pow10: Int, sign: Int, ctx: DecimalContext): Residue {

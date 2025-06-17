@@ -204,15 +204,15 @@ class Decimal() : Mag() {
                 val residue = when {
                     (xSign xor ySign) == 0 -> {
                         this.sign = xSign
-                        this.magAdd(x, y, xSign, ctx)
+                        MagAddSub.magAdd(this, x, y)
                     }
                     (x.magCompareTo(y) >= 0) -> {
                         this.sign = xSign
-                        this.magSub(x, y, xSign, ctx)
+                        MagAddSub.magSub(this, x, y)
                     }
                     else -> {
                         this.sign = ySign
-                        this.magSub(y, x, ySign, ctx)
+                        MagAddSub.magSub(this, y, x)
                     }
                 }
                 roundAndFinalize(residue, ctx)
@@ -246,7 +246,7 @@ class Decimal() : Mag() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < NON_FINITE_INF -> {
-                this.magMul(x, y, productSign, ctx)
+                MagMul.magMul(this, x, y)
                 this.sign = productSign
                 roundAndFinalize(EXACT, ctx)
             }
@@ -266,7 +266,7 @@ class Decimal() : Mag() {
         val qX = x.qExp
         when {
             qX < NON_FINITE_INF -> {
-                this.magSqr(x, ctx)
+                MagMul.magSqr(this, x)
                 this.sign = 0
                 roundAndFinalize(EXACT, ctx)            }
             qX == NON_FINITE_INF -> {
@@ -319,7 +319,7 @@ class Decimal() : Mag() {
             qMaxXY < NON_FINITE_INF -> {
                 when {
                     (y.bitLen > 0) -> {
-                        val residue = this.magDiv(x, y, quotientSign, ctx)
+                        val residue = MagDiv.magDiv(this, x, y)
                         this.sign = quotientSign
                         roundAndFinalize(residue, ctx)
                     }
