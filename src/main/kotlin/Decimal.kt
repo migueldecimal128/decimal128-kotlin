@@ -7,8 +7,6 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.Class754.*
-import java.math.BigDecimal
-import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
 
@@ -26,24 +24,19 @@ class Decimal() : Coeff() {
     var qExp = 0
     var sign = false
 
-    fun sciExp() = qExp + (digitLen - 1)
-
     constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
         this.coeffSet256(dw3, dw2, dw1, dw0)
         this.qExp = qExp
         this.sign = sign
     }
 
-    constructor(bd: BigDecimal): this() {
-        this.coeffSet(bd.abs().unscaledValue())
-        this.qExp = -bd.scale()
-        this.sign = bd.signum() < 0
-        roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
+    constructor(str: String): this() {
+        DecimalParsePrint.decFromString(this, str, DEFAULT_128_CONTEXT)
     }
 
-    constructor(str: String): this(BigDecimal(str))
-
     constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
+
+    fun sciExp() = qExp + (digitLen - 1)
 
     fun setZero()  = setZero(false)
 
@@ -128,33 +121,14 @@ class Decimal() : Coeff() {
         coeffSet64(ul)
     }
 
-    fun set(bi: BigInteger) {
-        if (bi.bitLength() <= 256) {
-            this.qExp = 0
-            val sign = bi.signum() < 0
-            this.sign = sign
-            val biT = if (sign) bi.abs() else bi
-            val d0 = biT.toLong()
-            val d1 = biT.shiftRight( 64).toLong()
-            val d2 = biT.shiftRight(128).toLong()
-            val d3 = biT.shiftRight(192).toLong()
-            coeffSet256(d3, d2, d1, d0)
-        }
-        val bd = BigDecimal(bi)
-        set(bd)
-    }
-
-    fun set(bd: BigDecimal) {
-        this.coeffSet(bd.abs().unscaledValue())
-        this.qExp = -bd.scale()
-        this.sign = bd.signum() < 0
-        roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
-    }
-
     fun set(x: Decimal) {
         coeffSet(x)
         this.qExp = x.qExp
         this.sign = x.sign
+    }
+
+    fun set(str: String) {
+        DecimalParsePrint.decFromString(this, str, DEFAULT_128_CONTEXT)
     }
 
     fun setMag(x: Decimal) {

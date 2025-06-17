@@ -144,7 +144,7 @@ private const val BYTE_DOT = '.'.code.toByte()
 private const val BYTE_PLUS = '+'.code.toByte()
 private const val BYTE_MINUS = '-'.code.toByte()
 
-object DecParsePrint {
+object DecimalParsePrint {
 
     fun decToString(x: Decimal) : String {
         val bytes = ByteArray(MAX_DEC34_CHAR_LEN)

@@ -172,7 +172,7 @@ class TestFptestRead {
             when (result) {
                 "Q" -> dec.setNaN(ctx)
                 "S" -> dec.setSNaN(ctx)
-                else -> DecParsePrint.decFromString(dec, result, ctx)
+                else -> DecimalParsePrint.decFromString(dec, result, ctx)
             }
             return dec
         }
@@ -185,7 +185,7 @@ class TestFptestRead {
                 when (t) {
                     "Q" -> d.setNaN(ctx)
                     "S" -> d.setSNaN(ctx)
-                    else -> DecParsePrint.decFromString(d, t, ctx)
+                    else -> DecimalParsePrint.decFromString(d, t, ctx)
                 }
                 ret.add(d)
             }

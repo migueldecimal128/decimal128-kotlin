@@ -2,6 +2,8 @@ package com.decimal128
 
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.MathContext
+import java.math.RoundingMode
 
 fun Coeff.coeffSet(bi: BigInteger) {
     require(bi.signum() >= 0)
@@ -44,9 +46,27 @@ fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
     return dec
 }
 
+fun Decimal.set(bd: BigDecimal) = this.set(bd, DecimalContext.newDecimal128Context())
+
 fun Decimal.set(bd: BigDecimal, ctx: DecimalContext) {
     this.coeffSet(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
     this.roundAndFinalize(Residue.EXACT, ctx)
+}
+
+fun Decimal.set(bi: BigInteger, ctx: DecimalContext) {
+    if (bi.bitLength() <= 256) {
+        this.qExp = 0
+        val sign = bi.signum() < 0
+        this.sign = sign
+        val biT = if (sign) bi.abs() else bi
+        val d0 = biT.toLong()
+        val d1 = biT.shiftRight( 64).toLong()
+        val d2 = biT.shiftRight(128).toLong()
+        val d3 = biT.shiftRight(192).toLong()
+        coeffSet256(d3, d2, d1, d0)
+    }
+    val bd = BigDecimal(bi, MathContext(70, RoundingMode.HALF_EVEN))
+    set(bd, DecimalContext.newDecimal128Context())
 }

@@ -77,8 +77,8 @@ class TestDecimalToString {
         if (verbose)
             println("$strVal bd:$bd => expected:$expected")
 
-        val d = Decimal(bd)
-        val observed = DecParsePrint.decToString(d)
+        val d = newDecimal(bd)
+        val observed = DecimalParsePrint.decToString(d)
 
         if (verbose)
             println(" => observed:$observed")

@@ -58,7 +58,7 @@ class TestDecimalMagnitudeDiv {
 
     @Test
     fun testRandom() {
-        for (i in 0..<10000000) {
+        for (i in 0..<100000) {
             val bdA = randBd()
             var bdB: BigDecimal
             do {

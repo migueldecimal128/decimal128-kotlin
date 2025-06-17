@@ -54,7 +54,7 @@ class TestNextUpDown {
     }
 
     fun test1(bd: BigDecimal) {
-        val n = Decimal(bd)
+        val n = newDecimal(bd)
         val up = Decimal()
         val down = Decimal()
         val ctx = DecimalContext()
