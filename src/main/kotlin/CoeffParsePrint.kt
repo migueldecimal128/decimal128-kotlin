@@ -9,40 +9,40 @@ private const val MU_1E9 = 0x44B82FA09
 private val SINGLE_DIGIT_NUMBERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 
-object CoeffPrintParse {
+object CoeffParsePrint {
 
     fun coeffToString(c: Coeff): String {
         if (c.digitLen > 1) {
             val bytes = ByteArray(c.digitLen)
-            coeffToChars(c, bytes)
+            coeffToChars(c, bytes, 0)
             return String(bytes, StandardCharsets.UTF_8)
         } else {
             return SINGLE_DIGIT_NUMBERS[c.dw0.toInt()]
         }
     }
 
-    private fun coeffToChars(c: Coeff, bytes: ByteArray) {
+    private fun coeffToChars(c: Coeff, bytes: ByteArray, off: Int) {
         if (c.bitLen <= 64) {
-            u64ToChars(c.digitLen, c.dw0, bytes, 0)
+            u64ToChars(c.digitLen, c.dw0, bytes, off)
             return
         }
         val t = Coeff(c)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToChars(9, r, bytes, ich)
+            u64ToChars(9, r, bytes, off + ich)
         }
         while (t.bitLen > 128) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_192(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToChars(9, r, bytes, ich)
+            u64ToChars(9, r, bytes, off + ich)
         }
         while (t.bitLen > 64) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToChars(9, r, bytes, ich)
+            u64ToChars(9, r, bytes, off + ich)
         }
-        u64ToChars(Math.max(1, t.digitLen), t.dw0, bytes, 0)
+        u64ToChars(Math.max(1, t.digitLen), t.dw0, bytes, off)
     }
 
     private fun u64ToChars(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int) {

@@ -19,7 +19,6 @@ import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSet.coeffSet
 import java.lang.Long.numberOfLeadingZeros
-import kotlin.math.absoluteValue
 
 const val PRECISION_34 = 34
 
@@ -34,7 +33,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
-        CoeffPrintParse.coeffFromString(this, str)
+        CoeffParsePrint.coeffFromString(this, str)
     }
     constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
@@ -227,7 +226,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
             bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
     }
 
-    fun coeffSet(str: String) = CoeffPrintParse.coeffFromString(this, str)
+    fun coeffSet(str: String) = CoeffParsePrint.coeffFromString(this, str)
 
     fun coeffSetShiftRight(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftRight(this, x, bitShift)
 
@@ -350,7 +349,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun coeffDwordAtBitIndex(bitIndex: Int) = CoeffBits.getDwordAtBitIndex(this, bitIndex)
 
     //override fun toString() = coeffToBigInteger().toString()
-    override fun toString() = CoeffPrintParse.coeffToString(this)
+    override fun toString() = CoeffParsePrint.coeffToString(this)
 
     override fun equals(other: Any?) = other is Coeff && coeffUnscaledEQ(this, other)
 

@@ -78,7 +78,7 @@ class TestDecimalFromString {
             println("$strVal bd:$bd => expected:$expected")
 
         val d = Decimal()
-        Dec34ParsePrint.decFromString(d, strVal, DecimalContext())
+        DecParsePrint.decFromString(d, strVal, DecimalContext())
         val observed = d
 
         val e = Decimal(bd)

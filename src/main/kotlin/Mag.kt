@@ -44,32 +44,9 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
             throw IllegalArgumentException()
     }
 
-    fun magIsMaxFinite(ctx: DecimalContext): Boolean {
-        if (qExp < ctx.qMax)
-            return false
-        return coeffIsAllNines(ctx.precision)
-    }
-
     fun magSetMinFinite(ctx: DecimalContext) {
         qExp = ctx.qTiny
         super.coeffSetOne()
-    }
-
-    fun magIsMinFinite(ctx: DecimalContext): Boolean {
-        return qExp == ctx.qTiny && bitLen == 1
-    }
-
-
-    fun magSet(dw0: Long) = magSet(0, dw0)
-
-    fun magSet(qExponent: Int, dw0: Long) {
-        this.qExp = capExponentRange(qExponent)
-        super.coeffSet64(dw0)
-    }
-
-    fun magSet(qExponent: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long, ctx: DecimalContext) {
-        coeffSet256(dw3, dw2, dw1, dw0)
-        this.qExp = capExponentRange(qExponent)
     }
 
     fun magSet(exponent: Int, bi: BigInteger, ctx: DecimalContext) {
