@@ -1,7 +1,5 @@
 package com.decimal128
 
-//import java.math.BigDecimal
-//import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
 
@@ -27,11 +25,6 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
 
     fun sciExp() = qExp + (digitLen - 1)
 
-    fun magSetZero() {
-        qExp = 0
-        super.coeffSetZero()
-    }
-
     fun magSetMaxFinite(ctx: DecimalContext) {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
@@ -50,23 +43,12 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         super.coeffSetOne()
     }
 
-//    fun magSet(exponent: Int, bi: BigInteger, ctx: DecimalContext) {
-//        coeffSet(bi)
-//        qExp = capExponentRange(exponent)
-//    }
-
-//    fun magSet(bd: BigDecimal) = magSet(bd, DecimalContext.newDecimal128Context())
-
-//    fun magSet(bd: BigDecimal, ctx: DecimalContext) {
-//        magSet(-bd.scale(), bd.unscaledValue().abs(), ctx)
-//    }
-
+    /*
     fun magSet(x:Mag) {
         qExp = x.qExp
         super.coeffSet(x)
     }
-
-    //fun magSet(str: String) = magSet(BigDecimal(str), DecimalContext.newDecimal128Context())
+     */
 
     fun magAdd(a: Mag, b: Mag, sign: Int, ctx: DecimalContext): Residue {
         val residue = MagAddSub.magAdd(this, a, b)

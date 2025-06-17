@@ -68,7 +68,8 @@ object MagAddSub {
 
             else -> {
                 // if m == 0 then return n ... n != 0 and n == 0
-                z.magSet(n)
+                z.coeffSet(n)
+                z.qExp = n.qExp
                 return Residue.EXACT
             }
         }
@@ -142,7 +143,8 @@ object MagAddSub {
 
                 else -> {
                     // if x == 0 then return y ... y != 0 and y == 0
-                    z.magSet(y)
+                    z.coeffSet(y)
+                    z.qExp = y.qExp
                     return Residue.EXACT
                 }
             }
@@ -152,7 +154,8 @@ object MagAddSub {
             if (y.coeffIsZero()) {
                 // subtracting zero with a larger exponent from x
                 // simply return x
-                z.magSet(x)
+                z.coeffSet(x)
+                z.qExp = x.qExp
                 return EXACT
             }
             val qDeltaY = y.qExp - x.qExp

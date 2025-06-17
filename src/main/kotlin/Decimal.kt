@@ -35,7 +35,8 @@ class Decimal() : Mag() {
     constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
 
     fun setZero() {
-        magSetZero()
+        coeffSetZero()
+        this.qExp = 0
         this.sign = 0
     }
 
@@ -49,7 +50,7 @@ class Decimal() : Mag() {
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
         assert(maxQ >= NON_FINITE_QNAN)
-        magSetZero()
+        setZero()
         if (maxQ == NON_FINITE_SNAN) {
             ctx.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
             ctx.setInvalid()
@@ -64,7 +65,7 @@ class Decimal() : Mag() {
         val qA = a.qExp
         val qMaxXYA = max(max(qX, qY), qA)
         assert(qMaxXYA >= NON_FINITE_QNAN)
-        magSetZero()
+        setZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -76,13 +77,13 @@ class Decimal() : Mag() {
     private fun setNaN(x: Decimal, ctx: DecimalContext) {
         val q = x.qExp
         assert(q >= NON_FINITE_QNAN)
-        magSetZero()
+        setZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
 
     fun setNaN(ctx: DecimalContext) {
-        magSetZero()
+        setZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -95,7 +96,7 @@ class Decimal() : Mag() {
     }
 
     fun setSNaN(ctx: DecimalContext) {
-        magSetZero()
+        setZero()
         qExp = NON_FINITE_SNAN
     }
 
@@ -143,8 +144,14 @@ class Decimal() : Mag() {
     }
 
     fun set(x: Decimal) {
-        magSet(x)
+        coeffSet(x)
+        this.qExp = x.qExp
         this.sign = x.sign
+    }
+
+    fun setMag(x: Decimal) {
+        coeffSet(x)
+        this.qExp = x.qExp
     }
 
     fun copy(x: Decimal) = set(x)
@@ -168,8 +175,8 @@ class Decimal() : Mag() {
     }
 
     fun copySign(x: Decimal, y: Decimal) {
+        set(x)
         this.sign = y.sign
-        magSet(x)
     }
 
     fun isNegative() : Boolean {
@@ -392,12 +399,12 @@ class Decimal() : Mag() {
     fun roundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext) {
         //FIXME - deal with special values
         if (qExp < 0) {
-            sign = x.sign
             val residue = this.coeffSetScaleDownPow10(x, -qExp)
             qExp = 0
+            sign = x.sign
             roundAndFinalize(residue, rd, ctx)
         } else {
-            magSet(x)
+            set(x)
         }
     }
 
