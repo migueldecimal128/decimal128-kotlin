@@ -8,9 +8,9 @@ import com.decimal128.CoeffSub.coeffSubScaled
 import com.decimal128.Residue.Companion.EXACT
 import kotlin.math.min
 
-object MagAddSub {
+object MagnitudeAddSub {
 
-    fun magAdd(z: Mag, x: Mag, y: Mag): Residue {
+    fun magAdd(z: Decimal, x: Decimal, y: Decimal): Residue {
         if (x.qExp == y.qExp) {
             z.qExp = x.qExp
             coeffAddUnscaled(z, x, y)
@@ -78,7 +78,7 @@ object MagAddSub {
     // uses Guard and Round digits
     // decrements when non-exact so that standard round and finalize routine can be called
     fun magSub(z: Decimal, x: Decimal, y: Decimal): Residue {
-        assert(x.magCompareTo(y) >= 0)
+        assert(x.magnitudeCompareTo(y) >= 0)
         if (x.qExp == y.qExp) {
             z.qExp = x.qExp
             CoeffSub.coeffSubUnscaled(z, x, y)

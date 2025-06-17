@@ -4,9 +4,9 @@ import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
 import kotlin.math.min
 
-object MagDiv {
+object MagnitudeDiv {
 
-    fun magDiv(z: Mag, x: Mag, y: Mag): Residue {
+    fun magDiv(z: Decimal, x: Decimal, y: Decimal): Residue {
         if (!x.coeffIsZero()) {
             val numeratorScale = 34 + 1 - (x.digitLen - y.digitLen)
             val yBitLen = y.bitLen
@@ -67,19 +67,4 @@ object MagDiv {
         return Residue.EXACT
     }
 
-    fun magDivx64(z: Mag, x: Mag, yDigitLen: Int, qY: Int, y0: Long): Residue {
-        val numeratorScale = 34 - (x.digitLen - yDigitLen)
-        z.coeffSetScaleUpPow10(x, numeratorScale)
-        val residue = z.coeffSetDivx64(z, y0)
-        val qPreferred = x.qExp - qY
-        var qZ = x.qExp - qY - numeratorScale
-        if (residue == Residue.EXACT) {
-            while (qZ < qPreferred && z.coeffIsMultipleOf10()) {
-                z.coeffSetScaleDownPow10(z, 1)
-                ++qZ
-            }
-        }
-        z.qExp = qZ
-        return residue
-    }
 }

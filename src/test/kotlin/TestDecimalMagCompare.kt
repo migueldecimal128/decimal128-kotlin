@@ -66,13 +66,13 @@ class TestDecimalMagCompare {
         val decB = newDecimal(bdB)
         if (verbose)
             println("bdA:$bdA compare bdB:$bdB => $expected")
-        val observed = decA.magCompareTo(decB)
+        val observed = decA.magnitudeCompareTo(decB)
         assertEquals(expected, observed)
-        val observed2 = decB.magCompareTo(decA)
+        val observed2 = decB.magnitudeCompareTo(decA)
         assertEquals(-expected, observed2)
-        val observedEQforward = decA.magEQ(decB)
+        val observedEQforward = decA.magnitudeEQ(decB)
         assertEquals(expected == 0, observedEQforward)
-        val observedEQreverse = decB.magEQ(decA)
+        val observedEQreverse = decB.magnitudeEQ(decA)
         assertEquals(expected == 0, observedEQreverse)
     }
 

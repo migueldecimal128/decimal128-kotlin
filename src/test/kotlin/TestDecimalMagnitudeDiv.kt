@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.util.*
 
-class TestDecimalMagDiv {
+class TestDecimalMagnitudeDiv {
 
     val verbose = false
 

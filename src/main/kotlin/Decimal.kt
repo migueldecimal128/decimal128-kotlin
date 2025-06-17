@@ -12,9 +12,18 @@ import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
 
+internal const val MIN_SPECIAL_VALUE = 1000000000
+internal const val NON_FINITE_INF = 1000000000
+internal const val NON_FINITE_QNAN = 1000000001
+internal const val NON_FINITE_SNAN = 1000000002
+
+const val CAPPED_EXP_MIN = -25000
+const val CAPPED_EXP_MAX = 25000
+
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
-class Decimal() : Mag() {
+class Decimal() : Coeff() {
+    var qExp = 0
     var sign = 0
 
     fun sciExp() = qExp + (digitLen - 1)
@@ -220,19 +229,19 @@ class Decimal() : Mag() {
         val qMax = max(qX, qY)
         val qMin = min(qX, qY)
         when {
-            qMax < NON_FINITE_INF -> {
+            qMax < MIN_SPECIAL_VALUE -> {
                 val residue = when {
                     (xSign xor ySign) == 0 -> {
                         this.sign = xSign
-                        MagAddSub.magAdd(this, x, y)
+                        MagnitudeAddSub.magAdd(this, x, y)
                     }
-                    (x.magCompareTo(y) >= 0) -> {
+                    (x.magnitudeCompareTo(y) >= 0) -> {
                         this.sign = xSign
-                        MagAddSub.magSub(this, x, y)
+                        MagnitudeAddSub.magSub(this, x, y)
                     }
                     else -> {
                         this.sign = ySign
-                        MagAddSub.magSub(this, y, x)
+                        MagnitudeAddSub.magSub(this, y, x)
                     }
                 }
                 roundAndFinalize(residue, ctx)
@@ -266,7 +275,8 @@ class Decimal() : Mag() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < NON_FINITE_INF -> {
-                MagMul.magMul(this, x, y)
+                this.coeffSetMul(x, y)
+                this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 roundAndFinalize(EXACT, ctx)
             }
@@ -286,7 +296,8 @@ class Decimal() : Mag() {
         val qX = x.qExp
         when {
             qX < NON_FINITE_INF -> {
-                MagMul.magSqr(this, x)
+                this.coeffSetSqr(x)
+                this.qExp = this.qExp shl 1
                 this.sign = 0
                 roundAndFinalize(EXACT, ctx)            }
             qX == NON_FINITE_INF -> {
@@ -308,7 +319,8 @@ class Decimal() : Mag() {
             qMaxXYA < NON_FINITE_INF -> {
                 var aT = if (this === a) Decimal(a) else a
                 // multiply without roundAndFinalize .. remains exact
-                MagMul.magMul(this, x, y)
+                this.coeffSetMul(x, y)
+                this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
                 this.add(this, aT, ctx)
@@ -339,7 +351,7 @@ class Decimal() : Mag() {
             qMaxXY < NON_FINITE_INF -> {
                 when {
                     (y.bitLen > 0) -> {
-                        val residue = MagDiv.magDiv(this, x, y)
+                        val residue = MagnitudeDiv.magDiv(this, x, y)
                         this.sign = quotientSign
                         roundAndFinalize(residue, ctx)
                     }
@@ -390,7 +402,7 @@ class Decimal() : Mag() {
                 }
                 if (sign != x.sign)
                     return 1 - (sign shl 1)
-                val cmp = magCompareTo(x)
+                val cmp = magnitudeCompareTo(x)
                 val ret = (cmp xor -sign) + sign
                 return ret
             }
@@ -414,7 +426,7 @@ class Decimal() : Mag() {
         }
     }
 
-    fun magCompareTo(other: Decimal) : Int {
+    fun magnitudeCompareTo(other: Decimal) : Int {
         val thisIsZero = coeffIsZero()
         val otherIsZero = other.coeffIsZero()
         val eitherIsZero = thisIsZero or otherIsZero
@@ -440,7 +452,7 @@ class Decimal() : Mag() {
         }
     }
 
-    fun magEQ(other: Decimal) : Boolean {
+    fun magnitudeEQ(other: Decimal) : Boolean {
         val thisIsZero = this.coeffIsZero()
         val otherIsZero = other.coeffIsZero()
         val bothAreZero = thisIsZero and otherIsZero
@@ -571,21 +583,34 @@ class Decimal() : Mag() {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax < NON_FINITE_INF -> {
-                val cmp = (x.magCompareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
+                val cmp = (x.magnitudeCompareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
                 set(if (cmp <= 0) x else y)
             }
             else -> minNum_helper(x, y, invertCompareZeroOrNeg1, ctx)
         }
     }
 
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun capExponentRange(e: Int): Int {
+        return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
+    }
+
     fun setScale(x: Decimal, pow10: Int, ctx: DecimalContext) {
         set(x)
         val p10 = capExponentRange(pow10)
         if (qExp < NON_FINITE_INF) {
+            qExp += p10
             val residue = when {
-                (p10 > 0) -> magMutateScaleUpPow10(p10, sign, ctx)
-                (p10 < 0) -> magMutateScaleDownPow10(-p10, sign, ctx)
-                else -> return
+                coeffIsZero() -> EXACT
+                (p10 > 0) -> {
+                    val headroom = ctx.precision - digitLen
+                    val scaleUp = min(headroom, p10)
+                    this.coeffSetScaleUpPow10(this, scaleUp)
+                    qExp -= scaleUp
+                    EXACT
+                }
+                (p10 < 0) -> this.coeffSetScaleDownPow10(this, -p10)
+                else -> return // p10 == 0 .. no scaling
             }
             roundAndFinalize(residue, ctx)
         } else if (qExp == NON_FINITE_SNAN)
@@ -640,7 +665,7 @@ class Decimal() : Mag() {
                 }
 
                 else -> {
-                    val cmp = magCompareTo(other)
+                    val cmp = magnitudeCompareTo(other)
                     Compare754Result(cmp + 1)
                 }
             }
@@ -682,7 +707,7 @@ class Decimal() : Mag() {
                 qMax < NON_FINITE_INF -> when {
                     coeffIsZero() -> other.coeffIsZero()
                     other.coeffIsZero() -> false
-                    else -> sign == other.sign && magEQ(other)
+                    else -> sign == other.sign && magnitudeEQ(other)
                 }
 
                 qMax == NON_FINITE_INF -> when {
