@@ -47,6 +47,6 @@ fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
 fun Decimal.set(bd: BigDecimal, ctx: DecimalContext) {
     this.coeffSet(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
-    this.sign = bd.signum() ushr 31
+    this.sign = bd.signum() < 0
     this.roundAndFinalize(Residue.EXACT, ctx)
 }

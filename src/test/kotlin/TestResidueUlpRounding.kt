@@ -21,11 +21,8 @@ class TestResidueUlpRounding {
     val verbose = false
 
     class TC(
-        val roundingDirection: RoundingDirection, val residue: Residue, val lsdw: Long, val sign: Int,
+        val roundingDirection: RoundingDirection, val residue: Residue, val lsdw: Long, val sign: Boolean,
         val expectedBias: Long) {
-        constructor(roundingDirection: RoundingDirection, residue: Residue, lsdw: Long,
-                            sign: Boolean, expectedBias: Long) :
-                this(roundingDirection, residue, lsdw, if (sign) 1 else 0, expectedBias)
 
             override fun toString() : String {
             return "$roundingDirection $residue sign:$sign lsb:$lsdw expectedBias:$expectedBias"

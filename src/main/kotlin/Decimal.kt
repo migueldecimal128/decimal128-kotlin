@@ -24,20 +24,20 @@ val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
 class Decimal() : Coeff() {
     var qExp = 0
-    var sign = 0
+    var sign = false
 
     fun sciExp() = qExp + (digitLen - 1)
 
-    constructor(sign: Int, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
+    constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
         this.coeffSet256(dw3, dw2, dw1, dw0)
         this.qExp = qExp
-        this.sign = sign and 1
+        this.sign = sign
     }
 
     constructor(bd: BigDecimal): this() {
         this.coeffSet(bd.abs().unscaledValue())
         this.qExp = -bd.scale()
-        this.sign = bd.signum() ushr 31
+        this.sign = bd.signum() < 0
         roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
     }
 
@@ -45,14 +45,11 @@ class Decimal() : Coeff() {
 
     constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
 
-    fun setZero() {
+    fun setZero()  = setZero(false)
+
+    fun setZero(sign: Boolean) {
         coeffSetZero()
         this.qExp = 0
-        this.sign = 0
-    }
-
-    fun setZero(sign: Int) {
-        assert((sign shr 1) == 0)
         this.sign = sign
     }
 
@@ -100,7 +97,7 @@ class Decimal() : Coeff() {
     }
 
     fun setNaN(payload: Int, ctx: DecimalContext) {
-        sign = 0
+        sign = false
         coeffSet64(payload.toLong())
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
@@ -111,7 +108,7 @@ class Decimal() : Coeff() {
         qExp = NON_FINITE_SNAN
     }
 
-    fun setInfinite(sign: Int) {
+    fun setInfinite(sign: Boolean) {
         this.coeffSetOne()
         this.qExp = NON_FINITE_INF
         this.sign = sign
@@ -119,7 +116,7 @@ class Decimal() : Coeff() {
 
     fun setInt(l: Long) {
         this.qExp = 0
-        this.sign = (l ushr 63).toInt()
+        this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
         coeffSet64(abs)
@@ -127,16 +124,16 @@ class Decimal() : Coeff() {
 
     fun setUInt(ul: Long) {
         this.qExp = 0
-        this.sign = 0
+        this.sign = false
         coeffSet64(ul)
     }
 
     fun set(bi: BigInteger) {
         if (bi.bitLength() <= 256) {
             this.qExp = 0
-            val sign = bi.signum() ushr 31
+            val sign = bi.signum() < 0
             this.sign = sign
-            val biT = if (sign == 0) bi else bi.abs()
+            val biT = if (sign) bi.abs() else bi
             val d0 = biT.toLong()
             val d1 = biT.shiftRight( 64).toLong()
             val d2 = biT.shiftRight(128).toLong()
@@ -150,7 +147,7 @@ class Decimal() : Coeff() {
     fun set(bd: BigDecimal) {
         this.coeffSet(bd.abs().unscaledValue())
         this.qExp = -bd.scale()
-        this.sign = bd.signum() shr 31
+        this.sign = bd.signum() < 0
         roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
     }
 
@@ -187,20 +184,20 @@ class Decimal() : Coeff() {
 
     fun setNegate(x: Decimal) {
         set(x)
-        this.sign = this.sign xor 1
+        this.sign = !this.sign
     }
 
     fun mutateNegate() {
-        this.sign = this.sign xor 1
+        this.sign = !this.sign
     }
 
     fun setAbs(x: Decimal) {
         set(x)
-        this.sign = 0
+        this.sign = false
     }
 
     fun mutateAbs() {
-        this.sign = 0
+        this.sign = false
     }
 
     fun copySign(x: Decimal, y: Decimal) {
@@ -208,9 +205,7 @@ class Decimal() : Coeff() {
         this.sign = y.sign
     }
 
-    fun isNegative() : Boolean {
-        return sign == 1
-    }
+    fun isNegative() = sign
 
     fun isNumber() : Boolean {
         return qExp <= NON_FINITE_INF
@@ -220,9 +215,9 @@ class Decimal() : Coeff() {
     fun add(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(x, y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun sub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(x, y.sign xor 1, y, ctx)
+    fun sub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(x, !y.sign, y, ctx)
 
-    private fun addImpl(x: Decimal, ySign: Int, y: Decimal, ctx: DecimalContext) {
+    private fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val xSign = x.sign
@@ -231,7 +226,7 @@ class Decimal() : Coeff() {
         when {
             qMax < MIN_SPECIAL_VALUE -> {
                 val residue = when {
-                    (xSign xor ySign) == 0 -> {
+                    ! (xSign xor ySign) -> {
                         this.sign = xSign
                         MagnitudeAddSub.magAdd(this, x, y)
                     }
@@ -298,10 +293,10 @@ class Decimal() : Coeff() {
             qX < NON_FINITE_INF -> {
                 this.coeffSetSqr(x)
                 this.qExp = this.qExp shl 1
-                this.sign = 0
+                this.sign = false
                 roundAndFinalize(EXACT, ctx)            }
             qX == NON_FINITE_INF -> {
-                setInfinite(0)
+                setInfinite(false)
             }
             else -> setNaN(x, ctx)
         }
@@ -387,39 +382,36 @@ class Decimal() : Coeff() {
         }
     }
 
-    fun compareTo(x: Decimal, ctx: DecimalContext) : Int {
-        val qMax = max(qExp, x.qExp)
+    fun compareTo(other: Decimal, ctx: DecimalContext) : Int {
+        val qMax = max(qExp, other.qExp)
         when {
-            (qMax < NON_FINITE_INF) -> {
+            (qMax < MIN_SPECIAL_VALUE) -> {
                 if (coeffIsZero()) {
-                    if (x.coeffIsZero())
+                    if (other.coeffIsZero())
                         return 0
                     else
-                        return (x.sign shl 1) - 1
+                        return if (other.sign) 1 else -1
                 }
-                if (x.coeffIsZero()) {
-                    return 1 - (sign shl 1)
+                if (other.coeffIsZero() || sign != other.sign) {
+                    return if (sign) -1 else 1
                 }
-                if (sign != x.sign)
-                    return 1 - (sign shl 1)
-                val cmp = magnitudeCompareTo(x)
-                val ret = (cmp xor -sign) + sign
+                val cmp = magnitudeCompareTo(other)
+                val ret = if (sign) -cmp else cmp
                 return ret
             }
 
             (qMax == NON_FINITE_INF) -> when {
-                (sign != x.sign) -> {
-                    return 1 - (sign shl 1)
+                (sign != other.sign) -> {
+                    return if (sign) -1 else 1
                 }
 
                 (qExp == NON_FINITE_INF) -> {
-                    if (x.qExp == NON_FINITE_INF)
+                    if (other.qExp == NON_FINITE_INF)
                         return 0
-                    return 1 - (sign shl 1)
+                    return if (sign) -1 else 1
                 }
-
                 else -> {
-                    return (sign shl 1) - 1
+                    return if (sign) 1 else -1
                 }
             }
             else -> throw RuntimeException("somebody is a NaN")
@@ -503,16 +495,16 @@ class Decimal() : Coeff() {
         when {
             qExp > NON_FINITE_INF -> { return }
             qExp == NON_FINITE_INF -> {
-                if (sign == 1)
+                if (sign)
                     setMaxFiniteMagnitude(ctx)
                 return
             }
             coeffIsZero() -> {
                 setMinFiniteMagnitude(ctx)
-                sign = 0
+                sign = false
                 return
             }
-            sign == 0 -> mutateNextAwayFromZero(ctx)
+            sign == false -> mutateNextAwayFromZero(ctx)
             else -> mutateNextTowardZero(ctx)
         }
         roundAndFinalize(EXACT, ROUND_TOWARD_POSITIVE, ctx)
@@ -523,17 +515,17 @@ class Decimal() : Coeff() {
         when {
             qExp > NON_FINITE_INF -> { return }
             qExp == NON_FINITE_INF -> {
-                if (sign == 0)
+                if (sign == false)
                     setMaxFiniteMagnitude(ctx)
                 return
             }
             coeffIsZero() -> {
                 setMinFiniteMagnitude(ctx)
-                sign = 1
+                sign = true
                 return
             }
 
-            sign != 0 -> mutateNextAwayFromZero(ctx)
+            sign -> mutateNextAwayFromZero(ctx)
 
             else -> mutateNextTowardZero(ctx)
         }
@@ -655,12 +647,12 @@ class Decimal() : Coeff() {
             qMax < NON_FINITE_INF -> when {
                 coeffIsZero() -> when {
                     other.coeffIsZero() -> IEEE754_EQ
-                    (other.sign != 0) -> IEEE754_LT
+                    other.sign -> IEEE754_LT
                     else -> IEEE754_GT
                 }
 
                 other.coeffIsZero() -> when {
-                    sign != 0 -> IEEE754_GT
+                    sign -> IEEE754_GT
                     else -> IEEE754_LT
                 }
 
@@ -674,15 +666,15 @@ class Decimal() : Coeff() {
                 qExp == NON_FINITE_INF -> when {
                     other.qExp == NON_FINITE_INF -> when {
                         sign == other.sign -> IEEE754_EQ
-                        sign == 0 -> IEEE754_GT
+                        sign == false -> IEEE754_GT
                         else -> IEEE754_LT
                     }
 
-                    sign == 0 -> IEEE754_GT
+                    sign == false -> IEEE754_GT
                     else -> IEEE754_LT
                 }
 
-                other.sign == 0 -> IEEE754_LT
+                other.sign == false -> IEEE754_LT
                 else -> IEEE754_GT
             }
 
@@ -728,19 +720,19 @@ class Decimal() : Coeff() {
             qExp == NON_FINITE_SNAN -> signalingNaN
             qExp == NON_FINITE_QNAN -> quiteNaN
             qExp == NON_FINITE_INF ->
-                return if (sign == 0) positiveInfinity else negativeInfinity
+                return if (sign == false) positiveInfinity else negativeInfinity
             coeffIsZero() ->
-                return if (sign == 0) positiveZero else negativeZero
+                return if (sign == false) positiveZero else negativeZero
             sciExp() < -6143 ->
-                return if (sign == 0) positiveSubnormal else negativeSubnormal
-            sign == 0 ->
+                return if (sign == false) positiveSubnormal else negativeSubnormal
+            sign == false ->
                 return positiveNormal
             else ->
                 negativeNormal
         }
     }
 
-    fun isSignMinus() = sign == 1
+    fun isSignMinus() = sign
     fun isNormal() = qExp < NON_FINITE_INF && sciExp() >= -6143
     fun isFinite() = qExp < NON_FINITE_INF
     fun isZero() = qExp < NON_FINITE_INF && coeffIsZero()
@@ -758,7 +750,7 @@ class Decimal() : Coeff() {
     fun sameQuantum(x: Decimal) = (this.qExp == x.qExp)
 
     override fun toString() : String {
-        return (if (sign == 0) '+' else '-') +
+        return (if (sign) '-' else '+') +
                 when {
                     (qExp < MIN_SPECIAL_VALUE) -> super.toString() + "E" + qExp
                     qExp == NON_FINITE_INF -> "Inf"

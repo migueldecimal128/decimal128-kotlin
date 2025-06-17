@@ -160,10 +160,10 @@ object DecParsePrint {
         do {
             val limit = off + len
             val dw0 = x.dw0
-            val signByte = if (x.sign == 0) BYTE_PLUS else BYTE_MINUS
+            val signByte = if (x.sign) BYTE_MINUS else BYTE_PLUS
             bytes[off] = signByte
             var exp = q
-            var ib = off + x.sign
+            var ib = off + if (x.sign) 1 else 0
             if (q >= NON_FINITE_INF) {
                 val isSNaN = if (q == NON_FINITE_SNAN) 1 else 0
                 val shift = ((NON_FINITE_INF - q) shr 31) and (32 - (isSNaN shl 3))
@@ -210,7 +210,7 @@ object DecParsePrint {
                 return ib - off
             }
             if (isSciDecimal) {
-                val coeffStart = off + x.sign
+                val coeffStart = off + if (x.sign) 1 else 0
                 bytes[coeffStart] = bytes[coeffStart + 1]
                 bytes[coeffStart + 1] = BYTE_DOT
                 exp = e
@@ -251,7 +251,7 @@ object DecParsePrint {
         var ich = 0
         var ch: Char
 
-        var sign = 0
+        var sign = false
         var fractionalDigitCount = 0
         var coeff19 = 0L
         var coeff34 = 0L
@@ -268,7 +268,7 @@ object DecParsePrint {
                     break@no_more_chars
                 ch = str[ich++]
                 if (ch == '+' || ch == '-') {
-                    sign = if (ch == '-') 1 else 0
+                    sign = (ch == '-')
                     if (ich == strLen)
                         break@no_more_chars
                     ch = str[ich++]
@@ -367,7 +367,7 @@ object DecParsePrint {
         } while (false)
         val lc = str.lowercase()
         when (lc) {
-            in lcInfinityStrings -> x.setInfinite(if (lc[0] == '-') 1 else 0)
+            in lcInfinityStrings -> x.setInfinite(lc[0] == '-')
             in lcNanStrings -> if (lc[0] == 's') x.setSNaN(ctx) else x.setNaN(ctx)
             else -> x.setNaN(NAN_INVALID_SYNTAX, ctx)
         }

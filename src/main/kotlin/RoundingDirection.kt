@@ -36,29 +36,29 @@ value class RoundingDirection private constructor(val value:Int) {
         return if (value < 3) this else if (value == 3) ROUND_TOWARD_NEGATIVE else ROUND_TOWARD_POSITIVE
     }
 
-    fun negate(signBit: Int) = if (signBit != 0) negate() else this
+    fun negate(sign: Boolean) = if (sign) negate() else this
 
     fun mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
-    fun overflowsToInfinity(sign: Int): Boolean {
+    fun overflowsToInfinity(sign: Boolean): Boolean {
         val toInfinity = when (this.value) {
             ROUND_TIES_TO_EVEN.value -> true
             ROUND_TIES_TO_AWAY.value -> true
             ROUND_TOWARD_ZERO.value -> false
-            ROUND_TOWARD_POSITIVE.value -> sign == 0
-            ROUND_TOWARD_NEGATIVE.value -> sign != 0
+            ROUND_TOWARD_POSITIVE.value -> !sign
+            ROUND_TOWARD_NEGATIVE.value -> sign
             else -> throw RuntimeException("unrecognized RoundingDirection value:$value")
         }
         return toInfinity
     }
 
-    fun underflowsToZero(sign: Int): Boolean {
+    fun underflowsToZero(sign: Boolean): Boolean {
         val toZero = when (this.value) {
             ROUND_TIES_TO_EVEN.value -> true
             ROUND_TIES_TO_AWAY.value -> true
             ROUND_TOWARD_ZERO.value -> true
-            ROUND_TOWARD_POSITIVE.value -> sign != 0
-            ROUND_TOWARD_NEGATIVE.value -> sign == 0
+            ROUND_TOWARD_POSITIVE.value -> sign
+            ROUND_TOWARD_NEGATIVE.value -> !sign
             else -> throw RuntimeException("unrecognized RoundingDirection value:$value")
         }
         return toZero

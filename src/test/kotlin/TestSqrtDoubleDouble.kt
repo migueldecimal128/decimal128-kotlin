@@ -213,7 +213,7 @@ class TestSqrtDoubleDouble{
 
         sqrt.coeffSet(coeffGuess2)
         sqrt.qExp = -scaleUp / 2
-        sqrt.sign = 0
+        sqrt.sign = false
 
         if (verbose)
             println(" --> sqrt:$sqrt")

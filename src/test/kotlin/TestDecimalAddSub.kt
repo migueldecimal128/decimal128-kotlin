@@ -9,7 +9,7 @@ import java.util.*
 
 class TestDecimalAddSub {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
@@ -94,7 +94,7 @@ class TestDecimalAddSub {
         if (verbose)
             println("decimalS:$decimalS")
         assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())
-        assertEquals(expected.signum() ushr 31, decimalS.sign)
+        assertEquals(expected.signum() < 0, decimalS.sign)
         assertEquals(-expected.scale(), decimalS.qExp)
     }
 
