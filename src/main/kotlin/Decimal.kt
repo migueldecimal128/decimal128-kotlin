@@ -40,11 +40,6 @@ open class Decimal() : Mag() {
         this.sign = sign
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun capExponentRange(e: Int): Int {
-        return Math.min(Math.max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
-    }
-
     private fun setNaN(x: Decimal, y: Decimal, ctx: DecimalContext) {
         val xQ = x.qExp
         val yQ = y.qExp

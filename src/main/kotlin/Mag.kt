@@ -18,6 +18,11 @@ const val NON_FINITE_SNAN = 1000000002
 const val CAPPED_EXP_MIN = -25000
 const val CAPPED_EXP_MAX = 25000
 
+@Suppress("NOTHING_TO_INLINE")
+inline fun capExponentRange(e: Int): Int {
+    return Math.min(Math.max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
+}
+
 open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coeff() {
     var qExp = 0
     constructor(exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): this() {
@@ -189,14 +194,19 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
 
     fun magSet(dw0: Long) = magSet(0, dw0)
 
-    fun magSet(exponent: Int, dw0: Long) {
-        qExp = exponent
+    fun magSet(qExponent: Int, dw0: Long) {
+        this.qExp = capExponentRange(qExponent)
         super.coeffSet64(dw0)
+    }
+
+    fun magSet(qExponent: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long, ctx: DecimalContext) {
+        coeffSet256(dw3, dw2, dw1, dw0)
+        this.qExp = capExponentRange(qExponent)
     }
 
     fun magSet(exponent: Int, bi: BigInteger, ctx: DecimalContext) {
         coeffSet(bi)
-        qExp = exponent
+        qExp = capExponentRange(exponent)
         roundAndFinalize(EXACT, bi.signum() shr 31, ctx)
     }
 
