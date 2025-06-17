@@ -24,7 +24,8 @@ class Decimal() : Mag() {
     }
 
     constructor(bd: BigDecimal): this() {
-        this.magSet(bd.abs(), DEFAULT_128_CONTEXT)
+        this.coeffSet(bd.abs().unscaledValue())
+        this.qExp = -bd.scale()
         this.sign = bd.signum() ushr 31
         roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
     }
@@ -135,8 +136,10 @@ class Decimal() : Mag() {
     }
 
     fun set(bd: BigDecimal) {
-        magSet(bd.abs(), DEFAULT_128_CONTEXT)
+        this.coeffSet(bd.abs().unscaledValue())
+        this.qExp = -bd.scale()
         this.sign = bd.signum() shr 31
+        roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
     }
 
     fun set(x: Decimal) {

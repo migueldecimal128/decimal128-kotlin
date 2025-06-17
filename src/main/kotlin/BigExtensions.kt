@@ -40,13 +40,13 @@ fun newDecimal(bd: BigDecimal): Decimal = newDecimal(bd, DecimalContext.newDecim
 
 fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
     val dec = Decimal()
-    dec.magSet(bd.abs(), ctx)
-    dec.sign = bd.signum() ushr 31
+    dec.set(bd, ctx)
     return dec
 }
 
 fun Decimal.set(bd: BigDecimal, ctx: DecimalContext) {
-    this.magSet(bd.abs(), ctx)
+    this.coeffSet(bd.abs().unscaledValue())
+    this.qExp = -bd.scale()
     this.sign = bd.signum() ushr 31
     this.roundAndFinalize(Residue.EXACT, ctx)
 }

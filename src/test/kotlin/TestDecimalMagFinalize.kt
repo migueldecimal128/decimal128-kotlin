@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestMagRoundAndFinalize {
+class TestDecimalMagFinalize {
 
     val verbose = false
 
@@ -60,9 +60,9 @@ class TestMagRoundAndFinalize {
 
     fun test1(case: TC) {
         val bdA = case.bdA
-        val mag = Mag()
-        mag.magSet(bdA)
-        println("bdA:$bdA => mag:$mag")
+        val dec = Decimal()
+        dec.set(bdA)
+        println("bdA:$bdA => dec:$dec")
     }
 
 }
