@@ -2,6 +2,7 @@ package com.decimal128
 
 import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
+import kotlin.math.min
 
 object MagDiv {
 
@@ -24,7 +25,7 @@ object MagDiv {
                     val quot = Coeff()
                     do {
                         val deltaQ = qPreferred - qZ
-                        val chunk = Math.min(Math.min(9, deltaQ), ntz)
+                        val chunk = min(min(9, deltaQ), ntz)
                         val chunkRemainder = DivBarrett.barrettDivModPow10(quot, z, chunk)
                         if (chunkRemainder > 0) {
                             var pow10Count = 0

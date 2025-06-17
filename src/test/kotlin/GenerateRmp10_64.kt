@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
+import kotlin.math.min
 
 class GenerateRmp10_64 {
     companion object {
@@ -189,7 +190,7 @@ class GenerateRmp10_64 {
     @Test
     fun genAll() {
         for (qDigitCount in 2..<79)
-            for (xPow10 in 1..<Math.min(qDigitCount, 45)) {
+            for (xPow10 in 1..<min(qDigitCount, 45)) {
                 val theoreticalY10 = calcTheoreticalMinY10(qDigitCount, xPow10)
                 val minY10 = calcMinY10(qDigitCount, xPow10)
                 val y64 = ((minY10+63)/64)*64

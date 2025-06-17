@@ -11,6 +11,7 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.math.min
 
 class TestCoeffScaleDown {
 
@@ -99,7 +100,7 @@ class TestCoeffScaleDown {
     fun testDecimalBoundaries() {
         for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
             val biQ = BigInteger.TEN.pow(qDigitCount)
-            for (xPow10 in MIN_DIVISOR_POW10..<Math.min(MAX_DIVISOR_POW10, qDigitCount + 2)) {
+            for (xPow10 in MIN_DIVISOR_POW10..<min(MAX_DIVISOR_POW10, qDigitCount + 2)) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
                     if (biA.bitLength() <= 256) {
@@ -168,7 +169,7 @@ class TestCoeffScaleDown {
 
     fun randPow(bi: BigInteger) : Int {
         val biDigitCount = bi.toString().length
-        val maxPow = Math.min(MAX_DIVISOR_POW10 - 1, biDigitCount + 2)
+        val maxPow = min(MAX_DIVISOR_POW10 - 1, biDigitCount + 2)
         val randPow = random.nextInt(maxPow)
         return randPow
     }

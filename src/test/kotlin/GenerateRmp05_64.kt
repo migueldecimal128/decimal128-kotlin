@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 class GenerateRmp05_64 {
     companion object {
@@ -226,12 +228,12 @@ class GenerateRmp05_64 {
         var maxMin64 = 0
         var maxFivePowNegXScaled = ZERO
         for (qDigitCount in 2..78) { // include 78 digits ... up through 2**256-1
-            for (xPow10 in 1..<Math.min(qDigitCount, 45)) {
+            for (xPow10 in 1..<min(qDigitCount, 45)) {
                 val theoreticalY05 = calcTheoreticalMinY05(qDigitCount, xPow10)
                 val minY05 = calcMinY05(qDigitCount, xPow10)
                 val min64 = ((minY05 + 63)/64)*64
                 //println("q:$qDigitCount x:$xPow10 => theory:$theoreticalY05 -> min:$minY05 -> min64:$min64")
-                maxMin64 = Math.max(maxMin64, min64)
+                maxMin64 = max(maxMin64, min64)
                 val fivePowNegXScaled = calcFivePowNegXScaled(xPow10, min64)
                 if (fivePowNegXScaled > maxFivePowNegXScaled)
                     maxFivePowNegXScaled = fivePowNegXScaled

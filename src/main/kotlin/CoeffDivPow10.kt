@@ -1,5 +1,7 @@
 package com.decimal128
 
+import kotlin.math.max
+
 object CoeffDivPow10 {
 
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
@@ -28,7 +30,7 @@ object CoeffDivPow10 {
         val step1a = MAX_DIVISOR_POW10 - 1
         val step2a = pow10 - step1a
         assert(step2a < MAX_DIVISOR_POW10)
-        val step2 = Math.max(step2a, BARRETT_POW10_MAX - 1)
+        val step2 = max(step2a, BARRETT_POW10_MAX - 1)
         val step1 = pow10 - step2
         val residue1 = DivRangeRecipMulPow10.rangeDivPow10(z, x, step1)
         val residue2 = divPow10(z, z, step2)

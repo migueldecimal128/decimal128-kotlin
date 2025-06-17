@@ -9,6 +9,8 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.Class754.*
 import java.math.BigDecimal
 import java.math.BigInteger
+import kotlin.math.max
+import kotlin.math.min
 
 class Decimal() : Mag() {
     var sign = 0
@@ -44,7 +46,7 @@ class Decimal() : Mag() {
     private fun setNaN(x: Decimal, y: Decimal, ctx: DecimalContext) {
         val xQ = x.qExp
         val yQ = y.qExp
-        val maxQ = Math.max(xQ, yQ)
+        val maxQ = max(xQ, yQ)
         assert(maxQ >= NON_FINITE_QNAN)
         magSetZero()
         if (maxQ == NON_FINITE_SNAN) {
@@ -59,7 +61,7 @@ class Decimal() : Mag() {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
-        val qMaxXYA = Math.max(Math.max(qX, qY), qA)
+        val qMaxXYA = max(max(qX, qY), qA)
         assert(qMaxXYA >= NON_FINITE_QNAN)
         magSetZero()
         qExp = NON_FINITE_QNAN
@@ -185,8 +187,8 @@ class Decimal() : Mag() {
         val qX = x.qExp
         val qY = y.qExp
         val xSign = x.sign
-        val qMax = Math.max(qX, qY)
-        val qMin = Math.min(qX, qY)
+        val qMax = max(qX, qY)
+        val qMin = min(qX, qY)
         when {
             qMax < NON_FINITE_INF -> {
                 val residue = when {
@@ -231,7 +233,7 @@ class Decimal() : Mag() {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
-        val qMaxXY = Math.max(qX, qY)
+        val qMaxXY = max(qX, qY)
         when {
             qMaxXY < NON_FINITE_INF -> {
                 this.magMul(x, y, productSign, ctx)
@@ -269,8 +271,8 @@ class Decimal() : Mag() {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
-        val qMaxXY = Math.max(qX, qY)
-        val qMaxXYA = Math.max(qMaxXY, qA)
+        val qMaxXY = max(qX, qY)
+        val qMaxXYA = max(qMaxXY, qA)
         val productSign = x.sign xor y.sign
         when {
             qMaxXYA < NON_FINITE_INF -> {
@@ -302,7 +304,7 @@ class Decimal() : Mag() {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign
-        val qMaxXY = Math.max(qX, qY)
+        val qMaxXY = max(qX, qY)
         when {
             qMaxXY < NON_FINITE_INF -> {
                 when {
@@ -346,7 +348,7 @@ class Decimal() : Mag() {
 
 
     fun compareTo(x: Decimal, ctx: DecimalContext) : Int {
-        val qMax = Math.max(qExp, x.qExp)
+        val qMax = max(qExp, x.qExp)
         when {
             (qMax < NON_FINITE_INF) -> {
                 if (coeffIsZero()) {
@@ -454,7 +456,7 @@ class Decimal() : Mag() {
     }
 
     private fun mutateNextAwayFromZero(ctx: DecimalContext) {
-        val headroom = Math.min(ctx.precision - digitLen, qExp - ctx.qTiny)
+        val headroom = min(ctx.precision - digitLen, qExp - ctx.qTiny)
         if (headroom > 1 || headroom == 1 && !coeffIsAllNines(ctx.precision-1)) {
             this.coeffSetScaleUpPow10(this, headroom)
             this.qExp -= headroom
@@ -464,7 +466,7 @@ class Decimal() : Mag() {
 
     private fun mutateNextTowardZero(ctx: DecimalContext) {
         val headroom =
-            Math.min(ctx.precision - digitLen + if (coeffIsPowerOf10()) 1 else 0, qExp - ctx.qTiny)
+            min(ctx.precision - digitLen + if (coeffIsPowerOf10()) 1 else 0, qExp - ctx.qTiny)
         if (headroom > 0) {
             this.coeffSetScaleUpPow10(this, headroom)
             this.qExp -= headroom
@@ -476,7 +478,7 @@ class Decimal() : Mag() {
     fun maxNum(x: Decimal, y: Decimal, ctx: DecimalContext) = minNum_helper(x, y, -1, ctx)
 
     private fun minNum_helper(x: Decimal, y: Decimal, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
-        val qMax = Math.max(x.qExp, y.qExp)
+        val qMax = max(x.qExp, y.qExp)
         when {
             qMax <= NON_FINITE_INF -> {
                 val cmp = (x.compareTo(y, ctx) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
@@ -493,7 +495,7 @@ class Decimal() : Mag() {
     fun maxNumMag(x: Decimal, y: Decimal, ctx: DecimalContext) = minNumMag_helper(x, y, -1, ctx)
 
     private fun minNumMag_helper(x: Decimal, y: Decimal, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
-        val qMax = Math.max(x.qExp, y.qExp)
+        val qMax = max(x.qExp, y.qExp)
         when {
             qMax < NON_FINITE_INF -> {
                 val cmp = (x.magCompareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
@@ -550,7 +552,7 @@ class Decimal() : Mag() {
         compare754(other, true, ctx)
 
     fun compare754(other: Decimal, isSignaling: Boolean, ctx: DecimalContext): Compare754Result {
-        val qMax = Math.max(qExp, other.qExp)
+        val qMax = max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {
                 coeffIsZero() -> when {
@@ -602,7 +604,7 @@ class Decimal() : Mag() {
 
     override fun equals(other: Any?) : Boolean {
         if (other is Decimal) {
-            val qMax = Math.max(qExp, other.qExp)
+            val qMax = max(qExp, other.qExp)
             return when {
                 qMax < NON_FINITE_INF -> when {
                     coeffIsZero() -> other.coeffIsZero()
@@ -677,7 +679,7 @@ class Decimal() : Mag() {
                     ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
                 }
 
-                val excess = Math.max(0, digitLen - precision)
+                val excess = max(0, digitLen - precision)
                 val myQTiny = ctx.qTiny - excess      // threshold for normalized
 
                 // 2) Normalized result: round only if bd has >34 digits
@@ -773,7 +775,7 @@ class Decimal() : Mag() {
                 return
             }
             // zero case
-            qExp = Math.max(Math.min(qExp, ctx.qMax), ctx.qTiny)
+            qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
         }
     }
 

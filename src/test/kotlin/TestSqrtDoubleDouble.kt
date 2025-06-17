@@ -9,6 +9,8 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
 class TestSqrtDoubleDouble{
 
@@ -139,7 +141,7 @@ class TestSqrtDoubleDouble{
             ++corrections
             --guess0Significand
             coeffGuess0.coeffSet64(guess0Significand)
-            coeffGuess0.coeffSetShiftLeft(coeffGuess0, Math.max(guess0Exp - 52, 0))
+            coeffGuess0.coeffSetShiftLeft(coeffGuess0, max(guess0Exp - 52, 0))
             if (verbose)
                 println(" --> dbl0:$dRadicandScaled doubleGuess0:$dGuess0 coeffGuess0:$coeffGuess0")
 
@@ -160,7 +162,7 @@ class TestSqrtDoubleDouble{
             val delta0Exp = ((delta0Raw ushr 52).toInt() and 0x7FF) - 1023
             coeffDelta0.coeffSet64(delta0Significand - 1)
             coeffDelta0.coeffMutateDecrement()
-            coeffDelta0.coeffSetShiftLeft(coeffDelta0, Math.max(delta0Exp - 52, 0))
+            coeffDelta0.coeffSetShiftLeft(coeffDelta0, max(delta0Exp - 52, 0))
 
             coeffGuess1.coeffSetAdd(coeffGuess0, coeffDelta0)
             if (verbose)
@@ -224,7 +226,7 @@ class TestSqrtDoubleDouble{
                 val quot = Coeff()
                 do {
                     val deltaQ = qPreferred - qZ
-                    val chunk = Math.min(Math.min(9, deltaQ), ntz)
+                    val chunk = min(min(9, deltaQ), ntz)
                     val chunkRemainder = DivBarrett.barrettDivModPow10(quot, sqrt, chunk)
                     if (chunkRemainder > 0) {
                         var pow10Count = 0

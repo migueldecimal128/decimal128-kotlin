@@ -2,6 +2,7 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 import java.nio.charset.StandardCharsets
+import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
@@ -13,7 +14,7 @@ object CoeffParsePrint {
 
     fun coeffToString(c: Coeff): String {
         if (c.digitLen > 1) {
-            val bytes = ByteArray(c.digitLen)
+            val bytes = ByteArray(max(c.digitLen, 1))
             coeffToChars(c, bytes, 0)
             return String(bytes, StandardCharsets.UTF_8)
         } else {
@@ -21,7 +22,7 @@ object CoeffParsePrint {
         }
     }
 
-    private fun coeffToChars(c: Coeff, bytes: ByteArray, off: Int) {
+    fun coeffToChars(c: Coeff, bytes: ByteArray, off: Int) {
         if (c.bitLen <= 64) {
             u64ToChars(c.digitLen, c.dw0, bytes, off)
             return
@@ -42,7 +43,7 @@ object CoeffParsePrint {
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
             u64ToChars(9, r, bytes, off + ich)
         }
-        u64ToChars(Math.max(1, t.digitLen), t.dw0, bytes, off)
+        u64ToChars(max(1, t.digitLen), t.dw0, bytes, off)
     }
 
     private fun u64ToChars(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int) {

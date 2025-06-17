@@ -3,6 +3,7 @@ package com.decimal128
 import java.lang.Long.compareUnsigned
 import java.lang.Long.numberOfLeadingZeros
 import java.lang.Math.unsignedMultiplyHigh
+import kotlin.math.max
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
@@ -267,7 +268,7 @@ internal object CoeffPow10 {
     fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 64 -> {
-                val loDigitCount = Math.max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_128)
+                val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_128)
                 val hiDigitCount = loDigitCount + 1
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p1 = POW10[pow10Offset + 1]
@@ -285,7 +286,7 @@ internal object CoeffPow10 {
     fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 128 -> {
-                val loDigitCount = Math.max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
+                val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
                 val hiDigitCount = loDigitCount + 1
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p2 = POW10[pow10Offset + 2]
@@ -307,7 +308,7 @@ internal object CoeffPow10 {
     fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 192 -> {
-                val loDigitCount = Math.max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_256)
+                val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_256)
                 val hiDigitCount = loDigitCount + 1
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p3 = POW10[pow10Offset + 3]

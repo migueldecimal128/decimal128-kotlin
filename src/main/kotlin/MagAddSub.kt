@@ -6,6 +6,7 @@ import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
 import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
 import com.decimal128.CoeffSub.coeffSubScaled
 import com.decimal128.Residue.Companion.EXACT
+import kotlin.math.min
 
 object MagAddSub {
 
@@ -21,7 +22,7 @@ object MagAddSub {
         assert(m.qExp > n.qExp)
         val qDelta = m.qExp - n.qExp
         val headroom = PRECISION_34 - m.digitLen
-        val shiftLeft = Math.min(qDelta, headroom)
+        val shiftLeft = min(qDelta, headroom)
         val qAlign = m.qExp - shiftLeft
         when {
             (m.bitLen > 0 && n.bitLen > 0) -> {
@@ -84,7 +85,7 @@ object MagAddSub {
         }
         val qDelta = Math.abs(x.qExp - y.qExp)
         val headroomWithGuardRound = 2 + PRECISION_34 - x.digitLen
-        val shiftLeft = Math.min(qDelta, headroomWithGuardRound)
+        val shiftLeft = min(qDelta, headroomWithGuardRound)
         val qAlign = x.qExp - shiftLeft
         if (x.qExp > y.qExp) {
             when {

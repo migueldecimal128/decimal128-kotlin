@@ -3,6 +3,8 @@ package com.decimal128
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
+import kotlin.math.max
+import kotlin.math.min
 
 private const val P34       = 34
 private const val EMIN      = -6143
@@ -34,7 +36,7 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
         q in QNAN_SCALE..SNAN_SCALE -> return bd
     }
     if (bd.signum() == 0) {
-        val boundedQ = Math.max(Math.min(q, 6111), -6176)
+        val boundedQ = max(min(q, 6111), -6176)
         val boundedZero = bd.setScale(-boundedQ)
         return boundedZero
     }
@@ -45,7 +47,7 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     val sign = bd.signum() < 0
     val p       = bd.precision()
     var e       = q + p - 1
-    val excess  = Math.max(0, p - p34)
+    val excess  = max(0, p - p34)
     val qTiny   = ETINY - excess                      // threshold for normalized
     val qMin    = ETINY - p                           // threshold for subnormal cohort
 

@@ -2,6 +2,7 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import com.decimal128.CoeffScalePow10.coeffScaleFmaPow10
+import kotlin.math.max
 
 object CoeffAdd {
 
@@ -25,7 +26,7 @@ object CoeffAdd {
         }
         */
 
-        val maxBitLen = Math.max(x.bitLen, y.bitLen)
+        val maxBitLen = max(x.bitLen, y.bitLen)
 
         val x0 = x.dw0
         val y0 = y.dw0

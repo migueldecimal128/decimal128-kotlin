@@ -9,7 +9,7 @@ import java.util.*
 
 class TestDecimalToString {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val strVal: String) {
         constructor(bd: BigDecimal) : this(bdToDecimal128String(bd))
@@ -20,6 +20,7 @@ class TestDecimalToString {
     }
 
     val tcs = arrayOf(
+        TC("0e1000002"),
         TC("9999999999_9999999999_9999999999_9999"),
         TC("9999999999_9999999999_9999999999_99990"),
         TC("9999999999_9999999999_9999999999_99994"),

@@ -2,6 +2,8 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 import java.nio.charset.StandardCharsets
+import kotlin.math.max
+import kotlin.math.min
 
 private const val SPECIAL_NAMES =
     ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16) or
@@ -190,15 +192,14 @@ object DecParsePrint {
                 bytes.fill(BYTE_ZERO, ib, ib + zeroCount)
                 bytes[ib + 1] = BYTE_DOT
                 ib += zeroCount
-            } else if (isSciDecimal)
-                ++ib
-            // render integer coeff, including a single 0
-            when {
-                (len - ib < x.digitLen) -> break@insufficient_buffer
-                (x.bitLen <= 64) -> ib += u64ToChars(x.digitLen, dw0, bytes, ib, limit - ib)
-                (x.bitLen <= 128) -> ib += u128ToChars(x.digitLen, x.dw1, dw0, bytes, ib, limit - ib)
-                else -> throw RuntimeException("coeff.bitLen > 128 not impl")
+            } else if (isSciDecimal) {
+                ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
             }
+            // render integer coeff, including a single 0
+            if (len - ib < x.digitLen)
+                break@insufficient_buffer
+            CoeffParsePrint.coeffToChars(x, bytes, ib)
+            ib += max(x.digitLen, 1) // if x.digitLen == 0 then 1
             if (isNonSciDecimal) {
                 if (isNonSciDecimalGE1) {
                     val decimalIndex = ib - scale
@@ -344,7 +345,7 @@ object DecParsePrint {
                 )
                 break@invalid_syntax
             // we have at least one digit
-            val coeffDigitCount = Math.min(34, significantDigitCount)
+            val coeffDigitCount = min(34, significantDigitCount)
             x.coeffSet64(coeff19)
             if (coeffDigitCount > 19) {
                 val pow10 = coeffDigitCount - 19
@@ -353,7 +354,7 @@ object DecParsePrint {
             x.sign = sign
             val signedExp = (exp xor -expSign) + expSign
             val integerDigitCount = significantDigitCount - fractionalDigitCount
-            val discardedIntegerDigitCount = Math.max(0, integerDigitCount - 34)
+            val discardedIntegerDigitCount = max(0, integerDigitCount - 34)
             val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
             x.qExp = qExp
             if (((guardDigit or stickyBits) == 0) && (qExp >= ctx.qTiny) && (qExp <= ctx.qMax))

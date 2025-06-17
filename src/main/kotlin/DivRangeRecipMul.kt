@@ -12,6 +12,8 @@ import java.math.BigInteger.ONE
 import java.math.BigInteger.TWO
 import java.math.BigInteger.TEN
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 val MIN_DIVIDEND_DIGIT_COUNT = 2
 val MAX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
@@ -309,7 +311,7 @@ object DivRangeRecipMulPow10 {
         val paramsArrayList = ArrayList<Long>(tableSize * 4)
         paramsArrayList.add(0L)
         for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAX_DIVIDEND_DIGIT_COUNT) {
-            val maxPow10 = Math.min(qDigitCount, MAX_DIVISOR_POW10)
+            val maxPow10 = min(qDigitCount, MAX_DIVISOR_POW10)
             for (xPow10 in MIN_DIVISOR_POW10..<maxPow10) {
                 val index = indexOf(qDigitCount, xPow10)
                 if (qDigitCount > xPow10) {
@@ -364,11 +366,11 @@ object DivRangeRecipMulPow10 {
                 val shift = unpackShift(descriptor)
                 val quotDwordCount = unpackQuotDwordCount(descriptor)
 
-                maxMulDwordCount = Math.max(maxMulDwordCount, mulDwordCount)
-                maxMulDigitCount = Math.max(maxMulDigitCount, mulDigitCount)
-                maxAccDwordCount = Math.max(maxAccDwordCount, accDwordCount)
-                maxQuotDwordCount = Math.max(maxQuotDwordCount, quotDwordCount)
-                maxShift = Math.max(maxShift, shift)
+                maxMulDwordCount = max(maxMulDwordCount, mulDwordCount)
+                maxMulDigitCount = max(maxMulDigitCount, mulDigitCount)
+                maxAccDwordCount = max(maxAccDwordCount, accDwordCount)
+                maxQuotDwordCount = max(maxQuotDwordCount, quotDwordCount)
+                maxShift = max(maxShift, shift)
             }
         }
         println("maxMulDwordCount:$maxMulDwordCount maxMulDigitCount:$maxMulDigitCount")

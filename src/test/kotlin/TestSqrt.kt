@@ -9,6 +9,8 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.nextDown
 
 class TestSqrt{
@@ -122,7 +124,7 @@ class TestSqrt{
         //val guess0Exp = ((rawGuess0 ushr 52).toInt() and 0x7FF) - 1023
 
         //val guess0Coeff = Coeff(guess0Mantissa)
-        //guess0Coeff.coeffSetShiftLeft(guess0Coeff, Math.max(guess0Exp - 52, 0))
+        //guess0Coeff.coeffSetShiftLeft(guess0Coeff, max(guess0Exp - 52, 0))
         val guess0Coeff = Coeff()
         guess0Coeff.coeffSet(guess0Double)
         if (verbose)
@@ -143,7 +145,7 @@ class TestSqrt{
             println(" --> residual0:$residual0")
 
         /*
-        val residual0BitCount = Math.min(53, residual0.bitLen)
+        val residual0BitCount = min(53, residual0.bitLen)
         val residual0BitIndex = residual0.bitLen - residual0BitCount
         val residualTopBits = CoeffBits.getDwordAtBitIndex(residual0, residual0BitIndex)
         val residual0Double = Math.scalb(residualTopBits.toDouble(), residual0BitIndex)
@@ -156,7 +158,7 @@ class TestSqrt{
         val delta0Mantissa = ((delta0Raw and ((1L shl 52) - 1)) or (1L shl 52))
         val delta0Exp = ((delta0Raw ushr 52).toInt() and 0x7FF) - 1023
         val delta0Coeff = Coeff(delta0Mantissa)
-        delta0Coeff.coeffSetShiftLeft(delta0Coeff, Math.max(delta0Exp - 52, 0))
+        delta0Coeff.coeffSetShiftLeft(delta0Coeff, max(delta0Exp - 52, 0))
 
         val guess1Coeff = Coeff()
         guess1Coeff.coeffSetAdd(guess0Coeff, delta0Coeff)
@@ -209,7 +211,7 @@ class TestSqrt{
                 val quot = Coeff()
                 do {
                     val deltaQ = qPreferred - qZ
-                    val chunk = Math.min(Math.min(9, deltaQ), ntz)
+                    val chunk = min(min(9, deltaQ), ntz)
                     val chunkRemainder = DivBarrett.barrettDivModPow10(quot, sqrt, chunk)
                     if (chunkRemainder > 0) {
                         var pow10Count = 0
@@ -248,7 +250,7 @@ class TestSqrt{
             println(" --> sqrt:$sqrt")
 
         /*
-        val bitCount1 = Math.min(53, coeff0Diff.bitLen)
+        val bitCount1 = min(53, coeff0Diff.bitLen)
         val bitIndex1 = coeff0Diff.bitLen - bitCount1
         val topBits1 = CoeffBits.getDwordAtBitIndex(coeff0Diff, bitIndex1)
         val dbl1 = Math.scalb(topBits1.toDouble(), bitIndex1)
@@ -261,7 +263,7 @@ class TestSqrt{
 
         val coeff1 = Coeff()
         coeff1.coeffSet64(dblSqrt1Mantissa)
-        coeff1.coeffSetShiftLeft(coeff1, Math.max(dblSqrt1Exp - 52, 0))
+        coeff1.coeffSetShiftLeft(coeff1, max(dblSqrt1Exp - 52, 0))
         println(" --> dbl1:$dbl1 dblSqrt1:$dblSqrt1, dblSqrt1Mantissa:$dblSqrt1Mantissa dblSqrt1Exp:$dblSqrt1Exp coeff1:$coeff1")
 
         val coeff1squared = Coeff()
@@ -270,7 +272,7 @@ class TestSqrt{
         CoeffSub.coeffSubUnscaled(coeff1Diff, coeff0Diff, coeff1squared)
         println(" --> coeff1Diff:$coeff1Diff")
 
-        val bitCount2 = Math.min(53, coeff1Diff.bitLen)
+        val bitCount2 = min(53, coeff1Diff.bitLen)
         val bitIndex2 = coeff1Diff.bitLen - bitCount2
         val topBits2 = CoeffBits.getDwordAtBitIndex(coeff1Diff, bitIndex2)
         val dbl2 = Math.scalb(topBits2.toDouble(), bitIndex2)
@@ -283,7 +285,7 @@ class TestSqrt{
 
         val coeff2 = Coeff()
         coeff2.coeffSet64(dblSqrt2Mantissa)
-        coeff2.coeffSetShiftLeft(coeff2, Math.max(dblSqrt2Exp - 52, 0))
+        coeff2.coeffSetShiftLeft(coeff2, max(dblSqrt2Exp - 52, 0))
         println(" --> dbl2:$dbl2 dblSqrt2:$dblSqrt2, dblSqrt2Mantissa:$dblSqrt2Mantissa dblSqrt2Exp:$dblSqrt2Exp coeff2:$coeff2")
 
         val coeff2squared = Coeff()
@@ -292,7 +294,7 @@ class TestSqrt{
         CoeffSub.coeffSubUnscaled(coeff2Diff, coeff1Diff, coeff2squared)
         println(" --> coeff2Diff:$coeff2Diff")
 
-        val bitCount3 = Math.min(53, coeff2Diff.bitLen)
+        val bitCount3 = min(53, coeff2Diff.bitLen)
         val bitIndex3 = coeff2Diff.bitLen - bitCount3
         val topBits3 = CoeffBits.getDwordAtBitIndex(coeff2Diff, bitIndex3)
         val dbl3 = Math.scalb(topBits3.toDouble(), bitIndex3)
@@ -305,7 +307,7 @@ class TestSqrt{
 
         val coeff3 = Coeff()
         coeff3.coeffSet64(dblSqrt3Mantissa)
-        coeff3.coeffSetShiftLeft(coeff3, Math.max(dblSqrt3Exp - 52, 0))
+        coeff3.coeffSetShiftLeft(coeff3, max(dblSqrt3Exp - 52, 0))
         println(" --> dbl3:$dbl3 dblSqrt3:$dblSqrt3, dblSqrt3Mantissa:$dblSqrt3Mantissa dblSqrt3Exp:$dblSqrt3Exp coeff3:$coeff3")
 
         val coeff3squared = Coeff()

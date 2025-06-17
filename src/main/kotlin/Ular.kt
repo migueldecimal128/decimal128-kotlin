@@ -310,7 +310,7 @@ class Ular {
         fun compare(x:LongArray, y:LongArray, yOff:Int, yLen:Int) = compare(x, 0, x.size, y, yOff, yLen)
 
         fun compare(x:LongArray, xOff:Int, xLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
-            val minLen = Math.min(xLen, yLen)
+            val minLen = min(xLen, yLen)
             for (i in (xLen-1) downTo minLen) {
                 if (x[xOff + i] != 0L)
                     return 1
@@ -334,7 +334,7 @@ class Ular {
         fun reverseCompare(x:LongArray, y:LongArray, yOff:Int, yLen:Int) = reverseCompare(x, 0, x.size, y, yOff, yLen)
 
         fun reverseCompare(x:LongArray, xOff:Int, xLen:Int, y:LongArray, yOff:Int, yLen:Int) : Int {
-            val minLen = Math.min(xLen, yLen)
+            val minLen = min(xLen, yLen)
             var cmpPrev = 0
             for (i in 0..<minLen) {
                 val xI = x[xOff + i]
@@ -362,7 +362,7 @@ class Ular {
                 return compare(x, xOff, maskDwordLen, y, yOff, yLen)
             }
             var mask = 1L shl (innerShift - 1)
-            val minLen = Math.min(maskDwordLen, yLen)
+            val minLen = min(maskDwordLen, yLen)
             for (i in (maskDwordLen-1) downTo minLen) {
                 if ((x[xOff + i] and mask) != 0L)
                     return 1
