@@ -23,11 +23,12 @@ class TestDecimalMagnitudeDiv {
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
         val bdBIsFinite = bdIsFinite(bdB)
-        val bdDiv = bdA.divide(bdB, MathContext(40, rm))
+        val bdDiv = bdA.divide(bdB, MathContext(70, rm))
         val bdP = bdToIeeeDecimal128(bdDiv, rm)
     }
 
     val cases = arrayOf(
+        TC("8.62772233398E+826", "3.37229718376401328925734846797201E-3185"),
         TC("1", "2"),
         TC("0E+4519", "4.14999526830484824E+2722"),
         TC("2.7710284E-1295", "2.912E-5964"),
@@ -48,7 +49,8 @@ class TestDecimalMagnitudeDiv {
 
     @Test
     fun testProblemChild() {
-        val tc =         TC("1", "2")
+        //val tc = TC("8.62772233398E+826", "3.37229718376401328925734846797201E-3185")
+        val tc = TC("862772233398", "337229718376401328925734846797201")
         test1(tc)
     }
 
@@ -56,7 +58,7 @@ class TestDecimalMagnitudeDiv {
 
     @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<10000000) {
             val bdA = randBd()
             var bdB: BigDecimal
             do {
@@ -101,8 +103,16 @@ class TestDecimalMagnitudeDiv {
         decQ.div(decA, decB, ctx)
         if (verbose)
             println("magQ:$decQ")
-        assertEquals(expected.unscaledValue(), decQ.coeffToBigInteger())
-        assertEquals(-expected.scale(), decQ.qExp)
+        val biExpected = expected.unscaledValue()
+        val qExpExpected = -expected.scale()
+        val biObserved = decQ.coeffToBigInteger()
+        val qExpObserved = decQ.qExp
+        if (verbose || biExpected != biObserved || qExpExpected != qExpObserved) {
+            println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")
+            println(" => qExpExpected:$qExpExpected qExpObserved:$qExpObserved")
+            println(" => biExpected:$biExpected biObserved:$biObserved")
+        }
+        assertEquals(biExpected, biObserved)
+        assertEquals(qExpExpected, qExpObserved)
     }
-
 }
