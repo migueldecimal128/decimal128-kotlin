@@ -8,7 +8,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestMagSet {
+class TestDecimalMagSet {
 
     val verbose = false
 
@@ -121,18 +121,18 @@ class TestMagSet {
         val expRounded = case.expRounded
         val ctx = case.ctx
         val roundingMode = ctx.getMathContext().roundingMode
-        val mag = Mag()
+        val dec = Decimal()
         if (verbose)
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
-        mag.magSet(bdA, ctx)
-        val biCoeff = mag.coeffToBigInteger()
+        dec.set(bdA, ctx)
+        val biCoeff = dec.coeffToBigInteger()
         if (verbose)
-            println("coeff:$biCoeff + expQ:${mag.qExp}")
-        if (biRounded != biCoeff || expRounded != mag.qExp) {
+            println("coeff:$biCoeff + expQ:${dec.qExp}")
+        if (biRounded != biCoeff || expRounded != dec.qExp) {
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
-            println("coeff:$biCoeff + expQ:${mag.qExp}")
+            println("coeff:$biCoeff + expQ:${dec.qExp}")
             assertEquals(biRounded, biCoeff)
-            assertEquals(expRounded, mag.qExp)
+            assertEquals(expRounded, dec.qExp)
 
         }
     }

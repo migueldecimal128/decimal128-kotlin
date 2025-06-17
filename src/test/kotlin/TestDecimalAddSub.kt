@@ -9,7 +9,7 @@ import java.util.*
 
 class TestDecimalAddSub {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
@@ -27,6 +27,7 @@ class TestDecimalAddSub {
     }
 
     val cases = arrayOf(
+        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
         TC("-3.87184285392449585406072732173794E+5253", "3.4414437429652711952247662511911E+2910"),
         TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
         TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),

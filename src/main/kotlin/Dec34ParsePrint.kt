@@ -361,7 +361,7 @@ object Dec34ParsePrint {
             val roundBit = if (guardDigit < 5) 0 else 1
             val stickyBit = (-stickyBits) ushr 31
             val residue = Residue.residueFrom(roundBit, stickyBit)
-            x.roundAndFinalize(residue, sign, ctx)
+            x.roundAndFinalize(residue, ctx)
             return
         } while (false)
         val lc = str.lowercase()

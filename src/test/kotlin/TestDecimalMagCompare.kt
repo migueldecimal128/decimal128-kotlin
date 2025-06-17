@@ -1,16 +1,12 @@
 package com.decimal128
 
-import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.RoundingMode
-import java.math.MathContext
 import java.util.*
 
-class TestMagCompare {
+class TestDecimalMagCompare {
 
     val verbose = false
 
@@ -66,17 +62,17 @@ class TestMagCompare {
         val bdA = case.bdA
         val bdB = case.bdB
         val expected = case.expected
-        val magA = Mag(bdA)
-        val magB = Mag(bdB)
+        val decA = newDecimal(bdA)
+        val decB = newDecimal(bdB)
         if (verbose)
             println("bdA:$bdA compare bdB:$bdB => $expected")
-        val observed = magA.magCompareTo(magB)
+        val observed = decA.magCompareTo(decB)
         assertEquals(expected, observed)
-        val observed2 = magB.magCompareTo(magA)
+        val observed2 = decB.magCompareTo(decA)
         assertEquals(-expected, observed2)
-        val observedEQforward = magA.magEQ(magB)
+        val observedEQforward = decA.magEQ(decB)
         assertEquals(expected == 0, observedEQforward)
-        val observedEQreverse = magB.magEQ(magA)
+        val observedEQreverse = decB.magEQ(decA)
         assertEquals(expected == 0, observedEQreverse)
     }
 

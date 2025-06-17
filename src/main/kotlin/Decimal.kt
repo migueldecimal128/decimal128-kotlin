@@ -10,7 +10,7 @@ import com.decimal128.Class754.*
 import java.math.BigDecimal
 import java.math.BigInteger
 
-open class Decimal() : Mag() {
+class Decimal() : Mag() {
     var sign = 0
 
     var DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
@@ -24,6 +24,7 @@ open class Decimal() : Mag() {
     constructor(bd: BigDecimal): this() {
         this.magSet(bd.abs(), DEFAULT_128_CONTEXT)
         this.sign = bd.signum() ushr 31
+        roundAndFinalize(EXACT, DEFAULT_128_CONTEXT)
     }
 
     constructor(str: String): this(BigDecimal(str))
@@ -187,19 +188,22 @@ open class Decimal() : Mag() {
         val qMax = Math.max(qX, qY)
         val qMin = Math.min(qX, qY)
         when {
-            qMax < NON_FINITE_INF -> when {
-                (xSign xor ySign) == 0 -> {
-                    this.magAdd(x, y, xSign, ctx)
-                    this.sign = xSign
+            qMax < NON_FINITE_INF -> {
+                val residue = when {
+                    (xSign xor ySign) == 0 -> {
+                        this.sign = xSign
+                        this.magAdd(x, y, xSign, ctx)
+                    }
+                    (x.magCompareTo(y) >= 0) -> {
+                        this.sign = xSign
+                        this.magSub(x, y, xSign, ctx)
+                    }
+                    else -> {
+                        this.sign = ySign
+                        this.magSub(y, x, ySign, ctx)
+                    }
                 }
-                (x.magCompareTo(y) >= 0) -> {
-                    this.magSub(x, y, xSign, ctx)
-                    this.sign = xSign
-                }
-                else -> {
-                    this.magSub(y, x, ySign, ctx)
-                    this.sign = ySign
-                }
+                roundAndFinalize(residue, ctx)
             }
             qMax == NON_FINITE_INF -> when {
                 (xSign == ySign) -> {
@@ -232,6 +236,7 @@ open class Decimal() : Mag() {
             qMaxXY < NON_FINITE_INF -> {
                 this.magMul(x, y, productSign, ctx)
                 this.sign = productSign
+                roundAndFinalize(EXACT, ctx)
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.coeffIsZero() || y.coeffIsZero()) {
@@ -251,7 +256,7 @@ open class Decimal() : Mag() {
             qX < NON_FINITE_INF -> {
                 this.magSqr(x, ctx)
                 this.sign = 0
-            }
+                roundAndFinalize(EXACT, ctx)            }
             qX == NON_FINITE_INF -> {
                 setInfinite(0)
             }
@@ -273,6 +278,7 @@ open class Decimal() : Mag() {
                 // multiply without roundAndFinalize .. remains exact
                 MagMul.magMul(this, x, y)
                 this.sign = productSign
+                // roundAndFinalize takes place here
                 this.add(this, aT, ctx)
             }
             qMaxXYA == NON_FINITE_INF -> when {
@@ -301,8 +307,9 @@ open class Decimal() : Mag() {
             qMaxXY < NON_FINITE_INF -> {
                 when {
                     (y.bitLen > 0) -> {
-                        this.magDiv(x, y, quotientSign, ctx)
+                        val residue = this.magDiv(x, y, quotientSign, ctx)
                         this.sign = quotientSign
+                        roundAndFinalize(residue, ctx)
                     }
                     (x.bitLen > 0) -> {
                         // finite division by zero
@@ -379,8 +386,14 @@ open class Decimal() : Mag() {
 
     fun roundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext) {
         //FIXME - deal with special values
-        sign = x.sign
-        coeffRoundToIntegral(x, sign, rd, ctx)
+        if (qExp < 0) {
+            sign = x.sign
+            val residue = this.coeffSetScaleDownPow10(x, -qExp)
+            qExp = 0
+            roundAndFinalize(residue, rd, ctx)
+        } else {
+            magSet(x)
+        }
     }
 
     fun roundToIntegralTiesToEven(x: Decimal, ctx: DecimalContext) =
@@ -415,7 +428,7 @@ open class Decimal() : Mag() {
             sign == 0 -> mutateNextAwayFromZero(ctx)
             else -> mutateNextTowardZero(ctx)
         }
-        roundAndFinalize(EXACT, sign, ROUND_TOWARD_POSITIVE, ctx)
+        roundAndFinalize(EXACT, ROUND_TOWARD_POSITIVE, ctx)
     }
 
     fun setNextDown(x: Decimal, ctx: DecimalContext) {
@@ -437,7 +450,7 @@ open class Decimal() : Mag() {
 
             else -> mutateNextTowardZero(ctx)
         }
-        roundAndFinalize(EXACT, sign, ROUND_TOWARD_NEGATIVE, ctx)
+        roundAndFinalize(EXACT, ROUND_TOWARD_NEGATIVE, ctx)
     }
 
     private fun mutateNextAwayFromZero(ctx: DecimalContext) {
@@ -494,10 +507,12 @@ open class Decimal() : Mag() {
         set(x)
         val p10 = capExponentRange(pow10)
         if (qExp < NON_FINITE_INF) {
-            if (p10 > 0)
-                magMutateScaleUpPow10(p10, sign, ctx)
-            else if (p10 < 0)
-                magMutateScaleDownPow10(-p10, sign, ctx)
+            val residue = when {
+                (p10 > 0) -> magMutateScaleUpPow10(p10, sign, ctx)
+                (p10 < 0) -> magMutateScaleDownPow10(-p10, sign, ctx)
+                else -> return
+            }
+            roundAndFinalize(residue, ctx)
         } else if (qExp == NON_FINITE_SNAN)
             sNaNOperand()
     }
@@ -516,7 +531,7 @@ open class Decimal() : Mag() {
                 val p10 = capExponentRange(pow10)
                 qExp += p10
                 if (qExp > ctx.qMax || qExp < ctx.qTiny)
-                    roundAndFinalize(Residue.EXACT, sign, ctx)
+                    roundAndFinalize(Residue.EXACT, ctx)
             }
             x.qExp <= NON_FINITE_QNAN -> {}
             else -> sNaNOperand()
@@ -644,6 +659,122 @@ open class Decimal() : Mag() {
 
     override fun toString() : String {
         return (if (sign == 0) '+' else '-') + super.toString()
+    }
+
+
+    fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
+        roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
+
+    fun roundAndFinalize(inboundResidue: Residue, roundingDirection: RoundingDirection, ctx: DecimalContext) {
+        val eMax = ctx.eMax
+        val eMin = ctx.eMin
+        val precision = ctx.precision
+        if (qExp < NON_FINITE_INF) {
+            if (bitLen != 0) {
+                var eExp = qExp + (digitLen - 1)
+                // IEEE754-2008 7.5: detect tininess on the unrounded result
+                if (eExp < eMin) {
+                    ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
+                }
+
+                val excess = Math.max(0, digitLen - precision)
+                val myQTiny = ctx.qTiny - excess      // threshold for normalized
+
+                // 2) Normalized result: round only if bd has >34 digits
+                if (eExp <= eMax && qExp >= myQTiny) {
+                    val totalResidue =
+                        if (excess == 0) {
+                            inboundResidue
+                        } else {
+                            val roundingResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess)
+                            qExp += excess
+                            assert(digitLen == precision)
+                            assert(eExp == qExp + (digitLen - 1))
+                            roundingResidue.merge(inboundResidue)
+                        }
+
+                    if (totalResidue == EXACT)
+                        return
+
+                    ctx.setInexact()
+                    val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
+                    if (!roundUp)
+                        return
+                    super.coeffMutateIncrement()
+                    if (digitLen <= precision)
+                        return
+                    assert(digitLen == precision + 1)
+                    // if we rolled into another digit because of roundup
+                    // then the result is EXACTly divisible by 10
+                    val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
+                    assert(residueExact == Residue.EXACT)
+                    ++qExp
+                    assert(qExp + (digitLen - 1) == eExp + 1)
+                    ++eExp
+                    if (eExp <= eMax)
+                        return
+                    // rounding caused overflow
+                    // fall into next conditional and flow over
+                }
+
+                // 1) Overflow => +/- Infinity
+                if (eExp > eMax) {
+                    // overflow IEEE754-2008 7.4 Overflow page 37
+                    if (roundingDirection.overflowsToInfinity(sign)) {
+                        super.coeffSetOne()
+                        qExp = NON_FINITE_INF
+                    } else {
+                        magSetMaxFinite(ctx)
+                    }
+                    ctx.setOverflow()
+                    ctx.setInexact()
+                    return
+                }
+
+                // 7.5.1: subnormal rounding (tiny result stays nonzero)
+                val myQMin = ctx.qTiny - digitLen           // threshold for subnormal cohort
+                val overlap = qExp - myQMin
+                if (overlap >= 0) {
+                    val excess2 = super.digitLen - overlap
+                    val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess2)
+                    qExp += excess2
+                    assert(digitLen <= precision)
+                    assert(eExp == qExp + (digitLen - 1))
+
+                    val totalResidue = scaleResidue.merge(inboundResidue)
+                    if (totalResidue == EXACT)
+                        return
+                    ctx.setInexact()
+                    val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
+                    if (!roundUp)
+                        return
+                    super.coeffMutateIncrement()
+                    if (digitLen <= precision)
+                        return
+                    assert(digitLen == precision + 1)
+                    // if we rolled into another digit because of roundup
+                    // then the result is definitely divisible by 10
+                    val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
+                    assert(residueExact == Residue.EXACT)
+                    ++qExp
+                    return
+                }
+
+                // underflow ... swamped non-zero value
+                if (roundingDirection.underflowsToZero(sign)) {
+                    super.coeffSetZero()
+                    qExp = NON_FINITE_INF
+                } else {
+                    magSetMinFinite(ctx)
+                }
+                qExp = ctx.qTiny
+                ctx.setUnderflow()
+                ctx.setInexact()
+                return
+            }
+            // zero case
+            qExp = Math.max(Math.min(qExp, ctx.qMax), ctx.qTiny)
+        }
     }
 
 }

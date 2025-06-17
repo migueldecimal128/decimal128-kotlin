@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.*
 
-class TestMagMul {
+class TestDecimalMagMul {
 
     val verbose = false
 
@@ -89,12 +89,12 @@ class TestMagMul {
         if (verbose)
             println("bdA:$bdA * bdB:$bdB (rm:$rm) => expected:$expected")
 
-        val magA = Mag(bdA)
-        val magB = Mag(bdB)
-        val magP = Mag()
-        magP.magMul(magA, magB, 0, ctx)
-        assertEquals(expected.unscaledValue(), magP.coeffToBigInteger())
-        assertEquals(-expected.scale(), magP.qExp)
+        val decA = newDecimal(bdA)
+        val decB = newDecimal(bdB)
+        val decP = Decimal()
+        decP.mul(decA, decB, ctx)
+        assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
+        assertEquals(-expected.scale(), decP.qExp)
     }
 
 }

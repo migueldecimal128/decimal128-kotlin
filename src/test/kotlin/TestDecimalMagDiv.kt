@@ -1,13 +1,13 @@
 package com.decimal128
 
-import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.MathContext
 import java.util.*
 
-class TestMagAddSub {
+class TestDecimalMagDiv {
 
     val verbose = false
 
@@ -23,17 +23,21 @@ class TestMagAddSub {
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
         val bdBIsFinite = bdIsFinite(bdB)
-        val bdP = bdToIeeeDecimal128(bdA.add(bdB), rm)
+        val bdDiv = bdA.divide(bdB, MathContext(40, rm))
+        val bdP = bdToIeeeDecimal128(bdDiv, rm)
     }
 
     val cases = arrayOf(
-        TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
-        TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),
-        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
-        TC("2.14402028641E+4038", "9.0688499219445651743894779402E-76", ROUND_TOWARD_POSITIVE),
-        TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
-        TC("2", "3"),
-        TC("0", "9e99"),
+        TC("1", "2"),
+        TC("0E+4519", "4.14999526830484824E+2722"),
+        TC("2.7710284E-1295", "2.912E-5964"),
+        TC("3.4648355837009412658250388928553E-289", "1.432458417443E-546"),
+        TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", RoundingDirection.ROUND_TOWARD_POSITIVE),
+        TC("1.221824056626775696489E-5049", "6.4667951153346922410790519767E-4095", RoundingDirection.ROUND_TIES_TO_AWAY),
+        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.ROUND_TIES_TO_EVEN),
+        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.ROUND_TOWARD_ZERO),
+        TC("1", "3"),
+        TC("1", "2"),
         )
 
     @Test
@@ -43,15 +47,22 @@ class TestMagAddSub {
     }
 
     @Test
-    fun testBigDecimalAddZero() {
-        val s0 = BigDecimal("0e-1").add(BigDecimal("0e-10"))
-        println(s0)
+    fun testProblemChild() {
+        val tc =         TC("1", "2")
+        test1(tc)
     }
+
+
 
     @Test
     fun testRandom() {
-        for (i in 0..<10000) {
-            val tc = TC(randBd(), randBd(), randDecimal128Context())
+        for (i in 0..<100000) {
+            val bdA = randBd()
+            var bdB: BigDecimal
+            do {
+                bdB = randBd()
+            } while (bdB.signum() == 0)
+            val tc = TC(bdA, bdB, randDecimal128Context())
             if (tc.bdAIsFinite && tc.bdBIsFinite)
                 test1(tc)
         }
@@ -82,15 +93,16 @@ class TestMagAddSub {
         val rm = ctx.roundingDirection.mapToRoundingMode()
 
         if (verbose)
-            println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
+            println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")
 
-        val ctx2 = DecimalContext()
-        val magA = Mag(bdA, ctx2)
-        val magB = Mag(bdB, ctx2)
-        val magP = Mag()
-        magP.magAdd(magA, magB, 0, ctx)
-        assertEquals(expected.unscaledValue(), magP.coeffToBigInteger())
-        assertEquals(-expected.scale(), magP.qExp)
+        val decA = newDecimal(bdA)
+        val decB = newDecimal(bdB)
+        val decQ = Decimal()
+        decQ.div(decA, decB, ctx)
+        if (verbose)
+            println("magQ:$decQ")
+        assertEquals(expected.unscaledValue(), decQ.coeffToBigInteger())
+        assertEquals(-expected.scale(), decQ.qExp)
     }
 
 }

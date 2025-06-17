@@ -1,6 +1,5 @@
 package com.decimal128
 
-import com.decimal128.TestMagMul.TC
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal

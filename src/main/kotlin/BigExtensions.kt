@@ -36,6 +36,8 @@ fun Coeff.coeffToBigInteger(): BigInteger {
     return bi
 }
 
+fun newDecimal(bd: BigDecimal): Decimal = newDecimal(bd, DecimalContext.newDecimal128Context())
+
 fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
     val dec = Decimal()
     dec.magSet(bd.abs(), ctx)
@@ -46,4 +48,5 @@ fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
 fun Decimal.set(bd: BigDecimal, ctx: DecimalContext) {
     this.magSet(bd.abs(), ctx)
     this.sign = bd.signum() ushr 31
+    this.roundAndFinalize(Residue.EXACT, ctx)
 }

@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestMagSub {
+class TestDecimalMagSub {
 
     val verbose = false
 
@@ -167,18 +167,18 @@ class TestMagSub {
         if (verbose)
             println("bdA:$bdA - bdB:$bdB (rm:$rm) => expected:$expected")
 
-        val magA = Mag(bdA)
-        val magB = Mag(bdB)
-        val magD = Mag()
-        magD.magSub(magA, magB, 0, ctx)
+        val decA = newDecimal(bdA)
+        val decB = newDecimal(bdB)
+        val decD = Decimal()
+        decD.sub(decA, decB, ctx)
         val expectedCoeff = expected.unscaledValue()
         val expectedQExp = -expected.scale()
-        val observedCoeff = magD.coeffToBigInteger()
-        val observedQExp = magD.qExp
+        val observedCoeff = decD.coeffToBigInteger()
+        val observedQExp = decD.qExp
         if (expectedCoeff != observedCoeff || expectedQExp != observedQExp)
             println("expected:$expectedCoeff e $expectedQExp observed:$observedCoeff e $observedQExp")
-        assertEquals(expected.unscaledValue(), magD.coeffToBigInteger())
-        assertEquals(-expected.scale(), magD.qExp)
+        assertEquals(expected.unscaledValue(), decD.coeffToBigInteger())
+        assertEquals(-expected.scale(), decD.qExp)
     }
 
 }
