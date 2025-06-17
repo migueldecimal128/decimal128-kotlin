@@ -19,8 +19,6 @@ inline fun capExponentRange(e: Int): Int {
 open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coeff() {
     var qExp = 0
 
-    fun sciExp() = qExp + (digitLen - 1)
-
     fun magSetMaxFinite(ctx: DecimalContext) {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
@@ -64,50 +62,6 @@ open class Mag(/* exp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long */) : Coe
         }
         qExp -= pow10
         return residue
-    }
-
-    fun magCompareTo(other: Mag) : Int {
-        val thisIsZero = coeffIsZero()
-        val otherIsZero = other.coeffIsZero()
-        val eitherIsZero = thisIsZero or otherIsZero
-        when {
-            !eitherIsZero -> {
-                val cmpExpSci = this.sciExp().compareTo(other.sciExp())
-                if (cmpExpSci != 0)
-                    return cmpExpSci
-                val expDelta = this.qExp - other.qExp
-                val ret = when {
-                    expDelta == 0 -> coeffUnscaledCompareTo(other)
-                    expDelta > 0 -> -other.coeffScaledCompareTo(this, expDelta)
-                    else -> coeffScaledCompareTo(other, -expDelta)
-                }
-                return ret
-            }
-            thisIsZero -> {
-                return if (otherIsZero) 0 else -1
-            }
-            else -> {
-                return 1
-            }
-        }
-    }
-
-    fun magEQ(other: Mag) : Boolean {
-        val thisIsZero = this.coeffIsZero()
-        val otherIsZero = other.coeffIsZero()
-        val bothAreZero = thisIsZero and otherIsZero
-        val eitherIsZero = thisIsZero or otherIsZero
-        if (this.sciExp() != other.sciExp())
-            return bothAreZero
-        if (! eitherIsZero) {
-            val expDelta = this.qExp - other.qExp
-            return when {
-                expDelta == 0 -> this.coeffUnscaledEQ(other)
-                expDelta > 0 -> other.coeffScaledEQ(this, expDelta)
-                else -> this.coeffScaledEQ(other, -expDelta)
-            }
-        }
-        return bothAreZero
     }
 
     override fun toString(): String {

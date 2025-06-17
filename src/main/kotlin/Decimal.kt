@@ -12,10 +12,12 @@ import java.math.BigInteger
 import kotlin.math.max
 import kotlin.math.min
 
+val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
+
 class Decimal() : Mag() {
     var sign = 0
 
-    var DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
+    fun sciExp() = qExp + (digitLen - 1)
 
     constructor(sign: Int, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
         this.coeffSet256(dw3, dw2, dw1, dw0)
@@ -355,8 +357,6 @@ class Decimal() : Mag() {
         }
     }
 
-
-
     fun compareTo(x: Decimal, ctx: DecimalContext) : Int {
         val qMax = max(qExp, x.qExp)
         when {
@@ -395,6 +395,51 @@ class Decimal() : Mag() {
             else -> throw RuntimeException("somebody is a NaN")
         }
     }
+
+    fun magCompareTo(other: Decimal) : Int {
+        val thisIsZero = coeffIsZero()
+        val otherIsZero = other.coeffIsZero()
+        val eitherIsZero = thisIsZero or otherIsZero
+        when {
+            !eitherIsZero -> {
+                val cmpExpSci = this.sciExp().compareTo(other.sciExp())
+                if (cmpExpSci != 0)
+                    return cmpExpSci
+                val expDelta = this.qExp - other.qExp
+                val ret = when {
+                    expDelta == 0 -> coeffUnscaledCompareTo(other)
+                    expDelta > 0 -> -other.coeffScaledCompareTo(this, expDelta)
+                    else -> coeffScaledCompareTo(other, -expDelta)
+                }
+                return ret
+            }
+            thisIsZero -> {
+                return if (otherIsZero) 0 else -1
+            }
+            else -> {
+                return 1
+            }
+        }
+    }
+
+    fun magEQ(other: Decimal) : Boolean {
+        val thisIsZero = this.coeffIsZero()
+        val otherIsZero = other.coeffIsZero()
+        val bothAreZero = thisIsZero and otherIsZero
+        val eitherIsZero = thisIsZero or otherIsZero
+        if (this.sciExp() != other.sciExp())
+            return bothAreZero
+        if (! eitherIsZero) {
+            val expDelta = this.qExp - other.qExp
+            return when {
+                expDelta == 0 -> this.coeffUnscaledEQ(other)
+                expDelta > 0 -> other.coeffScaledEQ(this, expDelta)
+                else -> this.coeffScaledEQ(other, -expDelta)
+            }
+        }
+        return bothAreZero
+    }
+
 
     fun roundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext) {
         //FIXME - deal with special values

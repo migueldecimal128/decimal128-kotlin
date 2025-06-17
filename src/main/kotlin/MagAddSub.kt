@@ -77,7 +77,7 @@ object MagAddSub {
 
     // uses Guard and Round digits
     // decrements when non-exact so that standard round and finalize routine can be called
-    fun magSub(z: Mag, x: Mag, y: Mag): Residue {
+    fun magSub(z: Decimal, x: Decimal, y: Decimal): Residue {
         assert(x.magCompareTo(y) >= 0)
         if (x.qExp == y.qExp) {
             z.qExp = x.qExp
