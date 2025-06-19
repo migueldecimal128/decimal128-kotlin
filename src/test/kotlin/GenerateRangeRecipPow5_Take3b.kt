@@ -12,22 +12,25 @@ class GenerateRangeRecipPow5_Take3b {
     val k_maxx = 44
 
     val ONE = BigInteger.ONE
-    val TWO = BigInteger.TWO
     val FIVE = BigInteger.valueOf(5)
     val TEN = BigInteger.TEN
 
+    private var POWERS_5 = Array<BigInteger>(j_maxx) { FIVE.pow(it) }
+
     data class TableEntry(val r: Int, val x: Int, val bitLen: Int, val M: BigInteger, val S: Int)
 
-    val recipTable : Array<Array<TableEntry?>> = Array(j_maxx) { arrayOfNulls<TableEntry>(k_maxx)}
+    var recipTable : Array<Array<TableEntry?>> = Array(j_maxx) { arrayOfNulls<TableEntry>(k_maxx)}
 
     fun populateTable() {
+        if (POWERS_5.isEmpty())
+            return
         for (j in j_min..<j_maxx) {
             var prev = recipTable[j-1][k_min]
             for (k in k_min..<min(j, k_maxx)) {
                 val yPrev = prev?.S ?: 4
                 val fivePowJ = FIVE.pow(j)
                 val fivePowK = FIVE.pow(k)
-                val te = findTableEntry(j, fivePowJ, k, fivePowK, yPrev + 2)
+                val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
                     //println("($j, $k) => minimalY:${te.S}")
                     recipTable[j][k] = te
@@ -36,15 +39,16 @@ class GenerateRangeRecipPow5_Take3b {
                 }
             }
         }
+        POWERS_5 = emptyArray()
     }
 
-    fun findTableEntry(r: Int, fivePowR: BigInteger, x: Int, fivePowX: BigInteger, yStart: Int): TableEntry? {
+    fun findTableEntry(r: Int, x: Int, yStart: Int): TableEntry? {
         var y = yStart
-        var te = computeMSIfValid(r, fivePowR, x, fivePowX, y)
+        var te = computeMSIfValid(r, x, y)
         val yDelta = if (te == null) 1 else -1
         while (true) {
             y += yDelta
-            val teDelta = computeMSIfValid(r, fivePowR, x, fivePowX, y)
+            val teDelta = computeMSIfValid(r, x, y)
             if (te != null && teDelta == null)
                 return te
             if (te == null && teDelta != null)
@@ -53,9 +57,9 @@ class GenerateRangeRecipPow5_Take3b {
         }
     }
 
-    fun computeMSIfValid(r: Int, fivePowR: BigInteger, x: Int, fivePowX: BigInteger, y: Int): TableEntry? {
-        val divisor = fivePowX                   // 5^x
-        val maxC    = fivePowR.subtract(ONE)     // 5^r - 1
+    fun computeMSIfValid(r: Int, x: Int, y: Int): TableEntry? {
+        val maxC    = POWERS_5[r].subtract(ONE)     // 5^r - 1
+        val divisor = POWERS_5[x]                   // 5^x
         val H       = maxC.divide(divisor)          // floor((5^r - 1) / 5^x)
 
         // truncation multiplier: ceil(2^y / 5^x)
