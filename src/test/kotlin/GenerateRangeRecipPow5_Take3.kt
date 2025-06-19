@@ -22,15 +22,8 @@ class GenerateRangeRecipPow5_Take3 {
 
     fun populateTable() {
         for (j in j_min..<j_maxx) {
-            val X_min = TEN.pow(j)
-            val X_max = TEN.pow(j + 1).subtract(ONE)
-            val Y_min = X_min.shiftRight(j - 1)
-            val Y_max = X_max.shiftRight(j - 1)
             var prev = recipTable[j-1][k_min]
             for (k in k_min..<min(j, k_maxx)) {
-                val D = FIVE.pow(k)
-                val q_min = X_min.divide(D)
-                val q_max = X_max.divide(D)
                 val yPrev = if (prev != null) prev.S else 4
                 val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
