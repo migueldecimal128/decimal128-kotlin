@@ -11,6 +11,8 @@ import kotlin.math.min
 
 object Car {
 
+    val EMPTY_CAR = IntArray(0)
+
     @Suppress("NOTHING_TO_INLINE")
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
@@ -61,6 +63,14 @@ object Car {
         return z
     }
 
+    fun newOrMutateAdd(x: IntArray, y: IntArray): IntArray {
+        val newBitLen = bitLen(x) + bitLen(y) + 1
+        val newWordLen = (newBitLen + 0x1F) ushr 5
+        val z = if (newWordLen == x.size) x else newCopy(x, newWordLen)
+        mutateAdd(z, y)
+        return z
+    }
+
     fun mutateAdd(x: IntArray, y: IntArray) {
         var carry = 0L
         val min = min(x.size, y.size)
@@ -79,15 +89,22 @@ object Car {
         }
     }
 
-    fun mutateSub(x: IntArray, n: Int) {
+    fun newSub(x: IntArray, n: Int): IntArray {
+        val z = newCopy(x)
+        mutateSub(z, 1)
+        return z
+    }
+
+    fun mutateSub(x: IntArray, n: Int): IntArray {
         var borrow = U32(n)
         for (i in x.indices) {
             val t = U32(x[i]) - borrow
             x[i] = t.toInt()
             borrow = t ushr 63
             if (borrow == 0L)
-                return
+                break
         }
+        return x
     }
 
     fun mutateSub(x: IntArray, y: IntArray) {
@@ -106,6 +123,13 @@ object Car {
             x[i] = t.toInt()
             borrow = t ushr 63
         }
+    }
+
+    fun newMul(x: IntArray, n: Int): IntArray {
+        val newBitLen = bitLen(x) + 32 - numberOfLeadingZeros(n)
+        val prod = newCopyWithBitLen(x, newBitLen)
+        mutateMul(prod, n)
+        return prod
     }
 
     fun mutateMul(x: IntArray, n: Int) {
@@ -160,12 +184,12 @@ object Car {
             dst[i++] = 0
     }
 
-    fun mutateShiftRight(x: IntArray, bitCount: Int) {
+    fun mutateShiftRight(x: IntArray, bitCount: Int): IntArray {
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
         if (wordShift >= x.size) {
             x.fill(0)
-            return
+            return x
         }
         val newLen = x.size - wordShift
         if (wordShift > 0) {
@@ -179,6 +203,7 @@ object Car {
                 x[i] = (x[i + 1] shl (-innerShift)) or (x[i] ushr innerShift)
             x[last] = x[last] ushr innerShift
         }
+        return x
     }
 
     fun newShiftLeft(x: IntArray, bitCount: Int) : IntArray {
@@ -214,6 +239,23 @@ object Car {
             if (x[i] != 0)
                 return 32 - numberOfLeadingZeros(x[i]) + (i * 32)
         return 0
+    }
+
+    fun newAnd(x: IntArray, y: IntArray): IntArray {
+        val m = min(x.size, y.size)
+        val z = IntArray(m)
+        for (i in 0..<m)
+            z[i] = x[i] and y[i]
+        return z
+    }
+
+    fun mutateAnd(x: IntArray, y: IntArray): IntArray {
+        val m = min(x.size, y.size)
+        for (i in 0..<m)
+            x[i] = x[i] and y[i]
+        for (i in m..<x.size)
+            x[i] = 0
+        return x
     }
 
     fun compare(x: IntArray, y: IntArray): Int {

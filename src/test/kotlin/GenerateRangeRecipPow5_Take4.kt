@@ -1,27 +1,21 @@
 package com.decimal128
 
 import org.junit.jupiter.api.Test
-import java.math.BigInteger
 import kotlin.math.min
 
-class GenerateRangeRecipPow5_Take3b {
+class GenerateRangeRecipPow5_Take4 {
 
     val j_min = 2
     val j_maxx = 79
     val k_min = 1
     val k_maxx = 44
 
-    val ONE = BigInteger.ONE
-    val FIVE = BigInteger.valueOf(5)
-    val TEN = BigInteger.TEN
+    private var POWERS_5 = Array<IntArray>(j_maxx) { Car.EMPTY_CAR}
 
-    private var POWERS_5 = Array<BigInteger>(j_maxx) { FIVE.pow(it) }
-
-    data class TableEntry(val r: Int, val x: Int, val M: BigInteger, val S: Int)
+    data class TableEntry(val r: Int, val x: Int, val M: IntArray, val S: Int)
 
     var recipTable : Array<Array<TableEntry?>> = Array(j_maxx) { arrayOfNulls<TableEntry>(k_maxx)}
 
-    /*
     fun populatePowers5() {
         var carPow5 = intArrayOf(1)
         var i = 0
@@ -31,20 +25,19 @@ class GenerateRangeRecipPow5_Take3b {
                 break
             carPow5 = Car.newMul(carPow5, 5)
         }
-
+/*
         for (j in 0..<j_maxx) {
-            val car = POWERS_5[j]
+            val car = POWERS_5_CAR[j]
             val str = CarTransducer.carToString(car)
-            val bitLen = Car.bitLen(carPow5)
+            val bitLen = Car.bitLen(car)
             val carSize = car.size
             println("5**$j => $str bitLen:$bitLen carSize:$carSize")
             if (carSize != (bitLen + 0x1F) ushr 5)
-                println("Foo!")
+                println("empty limb!")
         }
+ */
     }
 
-
-     */
 
 
     fun populateTable() {
@@ -54,8 +47,6 @@ class GenerateRangeRecipPow5_Take3b {
             var prev = recipTable[j-1][k_min]
             for (k in k_min..<min(j, k_maxx)) {
                 val yPrev = prev?.S ?: 4
-                val fivePowJ = FIVE.pow(j)
-                val fivePowK = FIVE.pow(k)
                 val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
                     //println("($j, $k) => minimalY:${te.S}")
@@ -83,46 +74,52 @@ class GenerateRangeRecipPow5_Take3b {
         }
     }
 
+    val ONE = intArrayOf(1)
+
     fun computeMSIfValid(r: Int, x: Int, y: Int): TableEntry? {
-        val maxC    = POWERS_5[r].subtract(ONE)     // 5^r - 1
+        val maxC    = Car.newSub(POWERS_5[r], 1)     // 5^r - 1
         val divisor = POWERS_5[x]                   // 5^x
-        val H       = maxC.divide(divisor)          // floor((5^r - 1) / 5^x)
+        val H       = Car.newDivide(maxC, divisor)          // floor((5^r - 1) / 5^x)
 
         // truncation multiplier: ceil(2^y / 5^x)
-        val twoY   = ONE.shiftLeft(y)
-        val Mtrunc = twoY.add(divisor).subtract(ONE).divide(divisor)
+        val twoPowY   = Car.newShiftLeft(ONE, y)
+        val twoPowYMinus1 = Car.newSub(twoPowY, 1)
+        val Mtrunc = Car.newDivide(Car.mutateSub(Car.newAdd(twoPowY, divisor), 1), divisor)
 
         // anchors
-        val C1     = H.multiply(divisor)
-        val halfUp = divisor.add(ONE).shiftRight(1)   // ceil(5^x/2)
-        val C2     = C1.add(halfUp).subtract(ONE)
-        val C3     = C1.add(halfUp)
-        val C4     = C1.add(divisor).subtract(ONE)
+        val C1     = Car.newMul(H, divisor)
+        val halfUp = Car.mutateShiftRight(Car.newAdd(divisor, 1), 1)   // ceil(5^x/2)
+        val C3     = Car.newAdd(C1, halfUp)
+        val C2     = Car.newSub(C3, 1)
+        val C4     = Car.mutateSub(Car.newAdd(C1, divisor), 1)
 
-        fun rem(v: BigInteger) = v.multiply(Mtrunc).and(twoY.subtract(ONE))
-        val r1 = rem(C1); val r2 = rem(C2); val r3 = rem(C3); val r4 = rem(C4)
+        fun rem(v: IntArray) = Car.newAnd(Car.newMul(v, Mtrunc), twoPowYMinus1)
+
+        val r1 = rem(C1)
+        val r2 = rem(C2)
+        val r3 = rem(C3)
+        val r4 = rem(C4)
 
         val lower1 = ONE
         val upper1 = Mtrunc
 
-        val half    = ONE.shiftLeft(y - 1)
-        val halfPlus= half.add(Mtrunc)
+        val half    = Car.newShiftLeft(ONE, y - 1)
+        val halfPlus= Car.newAdd(half, Mtrunc)
 
-        val lower2 = Mtrunc.add(ONE); val upper2 = half
-        val lower3 = half.add(ONE);   val upper3 = halfPlus
-        val lower4 = halfPlus.add(ONE); val upper4 = twoY
+        val lower2 = Car.newAdd(Mtrunc, 1); val upper2 = half
+        val lower3 = Car.newAdd(half, 1);   val upper3 = halfPlus
+        val lower4 = Car.newAdd(halfPlus, 1); val upper4 = twoPowY
 
         // strict checks via compareTo()
-        if (r1.compareTo(lower1) >= 0 && r1.compareTo(upper1) < 0 &&
-            r2.compareTo(lower2) >= 0 && r2.compareTo(upper2) < 0 &&
-            r3.compareTo(lower3) >= 0 && r3.compareTo(upper3) < 0 &&
-            r4.compareTo(lower4) >= 0 && r4.compareTo(upper4) < 0) {
+        if (Car.compare(r1, lower1) >= 0 && Car.compare(r1, upper1) < 0 &&
+            Car.compare(r2, lower2) >= 0 && Car.compare(r2, upper2) < 0 &&
+            Car.compare(r3, lower3) >= 0 && Car.compare(r3, upper3) < 0 &&
+            Car.compare(r4, lower4) >= 0 && Car.compare(r4, upper4) < 0) {
             // bump for guard bit
             val yRound = y + 1
-            val twoYr  = ONE.shiftLeft(yRound)
-            val Mround = twoYr.add(divisor).subtract(ONE).divide(divisor)
+            val twoYr  = Car.newShiftLeft(ONE, yRound)
+            val Mround = Car.newDivide(Car.mutateSub(Car.newAdd(twoYr, divisor), 1), divisor)
             val Sround = y
-            val maxBi = maxOf(C1, C2, C3, C4, H, maxC, Mtrunc, Mround, r1, r2, r3, r4)
             return TableEntry(r, x, Mround, Sround)
         }
         return null
@@ -166,7 +163,7 @@ class GenerateRangeRecipPow5_Take3b {
                     val intraRowDelta = te.S - prevTE.S
                     maxIntraRowDelta = kotlin.math.max(maxIntraRowDelta, intraRowDelta)
                     intraRowSum += intraRowDelta
-                    maxBitLen = kotlin.math.max(maxBitLen, te.M.bitLength())
+                    maxBitLen = kotlin.math.max(maxBitLen, Car.bitLen(te.M))
                 }
                 prevTE = te
             }
@@ -183,6 +180,7 @@ class GenerateRangeRecipPow5_Take3b {
 
     @Test
     fun testRun() {
+        populatePowers5()
         populateTable()
         dumpDeltas()
         //dumpTable()
