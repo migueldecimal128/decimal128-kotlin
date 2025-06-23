@@ -24,7 +24,7 @@ private fun getResidue(remainder: BigInteger, denominator: BigInteger): Int {
 }
 
 
-class GenerateRangeRecipPow10_take1 {
+class GenerateRangeRecipPow5_take1 {
 
     val q_min = 2
     val q_maxx = 79
@@ -73,54 +73,63 @@ class GenerateRangeRecipPow10_take1 {
 
     fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
         val twoPowY = ONE.shiftLeft(y)
-        val tenPowK = TEN.pow(k)
+        val fivePowK = FIVE.pow(k)
+        val tenPowK = fivePowK.shiftLeft(k)
         val tenPowQ = TEN.pow(q)
-        val M = twoPowY.add(tenPowK).subtract(ONE).divide(tenPowK)
+        val M = twoPowY.add(fivePowK).subtract(ONE).divide(fivePowK)
         val S = y
 
         val prod = tenPowQ.multiply(M)
         val C_max = tenPowQ.subtract(ONE)
 
-        if (!isValid(tenPowQ, tenPowK, twoPowY, M, S))
+        if (!isValid(tenPowQ, k, tenPowK, twoPowY, M, S))
             return null
         val half = tenPowK.shiftRight(1)
-        if (!isValid(half, tenPowK, twoPowY, M, S))
+        if (!isValid(half, k, tenPowK, twoPowY, M, S))
             return null
         val nines5 = tenPowQ.subtract(half)
-        if (!isValid(nines5, tenPowK, twoPowY, M, S))
+        if (!isValid(nines5, k, tenPowK, twoPowY, M, S))
             return null
         val down = nines5.subtract(ONE)
-        if (!isValid(down, tenPowK, twoPowY, M, S))
+        if (!isValid(down, k, tenPowK, twoPowY, M, S))
             return null
         val up = nines5.add(ONE)
-        if (!isValid(up, tenPowK, twoPowY, M, S))
+        if (!isValid(up, k, tenPowK, twoPowY, M, S))
             return null
 
         val bitLen = prod.bitLength()
         return TableEntry(q, k, bitLen, M, y)
     }
 
-    fun isValid(dividend: BigInteger, tenPowK: BigInteger, twoPowY: BigInteger, M: BigInteger, S: Int): Boolean {
-        val quotRem = dividend.divideAndRemainder(tenPowK)
+    fun isValid(dividend: BigInteger, k: Int, tenPowK: BigInteger, twoPowY: BigInteger, M: BigInteger, S: Int): Boolean {
+        val quotRem = dividend.divideAndRemainder(TEN.pow(k))
         val expectedQuot = quotRem[0]
         val expectedResidue = getResidue(quotRem[1], tenPowK)
 
-        val prod = dividend.multiply(M)
-        val quot = prod.shiftRight(S)
+        val dividendAlfa = dividend.shiftRight(k - 1)
+        val maskAlfa = ONE.shiftLeft(k - 1) - ONE
+        val fracAlfa = dividend.and(maskAlfa)
+        val stickyAlfa = fracAlfa.bitLength() > 0
+
+        val prod = dividendAlfa.multiply(M)
+        val quotPlusRound = prod.shiftRight(S)
+        val quot = quotPlusRound.shiftRight(1)
+        val round = quotPlusRound.and(ONE).bitLength() > 0
         if (expectedQuot != quot)
             return false
+        val fracBeta = prod.subtract(quotPlusRound.shiftLeft(S))
+        val stickyBeta = fracBeta >= M
 
-        val mask = twoPowY.subtract(ONE)
-        val frac = prod.and(mask)
-        if (frac < M)
-            return expectedResidue == EXACT
-        val halfTwoPowY = twoPowY.shiftRight(1)
-        if (frac < halfTwoPowY)
-            return expectedResidue == LT_HALF
-        if (frac < halfTwoPowY.add(M))
-            return expectedResidue == HALF
-        else
-            return expectedResidue == GT_HALF
+        val sticky = stickyAlfa or stickyBeta
+
+        val residue = when {
+            round && sticky -> GT_HALF
+            round -> HALF
+            sticky -> LT_HALF
+            else -> EXACT
+        }
+
+        return expectedResidue == residue
     }
 
     fun dumpTable() {

@@ -84,8 +84,6 @@ class TestIsMultipleOfFive {
         return ret
     }
 
-    val FIVE = BigInteger.valueOf(5L)
-
     class TC(val bi: BigInteger) {
         constructor(str: String) : this(BigInteger(str))
         constructor(l: Long) : this(BigInteger.valueOf(l))
