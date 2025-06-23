@@ -1,5 +1,6 @@
 package com.decimal128
 
+import java.lang.Integer.compareUnsigned
 import java.lang.Integer.numberOfLeadingZeros
 import java.lang.Long.*
 import kotlin.math.min
@@ -184,6 +185,14 @@ object Car {
             dst[i++] = 0
     }
 
+    fun newShiftRight(x: IntArray, bitCount: Int) : IntArray {
+        val newBitLen = bitLen(x) - bitCount
+        val newWordLen = (newBitLen + 0x1F) ushr 5
+        val z = newCopy(x, newWordLen)
+        mutateShiftRight(z, bitCount)
+        return z
+    }
+
     fun mutateShiftRight(x: IntArray, bitCount: Int): IntArray {
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
@@ -258,6 +267,8 @@ object Car {
         return x
     }
 
+    fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
+
     fun compare(x: IntArray, y: IntArray): Int {
         val minSize = min(x.size, y.size)
         for (i in x.size - 1 downTo minSize)
@@ -267,7 +278,7 @@ object Car {
             if (y[i] != 0)
                 return -1
         for (i in minSize - 1 downTo 0) {
-            val cmp = java.lang.Integer.compareUnsigned(x[i], y[i])
+            val cmp = compareUnsigned(x[i], y[i])
             if (cmp != 0)
                 return cmp
         }

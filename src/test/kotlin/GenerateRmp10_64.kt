@@ -9,7 +9,7 @@ import kotlin.math.min
 class GenerateRmp10_64 {
     companion object {
 
-        val verbose = false
+        val verbose = true
 
         // there can be errors here, but we are specifically testing and this will do for starters
         val rho = Math.log(10.0) / Math.log(2.0)

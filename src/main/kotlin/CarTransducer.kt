@@ -1,5 +1,6 @@
 package com.decimal128
 
+import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.math.max
 
@@ -51,5 +52,12 @@ object CarTransducer {
         return 0
     }
 
-    fun EQ(car: IntArray, bi: BigInteger) = compare(car, bi) == 0
+    fun EQ(car: IntArray, bi:BigInteger) = compare(car, bi) == 0
+
+    fun calcDigitCount(car: IntArray): Int {
+        val bi = carToBi(car)
+        val bd = BigDecimal(bi)
+        val precision = bd.precision()
+        return precision
+    }
 }

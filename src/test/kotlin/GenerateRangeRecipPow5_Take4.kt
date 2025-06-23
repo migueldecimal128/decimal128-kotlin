@@ -5,16 +5,20 @@ import kotlin.math.min
 
 class GenerateRangeRecipPow5_Take4 {
 
+    val verbose = true
+
     val j_min = 2
     val j_maxx = 79
     val k_min = 1
     val k_maxx = 44
 
-    private var POWERS_5 = Array<IntArray>(j_maxx) { Car.EMPTY_CAR}
+    private val POWERS_5 = Array<IntArray>(j_maxx) { Car.EMPTY_CAR}
 
     data class TableEntry(val r: Int, val x: Int, val M: IntArray, val S: Int)
 
-    var recipTable : Array<Array<TableEntry?>> = Array(j_maxx) { arrayOfNulls<TableEntry>(k_maxx)}
+    private val NULL_TE = TableEntry(-1, -1, Car.EMPTY_CAR, -1)
+    var recipTable : Array<Array<TableEntry>> = Array(j_maxx) { Array(k_maxx) { NULL_TE } }
+    var populated =false
 
     fun populatePowers5() {
         var carPow5 = intArrayOf(1)
@@ -41,12 +45,12 @@ class GenerateRangeRecipPow5_Take4 {
 
 
     fun populateTable() {
-        if (POWERS_5.isEmpty())
+        if (populated)
             return
         for (j in j_min..<j_maxx) {
             var prev = recipTable[j-1][k_min]
             for (k in k_min..<min(j, k_maxx)) {
-                val yPrev = prev?.S ?: 4
+                val yPrev = if (prev.r != -1) prev.S else 4
                 val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
                     //println("($j, $k) => minimalY:${te.S}")
@@ -56,11 +60,12 @@ class GenerateRangeRecipPow5_Take4 {
                 }
             }
         }
-        POWERS_5 = emptyArray()
+        populated = false
     }
 
     fun findTableEntry(r: Int, x: Int, yStart: Int): TableEntry? {
         var y = yStart
+        //println("($r, $x) yStart:$yStart")
         var te = computeMSIfValid(r, x, y)
         val yDelta = if (te == null) 1 else -1
         while (true) {
@@ -150,7 +155,7 @@ class GenerateRangeRecipPow5_Take4 {
             if (j > j_min) {
                 val prevRow = recipTable[j-1][k_min]
                 val thisRow = recipTable[j][k_min]
-                if (prevRow != null && thisRow != null) {
+                if (prevRow != NULL_TE && thisRow != NULL_TE) {
                     val interRowDelta = thisRow.S - prevRow.S
                     maxInterRowDelta = kotlin.math.max(maxInterRowDelta, interRowDelta)
                 }
@@ -185,5 +190,61 @@ class GenerateRangeRecipPow5_Take4 {
         dumpDeltas()
         //dumpTable()
     }
+
+    class TC(val str: String, val pow10: Int) {
+        val car = CarTransducer.carFromString(str)
+    }
+
+    val tcs = arrayOf(
+        //TC("10", 1),
+        //TC("100", 1),
+        //TC("1000", 1),
+        //TC("10000", 1),
+        TC("100000", 1),
+        TC("1000000", 1),
+        TC("1000000000", 1),
+        TC("10000000000000000000", 1),
+        TC("10000000000000000000000000000000000000000000", 1),
+        //TC("10000000000000000000000000000000000000000000", 20)
+    )
+
+    @Test
+    fun testCases() {
+        populatePowers5()
+        populateTable()
+        for (tc in tcs)
+            test1(tc)
+    }
+
+    fun test1(tc: TC) {
+        if (verbose) {
+            val str2 = CarTransducer.carToString(tc.car)
+            assert(str2 == tc.str)
+            println("$str2 / 10**${tc.pow10}")
+        }
+        test1(tc.car, tc.pow10)
+    }
+
+    fun test1(car: IntArray, k: Int) {
+        val denom = Car.newShiftLeft(POWERS_5[k], k)
+        val carKnuth = Car.newDivide(car, denom)
+
+        val carRecipMul = divideRecipMulPow5(car, k)
+        assert(Car.EQ(carKnuth, carRecipMul))
+    }
+
+    fun divideRecipMulPow5(car: IntArray, pow5: Int): IntArray {
+        val p = CarTransducer.calcDigitCount(car)
+        val te = recipTable[p][pow5]
+        assert(te.r == p)
+        assert(te.x == pow5)
+
+        val carT = Car.newShiftRight(car, pow5)
+        val prod = Car.newMul(carT, te.M)
+        val quotWithGuard = Car.newShiftRight(prod, te.S)
+        val quot = Car.newShiftRight(quotWithGuard, 1)
+        return quot
+    }
+
 
 }

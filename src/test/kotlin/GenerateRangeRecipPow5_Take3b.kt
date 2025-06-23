@@ -185,7 +185,7 @@ class GenerateRangeRecipPow5_Take3b {
     fun testRun() {
         populateTable()
         dumpDeltas()
-        //dumpTable()
+        dumpTable()
     }
 
 }
