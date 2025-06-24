@@ -50,6 +50,9 @@ class TestCar {
         val car = carFromString(str)
         val str2 = carToString(car)
         assertEquals(str, str2)
+
+        val str3 = Car.toString(car)
+        assertEquals(str, str3)
     }
 
     fun testRoundTripShift(bi: BigInteger) {

@@ -3,6 +3,7 @@ package com.decimal128
 import java.lang.Integer.compareUnsigned
 import java.lang.Integer.numberOfLeadingZeros
 import java.lang.Long.*
+import java.nio.charset.StandardCharsets
 import kotlin.math.min
 
 
@@ -103,7 +104,7 @@ object Car {
         return x
     }
 
-    fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x),y)
+    fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x), y)
 
     fun mutateSub(x: IntArray, y: IntArray): IntArray {
         var borrow = 0L
@@ -158,7 +159,7 @@ object Car {
         return p
     }
 
-    fun newCopy(src: IntArray) = newCopy(src, src.size)
+    fun newCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
 
     fun newCopy(src: IntArray, newWordLen: Int): IntArray {
         val dst = IntArray(newWordLen)
@@ -183,7 +184,7 @@ object Car {
             dst[i++] = 0
     }
 
-    fun newShiftRight(x: IntArray, bitCount: Int) : IntArray {
+    fun newShiftRight(x: IntArray, bitCount: Int): IntArray {
         val newBitLen = bitLen(x) - bitCount
         val newWordLen = (newBitLen + 0x1F) ushr 5
         val z = newCopy(x, newWordLen)
@@ -213,7 +214,7 @@ object Car {
         return x
     }
 
-    fun newShiftLeft(x: IntArray, bitCount: Int) : IntArray {
+    fun newShiftLeft(x: IntArray, bitCount: Int): IntArray {
         val newBitLen = bitLen(x) + bitCount
         val newWordLen = (newBitLen + 0x1F) ushr 5
         val y = newCopy(x, newWordLen)
@@ -283,13 +284,22 @@ object Car {
         return 0
     }
 
+    fun compare(x: IntArray, y: Int): Int {
+        val limbLen = nonZeroLimbLen(x)
+        return when {
+            (limbLen > 1) -> 1
+            (limbLen == 0) -> if (y == 0) 0 else -1
+            else -> compareUnsigned(x[0], y)
+        }
+    }
+
     // returns a 32 bit value as a Long
     fun mutateDivideRemainder(x: IntArray, n: Int): Long {
         if (n == 0)
             throw RuntimeException("DivByZero")
         val n64 = U32(n)
         var carry = 0L
-        for (i in x.size-1 downTo 0) {
+        for (i in x.size - 1 downTo 0) {
             val t = (carry shl 32) + U32(x[i])
             val q = divideUnsigned(t, n64)
             val r = remainderUnsigned(t, n64)
@@ -314,7 +324,7 @@ object Car {
             return IntArray(1)
         val u = x
         val v = y
-        val q = IntArray(m-n+1)
+        val q = IntArray(m - n + 1)
         val r = null
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
@@ -333,7 +343,7 @@ object Car {
             return arrayOf(IntArray(1), newCopy(y, n))
         val u = x
         val v = y
-        val q = IntArray(m-n+1)
+        val q = IntArray(m - n + 1)
         val r = IntArray(m + 1)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
@@ -432,4 +442,45 @@ object Car {
         return 0
     }
 
+    fun toString(car: IntArray): String {
+        val bitLen = bitLen(car)
+        if (bitLen <= 64) {
+            val lo = car[0].toULong() and 0xFFFF_FFFFuL
+            val hi = if (bitLen <= 32) 0uL else car[1].toULong() shl 32
+            val t = hi or lo
+            return t.toString()
+        }
+        val maxDigitLen = ((bitLen * 1234) shr 12) + 1
+        val t = newCopy(car)
+        val bytes = ByteArray(maxDigitLen)
+        var ib = 0
+        do {
+            val chunk = mutateDivideRemainder(t, 1_000_000_000).toInt()
+            ib = renderChunkReversed(chunk, 9, bytes, ib)
+        } while (compare(t, 1_000_000_000) >= 0)
+        ib = renderChunkReversed(t[0], 1, bytes, ib)
+        var j = 0
+        var k = ib - 1
+        while (j < k) {
+            val t = bytes[j]
+            bytes[j] = bytes[k]
+            bytes[k] = t
+            ++j
+            --k
+        }
+        return String(bytes, 0, ib, StandardCharsets.UTF_8)
+    }
+
+    fun renderChunkReversed(n: Int, minDigitCount: Int, bytes: ByteArray, off: Int): Int {
+        var t = U32(n)
+        var ib = off
+        val minIb = ib + minDigitCount
+        while (t != 0L || ib < minIb) {
+            val divTen = (t * 0xCCCCCCCD) ushr 35
+            val digit = (t - (divTen * 10)).toInt()
+            bytes[ib++] = ('0'.code + digit).toByte()
+            t = divTen
+        }
+        return ib
+    }
 }
