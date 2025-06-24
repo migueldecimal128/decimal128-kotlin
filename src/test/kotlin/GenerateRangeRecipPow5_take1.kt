@@ -4,41 +4,50 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import kotlin.math.min
 
-private val ONE = BigInteger.ONE
-private val TEN = BigInteger.TEN
+object GenerateRangeRecipPow5_take1 {
 
-private const val EXACT = 0
-private const val LT_HALF = 1
-private const val HALF = 2
-private const val GT_HALF = 3
+    private val ONE = BigInteger.ONE
+    private val TEN = BigInteger.TEN
 
-private fun getResidue(remainder: BigInteger, denominator: BigInteger): Int {
-    if (remainder.bitLength() == 0)
-        return EXACT
-    val cmp = remainder.shiftLeft(1).compareTo(denominator)
-    return when {
-        cmp < 0 -> LT_HALF
-        cmp == 0 -> HALF
-        else -> GT_HALF
+    private const val Q_MIN = 2
+    private const val Q_MAXX = 79
+    private const val K_MIN = 1
+    private const val K_MAXX = 44
+
+    private const val EXACT = 0
+    private const val LT_HALF = 1
+    private const val HALF = 2
+    private const val GT_HALF = 3
+
+    private fun getResidue(remainder: BigInteger, denominator: BigInteger): Int {
+        if (remainder.bitLength() == 0)
+            return EXACT
+        val cmp = remainder.shiftLeft(1).compareTo(denominator)
+        return when {
+            cmp < 0 -> LT_HALF
+            cmp == 0 -> HALF
+            else -> GT_HALF
+        }
     }
-}
 
+    private var POW_10 = Array<BigInteger>(Q_MAXX) { ONE }
+    private var POW_5 = Array<BigInteger>(K_MAXX) { ONE }
 
-class GenerateRangeRecipPow5_take1 {
-
-    val q_min = 2
-    val q_maxx = 79
-    val k_min = 1
-    val k_maxx = 44
+    fun calcPowTables() {
+        for (i in 1..<Q_MAXX)
+            POW_10[i] = POW_10[i-1].multiply(TEN)
+        for (i in 1..<K_MAXX)
+            POW_5[i] = POW_10[i].shiftRight(i)
+    }
 
     data class TableEntry(val q: Int, val k: Int, val bitLen: Int, val M: BigInteger, val S: Int)
 
-    val recipTable : Array<Array<TableEntry?>> = Array(q_maxx) { arrayOfNulls<TableEntry>(k_maxx)}
+    val recipTable : Array<Array<TableEntry?>> = Array(Q_MAXX) { arrayOfNulls<TableEntry>(K_MAXX)}
 
     fun populateTable() {
-        for (j in q_min..<q_maxx) {
-            var prev = recipTable[j-1][k_min]
-            for (k in k_min..<min(j, k_maxx)) {
+        for (j in Q_MIN..<Q_MAXX) {
+            var prev = recipTable[j-1][K_MIN]
+            for (k in K_MIN..<min(j, K_MAXX)) {
                 val yPrev = if (prev != null) prev.S else 8
                 val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
@@ -73,14 +82,13 @@ class GenerateRangeRecipPow5_take1 {
 
     fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
         val twoPowY = ONE.shiftLeft(y)
-        val fivePowK = FIVE.pow(k)
-        val tenPowK = fivePowK.shiftLeft(k)
-        val tenPowQ = TEN.pow(q)
+        val fivePowK = POW_5[k]
+        val tenPowK = POW_10[k]
+        val tenPowQ = POW_10[q]
         val M = twoPowY.add(fivePowK).subtract(ONE).divide(fivePowK)
         val S = y
 
-        val prod = tenPowQ.multiply(M)
-        val C_max = tenPowQ.subtract(ONE)
+        val C_max = tenPowQ // for me C_max == 10**q
 
         if (!isValid(tenPowQ, k, tenPowK, twoPowY, M, S))
             return null
@@ -90,14 +98,14 @@ class GenerateRangeRecipPow5_take1 {
         val nines5 = tenPowQ.subtract(half)
         if (!isValid(nines5, k, tenPowK, twoPowY, M, S))
             return null
-        val down = nines5.subtract(ONE)
-        if (!isValid(down, k, tenPowK, twoPowY, M, S))
+        val nines5down = nines5.subtract(ONE)
+        if (!isValid(nines5down, k, tenPowK, twoPowY, M, S))
             return null
-        val up = nines5.add(ONE)
-        if (!isValid(up, k, tenPowK, twoPowY, M, S))
+        val nines5up = nines5.add(ONE)
+        if (!isValid(nines5up, k, tenPowK, twoPowY, M, S))
             return null
 
-        val bitLen = prod.bitLength()
+        val bitLen = C_max.bitLength()
         return TableEntry(q, k, bitLen, M, y)
     }
 
@@ -134,13 +142,13 @@ class GenerateRangeRecipPow5_take1 {
 
     fun dumpTable() {
         print("        ")
-        for (k in k_min..<k_maxx) {
+        for (k in K_MIN..<K_MAXX) {
             print("$k  ")
         }
         println()
-        for (j in q_min..<q_maxx) {
+        for (j in Q_MIN..<Q_MAXX) {
             print("$j : ")
-            for (k in k_min..<k_maxx) {
+            for (k in K_MIN..<K_MAXX) {
                 val te = recipTable[j][k]
                 print("$te ")
             }
@@ -151,11 +159,11 @@ class GenerateRangeRecipPow5_take1 {
     fun dumpDeltas() {
         var maxIntraRowDelta = 0
         var maxInterRowDelta = 0
-        var maxBitLen = IntArray(q_maxx)
-        for (j in q_min..<q_maxx) {
-            if (j > q_min) {
-                val prevRow = recipTable[j-1][k_min]
-                val thisRow = recipTable[j][k_min]
+        var maxBitLen = IntArray(Q_MAXX)
+        for (j in Q_MIN..<Q_MAXX) {
+            if (j > Q_MIN) {
+                val prevRow = recipTable[j-1][K_MIN]
+                val thisRow = recipTable[j][K_MIN]
                 if (prevRow != null && thisRow != null) {
                     val interRowDelta = thisRow.S - prevRow.S
                     maxInterRowDelta = kotlin.math.max(maxInterRowDelta, interRowDelta)
@@ -163,7 +171,7 @@ class GenerateRangeRecipPow5_take1 {
             }
             var intraRowSum = 0
             var prevTE: TableEntry? = null
-            for (k in k_min + 1..<k_maxx) {
+            for (k in K_MIN + 1..<K_MAXX) {
                 val te = recipTable[j][k]
                 if (te != null && prevTE != null) {
                     val intraRowDelta = te.S - prevTE.S
@@ -173,7 +181,7 @@ class GenerateRangeRecipPow5_take1 {
                 }
                 prevTE = te
             }
-            val intraRowCount = min(k_maxx, j) - k_min - 1
+            val intraRowCount = min(K_MAXX, j) - K_MIN - 1
             if (intraRowCount > 0) {
                 val avg = intraRowSum.toDouble() / intraRowCount
                 println("j:$j intraRowCount:$intraRowCount avg:$avg maxBitLen:${maxBitLen[j]}")
@@ -185,6 +193,7 @@ class GenerateRangeRecipPow5_take1 {
 
     @Test
     fun testRun() {
+        calcPowTables()
         populateTable()
         dumpDeltas()
         dumpTable()
