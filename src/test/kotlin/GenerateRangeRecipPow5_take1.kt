@@ -55,7 +55,7 @@ object GenerateRangeRecipPow5_take1 {
         for (j in Q_MIN..<Q_MAXX) {
             var prev = recipTable[j-1][K_MIN]
             for (k in K_MIN..<min(j, K_MAXX)) {
-                val yPrev = if (prev != NULL_TABLE_ENTRY) prev.S else 8
+                val yPrev = if (prev != NULL_TABLE_ENTRY) prev.S else 5 * K_MIN
                 val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
                     //println("($j, $k) => minimalY:${te.S}")
@@ -98,27 +98,28 @@ object GenerateRangeRecipPow5_take1 {
         val C_max = tenPowQ // for me C_max == 10**q
         val maxProd = C_max.shiftRight(k - 1).multiply(M)
 
-        if (!isValid(tenPowQ, k, tenPowK, twoPowY, M, S))
+        if (!isValid(tenPowQ, k, M, S))
             return null
         val half = tenPowK.shiftRight(1)
-        if (!isValid(half, k, tenPowK, twoPowY, M, S))
+        if (!isValid(half, k, M, S))
             return null
         val nines5 = tenPowQ.subtract(half)
-        if (!isValid(nines5, k, tenPowK, twoPowY, M, S))
+        if (!isValid(nines5, k, M, S))
             return null
         val nines5down = nines5.subtract(ONE)
-        if (!isValid(nines5down, k, tenPowK, twoPowY, M, S))
+        if (!isValid(nines5down, k, M, S))
             return null
         val nines5up = nines5.add(ONE)
-        if (!isValid(nines5up, k, tenPowK, twoPowY, M, S))
+        if (!isValid(nines5up, k, M, S))
             return null
 
         val bitLen = maxProd.bitLength()
         return TableEntry(q, k, bitLen, M, y)
     }
 
-    fun isValid(dividend: BigInteger, k: Int, tenPowK: BigInteger, twoPowY: BigInteger, M: BigInteger, S: Int): Boolean {
-        val quotRem = dividend.divideAndRemainder(TEN.pow(k))
+    fun isValid(dividend: BigInteger, k: Int, M: BigInteger, S: Int): Boolean {
+        val tenPowK = POW_10[k]
+        val quotRem = dividend.divideAndRemainder(tenPowK)
         val expectedQuot = quotRem[0]
         val expectedResidue = getResidue(quotRem[1], tenPowK)
 

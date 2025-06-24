@@ -41,38 +41,36 @@ object Car {
     fun newAdd(x: IntArray, n: Int): IntArray {
         val newBitLen = bitLen(x) + (32 - numberOfLeadingZeros(n)) + 1
         val z = newCopyWithBitLen(x, newBitLen)
-        mutateAdd(z, n)
-        return z
+        return mutateAdd(z, n)
     }
 
-    fun mutateAdd(x: IntArray, n: Int) {
+    fun mutateAdd(x: IntArray, n: Int): IntArray {
         var carry = U32(n)
         for (i in x.indices) {
             val t = U32(x[i]) + carry
             x[i] = t.toInt()
             carry = t ushr 32
             if (carry == 0L)
-                return
+                break
             assert(carry == 1L)
         }
+        return x
     }
 
     fun newAdd(x: IntArray, y: IntArray): IntArray {
         val newBitLen = bitLen(x) + bitLen(y) + 1
         val z = newCopyWithBitLen(x, newBitLen)
-        mutateAdd(z, y)
-        return z
+        return mutateAdd(z, y)
     }
 
     fun newOrMutateAdd(x: IntArray, y: IntArray): IntArray {
         val newBitLen = bitLen(x) + bitLen(y) + 1
         val newWordLen = (newBitLen + 0x1F) ushr 5
         val z = if (newWordLen == x.size) x else newCopy(x, newWordLen)
-        mutateAdd(z, y)
-        return z
+        return mutateAdd(z, y)
     }
 
-    fun mutateAdd(x: IntArray, y: IntArray) {
+    fun mutateAdd(x: IntArray, y: IntArray): IntArray {
         var carry = 0L
         val min = min(x.size, y.size)
         var i = 0
@@ -88,13 +86,10 @@ object Car {
             x[i] = t.toInt()
             carry = t ushr 32
         }
+        return x
     }
 
-    fun newSub(x: IntArray, n: Int): IntArray {
-        val z = newCopy(x)
-        mutateSub(z, 1)
-        return z
-    }
+    fun newSub(x: IntArray, n: Int) = mutateSub(newCopy(x), n)
 
     fun mutateSub(x: IntArray, n: Int): IntArray {
         var borrow = U32(n)
@@ -108,7 +103,9 @@ object Car {
         return x
     }
 
-    fun mutateSub(x: IntArray, y: IntArray) {
+    fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x),y)
+
+    fun mutateSub(x: IntArray, y: IntArray): IntArray {
         var borrow = 0L
         val min = min(x.size, y.size)
         var i = 0
@@ -124,6 +121,7 @@ object Car {
             x[i] = t.toInt()
             borrow = t ushr 63
         }
+        return x
     }
 
     fun newMul(x: IntArray, n: Int): IntArray {
@@ -285,6 +283,7 @@ object Car {
         return 0
     }
 
+    // returns a 32 bit value as a Long
     fun mutateDivideRemainder(x: IntArray, n: Int): Long {
         if (n == 0)
             throw RuntimeException("DivByZero")
@@ -300,16 +299,16 @@ object Car {
         return carry
     }
 
-    fun newDivide(x: IntArray, n: Int): IntArray {
+    fun newDiv(x: IntArray, n: Int): IntArray {
         val q = newCopy(x)
         mutateDivideRemainder(q, n)
         return q
     }
 
-    fun newDivide(x: IntArray, y: IntArray): IntArray {
+    fun newDiv(x: IntArray, y: IntArray): IntArray {
         val n = nonZeroLimbLen(y)
         if (n < 2)
-            return newDivide(x, y[0])
+            return newDiv(x, y[0])
         val m = nonZeroLimbLen(x)
         if (m < n)
             return IntArray(1)
@@ -320,6 +319,25 @@ object Car {
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
         return q
+    }
+
+    fun newDivMod(x: IntArray, y: IntArray): Array<IntArray> {
+        val n = nonZeroLimbLen(y)
+        if (n < 2) {
+            val div = newCopy(x)
+            val rem = mutateDivideRemainder(div, y[0])
+            return arrayOf(div, intArrayOf(rem.toInt()))
+        }
+        val m = nonZeroLimbLen(x)
+        if (m < n)
+            return arrayOf(IntArray(1), newCopy(y, n))
+        val u = x
+        val v = y
+        val q = IntArray(m-n+1)
+        val r = IntArray(m + 1)
+        val status = knuthDivide(q, r, u, v, m, n)
+        require(status == 0)
+        return arrayOf(q, r)
     }
 
     /**

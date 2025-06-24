@@ -139,7 +139,7 @@ class TestCar {
             return
         val carA = carFromBi(biA)
         val carB = carFromBi(biB)
-        val carQuot = Car.newDivide(carA, carB)
+        val carQuot = Car.newDiv(carA, carB)
 
         val biQuot = biA.divide(biB)
 
