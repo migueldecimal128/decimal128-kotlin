@@ -9,9 +9,9 @@ object GenerateRangeRecipPow5_take1 {
     private val ONE = BigInteger.ONE
     private val TEN = BigInteger.TEN
 
-    private const val Q_MIN = 2
+    private const val Q_MIN = 11
     private const val Q_MAXX = 79
-    private const val K_MIN = 1
+    private const val K_MIN = 10
     private const val K_MAXX = 44
 
     private const val EXACT = 0
@@ -40,15 +40,22 @@ object GenerateRangeRecipPow5_take1 {
             POW_5[i] = POW_10[i].shiftRight(i)
     }
 
-    data class TableEntry(val q: Int, val k: Int, val bitLen: Int, val M: BigInteger, val S: Int)
+    data class TableEntry(val maxQ: Int, val k: Int, val bitLen: Int, val M: BigInteger, val S: Int) {
+        var minQ = maxQ
+        fun dwordLen() = (bitLen + 0x3f) ushr 6
 
-    val recipTable : Array<Array<TableEntry?>> = Array(Q_MAXX) { arrayOfNulls<TableEntry>(K_MAXX)}
+        override fun toString() = if (maxQ == -1) "[NULL]" else "[q:$minQ-$maxQ k:$k bitLen:$bitLen]"
+    }
+
+    val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, ONE, -1)
+
+    val recipTable : Array<Array<TableEntry>> = Array(Q_MAXX) { Array<TableEntry>(K_MAXX) { NULL_TABLE_ENTRY} }
 
     fun populateTable() {
         for (j in Q_MIN..<Q_MAXX) {
             var prev = recipTable[j-1][K_MIN]
             for (k in K_MIN..<min(j, K_MAXX)) {
-                val yPrev = if (prev != null) prev.S else 8
+                val yPrev = if (prev != NULL_TABLE_ENTRY) prev.S else 8
                 val te = findTableEntry(j, k, yPrev + 2)
                 if (te != null) {
                     //println("($j, $k) => minimalY:${te.S}")
@@ -89,6 +96,7 @@ object GenerateRangeRecipPow5_take1 {
         val S = y
 
         val C_max = tenPowQ // for me C_max == 10**q
+        val maxProd = C_max.shiftRight(k - 1).multiply(M)
 
         if (!isValid(tenPowQ, k, tenPowK, twoPowY, M, S))
             return null
@@ -105,7 +113,7 @@ object GenerateRangeRecipPow5_take1 {
         if (!isValid(nines5up, k, tenPowK, twoPowY, M, S))
             return null
 
-        val bitLen = C_max.bitLength()
+        val bitLen = maxProd.bitLength()
         return TableEntry(q, k, bitLen, M, y)
     }
 
@@ -140,6 +148,22 @@ object GenerateRangeRecipPow5_take1 {
         return expectedResidue == residue
     }
 
+    fun tableMerge() {
+        for (k in K_MIN..<K_MAXX) {
+            var tePrev = recipTable[Q_MAXX-1][k]
+            for (q in Q_MAXX-2 downTo Q_MIN) {
+                val te = recipTable[q][k]
+                if (tePrev != NULL_TABLE_ENTRY && te.dwordLen() == tePrev.dwordLen()) {
+                    tePrev.minQ = q
+                    recipTable[q][k] = tePrev
+                    //println("merge($q, $k)")
+                } else {
+                    tePrev = te
+                }
+            }
+        }
+    }
+
     fun dumpTable() {
         print("        ")
         for (k in K_MIN..<K_MAXX) {
@@ -164,16 +188,16 @@ object GenerateRangeRecipPow5_take1 {
             if (j > Q_MIN) {
                 val prevRow = recipTable[j-1][K_MIN]
                 val thisRow = recipTable[j][K_MIN]
-                if (prevRow != null && thisRow != null) {
+                if (prevRow != NULL_TABLE_ENTRY && thisRow != NULL_TABLE_ENTRY) {
                     val interRowDelta = thisRow.S - prevRow.S
                     maxInterRowDelta = kotlin.math.max(maxInterRowDelta, interRowDelta)
                 }
             }
             var intraRowSum = 0
-            var prevTE: TableEntry? = null
+            var prevTE: TableEntry = NULL_TABLE_ENTRY
             for (k in K_MIN + 1..<K_MAXX) {
                 val te = recipTable[j][k]
-                if (te != null && prevTE != null) {
+                if (te != NULL_TABLE_ENTRY && prevTE != NULL_TABLE_ENTRY) {
                     val intraRowDelta = te.S - prevTE.S
                     maxIntraRowDelta = kotlin.math.max(maxIntraRowDelta, intraRowDelta)
                     intraRowSum += intraRowDelta
@@ -195,6 +219,7 @@ object GenerateRangeRecipPow5_take1 {
     fun testRun() {
         calcPowTables()
         populateTable()
+        tableMerge()
         dumpDeltas()
         dumpTable()
     }
