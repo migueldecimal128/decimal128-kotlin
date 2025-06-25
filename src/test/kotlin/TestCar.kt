@@ -12,6 +12,8 @@ import java.util.*
 
 class TestCar {
 
+    val verbose = false
+
     val random = Random()
 
     fun randBi() : BigInteger {
@@ -47,11 +49,16 @@ class TestCar {
     }
 
     fun testRoundTripStr(str: String) {
+
+        if (verbose)
+            println("testRoundTripStr($str)")
         val car = carFromString(str)
         val str2 = carToString(car)
         assertEquals(str, str2)
 
-        val str3 = Car.toString(car)
+        val car3 = Car.newFromString(str)
+        assert(Car.EQ(car, car3))
+        val str3 = Car.toString(car3)
         assertEquals(str, str3)
     }
 

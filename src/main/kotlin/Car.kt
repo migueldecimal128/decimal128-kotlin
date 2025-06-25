@@ -132,7 +132,7 @@ object Car {
         return prod
     }
 
-    fun mutateMul(x: IntArray, n: Int) {
+    fun mutateMul(x: IntArray, n: Int): IntArray {
         val n64 = U32(n)
         var carry = 0L
         for (i in x.indices) {
@@ -140,6 +140,7 @@ object Car {
             x[i] = t.toInt()
             carry = t ushr 32
         }
+        return x
     }
 
     fun newMul(x: IntArray, y: IntArray): IntArray {
@@ -445,6 +446,8 @@ object Car {
     fun toString(car: IntArray): String {
         val bitLen = bitLen(car)
         if (bitLen <= 64) {
+            if (bitLen == 0)
+                return "0"
             val lo = car[0].toULong() and 0xFFFF_FFFFuL
             val hi = if (bitLen <= 32) 0uL else car[1].toULong() shl 32
             val t = hi or lo
@@ -483,4 +486,51 @@ object Car {
         }
         return ib
     }
+
+    fun newFromString(str: String): IntArray {
+        val strLen = str.length
+        when {
+            (strLen == 0) ->
+                throw IllegalArgumentException("cannot parse empty string")
+            //str.startsWith("0x") -> {
+            //    return newFromHexString(str)
+            //}
+        }
+        var totalDigitCount = 0
+        var accumulator = 0
+        var accumulatorDigitCount = 0
+        var i = 0
+        while (i < strLen && str[i] == '0')
+            ++i
+
+        val bitLen = ((strLen - i) * 13607 + 4095) ushr 12
+        val wordLen = (bitLen + 0x1F) ushr 5
+        val z = IntArray(wordLen)
+
+        while (i < strLen) {
+            val ch = str[i++]
+            if (ch !in '0'..'9') {
+                if (ch == '_' && i > 0)
+                    continue
+                throw IllegalArgumentException("unsigned integer parse error:$str")
+            }
+            val n = ch - '0'
+            ++totalDigitCount
+            accumulator = accumulator * 10 + n
+            ++accumulatorDigitCount
+            if (accumulatorDigitCount < 9)
+                continue
+            mutateAdd(mutateMul(z, 1000000000), accumulator)
+            accumulator = 0
+            accumulatorDigitCount = 0
+        }
+        if (accumulatorDigitCount > 0) {
+            var pow10 = 1
+            for (j in 0..<accumulatorDigitCount)
+                pow10 *= 10
+            mutateAdd(mutateMul(z, pow10), accumulator)
+        }
+        return z
+    }
+
 }
