@@ -201,11 +201,13 @@ object GenerateRangeRecipPow5_take2 {
     fun dumpDeltas() {
         var maxIntraRowDelta = 0
         var maxInterRowDelta = 0
-        var maxBitLen = IntArray(Q_MAXX)
-        for (j in Q_MIN..<Q_MAXX) {
-            if (j > Q_MIN) {
-                val prevRow = recipTable[j-1][K_MIN]
-                val thisRow = recipTable[j][K_MIN]
+        var uniqueEntryCount = 0
+        var nonNullEntryCount = 0
+        val maxBitLen = IntArray(Q_MAXX)
+        for (q in Q_MIN..<Q_MAXX) {
+            if (q > Q_MIN) {
+                val prevRow = recipTable[q-1][K_MIN]
+                val thisRow = recipTable[q][K_MIN]
                 if (prevRow != NULL_TABLE_ENTRY && thisRow != NULL_TABLE_ENTRY) {
                     val interRowDelta = thisRow.S - prevRow.S
                     maxInterRowDelta = kotlin.math.max(maxInterRowDelta, interRowDelta)
@@ -214,23 +216,30 @@ object GenerateRangeRecipPow5_take2 {
             var intraRowSum = 0
             var prevTE: TableEntry = NULL_TABLE_ENTRY
             for (k in K_MIN + 1..<K_MAXX) {
-                val te = recipTable[j][k]
+                val te = recipTable[q][k]
                 if (te != NULL_TABLE_ENTRY && prevTE != NULL_TABLE_ENTRY) {
                     val intraRowDelta = te.S - prevTE.S
                     maxIntraRowDelta = kotlin.math.max(maxIntraRowDelta, intraRowDelta)
                     intraRowSum += intraRowDelta
-                    maxBitLen[j] = kotlin.math.max(maxBitLen[j], te.bitLen)
+                    maxBitLen[q] = kotlin.math.max(maxBitLen[q], te.bitLen)
+                }
+                if (te != NULL_TABLE_ENTRY) {
+                    ++nonNullEntryCount
+                    if (q == te.minQ)
+                        ++uniqueEntryCount
                 }
                 prevTE = te
             }
-            val intraRowCount = min(K_MAXX, j) - K_MIN - 1
+            val intraRowCount = min(K_MAXX, q) - K_MIN - 1
             if (intraRowCount > 0) {
                 val avg = intraRowSum.toDouble() / intraRowCount
-                println("j:$j intraRowCount:$intraRowCount avg:$avg maxBitLen:${maxBitLen[j]}")
+                println("j:$q intraRowCount:$intraRowCount avg:$avg maxBitLen:${maxBitLen[q]}")
             }
         }
         println("maxIntraRowDelta:$maxIntraRowDelta")
         println("maxInterRowDelta:$maxInterRowDelta")
+        println("nonNullEntryCount:$nonNullEntryCount")
+        println("uniqueEntryCount:$uniqueEntryCount")
     }
 
     @Test
