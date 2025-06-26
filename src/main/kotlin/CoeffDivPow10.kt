@@ -7,10 +7,10 @@ object CoeffDivPow10 {
     fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
         assert(pow10 >= 0)
         val xBitLen = x.bitLen
-        if (pow10 < MAGIC_POW10_MAX) {
+        if (pow10 < MAGIC_POW10_MAXX) {
             if (xBitLen <= 64)
                 return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
-            if (pow10 < BARRETT_POW10_MAX)
+            if (pow10 < BARRETT_POW10_MAXX)
                 return DivBarrett.barrettDivPow10(z, x, pow10)
         }
         val pow10BitLen = CoeffPow10.pow10BitLen(pow10)
@@ -24,15 +24,15 @@ object CoeffDivPow10 {
                         Residue.residueFrom(x)
                     })
         }
-        if (pow10 < MAX_DIVISOR_POW10)
-            return DivRangeRecipMulPow10.rangeDivPow10(z, x, pow10)
+        if (pow10 < MAXX_DIVISOR_POW10)
+            return DivRangeRecipMulPow10bi.rangeDivPow10(z, x, pow10)
         // perform a two-step
-        val step1a = MAX_DIVISOR_POW10 - 1
+        val step1a = MAXX_DIVISOR_POW10 - 1
         val step2a = pow10 - step1a
-        assert(step2a < MAX_DIVISOR_POW10)
-        val step2 = max(step2a, BARRETT_POW10_MAX - 1)
+        assert(step2a < MAXX_DIVISOR_POW10)
+        val step2 = max(step2a, BARRETT_POW10_MAXX - 1)
         val step1 = pow10 - step2
-        val residue1 = DivRangeRecipMulPow10.rangeDivPow10(z, x, step1)
+        val residue1 = DivRangeRecipMulPow10bi.rangeDivPow10(z, x, step1)
         val residue2 = divPow10(z, z, step2)
         val residue = residue2.merge(residue1)
         return residue

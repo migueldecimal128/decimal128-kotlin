@@ -2,25 +2,24 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import java.lang.Long.numberOfLeadingZeros
-import java.lang.Math.unsignedMultiplyHigh
 import kotlin.math.max
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
 
 internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
-internal const val BARRETT_POW10_MAX = 10
+internal const val BARRETT_POW10_MAXX = 10
 
-internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAX
+internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAXX
 internal const val POW5_64_MAX = 28
 
 internal const val BARRETT_POW5_MU_OFFSET = POW5_64_OFFSET + POW5_64_MAX
 internal const val BARRETT_POW5_MAX = 14
 
 internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAX
-internal const val MAGIC_POW10_MAX = 20
+internal const val MAGIC_POW10_MAXX = 20
 
-private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAX
+private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
 
 internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
@@ -202,7 +201,7 @@ internal object CoeffPow10 {
 
         twoPow64.coeffSet128(1L, 0L)
         // mu for 10**0 == 0 ... used for checking div by 1 case
-        for (i in 1..<BARRETT_POW10_MAX) {
+        for (i in 1..<BARRETT_POW10_MAXX) {
             if (i == 1) pow10.coeffSet64(10L) else pow10.coeffSetMul(pow10, ten)
             mu.coeffSetDiv(twoPow64, pow10)
             POW10[BARRETT_POW10_MU_OFFSET + i] = mu.dw0

@@ -2,7 +2,6 @@
 
 package com.decimal128
 
-import com.decimal128.Residue.Companion.EXACT
 import java.lang.Math.unsignedMultiplyHigh
 
 object DivBarrett {
@@ -15,7 +14,7 @@ object DivBarrett {
 
     fun barrettDivModPow10(z: Coeff, x: Coeff, pow10: Int): Long {
         when {
-            pow10 > 0 && pow10 < BARRETT_POW10_MAX -> {
+            pow10 > 0 && pow10 < BARRETT_POW10_MAXX -> {
                 val denom = POW10[pow10]
                 val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
                 val xBitLen = x.bitLen

@@ -19,7 +19,7 @@ class TestDivModPow10 {
 //        for (i in minDividendDigitCount..maxDividendDigitCount) {
         for (i in 1..19) {
             val dividend = powerOf10(i)
-            for (divisorPow10 in MIN_DIVISOR_POW10..<MAX_DIVISOR_POW10) {
+            for (divisorPow10 in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10) {
                 test3(dividend, divisorPow10)
             }
         }
@@ -40,7 +40,7 @@ class TestDivModPow10 {
         val (biQuot, biRem) = biDividend.divideAndRemainder(biDivisor)
         val bitLen = 64 - java.lang.Long.numberOfLeadingZeros(l)
 
-        val (quot, rem) = DivRangeRecipMulPow10.divModPow10(CoeffPow10.calcDigitLen64(bitLen, l), l, divisorPow10)
+        val (quot, rem) = DivRangeRecipMulPow10bi.divModPow10(CoeffPow10.calcDigitLen64(bitLen, l), l, divisorPow10)
 
         assertEquals(biQuot, bigIntegerFromLong(quot))
         assertEquals(biRem, bigIntegerFromLong(rem))

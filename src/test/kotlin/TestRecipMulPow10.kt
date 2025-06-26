@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
 
-import com.decimal128.DivRangeRecipMulPow10.divModPow10
-import com.decimal128.DivRangeRecipMulPow10.getMultShift
+import com.decimal128.DivRangeRecipMulPow10bi.divModPow10
+import com.decimal128.DivRangeRecipMulPow10bi.getMultShift
 
 class TestRecipMulPow10 {
 
@@ -99,7 +99,7 @@ class TestRecipMulPow10 {
         val coeffR = Coeff()
 
         if (coeffA.digitLen < MIN_DIVIDEND_DIGIT_COUNT || pow10 < MIN_DIVISOR_POW10 ||
-            (coeffA.digitLen + pow10) >= MAX_DIVIDEND_DIGIT_COUNT ) {
+            (coeffA.digitLen + pow10) >= MAXX_DIVIDEND_DIGIT_COUNT ) {
             println("out of range")
             return
         }
