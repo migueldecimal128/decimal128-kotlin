@@ -5,6 +5,7 @@ import java.lang.Integer.numberOfLeadingZeros
 import java.lang.Long.*
 import java.nio.charset.StandardCharsets
 import kotlin.math.min
+import kotlin.math.max
 
 
 // CAR == Cardinal ARray
@@ -185,11 +186,33 @@ object Car {
             dst[i++] = 0
     }
 
+    fun newShiftRight_X(x: IntArray, bitCount: Int): IntArray {
+        val z = newCopy(x)
+        return mutateShiftRight(z, bitCount)
+    }
+
     fun newShiftRight(x: IntArray, bitCount: Int): IntArray {
         val newBitLen = bitLen(x) - bitCount
         val newWordLen = (newBitLen + 0x1F) ushr 5
-        val z = newCopy(x, newWordLen)
-        mutateShiftRight(z, bitCount)
+        val wordShift = bitCount ushr 5
+        val innerShift = bitCount and ((1 shl 5) - 1)
+        val z = IntArray(max(newWordLen, 0))
+        if (newWordLen > 0) {
+            if (innerShift != 0) {
+                val iLast = z.size - 1
+                for (i in 0..<iLast)
+                    z[i] = (x[i + wordShift + 1] shl -innerShift) or (x[i + wordShift] ushr innerShift)
+                val srcIndex = iLast + wordShift + 1
+                z[iLast] = (
+                        if (srcIndex < x.size)
+                            (x[iLast + wordShift + 1] shl -innerShift)
+                        else
+                            0) or (x[iLast + wordShift] ushr innerShift)
+            } else {
+                for (i in z.indices)
+                    z[i] = x[i + wordShift]
+            }
+        }
         return z
     }
 
@@ -341,7 +364,7 @@ object Car {
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return arrayOf(IntArray(1), newCopy(y, n))
+            return arrayOf(IntArray(1), newCopy(x))
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
