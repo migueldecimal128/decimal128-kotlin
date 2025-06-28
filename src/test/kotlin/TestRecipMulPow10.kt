@@ -98,8 +98,8 @@ class TestRecipMulPow10 {
         val coeffQ = Coeff()
         val coeffR = Coeff()
 
-        if (coeffA.digitLen < MIN_DIVIDEND_DIGIT_COUNT || pow10 < MIN_DIVISOR_POW10 ||
-            (coeffA.digitLen + pow10) >= MAXX_DIVIDEND_DIGIT_COUNT ) {
+        if (coeffA.digitLen < Q_MIN || pow10 < K_MIN ||
+            (coeffA.digitLen + pow10) >= Q_MAXX ) {
             println("out of range")
             return
         }

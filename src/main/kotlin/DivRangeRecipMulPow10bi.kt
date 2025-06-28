@@ -15,10 +15,10 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
-const val MIN_DIVIDEND_DIGIT_COUNT = POW10_64_COUNT
-const val MAXX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
-const val MIN_DIVISOR_POW10 = BARRETT_POW10_MAXX
-const val MAXX_DIVISOR_POW10 = MAXX_DIVIDEND_DIGIT_COUNT - 34
+const val Q_MIN = POW10_64_COUNT
+const val Q_MAXX = 79 // exclusive
+const val K_MIN = BARRETT_POW10_MAXX
+const val K_MAXX = Q_MAXX - 34
 
 object DivRangeRecipMulPow10bi {
 
@@ -292,16 +292,16 @@ object DivRangeRecipMulPow10bi {
 
     var initialized = false
 
-    val rowSize = MAXX_DIVISOR_POW10 - MIN_DIVISOR_POW10
-    val tableSize = (MAXX_DIVIDEND_DIGIT_COUNT - MIN_DIVIDEND_DIGIT_COUNT) * rowSize
+    val rowSize = K_MAXX - K_MIN
+    val tableSize = (Q_MAXX - Q_MIN) * rowSize
 
     val INDEXES = IntArray(tableSize)
     var PARAMS = LongArray(0)
 
     fun indexOf(digitCount: Int, pow10: Int): Int {
-        assert(digitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAXX_DIVIDEND_DIGIT_COUNT)
-        assert(pow10 in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10)
-        val index = (digitCount - MIN_DIVIDEND_DIGIT_COUNT) * rowSize + (pow10 - MIN_DIVISOR_POW10)
+        assert(digitCount in Q_MIN..<Q_MAXX)
+        assert(pow10 in K_MIN..<K_MAXX)
+        val index = (digitCount - Q_MIN) * rowSize + (pow10 - K_MIN)
         return index
     }
 
@@ -310,9 +310,9 @@ object DivRangeRecipMulPow10bi {
             return
         val paramsArrayList = ArrayList<Long>(tableSize * 4)
         paramsArrayList.add(0L)
-        for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAXX_DIVIDEND_DIGIT_COUNT) {
-            val maxPow10 = min(qDigitCount, MAXX_DIVISOR_POW10)
-            for (xPow10 in MIN_DIVISOR_POW10..<maxPow10) {
+        for (qDigitCount in Q_MIN..<Q_MAXX) {
+            val maxPow10 = min(qDigitCount, K_MAXX)
+            for (xPow10 in K_MIN..<maxPow10) {
                 val index = indexOf(qDigitCount, xPow10)
                 if (qDigitCount > xPow10) {
                     val rmp5 = calcRecipMulParams5(qDigitCount, xPow10)
@@ -353,8 +353,8 @@ object DivRangeRecipMulPow10bi {
         var maxAccDwordCount = 0
         var maxShift = 0
         var maxQuotDwordCount = 0
-        for (digitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAXX_DIVIDEND_DIGIT_COUNT) {
-            for (pow10 in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10) {
+        for (digitCount in Q_MIN..<Q_MAXX) {
+            for (pow10 in K_MIN..<K_MAXX) {
                 val index = indexOf(digitCount, pow10)
                 val paramsIndex = INDEXES[index]
                 if (paramsIndex == 0)
@@ -405,8 +405,8 @@ object DivRangeRecipMulPow10bi {
     private fun _divPow10_miguel3(
         z: Coeff, xDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long,
         pow10: Int): Residue {
-        require(xDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAXX_DIVIDEND_DIGIT_COUNT)
-        require(pow10 in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10)
+        require(xDigitCount in Q_MIN..<Q_MAXX)
+        require(pow10 in K_MIN..<K_MAXX)
         // clear coeff without worrying about aliasing
         z.coeffEnableIndexSetAndZeroOut()
 

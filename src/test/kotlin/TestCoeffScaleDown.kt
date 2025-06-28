@@ -98,9 +98,9 @@ class TestCoeffScaleDown {
 
     @Test
     fun testDecimalBoundaries() {
-        for (qDigitCount in MIN_DIVIDEND_DIGIT_COUNT..<MAXX_DIVIDEND_DIGIT_COUNT) {
+        for (qDigitCount in Q_MIN..<Q_MAXX) {
             val biQ = BigInteger.TEN.pow(qDigitCount)
-            for (xPow10 in MIN_DIVISOR_POW10..<min(MAXX_DIVISOR_POW10, qDigitCount + 2)) {
+            for (xPow10 in K_MIN..<min(K_MAXX, qDigitCount + 2)) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
                     if (biA.bitLength() <= 256) {
@@ -134,7 +134,7 @@ class TestCoeffScaleDown {
             val dw2 = quads[i + 2]
             val dw3 = quads[i + 3]
             val biQ = Ular.toBigInteger(dw3, dw2, dw1, dw0)
-            for (xPow10 in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10) {
+            for (xPow10 in K_MIN..<K_MAXX) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
                     if (biA.bitLength() <= 64) {
@@ -169,7 +169,7 @@ class TestCoeffScaleDown {
 
     fun randPow(bi: BigInteger) : Int {
         val biDigitCount = bi.toString().length
-        val maxPow = min(MAXX_DIVISOR_POW10 - 1, biDigitCount + 2)
+        val maxPow = min(K_MAXX - 1, biDigitCount + 2)
         val randPow = random.nextInt(maxPow)
         return randPow
     }
@@ -178,7 +178,7 @@ class TestCoeffScaleDown {
         while (true) {
             val bitLength = random.nextInt(0, 257)
             val bi = BigInteger(bitLength, random)
-            if (bi.toString().length < MAXX_DIVIDEND_DIGIT_COUNT)
+            if (bi.toString().length < Q_MAXX)
                 return bi
         }
     }

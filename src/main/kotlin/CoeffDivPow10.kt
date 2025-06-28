@@ -24,12 +24,12 @@ object CoeffDivPow10 {
                         Residue.residueFrom(x)
                     })
         }
-        if (pow10 < MAXX_DIVISOR_POW10)
+        if (pow10 < K_MAXX)
             return DivRangeRecipMulPow10bi.rangeDivPow10(z, x, pow10)
         // perform a two-step
-        val step1a = MAXX_DIVISOR_POW10 - 1
+        val step1a = K_MAXX - 1
         val step2a = pow10 - step1a
-        assert(step2a < MAXX_DIVISOR_POW10)
+        assert(step2a < K_MAXX)
         val step2 = max(step2a, BARRETT_POW10_MAXX - 1)
         val step1 = pow10 - step2
         val residue1 = DivRangeRecipMulPow10bi.rangeDivPow10(z, x, step1)

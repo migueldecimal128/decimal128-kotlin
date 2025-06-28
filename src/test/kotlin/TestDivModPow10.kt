@@ -19,7 +19,7 @@ class TestDivModPow10 {
 //        for (i in minDividendDigitCount..maxDividendDigitCount) {
         for (i in 1..19) {
             val dividend = powerOf10(i)
-            for (divisorPow10 in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10) {
+            for (divisorPow10 in K_MIN..<K_MAXX) {
                 test3(dividend, divisorPow10)
             }
         }
