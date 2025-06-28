@@ -1,16 +1,16 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Assertions.assertEquals
+import com.decimal128.DivRangeRecipMulPow10bi.rowSize
 import org.junit.jupiter.api.Test
-import java.math.BigInteger
+import java.util.*
 import kotlin.math.min
 
 object GenerateRangeRecipPow5_take2 {
 
-    private const val Q_MIN = 10
+    private const val Q_MIN = POW10_64_COUNT
     private const val Q_MAXX = 79
-    private const val K_MIN = 1
-    private const val K_MAXX = 44
+    private const val K_MIN = BARRETT_POW10_MAXX
+    private const val K_MAXX = MAXX_DIVIDEND_DIGIT_COUNT - 34
 
     private const val EXACT = 0
     private const val LT_HALF = 1
@@ -43,6 +43,8 @@ object GenerateRangeRecipPow5_take2 {
     data class TableEntry(val maxQ: Int, val k: Int, val bitLen: Int, val M: IntArray, val S: Int) {
         var minQ = maxQ
         fun dwordLen() = (bitLen + 0x3f) ushr 6
+
+        fun packHeader() = -1L
 
         override fun toString() = if (maxQ == -1) "[NULL]" else "[q:$minQ-$maxQ k:$k bitLen:$bitLen M:${Car.toString(M)} S:$S]"
     }
@@ -242,6 +244,72 @@ object GenerateRangeRecipPow5_take2 {
         println("uniqueEntryCount:$uniqueEntryCount")
     }
 
+    private const val ROW_SIZE = MAXX_DIVISOR_POW10 - MIN_DIVISOR_POW10
+    private const val TABLE_SIZE = (MAXX_DIVIDEND_DIGIT_COUNT - MIN_DIVIDEND_DIGIT_COUNT) * ROW_SIZE
+
+    fun indexOf(q: Int, k: Int): Int {
+        require(q in MIN_DIVIDEND_DIGIT_COUNT..<MAXX_DIVIDEND_DIGIT_COUNT)
+        require(k in MIN_DIVISOR_POW10..<MAXX_DIVISOR_POW10)
+        val index = (q - MIN_DIVIDEND_DIGIT_COUNT) * rowSize + (k - MIN_DIVISOR_POW10)
+        return index
+    }
+
+    private val OFFSETS = IntArray(TABLE_SIZE)
+
+    var iRRP = 1
+    var RANGE_RECIP_PARAMS = LongArray(0)
+
+    fun serializeTable() {
+        RANGE_RECIP_PARAMS = LongArray(4 * TABLE_SIZE)
+        for (q in Q_MIN..<Q_MAXX) {
+            for (k in K_MIN..<K_MAXX) {
+                val te = recipTable[q][k]
+                val i = indexOf(q, k)
+                val offset = when {
+                    te == NULL_TABLE_ENTRY -> -1
+                    te.minQ < q -> OFFSETS[indexOf(te.minQ, k)]
+                    else -> serialize(te)
+                }
+                OFFSETS[i] = offset
+            }
+        }
+
+        RANGE_RECIP_PARAMS = Arrays.copyOf(RANGE_RECIP_PARAMS, iRRP)
+    }
+
+    fun dumpOffsets() {
+        for (q in Q_MIN..<Q_MAXX) {
+            for (k in K_MIN..<K_MAXX) {
+                val i = indexOf(q, k)
+                val offset = OFFSETS[i]
+                println("$q,$k => $offset")
+            }
+        }
+    }
+
+    fun serialize(te: TableEntry): Int {
+        val offset = iRRP
+        appendLong(te.packHeader())
+        val M = te.M
+        for (i in 0..<(M.size and 0x7FFF_FFFE) step 2) {
+            val mLimb = (M[i + 1] shl 32) + (M[i].toLong() and 0xFFFF_FFFFL)
+            appendLong(mLimb)
+        }
+        if ((M.size and 1) != 0) {
+            val mLimb = M[M.size - 1].toLong() and 0xFFFF_FFFFL
+            appendLong(mLimb)
+        }
+        return offset
+    }
+
+    fun appendLong(dw: Long) {
+        if (iRRP == RANGE_RECIP_PARAMS.size) {
+            val newSize = kotlin.math.max(2*RANGE_RECIP_PARAMS.size, 256)
+            RANGE_RECIP_PARAMS = Arrays.copyOf(RANGE_RECIP_PARAMS, newSize)
+        }
+        RANGE_RECIP_PARAMS[iRRP++] = dw
+    }
+
     @Test
     fun testRun() {
         calcPowTables()
@@ -249,6 +317,9 @@ object GenerateRangeRecipPow5_take2 {
         tableMerge()
         dumpDeltas()
         dumpTable()
+        serializeTable()
+        println("iRRP:$iRRP")
+        dumpOffsets()
     }
 
     @Test

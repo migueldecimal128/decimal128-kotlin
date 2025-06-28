@@ -15,10 +15,10 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
-val MIN_DIVIDEND_DIGIT_COUNT = POW10_64_COUNT
-val MAXX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
-val MIN_DIVISOR_POW10 = BARRETT_POW10_MAXX
-val MAXX_DIVISOR_POW10 = MAXX_DIVIDEND_DIGIT_COUNT - 34
+const val MIN_DIVIDEND_DIGIT_COUNT = POW10_64_COUNT
+const val MAXX_DIVIDEND_DIGIT_COUNT = 79 // exclusive
+const val MIN_DIVISOR_POW10 = BARRETT_POW10_MAXX
+const val MAXX_DIVISOR_POW10 = MAXX_DIVIDEND_DIGIT_COUNT - 34
 
 object DivRangeRecipMulPow10bi {
 
