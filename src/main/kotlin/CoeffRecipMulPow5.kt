@@ -6,7 +6,7 @@ import java.lang.Long.compareUnsigned
 object CoeffRecipMulPow5 {
 
     fun coeffRecipMul4(
-        q: Coeff,
+        quotient: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
         n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -83,7 +83,7 @@ object CoeffRecipMulPow5 {
                 }
             } else {
                 val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-                q[quotientIndex++] = q0
+                quotient[quotientIndex++] = q0
             }
 
             z_1 = z_0
@@ -129,7 +129,7 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         val (carry2, z2) = sumU64(pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
         if (fractionBitsRemaining > 0) {
@@ -146,7 +146,7 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
         if (fractionBitsRemaining > 0) {
@@ -163,7 +163,7 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z3 shl shiftLeft) or ((z2 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         //val (carry4, z4) = sumU64(pp31_1, carry3)
         //require(carry4 == 0L)
@@ -182,20 +182,20 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z4 shl shiftLeft) or ((z3 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
 
         assert(fractionBitsRemaining <= 0)
         val q4 = ((z4 ushr shiftRight) and shiftRightNonZeroMask)
         if (q4 != 0L)
-            q[quotientIndex] = q4
+            quotient[quotientIndex] = q4
 
         val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 
     fun coeffRecipMul3(
-        q: Coeff,
+        quotient: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
         n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -260,7 +260,7 @@ object CoeffRecipMulPow5 {
                 }
             } else {
                 val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-                q[quotientIndex++] = q0
+                quotient[quotientIndex++] = q0
             }
 
             z_1 = z_0
@@ -297,7 +297,7 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         val (carry2, z2) = sumU64(pp21_2, pp20_1, pp11_1, carry1)
         if (fractionBitsRemaining > 0) {
@@ -314,7 +314,7 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         val z3 = pp21_1 + carry2
         if (fractionBitsRemaining > 0) {
@@ -331,19 +331,19 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z3 shl shiftLeft) or ((z2 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         assert(fractionBitsRemaining <= 0)
         val q3 = ((z3 ushr shiftRight) and shiftRightNonZeroMask)
         if (q3 != 0L)
-            q[quotientIndex] = q3
+            quotient[quotientIndex] = q3
 
         val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 
     fun coeffRecipMul2(
-        q: Coeff,
+        quotient: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
         n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -398,7 +398,7 @@ object CoeffRecipMulPow5 {
                 }
             } else {
                 val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-                q[quotientIndex++] = q0
+                quotient[quotientIndex++] = q0
             }
 
             z_1 = z_0
@@ -428,7 +428,7 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         val z2 = pp11_1 + carry1
         if (fractionBitsRemaining > 0) {
@@ -445,19 +445,19 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         assert(fractionBitsRemaining <= 0)
         val q2 = ((z2 ushr shiftRight) and shiftRightNonZeroMask)
         if (q2 != 0L)
-            q[quotientIndex] = q2
+            quotient[quotientIndex] = q2
 
         val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue
     }
 
     fun coeffRecipMul1(
-        q: Coeff,
+        quotient: Coeff,
         m: LongArray, mOff: Int, mLen: Int,
         n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -504,7 +504,7 @@ object CoeffRecipMulPow5 {
                 }
             } else {
                 val q0 = (z_0 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-                q[quotientIndex++] = q0
+                quotient[quotientIndex++] = q0
             }
 
             z_1 = z_0
@@ -529,12 +529,12 @@ object CoeffRecipMulPow5 {
             }
         } else {
             val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
-            q[quotientIndex++] = q0
+            quotient[quotientIndex++] = q0
         }
         assert(fractionBitsRemaining <= 0)
         val q1 = ((z1 ushr shiftRight) and shiftRightNonZeroMask)
         if (q1 != 0L)
-            q[quotientIndex] = q1
+            quotient[quotientIndex] = q1
 
         val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
         return residue

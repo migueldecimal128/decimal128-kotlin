@@ -1,11 +1,17 @@
 package com.decimal128
 
-import com.decimal128.DivRangeRecipMulPow10bi.rowSize
+import com.decimal128.CoeffRecipMulPow5.coeffRecipMul1
+import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
+import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
+import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.math.min
 
 object GenerateRangeRecipPow5_take2 {
+
+    val verbose = true
 
     //private const val Q_MIN = POW10_64_COUNT
     //private const val Q_MAXX = 79
@@ -313,7 +319,7 @@ object GenerateRangeRecipPow5_take2 {
                 val i = offsetIndex(q, k)
                 val offset = when {
                     te == NULL_TABLE_ENTRY -> -1
-                    te.qMin < q -> OFFSETS[offsetIndex(te.qMin, k)]
+                    q > te.qMin -> OFFSETS[offsetIndex(te.qMin, k)]
                     else -> serialize(te)
                 }
                 OFFSETS[i] = offset.toShort()
@@ -326,11 +332,15 @@ object GenerateRangeRecipPow5_take2 {
     }
 
     fun dumpOffsets() {
+        var i = 0
         for (q in Q_MIN..<Q_MAXX) {
             for (k in K_MIN..<min(q, K_MAXX)) {
-                val i = offsetIndex(q, k)
-                val offset = OFFSETS[i]
-                println("$q,$k => $offset")
+                val offsetIndex = offsetIndex(q, k)
+                val offset = OFFSETS[offsetIndex]
+                if (verbose)
+                    println("$q,$k => $offset")
+                assert(i == offsetIndex)
+                ++i
             }
         }
     }
@@ -350,7 +360,7 @@ object GenerateRangeRecipPow5_take2 {
                 val mOffset = offset + 1
                 val mLongArray = Arrays.copyOfRange(RANGE_RECIP_PARAMS, mOffset, mOffset + mDwordLen)
                 val mStr = mLongArray.contentToString()
-                println("qMin:$qMin qMax:$qMax k:$k2 prodDwordLen:$prodDwordLen S:$S mDwordLen:$mDwordLen M:$mStr")
+                println("($q, $k) qMin:$qMin qMax:$qMax k:$k2 prodDwordLen:$prodDwordLen S:$S mDwordLen:$mDwordLen M:$mStr")
             }
         }
     }
@@ -407,6 +417,110 @@ object GenerateRangeRecipPow5_take2 {
                 assert(expected == offsetIndex)
                 ++expected
             }
+    }
+
+    var initialized = false
+    fun initialize() {
+        if (! initialized) {
+            calcPowTables()
+            populateTable()
+            tableMerge()
+            serializeTable()
+            initialized = true
+        }
+    }
+
+    fun rangeDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+        assert(pow10 >= K_MIN)
+        initialize()
+        return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+    }
+
+    private fun _divPow10(
+        z: Coeff, q: Int, x3: Long, x2: Long, x1: Long, x0: Long, k: Int): Residue {
+        require(q in Q_MIN..<Q_MAXX)
+        require(k in K_MIN..<K_MAXX)
+        // clear coeff without worrying about aliasing
+        z.coeffEnableIndexSetAndZeroOut()
+
+        val paramsIndex = OFFSETS[offsetIndex(q, k)].toInt()
+        val descriptor = RANGE_RECIP_PARAMS[paramsIndex]
+        assert(q in unpackQMin(descriptor)..unpackQMax(descriptor))
+        assert(k == unpackK(descriptor))
+        val prodDwordLen = unpackProdDwordLen(descriptor)
+        val mDwordCount = unpackMDwordLen(descriptor)
+        val shift = unpackS(descriptor)
+        val fractionBitLen = shift + 1
+
+        val dividendShiftRight = k - 1
+        assert(dividendShiftRight in 1..<64)
+        val stickyBitsAlfa = x0 and ((1L shl dividendShiftRight) - 1)
+
+        val dividendShiftLeft = 64 - dividendShiftRight
+        val d0 = (x1 shl dividendShiftLeft) or (x0 ushr dividendShiftRight)
+        val d1 = (x2 shl dividendShiftLeft) or (x1 ushr dividendShiftRight)
+        val d2 = (x3 shl dividendShiftLeft) or (x2 ushr dividendShiftRight)
+        val d3 = (x3 ushr dividendShiftRight)
+
+        val residue = when {
+            (d3 != 0L) ->
+                coeffRecipMul4(
+                    z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
+                    d3, d2, d1, d0, fractionBitLen, stickyBitsAlfa
+                )
+
+            (d2 != 0L) ->
+                coeffRecipMul3(
+                    z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
+                    d2, d1, d0, fractionBitLen, stickyBitsAlfa
+                )
+
+            (d1 != 0L) ->
+                coeffRecipMul2(
+                    z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
+                    d1, d0, fractionBitLen, stickyBitsAlfa
+                )
+
+            (d0 != 0L) ->
+                coeffRecipMul1(
+                    z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
+                    d0, fractionBitLen, stickyBitsAlfa
+                )
+
+            else -> throw RuntimeException("why am I here?")
+        }
+
+        z.coeffDisableIndexSetAndUpdateLengths()
+        return residue
+    }
+
+    class TC(val strDividend: String, val pow10: Int, val strExpected: String, val expectedResidue: Int) {
+    }
+
+    val tcs = arrayOf(
+        TC("12345678900000000000", 11, "123456789", EXACT),
+        TC("12345678901234567890", 10, "1234567890", LT_HALF),
+        TC("12345000000000000000", 15, "12345", EXACT),
+        TC("12345000000000000000", 16, "1234", HALF),
+        TC("12345678901234567890", 12, "12345678", GT_HALF),
+    )
+
+    @Test
+    fun testCases() {
+        for (tc in tcs)
+            test1(tc)
+    }
+
+    fun test1(tc: TC) {
+        val dividend = Coeff(tc.strDividend)
+        val k = tc.pow10
+        val z = Coeff()
+        val residue = rangeDivPow10(z, dividend, k)
+        val expected = Coeff(tc.strExpected)
+        if (verbose)
+            println("$dividend / 10**$k => $expected (${tc.expectedResidue})")
+        assertEquals(expected, z)
+        assertEquals(tc.expectedResidue, residue.value)
     }
 
 }
