@@ -214,18 +214,20 @@ object GenerateRangeRecipPow5_take2 {
     }
 
     fun dumpTable() {
-        print("        ")
-        for (k in K_MIN..<K_MAXX) {
-            print("$k  ")
-        }
-        println()
-        for (j in Q_MIN..<Q_MAXX) {
-            print("$j : ")
+        if (verbose) {
+            print("        ")
             for (k in K_MIN..<K_MAXX) {
-                val te = recipTable[j][k]
-                print("$te ")
+                print("$k  ")
             }
             println()
+            for (j in Q_MIN..<Q_MAXX) {
+                print("$j : ")
+                for (k in K_MIN..<K_MAXX) {
+                    val te = recipTable[j][k]
+                    print("$te ")
+                }
+                println()
+            }
         }
     }
 
@@ -239,7 +241,7 @@ object GenerateRangeRecipPow5_take2 {
         var maxS = 0
         for (q in Q_MIN..<Q_MAXX) {
             if (q > Q_MIN) {
-                val prevRow = recipTable[q-1][K_MIN]
+                val prevRow = recipTable[q - 1][K_MIN]
                 val thisRow = recipTable[q][K_MIN]
                 if (prevRow != NULL_TABLE_ENTRY && thisRow != NULL_TABLE_ENTRY) {
                     val interRowDelta = thisRow.S - prevRow.S
@@ -268,15 +270,18 @@ object GenerateRangeRecipPow5_take2 {
             val intraRowCount = min(K_MAXX, q) - K_MIN - 1
             if (intraRowCount > 0) {
                 val avg = intraRowSum.toDouble() / intraRowCount
-                println("j:$q intraRowCount:$intraRowCount avg:$avg maxBitLen:${maxProdBitLens[q]}")
+                if (verbose)
+                    println("j:$q intraRowCount:$intraRowCount avg:$avg maxBitLen:${maxProdBitLens[q]}")
             }
         }
-        println("maxIntraRowDelta:$maxIntraRowDelta")
-        println("maxInterRowDelta:$maxInterRowDelta")
-        println("nonNullEntryCount:$nonNullEntryCount")
-        println("uniqueEntryCount:$uniqueEntryCount")
-        println("maxS:$maxS")
-        println("maxProdBitLen:$maxProdBitLen")
+        if (verbose) {
+            println("maxIntraRowDelta:$maxIntraRowDelta")
+            println("maxInterRowDelta:$maxInterRowDelta")
+            println("nonNullEntryCount:$nonNullEntryCount")
+            println("uniqueEntryCount:$uniqueEntryCount")
+            println("maxS:$maxS")
+            println("maxProdBitLen:$maxProdBitLen")
+        }
     }
 
     private const val TRIANGLE_N1 = K_MAXX - Q_MIN + 1        // rows 20..45 inclusive
@@ -389,13 +394,10 @@ object GenerateRangeRecipPow5_take2 {
 
     @Test
     fun testRun() {
-        calcPowTables()
-        populateTable()
-        tableMerge()
+        initialize()
+        println("iRRP:$iRRP")
         dumpDeltas()
         dumpTable()
-        serializeTable()
-        println("iRRP:$iRRP")
         dumpOffsets()
         dumpSerialized()
     }
