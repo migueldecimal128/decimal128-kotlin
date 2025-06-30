@@ -284,35 +284,19 @@ object GenerateRangeRecipPow5_take2 {
         }
     }
 
-    private const val TRIANGLE_N1 = K_MAXX - Q_MIN + 1        // rows 20..45 inclusive
-    private const val TRIANGLE_SIZE = TRIANGLE_N1 * (Q_MIN - K_MIN) + (TRIANGLE_N1 * (TRIANGLE_N1 - 1)) / 2
-    private const val RECTANGLE_N2 = (Q_MAXX - 1) - K_MAXX
-    private const val RECTANGLE_SIZE = RECTANGLE_N2 * (K_MAXX - K_MIN)
-    private const val OFFSET_TABLE_SIZE = TRIANGLE_SIZE + RECTANGLE_SIZE
-    private val OFFSETS = ShortArray(OFFSET_TABLE_SIZE)
-
-    fun offsetIndex(q: Int, k: Int): Int {
-        require(q in Q_MIN until Q_MAXX) {
-            "q must be in [$Q_MIN, ${Q_MAXX - 1}], was $q"
-        }
-        require(k in K_MIN until minOf(q, K_MAXX)) {
-            "k must be in [$K_MIN, min(q, $K_MAXX)), was $k"
-        }
-
-        return if (q <= K_MAXX) {
-            val n = q - Q_MIN
-            val skip = n * (Q_MIN - K_MIN) + (n * (n - 1)) / 2
-            skip + (k - K_MIN)
-        } else {
-            // first N1 rows grow, then N2 rows are capped at (kMaxx-kMin):
-            val N1 = K_MAXX - Q_MIN + 1        // rows 20..45 inclusive
-            val N2 = (q - 1) - K_MAXX         // rows 46..(q−1)
-            val part1 = N1 * (Q_MIN - K_MIN) + (N1 * (N1 - 1)) / 2
-            val part2 = N2 * (K_MAXX - K_MIN)
-            part1 + part2 + (k - K_MIN)
-        }
+    private const val ROW_SIZE = K_MAXX - K_MIN
+    private const val TABLE_SIZE = (Q_MAXX - Q_MIN) * ROW_SIZE
+    private val OFFSETS = ShortArray(TABLE_SIZE)
+    // I tried setting this up to use triangle indexing
+    // it only saved 15% of the table size and required
+    // more calculation to find the offsetIndex, esp because
+    // of the upper triangle vs the lower rectangle
+    fun offsetIndex(digitCount: Int, pow10: Int): Int {
+        assert(digitCount in Q_MIN..<Q_MAXX)
+        assert(pow10 in K_MIN..<K_MAXX)
+        val index = (digitCount - Q_MIN) * ROW_SIZE + (pow10 - K_MIN)
+        return index
     }
-
 
     var iRRP = 1
     val RANGE_RECIP_PARAMS = LongArray(814)
@@ -344,7 +328,7 @@ object GenerateRangeRecipPow5_take2 {
                 val offset = OFFSETS[offsetIndex]
                 if (verbose)
                     println("$q,$k => $offset")
-                assert(i == offsetIndex)
+                //assert(i == offsetIndex)
                 ++i
             }
         }
@@ -407,18 +391,6 @@ object GenerateRangeRecipPow5_take2 {
         calcPowTables()
         val te = computeMSIfValid(30, 29, 138)
         println(te)
-    }
-
-    @Test
-    fun testIndexTriangle() {
-        var expected = 0
-        for (q in Q_MIN..<Q_MAXX)
-            for (k in K_MIN..<min(q, K_MAXX)) {
-                val offsetIndex = offsetIndex(q, k)
-                println("q:$q k:$k => offsetIndex:$offsetIndex")
-                assert(expected == offsetIndex)
-                ++expected
-            }
     }
 
     var initialized = false
