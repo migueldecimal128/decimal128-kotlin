@@ -7,9 +7,7 @@ import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
 import com.decimal128.CoeffRecipMulPow5.coeffRecipMul1
 import java.math.BigInteger
-import java.math.BigInteger.ZERO
 import java.math.BigInteger.ONE
-import java.math.BigInteger.TWO
 import java.math.BigInteger.TEN
 import kotlin.math.ceil
 import kotlin.math.max
@@ -20,12 +18,7 @@ const val Q_MAXX = 79 // exclusive
 const val K_MIN = BARRETT_POW10_MAXX
 const val K_MAXX = Q_MAXX - 34
 
-object DivRangeRecipMulPow10bi {
-
-    val THREE = BigInteger.valueOf(3)
-    val FIVE = BigInteger.valueOf(5)
-
-    val biMap = arrayOf(ZERO, ONE, TWO, THREE)
+object DivRangeRecipMulPow10 {
 
     class RecipMulParams5(
         val qDigitCount: Int, val xPow10: Int,

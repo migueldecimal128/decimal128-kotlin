@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
 
-import com.decimal128.DivRangeRecipMulPow10bi.divModPow10
-import com.decimal128.DivRangeRecipMulPow10bi.getMultShift
+import com.decimal128.DivRangeRecipMulPow10.divModPow10
+import com.decimal128.DivRangeRecipMulPow10.getMultShift
 
 class TestRecipMulPow10 {
 
