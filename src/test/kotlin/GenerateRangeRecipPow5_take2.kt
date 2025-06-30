@@ -35,18 +35,19 @@ object GenerateRangeRecipPow5_take2 {
         }
     }
 
+    private var EMPTY: Array<IntArray> = emptyArray()
     private var ONE = intArrayOf(1)
     private var POW_10 = Array<IntArray>(Q_MAXX) { ONE }
     private var POW_5 = Array<IntArray>(K_MAXX) { ONE }
 
-    fun calcPowTables() {
+    private fun calcPowTables() {
         for (i in 1..<Q_MAXX)
             POW_10[i] = Car.newMul(POW_10[i-1], 10)
         for (i in 1..<K_MAXX)
             POW_5[i] = Car.newMul(POW_5[i-1], 5)
     }
 
-    data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: IntArray, val S: Int) {
+    private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: IntArray, val S: Int) {
         var qMin = qMax
         fun prodDwordLen() = (prodBitLen + 0x3f) ushr 6
 
@@ -59,7 +60,7 @@ object GenerateRangeRecipPow5_take2 {
     // maxProdDwordLen = 8 bits
     // S = 16 bits
     // mDwordLen = 16 bits
-    fun packDescriptor(te: TableEntry): Long {
+    private fun packDescriptor(te: TableEntry): Long {
         val prodDwordLen = te.prodDwordLen()
         val MDwordLen = (te.M.size + 1) ushr 1
         val descriptor = (te.qMin.toLong() shl 56) or
@@ -71,18 +72,18 @@ object GenerateRangeRecipPow5_take2 {
         return descriptor
     }
 
-    fun unpackQMin(d: Long) = (d ushr 56).toInt()
-    fun unpackQMax(d: Long) = (d ushr 48).toInt() and 0xFF
-    fun unpackK(d: Long) = (d ushr 40).toInt() and 0xFF
-    fun unpackProdDwordLen(d: Long) = (d ushr 32).toInt() and 0xFF
-    fun unpackS(d: Long) = (d ushr 16).toInt() and 0xFFFF
-    fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
+    private fun unpackQMin(d: Long) = (d ushr 56).toInt()
+    private fun unpackQMax(d: Long) = (d ushr 48).toInt() and 0xFF
+    private fun unpackK(d: Long) = (d ushr 40).toInt() and 0xFF
+    private fun unpackProdDwordLen(d: Long) = (d ushr 32).toInt() and 0xFF
+    private fun unpackS(d: Long) = (d ushr 16).toInt() and 0xFFFF
+    private fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
 
-    val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, ONE, -1)
+    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, ONE, -1)
 
-    val recipTable : Array<Array<TableEntry>> = Array(Q_MAXX) { Array<TableEntry>(K_MAXX) { NULL_TABLE_ENTRY} }
+    private var recipTable : Array<Array<TableEntry>> = Array(Q_MAXX) { Array<TableEntry>(K_MAXX) { NULL_TABLE_ENTRY} }
 
-    fun populateTable() {
+    private fun populateTable() {
         for (j in Q_MIN..<Q_MAXX) {
             var prev = recipTable[j-1][K_MIN]
             for (k in K_MIN..<min(j, K_MAXX)) {
@@ -98,7 +99,7 @@ object GenerateRangeRecipPow5_take2 {
         }
     }
 
-    fun findTableEntry(q: Int, k: Int, yStart: Int): TableEntry? {
+    private fun findTableEntry(q: Int, k: Int, yStart: Int): TableEntry? {
         var y = yStart
         var te = computeMSIfValid(q, k, y)
         if (te != null) {
@@ -123,7 +124,7 @@ object GenerateRangeRecipPow5_take2 {
         }
     }
 
-    fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
+    private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
         val twoPowY = Car.newShiftLeft(ONE, y)
         val fivePowK = POW_5[k]
         val tenPowK = POW_10[k]
@@ -162,7 +163,7 @@ object GenerateRangeRecipPow5_take2 {
         return TableEntry(q, k, bitLen, M, y)
     }
 
-    fun isValid(dividend: IntArray, k: Int, M: IntArray, S: Int): Boolean {
+    private fun isValid(dividend: IntArray, k: Int, M: IntArray, S: Int): Boolean {
         val tenPowK = POW_10[k]
         val quotRem = Car.newDivMod(dividend, tenPowK)
         val expectedQuot = quotRem[0]
@@ -197,7 +198,7 @@ object GenerateRangeRecipPow5_take2 {
         return expectedResidue == residue
     }
 
-    fun tableMerge() {
+    private fun tableMerge() {
         for (k in K_MIN..<K_MAXX) {
             var tePrev = recipTable[Q_MAXX-1][k]
             for (q in Q_MAXX-2 downTo Q_MIN) {
@@ -210,6 +211,82 @@ object GenerateRangeRecipPow5_take2 {
                     tePrev = te
                 }
             }
+        }
+    }
+
+    private const val ROW_SIZE = K_MAXX - K_MIN
+    private const val TABLE_SIZE = (Q_MAXX - Q_MIN) * ROW_SIZE
+    private val OFFSETS = ShortArray(TABLE_SIZE)
+    // I tried setting this up to use triangle indexing
+    // it only saved 15% of the table size and required
+    // more calculation to find the offsetIndex, esp because
+    // of the upper triangle vs the lower rectangle
+    private fun offsetIndex(digitCount: Int, pow10: Int): Int {
+        assert(digitCount in Q_MIN..<Q_MAXX)
+        assert(pow10 in K_MIN..<K_MAXX)
+        val index = (digitCount - Q_MIN) * ROW_SIZE + (pow10 - K_MIN)
+        return index
+    }
+
+    var iRRP = 1
+    val RANGE_RECIP_PARAMS = LongArray(814)
+
+    private fun serializeTable() {
+        for (q in Q_MIN..<Q_MAXX) {
+            for (k in K_MIN..<min(q, K_MAXX)) {
+                val te = recipTable[q][k]
+                val i = offsetIndex(q, k)
+                val offset = when {
+                    te == NULL_TABLE_ENTRY -> -1
+                    q > te.qMin -> OFFSETS[offsetIndex(te.qMin, k)]
+                    else -> serialize(te)
+                }
+                OFFSETS[i] = offset.toShort()
+            }
+        }
+
+        if (RANGE_RECIP_PARAMS.size != iRRP) {
+            println("RANGE_RECIP_PARAMS.size should be $iRRP")
+        }
+    }
+
+    private fun serialize(te: TableEntry): Int {
+        val offset = iRRP
+        appendLong(packDescriptor(te))
+        val M = te.M
+        for (i in 0..<(M.size and 0x7FFF_FFFE) step 2) {
+            val mLimb = (M[i + 1].toLong() shl 32) + (M[i].toLong() and 0xFFFF_FFFFL)
+            appendLong(mLimb)
+        }
+        if ((M.size and 1) != 0) {
+            val mLimb = M[M.size - 1].toLong() and 0xFFFF_FFFFL
+            appendLong(mLimb)
+        }
+        return offset
+    }
+
+    private fun appendLong(dw: Long) {
+        if (iRRP == RANGE_RECIP_PARAMS.size)
+            throw RuntimeException("RANGE_RECIP_PARAMS is too small")
+        RANGE_RECIP_PARAMS[iRRP] = dw
+        ++iRRP
+    }
+
+    private fun releaseTemporaryStorage() {
+        POW_5 = EMPTY
+        POW_10 = EMPTY
+        recipTable = emptyArray()
+    }
+
+    private var initialized = false
+    fun initialize() {
+        if (! initialized) {
+            calcPowTables()
+            populateTable()
+            tableMerge()
+            serializeTable()
+            //releaseTemporaryStorage()
+            initialized = true
         }
     }
 
@@ -284,42 +361,6 @@ object GenerateRangeRecipPow5_take2 {
         }
     }
 
-    private const val ROW_SIZE = K_MAXX - K_MIN
-    private const val TABLE_SIZE = (Q_MAXX - Q_MIN) * ROW_SIZE
-    private val OFFSETS = ShortArray(TABLE_SIZE)
-    // I tried setting this up to use triangle indexing
-    // it only saved 15% of the table size and required
-    // more calculation to find the offsetIndex, esp because
-    // of the upper triangle vs the lower rectangle
-    fun offsetIndex(digitCount: Int, pow10: Int): Int {
-        assert(digitCount in Q_MIN..<Q_MAXX)
-        assert(pow10 in K_MIN..<K_MAXX)
-        val index = (digitCount - Q_MIN) * ROW_SIZE + (pow10 - K_MIN)
-        return index
-    }
-
-    var iRRP = 1
-    val RANGE_RECIP_PARAMS = LongArray(814)
-
-    fun serializeTable() {
-        for (q in Q_MIN..<Q_MAXX) {
-            for (k in K_MIN..<min(q, K_MAXX)) {
-                val te = recipTable[q][k]
-                val i = offsetIndex(q, k)
-                val offset = when {
-                    te == NULL_TABLE_ENTRY -> -1
-                    q > te.qMin -> OFFSETS[offsetIndex(te.qMin, k)]
-                    else -> serialize(te)
-                }
-                OFFSETS[i] = offset.toShort()
-            }
-        }
-
-        if (RANGE_RECIP_PARAMS.size != iRRP) {
-            println("RANGE_RECIP_PARAMS.size should be $iRRP")
-        }
-    }
-
     fun dumpOffsets() {
         var i = 0
         for (q in Q_MIN..<Q_MAXX) {
@@ -354,28 +395,6 @@ object GenerateRangeRecipPow5_take2 {
         }
     }
 
-    fun serialize(te: TableEntry): Int {
-        val offset = iRRP
-        appendLong(packDescriptor(te))
-        val M = te.M
-        for (i in 0..<(M.size and 0x7FFF_FFFE) step 2) {
-            val mLimb = (M[i + 1].toLong() shl 32) + (M[i].toLong() and 0xFFFF_FFFFL)
-            appendLong(mLimb)
-        }
-        if ((M.size and 1) != 0) {
-            val mLimb = M[M.size - 1].toLong() and 0xFFFF_FFFFL
-            appendLong(mLimb)
-        }
-        return offset
-    }
-
-    fun appendLong(dw: Long) {
-        if (iRRP == RANGE_RECIP_PARAMS.size)
-            throw RuntimeException("RANGE_RECIP_PARAMS is too small")
-        RANGE_RECIP_PARAMS[iRRP] = dw
-        ++iRRP
-    }
-
     @Test
     fun testRun() {
         initialize()
@@ -391,17 +410,6 @@ object GenerateRangeRecipPow5_take2 {
         calcPowTables()
         val te = computeMSIfValid(30, 29, 138)
         println(te)
-    }
-
-    var initialized = false
-    fun initialize() {
-        if (! initialized) {
-            calcPowTables()
-            populateTable()
-            tableMerge()
-            serializeTable()
-            initialized = true
-        }
     }
 
     fun rangeDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {

@@ -114,6 +114,19 @@ import java.lang.Long.compareUnsigned
             return EXACT
         }
 
+        fun residueFromRemainderDivisor(remainder: IntArray, divisor: IntArray): Residue {
+            if (Car.isZero(remainder))
+                return EXACT
+            val remainderDoubled = Car.newShiftLeft(remainder, 1)
+            val cmp = Car.compare(remainderDoubled, divisor)
+            return when {
+                cmp < 0 -> LT_HALF
+                cmp == 0 -> HALF
+                else -> GT_HALF
+            }
+
+        }
+
         fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue {
             val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
             val pow10div2 = POW10[pow10] ushr 1
