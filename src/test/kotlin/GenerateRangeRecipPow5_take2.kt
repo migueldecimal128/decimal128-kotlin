@@ -11,7 +11,7 @@ import kotlin.math.min
 
 object GenerateRangeRecipPow5_take2 {
 
-    val verbose = true
+    val verbose = false
 
     //private const val Q_MIN = POW10_64_COUNT
     //private const val Q_MAXX = 79
@@ -390,7 +390,8 @@ object GenerateRangeRecipPow5_take2 {
                 val mOffset = offset + 1
                 val mLongArray = Arrays.copyOfRange(RANGE_RECIP_PARAMS, mOffset, mOffset + mDwordLen)
                 val mStr = mLongArray.contentToString()
-                println("($q, $k) qMin:$qMin qMax:$qMax k:$k2 prodDwordLen:$prodDwordLen S:$S mDwordLen:$mDwordLen M:$mStr")
+                if (verbose)
+                    println("($q, $k) qMin:$qMin qMax:$qMax k:$k2 prodDwordLen:$prodDwordLen S:$S mDwordLen:$mDwordLen M:$mStr")
             }
         }
     }
