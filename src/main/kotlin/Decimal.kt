@@ -243,7 +243,7 @@ class Decimal() : Coeff() {
         val productSign = x.sign xor y.sign
         val qMaxXY = max(qX, qY)
         when {
-            qMaxXY < NON_FINITE_INF -> {
+            qMaxXY < MIN_SPECIAL_VALUE -> {
                 this.coeffSetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
@@ -264,7 +264,7 @@ class Decimal() : Coeff() {
     fun sqr(x: Decimal, ctx: DecimalContext) {
         val qX = x.qExp
         when {
-            qX < NON_FINITE_INF -> {
+            qX < MIN_SPECIAL_VALUE -> {
                 this.coeffSetSqr(x)
                 this.qExp = this.qExp shl 1
                 this.sign = false
@@ -285,7 +285,7 @@ class Decimal() : Coeff() {
         val qMaxXYA = max(qMaxXY, qA)
         val productSign = x.sign xor y.sign
         when {
-            qMaxXYA < NON_FINITE_INF -> {
+            qMaxXYA < MIN_SPECIAL_VALUE -> {
                 var aT = if (this === a) Decimal(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 this.coeffSetMul(x, y)
@@ -317,7 +317,7 @@ class Decimal() : Coeff() {
         val quotientSign = x.sign xor y.sign
         val qMaxXY = max(qX, qY)
         when {
-            qMaxXY < NON_FINITE_INF -> {
+            qMaxXY < MIN_SPECIAL_VALUE -> {
                 when {
                     (y.bitLen > 0) -> {
                         val residue = MagnitudeDiv.magDiv(this, x, y)
@@ -354,6 +354,61 @@ class Decimal() : Coeff() {
             }
             else -> setNaN(x, y, ctx)
         }
+    }
+
+    fun inv(x: Decimal, ctx: DecimalContext) {
+        val qX = x.qExp
+        val quotientSign = x.sign
+        when {
+            qX < MIN_SPECIAL_VALUE -> {
+                when {
+                    (x.bitLen > 0) -> {
+                        val residue = MagnitudeInv.magInv(this, x)
+                        this.sign = quotientSign
+                        roundAndFinalize(residue, ctx)
+                    }
+                    else -> {
+                        // inverse of zero
+                        setInfinite(quotientSign)
+                        ctx.setDivByZero()
+                    }
+                }
+            }
+            qX == NON_FINITE_INF -> {
+                setZero(quotientSign)
+            }
+            else -> setNaN(x, ctx)
+        }
+
+    }
+
+    fun sqrt(x: Decimal, ctx: DecimalContext) {
+        val qX = x.qExp
+        when {
+            x.sign -> {
+                setNaN(ctx)
+                ctx.setInvalid()
+            }
+            qX < MIN_SPECIAL_VALUE -> {
+                when {
+                    (x.bitLen > 0) -> {
+                        val residue = MagnitudeSqrt.magSqrt(this, x)
+                        this.sign = false
+                        roundAndFinalize(residue, ctx)
+                    }
+                    else -> {
+                        // sqrt of zero
+                        setZero(false)
+                        qExp = qX shr 1
+                    }
+                }
+            }
+            qX == NON_FINITE_INF -> {
+                setInfinite(false)
+            }
+            else -> setNaN(x, ctx)
+        }
+
     }
 
     fun compareTo(other: Decimal, ctx: DecimalContext) : Int {
