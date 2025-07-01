@@ -9,7 +9,7 @@ import java.util.*
 
 class TestDecimalAddSub {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
         constructor(strA: String, strB: String, rd: RoundingDirection) :
