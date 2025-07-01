@@ -133,7 +133,8 @@ class TestCoeffScaleDown {
             val dw1 = quads[i + 1]
             val dw2 = quads[i + 2]
             val dw3 = quads[i + 3]
-            val biQ = Ular.toBigInteger(dw3, dw2, dw1, dw0)
+            val coeff = Coeff(dw3, dw2, dw1, dw0)
+            val biQ = coeff.coeffToBigInteger()
             for (xPow10 in K_MIN..<K_MAXX) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
