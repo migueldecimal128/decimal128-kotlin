@@ -1,24 +1,26 @@
 package com.decimal128
 
 import java.math.MathContext
-import java.math.RoundingMode
 
-class DecimalContext(val decimalConfig: DecimalConfig) {
-    constructor() : this(DecimalConfig.DECIMAL_128_CONFIG)
-    constructor(roundingDirection: RoundingDirection) : this(DecimalConfig(roundingDirection))
+class DecimalContext(val decimalFormat: DecimalFormat) {
+    constructor() : this(DecimalFormat.DECIMAL_128)
+    constructor(decimalFormat: DecimalFormat, roundingDirection:RoundingDirection) :
+            this(decimalFormat.withRoundingDirection(roundingDirection))
+    constructor(roundingDirection: RoundingDirection) :
+            this(DecimalFormat.DECIMAL_128.withRoundingDirection(roundingDirection))
 
     companion object {
 
-        fun newDecimal64Context() = DecimalContext(DecimalConfig.DECIMAL_64_CONFIG)
-        fun newDecimal128Context() = DecimalContext(DecimalConfig.DECIMAL_128_CONFIG)
-        fun newDecimal128ExtendedContext() = DecimalContext(DecimalConfig.DECIMAL_128_EXTENDED_CONFIG)
+        fun newDecimal64Context() = DecimalContext(DecimalFormat.DECIMAL_64)
+        fun newDecimal128Context() = DecimalContext(DecimalFormat.DECIMAL_128)
+        fun newDecimal128ExtendedContext() = DecimalContext(DecimalFormat.DECIMAL_128_EXTENDED)
     }
-    val precision = decimalConfig.precision
-    val roundingDirection = decimalConfig.roundingDirection
-    val eMax = decimalConfig.eMax
-    val eMin = decimalConfig.eMin
-    val qMax = decimalConfig.qMax
-    val qTiny = decimalConfig.qTiny
+    val precision = decimalFormat.precision
+    val roundingDirection = decimalFormat.roundingDirection
+    val eMax = decimalFormat.eMax
+    val eMin = decimalFormat.eMin
+    val qMax = decimalFormat.qMax
+    val qTiny = decimalFormat.qTiny
 
     fun getMathContext() : MathContext {
         return MathContext(precision, roundingDirection.mapToRoundingMode())

@@ -12,9 +12,10 @@ import java.nio.charset.StandardCharsets
 
 class TestFptestRead {
 
-    val verbose = true
+    val verbose = false
 
     val tcs = arrayOf (
+        "d64+ =0 i -1e-398 +0e-398 -> -1e-398",
         "d128/ =0 -49642331588100000000000e1339 -34761812775252754060000000000e-3295 -> +1428070852031077636864738734302306e4595 x",
         "d128/ =0 i +890948442942907790036148664190309e-6176 +100000000000000000e-6160 -> +890948442942907790036148664190309e-33",
         "d128/ =0 i +999999999999999999999999999999999e-6176 +999999999999999999999999999999999e-6176 -> +1e0",
@@ -108,6 +109,7 @@ class TestFptestRead {
     }
 
     class Fptest(val fptestStr: String,
+                 val format: String,
                  val op: String,
                  val round: String,
                  val traps: String,
@@ -120,9 +122,13 @@ class TestFptestRead {
 
                 fun parseFptest(fptestStr: String): Fptest? {
                     val tokens = fptestStr.split(whitespaceRegex)
-                    if (! tokens[0].startsWith("d128"))
+                    val tokens0 = tokens[0]
+                    val isDecimal128 = tokens0.startsWith("d128")
+                    val isDecimal64 = tokens0.startsWith("d64")
+                    if (! isDecimal128 && ! isDecimal64)
                         return null
-                    val op = tokens[0].substring(4)
+                    val format = tokens0.substring(0, if (isDecimal64) 3 else 4)
+                    val op = tokens0.substring(if (isDecimal64) 3 else 4)
                     val round = tokens[1]
 
                     var i = 2
@@ -144,7 +150,7 @@ class TestFptestRead {
 
                     val exceptions = if (i < tokens.size) tokens[i] else ""
 
-                    return Fptest(fptestStr, op, round, traps, operands, result, exceptions)
+                    return Fptest(fptestStr, format, op, round, traps, operands, result, exceptions)
                 }
 
                 val trapRegex = "[xuozi]+".toRegex()
@@ -214,8 +220,13 @@ class TestFptestRead {
     }
 
     fun test1(fptest: Fptest) {
+        val format = fptest.format
         val operands = fptest.decOperands()
-        val ctx = DecimalContext(fptest.roundingDirection())
+        val ctx = when {
+            format == "d128" -> DecimalContext(DecimalFormat.DECIMAL_128.withRoundingDirection(fptest.roundingDirection()))
+            format == "d64" -> DecimalContext(DecimalFormat.DECIMAL_64.withRoundingDirection(fptest.roundingDirection()))
+            else -> throw IllegalStateException()
+        }
         val observed = Decimal()
         if (verbose)
             println(fptest.fptestStr)
