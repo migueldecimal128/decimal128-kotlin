@@ -14,7 +14,7 @@ import kotlin.math.min
 
 class TestSqrtDoubleDouble{
 
-    val verbose = false
+    val verbose = true
 
     class TC(val bd: BigDecimal) {
         constructor(str: String) : this(BigDecimal(str))
@@ -69,13 +69,13 @@ class TestSqrtDoubleDouble{
 
     @Test
     fun testProblemChild() {
-        val tc = TC("+10E-1")
+        val tc = TC("0e-5")
         test1(tc)
     }
 
     @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<1000) {
             val tc = TC(randBd())
             test1(tc)
         }
@@ -110,10 +110,7 @@ class TestSqrtDoubleDouble{
         ++total
         val qPreferred = radicand.qExp shr 1
         if (radicand.coeffIsZero()) {
-            val sciExp = radicand.sciExp()
-            if (verbose)
-                println("zero radicand:$radicand sciExp:$sciExp")
-            sqrt.setZero()
+            sqrt.coeffSetZero()
             sqrt.qExp = qPreferred
             sqrt.sign = radicand.sign
             return

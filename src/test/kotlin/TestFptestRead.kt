@@ -213,7 +213,8 @@ class TestFptestRead {
         for (line in file.readLines()) {
             val fptest = Fptest.parseFptest(line)
             if (fptest != null) {
-                println(fptest)
+                if (verbose)
+                    println(fptest)
                 test1(fptest)
             }
         }

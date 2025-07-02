@@ -535,6 +535,20 @@ internal object CoeffPow10 {
         return false
     }
 
+    fun coeffSetPow10(z: Coeff, pow10: Int) {
+        if (pow10 >= 0) {
+            val pow10BitLen = pow10BitLen(pow10)
+            val pow10Offset = pow10Offset(pow10)
+            val p0 = POW10[pow10Offset + 0]
+            val p1 = POW10[pow10Offset + 1] and (( 64 - pow10BitLen) shr 31).toLong()
+            val p2 = POW10[pow10Offset + 2] and ((128 - pow10BitLen) shr 31).toLong()
+            val p3 = POW10[pow10Offset + 3] and ((192 - pow10BitLen) shr 31).toLong()
+            z.coeffSet256(p3, p2, p1, p0)
+        } else {
+            z.coeffSetZero()
+        }
+    }
+
 }
 
 

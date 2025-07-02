@@ -361,18 +361,9 @@ class Decimal() : Coeff() {
         val quotientSign = x.sign
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                when {
-                    (x.bitLen > 0) -> {
-                        val residue = MagnitudeInv.magInv(this, x)
-                        this.sign = quotientSign
-                        roundAndFinalize(residue, ctx)
-                    }
-                    else -> {
-                        // inverse of zero
-                        setInfinite(quotientSign)
-                        ctx.setDivByZero()
-                    }
-                }
+                val residue = MagnitudeInv.magInv(this, x)
+                this.sign = quotientSign
+                roundAndFinalize(residue, ctx)
             }
             qX == NON_FINITE_INF -> {
                 setZero(quotientSign)
@@ -798,7 +789,7 @@ class Decimal() : Coeff() {
         val eMax = ctx.eMax
         val eMin = ctx.eMin
         val precision = ctx.precision
-        if (qExp < NON_FINITE_INF) {
+        if (qExp < MIN_SPECIAL_VALUE) {
             if (bitLen != 0) {
                 var eExp = qExp + (digitLen - 1)
                 // IEEE754-2008 7.5: detect tininess on the unrounded result

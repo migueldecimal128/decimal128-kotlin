@@ -133,6 +133,8 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffScaledEQ(other: Coeff, scaleDelta: Int) = coeffScaledEQ(this, other, scaleDelta)
 
+    fun coeffSetPow10(pow10: Int) = CoeffPow10.coeffSetPow10(this, pow10)
+
     fun coeffSetAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
 
     fun coeffSetAdd(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)

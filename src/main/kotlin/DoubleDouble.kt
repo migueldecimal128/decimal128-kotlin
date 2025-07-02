@@ -79,8 +79,17 @@ class DoubleDouble(a: Double, b: Double) {
         }
 
         fun newMulDoubleDoubleByDouble(x: DoubleDouble, y:Double): DoubleDouble {
-            val p = newTwoProd(x.hi, y)
-            return newQuickTwoSum(p.hi, p.lo + x.lo * y)
+            val hi  = x.hi * y
+            val err1 = Math.fma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
+            val err2 = x.lo * y                 // low limb scaled
+            val lo  = err1 + err2              // combined low-order bits
+            return DoubleDouble(hi, lo)
+        }
+
+        fun newSquare(x: Double): DoubleDouble {
+            val hi = x * x
+            val lo = Math.fma(x, x, -hi)
+            return DoubleDouble(hi, lo)
         }
 
         fun newDiv(x: DoubleDouble, y: DoubleDouble): DoubleDouble {
@@ -155,6 +164,16 @@ class DoubleDouble(a: Double, b: Double) {
         val e3   = (s - (u - z3)) + (e1t - z3)
 
         setQuickTwoSum(u, e2 + e3)
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun setMulDoubleDoubleByDouble(x: DoubleDouble, y: Double) {
+        val hi  = x.hi * y
+        val err1 = Math.fma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
+        val err2 = x.lo * y                 // low limb scaled
+        val lo  = err1 + err2              // combined low-order bits
+        this.hi = hi
+        this.lo = lo
     }
 
     @Suppress("NOTHING_TO_INLINE")
