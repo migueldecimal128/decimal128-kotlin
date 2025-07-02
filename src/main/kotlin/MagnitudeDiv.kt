@@ -6,9 +6,9 @@ import kotlin.math.min
 
 object MagnitudeDiv {
 
-    fun magDiv(z: Decimal, x: Decimal, y: Decimal): Residue {
+    fun magDiv(z: Decimal, x: Decimal, y: Decimal, ctx: DecimalContext): Residue {
         if (!x.coeffIsZero()) {
-            val numeratorScale = 34 + 1 - (x.digitLen - y.digitLen)
+            val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
             val yBitLen = y.bitLen
             val y0 = y.dw0
             val scaledNumerator = if (z === y && yBitLen > 64) Coeff() else z

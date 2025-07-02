@@ -320,7 +320,7 @@ class Decimal() : Coeff() {
             qMaxXY < MIN_SPECIAL_VALUE -> {
                 when {
                     (y.bitLen > 0) -> {
-                        val residue = MagnitudeDiv.magDiv(this, x, y)
+                        val residue = MagnitudeDiv.magDiv(this, x, y, ctx)
                         this.sign = quotientSign
                         roundAndFinalize(residue, ctx)
                     }
@@ -361,7 +361,7 @@ class Decimal() : Coeff() {
         val quotientSign = x.sign
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                val residue = MagnitudeInv.magInv(this, x)
+                val residue = MagnitudeInv.magInv(this, x, ctx)
                 this.sign = quotientSign
                 roundAndFinalize(residue, ctx)
             }
@@ -779,8 +779,6 @@ class Decimal() : Coeff() {
                     else -> "?que? $qExp"
                 }
     }
-
-
 
     fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
