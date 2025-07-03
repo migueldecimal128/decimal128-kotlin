@@ -133,6 +133,20 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun coeffScaledEQ(other: Coeff, scaleDelta: Int) = coeffScaledEQ(this, other, scaleDelta)
 
+    fun coeffSetPow2(pow2: Int) {
+        if (pow2 !in 0..255)
+            throw IllegalArgumentException()
+        val shifted = 1L shl pow2
+        val i = pow2 ushr 6
+        val j = 1L shl (60 + i)
+        dw0 = shifted and ((j shl 3) shr 63)
+        dw1 = shifted and ((j shl 2) shr 63)
+        dw2 = shifted and ((j shl 1) shr 63)
+        dw3 = shifted and ((j      ) shr 63)
+        bitLen = pow2 + 1
+        digitLen = ((pow2 * 1233) ushr 12) + 1
+    }
+
     fun coeffSetPow10(pow10: Int) = CoeffPow10.coeffSetPow10(this, pow10)
 
     fun coeffSetAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
