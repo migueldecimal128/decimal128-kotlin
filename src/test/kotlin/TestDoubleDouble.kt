@@ -1,6 +1,5 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
@@ -39,7 +38,7 @@ class TestDoubleDouble {
         val ddSum = DoubleDouble.newAdd(tc.ddA, tc.ddB)
         assert(ddSum.EQ(tc.ddSum))
 
-        val ddProd = DoubleDouble.newMulExact(ddSum, tc.ddC)
+        val ddProd = DoubleDouble.newMulBetter(ddSum, tc.ddC)
         assert(ddProd.EQ(tc.ddProd))
 
         val ddQuot = DoubleDouble.newDiv(ddProd, tc.ddD)
@@ -74,7 +73,7 @@ class TestDoubleDouble {
         val cmpXY = ddSumX.compareTo(ddSumY)
         println("cmpXY:$cmpXY")
 
-        val ddProdY = DoubleDouble.newMulExact(ddC, ddSumY)
+        val ddProdY = DoubleDouble.newMulBetter(ddC, ddSumY)
         println("ddProdY:$ddProdY")
         assert(ddProdX.EQwithinUlpSlop(ddProdY, 1))
 

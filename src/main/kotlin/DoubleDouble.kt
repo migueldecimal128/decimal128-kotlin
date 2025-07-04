@@ -72,7 +72,7 @@ class DoubleDouble(a: Double, b: Double) {
             return newQuickTwoSum(p, e + cross)
         }
 
-        fun newMulExact(x: DoubleDouble, y:DoubleDouble): DoubleDouble {
+        fun newMulBetter(x: DoubleDouble, y:DoubleDouble): DoubleDouble {
             val dd = DoubleDouble()
             dd.setMulBetter(x, y)
             return dd
@@ -147,23 +147,15 @@ class DoubleDouble(a: Double, b: Double) {
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun setSub(x: DoubleDouble, y: DoubleDouble) {
-        // 1) twoSum on hi
-        val s  = x.hi - y.hi
-        val z1 = s - x.hi
-        val e1 = (x.hi - (s - z1)) + (-y.hi - z1)
-
-        // 2) twoSum on lo
-        val t  = x.lo - y.lo
-        val z2 = t - x.lo
-        val e2 = (x.lo - (t - z2)) + (-y.lo - z2)
-
-        // 3) blend high-error with low-sum
-        val e1t = e1 + t
-        val u    = s + e1t
-        val z3   = u - s
-        val e3   = (s - (u - z3)) + (e1t - z3)
-
-        setQuickTwoSum(u, e2 + e3)
+        // 1) subtract hi-words
+        val p = x.hi - y.hi
+        // 2) compute the exact rounding error of that subtraction
+        //    (a.hi - b.hi) – p  plus the lo-words
+        val err = Math.fma(1.0, x.hi, -y.hi - p) + x.lo - y.lo
+        // 3) renormalize (quick two-sum)
+        val sum = p + err
+        this.hi = sum
+        this.lo = err - (sum - p)
     }
 
     @Suppress("NOTHING_TO_INLINE")
@@ -188,7 +180,7 @@ class DoubleDouble(a: Double, b: Double) {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun setMulBetter(x: DoubleDouble, y: DoubleDouble) {
+    inline fun setMulBetter_X(x: DoubleDouble, y: DoubleDouble) {
         // 1) high‐word product + error
         val pH = x.hi * y.hi
         val pL = Math.fma(x.hi, y.hi, -pH)
@@ -227,6 +219,91 @@ class DoubleDouble(a: Double, b: Double) {
         lo = lo0 - (h - hi0)
         hi = h
     }
+
+    /** this = a * b  in full double-double precision */
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun setMulBetter_Y(a: DoubleDouble, b: DoubleDouble) {
+        // 1) hi-word product
+        val p     = a.hi * b.hi
+        // 2) error of hi×hi
+        val e1    = Math.fma(a.hi, b.hi, -p)
+        // 3) cross-terms
+        val e2    = a.hi * b.lo + a.lo * b.hi
+        // 4) lo×lo (very tiny, but for completeness)
+        val e3    = a.lo * b.lo
+
+        // 5) accumulate e1 + e2
+        val s     = e1 + e2
+        val z     = s - e1
+        val e12   = (e1 - (s - z)) + (e2 - z)
+
+        // 6) add to p → (hi0, e23)
+        val hi0   = p + s
+        val z2    = hi0 - p
+        val e23   = (p - (hi0 - z2)) + (s - z2)
+
+        // 7) total low part = e12 + e23 + e3
+        val lo0   = e12 + e23 + e3
+
+        // 8) final renormalize (quick-two-sum)
+        val h     = hi0 + lo0
+        val l     = lo0 - (h - hi0)
+
+        this.hi = h
+        this.lo = l
+    }
+
+    inline fun setMulBetter(a: DoubleDouble, b: DoubleDouble) {
+        // hi×hi
+        val p  = a.hi * b.hi
+        // error of hi×hi
+        val e1 = Math.fma(a.hi, b.hi, -p)
+        // cross-terms
+        val c1 = a.hi * b.lo
+        val c2 = a.lo * b.hi
+        val e2 = c1 + c2
+        // lo×lo
+        val e3 = a.lo * b.lo
+
+        // renormalize e1+e2
+        val s  = e1 + e2
+        val z  = s - e1
+        val e12 = (e1 - (s - z)) + (e2 - z)
+
+        // merge into p
+        val hi0 = p + s
+        val z2  = hi0 - p
+        val e23 = (p - (hi0 - z2)) + (s - z2)
+
+        // total low part
+        val lo0 = e12 + e23 + e3
+
+        // final quick-two-sum
+        val h   = hi0 + lo0
+        val l   = lo0 - (h - hi0)
+
+        // debug print
+        println("""
+      setMulBetter debug:
+        a = {hi=${a.hi}, lo=${a.lo}}
+        b = {hi=${b.hi}, lo=${b.lo}}
+        p  = $p
+        e1 = $e1
+        c1 = $c1, c2 = $c2
+        e2 = $e2
+        e3 = $e3
+        e12= $e12
+        e23= $e23
+        hi0= $hi0
+        lo0= $lo0
+        result = {hi=$h, lo=$l}
+    """.trimIndent())
+
+        this.hi = h
+        this.lo = l
+    }
+
+
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun setMul(x: DoubleDouble, y: Double) {
