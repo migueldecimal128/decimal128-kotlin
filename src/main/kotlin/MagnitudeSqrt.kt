@@ -86,7 +86,7 @@ object MagnitudeSqrt {
             println(" --> residual1:$coeffResidual1")
 
         val ddT = coeffGuess1.coeffToNewDoubleDouble()
-        ddT.mutateDouble()
+        ddT.mutate2x()
         ddT.mutateInvFast()
         val ddResidual1 = coeffResidual1.coeffToNewDoubleDouble()
         val ddDelta1 = DoubleDouble.newMulApprox(ddResidual1, ddT)

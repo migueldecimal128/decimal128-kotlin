@@ -281,7 +281,7 @@ class DoubleDouble(a: Double, b: Double) {
         // final quick-two-sum
         val h   = hi0 + lo0
         val l   = lo0 - (h - hi0)
-
+        /*
         // debug print
         println("""
       setMulBetter debug:
@@ -298,7 +298,7 @@ class DoubleDouble(a: Double, b: Double) {
         lo0= $lo0
         result = {hi=$h, lo=$l}
     """.trimIndent())
-
+        */
         this.hi = h
         this.lo = l
     }
@@ -426,9 +426,32 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(hi, lo0)
     }
 
-    fun mutateDouble() {
+    fun mutate2x() {
         hi *= 2
         lo *= 2
+    }
+
+    fun newReciprocal(a: DoubleDouble): DoubleDouble {
+        // 1. Initial approximation of the reciprocal.
+        val q1 = 1.0 / a.hi
+
+        // 2. Calculate the residual: r = 1.0 - a * q1
+        // We need to compute this with high precision.
+        // First, calculate a * q1 using double-double multiplication.
+        val p = newTwoProd(a.hi, q1)
+        val mult_hi = p.hi
+        val mult_lo = p.lo + a.lo * q1
+
+        // Now, subtract this from 1.0 with high precision.
+        val r = newTwoSum(1.0, -mult_hi)
+        val r_lo = -mult_lo
+
+        // 3. Calculate the second-order term: q2 = r * q1
+        val q2 = r.hi * q1
+
+        // 4. Sum the terms to get the final result.
+        // The final result is q1 + r*q1
+        return newTwoSum(q1, q2)
     }
 
     /*

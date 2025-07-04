@@ -8,9 +8,7 @@ import java.math.MathContext
 import java.util.*
 import kotlin.math.abs
 
-class TestInvDoubleDouble{
-
-    // FIXME this test is incomplete/broken
+class TestDecimalReciprocal{
 
     val verbose = true
 
@@ -55,7 +53,7 @@ class TestInvDoubleDouble{
 
     @Test
     fun testProblemChild() {
-        val tc = TC("3")
+        val tc = TC("6")
         test1(tc)
     }
 
@@ -99,6 +97,9 @@ class TestInvDoubleDouble{
     }
 
     fun setInv(inv: Decimal, divisor: Decimal, ctx: DecimalContext) {
+        val scalePow10 = 36
+        val scaleDouble = 1e36
+
         if (divisor.bitLen <= 1) {
             if (divisor.bitLen == 0) {
                 inv.setInfinite(divisor.sign)
@@ -111,54 +112,38 @@ class TestInvDoubleDouble{
         }
 
         val dDivisor = divisor.coeffToFloorDouble()
-        val ddDivisor = divisor.coeffToNewDoubleDouble()
 
-        val dGuess0 = 1.0 / dDivisor
-        val r = Math.fma(-dDivisor, dGuess0, 1.0)
-        val ddGuess0 = DoubleDouble(dGuess0, r * dGuess0)
+        val dGuess0 = 1.0 / dDivisor * scaleDouble
+        val cGuess = Coeff().apply { coeffSet(dGuess0) }
 
         if (verbose) {
-            println("divisor:$divisor dDivisor:$dDivisor ddDivisor:$ddDivisor")
-            println("dGuess0:$dGuess0 ddGuess0:$ddGuess0")
+            println("divisor:$divisor dDivisor:$dDivisor")
+            println("dGuess0:$dGuess0 cGuess:$cGuess")
         }
 
-        val ddTwo = DoubleDouble(2.0, 0.0)
-        val t = DoubleDouble.newMulBetter(ddDivisor, ddGuess0)
-        t.setSub(ddTwo, t)
-        t.setMulBetter(t, ddGuess0)
-        val ddGuess1 = t
+        val coeff2xS = Coeff().apply { coeffSetPow10(scalePow10); coeffMutateShiftLeft(1) }
+        val t = Coeff()
 
-        if (verbose)
-            println("ddGuess1:$ddGuess1")
+        t.coeffSetMul(divisor, cGuess)
+        t.coeffSetSub(coeff2xS, t)
+        t.coeffSetMul(t, cGuess)
+        cGuess.coeffSetScaleDownPow10(t, scalePow10)
 
-    }
+        if (verbose) {
+            println("cGuess:$cGuess")
+        }
 
-    @Test
-    fun testDdReciprocal() {
-        val ddX = DoubleDouble(3.0, 0.0)
-        val ddRecip = ddReciprocal(ddX)
-        println("ddX:$ddX ddRecip:$ddRecip")
-    }
+        t.coeffSetMul(divisor, cGuess)
+        t.coeffSetSub(coeff2xS, t)
+        t.coeffSetMul(t, cGuess)
+        cGuess.coeffSetScaleDownPow10(t, scalePow10)
 
-    fun ddReciprocal(a: DoubleDouble): DoubleDouble {
-        require(!(a.hi == 0.0 && a.lo == 0.0)) { "Division by zero" }
+        if (verbose) {
+            println("cGuess:$cGuess")
+        }
 
-        // 0) Constants
-        val two = DoubleDouble(2.0, 0.0)
 
-        // 1) Initial guess (just a hardware divide)
-        var x = DoubleDouble(1.0 / a.hi, 0.0)
 
-        // 2) Compute a*x in double-double
-        val ax = DoubleDouble.newMulBetter(a, x)
-
-        // 3) Compute (2 – a*x)
-        val t  = DoubleDouble.newSub(two, ax)
-
-        // 4) Multiply x * t → x_{new}
-        x = DoubleDouble.newMulBetter(x, t)
-
-        return x
     }
 
 }
