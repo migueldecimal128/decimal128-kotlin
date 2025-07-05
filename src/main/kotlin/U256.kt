@@ -28,7 +28,7 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
+internal open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -52,7 +52,6 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
         private set
     var digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
         private set
-    var sign = false
 
     fun u256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; bitLen = 0; digitLen = 0
@@ -175,7 +174,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     fun u256SetDiv(x: U256, y: U256) = u256Div(this, x, y)
 
-    fun u256SetDivx64(x: U256, y0: Long) = u256Divx64(this, x, y0)
+    fun u256SetDivX64(x: U256, y0: Long) = u256Divx64(this, x, y0)
 
     fun u256SetMod(x: U256, y: U256) = u256Mod(this, x, y)
 
@@ -375,80 +374,6 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
 
     fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else toString()
-
-    ///////////////////////
-    // signed operations //
-    ///////////////////////
-
-    fun s256Add(z: XInt256, x: XInt256, y: XInt256) = s256AddImpl(z, x, y.sign, y)
-
-    fun s256Sub(z: XInt256, x: XInt256, y: XInt256) = s256AddImpl(z, x, ! y.sign, y)
-
-    private fun s256AddImpl(z: XInt256, x: XInt256, ySign: Boolean, y: XInt256) {
-        val xSign = x.sign
-        if (xSign == ySign) {
-            // FIXME do I need to worry about -0 here?
-            z.sign = ySign
-            u256AddUnscaled(z, x, y)
-        } else {
-            val cmp = u256UnscaledCompare(x, y)
-            when {
-                (cmp > 0) -> {
-                    u256SubUnscaled(z, x, y)
-                    z.sign = xSign and (z.bitLen > 0)
-                }
-                (cmp < 0) -> {
-                    u256SubUnscaled(z, y, x)
-                    z.sign = ySign and (z.bitLen > 0)
-                }
-                else -> {
-                    z.sign = false
-                    u256SetZero()
-                }
-            }
-        }
-    }
-
-    fun s256Mul(z: XInt256, x: XInt256, y: XInt256) {
-        u256Mul(z, x, y)
-        z.sign = (x.sign xor y.sign) and (z.bitLen > 0)
-    }
-
-    fun s256Divx64(z: XInt256, x: XInt256, y0: Long) {
-        u256Divx64(z, x, y0)
-        z.sign = x.sign
-    }
-
-    fun s256Div(z: XInt256, x: XInt256, y: XInt256) {
-        u256Div(z, x, y)
-        z.sign = x.sign xor y.sign
-    }
-
-    fun s256Mod(z: XInt256, x: XInt256, y: XInt256) {
-        u256Mod(z, x, y)
-        z.sign = x.sign xor y.sign
-    }
-
-    fun s256ScaleUpPow10(z: XInt256, x: XInt256, pow10: Int) {
-        u256ScaleUpPow10(z, x, pow10)
-        z.sign = x.sign
-    }
-
-    fun s256ScaleDownPow10(z: XInt256, x: XInt256, pow10: Int) {
-        u256ScaleDownPow10(z, x, pow10)
-        z.sign = x.sign
-    }
-
-    fun s256FmaPow10(z: XInt256, x: XInt256, pow10: Int, a: XInt256) {
-        if (! (x.sign xor a.sign)) {
-            z.sign = x.sign
-            U256ScalePow10.u256ScaleFmaPow10(z, x, pow10, a)
-            return
-        }
-        val prod = if (z === a) XInt256() else z
-        s256ScaleUpPow10(prod, x, pow10)
-        s256Add(z, prod, a)
-    }
 
 
 }

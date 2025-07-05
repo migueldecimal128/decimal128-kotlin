@@ -20,7 +20,7 @@ const val CAPPED_EXP_MAX = 25000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
-class Decimal() : U256() {
+class Decimal() : S256() {
     var qExp = 0
     //var sign = false
 
