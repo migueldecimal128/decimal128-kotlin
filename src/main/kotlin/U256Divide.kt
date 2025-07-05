@@ -1,7 +1,7 @@
 package com.decimal128
 
-import com.decimal128.CoeffCompare.coeffUnscaledCompare
-import com.decimal128.CoeffSet.coeffSetShiftRight
+import com.decimal128.U256Compare.u256UnscaledCompare
+import com.decimal128.U256Set.u256SetShiftRight
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.HALF
@@ -17,13 +17,13 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
     //    (v[i] shl s) or if (s != 0) (v[i - 1] ushr (32 - s)) else 0
 }
 
-object CoeffDivide {
+object U256Divide {
 
-    fun coeffDivx64(z: Coeff, x: Coeff, y0: Long): Residue {
+    fun u256Divx64(z: U256, x: U256, y0: Long): Residue {
         if ((y0 shr 1) == 0L) {
             if (y0 == 0L)
                 throw RuntimeException("div by zero")
-            z.coeffSet(x)
+            z.u256Set(x)
             return EXACT
         }
         val x0 = x.dw0
@@ -37,7 +37,7 @@ object CoeffDivide {
                 2 * rem == y0 -> HALF   // so make sure divisor is small enough
                 else -> GT_HALF
             }
-            z.coeffSet64(quot)
+            z.u256Set64(quot)
             return residue
         }
         if ((y0 and (y0 - 1)) == 0L) {
@@ -52,7 +52,7 @@ object CoeffDivide {
                 2 * rem == y0 -> HALF
                 else -> GT_HALF
             }
-            coeffSetShiftRight(z, x, ntz)
+            u256SetShiftRight(z, x, ntz)
             return residue
         }
         //TODO at this point I know that x.bitLen >= y.bitLen and x > y
@@ -63,9 +63,9 @@ object CoeffDivide {
         return DivKnuth.knuthDivideWrapperx64(z, x, y0, false)
     }
 
-    fun coeffDiv(z: Coeff, x: Coeff, y: Coeff): Residue {
+    fun u256Div(z: U256, x: U256, y: U256): Residue {
         if (y.bitLen <= 64)
-            return coeffDivx64(z, x, y.dw0)
+            return u256Divx64(z, x, y.dw0)
         val bitLenDelta = x.bitLen - y.bitLen
         if (bitLenDelta < 0) {
             val residue = when {
@@ -73,18 +73,18 @@ object CoeffDivide {
                 bitLenDelta <= -2 -> LT_HALF
                 else -> Residue.residueFromRemainderDivisor(x, y)
             }
-            z.coeffSetZero()
+            z.u256SetZero()
             return residue
         }
         if (bitLenDelta == 0) {
-            val cmp = coeffUnscaledCompare(x, y)
+            val cmp = u256UnscaledCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
-                z.coeffSetZero()
+                z.u256SetZero()
                 return residue
             }
             if (cmp == 0) {
-                z.coeffSetOne()
+                z.u256SetOne()
                 return EXACT
             }
         }
@@ -94,21 +94,21 @@ object CoeffDivide {
         return DivKnuth.knuthDivideWrapper(z, x, y, false)
     }
 
-    fun coeffMod(z: Coeff, x: Coeff, y: Coeff) {
-        assert(y.coeffIsGTOne())
+    fun u256Mod(z: U256, x: U256, y: U256) {
+        assert(y.u256IsGTOne())
         if (x.bitLen < y.bitLen) {
-            z.coeffSet(x)
+            z.u256Set(x)
             return
         }
         if (x.bitLen == y.bitLen) {
-            val cmp = coeffUnscaledCompare(x, y)
+            val cmp = u256UnscaledCompare(x, y)
             if (cmp < 0) {
                 val residue = Residue.residueFromRemainderDivisor(x, y)
-                z.coeffSet(x)
+                z.u256Set(x)
                 return
             }
             if (cmp == 0) {
-                z.coeffSetZero()
+                z.u256SetZero()
                 return
             }
         }

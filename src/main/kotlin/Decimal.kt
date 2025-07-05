@@ -20,12 +20,12 @@ const val CAPPED_EXP_MAX = 25000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
-class Decimal() : Coeff() {
+class Decimal() : U256() {
     var qExp = 0
-    var sign = false
+    //var sign = false
 
     constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
-        this.coeffSet256(dw3, dw2, dw1, dw0)
+        this.u256Set256(dw3, dw2, dw1, dw0)
         this.qExp = qExp
         this.sign = sign
     }
@@ -41,7 +41,7 @@ class Decimal() : Coeff() {
     fun setZero()  = setZero(false)
 
     fun setZero(sign: Boolean) {
-        coeffSetZero()
+        u256SetZero()
         this.qExp = 0
         this.sign = sign
     }
@@ -91,7 +91,7 @@ class Decimal() : Coeff() {
 
     fun setNaN(payload: Int, ctx: DecimalContext) {
         sign = false
-        coeffSet64(payload.toLong())
+        u256Set64(payload.toLong())
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -102,7 +102,7 @@ class Decimal() : Coeff() {
     }
 
     fun setInfinite(sign: Boolean) {
-        this.coeffSetOne()
+        this.u256SetOne()
         this.qExp = NON_FINITE_INF
         this.sign = sign
     }
@@ -112,17 +112,17 @@ class Decimal() : Coeff() {
         this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
-        coeffSet64(abs)
+        u256Set64(abs)
     }
 
     fun setUInt(ul: Long) {
         this.qExp = 0
         this.sign = false
-        coeffSet64(ul)
+        u256Set64(ul)
     }
 
     fun set(x: Decimal) {
-        coeffSet(x)
+        u256Set(x)
         this.qExp = x.qExp
         this.sign = x.sign
     }
@@ -132,7 +132,7 @@ class Decimal() : Coeff() {
     }
 
     fun setMag(x: Decimal) {
-        coeffSet(x)
+        u256Set(x)
         this.qExp = x.qExp
     }
 
@@ -140,18 +140,18 @@ class Decimal() : Coeff() {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
-        val offset = CoeffPow10.pow10Offset(ctx.precision)
+        val offset = U256Pow10.pow10Offset(ctx.precision)
         if (ctx.precision < MIN_POW10_DIGIT_LEN_128) {
-            super.coeffSet64(POW10[offset] - 1)
+            super.u256Set64(POW10[offset] - 1)
         } else if (ctx.precision < MIN_POW10_DIGIT_LEN_192) {
-            super.coeffSet128(POW10[offset + 1], POW10[offset] - 1)
+            super.u256Set128(POW10[offset + 1], POW10[offset] - 1)
         } else
             throw IllegalArgumentException()
     }
 
     fun setMinFiniteMagnitude(ctx: DecimalContext) {
         qExp = ctx.qTiny
-        super.coeffSetOne()
+        super.u256SetOne()
     }
 
     fun copy(x: Decimal) = set(x)
@@ -244,13 +244,13 @@ class Decimal() : Coeff() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
-                this.coeffSetMul(x, y)
+                this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 roundAndFinalize(EXACT, ctx)
             }
             qMaxXY == NON_FINITE_INF -> {
-                if (x.coeffIsZero() || y.coeffIsZero()) {
+                if (x.u256IsZero() || y.u256IsZero()) {
                     ctx.setInvalid()
                     setNaN(ctx)
                 } else {
@@ -265,7 +265,7 @@ class Decimal() : Coeff() {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                this.coeffSetSqr(x)
+                this.u256SetSqr(x)
                 this.qExp = this.qExp shl 1
                 this.sign = false
                 roundAndFinalize(EXACT, ctx)            }
@@ -288,14 +288,14 @@ class Decimal() : Coeff() {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
                 var aT = if (this === a) Decimal(a) else a
                 // multiply without roundAndFinalize .. remains exact
-                this.coeffSetMul(x, y)
+                this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
                 this.add(this, aT, ctx)
             }
             qMaxXYA == NON_FINITE_INF -> when {
-                (x.coeffIsZero() || y.coeffIsZero()) -> {
+                (x.u256IsZero() || y.u256IsZero()) -> {
                     setNaN(ctx)
                 }
                 (qA == NON_FINITE_INF) -> {
@@ -406,13 +406,13 @@ class Decimal() : Coeff() {
         val qMax = max(qExp, other.qExp)
         when {
             (qMax < MIN_SPECIAL_VALUE) -> {
-                if (coeffIsZero()) {
-                    if (other.coeffIsZero())
+                if (u256IsZero()) {
+                    if (other.u256IsZero())
                         return 0
                     else
                         return if (other.sign) 1 else -1
                 }
-                if (other.coeffIsZero() || sign != other.sign) {
+                if (other.u256IsZero() || sign != other.sign) {
                     return if (sign) -1 else 1
                 }
                 val cmp = magnitudeCompareTo(other)
@@ -439,8 +439,8 @@ class Decimal() : Coeff() {
     }
 
     fun magnitudeCompareTo(other: Decimal) : Int {
-        val thisIsZero = coeffIsZero()
-        val otherIsZero = other.coeffIsZero()
+        val thisIsZero = u256IsZero()
+        val otherIsZero = other.u256IsZero()
         val eitherIsZero = thisIsZero or otherIsZero
         when {
             !eitherIsZero -> {
@@ -449,9 +449,9 @@ class Decimal() : Coeff() {
                     return cmpExpSci
                 val expDelta = this.qExp - other.qExp
                 val ret = when {
-                    expDelta == 0 -> coeffUnscaledCompareTo(other)
-                    expDelta > 0 -> -other.coeffScaledCompareTo(this, expDelta)
-                    else -> coeffScaledCompareTo(other, -expDelta)
+                    expDelta == 0 -> u256UnscaledCompareTo(other)
+                    expDelta > 0 -> -other.u256ScaledCompareTo(this, expDelta)
+                    else -> u256ScaledCompareTo(other, -expDelta)
                 }
                 return ret
             }
@@ -465,8 +465,8 @@ class Decimal() : Coeff() {
     }
 
     fun magnitudeEQ(other: Decimal) : Boolean {
-        val thisIsZero = this.coeffIsZero()
-        val otherIsZero = other.coeffIsZero()
+        val thisIsZero = this.u256IsZero()
+        val otherIsZero = other.u256IsZero()
         val bothAreZero = thisIsZero and otherIsZero
         val eitherIsZero = thisIsZero or otherIsZero
         if (this.sciExp() != other.sciExp())
@@ -474,9 +474,9 @@ class Decimal() : Coeff() {
         if (! eitherIsZero) {
             val expDelta = this.qExp - other.qExp
             return when {
-                expDelta == 0 -> this.coeffUnscaledEQ(other)
-                expDelta > 0 -> other.coeffScaledEQ(this, expDelta)
-                else -> this.coeffScaledEQ(other, -expDelta)
+                expDelta == 0 -> this.u256UnscaledEQ(other)
+                expDelta > 0 -> other.u256ScaledEQ(this, expDelta)
+                else -> this.u256ScaledEQ(other, -expDelta)
             }
         }
         return bothAreZero
@@ -486,7 +486,7 @@ class Decimal() : Coeff() {
     fun roundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext) {
         //FIXME - deal with special values
         if (qExp < 0) {
-            val residue = this.coeffSetScaleDownPow10(x, -qExp)
+            val residue = this.u256SetScaleDownPow10(x, -qExp)
             qExp = 0
             sign = x.sign
             roundAndFinalize(residue, rd, ctx)
@@ -519,7 +519,7 @@ class Decimal() : Coeff() {
                     setMaxFiniteMagnitude(ctx)
                 return
             }
-            coeffIsZero() -> {
+            u256IsZero() -> {
                 setMinFiniteMagnitude(ctx)
                 sign = false
                 return
@@ -539,7 +539,7 @@ class Decimal() : Coeff() {
                     setMaxFiniteMagnitude(ctx)
                 return
             }
-            coeffIsZero() -> {
+            u256IsZero() -> {
                 setMinFiniteMagnitude(ctx)
                 sign = true
                 return
@@ -554,21 +554,21 @@ class Decimal() : Coeff() {
 
     private fun mutateNextAwayFromZero(ctx: DecimalContext) {
         val headroom = min(ctx.precision - digitLen, qExp - ctx.qTiny)
-        if (headroom > 1 || headroom == 1 && !coeffIsAllNines(ctx.precision-1)) {
-            this.coeffSetScaleUpPow10(this, headroom)
+        if (headroom > 1 || headroom == 1 && !u256IsAllNines(ctx.precision-1)) {
+            this.u256SetScaleUpPow10(this, headroom)
             this.qExp -= headroom
         }
-        coeffMutateIncrement()
+        u256MutateIncrement()
     }
 
     private fun mutateNextTowardZero(ctx: DecimalContext) {
         val headroom =
-            min(ctx.precision - digitLen + if (coeffIsPowerOf10()) 1 else 0, qExp - ctx.qTiny)
+            min(ctx.precision - digitLen + if (u256IsPowerOf10()) 1 else 0, qExp - ctx.qTiny)
         if (headroom > 0) {
-            this.coeffSetScaleUpPow10(this, headroom)
+            this.u256SetScaleUpPow10(this, headroom)
             this.qExp -= headroom
         }
-        coeffMutateDecrement()
+        u256MutateDecrement()
     }
 
     fun minNum(x: Decimal, y: Decimal, ctx: DecimalContext) = minNum_helper(x, y, 0, ctx)
@@ -613,15 +613,15 @@ class Decimal() : Coeff() {
         if (qExp < NON_FINITE_INF) {
             qExp += p10
             val residue = when {
-                coeffIsZero() -> EXACT
+                u256IsZero() -> EXACT
                 (p10 > 0) -> {
                     val headroom = ctx.precision - digitLen
                     val scaleUp = min(headroom, p10)
-                    this.coeffSetScaleUpPow10(this, scaleUp)
+                    this.u256SetScaleUpPow10(this, scaleUp)
                     qExp -= scaleUp
                     EXACT
                 }
-                (p10 < 0) -> this.coeffSetScaleDownPow10(this, -p10)
+                (p10 < 0) -> this.u256SetScaleDownPow10(this, -p10)
                 else -> return // p10 == 0 .. no scaling
             }
             roundAndFinalize(residue, ctx)
@@ -665,13 +665,13 @@ class Decimal() : Coeff() {
         val qMax = max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {
-                coeffIsZero() -> when {
-                    other.coeffIsZero() -> IEEE754_EQ
+                u256IsZero() -> when {
+                    other.u256IsZero() -> IEEE754_EQ
                     other.sign -> IEEE754_LT
                     else -> IEEE754_GT
                 }
 
-                other.coeffIsZero() -> when {
+                other.u256IsZero() -> when {
                     sign -> IEEE754_GT
                     else -> IEEE754_LT
                 }
@@ -717,8 +717,8 @@ class Decimal() : Coeff() {
             val qMax = max(qExp, other.qExp)
             return when {
                 qMax < NON_FINITE_INF -> when {
-                    coeffIsZero() -> other.coeffIsZero()
-                    other.coeffIsZero() -> false
+                    u256IsZero() -> other.u256IsZero()
+                    other.u256IsZero() -> false
                     else -> sign == other.sign && magnitudeEQ(other)
                 }
 
@@ -741,7 +741,7 @@ class Decimal() : Coeff() {
             qExp == NON_FINITE_QNAN -> quiteNaN
             qExp == NON_FINITE_INF ->
                 return if (sign == false) positiveInfinity else negativeInfinity
-            coeffIsZero() ->
+            u256IsZero() ->
                 return if (sign == false) positiveZero else negativeZero
             sciExp() < -6143 ->
                 return if (sign == false) positiveSubnormal else negativeSubnormal
@@ -755,7 +755,7 @@ class Decimal() : Coeff() {
     fun isSignMinus() = sign
     fun isNormal() = qExp < NON_FINITE_INF && sciExp() >= -6143
     fun isFinite() = qExp < NON_FINITE_INF
-    fun isZero() = qExp < NON_FINITE_INF && coeffIsZero()
+    fun isZero() = qExp < NON_FINITE_INF && u256IsZero()
     fun isSubnormal() = qExp < NON_FINITE_INF && sciExp() < -6143
     fun isInfinite() = qExp == NON_FINITE_INF
     fun isNaN() = qExp in NON_FINITE_QNAN..NON_FINITE_SNAN
@@ -774,8 +774,8 @@ class Decimal() : Coeff() {
                 when {
                     (qExp < MIN_SPECIAL_VALUE) -> super.toString() + "E" + qExp
                     qExp == NON_FINITE_INF -> "Inf"
-                    qExp == NON_FINITE_QNAN -> "NaN" + super.coeffToNaNDiagnosticString()
-                    qExp == NON_FINITE_SNAN -> "sNaN" + super.coeffToNaNDiagnosticString()
+                    qExp == NON_FINITE_QNAN -> "NaN" + super.u256ToNaNDiagnosticString()
+                    qExp == NON_FINITE_SNAN -> "sNaN" + super.u256ToNaNDiagnosticString()
                     else -> "?que? $qExp"
                 }
     }
@@ -804,7 +804,7 @@ class Decimal() : Coeff() {
                         if (excess == 0) {
                             inboundResidue
                         } else {
-                            val roundingResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess)
+                            val roundingResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess)
                             qExp += excess
                             assert(digitLen == precision)
                             assert(eExp == qExp + (digitLen - 1))
@@ -818,13 +818,13 @@ class Decimal() : Coeff() {
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (!roundUp)
                         return
-                    super.coeffMutateIncrement()
+                    super.u256MutateIncrement()
                     if (digitLen <= precision)
                         return
                     assert(digitLen == precision + 1)
                     // if we rolled into another digit because of roundup
                     // then the result is EXACTly divisible by 10
-                    val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
+                    val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
                     assert(residueExact == Residue.EXACT)
                     ++qExp
                     assert(qExp + (digitLen - 1) == eExp + 1)
@@ -839,7 +839,7 @@ class Decimal() : Coeff() {
                 if (eExp > eMax) {
                     // overflow IEEE754-2008 7.4 Overflow page 37
                     if (roundingDirection.overflowsToInfinity(sign)) {
-                        super.coeffSetOne()
+                        super.u256SetOne()
                         qExp = NON_FINITE_INF
                     } else {
                         setMaxFiniteMagnitude(ctx)
@@ -854,7 +854,7 @@ class Decimal() : Coeff() {
                 val overlap = qExp - myQMin
                 if (overlap >= 0) {
                     val excess2 = super.digitLen - overlap
-                    val scaleResidue = CoeffScalePow10.coeffScaleDownPow10(this, this, excess2)
+                    val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess2)
                     qExp += excess2
                     assert(digitLen <= precision)
                     assert(eExp == qExp + (digitLen - 1))
@@ -866,13 +866,13 @@ class Decimal() : Coeff() {
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (!roundUp)
                         return
-                    super.coeffMutateIncrement()
+                    super.u256MutateIncrement()
                     if (digitLen <= precision)
                         return
                     assert(digitLen == precision + 1)
                     // if we rolled into another digit because of roundup
                     // then the result is definitely divisible by 10
-                    val residueExact = CoeffScalePow10.coeffScaleDownPow10(this, this, 1)
+                    val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
                     assert(residueExact == Residue.EXACT)
                     ++qExp
                     return
@@ -880,7 +880,7 @@ class Decimal() : Coeff() {
 
                 // underflow ... swamped non-zero value
                 if (roundingDirection.underflowsToZero(sign)) {
-                    super.coeffSetZero()
+                    super.u256SetZero()
                     qExp = NON_FINITE_INF
                 } else {
                     setMinFiniteMagnitude(ctx)

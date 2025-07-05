@@ -6,7 +6,7 @@ import java.math.BigInteger
 import java.math.BigInteger.ONE
 import java.util.*
 
-class TestCoeffBitLength {
+class TestU256BitLength {
 
     val verbose = false
 

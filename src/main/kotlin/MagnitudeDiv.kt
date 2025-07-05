@@ -7,22 +7,22 @@ import kotlin.math.min
 object MagnitudeDiv {
 
     fun magDiv(z: Decimal, x: Decimal, y: Decimal, ctx: DecimalContext): Residue {
-        if (!x.coeffIsZero()) {
+        if (!x.u256IsZero()) {
             val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
             val yBitLen = y.bitLen
             val y0 = y.dw0
-            val scaledNumerator = if (z === y && yBitLen > 64) Coeff() else z
-            scaledNumerator.coeffSetScaleUpPow10(x, numeratorScale)
+            val scaledNumerator = if (z === y && yBitLen > 64) U256() else z
+            scaledNumerator.u256SetScaleUpPow10(x, numeratorScale)
             val residue = when {
-                (y.bitLen <= 64) -> z.coeffSetDivx64(scaledNumerator, y.dw0)
-                else -> z.coeffSetDiv(scaledNumerator, y)
+                (y.bitLen <= 64) -> z.u256SetDivx64(scaledNumerator, y.dw0)
+                else -> z.u256SetDiv(scaledNumerator, y)
             }
             val qPreferred = x.qExp - y.qExp
             var qZ = x.qExp - y.qExp - numeratorScale
             var ntz = numberOfTrailingZeros(z.dw0)
             if (residue == Residue.EXACT && qZ < qPreferred && ntz > 0) {
                 if (qZ + 1 < qPreferred) {
-                    val quot = Coeff()
+                    val quot = U256()
                     do {
                         val deltaQ = qPreferred - qZ
                         val chunk = min(min(9, deltaQ), ntz)
@@ -42,18 +42,18 @@ object MagnitudeDiv {
                                 t = q
                             }
                             if (pow10Count > 0) {
-                                z.coeffSetScaleDownPow10(z, pow10Count)
+                                z.u256SetScaleDownPow10(z, pow10Count)
                                 qZ += pow10Count
                             }
                             break
                         } else {
-                            z.coeffSet(quot)
+                            z.u256Set(quot)
                             ntz -= chunk
                             qZ += chunk
                         }
                     } while (qZ < qPreferred && ntz > 0)
-                } else if (z.coeffIsMultipleOf10()) {
-                    z.coeffSetScaleDownPow10(z, 1)
+                } else if (z.u256IsMultipleOf10()) {
+                    z.u256SetScaleDownPow10(z, 1)
                     ++qZ
                 }
             }
@@ -62,7 +62,7 @@ object MagnitudeDiv {
         }
         // x is zero
         val qPreferred = x.qExp - y.qExp
-        z.coeffSetZero()
+        z.u256SetZero()
         z.qExp = qPreferred
         return Residue.EXACT
     }

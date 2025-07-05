@@ -5,7 +5,7 @@ import java.math.BigInteger
 import java.math.BigInteger.ONE
 import java.util.*
 
-class TestCoeffDiv {
+class TestU256Div {
 
     val verbose = false
 
@@ -90,19 +90,19 @@ class TestCoeffDiv {
             return
         val coeffA = newCoeff(case.biA)
         val coeffB = newCoeff(case.biB)
-        val coeffC = Coeff()
+        val coeffC = U256()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / $coeffB (${coeffB.digitLen}) = expected:$expected")
-        coeffC.coeffSetDiv(coeffA, coeffB)
+        coeffC.u256SetDiv(coeffA, coeffB)
         val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) / $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
         assert (biC.equals(expected))
         if (random.nextBoolean()) {
-            coeffA.coeffSetDiv(coeffA, coeffB)
+            coeffA.u256SetDiv(coeffA, coeffB)
             assert(coeffA.coeffToBigInteger().equals(expected))
         } else {
-            coeffB.coeffSetDiv(coeffA, coeffB)
+            coeffB.u256SetDiv(coeffA, coeffB)
             assert(coeffB.coeffToBigInteger().equals(expected))
 
         }

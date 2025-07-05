@@ -1,12 +1,10 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.util.*
-import kotlin.math.abs
 
 class TestDecimalReciprocal{
 
@@ -111,32 +109,32 @@ class TestDecimalReciprocal{
             return
         }
 
-        val dDivisor = divisor.coeffToFloorDouble()
+        val dDivisor = divisor.u256ToFloorDouble()
 
         val dGuess0 = 1.0 / dDivisor * scaleDouble
-        val cGuess = Coeff().apply { coeffSet(dGuess0) }
+        val cGuess = U256().apply { u256Set(dGuess0) }
 
         if (verbose) {
             println("divisor:$divisor dDivisor:$dDivisor")
             println("dGuess0:$dGuess0 cGuess:$cGuess")
         }
 
-        val coeff2xS = Coeff().apply { coeffSetPow10(scalePow10); coeffMutateShiftLeft(1) }
-        val t = Coeff()
+        val coeff2xS = U256().apply { u256SetPow10(scalePow10); u256MutateShiftLeft(1) }
+        val t = U256()
 
-        t.coeffSetMul(divisor, cGuess)
-        t.coeffSetSub(coeff2xS, t)
-        t.coeffSetMul(t, cGuess)
-        cGuess.coeffSetScaleDownPow10(t, scalePow10)
+        t.u256SetMul(divisor, cGuess)
+        t.u256SetSub(coeff2xS, t)
+        t.u256SetMul(t, cGuess)
+        cGuess.u256SetScaleDownPow10(t, scalePow10)
 
         if (verbose) {
             println("cGuess:$cGuess")
         }
 
-        t.coeffSetMul(divisor, cGuess)
-        t.coeffSetSub(coeff2xS, t)
-        t.coeffSetMul(t, cGuess)
-        cGuess.coeffSetScaleDownPow10(t, scalePow10)
+        t.u256SetMul(divisor, cGuess)
+        t.u256SetSub(coeff2xS, t)
+        t.u256SetMul(t, cGuess)
+        cGuess.u256SetScaleDownPow10(t, scalePow10)
 
         if (verbose) {
             println("cGuess:$cGuess")

@@ -4,10 +4,10 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.CoeffPow10.compareWithHalfPow10_128
-import com.decimal128.CoeffPow10.compareWithHalfPow10_192
-import com.decimal128.CoeffPow10.compareWithHalfPow10_256
-import com.decimal128.CoeffPow10.compareWithHalfPow10_64
+import com.decimal128.U256Pow10.compareWithHalfPow10_128
+import com.decimal128.U256Pow10.compareWithHalfPow10_192
+import com.decimal128.U256Pow10.compareWithHalfPow10_256
+import com.decimal128.U256Pow10.compareWithHalfPow10_64
 
 import java.lang.Long.compareUnsigned
 
@@ -41,7 +41,7 @@ import java.lang.Long.compareUnsigned
         val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF",
             "EXACT_NEGATED", "LT_HALF_NEGATED", "HALF_NEGATED", "GT_HALF_NEGATED")
 
-        fun residueFrom(c:Coeff) :Residue {
+        fun residueFrom(c:U256) :Residue {
             val bitLen = c.bitLen
             return when {
                 bitLen == 0 -> EXACT
@@ -85,7 +85,7 @@ import java.lang.Long.compareUnsigned
             return residueX
         }
 
-        fun residueFromRemainderDivisor(r: Coeff, d: Coeff): Residue {
+        fun residueFromRemainderDivisor(r: U256, d: U256): Residue {
             if (r.dw3 < 0L) {
                 // high bit of residue is set
                 // doubling is certainly larger

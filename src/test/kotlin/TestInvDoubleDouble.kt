@@ -1,12 +1,10 @@
 package com.decimal128
 
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.util.*
-import kotlin.math.abs
 
 class TestInvDoubleDouble{
 
@@ -110,8 +108,8 @@ class TestInvDoubleDouble{
             return
         }
 
-        val dDivisor = divisor.coeffToFloorDouble()
-        val ddDivisor = divisor.coeffToNewDoubleDouble()
+        val dDivisor = divisor.u256ToFloorDouble()
+        val ddDivisor = divisor.u256ToNewDoubleDouble()
 
         val dGuess0 = 1.0 / dDivisor
         val r = Math.fma(-dDivisor, dGuess0, 1.0)

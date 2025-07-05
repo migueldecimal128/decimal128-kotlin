@@ -89,7 +89,7 @@ object DivMagic {
     // it has the 64-bit range in the divisor ... compared with Barrett
     // 32-bit divisor
 
-    fun magicDivPow10_64(z: Coeff, x0: Long, pow10: Int): Residue {
+    fun magicDivPow10_64(z: U256, x0: Long, pow10: Int): Residue {
         assert(pow10 in 0..<MAGIC_POW10_MAXX)
         assert(initialized)
         val remainder = magicDivModPow10_64(z, x0, pow10)
@@ -97,7 +97,7 @@ object DivMagic {
         return residue
     }
 
-    private fun magicDivModPow10_64(z: Coeff, x0: Long, pow10: Int): Long {
+    private fun magicDivModPow10_64(z: U256, x0: Long, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
                 val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
@@ -118,11 +118,11 @@ object DivMagic {
                 val rHat = x0 - reconstructedLo
                 val remainder = rHat + (-reconstructedHi and denom)
 
-                z.coeffSet64(q0)
+                z.u256Set64(q0)
                 return remainder
             }
             pow10 == 0 -> {
-                z.coeffSet64(x0)
+                z.u256Set64(x0)
                 return 0L
             }
             else ->
@@ -131,7 +131,7 @@ object DivMagic {
     }
 
     private fun magicDivModPow10_64(
-        q: Coeff,
+        q: U256,
         x0: Long,
         pow10: Int,
         m: Long,
@@ -161,7 +161,7 @@ object DivMagic {
         val rHat = x0 - reconstructedLo
         val r = rHat // + (-reconstructedHi and x0)
 
-        q.coeffSet64(q0)
+        q.u256Set64(q0)
         return r
     }
 

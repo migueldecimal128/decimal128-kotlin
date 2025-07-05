@@ -1,9 +1,9 @@
 package com.decimal128
 
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul1
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul2
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul3
-import com.decimal128.CoeffRecipMulPow5.coeffRecipMul4
+import com.decimal128.U256RecipMulPow5.u256RecipMul1
+import com.decimal128.U256RecipMulPow5.u256RecipMul2
+import com.decimal128.U256RecipMulPow5.u256RecipMul3
+import com.decimal128.U256RecipMulPow5.u256RecipMul4
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -413,18 +413,18 @@ object GenerateRangeRecipPow5_take2 {
         println(te)
     }
 
-    fun rangeDivPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+    fun rangeDivPow10(z: U256, x: U256, pow10: Int): Residue {
         assert(pow10 >= K_MIN)
         initialize()
         return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
     }
 
     private fun _divPow10(
-        z: Coeff, q: Int, x3: Long, x2: Long, x1: Long, x0: Long, k: Int): Residue {
+        z: U256, q: Int, x3: Long, x2: Long, x1: Long, x0: Long, k: Int): Residue {
         require(q in Q_MIN..<Q_MAXX)
         require(k in K_MIN..<K_MAXX)
         // clear coeff without worrying about aliasing
-        z.coeffEnableIndexSetAndZeroOut()
+        z.u256EnableIndexSetAndZeroOut()
 
         val paramsIndex = OFFSETS[offsetIndex(q, k)].toInt()
         val descriptor = RANGE_RECIP_PARAMS[paramsIndex]
@@ -447,25 +447,25 @@ object GenerateRangeRecipPow5_take2 {
 
         val residue = when {
             (d3 != 0L) ->
-                coeffRecipMul4(
+                u256RecipMul4(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d3, d2, d1, d0, fractionBitLen, stickyBitsAlfa
                 )
 
             (d2 != 0L) ->
-                coeffRecipMul3(
+                u256RecipMul3(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d2, d1, d0, fractionBitLen, stickyBitsAlfa
                 )
 
             (d1 != 0L) ->
-                coeffRecipMul2(
+                u256RecipMul2(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d1, d0, fractionBitLen, stickyBitsAlfa
                 )
 
             (d0 != 0L) ->
-                coeffRecipMul1(
+                u256RecipMul1(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d0, fractionBitLen, stickyBitsAlfa
                 )
@@ -473,7 +473,7 @@ object GenerateRangeRecipPow5_take2 {
             else -> throw RuntimeException("why am I here?")
         }
 
-        z.coeffDisableIndexSetAndUpdateLengths()
+        z.u256DisableIndexSetAndUpdateLengths()
         return residue
     }
 
@@ -495,11 +495,11 @@ object GenerateRangeRecipPow5_take2 {
     }
 
     fun test1(tc: TC) {
-        val dividend = Coeff(tc.strDividend)
+        val dividend = U256(tc.strDividend)
         val k = tc.pow10
-        val z = Coeff()
+        val z = U256()
         val residue = rangeDivPow10(z, dividend, k)
-        val expected = Coeff(tc.strExpected)
+        val expected = U256(tc.strExpected)
         if (verbose)
             println("$dividend / 10**$k => $expected (${tc.expectedResidue})")
         assertEquals(expected, z)

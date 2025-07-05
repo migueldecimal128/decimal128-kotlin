@@ -1,23 +1,23 @@
 package com.decimal128
 
-import com.decimal128.CoeffMul.coeffMul
-import com.decimal128.CoeffFma.coeffFma
-import com.decimal128.CoeffAdd.coeffAddUnscaled
-import com.decimal128.CoeffAdd.coeffAdd
-import com.decimal128.CoeffCompare.coeffScaledCompare
-import com.decimal128.CoeffCompare.coeffScaledEQ
-import com.decimal128.CoeffSet.coeffSetShiftRight
-import com.decimal128.CoeffCompare.coeffUnscaledCompare
-import com.decimal128.CoeffCompare.coeffUnscaledEQ
-import com.decimal128.CoeffDivide.coeffDiv
-import com.decimal128.CoeffDivide.coeffDivx64
-import com.decimal128.CoeffDivide.coeffMod
-import com.decimal128.CoeffFma.coeffFmaPow10
-import com.decimal128.CoeffPow10.calcDigitLen256
-import com.decimal128.CoeffPow10.pow10Offset
-import com.decimal128.CoeffScalePow10.coeffScaleDownPow10
-import com.decimal128.CoeffScalePow10.coeffScaleUpPow10
-import com.decimal128.CoeffSet.coeffSet
+import com.decimal128.U256Mul.u256Mul
+import com.decimal128.U256Fma.u256Fma
+import com.decimal128.U256Add.u256AddUnscaled
+import com.decimal128.U256Add.u256Add
+import com.decimal128.U256Compare.u256ScaledCompare
+import com.decimal128.U256Compare.u256ScaledEQ
+import com.decimal128.U256Set.u256SetShiftRight
+import com.decimal128.U256Compare.u256UnscaledCompare
+import com.decimal128.U256Compare.u256UnscaledEQ
+import com.decimal128.U256Divide.u256Div
+import com.decimal128.U256Divide.u256Divx64
+import com.decimal128.U256Divide.u256Mod
+import com.decimal128.U256Fma.u256FmaPow10
+import com.decimal128.U256Pow10.calcDigitLen256
+import com.decimal128.U256Pow10.pow10Offset
+import com.decimal128.U256ScalePow10.u256ScaleDownPow10
+import com.decimal128.U256ScalePow10.u256ScaleUpPow10
+import com.decimal128.U256Set.u256Set
 import java.lang.Long.numberOfLeadingZeros
 import kotlin.math.max
 import kotlin.math.min
@@ -27,7 +27,7 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
+open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -35,9 +35,9 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
-        CoeffParsePrint.coeffFromString(this, str)
+        U256ParsePrint.u256FromString(this, str)
     }
-    constructor(c: Coeff) : this(c.dw3, c.dw2, c.dw1, c.dw0)
+    constructor(c: U256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
     var dw3 = d3
         private set
@@ -51,42 +51,43 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         private set
     var digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
         private set
+    var sign = false
 
-    fun coeffSetZero() {
+    fun u256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; bitLen = 0; digitLen = 0
     }
 
-    fun coeffIsZero() = digitLen == 0
+    fun u256IsZero() = bitLen == 0
 
-    fun coeffIsNotZero() = digitLen > 0
+    fun u256IsNotZero() = bitLen > 0
 
-    fun coeffSetOne() {
+    fun u256SetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; bitLen = 1; digitLen = 1
     }
 
-    fun coeffSetZeroOrOneMasked(d0: Long) {
+    fun u256SetZeroOrOneMasked(d0: Long) {
         val asInt = (d0 and 1).toInt()
         dw3 = 0; dw2 = 0; dw1 = 0; dw0 = d0 and 1; bitLen = asInt; digitLen = asInt
     }
 
-    fun coeffIsOne() = bitLen == 1
+    fun u256IsOne() = bitLen == 1
 
-    fun coeffIsLEOne() = bitLen <= 1
+    fun u256IsLEOne() = bitLen <= 1
 
-    fun coeffIsGTOne() = bitLen > 1
+    fun u256IsGTOne() = bitLen > 1
 
-    fun coeffIsMultipleOf5() = CoeffBits.coeffIsMultipleOf5(this)
+    fun u256IsMultipleOf5() = U256Bits.u256IsMultipleOf5(this)
 
-    fun coeffIsMultipleOf10(): Boolean {
+    fun u256IsMultipleOf10(): Boolean {
         if (bitLen < 4 || (dw0 and 1) != 0L)
             return false
-        return coeffIsMultipleOf5()
+        return u256IsMultipleOf5()
     }
 
-    fun coeffIsPowerOf10() = CoeffPow10.coeffIsPow10(this)
+    fun u256IsPowerOf10() = U256Pow10.coeffIsPow10(this)
 
-    fun coeffIsAllNines(nineCount: Int) : Boolean  {
-        val pow10BitLen = CoeffPow10.pow10BitLen(nineCount)
+    fun u256IsAllNines(nineCount: Int) : Boolean  {
+        val pow10BitLen = U256Pow10.pow10BitLen(nineCount)
         if (bitLen != pow10BitLen)
             return false
         val offset = pow10Offset(nineCount)
@@ -103,9 +104,9 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     private fun calcDigitLen(): Int {
         return when {
-            (bitLen <= 64) -> CoeffPow10.calcDigitLen64(bitLen, dw0)
-            (bitLen <= 128) -> CoeffPow10.calcDigitLen128(bitLen, dw1, dw0)
-            (bitLen <= 192) -> CoeffPow10.calcDigitLen192(bitLen, dw2, dw1, dw0)
+            (bitLen <= 64) -> U256Pow10.calcDigitLen64(bitLen, dw0)
+            (bitLen <= 128) -> U256Pow10.calcDigitLen128(bitLen, dw1, dw0)
+            (bitLen <= 192) -> U256Pow10.calcDigitLen192(bitLen, dw2, dw1, dw0)
             else -> calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
         }
     }
@@ -119,21 +120,21 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
     // of bitLen delta <= 1 and digitLen delta <= 1
     private fun updateLengthsAfterRoundUp() = updateLengths()
 
-    fun coeffHasValidLengths(): Boolean {
+    fun u256HasValidLengths(): Boolean {
         if (digitLen != calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
             return false;
         return true
     }
 
-    fun coeffUnscaledCompareTo(other: Coeff) = coeffUnscaledCompare(this, other)
+    fun u256UnscaledCompareTo(other: U256) = u256UnscaledCompare(this, other)
 
-    fun coeffUnscaledEQ(other: Coeff) = coeffUnscaledEQ(this, other)
+    fun u256UnscaledEQ(other: U256) = u256UnscaledEQ(this, other)
 
-    fun coeffScaledCompareTo(other: Coeff, scaleDelta: Int)  = coeffScaledCompare(this, other, scaleDelta)
+    fun u256ScaledCompareTo(other: U256, scaleDelta: Int)  = u256ScaledCompare(this, other, scaleDelta)
 
-    fun coeffScaledEQ(other: Coeff, scaleDelta: Int) = coeffScaledEQ(this, other, scaleDelta)
+    fun u256ScaledEQ(other: U256, scaleDelta: Int) = u256ScaledEQ(this, other, scaleDelta)
 
-    fun coeffSetPow2(pow2: Int) {
+    fun u256SetPow2(pow2: Int) {
         if (pow2 !in 0..255)
             throw IllegalArgumentException()
         val shifted = 1L shl pow2
@@ -147,39 +148,39 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         digitLen = ((pow2 * 1233) ushr 12) + 1
     }
 
-    fun coeffSetPow10(pow10: Int) = CoeffPow10.coeffSetPow10(this, pow10)
+    fun u256SetPow10(pow10: Int) = U256Pow10.coeffSetPow10(this, pow10)
 
-    fun coeffSetAdd(x: Coeff, scaleDelta: Int, y: Coeff) = coeffAdd(this, x, scaleDelta, y)
+    fun u256SetAdd(x: U256, scaleDelta: Int, y: U256) = u256Add(this, x, scaleDelta, y)
 
-    fun coeffSetAdd(x: Coeff, y: Coeff) = coeffAddUnscaled(this, x, y)
+    fun u256SetAdd(x: U256, y: U256) = u256AddUnscaled(this, x, y)
 
-    fun coeffSetSub(x: Coeff, y: Coeff) = CoeffSub.coeffSubUnscaled(this, x, y)
+    fun u256SetSub(x: U256, y: U256) = U256Sub.u256SubUnscaled(this, x, y)
 
-    fun coeffSetMul(x: Coeff, y: Coeff) = coeffMul(this, x, y)
+    fun u256SetMul(x: U256, y: U256) = u256Mul(this, x, y)
 
-    fun coeffSetSqr(x: Coeff) = CoeffSqr.coeffSqr(this, x)
+    fun u256SetSqr(x: U256) = U256Sqr.u256Sqr(this, x)
 
-    fun coeffSetFma(x: Coeff, y: Coeff, a: Coeff) = coeffFma(this, x, y, a)
+    fun u256SetFma(x: U256, y: U256, a: U256) = u256Fma(this, x, y, a)
 
-    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a: Coeff) = coeffFmaPow10(this, x, pow10, a)
+    fun u256SetFmaPow10(x: U256, pow10: Int, a: U256) = u256FmaPow10(this, x, pow10, a)
 
-    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a0: Long) = coeffFmaPow10(this, x, pow10, a0)
+    fun u256SetFmaPow10(x: U256, pow10: Int, a0: Long) = u256FmaPow10(this, x, pow10, a0)
 
-    fun coeffSetFmaPow10(x: Coeff, pow10: Int, a1: Long, a0: Long) = coeffFmaPow10(this, x, pow10, a1, a0)
+    fun u256SetFmaPow10(x: U256, pow10: Int, a1: Long, a0: Long) = u256FmaPow10(this, x, pow10, a1, a0)
 
-    fun coeffMutateFmaPow10(pow10: Int, a: Long) = coeffFmaPow10(this, this, pow10, a)
+    fun u256MutateFmaPow10(pow10: Int, a: Long) = u256FmaPow10(this, this, pow10, a)
 
-    fun coeffSetFms(x: Coeff, y: Coeff, subtrahend: Coeff) = CoeffFms.coeffFms(this, x, y, subtrahend)
+    fun u256SetFms(x: U256, y: U256, subtrahend: U256) = U256Fms.u256Fms(this, x, y, subtrahend)
 
-    fun coeffSetDiv(x: Coeff, y: Coeff) = coeffDiv(this, x, y)
+    fun u256SetDiv(x: U256, y: U256) = u256Div(this, x, y)
 
-    fun coeffSetDivx64(x: Coeff, y0: Long) = coeffDivx64(this, x, y0)
+    fun u256SetDivx64(x: U256, y0: Long) = u256Divx64(this, x, y0)
 
-    fun coeffSetMod(x: Coeff, y: Coeff) = coeffMod(this, x, y)
+    fun u256SetMod(x: U256, y: U256) = u256Mod(this, x, y)
 
-    fun coeffSetScaleUpPow10(x: Coeff, pow10: Int) = coeffScaleUpPow10(this, x, pow10)
+    fun u256SetScaleUpPow10(x: U256, pow10: Int) = u256ScaleUpPow10(this, x, pow10)
 
-    fun coeffSetScaleDownPow10(x: Coeff, pow10: Int) = coeffScaleDownPow10(this, x, pow10)
+    fun u256SetScaleDownPow10(x: U256, pow10: Int) = u256ScaleDownPow10(this, x, pow10)
 
     operator fun get(index: Int): Long {
         return when (index) {
@@ -202,67 +203,67 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         }
     }
 
-    fun coeffEnableIndexSetAndZeroOut() {
+    fun u256EnableIndexSetAndZeroOut() {
         digitLen = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
-    fun coeffDisableIndexSetAndUpdateLengths() {
+    fun u256DisableIndexSetAndUpdateLengths() {
         assert(digitLen == -1)
         updateLengths()
     }
 
-    fun coeffSet64(d0: Long) {
+    fun u256Set64(d0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
         bitLen = calcBitLen64(d0)
-        digitLen = CoeffPow10.calcDigitLen64(bitLen, d0)
+        digitLen = U256Pow10.calcDigitLen64(bitLen, d0)
     }
 
-    fun coeffSet128(d1: Long, d0: Long) {
+    fun u256Set128(d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen128(d1, d0)
-        digitLen = CoeffPow10.calcDigitLen128(bitLen, d1, d0)
+        digitLen = U256Pow10.calcDigitLen128(bitLen, d1, d0)
     }
 
-    fun coeffSet192(d2: Long, d1: Long, d0: Long) {
+    fun u256Set192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen192(d2, d1, d0)
-        digitLen = CoeffPow10.calcDigitLen192(bitLen, d2, d1, d0)
+        digitLen = U256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
     }
 
 
-    fun coeffSet256(d3: Long, d2: Long, d1: Long, d0: Long){
+    fun u256Set256(d3: Long, d2: Long, d1: Long, d0: Long){
         dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen256(d3, d2, d1, d0)
         digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
-    fun coeffSet(x: Coeff) {
+    fun u256Set(x: U256) {
             bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
     }
 
-    fun coeffSet(str: String) = CoeffParsePrint.coeffFromString(this, str)
+    fun u256Set(str: String) = U256ParsePrint.u256FromString(this, str)
 
-    fun coeffSetShiftRight(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftRight(this, x, bitShift)
+    fun u256SetShiftRight(x: U256, bitShift: Int) = U256Set.u256SetShiftRight(this, x, bitShift)
 
-    fun coeffSetShiftLeft(x: Coeff, bitShift: Int) = CoeffSet.coeffSetShiftLeftOr(this, x, bitShift, 0L)
+    fun u256SetShiftLeft(x: U256, bitShift: Int) = U256Set.u256SetShiftLeftOr(this, x, bitShift, 0L)
 
-    fun coeffMutateShiftLeft(bitShift: Int) = CoeffSet.coeffSetShiftLeftOr(this, this, bitShift, 0L)
+    fun u256MutateShiftLeft(bitShift: Int) = U256Set.u256SetShiftLeftOr(this, this, bitShift, 0L)
 
-    fun coeffMutateShiftLeftOr(bitShift: Int, d0: Long) = CoeffSet.coeffSetShiftLeftOr(this, this, bitShift, d0)
+    fun u256MutateShiftLeftOr(bitShift: Int, d0: Long) = U256Set.u256SetShiftLeftOr(this, this, bitShift, d0)
 
-    fun coeffSet(x: LongArray, xOff: Int, xLen: Int) = coeffSet(this, x, xOff, xLen)
+    fun u256Set(x: LongArray, xOff: Int, xLen: Int) = u256Set(this, x, xOff, xLen)
 
-    fun coeffSetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
-        coeffSetShiftRight(this, x, xOff, xLen, bitCount)
+    fun u256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
+        u256SetShiftRight(this, x, xOff, xLen, bitCount)
 
     fun getDwordAtBitIndex(bitIndex: Int): Long =
-        CoeffBits.getDwordAtBitIndex(this, bitIndex)
+        U256Bits.getDwordAtBitIndex(this, bitIndex)
 
-    open fun coeffToFloorDouble(): Double {
+    open fun u256ToFloorDouble(): Double {
         val hiBitLen = min(53, bitLen)
         val hiBitIndex = bitLen - hiBitLen
         val hiBits = getDwordAtBitIndex(hiBitIndex)
@@ -270,22 +271,22 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return dHiBits
     }
 
-    fun coeffSet(d: Double) {
+    fun u256Set(d: Double) {
         val dRaw = d.toRawBits()
         val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
         if (exp <= 63) {
-            coeffSet64(Math.abs(d).toLong())
+            u256Set64(Math.abs(d).toLong())
             return
         }
         if (exp > 255) {
             throw RuntimeException("coefficient overflow")
         }
         val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
-        coeffSet64(significand)
-        coeffSetShiftLeft(this, exp - 52)
+        u256Set64(significand)
+        u256SetShiftLeft(this, exp - 52)
     }
 
-    open fun coeffToNewDoubleDouble(): DoubleDouble {
+    open fun u256ToNewDoubleDouble(): DoubleDouble {
         val hiBitsLen = min(53, bitLen)
         val hiBitsIndex = bitLen - hiBitsLen
         val hiBits = getDwordAtBitIndex(hiBitsIndex)
@@ -311,24 +312,24 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         return DoubleDouble(dHiBits, dLoBits)
     }
 
-    fun coeffSet(dd: DoubleDouble) {
-        coeffSet(dd.hi)
+    fun u256Set(dd: DoubleDouble) {
+        u256Set(dd.hi)
         if (dd.lo == 0.0)
             return
-        val coeffLo = Coeff()
-        coeffLo.coeffSet(dd.lo)
+        val coeffLo = U256()
+        coeffLo.u256Set(dd.lo)
         if (dd.lo > 0)
-            coeffSetAdd(this, coeffLo)
+            u256SetAdd(this, coeffLo)
         else
-            coeffSetSub(this, coeffLo)
+            u256SetSub(this, coeffLo)
     }
 
-    fun coeffMutateIncrement(doRoundUp: Boolean) {
+    fun u256MutateIncrement(doRoundUp: Boolean) {
         if (doRoundUp)
-            coeffMutateIncrement()
+            u256MutateIncrement()
     }
 
-    fun coeffMutateIncrement() {
+    fun u256MutateIncrement() {
         ++dw0
         if (dw0 == 0L) {
             ++dw1
@@ -346,7 +347,7 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
             updateLengthsAfterRoundUp()
     }
 
-    fun coeffMutateDecrement() {
+    fun u256MutateDecrement() {
         --dw0
         if (dw0 == -1L) {
             --dw1
@@ -362,16 +363,16 @@ open class Coeff(d3: Long, d2: Long, d1: Long, d0: Long) {
         updateLengths()
     }
 
-    fun coeffNumberOfTrailingZeros() = CoeffBits.numberOfTrailingZeros(this)
+    fun u256NumberOfTrailingZeros() = U256Bits.numberOfTrailingZeros(this)
 
-    fun coeffDwordAtBitIndex(bitIndex: Int) = CoeffBits.getDwordAtBitIndex(this, bitIndex)
+    fun u256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
 
     //override fun toString() = coeffToBigInteger().toString()
-    override fun toString() = CoeffParsePrint.coeffToString(this)
+    override fun toString() = U256ParsePrint.u256ToString(this)
 
-    override fun equals(other: Any?) = other is Coeff && coeffUnscaledEQ(this, other)
+    override fun equals(other: Any?) = other is U256 && u256UnscaledEQ(this, other)
 
 
-    fun coeffToNaNDiagnosticString() = if (coeffIsZero()) "" else toString()
+    fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else toString()
 
 }

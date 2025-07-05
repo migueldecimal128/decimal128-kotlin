@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffAddUnrounded {
+class TestU256AddUnrounded {
 
     val verbose = false
 
@@ -60,12 +60,12 @@ class TestCoeffAddUnrounded {
             return
         val coeffA = newCoeff(case.biA)
         val coeffB = newCoeff(case.biB)
-        val coeffC = Coeff()
-        coeffC.coeffSetAdd(coeffA, coeffB)
+        val coeffC = U256()
+        coeffC.u256SetAdd(coeffA, coeffB)
         if (verbose)
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         val oldDigitCount = coeffC.digitLen
-        if (! coeffC.coeffHasValidLengths()) {
+        if (! coeffC.u256HasValidLengths()) {
             val digitCount = coeffC.digitLen
             println("bad digit count $coeffA + $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()
@@ -75,7 +75,7 @@ class TestCoeffAddUnrounded {
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         assert (biC.equals(expected))
 
-        coeffA.coeffSetAdd(coeffA, coeffB)
+        coeffA.u256SetAdd(coeffA, coeffB)
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 

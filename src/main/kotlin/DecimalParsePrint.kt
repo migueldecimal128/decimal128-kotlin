@@ -173,7 +173,7 @@ object DecimalParsePrint {
                 bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
                 bytes[off + 3] = (chars ushr 16).toByte()
                 ib = 4 + isSNaN
-                if (q == NON_FINITE_INF || x.coeffIsZero())
+                if (q == NON_FINITE_INF || x.u256IsZero())
                     return ib - off
                 // drop thru to add NaN payload
                 exp = 0
@@ -198,7 +198,7 @@ object DecimalParsePrint {
             // render integer coeff, including a single 0
             if (len - ib < x.digitLen)
                 break@insufficient_buffer
-            CoeffParsePrint.coeffToChars(x, bytes, ib)
+            U256ParsePrint.u256ToChars(x, bytes, ib)
             ib += max(x.digitLen, 1) // if x.digitLen == 0 then 1
             if (isNonSciDecimal) {
                 if (isNonSciDecimalGE1) {
@@ -222,7 +222,7 @@ object DecimalParsePrint {
                 val expAbs = Math.abs(exp.toLong())
                 val expByte = if (exp < 0) BYTE_MINUS else BYTE_PLUS
                 bytes[ib++] = expByte
-                val expDigitLen = CoeffPow10.calcDigitLen64(expAbs)
+                val expDigitLen = U256Pow10.calcDigitLen64(expAbs)
                 if (limit - ib < expDigitLen)
                     break@insufficient_buffer
                 ib += u64ToChars(expDigitLen, expAbs, bytes, ib, limit - ib)
@@ -346,10 +346,10 @@ object DecimalParsePrint {
                 break@invalid_syntax
             // we have at least one digit
             val coeffDigitCount = min(34, significantDigitCount)
-            x.coeffSet64(coeff19)
+            x.u256Set64(coeff19)
             if (coeffDigitCount > 19) {
                 val pow10 = coeffDigitCount - 19
-                x.coeffMutateFmaPow10(pow10, coeff34)
+                x.u256MutateFmaPow10(pow10, coeff34)
                 }
             x.sign = sign
             val signedExp = (exp xor -expSign) + expSign

@@ -10,24 +10,24 @@ private const val MU_1E9 = 0x44B82FA09
 private val SINGLE_DIGIT_NUMBERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 
-object CoeffParsePrint {
+object U256ParsePrint {
 
-    fun coeffToString(c: Coeff): String {
+    fun u256ToString(c: U256): String {
         if (c.digitLen > 1) {
             val bytes = ByteArray(max(c.digitLen, 1))
-            coeffToChars(c, bytes, 0)
+            u256ToChars(c, bytes, 0)
             return String(bytes, StandardCharsets.UTF_8)
         } else {
             return SINGLE_DIGIT_NUMBERS[c.dw0.toInt()]
         }
     }
 
-    fun coeffToChars(c: Coeff, bytes: ByteArray, off: Int) {
+    fun u256ToChars(c: U256, bytes: ByteArray, off: Int) {
         if (c.bitLen <= 64) {
             u64ToChars(c.digitLen, c.dw0, bytes, off)
             return
         }
-        val t = Coeff(c)
+        val t = U256(c)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
@@ -71,14 +71,14 @@ object CoeffParsePrint {
         } while (i >= 0)
     }
 
-    fun coeffFromString(c: Coeff, str: String) {
-        c.coeffSetZero()
+    fun u256FromString(c: U256, str: String) {
+        c.u256SetZero()
         val strLen = str.length
         when {
             (strLen == 0) ->
                 throw IllegalArgumentException("cannot parse empty string")
             str.startsWith("0x") -> {
-                coeffFromHexString(c, str)
+                u256FromHexString(c, str)
                 return
             }
         }
@@ -102,15 +102,15 @@ object CoeffParsePrint {
             ++accumulatorDigitCount
             if (accumulatorDigitCount < 19)
                 continue
-            c.coeffMutateFmaPow10(19, accumulator)
+            c.u256MutateFmaPow10(19, accumulator)
             accumulator = 0L
             accumulatorDigitCount = 0
         }
         if (accumulatorDigitCount > 0)
-            c.coeffMutateFmaPow10(accumulatorDigitCount, accumulator)
+            c.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
     }
 
-    private fun coeffFromHexString(c:Coeff, str: String) {
+    private fun u256FromHexString(c:U256, str: String) {
         val strLen = str.length
         if (strLen < 3)
             throw IllegalArgumentException("hex string too short")
@@ -133,12 +133,12 @@ object CoeffParsePrint {
             ++accumulatorHexitCount
             if (accumulatorHexitCount < 16)
                 continue
-            c.coeffMutateShiftLeftOr(64, accumulator)
+            c.u256MutateShiftLeftOr(64, accumulator)
             accumulator = 0
             accumulatorHexitCount = 0
         }
         if (accumulatorHexitCount > 0)
-            c.coeffMutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
+            c.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
     }
 
 }

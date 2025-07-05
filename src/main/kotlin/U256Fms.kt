@@ -1,17 +1,17 @@
 package com.decimal128
 
-import com.decimal128.CoeffPow10.pow10BitLen
-import com.decimal128.CoeffPow10.pow10Offset
+import com.decimal128.U256Pow10.pow10BitLen
+import com.decimal128.U256Pow10.pow10Offset
 import java.lang.Math.max
 import java.lang.Math.unsignedMultiplyHigh
 
-object CoeffFms {
+object U256Fms {
 
-    fun coeffFms(z: Coeff, x: Coeff, y: Coeff, s: Coeff) {
-        assert(z.coeffHasValidLengths())
-        assert(x.coeffHasValidLengths())
-        assert(y.coeffHasValidLengths())
-        assert(s.coeffHasValidLengths())
+    fun u256Fms(z: U256, x: U256, y: U256, s: U256) {
+        assert(z.u256HasValidLengths())
+        assert(x.u256HasValidLengths())
+        assert(y.u256HasValidLengths())
+        assert(s.u256HasValidLengths())
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
@@ -89,13 +89,13 @@ object CoeffFms {
 
 
 
-    fun coeffFmsPow10(z: Coeff, x: Coeff, pow10: Int, y: Coeff) {
+    fun u256FmsPow10(z: U256, x: U256, pow10: Int, y: U256) {
         assert(pow10 > 0)
-        assert(z.coeffHasValidLengths())
-        assert(x.coeffHasValidLengths())
-        assert(y.coeffHasValidLengths())
+        assert(z.u256HasValidLengths())
+        assert(x.u256HasValidLengths())
+        assert(y.u256HasValidLengths())
         assert(y.bitLen <= 128)
-        assert(y.coeffScaledCompareTo(x, pow10) <= 0)
+        assert(y.u256ScaledCompareTo(x, pow10) <= 0)
         val xBitLen = x.bitLen
         val x0 = x.dw0
         val x1 = x.dw1
@@ -206,13 +206,13 @@ object CoeffFms {
         }
     }
 
-    fun coeffFmsPow10(z: Coeff, x: Coeff, y: Coeff, pow10: Int) {
+    fun u256FmsPow10(z: U256, x: U256, y: U256, pow10: Int) {
         assert(pow10 > 0)
-        assert(z.coeffHasValidLengths())
-        assert(x.coeffHasValidLengths())
-        assert(y.coeffHasValidLengths())
+        assert(z.u256HasValidLengths())
+        assert(x.u256HasValidLengths())
+        assert(y.u256HasValidLengths())
         assert(x.bitLen <= 128)
-        assert(x.coeffScaledCompareTo(y, pow10) >= 0)
+        assert(x.u256ScaledCompareTo(y, pow10) >= 0)
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
         val p10BitLen = pow10BitLen(pow10)
@@ -233,12 +233,12 @@ object CoeffFms {
         val f1 = pp00Hi + pp10Lo + pp01Lo
         val (borrow0, d0) = diffU64(x0, f0)
         val d1 = x1 - f1 - borrow0
-        z.coeffSet128(d1, d0)
+        z.u256Set128(d1, d0)
     }
 
     @Suppress("UNUSED")
     private fun _fms4x4x4(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
         y3: Long, y2: Long, y1: Long, y0: Long,
@@ -248,7 +248,7 @@ object CoeffFms {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo - s0
-            f.coeffSet64(f0)
+            f.u256Set64(f0)
             return
         }
         val (borrow0, f0) = diffU64(pp00Lo, s0)
@@ -258,7 +258,7 @@ object CoeffFms {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = pp00Hi + pp01Lo + pp10Lo - s1 - borrow0
-            f.coeffSet128(f1, f0)
+            f.u256Set128(f1, f0)
             return
         }
         val (carry1, f1p) = sumU64(pp00Hi, pp01Lo, pp10Lo)
@@ -272,7 +272,7 @@ object CoeffFms {
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo - s2 - borrow1
-            f.coeffSet192(f2, f1, f0)
+            f.u256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2p) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo)
@@ -289,7 +289,7 @@ object CoeffFms {
 
         if (maxFusedBitLen <= 256) {
             val f3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo - s3 - borrow2
-            f.coeffSet256(f3, f2, f1, f0)
+            f.u256Set256(f3, f2, f1, f0)
             return
         }
         val (carry3, f3p) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo)
@@ -298,14 +298,14 @@ object CoeffFms {
         val (carry4, f4t) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         val (borrow4, f4) = diffU64(f4t, borrow3)
         if (carry4 == 0L && borrow4 == 0L && f4 == 0L) {
-            f.coeffSet256(f3, f2, f1, f0)
+            f.u256Set256(f3, f2, f1, f0)
             return
         }
         throw RuntimeException("coeff multiply overflow")
     }
 
     private fun _fms4x1x2(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
         y0: Long,
@@ -318,7 +318,7 @@ object CoeffFms {
     }
 
     private fun _fms3x2x2(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x2: Long, x1: Long, x0: Long,
         y1: Long, y0: Long,
@@ -331,7 +331,7 @@ object CoeffFms {
     }
 
     private fun _fms3x1x2(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x2: Long, x1: Long, x0: Long,
         y0: Long,
@@ -344,7 +344,7 @@ object CoeffFms {
     }
 
     private fun _fms2x2x2(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x1: Long, x0: Long,
         y1: Long, y0: Long,
@@ -357,7 +357,7 @@ object CoeffFms {
     }
 
     private fun _fms2x1x2(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x1: Long, x0: Long,
         y0: Long,
@@ -370,7 +370,7 @@ object CoeffFms {
     }
 
     private fun _fms1x1x2(
-        f: Coeff,
+        f: U256,
         maxFusedBitLen: Int,
         x0: Long,
         y0: Long,

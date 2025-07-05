@@ -2,9 +2,9 @@ package com.decimal128
 
 import kotlin.math.max
 
-object CoeffDivPow10 {
+object U256DivPow10 {
 
-    fun divPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+    fun divPow10(z: U256, x: U256, pow10: Int): Residue {
         assert(pow10 >= 0)
         val xBitLen = x.bitLen
         if (pow10 < MAGIC_POW10_MAXX) {
@@ -13,9 +13,9 @@ object CoeffDivPow10 {
             if (pow10 < BARRETT_POW10_MAXX)
                 return DivBarrett.barrettDivPow10(z, x, pow10)
         }
-        val pow10BitLen = CoeffPow10.pow10BitLen(pow10)
+        val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         if (xBitLen < pow10BitLen) {
-            z.coeffSetZero()
+            z.u256SetZero()
             val halfPow10BitLen = pow10BitLen - 1
             return (
                     if (xBitLen < halfPow10BitLen) {

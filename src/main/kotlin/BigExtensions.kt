@@ -5,19 +5,19 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 
-fun Coeff.coeffSet(bi: BigInteger) {
+fun U256.u256Set(bi: BigInteger) {
     require(bi.signum() >= 0)
     require(bi.bitLength() <= 256)
-    this.coeffSet256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+    this.u256Set256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
 }
 
-fun newCoeff(bi: BigInteger): Coeff {
-    val c = Coeff()
-    c.coeffSet(bi)
+fun newCoeff(bi: BigInteger): U256 {
+    val c = U256()
+    c.u256Set(bi)
     return c
 }
 
-fun Coeff.coeffToBigInteger(): BigInteger {
+fun U256.coeffToBigInteger(): BigInteger {
     var bi = BigInteger.ZERO
     val dw0Lo = this.dw0 and 0xFFFFFFFFL
     val dw0Hi = this.dw0 ushr 32
@@ -49,7 +49,7 @@ fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
 fun Decimal.set(bd: BigDecimal) = this.set(bd, DecimalContext.newDecimal128Context())
 
 fun Decimal.set(bd: BigDecimal, ctx: DecimalContext) {
-    this.coeffSet(bd.abs().unscaledValue())
+    this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
     this.roundAndFinalize(Residue.EXACT, ctx)
@@ -65,7 +65,7 @@ fun Decimal.set(bi: BigInteger, ctx: DecimalContext) {
         val d1 = biT.shiftRight( 64).toLong()
         val d2 = biT.shiftRight(128).toLong()
         val d3 = biT.shiftRight(192).toLong()
-        coeffSet256(d3, d2, d1, d0)
+        u256Set256(d3, d2, d1, d0)
     }
     val bd = BigDecimal(bi, MathContext(70, RoundingMode.HALF_EVEN))
     set(bd, DecimalContext.newDecimal128Context())

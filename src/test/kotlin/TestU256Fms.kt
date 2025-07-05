@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffFms {
+class TestU256Fms {
 
     val verbose = false
 
@@ -94,10 +94,10 @@ class TestCoeffFms {
         val coeffY = newCoeff(case.biY)
         val coeffS = newCoeff(case.biS)
         val coeffExpected = newCoeff(case.biResult)
-        val coeffResult = Coeff()
+        val coeffResult = U256()
         if (verbose)
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = expected:$expected (${expected.bitLength()} bits)")
-        coeffResult.coeffSetFms(coeffX, coeffY, coeffS)
+        coeffResult.u256SetFms(coeffX, coeffY, coeffS)
         val biProd = coeffResult.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = $coeffResult (${coeffResult.bitLen} bits)  expected:$expected (${expected.bitLength()} bits)")
@@ -105,13 +105,13 @@ class TestCoeffFms {
 
         val rnd = random.nextInt(3)
         if (rnd == 0) {
-            coeffX.coeffSetFms(coeffX, coeffY, coeffS)
+            coeffX.u256SetFms(coeffX, coeffY, coeffS)
             assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
-            coeffY.coeffSetFms(coeffY, coeffX, coeffS)
+            coeffY.u256SetFms(coeffY, coeffX, coeffS)
             assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
-            coeffS.coeffSetFms(coeffX, coeffY, coeffS)
+            coeffS.u256SetFms(coeffX, coeffY, coeffS)
             assert(coeffS.coeffToBigInteger().equals(expected))
         }
 

@@ -6,7 +6,7 @@ import java.math.BigInteger
 import java.math.BigInteger.TEN
 import java.util.*
 
-class TestCoeffAddScaledFullOverlap {
+class TestU256AddScaledFullOverlap {
 
     val verbose = false
 
@@ -61,10 +61,10 @@ class TestCoeffAddScaledFullOverlap {
             return
         val coeffX = newCoeff(case.biX)
         val coeffY = newCoeff(case.biY)
-        val coeffZ = Coeff()
+        val coeffZ = U256()
         if (verbose)
             println("${case.biX} * 10**${case.scaleDelta} + ${case.biY} => expected:$expected")
-        coeffZ.coeffSetAdd(coeffX, case.scaleDelta, coeffY)
+        coeffZ.u256SetAdd(coeffX, case.scaleDelta, coeffY)
         val observed = coeffZ.coeffToBigInteger()
         assertEquals(expected, observed)
     }

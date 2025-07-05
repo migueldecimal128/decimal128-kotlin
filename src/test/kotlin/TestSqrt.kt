@@ -101,7 +101,7 @@ class TestSqrt{
 
     fun setSqrt(sqrt: Decimal, radicand: Decimal) {
         val qPreferred = radicand.qExp shr 1
-        if (radicand.coeffIsZero()) {
+        if (radicand.u256IsZero()) {
             val sciExp = radicand.sciExp()
             if (verbose)
                 println("zero radicand:$radicand sciExp:$sciExp")
@@ -110,13 +110,13 @@ class TestSqrt{
             sqrt.sign = radicand.sign
             return
         }
-        val radicandScaled = Coeff()
+        val radicandScaled = U256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
-        radicandScaled.coeffSetScaleUpPow10(radicand, scaleUp)
+        radicandScaled.u256SetScaleUpPow10(radicand, scaleUp)
         if (verbose)
             println("radicand:$radicand radicandScaled:$radicandScaled")
 
-        val dbl0 = radicandScaled.coeffToFloorDouble()
+        val dbl0 = radicandScaled.u256ToFloorDouble()
         // g == guess
         val guess0Double = Math.sqrt(dbl0).nextDown()
         //val rawGuess0 = guess0Double.toRawBits()
@@ -125,22 +125,22 @@ class TestSqrt{
 
         //val guess0Coeff = Coeff(guess0Mantissa)
         //guess0Coeff.coeffSetShiftLeft(guess0Coeff, max(guess0Exp - 52, 0))
-        val guess0Coeff = Coeff()
-        guess0Coeff.coeffSet(guess0Double)
+        val guess0Coeff = U256()
+        guess0Coeff.u256Set(guess0Double)
         if (verbose)
             println(" --> dbl0:$dbl0 doubleGuess0:$guess0Double coeffGuess0:$guess0Coeff")
-        guess0Coeff.coeffMutateDecrement()
+        guess0Coeff.u256MutateDecrement()
 
-        val guess0Squared = Coeff()
-        guess0Squared.coeffSetMul(guess0Coeff, guess0Coeff)
+        val guess0Squared = U256()
+        guess0Squared.u256SetMul(guess0Coeff, guess0Coeff)
         if (verbose)
             println(" --> coeffGuess0:$guess0Coeff guess0Squared:$guess0Squared")
-        while (guess0Squared.coeffUnscaledCompareTo(radicandScaled) > 0) {
-            guess0Coeff.coeffMutateDecrement()
-            guess0Squared.coeffSetMul(guess0Coeff, guess0Coeff)
+        while (guess0Squared.u256UnscaledCompareTo(radicandScaled) > 0) {
+            guess0Coeff.u256MutateDecrement()
+            guess0Squared.u256SetMul(guess0Coeff, guess0Coeff)
         }
-        val residual0 = Coeff()
-        CoeffSub.coeffSubUnscaled(residual0, radicandScaled, guess0Squared)
+        val residual0 = U256()
+        U256Sub.u256SubUnscaled(residual0, radicandScaled, guess0Squared)
         if (verbose)
             println(" --> residual0:$residual0")
 
@@ -150,65 +150,65 @@ class TestSqrt{
         val residualTopBits = CoeffBits.getDwordAtBitIndex(residual0, residual0BitIndex)
         val residual0Double = Math.scalb(residualTopBits.toDouble(), residual0BitIndex)
          */
-        val residual0Double = residual0.coeffToFloorDouble()
+        val residual0Double = residual0.u256ToFloorDouble()
 
         val inv2Guess0 = 0.5 / guess0Double
         val delta0Double = residual0Double * inv2Guess0
         val delta0Raw = delta0Double.toRawBits()
         val delta0Mantissa = ((delta0Raw and ((1L shl 52) - 1)) or (1L shl 52))
         val delta0Exp = ((delta0Raw ushr 52).toInt() and 0x7FF) - 1023
-        val delta0Coeff = Coeff(delta0Mantissa)
-        delta0Coeff.coeffSetShiftLeft(delta0Coeff, max(delta0Exp - 52, 0))
+        val delta0Coeff = U256(delta0Mantissa)
+        delta0Coeff.u256SetShiftLeft(delta0Coeff, max(delta0Exp - 52, 0))
 
-        val guess1Coeff = Coeff()
-        guess1Coeff.coeffSetAdd(guess0Coeff, delta0Coeff)
+        val guess1Coeff = U256()
+        guess1Coeff.u256SetAdd(guess0Coeff, delta0Coeff)
         if (verbose)
             println(" --> guess1Coeff:$guess1Coeff")
 
-        val guess1Squared = Coeff()
-        guess1Squared.coeffSetMul(guess1Coeff, guess1Coeff)
-        while (guess1Squared.coeffUnscaledCompareTo(radicandScaled) > 0) {
-            guess1Coeff.coeffMutateDecrement()
-            guess1Squared.coeffSetMul(guess1Coeff, guess1Coeff)
+        val guess1Squared = U256()
+        guess1Squared.u256SetMul(guess1Coeff, guess1Coeff)
+        while (guess1Squared.u256UnscaledCompareTo(radicandScaled) > 0) {
+            guess1Coeff.u256MutateDecrement()
+            guess1Squared.u256SetMul(guess1Coeff, guess1Coeff)
         }
-        val residual1 = Coeff()
-        CoeffSub.coeffSubUnscaled(residual1, radicandScaled, guess1Squared)
+        val residual1 = U256()
+        U256Sub.u256SubUnscaled(residual1, radicandScaled, guess1Squared)
         if (verbose)
             println(" --> residual1:$residual1")
 
-        val guess1x2 = Coeff()
-        guess1x2.coeffSetShiftLeft(guess1Coeff, 1)
-        val delta1 = Coeff()
-        val residue1 = delta1.coeffSetDiv(residual1, guess1x2)
+        val guess1x2 = U256()
+        guess1x2.u256SetShiftLeft(guess1Coeff, 1)
+        val delta1 = U256()
+        val residue1 = delta1.u256SetDiv(residual1, guess1x2)
 
-        val guess2 = Coeff()
-        guess2.coeffSetAdd(guess1Coeff, delta1)
+        val guess2 = U256()
+        guess2.u256SetAdd(guess1Coeff, delta1)
         if (verbose)
             println(" --> guess2:$guess2")
 
-        val guess2Squared = Coeff()
-        guess2Squared.coeffSetSqr(guess2)
-        val residual2 = Coeff()
-        CoeffSub.coeffSubUnscaled(residual2, radicandScaled, guess2Squared)
+        val guess2Squared = U256()
+        guess2Squared.u256SetSqr(guess2)
+        val residual2 = U256()
+        U256Sub.u256SubUnscaled(residual2, radicandScaled, guess2Squared)
         if (verbose)
             println(" --> residual2:$residual2")
 
         if (verbose)
             println(" --> scaleUp:$scaleUp preferred:$qPreferred")
 
-        sqrt.coeffSet(guess2)
+        sqrt.u256Set(guess2)
         sqrt.qExp = -scaleUp / 2
         sqrt.sign = false
 
         if (verbose)
             println(" --> sqrt:$sqrt")
 
-        val residue2 = if (residual2.coeffIsZero()) Residue.EXACT else Residue.LT_HALF
+        val residue2 = if (residual2.u256IsZero()) Residue.EXACT else Residue.LT_HALF
         var qZ = (radicand.qExp - scaleUp) / 2
         var ntz = numberOfTrailingZeros(sqrt.dw0)
         if (residue2 == Residue.EXACT && qZ < qPreferred && ntz > 0) {
             if (qZ + 1 < qPreferred) {
-                val quot = Coeff()
+                val quot = U256()
                 do {
                     val deltaQ = qPreferred - qZ
                     val chunk = min(min(9, deltaQ), ntz)
@@ -228,18 +228,18 @@ class TestSqrt{
                             t = q
                         }
                         if (pow10Count > 0) {
-                            sqrt.coeffSetScaleDownPow10(sqrt, pow10Count)
+                            sqrt.u256SetScaleDownPow10(sqrt, pow10Count)
                             qZ += pow10Count
                         }
                         break
                     } else {
-                        sqrt.coeffSet(quot)
+                        sqrt.u256Set(quot)
                         ntz -= chunk
                         qZ += chunk
                     }
                 } while (qZ < qPreferred && ntz > 0)
-            } else if (sqrt.coeffIsMultipleOf10()) {
-                sqrt.coeffSetScaleDownPow10(sqrt, 1)
+            } else if (sqrt.u256IsMultipleOf10()) {
+                sqrt.u256SetScaleDownPow10(sqrt, 1)
                 ++qZ
             }
         }

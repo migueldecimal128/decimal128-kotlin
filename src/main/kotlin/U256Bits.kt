@@ -52,9 +52,9 @@ private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
 private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
 private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
-object CoeffBits {
+object U256Bits {
 
-    fun numberOfTrailingZeros(x: Coeff): Int {
+    fun numberOfTrailingZeros(x: U256): Int {
         val ntz0 = numberOfTrailingZeros(x.dw0)
         val ntz1 = 64 + numberOfTrailingZeros(x.dw1)
         val ntz2 = 128 + numberOfTrailingZeros(x.dw2)
@@ -65,7 +65,7 @@ object CoeffBits {
         return ntz0123
     }
 
-    fun getDwordAtBitIndex(x: Coeff, bitIndex: Int): Long {
+    fun getDwordAtBitIndex(x: U256, bitIndex: Int): Long {
         val dwordShift = bitIndex ushr 6
         val innerShift = bitIndex and 0x3F
         val nonZeroMask = (-innerShift shr 31).toLong()
@@ -146,7 +146,7 @@ object CoeffBits {
         return ret
     }
 
-    fun coeffIsMultipleOf5(x: Coeff): Boolean {
+    fun u256IsMultipleOf5(x: U256): Boolean {
         val bitLen = x.bitLen
         return when {
             bitLen <=  64 -> isMultipleOfFive_64(x.dw0)

@@ -68,13 +68,13 @@ class TestCompareWithHalfPow10 {
             println("$biA ($digitLen) compareWithHalfPow10 expected:$expected")
         val observed = when {
             bitLen <= 64 ->
-                CoeffPow10.compareWithHalfPow10_64(bitLen, biA.toLong())
+                U256Pow10.compareWithHalfPow10_64(bitLen, biA.toLong())
             bitLen <= 128 ->
-                CoeffPow10.compareWithHalfPow10_128(bitLen, biA.shiftRight(64).toLong(), biA.toLong())
+                U256Pow10.compareWithHalfPow10_128(bitLen, biA.shiftRight(64).toLong(), biA.toLong())
             bitLen <= 192 ->
-                CoeffPow10.compareWithHalfPow10_192(bitLen, biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong())
+                U256Pow10.compareWithHalfPow10_192(bitLen, biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong())
             else ->
-                CoeffPow10.compareWithHalfPow10_256(bitLen, biA.shiftRight(192).toLong(), biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong())
+                U256Pow10.compareWithHalfPow10_256(bitLen, biA.shiftRight(192).toLong(), biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong())
         }
         assertEquals(expected, observed)
     }

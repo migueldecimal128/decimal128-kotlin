@@ -24,7 +24,7 @@ private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
 internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
 
-internal object CoeffPow10 {
+internal object U256Pow10 {
     /*
     // minBitCount:0  maxBitCount:64
     1L, // 1 (0)
@@ -160,10 +160,10 @@ internal object CoeffPow10 {
             POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
             POW10[i] = pow10_64
         }
-        val pow10 = Coeff(pow10_64)
-        val ten = Coeff(10L)
+        val pow10 = U256(pow10_64)
+        val ten = U256(10L)
         for (i in POW10_64_COUNT..<MAX_DIGIT_LEN) {
-            pow10.coeffSetMul(pow10, ten)
+            pow10.u256SetMul(pow10, ten)
             val bitLen = pow10.bitLen
             POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
             val pow10Offset = pow10Offset(i)
@@ -195,24 +195,24 @@ internal object CoeffPow10 {
             POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
         // initialize Barrett division
-        val twoPow64 = Coeff()
-        val mu = Coeff()
-        val pow5 = Coeff()
+        val twoPow64 = U256()
+        val mu = U256()
+        val pow5 = U256()
 
-        twoPow64.coeffSet128(1L, 0L)
+        twoPow64.u256Set128(1L, 0L)
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAXX) {
-            if (i == 1) pow10.coeffSet64(10L) else pow10.coeffSetMul(pow10, ten)
-            mu.coeffSetDiv(twoPow64, pow10)
+            if (i == 1) pow10.u256Set64(10L) else pow10.u256SetMul(pow10, ten)
+            mu.u256SetDiv(twoPow64, pow10)
             POW10[BARRETT_POW10_MU_OFFSET + i] = mu.dw0
 
-            pow5.coeffSetShiftRight(pow10, i)
-            mu.coeffSetDiv(twoPow64, pow5)
+            pow5.u256SetShiftRight(pow10, i)
+            mu.u256SetDiv(twoPow64, pow5)
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
         }
         for (i in 1..<BARRETT_POW5_MAX) {
-            pow5.coeffSet64(POW10[POW5_64_OFFSET + i])
-            mu.coeffSetDiv(twoPow64, pow5)
+            pow5.u256Set64(POW10[POW5_64_OFFSET + i])
+            mu.u256SetDiv(twoPow64, pow5)
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
         }
         // initialization of Magic multipliers M is in DivMagic
@@ -521,7 +521,7 @@ internal object CoeffPow10 {
         return cmp
     }
 
-    fun coeffIsPow10(x: Coeff) : Boolean {
+    fun coeffIsPow10(x: U256) : Boolean {
         val xBitLen = x.bitLen
         val xDigitLen = x.digitLen
         if (xDigitLen > 0) {
@@ -535,7 +535,7 @@ internal object CoeffPow10 {
         return false
     }
 
-    fun coeffSetPow10(z: Coeff, pow10: Int) {
+    fun coeffSetPow10(z: U256, pow10: Int) {
         if (pow10 >= 0) {
             val pow10BitLen = pow10BitLen(pow10)
             val pow10Offset = pow10Offset(pow10)
@@ -543,9 +543,9 @@ internal object CoeffPow10 {
             val p1 = POW10[pow10Offset + 1] and (( 64 - pow10BitLen) shr 31).toLong()
             val p2 = POW10[pow10Offset + 2] and ((128 - pow10BitLen) shr 31).toLong()
             val p3 = POW10[pow10Offset + 3] and ((192 - pow10BitLen) shr 31).toLong()
-            z.coeffSet256(p3, p2, p1, p0)
+            z.u256Set256(p3, p2, p1, p0)
         } else {
-            z.coeffSetZero()
+            z.u256SetZero()
         }
     }
 

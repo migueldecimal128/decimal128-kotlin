@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffRoundTrip {
+class TestU256RoundTrip {
 
     val cases : Array<String> = arrayOf("0", "1", "9", "10", "99")
 
@@ -16,8 +16,8 @@ class TestCoeffRoundTrip {
     }
 
     fun test1(str: String) {
-        val coeff = Coeff()
-        coeff.coeffSet(str)
+        val coeff = U256()
+        coeff.u256Set(str)
         val expected = str
         val observed = coeff.toString();
         if (expected != observed)
@@ -26,8 +26,8 @@ class TestCoeffRoundTrip {
     }
 
     fun test1(bi: BigInteger) {
-        val coeff = Coeff()
-        coeff.coeffSet(bi)
+        val coeff = U256()
+        coeff.u256Set(bi)
         val observed = coeff.coeffToBigInteger()
         assert (bi.equals(observed))
     }

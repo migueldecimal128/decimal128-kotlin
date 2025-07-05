@@ -40,7 +40,7 @@ class TestDivModPow10 {
         val (biQuot, biRem) = biDividend.divideAndRemainder(biDivisor)
         val bitLen = 64 - java.lang.Long.numberOfLeadingZeros(l)
 
-        val (quot, rem) = DivRangeRecipMulPow10.divModPow10(CoeffPow10.calcDigitLen64(bitLen, l), l, divisorPow10)
+        val (quot, rem) = DivRangeRecipMulPow10.divModPow10(U256Pow10.calcDigitLen64(bitLen, l), l, divisorPow10)
 
         assertEquals(biQuot, bigIntegerFromLong(quot))
         assertEquals(biRem, bigIntegerFromLong(rem))

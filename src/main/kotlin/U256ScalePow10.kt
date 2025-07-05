@@ -1,14 +1,14 @@
 package com.decimal128
 
-import com.decimal128.CoeffMul.mulCoeff
-import com.decimal128.CoeffPow10.pow10BitLen
-import com.decimal128.CoeffPow10.pow10Offset
+import com.decimal128.U256Mul.u256Mul
+import com.decimal128.U256Pow10.pow10BitLen
+import com.decimal128.U256Pow10.pow10Offset
 import com.decimal128.Residue.Companion.EXACT
 
 
-internal object CoeffScalePow10 {
+internal object U256ScalePow10 {
 
-    fun coeffScaleUpPow10(z: Coeff, x: Coeff, pow10: Int) {
+    fun u256ScaleUpPow10(z: U256, x: U256, pow10: Int) {
         when {
             pow10 > 0 -> {
                 val pow10BitLen = pow10BitLen(pow10)
@@ -20,49 +20,49 @@ internal object CoeffScalePow10 {
                     (pow10BitLen <= 64) -> {
                         if (maxBitLen <= 192) {
                             val (p2, p1, p0) = umul192x64to192(x.dw2, x.dw1, x.dw0, pow10dw0)
-                            z.coeffSet192(p2, p1, p0)
+                            z.u256Set192(p2, p1, p0)
                             return
                         }
-                        mulCoeff(z, x, pow10BitLen, pow10dw0)
+                        u256Mul(z, x, pow10BitLen, pow10dw0)
                     }
                     (pow10BitLen <= 128) -> {
                         if (maxBitLen <= 192) {
                             val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, pow10dw1, pow10dw0)
-                            z.coeffSet192(p2, p1, p0)
+                            z.u256Set192(p2, p1, p0)
                             return
                         }
-                        mulCoeff(z, x, pow10BitLen, pow10dw1, pow10dw0)
+                        u256Mul(z, x, pow10BitLen, pow10dw1, pow10dw0)
                     }
                     (pow10BitLen <= 192) -> {
-                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 2], pow10dw1, pow10dw0)
+                        u256Mul(z, x, pow10BitLen, POW10[pow10Offset + 2], pow10dw1, pow10dw0)
                     }
                     (pow10BitLen <= 256) -> {
-                        mulCoeff(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], pow10dw1, pow10dw0)
+                        u256Mul(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], pow10dw1, pow10dw0)
                     }
                     else -> throw RuntimeException()
                 }
             }
-            pow10 == 0 -> z.coeffSet(x)
+            pow10 == 0 -> z.u256Set(x)
             else -> throw RuntimeException()
         }
     }
 
-    fun coeffScaleDownPow10(z: Coeff, x: Coeff, pow10: Int): Residue {
+    fun u256ScaleDownPow10(z: U256, x: U256, pow10: Int): Residue {
         if (x.bitLen > 0 && pow10 > 0) {
             val productDigitCount = x.digitLen - pow10
             if (productDigitCount <= 0) {
                 val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
-                z.coeffSetZero()
+                z.u256SetZero()
                 return residue
             }
-            return CoeffDivPow10.divPow10(z, x, pow10)
+            return U256DivPow10.divPow10(z, x, pow10)
         }
-        z.coeffSet(x)
+        z.u256Set(x)
         return EXACT
     }
 
-    fun coeffScaleFmaPow10(z: Coeff, x: Coeff, pow10: Int, a: Coeff) {
-        CoeffFma.coeffFmaPow10(z, x, pow10, a)
+    fun u256ScaleFmaPow10(z: U256, x: U256, pow10: Int, a: U256) {
+        U256Fma.u256FmaPow10(z, x, pow10, a)
     }
 
 }

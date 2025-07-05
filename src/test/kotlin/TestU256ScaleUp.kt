@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffScaleUp {
+class TestU256ScaleUp {
 
     val verbose = false
 
@@ -101,12 +101,12 @@ class TestCoeffScaleUp {
             return
         }
         val coeffA = newCoeff(case.biA)
-        val coeffObserved = Coeff()
+        val coeffObserved = U256()
         val pow10 = case.pow10
         val ctx = DecimalContext()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = expected:$expected")
-        coeffObserved.coeffSetScaleUpPow10(coeffA, pow10)
+        coeffObserved.u256SetScaleUpPow10(coeffA, pow10)
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = $coeffObserved (${coeffObserved.digitLen})  expected:$expected")

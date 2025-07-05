@@ -3,10 +3,10 @@ package com.decimal128
 import java.lang.Math.unsignedMultiplyHigh
 import java.lang.Long.compareUnsigned
 
-object CoeffRecipMulPow5 {
+object U256RecipMulPow5 {
 
-    fun coeffRecipMul4(
-        quotient: Coeff,
+    fun u256RecipMul4(
+        quotient: U256,
         m: LongArray, mOff: Int, mLen: Int,
         n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -194,8 +194,8 @@ object CoeffRecipMulPow5 {
         return residue
     }
 
-    fun coeffRecipMul3(
-        quotient: Coeff,
+    fun u256RecipMul3(
+        quotient: U256,
         m: LongArray, mOff: Int, mLen: Int,
         n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -342,8 +342,8 @@ object CoeffRecipMulPow5 {
         return residue
     }
 
-    fun coeffRecipMul2(
-        quotient: Coeff,
+    fun u256RecipMul2(
+        quotient: U256,
         m: LongArray, mOff: Int, mLen: Int,
         n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {
@@ -456,8 +456,8 @@ object CoeffRecipMulPow5 {
         return residue
     }
 
-    fun coeffRecipMul1(
-        quotient: Coeff,
+    fun u256RecipMul1(
+        quotient: U256,
         m: LongArray, mOff: Int, mLen: Int,
         n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
     ): Residue {

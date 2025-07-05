@@ -13,7 +13,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.min
 
-class TestCoeffScaleDown {
+class TestU256ScaleDown {
 
     val verbose = false
 
@@ -133,7 +133,7 @@ class TestCoeffScaleDown {
             val dw1 = quads[i + 1]
             val dw2 = quads[i + 2]
             val dw3 = quads[i + 3]
-            val coeff = Coeff(dw3, dw2, dw1, dw0)
+            val coeff = U256(dw3, dw2, dw1, dw0)
             val biQ = coeff.coeffToBigInteger()
             for (xPow10 in K_MIN..<K_MAXX) {
                 for (deltaX in deltas) {
@@ -194,12 +194,12 @@ class TestCoeffScaleDown {
         }
         val sign = case.sign
         val coeffA = newCoeff(case.biA)
-        val coeffObserved = Coeff()
+        val coeffObserved = U256()
         val pow10 = case.pow10
         val ctx = DecimalContext(case.roundingDirection)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.roundingDirection} expected:$expected")
-        coeffObserved.coeffSetScaleDownPow10(coeffA, pow10)
+        coeffObserved.u256SetScaleDownPow10(coeffA, pow10)
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.roundingDirection} expected:$expected")

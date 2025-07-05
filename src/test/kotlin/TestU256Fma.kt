@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestCoeffFma {
+class TestU256Fma {
 
     class TC(val biX: BigInteger, val biY: BigInteger, val biA: BigInteger) {
         val biProduct = biX.multiply(biY).add(biA)
@@ -78,16 +78,16 @@ class TestCoeffFma {
         val coeffY = newCoeff(case.biY)
         val coeffA = newCoeff(case.biA)
         val coeffExpected = newCoeff(case.biProduct)
-        val coeffProd = Coeff()
+        val coeffProd = U256()
         //println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) + $coeffA (${coeffA.digitCount}) = expected:$expected")
-        coeffProd.coeffSetFma(coeffX, coeffY, coeffA)
+        coeffProd.u256SetFma(coeffX, coeffY, coeffA)
         val biProd = coeffProd.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) + $coeffA (${coeffA.digitLen}) = $coeffProd (${coeffProd.digitLen})  expected:$expected")
         assert (biProd.equals(expected))
 
         val oldDigitCount = coeffProd.digitLen
-        if (! coeffProd.coeffHasValidLengths()) {
+        if (! coeffProd.u256HasValidLengths()) {
             val digitCount = coeffProd.digitLen
             println("bad digit count $coeffX * $coeffY = $coeffProd was $oldDigitCount should be $digitCount")
             throw RuntimeException()
@@ -95,13 +95,13 @@ class TestCoeffFma {
 
         val rnd = random.nextInt(3)
         if (rnd == 0) {
-            coeffX.coeffSetFma(coeffX, coeffY, coeffA)
+            coeffX.u256SetFma(coeffX, coeffY, coeffA)
             assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
-            coeffY.coeffSetFma(coeffX, coeffY, coeffA)
+            coeffY.u256SetFma(coeffX, coeffY, coeffA)
             assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
-            coeffA.coeffSetFma(coeffX, coeffY, coeffA)
+            coeffA.u256SetFma(coeffX, coeffY, coeffA)
             assert(coeffA.coeffToBigInteger().equals(expected))
         }
 

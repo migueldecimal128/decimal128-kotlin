@@ -2,9 +2,9 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 
-internal object CoeffSqr {
+internal object U256Sqr {
 
-    fun coeffSqr(z: Coeff, x: Coeff) {
+    fun u256Sqr(z: U256, x: U256) {
         val xBitLen = x.bitLen
         when {
             (xBitLen <= 64) -> {
@@ -14,17 +14,17 @@ internal object CoeffSqr {
             }
             (xBitLen <= 96) -> {
                 val (p2, p1, p0) = usqr96to192(x.dw1, x.dw0)
-                z.coeffSet192(p2, p1, p0)
+                z.u256Set192(p2, p1, p0)
             }
             (xBitLen <= 128) -> {
-                _sqrCoeff2to4(z, x.dw1, x.dw0)
+                _sqrU256_2to4(z, x.dw1, x.dw0)
             }
             else -> throw RuntimeException("coeff mul overflow")
         }
     }
 
-    private fun _sqrCoeff2to4(
-        p: Coeff,
+    private fun _sqrU256_2to4(
+        p: U256,
         x1: Long, x0: Long
     ) {
         val pp00Hi = unsignedMultiplyHigh(x0, x0)
@@ -42,7 +42,7 @@ internal object CoeffSqr {
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
 
         val p3 = carry2 + pp11Hi
-        p.coeffSet256(p3, p2, p1, p0)
+        p.u256Set256(p3, p2, p1, p0)
     }
 
 }

@@ -1,9 +1,9 @@
 package com.decimal128
 
-import com.decimal128.CoeffCompare.coeffUnscaledCompare
-import com.decimal128.CoeffCompare.coeffGTOne
-import com.decimal128.CoeffSet.coeffSet
-import com.decimal128.CoeffSet.coeffSetShiftRight
+import com.decimal128.U256Compare.u256UnscaledCompare
+import com.decimal128.U256Compare.u256GTOne
+import com.decimal128.U256Set.u256Set
+import com.decimal128.U256Set.u256SetShiftRight
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.HALF
@@ -17,9 +17,9 @@ object DivKnuth {
     private val vn = IntArray(9)
     private val un = IntArray(9)
 
-    fun knuthDivideWrapper(z: Coeff, x: Coeff, y: Coeff, wantRemainder: Boolean): Residue {
-        assert(coeffGTOne(y))
-        assert(x.coeffUnscaledCompareTo(y) > 0)
+    fun knuthDivideWrapper(z: U256, x: U256, y: U256, wantRemainder: Boolean): Residue {
+        assert(u256GTOne(y))
+        assert(x.u256UnscaledCompareTo(y) > 0)
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()
@@ -65,7 +65,7 @@ object DivKnuth {
         knuthDivideCore(m, n)
 
         if (wantRemainder) {
-            coeffSetShiftRight(z, un, n, s)
+            u256SetShiftRight(z, un, n, s)
             return EXACT
         }
 
@@ -107,7 +107,7 @@ object DivKnuth {
                     Residue.EXACT
                 } else {
                     // note that this compare is reversed ... y compare 2*remainder
-                    val cmp = coeffUnscaledCompare(y, un)
+                    val cmp = u256UnscaledCompare(y, un)
                     if (cmp > 0)
                         LT_HALF
                     else if (cmp == 0)
@@ -116,11 +116,11 @@ object DivKnuth {
                         GT_HALF
                 }
             }
-        coeffSet(z, q, m)
+        u256Set(z, q, m)
         return residue
     }
 
-    fun knuthDivideWrapperx64(z: Coeff, x: Coeff, y0: Long, wantRemainder: Boolean): Residue {
+    fun knuthDivideWrapperx64(z: U256, x: U256, y0: Long, wantRemainder: Boolean): Residue {
         assert((y0 ushr 32) != 0L)
         assert(x.bitLen > 64)
 
@@ -158,7 +158,7 @@ object DivKnuth {
         val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
         val remainder = remainderNormalized ushr s
         if (wantRemainder) {
-            z.coeffSet64(remainder)
+            z.u256Set64(remainder)
             return EXACT
         }
 
@@ -173,7 +173,7 @@ object DivKnuth {
             2 * remainder == y0 -> HALF
             else -> GT_HALF
         }
-        coeffSet(z, q, m)
+        u256Set(z, q, m)
         return residue
     }
 

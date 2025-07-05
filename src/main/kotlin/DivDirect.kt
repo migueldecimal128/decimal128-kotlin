@@ -9,7 +9,7 @@ import java.lang.Long.remainderUnsigned
 
 object DivDirect {
     
-    fun divx32(z: Coeff, x: Coeff, y0: Long): Residue {
+    fun divx32(z: U256, x: U256, y0: Long): Residue {
         val xBitLen = x.bitLen
         val residue = when {
             ((y0 > 1L) && (y0 ushr 32) == 0L) -> when {
@@ -19,7 +19,7 @@ object DivDirect {
                 else ->           div256x32(z, x.dw3, x.dw2, x.dw1, x.dw0, y0)
             }
             (y0 == 1L) -> {
-                z.coeffSet(x)
+                z.u256Set(x)
                 Residue.EXACT
             }
             else -> throw IllegalArgumentException()
@@ -27,7 +27,7 @@ object DivDirect {
         return residue
     }
 
-    fun div256x32(z: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Residue {
+    fun div256x32(z: U256, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Residue {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x3
@@ -75,11 +75,11 @@ object DivDirect {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.coeffSet256(q3, q2, q1, q0)
+        z.u256Set256(q3, q2, q1, q0)
         return residue
     }
 
-    fun div192x32(z: Coeff, x2: Long, x1: Long, x0: Long, y0: Long): Residue {
+    fun div192x32(z: U256, x2: Long, x1: Long, x0: Long, y0: Long): Residue {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x2
@@ -118,11 +118,11 @@ object DivDirect {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.coeffSet192(q2, q1, q0)
+        z.u256Set192(q2, q1, q0)
         return residue
     }
 
-    fun div128x32(z: Coeff, x1: Long, x0: Long, y0: Long): Residue {
+    fun div128x32(z: U256, x1: Long, x0: Long, y0: Long): Residue {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x1
@@ -152,11 +152,11 @@ object DivDirect {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.coeffSet128(q1, q0)
+        z.u256Set128(q1, q0)
         return residue
     }
 
-    fun div64x32(z: Coeff, x0: Long, y0: Long): Residue {
+    fun div64x32(z: U256, x0: Long, y0: Long): Residue {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x0
@@ -177,11 +177,11 @@ object DivDirect {
             rem == y0Doubled -> HALF
             else -> GT_HALF
         }
-        z.coeffSet64(q0)
+        z.u256Set64(q0)
         return residue
     }
 
-    fun modx32(z: Coeff, x: Coeff, y0: Long) {
+    fun modx32(z: U256, x: U256, y0: Long) {
         assert((y0 ushr 32) == 0L && y0 > 1L)
         val rem =
             if ((x.dw3 or x.dw2) == 0L) {
@@ -194,10 +194,10 @@ object DivDirect {
             } else {
                 mod256x32(z, x.dw3, x.dw2, x.dw1, x.dw0, y0)
             }
-        z.coeffSet64(rem)
+        z.u256Set64(rem)
     }
 
-    fun mod256x32(z: Coeff, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
+    fun mod256x32(z: U256, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x3
@@ -228,7 +228,7 @@ object DivDirect {
         return rem
     }
 
-    fun mod192x32(z: Coeff, x2: Long, x1: Long, x0: Long, y0: Long): Long {
+    fun mod192x32(z: U256, x2: Long, x1: Long, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x2
@@ -253,7 +253,7 @@ object DivDirect {
         return rem
     }
 
-    fun mod128x32(z: Coeff, x1: Long, x0: Long, y0: Long): Long {
+    fun mod128x32(z: U256, x1: Long, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x1
@@ -272,7 +272,7 @@ object DivDirect {
         return rem
     }
 
-    fun mod64x32(z: Coeff, x0: Long, y0: Long): Long {
+    fun mod64x32(z: U256, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x0
