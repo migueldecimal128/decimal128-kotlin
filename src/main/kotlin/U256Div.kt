@@ -17,7 +17,7 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
     //    (v[i] shl s) or if (s != 0) (v[i - 1] ushr (32 - s)) else 0
 }
 
-object U256Divide {
+object U256Div {
 
     fun u256Divx64(z: U256, x: U256, y0: Long): Residue {
         if ((y0 shr 1) == 0L) {

@@ -87,4 +87,41 @@ object U256Add {
 
         u256ScaleFmaPow10(z, x, scaleDelta, y)
     }
+
+    fun u256MutateIncrement(z: U256) {
+        ++z.dw0
+        if (z.dw0 == 0L) {
+            ++z.dw1
+            if (z.dw1 == 0L) {
+                ++z.dw2
+                if (z.dw2 == 0L) {
+                    ++z.dw3
+                    if (z.dw3 == 0L)
+                        throw RuntimeException("overflow")
+                }
+            }
+        }
+        // flag for roundup which occurs during multiplies while enableIndexSet is active
+        if (z.digitLen >= 0)
+            U256Bits.updateLengths(z)
+    }
+
+    fun u256MutateDecrement(z: U256) {
+        --z.dw0
+        if (z.dw0 == -1L) {
+            --z.dw1
+            if (z.dw1 == -1L) {
+                --z.dw2
+                if (z.dw2 == -1L) {
+                    --z.dw3
+                    if (z.dw3 == -1L)
+                        throw RuntimeException("decrement underflow")
+                }
+            }
+        }
+        U256Bits.updateLengths(z)
+    }
+
+
+
 }

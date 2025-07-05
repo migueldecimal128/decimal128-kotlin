@@ -7,6 +7,18 @@ import java.lang.Math.unsignedMultiplyHigh
 
 object U256Compare {
 
+    fun u256IsZero(x: U256): Boolean {
+        return x.bitLen == 0
+    }
+
+    fun u256IsNotZero(x: U256): Boolean {
+        return x.bitLen != 0
+    }
+
+    fun u256IsOne(x: U256): Boolean {
+        return x.bitLen == 1
+    }
+
     fun u256UnscaledCompare(x:U256, y:U256) : Int {
         if (x.bitLen != y.bitLen)
             return x.bitLen.compareTo(y.bitLen)

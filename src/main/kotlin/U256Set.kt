@@ -1,6 +1,51 @@
 package com.decimal128
 
+@Suppress("NOTHING_TO_INLINE")
 object U256Set {
+
+    fun u256SetZero(z: U256) {
+        z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = 0L;
+        z.bitLen = 0; z.digitLen = 0
+    }
+
+    fun u256SetOne(z: U256) {
+        z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = 1L;
+        z.bitLen = 1; z.digitLen = 1
+    }
+
+    fun u256Set64(z: U256, d0: Long) {
+        z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
+        z.dw0 = d0
+        z.bitLen = calcBitLen64(d0)
+        z.digitLen = U256Pow10.calcDigitLen64(z.bitLen, d0)
+    }
+
+    fun u256Set128(z: U256, d1: Long, d0: Long) {
+        z.dw3 = 0L; z.dw2 = 0L
+        z.dw1 = d1; z.dw0 = d0
+        z.bitLen = calcBitLen128(d1, d0)
+        z.digitLen = U256Pow10.calcDigitLen128(z.bitLen, d1, d0)
+    }
+
+    fun u256Set192(z: U256, d2: Long, d1: Long, d0: Long) {
+        z.dw3 = 0L
+        z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
+        z.bitLen = calcBitLen192(d2, d1, d0)
+        z.digitLen = U256Pow10.calcDigitLen192(z.bitLen, d2, d1, d0)
+    }
+
+
+    fun u256Set256(z: U256, d3: Long, d2: Long, d1: Long, d0: Long) {
+        z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
+        z.bitLen = calcBitLen256(d3, d2, d1, d0)
+        z.digitLen = U256Pow10.calcDigitLen256(z.bitLen, d3, d2, d1, d0)
+    }
+
+    fun u256Set(z: U256, x: U256) {
+        z.dw3 = x.dw3; z.dw2 = x.dw2; z.dw1 = x.dw1; z.dw0 = x.dw0
+        z.bitLen = x.bitLen; z.digitLen = x.digitLen
+    }
+
 
     fun u256Set(c: U256, x: LongArray, xOff: Int, xLen: Int) {
         c.u256SetZero()
@@ -124,6 +169,8 @@ object U256Set {
             else -> z.u256SetZero()
         }
     }
+
+    inline fun u256SetShiftLeft(z: U256, x: U256, s: Int) = u256SetShiftLeftOr(z, x, s, 0L)
 
     fun u256SetShiftLeftOr(z: U256, x: U256, s: Int, d0: Long) {
         val wholeDwordCount = s ushr 6

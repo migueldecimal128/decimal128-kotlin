@@ -52,6 +52,7 @@ private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
 private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
 private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
+@Suppress("NOTHING_TO_INLINE")
 object U256Bits {
 
     fun numberOfTrailingZeros(x: U256): Int {
@@ -155,5 +156,88 @@ object U256Bits {
             else -> isMultipleOfFive_256(x.dw3, x.dw2, x.dw1, x.dw0)
         }
     }
+
+    fun u256SetPow2(z: U256, pow2: Int) {
+        if (pow2 !in 0..255)
+            throw IllegalArgumentException()
+        val shifted = 1L shl pow2
+        val i = pow2 ushr 6
+        val j = 1L shl (60 + i)
+        z.dw0 = shifted and ((j shl 3) shr 63)
+        z.dw1 = shifted and ((j shl 2) shr 63)
+        z.dw2 = shifted and ((j shl 1) shr 63)
+        z.dw3 = shifted and ((j      ) shr 63)
+        z.bitLen = pow2 + 1
+        z.digitLen = ((pow2 * 1233) ushr 12) + 1
+    }
+
+    fun u256ToFloorDouble(x: U256): Double {
+        val hiBitLen = kotlin.math.min(53, x.bitLen)
+        val hiBitIndex = x.bitLen - hiBitLen
+        val hiBits = getDwordAtBitIndex(x, hiBitIndex)
+        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitIndex)
+        return dHiBits
+    }
+
+    fun u256Set(z: U256, d: Double) {
+        val dRaw = d.toRawBits()
+        val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
+        if (exp <= 63) {
+            U256Set.u256Set64(z, Math.abs(d).toLong())
+            return
+        }
+        if (exp > 255) {
+            throw RuntimeException("coefficient overflow")
+        }
+        val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
+        U256Set.u256Set64(z, significand)
+        U256Set.u256SetShiftLeft(z, z, exp - 52)
+    }
+
+    fun u256ToNewDoubleDouble(x: U256): DoubleDouble {
+        val hiBitsLen = kotlin.math.min(53, x.bitLen)
+        val hiBitsIndex = x.bitLen - hiBitsLen
+        val hiBits = getDwordAtBitIndex(x, hiBitsIndex)
+        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitsIndex)
+        if (hiBitsIndex == 0)
+            return DoubleDouble(dHiBits, 0.0)
+        var loBits64Index: Int = kotlin.math.max(0, hiBitsIndex - 64)
+        var loBitsMask = -1L ushr kotlin.math.max(0, 64 - hiBitsIndex)
+        var loBits: Long
+        var nlz: Int
+        while (true) {
+            loBits = getDwordAtBitIndex(x, loBits64Index) and loBitsMask
+            nlz = numberOfLeadingZeros(loBits)
+            if (loBits64Index == 0 || nlz <= 11)
+                break
+            loBits64Index = kotlin.math.max(loBits64Index - nlz, 0)
+            loBitsMask = -1
+        }
+        val extraBits = kotlin.math.max(0, 11 - nlz)
+        loBits = loBits ushr extraBits
+        val loBits53Index = loBits64Index + extraBits
+        val dLoBits = Math.scalb(loBits.toDouble(), loBits53Index)
+        return DoubleDouble(dHiBits, dLoBits)
+    }
+
+    fun u256Set(z: U256, dd: DoubleDouble) {
+        u256Set(z, dd.hi)
+        if (dd.lo == 0.0)
+            return
+        val uLo = U256()
+        uLo.u256Set(dd.lo)
+        if (dd.lo > 0)
+            U256Add.u256AddUnscaled(z, z, uLo)
+        else
+            U256Sub.u256SubUnscaled(z, z, uLo)
+    }
+
+    fun updateLengths(z: U256) {
+        z.bitLen = calcBitLen256(z.dw3, z.dw2, z.dw1, z.dw0)
+        z.digitLen = U256Pow10.calcDigitLen256(z.bitLen, z.dw3, z.dw2, z.dw1, z.dw0)
+    }
+
+
+
 
 }

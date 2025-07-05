@@ -1,24 +1,5 @@
 package com.decimal128
 
-import com.decimal128.U256Mul.u256Mul
-import com.decimal128.U256Fma.u256Fma
-import com.decimal128.U256Add.u256AddUnscaled
-import com.decimal128.U256Add.u256Add
-import com.decimal128.U256Compare.u256ScaledCompare
-import com.decimal128.U256Compare.u256ScaledEQ
-import com.decimal128.U256Set.u256SetShiftRight
-import com.decimal128.U256Compare.u256UnscaledCompare
-import com.decimal128.U256Compare.u256UnscaledEQ
-import com.decimal128.U256Divide.u256Div
-import com.decimal128.U256Divide.u256Divx64
-import com.decimal128.U256Divide.u256Mod
-import com.decimal128.U256Fma.u256FmaPow10
-import com.decimal128.U256Pow10.calcDigitLen256
-import com.decimal128.U256Pow10.pow10Offset
-import com.decimal128.U256ScalePow10.u256ScaleDownPow10
-import com.decimal128.U256ScalePow10.u256ScaleUpPow10
-import com.decimal128.U256Set.u256Set
-import com.decimal128.U256Sub.u256SubUnscaled
 import java.lang.Long.numberOfLeadingZeros
 import kotlin.math.max
 import kotlin.math.min
@@ -27,7 +8,7 @@ const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
-
+@Suppress("NOTHING_TO_INLINE")
 open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
@@ -40,57 +21,48 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
     constructor(c: U256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
-    var dw3 = d3
-        private set
-    var dw2 = d2
-        private set
-    var dw1 = d1
-        private set
-    var dw0 = d0
-        private set
-    var bitLen = calcBitLen256(d3, d2, d1, d0)
-        private set
-    var digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
-        private set
+    @JvmField
+    internal var dw3 = d3
+    @JvmField
+    internal var dw2 = d2
+    @JvmField
+    internal var dw1 = d1
+    @JvmField
+    internal var dw0 = d0
+    @JvmField
+    internal var bitLen = calcBitLen256(d3, d2, d1, d0)
+    @JvmField
+    internal var digitLen = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
 
-    fun u256SetZero() {
-        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L; bitLen = 0; digitLen = 0
-    }
+    internal inline fun u256SetZero() = U256Set.u256SetZero(this)
 
-    fun u256IsZero() = bitLen == 0
+    internal inline fun u256SetOne() = U256Set.u256SetOne(this)
 
-    fun u256IsNotZero() = bitLen > 0
+    internal inline fun u256IsZero() = bitLen == 0
 
-    fun u256SetOne() {
-        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L; bitLen = 1; digitLen = 1
-    }
+    internal inline fun u256IsNotZero() = bitLen != 0
 
-    fun u256SetZeroOrOneMasked(d0: Long) {
-        val asInt = (d0 and 1).toInt()
-        dw3 = 0; dw2 = 0; dw1 = 0; dw0 = d0 and 1; bitLen = asInt; digitLen = asInt
-    }
+    internal inline fun u256IsOne() = bitLen == 1
 
-    fun u256IsOne() = bitLen == 1
+    internal inline fun u256IsLEOne() = bitLen <= 1
 
-    fun u256IsLEOne() = bitLen <= 1
+    internal inline fun u256IsGTOne() = bitLen > 1
 
-    fun u256IsGTOne() = bitLen > 1
+    internal inline fun u256IsMultipleOf5() = U256Bits.u256IsMultipleOf5(this)
 
-    fun u256IsMultipleOf5() = U256Bits.u256IsMultipleOf5(this)
-
-    fun u256IsMultipleOf10(): Boolean {
+    internal inline fun u256IsMultipleOf10(): Boolean {
         if (bitLen < 4 || (dw0 and 1) != 0L)
             return false
         return u256IsMultipleOf5()
     }
 
-    fun u256IsPowerOf10() = U256Pow10.coeffIsPow10(this)
+    internal inline fun u256IsPowerOf10() = U256Pow10.coeffIsPow10(this)
 
-    fun u256IsAllNines(nineCount: Int) : Boolean  {
+    internal inline fun u256IsAllNines(nineCount: Int) : Boolean  {
         val pow10BitLen = U256Pow10.pow10BitLen(nineCount)
         if (bitLen != pow10BitLen)
             return false
-        val offset = pow10Offset(nineCount)
+        val offset = U256Pow10.pow10Offset(nineCount)
         if (dw0 != POW10[offset] - 1)
             return false
         if (nineCount < MIN_POW10_DIGIT_LEN_128 || dw1 != POW10[offset])
@@ -98,22 +70,9 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
         return true
     }
 
-    private fun calcBitLen(): Int {
-        return calcBitLen256(dw3, dw2, dw1, dw0)
-    }
-
-    private fun calcDigitLen(): Int {
-        return when {
-            (bitLen <= 64) -> U256Pow10.calcDigitLen64(bitLen, dw0)
-            (bitLen <= 128) -> U256Pow10.calcDigitLen128(bitLen, dw1, dw0)
-            (bitLen <= 192) -> U256Pow10.calcDigitLen192(bitLen, dw2, dw1, dw0)
-            else -> calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
-        }
-    }
-
-    private fun updateLengths() {
+    fun updateLengths() {
         bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
-        digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+        digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
     }
 
     //FIXME this case can probably be accelerated because
@@ -121,68 +80,58 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     private fun updateLengthsAfterRoundUp() = updateLengths()
 
     fun u256HasValidLengths(): Boolean {
-        if (digitLen != calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
+        if (bitLen != calcBitLen256(dw3, dw2, dw1, dw0))
+            return false
+        if (digitLen != U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
             return false;
         return true
     }
 
-    fun u256UnscaledCompareTo(other: U256) = u256UnscaledCompare(this, other)
+    internal inline fun u256UnscaledCompareTo(other: U256) = U256Compare.u256UnscaledCompare(this, other)
 
-    fun u256UnscaledEQ(other: U256) = u256UnscaledEQ(this, other)
+    internal inline fun u256UnscaledEQ(other: U256) = U256Compare.u256UnscaledEQ(this, other)
 
-    fun u256ScaledCompareTo(other: U256, scaleDelta: Int)  = u256ScaledCompare(this, other, scaleDelta)
+    internal inline fun u256ScaledCompareTo(other: U256, scaleDelta: Int)  = U256Compare.u256ScaledCompare(this, other, scaleDelta)
 
-    fun u256ScaledEQ(other: U256, scaleDelta: Int) = u256ScaledEQ(this, other, scaleDelta)
+    internal inline fun u256ScaledEQ(other: U256, scaleDelta: Int) = U256Compare.u256ScaledEQ(this, other, scaleDelta)
 
-    fun u256SetPow2(pow2: Int) {
-        if (pow2 !in 0..255)
-            throw IllegalArgumentException()
-        val shifted = 1L shl pow2
-        val i = pow2 ushr 6
-        val j = 1L shl (60 + i)
-        dw0 = shifted and ((j shl 3) shr 63)
-        dw1 = shifted and ((j shl 2) shr 63)
-        dw2 = shifted and ((j shl 1) shr 63)
-        dw3 = shifted and ((j      ) shr 63)
-        bitLen = pow2 + 1
-        digitLen = ((pow2 * 1233) ushr 12) + 1
-    }
+    internal inline fun u256SetPow2(pow2: Int) = U256Bits.u256SetPow2(this, pow2)
 
-    fun u256SetPow10(pow10: Int) = U256Pow10.coeffSetPow10(this, pow10)
+    internal inline fun u256SetPow10(pow10: Int) = U256Pow10.coeffSetPow10(this, pow10)
 
-    fun u256SetAdd(x: U256, scaleDelta: Int, y: U256) = u256Add(this, x, scaleDelta, y)
+    internal inline fun u256SetAdd(x: U256, scaleDelta: Int, y: U256) = U256Add.u256Add(this, x, scaleDelta, y)
 
-    fun u256SetAdd(x: U256, y: U256) = u256AddUnscaled(this, x, y)
+    internal inline fun u256SetAdd(x: U256, y: U256) = U256Add.u256AddUnscaled(this, x, y)
 
-    fun u256SetSub(x: U256, y: U256) = u256SubUnscaled(this, x, y)
+    internal inline fun u256SetSub(x: U256, y: U256) = U256Sub.u256SubUnscaled(this, x, y)
 
-    fun u256SetMul(x: U256, y: U256) = u256Mul(this, x, y)
+    internal inline fun u256SetMul(x: U256, y: U256) = U256Mul.u256Mul(this, x, y)
 
-    fun u256SetSqr(x: U256) = U256Sqr.u256Sqr(this, x)
+    internal inline fun u256SetSqr(x: U256) = U256Sqr.u256Sqr(this, x)
 
-    fun u256SetFma(x: U256, y: U256, a: U256) = u256Fma(this, x, y, a)
+    internal inline fun u256SetFma(x: U256, y: U256, a: U256) = U256Fma.u256Fma(this, x, y, a)
 
-    fun u256SetFmaPow10(x: U256, pow10: Int, a: U256) = u256FmaPow10(this, x, pow10, a)
+    internal inline fun u256SetFmaPow10(x: U256, pow10: Int, a: U256) = U256Fma.u256FmaPow10(this, x, pow10, a)
 
-    fun u256SetFmaPow10(x: U256, pow10: Int, a0: Long) = u256FmaPow10(this, x, pow10, a0)
+    internal inline fun u256SetFmaPow10(x: U256, pow10: Int, a0: Long) = U256Fma.u256FmaPow10(this, x, pow10, a0)
 
-    fun u256SetFmaPow10(x: U256, pow10: Int, a1: Long, a0: Long) = u256FmaPow10(this, x, pow10, a1, a0)
+    internal inline fun u256SetFmaPow10(x: U256, pow10: Int, a1: Long, a0: Long) = U256Fma.u256FmaPow10(this, x, pow10, a1, a0)
 
-    fun u256MutateFmaPow10(pow10: Int, a: Long) = u256FmaPow10(this, this, pow10, a)
+    internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = U256Fma.u256FmaPow10(this, this, pow10, a)
 
-    fun u256SetFms(x: U256, y: U256, subtrahend: U256) = U256Fms.u256Fms(this, x, y, subtrahend)
+    internal inline fun u256SetFms(x: U256, y: U256, subtrahend: U256) = U256Fms.u256Fms(this, x, y, subtrahend)
 
-    fun u256SetDiv(x: U256, y: U256) = u256Div(this, x, y)
+    internal inline fun u256SetDiv(x: U256, y: U256) = U256Div.u256Div(this, x, y)
 
-    fun u256SetDivX64(x: U256, y0: Long) = u256Divx64(this, x, y0)
+    internal inline fun u256SetDivX64(x: U256, y0: Long) = U256Div.u256Divx64(this, x, y0)
 
-    fun u256SetMod(x: U256, y: U256) = u256Mod(this, x, y)
+    internal inline fun u256SetMod(x: U256, y: U256) = U256Div.u256Mod(this, x, y)
 
-    fun u256SetScaleUpPow10(x: U256, pow10: Int) = u256ScaleUpPow10(this, x, pow10)
+    internal inline fun u256SetScaleUpPow10(x: U256, pow10: Int) = U256ScalePow10.u256ScaleUpPow10(this, x, pow10)
 
-    fun u256SetScaleDownPow10(x: U256, pow10: Int) = u256ScaleDownPow10(this, x, pow10)
+    internal inline fun u256SetScaleDownPow10(x: U256, pow10: Int) = U256ScalePow10.u256ScaleDownPow10(this, x, pow10)
 
-    operator fun get(index: Int): Long {
+    internal operator fun get(index: Int): Long {
         return when (index) {
             0 -> dw0
             1 -> dw1
@@ -192,7 +141,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
         }
     }
 
-    operator fun set(index: Int, value: Long) {
+    internal operator fun set(index: Int, value: Long) {
         assert(digitLen == -1)
         when (index) {
             0 -> dw0 = value
@@ -203,177 +152,71 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
         }
     }
 
-    fun u256EnableIndexSetAndZeroOut() {
+    internal inline fun u256EnableIndexSetAndZeroOut() {
         digitLen = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
-    fun u256DisableIndexSetAndUpdateLengths() {
+    internal inline fun u256DisableIndexSetAndUpdateLengths() {
         assert(digitLen == -1)
-        updateLengths()
+        U256Bits.updateLengths(this)
     }
 
-    fun u256Set64(d0: Long) {
-        dw3 = 0L; dw2 = 0L; dw1 = 0L
-        dw0 = d0
-        bitLen = calcBitLen64(d0)
-        digitLen = U256Pow10.calcDigitLen64(bitLen, d0)
-    }
+    internal inline fun u256Set64(d0: Long) = U256Set.u256Set64(this, d0)
 
-    fun u256Set128(d1: Long, d0: Long) {
-        dw3 = 0L; dw2 = 0L
-        dw1 = d1; dw0 = d0
-        bitLen = calcBitLen128(d1, d0)
-        digitLen = U256Pow10.calcDigitLen128(bitLen, d1, d0)
-    }
+    internal inline fun u256Set128(d1: Long, d0: Long) = U256Set.u256Set128(this, d1, d0)
 
-    fun u256Set192(d2: Long, d1: Long, d0: Long) {
-        dw3 = 0L
-        dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen192(d2, d1, d0)
-        digitLen = U256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
-    }
+    internal inline fun u256Set192(d2: Long, d1: Long, d0: Long) = U256Set.u256Set192(this, d2, d1, d0)
 
+    internal inline fun u256Set256(d3: Long, d2: Long, d1: Long, d0: Long)  = U256Set.u256Set256(this, d3, d2, d1, d0)
 
-    fun u256Set256(d3: Long, d2: Long, d1: Long, d0: Long){
-        dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen256(d3, d2, d1, d0)
-        digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
-    }
+    internal inline fun u256Set(x: U256) = U256Set.u256Set(this, x)
 
-    fun u256Set(x: U256) {
-            bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
-    }
+    internal inline fun u256Set(str: String) = Int256ParsePrint.u256FromString(this, str)
 
-    fun u256Set(str: String) = Int256ParsePrint.u256FromString(this, str)
+    internal inline fun u256SetShiftRight(x: U256, bitShift: Int) = U256Set.u256SetShiftRight(this, x, bitShift)
 
-    fun u256SetShiftRight(x: U256, bitShift: Int) = U256Set.u256SetShiftRight(this, x, bitShift)
+    internal inline fun u256SetShiftLeft(x: U256, bitShift: Int) = U256Set.u256SetShiftLeftOr(this, x, bitShift, 0L)
 
-    fun u256SetShiftLeft(x: U256, bitShift: Int) = U256Set.u256SetShiftLeftOr(this, x, bitShift, 0L)
+    internal inline fun u256MutateShiftLeft(bitShift: Int) = U256Set.u256SetShiftLeftOr(this, this, bitShift, 0L)
 
-    fun u256MutateShiftLeft(bitShift: Int) = U256Set.u256SetShiftLeftOr(this, this, bitShift, 0L)
+    internal inline fun u256MutateShiftLeftOr(bitShift: Int, d0: Long) = U256Set.u256SetShiftLeftOr(this, this, bitShift, d0)
 
-    fun u256MutateShiftLeftOr(bitShift: Int, d0: Long) = U256Set.u256SetShiftLeftOr(this, this, bitShift, d0)
+    internal inline fun u256Set(x: LongArray, xOff: Int, xLen: Int) = U256Set.u256Set(this, x, xOff, xLen)
 
-    fun u256Set(x: LongArray, xOff: Int, xLen: Int) = u256Set(this, x, xOff, xLen)
+    internal inline fun u256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
+        U256Set.u256SetShiftRight(this, x, xOff, xLen, bitCount)
 
-    fun u256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
-        u256SetShiftRight(this, x, xOff, xLen, bitCount)
+    internal inline fun getDwordAtBitIndex(bitIndex: Int): Long = U256Bits.getDwordAtBitIndex(this, bitIndex)
 
-    fun getDwordAtBitIndex(bitIndex: Int): Long =
-        U256Bits.getDwordAtBitIndex(this, bitIndex)
+    internal inline fun u256ToFloorDouble() = U256Bits.u256ToFloorDouble(this)
 
-    open fun u256ToFloorDouble(): Double {
-        val hiBitLen = min(53, bitLen)
-        val hiBitIndex = bitLen - hiBitLen
-        val hiBits = getDwordAtBitIndex(hiBitIndex)
-        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitIndex)
-        return dHiBits
-    }
+    internal inline fun u256Set(d: Double) = U256Bits.u256Set(this, d)
 
-    fun u256Set(d: Double) {
-        val dRaw = d.toRawBits()
-        val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
-        if (exp <= 63) {
-            u256Set64(Math.abs(d).toLong())
-            return
-        }
-        if (exp > 255) {
-            throw RuntimeException("coefficient overflow")
-        }
-        val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
-        u256Set64(significand)
-        u256SetShiftLeft(this, exp - 52)
-    }
+    internal inline fun u256ToNewDoubleDouble() = U256Bits.u256ToNewDoubleDouble(this)
 
-    open fun u256ToNewDoubleDouble(): DoubleDouble {
-        val hiBitsLen = min(53, bitLen)
-        val hiBitsIndex = bitLen - hiBitsLen
-        val hiBits = getDwordAtBitIndex(hiBitsIndex)
-        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitsIndex)
-        if (hiBitsIndex == 0)
-            return DoubleDouble(dHiBits, 0.0)
-        var loBits64Index: Int = max(0, hiBitsIndex - 64)
-        var loBitsMask = -1L ushr max(0, 64 - hiBitsIndex)
-        var loBits: Long
-        var nlz: Int
-        while (true) {
-            loBits = getDwordAtBitIndex(loBits64Index) and loBitsMask
-            nlz = numberOfLeadingZeros(loBits)
-            if (loBits64Index == 0 || nlz <= 11)
-                break
-            loBits64Index = max(loBits64Index - nlz, 0)
-            loBitsMask = -1
-        }
-        val extraBits = max(0, 11 - nlz)
-        loBits = loBits ushr extraBits
-        val loBits53Index = loBits64Index + extraBits
-        val dLoBits = Math.scalb(loBits.toDouble(), loBits53Index)
-        return DoubleDouble(dHiBits, dLoBits)
-    }
+    internal inline fun u256Set(dd: DoubleDouble) = U256Bits.u256Set(this, dd)
 
-    fun u256Set(dd: DoubleDouble) {
-        u256Set(dd.hi)
-        if (dd.lo == 0.0)
-            return
-        val coeffLo = U256()
-        coeffLo.u256Set(dd.lo)
-        if (dd.lo > 0)
-            u256SetAdd(this, coeffLo)
-        else
-            u256SetSub(this, coeffLo)
-    }
-
-    fun u256MutateIncrement(doRoundUp: Boolean) {
+    internal inline fun u256MutateIncrement(doRoundUp: Boolean) {
         if (doRoundUp)
-            u256MutateIncrement()
+            U256Add.u256MutateIncrement(this)
     }
 
-    fun u256MutateIncrement() {
-        ++dw0
-        if (dw0 == 0L) {
-            ++dw1
-            if (dw1 == 0L) {
-                ++dw2
-                if (dw2 == 0L) {
-                    ++dw3
-                    if (dw3 == 0L)
-                        throw RuntimeException("overflow")
-                }
-            }
-        }
-        // flag for roundup which occurs during multiplies while enableIndexSet is active
-        if (digitLen >= 0)
-            updateLengthsAfterRoundUp()
-    }
+    internal inline fun u256MutateIncrement() = U256Add.u256MutateIncrement(this)
 
-    fun u256MutateDecrement() {
-        --dw0
-        if (dw0 == -1L) {
-            --dw1
-            if (dw1 == -1L) {
-                --dw2
-                if (dw2 == -1L) {
-                    --dw3
-                    if (dw3 == -1L)
-                        throw RuntimeException("decrement underflow")
-                }
-            }
-        }
-        updateLengths()
-    }
+    internal inline fun u256MutateDecrement() = U256Add.u256MutateDecrement(this)
 
-    fun u256NumberOfTrailingZeros() = U256Bits.numberOfTrailingZeros(this)
+    internal inline fun u256NumberOfTrailingZeros() = U256Bits.numberOfTrailingZeros(this)
 
-    fun u256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
+    internal inline fun u256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
 
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() = Int256ParsePrint.int256ToString(false, this)
 
-    override fun equals(other: Any?) = other is U256 && u256UnscaledEQ(this, other)
+    override fun equals(other: Any?) = other is U256 && U256Compare.u256UnscaledEQ(this, other)
 
 
-    fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else toString()
+    internal inline fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else toString()
 
 
 }
