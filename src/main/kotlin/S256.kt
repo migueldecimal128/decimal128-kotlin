@@ -2,7 +2,7 @@ package com.decimal128
 
 import com.decimal128.U256Compare.u256UnscaledCompare
 
-internal open class S256() : U256() {
+open class S256() : U256() {
     var sign = false
 
     fun s256Add(x: S256, y: S256) = s256AddImpl(x, y.sign, y)
@@ -76,5 +76,9 @@ internal open class S256() : U256() {
         prod.s256SetScaleUpPow10(x, pow10)
         s256Add(prod, a)
     }
+
+    override fun toString() = Int256ParsePrint.int256ToString(sign, this)
+
+    override fun equals(other: Any?) = other is S256 && sign == other.sign && u256UnscaledEQ(other)
 
 }

@@ -8,26 +8,29 @@ private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
 
 private val SINGLE_DIGIT_NUMBERS =
-    arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+    arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+        "-0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9")
 
-object U256ParsePrint {
+internal object Int256ParsePrint {
 
-    fun u256ToString(c: U256): String {
-        if (c.digitLen > 1) {
-            val bytes = ByteArray(max(c.digitLen, 1))
-            u256ToChars(c, bytes, 0)
+    fun int256ToString(sign: Boolean, u: U256): String {
+        val s = if (sign) 1 else 0
+        if (u.digitLen > 1) {
+            val bytes = ByteArray(u.digitLen + s)
+            bytes[0] = '-'.code.toByte() // if positive then this will be overwritten
+            u256ToChars(u, bytes, s)
             return String(bytes, StandardCharsets.UTF_8)
         } else {
-            return SINGLE_DIGIT_NUMBERS[c.dw0.toInt()]
+            return SINGLE_DIGIT_NUMBERS[(10 and -s) + u.dw0.toInt()]
         }
     }
 
-    fun u256ToChars(c: U256, bytes: ByteArray, off: Int) {
-        if (c.bitLen <= 64) {
-            u64ToChars(c.digitLen, c.dw0, bytes, off)
+    fun u256ToChars(u: U256, bytes: ByteArray, off: Int) {
+        if (u.bitLen <= 64) {
+            u64ToChars(u.digitLen, u.dw0, bytes, off)
             return
         }
-        val t = U256(c)
+        val t = U256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)

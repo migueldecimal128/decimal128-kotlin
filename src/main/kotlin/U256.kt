@@ -28,7 +28,7 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 
-internal open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
+open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -36,7 +36,7 @@ internal open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
-        U256ParsePrint.u256FromString(this, str)
+        Int256ParsePrint.u256FromString(this, str)
     }
     constructor(c: U256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
@@ -245,7 +245,7 @@ internal open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
             bitLen = x.bitLen; digitLen = x.digitLen; dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
     }
 
-    fun u256Set(str: String) = U256ParsePrint.u256FromString(this, str)
+    fun u256Set(str: String) = Int256ParsePrint.u256FromString(this, str)
 
     fun u256SetShiftRight(x: U256, bitShift: Int) = U256Set.u256SetShiftRight(this, x, bitShift)
 
@@ -368,7 +368,7 @@ internal open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     fun u256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
 
     //override fun toString() = coeffToBigInteger().toString()
-    override fun toString() = U256ParsePrint.u256ToString(this)
+    override fun toString() = Int256ParsePrint.int256ToString(false, this)
 
     override fun equals(other: Any?) = other is U256 && u256UnscaledEQ(this, other)
 

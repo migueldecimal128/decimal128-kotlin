@@ -198,7 +198,7 @@ object DecimalParsePrint {
             // render integer coeff, including a single 0
             if (len - ib < x.digitLen)
                 break@insufficient_buffer
-            U256ParsePrint.u256ToChars(x, bytes, ib)
+            Int256ParsePrint.u256ToChars(x, bytes, ib)
             ib += max(x.digitLen, 1) // if x.digitLen == 0 then 1
             if (isNonSciDecimal) {
                 if (isNonSciDecimalGE1) {
