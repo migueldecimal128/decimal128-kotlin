@@ -63,6 +63,37 @@ object U256Divide {
         return DivKnuth.knuthDivideWrapperx64(z, x, y0, false)
     }
 
+    fun u256DivModX64(z: U256, x: U256, y0: Long): Long {
+        if ((y0 shr 1) == 0L) {
+            if (y0 == 0L)
+                throw RuntimeException("div by zero")
+            z.u256Set(x)
+            return 0
+        }
+        val x0 = x.dw0
+        if (x.bitLen <= 64) {
+            val quot = divideUnsigned(x0, y0)
+            val rem = remainderUnsigned(x0, y0)
+            z.u256Set64(quot)
+            return rem
+        }
+        if ((y0 and (y0 - 1)) == 0L) {
+            // y0 is an exact power of 2 ... just shift right.
+            // 0 and 1 cases handled above, so if we are here then ntz >= 1
+            val ntz = numberOfTrailingZeros(y0)
+            val mask = (1L shl ntz) - 1L
+            val rem = x0 and mask
+            u256SetShiftRight(z, x, ntz)
+            return rem
+        }
+        //TODO at this point I know that x.bitLen >= y.bitLen and x > y
+        // if (bitLenDelta < some-small-number) then I should use repeated subtraction
+        if ((y0 ushr 32) == 0L) {
+            return DivDirect.divModX32(z, x, y0)
+        }
+        return DivKnuth.knuthDivModX64(z, x, y0)
+    }
+
     fun u256Div(z: U256, x: U256, y: U256): Residue {
         if (y.bitLen <= 64)
             return u256Divx64(z, x, y.dw0)

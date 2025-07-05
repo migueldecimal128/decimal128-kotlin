@@ -177,6 +177,47 @@ object DivKnuth {
         return residue
     }
 
+    fun knuthDivModX64(z: U256, x: U256, y0: Long): Long {
+        assert((y0 ushr 32) != 0L)
+        assert(x.bitLen > 64)
+
+        un[0] = x.dw0.toInt()
+        un[1] = (x.dw0 ushr 32).toInt()
+        un[2] = x.dw1.toInt()
+        un[3] = (x.dw1 ushr 32).toInt()
+        un[4] = x.dw2.toInt()
+        un[5] = (x.dw2 ushr 32).toInt()
+        un[6] = x.dw3.toInt()
+        un[7] = (x.dw3 ushr 32).toInt()
+        un[8] = 0
+
+        val m = ((x.bitLen - 1) ushr 5) + 1
+
+        val s = numberOfLeadingZeros(y0)
+        val y0Normalized = y0 shl s
+
+        vn[0] = y0Normalized.toInt()
+        vn[1] = (y0Normalized ushr 32).toInt()
+        //val n = 2
+
+        if (s != 0) {
+            un[m] = un[m - 1] ushr -s
+            for (i in m - 1 downTo 1) {
+                un[i] = (un[i] shl s) or (un[i - 1] ushr -s)
+            }
+            un[0] = un[0] shl s
+        }
+
+        q.fill(0)
+
+        knuthDivideCore(m, 2)
+
+        val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
+        val remainder = remainderNormalized ushr s
+        u256Set(z, q, m)
+        return remainder
+    }
+
     /**
      * Multi‐word division (Knuth’s Algorithm D) in base 2^32.
      *
