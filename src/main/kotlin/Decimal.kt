@@ -22,7 +22,6 @@ val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
 class Decimal() : S256() {
     var qExp = 0
-    //var sign = false
 
     constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
         this.u256Set256(dw3, dw2, dw1, dw0)
@@ -192,6 +191,17 @@ class Decimal() : S256() {
     fun sub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(x, !y.sign, y, ctx)
 
     private fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext) {
+        val xQ = x.qExp
+        if (xQ == y.qExp && xQ < MIN_SPECIAL_VALUE) {
+            this.qExp = xQ
+            s256AddImpl(x, ySign, y)
+            roundAndFinalize(EXACT, ctx)
+        } else {
+            scaledAddImpl(x, ySign, y, ctx)
+        }
+    }
+
+    private fun scaledAddImpl(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val xSign = x.sign
@@ -202,7 +212,7 @@ class Decimal() : S256() {
                 val residue = when {
                     ! (xSign xor ySign) -> {
                         this.sign = xSign
-                        MagnitudeAddSub.magAdd(this, x, y)
+                        MagnitudeAddSub.magScaledAdd(this, x, y)
                     }
                     (x.magnitudeCompareTo(y) >= 0) -> {
                         this.sign = xSign

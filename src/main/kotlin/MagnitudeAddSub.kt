@@ -10,12 +10,13 @@ import java.lang.Math.min
 
 object MagnitudeAddSub {
 
-    fun magAdd(z: Decimal, x: Decimal, y: Decimal): Residue {
-        if (x.qExp == y.qExp) {
-            z.qExp = x.qExp
-            u256AddUnscaled(z, x, y)
-            return Residue.EXACT
-        }
+    fun magScaledAdd(z: Decimal, x: Decimal, y: Decimal): Residue {
+        assert(x.qExp != y.qExp) // should be caught earlier
+        //if (x.qExp == y.qExp) {
+        //    z.qExp = x.qExp
+        //    u256AddUnscaled(z, x, y)
+        //    return Residue.EXACT
+        //}
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
@@ -79,11 +80,12 @@ object MagnitudeAddSub {
     // decrements when non-exact so that standard round and finalize routine can be called
     fun magSub(z: Decimal, x: Decimal, y: Decimal): Residue {
         assert(x.magnitudeCompareTo(y) >= 0)
-        if (x.qExp == y.qExp) {
-            z.qExp = x.qExp
-            U256Sub.u256SubUnscaled(z, x, y)
-            return Residue.EXACT
-        }
+        assert(x.qExp != y.qExp) // should be caught earlier
+        //if (x.qExp == y.qExp) {
+        //    z.qExp = x.qExp
+        //    U256Sub.u256SubUnscaled(z, x, y)
+        //    return Residue.EXACT
+        //}
         val qDelta = Math.abs(x.qExp - y.qExp)
         val headroomWithGuardRound = 2 + PRECISION_34 - x.digitLen
         val shiftLeft = min(qDelta, headroomWithGuardRound)

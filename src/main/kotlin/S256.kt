@@ -49,7 +49,7 @@ open class S256 : U256 {
 
     internal inline fun s256Sub(x: S256, y: S256) = s256AddImpl(x, ! y.sign, y)
 
-    private fun s256AddImpl(x: S256, ySign: Boolean, y: S256) {
+    fun s256AddImpl(x: S256, ySign: Boolean, y: S256) {
         val xSign = x.sign
         if (xSign == ySign) {
             this.u256SetAdd(x, y)
