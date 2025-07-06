@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.BigInteger.*
-import kotlin.math.ceil
+import java.lang.Math.ceil
 
 @OptIn(ExperimentalStdlibApi::class)
 class GenerateDecimal128Constants {

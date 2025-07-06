@@ -7,7 +7,6 @@ import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
 import java.math.BigInteger.*
 import java.util.*
-import kotlin.math.*
 
 class TestSimpleRecipMulDivSmallPow10 {
 

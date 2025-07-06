@@ -1,8 +1,8 @@
 package com.decimal128
 
 import java.lang.Long.numberOfLeadingZeros
-import kotlin.math.max
-import kotlin.math.min
+import java.lang.Math.max
+import java.lang.Math.min
 
 const val PRECISION_34 = 34
 

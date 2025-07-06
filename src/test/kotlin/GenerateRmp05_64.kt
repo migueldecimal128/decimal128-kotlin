@@ -3,9 +3,9 @@ package com.decimal128
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
-import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.min
+import java.lang.Math.ceil
+import java.lang.Math.max
+import java.lang.Math.min
 
 class GenerateRmp05_64 {
     companion object {

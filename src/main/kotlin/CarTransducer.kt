@@ -2,7 +2,7 @@ package com.decimal128
 
 import java.math.BigDecimal
 import java.math.BigInteger
-import kotlin.math.max
+import java.lang.Math.max
 
 
 // CAR == Cardinal ARray

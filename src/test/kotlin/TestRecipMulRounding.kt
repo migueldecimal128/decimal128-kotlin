@@ -3,7 +3,7 @@ package com.decimal128
 import org.junit.jupiter.api.Test
 
 import java.math.BigInteger
-import kotlin.math.max
+import java.lang.Math.max
 import java.io.File
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream

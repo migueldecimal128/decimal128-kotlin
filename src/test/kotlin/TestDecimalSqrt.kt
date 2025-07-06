@@ -9,9 +9,9 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.nextDown
+import java.lang.Math.max
+import java.lang.Math.min
+import java.lang.Math.nextDown
 
 class TestDecimalSqrt{
 

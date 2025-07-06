@@ -7,8 +7,8 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.Class754.*
-import kotlin.math.max
-import kotlin.math.min
+import java.lang.Math.max
+import java.lang.Math.min
 
 internal const val MIN_SPECIAL_VALUE = 1000000000
 internal const val NON_FINITE_INF = 1000000000

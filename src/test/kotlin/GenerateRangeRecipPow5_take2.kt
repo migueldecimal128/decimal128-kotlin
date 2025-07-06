@@ -7,7 +7,7 @@ import com.decimal128.U256RecipMulPow5.u256RecipMul4
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
-import kotlin.math.min
+import java.lang.Math.min
 
 object GenerateRangeRecipPow5_take2 {
 
@@ -322,7 +322,7 @@ object GenerateRangeRecipPow5_take2 {
                 val thisRow = recipTable[q][K_MIN]
                 if (prevRow != NULL_TABLE_ENTRY && thisRow != NULL_TABLE_ENTRY) {
                     val interRowDelta = thisRow.S - prevRow.S
-                    maxInterRowDelta = kotlin.math.max(maxInterRowDelta, interRowDelta)
+                    maxInterRowDelta = java.lang.Math.max(maxInterRowDelta, interRowDelta)
                 }
             }
             var intraRowSum = 0
@@ -331,16 +331,16 @@ object GenerateRangeRecipPow5_take2 {
                 val te = recipTable[q][k]
                 if (te != NULL_TABLE_ENTRY && prevTE != NULL_TABLE_ENTRY) {
                     val intraRowDelta = te.S - prevTE.S
-                    maxIntraRowDelta = kotlin.math.max(maxIntraRowDelta, intraRowDelta)
+                    maxIntraRowDelta = java.lang.Math.max(maxIntraRowDelta, intraRowDelta)
                     intraRowSum += intraRowDelta
-                    maxProdBitLens[q] = kotlin.math.max(maxProdBitLens[q], te.prodBitLen)
+                    maxProdBitLens[q] = java.lang.Math.max(maxProdBitLens[q], te.prodBitLen)
                 }
                 if (te != NULL_TABLE_ENTRY) {
                     ++nonNullEntryCount
                     if (q == te.qMin)
                         ++uniqueEntryCount
-                    maxS = kotlin.math.max(maxS, te.S)
-                    maxProdBitLen = kotlin.math.max(maxProdBitLen, te.prodBitLen)
+                    maxS = java.lang.Math.max(maxS, te.S)
+                    maxProdBitLen = java.lang.Math.max(maxProdBitLen, te.prodBitLen)
                 }
                 prevTE = te
             }

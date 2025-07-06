@@ -3,8 +3,8 @@ package com.decimal128
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
-import kotlin.math.max
-import kotlin.math.min
+import java.lang.Math.max
+import java.lang.Math.min
 
 private const val P34       = 34
 private const val EMIN      = -6143

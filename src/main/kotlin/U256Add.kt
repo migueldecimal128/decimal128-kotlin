@@ -2,7 +2,7 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import com.decimal128.U256ScalePow10.u256ScaleFmaPow10
-import kotlin.math.max
+import java.lang.Math.max
 
 object U256Add {
 

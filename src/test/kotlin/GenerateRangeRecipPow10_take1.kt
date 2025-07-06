@@ -2,7 +2,7 @@ package com.decimal128
 
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
-import kotlin.math.min
+import java.lang.Math.min
 
 private val ONE = BigInteger.ONE
 private val TEN = BigInteger.TEN
@@ -149,7 +149,7 @@ class GenerateRangeRecipPow10_take1 {
                 val thisRow = recipTable[j][k_min]
                 if (prevRow != null && thisRow != null) {
                     val interRowDelta = thisRow.S - prevRow.S
-                    maxInterRowDelta = kotlin.math.max(maxInterRowDelta, interRowDelta)
+                    maxInterRowDelta = java.lang.Math.max(maxInterRowDelta, interRowDelta)
                 }
             }
             var intraRowSum = 0
@@ -158,9 +158,9 @@ class GenerateRangeRecipPow10_take1 {
                 val te = recipTable[j][k]
                 if (te != null && prevTE != null) {
                     val intraRowDelta = te.S - prevTE.S
-                    maxIntraRowDelta = kotlin.math.max(maxIntraRowDelta, intraRowDelta)
+                    maxIntraRowDelta = java.lang.Math.max(maxIntraRowDelta, intraRowDelta)
                     intraRowSum += intraRowDelta
-                    maxBitLen[j] = kotlin.math.max(maxBitLen[j], te.bitLen)
+                    maxBitLen[j] = java.lang.Math.max(maxBitLen[j], te.bitLen)
                 }
                 prevTE = te
             }

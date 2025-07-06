@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.BigInteger.ONE
 import java.math.BigInteger.ZERO
 import java.util.*
-import kotlin.math.min
+import java.lang.Math.min
 import kotlin.test.assertEquals
 
 class TestReduce {

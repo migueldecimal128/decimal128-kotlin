@@ -11,7 +11,7 @@ import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlin.math.min
+import java.lang.Math.min
 
 class TestU256ScaleDown {
 

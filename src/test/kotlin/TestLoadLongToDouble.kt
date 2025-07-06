@@ -5,7 +5,7 @@ import java.lang.Double.doubleToRawLongBits
 import java.math.BigInteger
 import java.math.BigInteger.TEN
 import java.math.BigInteger.TWO
-import kotlin.math.sqrt
+import java.lang.Math.sqrt
 
 class TestLoadLongToDouble {
 

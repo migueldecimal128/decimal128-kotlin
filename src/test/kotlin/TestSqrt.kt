@@ -9,9 +9,9 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.nextDown
+import java.lang.Math.max
+import java.lang.Math.min
+import java.lang.Math.nextDown
 
 class TestSqrt{
 
@@ -118,7 +118,7 @@ class TestSqrt{
 
         val dbl0 = radicandScaled.u256ToFloorDouble()
         // g == guess
-        val guess0Double = Math.sqrt(dbl0).nextDown()
+        val guess0Double = Math.nextDown(Math.sqrt(dbl0))
         //val rawGuess0 = guess0Double.toRawBits()
         //val guess0Mantissa = ((rawGuess0 and ((1L shl 52) - 1)) or (1L shl 52)) - 1 // ensure floor
         //val guess0Exp = ((rawGuess0 ushr 52).toInt() and 0x7FF) - 1023

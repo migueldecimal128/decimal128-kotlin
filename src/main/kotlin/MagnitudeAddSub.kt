@@ -6,7 +6,7 @@ import com.decimal128.U256ScalePow10.u256ScaleDownPow10
 import com.decimal128.U256ScalePow10.u256ScaleUpPow10
 import com.decimal128.U256Sub.u256SubScaled
 import com.decimal128.Residue.Companion.EXACT
-import kotlin.math.min
+import java.lang.Math.min
 
 object MagnitudeAddSub {
 

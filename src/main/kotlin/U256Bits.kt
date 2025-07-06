@@ -172,7 +172,7 @@ object U256Bits {
     }
 
     fun u256ToFloorDouble(x: U256): Double {
-        val hiBitLen = kotlin.math.min(53, x.bitLen)
+        val hiBitLen = java.lang.Math.min(53, x.bitLen)
         val hiBitIndex = x.bitLen - hiBitLen
         val hiBits = getDwordAtBitIndex(x, hiBitIndex)
         val dHiBits = Math.scalb(hiBits.toDouble(), hiBitIndex)
@@ -195,14 +195,14 @@ object U256Bits {
     }
 
     fun u256ToNewDoubleDouble(x: U256): DoubleDouble {
-        val hiBitsLen = kotlin.math.min(53, x.bitLen)
+        val hiBitsLen = java.lang.Math.min(53, x.bitLen)
         val hiBitsIndex = x.bitLen - hiBitsLen
         val hiBits = getDwordAtBitIndex(x, hiBitsIndex)
         val dHiBits = Math.scalb(hiBits.toDouble(), hiBitsIndex)
         if (hiBitsIndex == 0)
             return DoubleDouble(dHiBits, 0.0)
-        var loBits64Index: Int = kotlin.math.max(0, hiBitsIndex - 64)
-        var loBitsMask = -1L ushr kotlin.math.max(0, 64 - hiBitsIndex)
+        var loBits64Index: Int = java.lang.Math.max(0, hiBitsIndex - 64)
+        var loBitsMask = -1L ushr java.lang.Math.max(0, 64 - hiBitsIndex)
         var loBits: Long
         var nlz: Int
         while (true) {
@@ -210,10 +210,10 @@ object U256Bits {
             nlz = numberOfLeadingZeros(loBits)
             if (loBits64Index == 0 || nlz <= 11)
                 break
-            loBits64Index = kotlin.math.max(loBits64Index - nlz, 0)
+            loBits64Index = java.lang.Math.max(loBits64Index - nlz, 0)
             loBitsMask = -1
         }
-        val extraBits = kotlin.math.max(0, 11 - nlz)
+        val extraBits = java.lang.Math.max(0, 11 - nlz)
         loBits = loBits ushr extraBits
         val loBits53Index = loBits64Index + extraBits
         val dLoBits = Math.scalb(loBits.toDouble(), loBits53Index)

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
-import kotlin.math.min
+import java.lang.Math.min
 
 class GenerateRmp10Correctly {
     companion object {

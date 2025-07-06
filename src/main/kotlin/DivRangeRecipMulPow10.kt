@@ -6,7 +6,7 @@ import com.decimal128.U256RecipMulPow5.u256RecipMul4
 import com.decimal128.U256RecipMulPow5.u256RecipMul3
 import com.decimal128.U256RecipMulPow5.u256RecipMul2
 import com.decimal128.U256RecipMulPow5.u256RecipMul1
-import kotlin.math.min
+import java.lang.Math.min
 
 const val Q_MIN = POW10_64_COUNT
 const val Q_MAXX = 79 // exclusive

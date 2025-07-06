@@ -4,8 +4,8 @@ import java.lang.Integer.compareUnsigned
 import java.lang.Integer.numberOfLeadingZeros
 import java.lang.Long.*
 import java.nio.charset.StandardCharsets
-import kotlin.math.min
-import kotlin.math.max
+import java.lang.Math.min
+import java.lang.Math.max
 
 
 // CAR == Cardinal ARray
