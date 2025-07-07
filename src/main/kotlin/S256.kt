@@ -13,7 +13,8 @@ open class S256 : U256 {
         this.sign = sign
     }
     constructor(str: String) : super() {
-        Int256ParsePrint.u256FromString(this, str)
+        val sign = Int256ParsePrint.u256FromString(this, true, str)
+        this.sign = sign and (bitLen > 0)
     }
 
     @JvmField
@@ -117,6 +118,7 @@ open class S256 : U256 {
         s256Add(prod, a)
     }
 
+    override fun toHexString() = Int256ParsePrint.int256ToHexString(sign, this)
     override fun toString() = Int256ParsePrint.int256ToString(sign, this)
 
     internal inline fun signum(): Int {

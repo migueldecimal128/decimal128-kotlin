@@ -17,7 +17,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
-        Int256ParsePrint.u256FromString(this, str)
+        Int256ParsePrint.u256FromString(this, false, str)
     }
     constructor(c: U256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
@@ -172,7 +172,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256Set(x: U256) = U256Set.u256Set(this, x)
 
-    internal inline fun u256Set(str: String) = Int256ParsePrint.u256FromString(this, str)
+    internal inline fun u256Set(str: String) = Int256ParsePrint.u256FromString(this, false, str)
 
     internal inline fun u256SetShiftRight(x: U256, bitShift: Int) = U256Set.u256SetShiftRight(this, x, bitShift)
 
@@ -210,6 +210,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
 
+    open fun toHexString() = Int256ParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() = Int256ParsePrint.int256ToString(false, this)
 

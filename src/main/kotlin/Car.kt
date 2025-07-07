@@ -9,8 +9,8 @@ import java.lang.Math.max
 
 
 // CAR == Cardinal ARray
-// cardinal has fallen out of use, but is an unsigned integer
-// the "cardinality" of a set
+// the word 'cardinal' has fallen out of use, but is an unsigned integer
+// ... the "cardinality" of a set
 
 object Car {
 

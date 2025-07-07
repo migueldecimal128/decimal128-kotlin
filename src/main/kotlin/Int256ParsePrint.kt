@@ -74,52 +74,106 @@ internal object Int256ParsePrint {
         } while (i >= 0)
     }
 
-    fun u256FromString(c: U256, str: String) {
-        c.u256SetZero()
-        val strLen = str.length
-        when {
-            (strLen == 0) ->
-                throw IllegalArgumentException("cannot parse empty string")
-            str.startsWith("0x") -> {
-                u256FromHexString(c, str)
-                return
-            }
-        }
+    fun int256ToHexString(sign: Boolean, u: U256): String {
+        val s = if (sign) 1 else 0
+        if (u.bitLen == 0)
+            return "0x0"
+        val hexitCount = (u.bitLen + 3) ushr 2
+        val bytes = ByteArray(s + 2 + hexitCount)
+        bytes[0    ] = '-'.code.toByte()
+        bytes[s    ] = '0'.code.toByte()
+        bytes[s + 1] = 'x'.code.toByte()
+        u256ToHexChars(u, hexitCount, bytes, s + 2)
+        return String(bytes, StandardCharsets.UTF_8)
+    }
 
+    fun u256ToHexChars(u: U256, hexitCount: Int, bytes: ByteArray, off: Int) {
+        var hexitsRemaining = hexitCount
+        var ich = off
+        for (i in u.bitLen ushr 6 downTo 0) {
+            val dw = u[i]
+            val thisHexitCount = if ((hexitsRemaining and 0x0F) != 0) (hexitsRemaining and 0x0F) else 16
+            u64ToHexChars(dw, thisHexitCount, bytes, ich)
+            hexitsRemaining -= thisHexitCount
+            ich += thisHexitCount
+        }
+        assert(hexitsRemaining == 0)
+        assert(ich == bytes.size)
+    }
+
+    fun u64ToHexChars(dw: Long, hexitCount: Int, bytes: ByteArray, off: Int) {
+        var t = dw
+        assert(hexitCount in 1..16)
+        for (i in hexitCount - 1 downTo 0) {
+            val h = (t and 0x0FL).toInt()
+            val ch = if (h < 10) '0' + h else 'A' - 10 + h
+            bytes[off + i] = ch.code.toByte()
+            t = t ushr 4
+        }
+    }
+
+    fun u256FromString(u: U256, allowSign: Boolean, str: String): Boolean {
+        u.u256SetZero()
+        val strLen = str.length
+        if (strLen == 0)
+            throw IllegalArgumentException("cannot parse empty string")
         var totalDigitCount = 0
         var accumulator = 0L
         var accumulatorDigitCount = 0
+        var nonZeroSeen = false
         var i = 0
-        while (i < strLen && str[i] == '0')
-            ++i
-        while (i < strLen) {
-            val ch = str[i++]
-            if (ch !in '0'..'9') {
-                if (ch == '_' && i > 0)
-                    continue
-                throw RuntimeException("unsigned integer parse error")
-            }
-            val n = ch - '0'
-            ++totalDigitCount
-            accumulator = accumulator * 10 + n
-            ++accumulatorDigitCount
-            if (accumulatorDigitCount < 19)
-                continue
-            c.u256MutateFmaPow10(19, accumulator)
-            accumulator = 0L
-            accumulatorDigitCount = 0
+        val sign = (
+                if (allowSign && (str[0] == '-' || str[0] == '+')) {
+                    ++i
+                    str[0] == '-'
+                } else {
+                    false
+                })
+        if (i + 1 < strLen && str[i] == '0' && (str[i + 1].code or 0x20) == 'x'.code) {
+            u256FromHexString(u, str, i)
+            return sign
         }
-        if (accumulatorDigitCount > 0)
-            c.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
+        do {
+            if (str[i] == '_')
+                break
+            var ch = '0'
+            while (i < strLen) {
+                ch = str[i++]
+                if (ch !in '0'..'9') {
+                    if (ch == '_')
+                        continue
+                    break
+                }
+                val n = ch - '0'
+                ++totalDigitCount
+                nonZeroSeen = nonZeroSeen or (n > 0)
+                if (! nonZeroSeen)
+                    continue
+                accumulator = accumulator * 10 + n
+                ++accumulatorDigitCount
+                if (accumulatorDigitCount < 19)
+                    continue
+                u.u256MutateFmaPow10(19, accumulator)
+                accumulator = 0L
+                accumulatorDigitCount = 0
+            }
+            if (ch == '_')
+                break
+            if (accumulatorDigitCount > 0)
+                u.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
+            if (totalDigitCount > 0)
+                return sign
+        } while (false)
+        throw IllegalArgumentException("invalid syntax:$str")
     }
 
-    private fun u256FromHexString(c:U256, str: String) {
+    private fun u256FromHexString(u: U256, str: String, ichStart: Int) {
         val strLen = str.length
-        if (strLen < 3)
+        if (ichStart + 2 >= strLen)
             throw IllegalArgumentException("hex string too short")
         var accumulator = 0L
         var accumulatorHexitCount = 0
-        var ich = 3
+        var ich = ichStart + 2
         while (ich < strLen) {
             val ch = str[ich++]
             if (ch == '_')
@@ -136,12 +190,12 @@ internal object Int256ParsePrint {
             ++accumulatorHexitCount
             if (accumulatorHexitCount < 16)
                 continue
-            c.u256MutateShiftLeftOr(64, accumulator)
+            u.u256MutateShiftLeftOr(64, accumulator)
             accumulator = 0
             accumulatorHexitCount = 0
         }
         if (accumulatorHexitCount > 0)
-            c.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
+            u.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
     }
 
 }
