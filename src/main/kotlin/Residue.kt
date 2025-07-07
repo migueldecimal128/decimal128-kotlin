@@ -25,7 +25,8 @@ value class Residue private constructor(val value:Int) {
 
         val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF")
 
-        // FIXME - this method is broken and must pass in the pow10 ... or something
+        // FIXME - this method is fine, but it needs a better name
+        //  ... and perhaps a better implementation
         fun residueFrom(c:U256) :Residue {
             val bitLen = c.bitLen
             return when {
