@@ -215,8 +215,6 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     override fun equals(other: Any?) = other is U256 && U256Compare.u256UnscaledEQ(this, other)
 
-
     internal inline fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else toString()
-
 
 }

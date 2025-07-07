@@ -119,35 +119,33 @@ open class S256 : U256 {
 
     override fun toString() = Int256ParsePrint.int256ToString(sign, this)
 
+    internal inline fun signum(): Int {
+        val nonZero = (-this.bitLen) shr 31
+        val s = if (this.sign) -1 else 1
+        return nonZero and s
+    }
+
     fun s256UnscaledCompareTo(other: S256): Int {
-        if (bitLen > 0) {
-            if (other.bitLen > 0) {
-                if (! this.sign) {
-                    if (other.sign)
-                        return 1
-                    else
-                        return u256UnscaledCompareTo(other)
-                } else {
-                    if (other.sign)
-                        return -u256UnscaledCompareTo(other)
-                    else
-                        return 1
-                }
-            } else {
-                // other == 0
-                return if (! sign) 1 else -1
+        val thisSignum = this.signum()
+        val otherSignum = other.signum()
+
+        // If both are non-zero
+        if ((thisSignum and otherSignum) != 0) {
+            if (thisSignum == otherSignum) {
+                val cmp = u256UnscaledCompareTo(other)
+                return thisSignum * cmp
             }
-        } else {
-            // this == 0
-            if (other.bitLen > 0) {
-                return if (other.sign) 1 else -1
-            } else {
-                // other == 0
-                return 0
-            }
+            return thisSignum
         }
+        // at least one is zero
+        return (thisSignum and ((otherSignum and 1) - 1)) or (otherSignum and ((thisSignum and 1) - 1))
     }
 
     override fun equals(other: Any?) = other is S256 && sign == other.sign && u256UnscaledEQ(other)
 
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + if (sign) 1 else 0
+        return result
+    }
 }

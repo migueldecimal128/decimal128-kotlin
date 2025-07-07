@@ -736,13 +736,18 @@ class Decimal() : S256() {
                     qExp == NON_FINITE_INF && other.qExp == NON_FINITE_INF -> return sign == other.sign
                     else -> false
                 }
-
+                // FIXME ... and ... Why haven't my unit tests flushed out this case?
                 else -> throw RuntimeException("somebody is a NaN")
             }
         }
         return false
     }
 
+    override fun hashCode(): Int {
+        var result = super.hashCode()  // includes sign + coefficient
+        result = 31 * result + qExp
+        return result
+    }
     // 5.7.2 General operations
 
     fun valueClass(): Class754 {

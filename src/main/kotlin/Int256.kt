@@ -85,4 +85,15 @@ class Int256 : S256 {
         return this
     }
 
+    override fun equals(other: Any?) = other is Int256 && compareTo(other) == 0
+
+    override fun hashCode(): Int {
+        var result = dw3.hashCode() + if (sign) 1 else 0
+        result = 31 * result + dw2.hashCode()
+        result = 31 * result + dw1.hashCode()
+        result = 31 * result + dw0.hashCode()
+        return result
+    }
+
+
 }
