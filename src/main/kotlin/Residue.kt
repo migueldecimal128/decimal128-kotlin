@@ -11,18 +11,9 @@ import com.decimal128.U256Pow10.compareWithHalfPow10_64
 
 import java.lang.Long.compareUnsigned
 
-
-//@JvmInline
-/*value*/ class Residue private constructor(val value:Int) {
-
-    // comment this out when we turn Residue into a value class
-    override fun equals(other: Any?): Boolean {
-        return other is Residue && this.value == other.value
-    }
-
-    fun toggleNegate() = RESIDUE_MAP[value xor 0x04]
-    fun withoutNegate() = RESIDUE_MAP[value and 0x03]
-    fun isNegated() = (value and 0x04) != 0
+private const val RESIDUE_IS_VALUE_CLASS = true
+@JvmInline
+value class Residue private constructor(val value:Int) {
 
     companion object {
         val EXACT = Residue(0)
@@ -30,17 +21,11 @@ import java.lang.Long.compareUnsigned
         val HALF = Residue(2)
         val GT_HALF = Residue(3)
 
-        val EXACT_NEGATED = Residue(4)
-        val LT_HALF_NEGATED = Residue(5)
-        val HALF_NEGATED = Residue(6)
-        val GT_HALF_NEGATED = Residue(7)
+        val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF)
 
+        val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF")
 
-        val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF, EXACT_NEGATED, LT_HALF_NEGATED, HALF_NEGATED, GT_HALF_NEGATED)
-
-        val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF",
-            "EXACT_NEGATED", "LT_HALF_NEGATED", "HALF_NEGATED", "GT_HALF_NEGATED")
-
+        // FIXME - this method is broken and must pass in the pow10 ... or something
         fun residueFrom(c:U256) :Residue {
             val bitLen = c.bitLen
             return when {
@@ -56,8 +41,8 @@ import java.lang.Long.compareUnsigned
         fun residueFrom(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long) : Residue {
             val stickyBit = if (stickyBitsFracCompare >= 0 || stickyBitsPow2 != 0L) 1 else 0
             val roundBit = if (isolatedRoundBit == 0L) 0 else 1
-            val residueValue = (roundBit shl 1) or stickyBit
-            val residueX = Residue(residueValue)
+            val residueValue = ((roundBit shl 1) or stickyBit) and 0x03
+            val residueX = if (RESIDUE_IS_VALUE_CLASS) Residue(residueValue) else RESIDUE_MAP[residueValue]
             val residueY =
                 if (stickyBitsPow2 == 0L) {
                     if (stickyBitsFracCompare < 0) {
@@ -81,7 +66,7 @@ import java.lang.Long.compareUnsigned
             assert(roundBit in 0..1)
             assert(stickyBit in 0..1)
             val residueValue = (roundBit shl 1) or stickyBit
-            val residueX = Residue(residueValue)
+            val residueX = RESIDUE_MAP[residueValue and 0x03]
             return residueX
         }
 
@@ -131,8 +116,9 @@ import java.lang.Long.compareUnsigned
             val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
             val pow10div2 = POW10[pow10] ushr 1
             val cmp = compareUnsigned(remainder, pow10div2)
-            val index = (cmp + 2) and nonZeroMask
-            val residue = RESIDUE_MAP[index and 0x03]
+            val index = ((cmp + 2) and nonZeroMask) and 0x03
+            //val residue = RESIDUE_MAP[index and 0x03]
+            val residue = if (RESIDUE_IS_VALUE_CLASS) Residue(index) else RESIDUE_MAP[index]
             return residue
         }
 
@@ -156,7 +142,7 @@ import java.lang.Long.compareUnsigned
     // used in add case when there is no overlap
     fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
         return when (roundingDirection) {
-            ROUND_TIES_TO_EVEN -> when (value and 0x03) { // mask off isNegated bit
+            ROUND_TIES_TO_EVEN -> when (value) {
                 LT_HALF.value -> 0L
                 HALF.value -> lsdwIsOdd and 1L
                 GT_HALF.value -> 1L
@@ -204,24 +190,21 @@ import java.lang.Long.compareUnsigned
     gt_half     gt_half gt_half gt_half gt_half
 
      */
-    //FIXME turn this into a map
-    // it is really just just merging the sticky bit
 
-    //FIXME what to do about _NEGATED residues
     fun merge(stickyResidue: Residue): Residue {
+        /*
         val mergedResidue = when (this.value) {
-            EXACT.value -> if (stickyResidue.value and 3 == EXACT.value) EXACT else LT_HALF
+            EXACT.value -> if (stickyResidue.value == EXACT.value) EXACT else LT_HALF
             LT_HALF.value -> LT_HALF
-            HALF.value -> if (stickyResidue.value and 3 == EXACT.value) HALF else GT_HALF
+            HALF.value -> if (stickyResidue.value == EXACT.value) HALF else GT_HALF
             GT_HALF.value -> GT_HALF
-
-            EXACT_NEGATED.value -> if (stickyResidue.value and 3 == EXACT.value) EXACT_NEGATED else LT_HALF_NEGATED
-            LT_HALF_NEGATED.value -> LT_HALF_NEGATED
-            HALF_NEGATED.value -> if (stickyResidue.value and 3 == EXACT.value) HALF_NEGATED else GT_HALF_NEGATED
-            GT_HALF_NEGATED.value -> GT_HALF_NEGATED
 
             else -> throw RuntimeException("unrecognized Residue.value")
         }
+         */
+        val s = (stickyResidue.value and 1) or (stickyResidue.value ushr 1)
+        val r = (this.value or s) and 0x03
+        val mergedResidue = if (RESIDUE_IS_VALUE_CLASS) Residue(r) else RESIDUE_MAP[r]
         return mergedResidue
     }
 
