@@ -22,14 +22,6 @@ class GenerateDecimal128Constants {
         Constant("MIN_POW10_DIGIT_LEN_192", 39),
         Constant("MIN_POW10_DIGIT_LEN_256", 58),
         Constant("MAX_DIGIT_LEN", 78),
-        Constant("ONE_E19", 1, TEN.pow(19)),
-        Constant("FIVE_E19", 2, TEN.pow(20).shiftRight(1)),
-        Constant("ONE_E20", 2, TEN.pow(20)),
-        Constant("ONE_E38", 3, TEN.pow(38)),
-        Constant("FIVE_E38", 3, TEN.pow(39).shiftRight(1)),
-        Constant("FIVE_E57", 3, TEN.pow(58).shiftRight(1)),
-        Constant("ONE_E58", 4, TEN.pow(58)),
-        Constant("ONE_E77", 4, TEN.pow(77)),
     )
     @Test
     fun generateConstants() {

@@ -19,6 +19,7 @@ class TestCompareWithHalfPow10 {
     }
 
     val cases = arrayOf(
+        TC("1096304271182483964159462071707506698374233386357680501"),
         TC("3115923653267705855292437738999867925214881860306447889664"),
         TC("44710045652749765965"),
         TC("22447106069505776011"),
@@ -33,7 +34,8 @@ class TestCompareWithHalfPow10 {
         TC("4999999999999999999"),
         TC("5000000000000000000"),
         TC("5000000000000000001"),
-        TC(ONE.shiftLeft(64).subtract(ONE))
+        TC(ONE.shiftLeft(64).subtract(ONE)),
+        TC(ONE.shiftLeft(256).subtract(ONE)),
         )
 
     @Test
@@ -67,14 +69,14 @@ class TestCompareWithHalfPow10 {
         if (verbose)
             println("$biA ($digitLen) compareWithHalfPow10 expected:$expected")
         val observed = when {
-            bitLen <= 64 ->
-                U256Pow10.compareWithHalfPow10_64(bitLen, biA.toLong())
-            bitLen <= 128 ->
-                U256Pow10.compareWithHalfPow10_128(bitLen, biA.shiftRight(64).toLong(), biA.toLong())
-            bitLen <= 192 ->
-                U256Pow10.compareWithHalfPow10_192(bitLen, biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong())
+            digitLen < MIN_POW10_DIGIT_LEN_128 ->
+                U256Pow10.compareWithHalfPow10_1(biA.toLong(), digitLen)
+            digitLen < MIN_POW10_DIGIT_LEN_192 ->
+                U256Pow10.compareWithHalfPow10_2(biA.shiftRight(64).toLong(), biA.toLong(), digitLen)
+            digitLen < MIN_POW10_DIGIT_LEN_256 ->
+                U256Pow10.compareWithHalfPow10_3(biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong(), digitLen)
             else ->
-                U256Pow10.compareWithHalfPow10_256(bitLen, biA.shiftRight(192).toLong(), biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong())
+                U256Pow10.compareWithHalfPow10_4(biA.shiftRight(192).toLong(), biA.shiftRight(128).toLong(), biA.shiftRight(64).toLong(), biA.toLong(), digitLen)
         }
         assertEquals(expected, observed)
     }

@@ -330,197 +330,6 @@ internal object U256Pow10 {
         }
     }
 
-    fun compareWithHalfPow10_64(bitLen: Int, dw0: Long): Int {
-        // normal path with hi bit not set ... double dw0
-        val dw0x2 = dw0 shl 1
-        val loDigitLen = ((bitLen * 1233) ushr 12) and 0x1F
-        val hiDigitLen = loDigitLen + 1
-        val pow10LoDigitLen = POW10[loDigitLen]
-        val pow10HiDigitLen = POW10[hiDigitLen]
-        val pow10 = if (compareUnsigned(dw0, pow10LoDigitLen) < 0) pow10LoDigitLen else pow10HiDigitLen
-        val cmp2xPath = compareUnsigned(dw0x2, pow10)
-        val is2xMask = if (dw0 > 0) -1 else 0
-        // hiBitWas set ... so we compare directly against ONE_E19_dw0
-        val cmpHiBitPath = -compareUnsigned(dw0, ONE_E19_dw0)
-        val isHiBitMask = (dw0 shr 63).toInt()
-        // if dw0 == 0L then we will swamp everything to -1
-        val isZeroMask = if (dw0 == 0L) -1 else 0
-
-        val cmp = (cmp2xPath and is2xMask) or (cmpHiBitPath and isHiBitMask) or isZeroMask
-        return cmp
-    }
-
-    fun compareWithHalfPow10_128(bitLen: Int, dw1: Long, dw0: Long): Int {
-        assert(bitLen in 65..128 && dw1 != 0L)
-        // 10**39 takes 3 dwords with most significant dword having value 0x02
-        // therefore, half of 10**39 takes 3 dwords
-        // 10**38 takes 127 bits
-        // therefore, anything with the hi bit set is 39 digits, but LT_HALF
-        if (bitLen >= 127) {
-            val cmp1 = -compareUnsigned(dw1, ONE_E38_dw1)
-            val cmp0 = -compareUnsigned(dw0, ONE_E38_dw0)
-            val cmp = if (cmp1 != 0) cmp1 else cmp0
-            return cmp
-        }
-        if (bitLen <= 66) {
-            val cmp1 = compareUnsigned(dw1, FIVE_E19_dw1)
-            val cmp0 = compareUnsigned(dw0, FIVE_E19_dw0)
-            val cmp = if (cmp1 != 0) cmp1 else cmp0
-            return cmp
-        }
-        val loDigitLen = (bitLen * 1233) ushr 12
-        val pow10Offset = pow10Offset(loDigitLen)
-        val loPow10dw1 = POW10[pow10Offset + 1]
-        val loPow10dw0 = POW10[pow10Offset + 0]
-        if (dw1 == loPow10dw1) {
-            val cmp0 = compareUnsigned(dw0, loPow10dw0)
-            val cmp = if (cmp0 < 0) 1 else -1
-            return cmp
-        }
-        val dw1x2 = (dw1 shl 1) or (dw0 ushr -1)
-        val dw0x2 = dw0 shl 1
-        val hiPow10dw1 = POW10[pow10Offset + 2 + 1]
-        val hiPow10dw0 = POW10[pow10Offset + 2 + 0]
-        val goLo = compareUnsigned(dw1, loPow10dw1) < 0
-        val pow10dw1 = if (goLo) loPow10dw1 else hiPow10dw1
-        val pow10dw0 = if (goLo) loPow10dw0 else hiPow10dw0
-
-        val cmp1 = compareUnsigned(dw1x2, pow10dw1)
-        val cmp0 = compareUnsigned(dw0x2, pow10dw0)
-        val cmp = if (cmp1 != 0) cmp1 else cmp0
-        return cmp
-    }
-
-    fun compareWithHalfPow10_192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int {
-        assert(bitLen in 129..192 && dw2 != 0L)
-        if (bitLen >= 191) {
-            val cmp2 = compareUnsigned(dw2, FIVE_E57_dw2)
-            val cmp1 = compareUnsigned(dw1, FIVE_E57_dw1)
-            val cmp0 = compareUnsigned(dw0, FIVE_E57_dw0)
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp210 = if (cmp2 != 0) cmp2 else cmp10
-            val cmp = cmp210
-            return cmp
-        }
-        if (bitLen == 129) {
-            val cmp2 = compareUnsigned(dw2, FIVE_E38_dw2)
-            val cmp1 = compareUnsigned(dw1, FIVE_E38_dw1)
-            val cmp0 = compareUnsigned(dw0, FIVE_E38_dw0)
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp210 = if (cmp2 != 0) cmp2 else cmp10
-            val cmp = cmp210
-            return cmp
-        }
-        val loDigitLen = (bitLen * 1233) ushr 12
-        val pow10Offset = pow10Offset(loDigitLen)
-        val loPow10dw2 = POW10[pow10Offset + 2]
-        val loPow10dw1 = POW10[pow10Offset + 1]
-        val loPow10dw0 = POW10[pow10Offset + 0]
-        if (dw2 == loPow10dw2) {
-            val cmp1 = compareUnsigned(dw1, loPow10dw1)
-            val cmp0 = compareUnsigned(dw0, loPow10dw0)
-            val cmp10 = if (dw1 != loPow10dw1) cmp1 else cmp0
-            val cmp = if (cmp10 < 0) 1 else -1
-            return cmp
-        }
-        val dw2x2 = (dw2 shl 1) or (dw1 ushr -1)
-        val dw1x2 = (dw1 shl 1) or (dw0 ushr -1)
-        val dw0x2 = dw0 shl 1
-        val hiPow10dw2 = POW10[pow10Offset + 3 + 2]
-        val hiPow10dw1 = POW10[pow10Offset + 3 + 1]
-        val hiPow10dw0 = POW10[pow10Offset + 3 + 0]
-        val goLoCmp2 = compareUnsigned(dw2, loPow10dw2)
-        val goLoCmp1 = compareUnsigned(dw1, loPow10dw1)
-        val goLoCmp0 = compareUnsigned(dw1, loPow10dw0)
-        val goLoCmp10 = goLoCmp1 or (((goLoCmp1 and 1) - 1) and goLoCmp0)
-        val goLoCmp210 = goLoCmp2 or (((goLoCmp2 and 1) - 1) and goLoCmp10)
-        val goLo = goLoCmp210 < 0
-
-        val pow10dw2 = if (goLo) loPow10dw2 else hiPow10dw2
-        val pow10dw1 = if (goLo) loPow10dw1 else hiPow10dw1
-        val pow10dw0 = if (goLo) loPow10dw0 else hiPow10dw0
-
-        val cmp2 = compareUnsigned(dw2x2, pow10dw2)
-        val cmp1 = compareUnsigned(dw1x2, pow10dw1)
-        val cmp0 = compareUnsigned(dw0x2, pow10dw0)
-        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-        val cmp210 = if (cmp2 != 0) cmp2 else cmp10
-        val cmp = cmp210
-        return cmp
-    }
-
-    fun compareWithHalfPow10_256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
-        assert(bitLen in 193..256 && dw3 != 0L)
-        if (bitLen == 256) {
-            val cmp3 = -compareUnsigned(dw3, ONE_E77_dw3)
-            val cmp2 = -compareUnsigned(dw2, ONE_E77_dw2)
-            val cmp1 = -compareUnsigned(dw1, ONE_E77_dw1)
-            val cmp0 = -compareUnsigned(dw0, ONE_E77_dw0)
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp32 = if (cmp3 != 0) cmp3 else cmp2
-            val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
-            val cmp = cmp3210
-            return cmp
-        }
-        if (bitLen == 193) {
-            val cmp3 = -compareUnsigned(dw3, ONE_E58_dw3)
-            val cmp2 = -compareUnsigned(dw2, ONE_E58_dw2)
-            val cmp1 = -compareUnsigned(dw1, ONE_E58_dw1)
-            val cmp0 = -compareUnsigned(dw0, ONE_E58_dw0)
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp32 = if (cmp3 != 0) cmp3 else cmp2
-            val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
-            val cmp = cmp3210
-            return cmp
-        }
-        val loDigitLen = (bitLen * 1233) ushr 12
-        val pow10Offset = pow10Offset(loDigitLen)
-        val loPow10dw3 = POW10[pow10Offset + 3]
-        val loPow10dw2 = POW10[pow10Offset + 2]
-        val loPow10dw1 = POW10[pow10Offset + 1]
-        val loPow10dw0 = POW10[pow10Offset + 0]
-        if (dw3 == loPow10dw3) {
-            val cmp2 = compareUnsigned(dw2, loPow10dw2)
-            val cmp1 = compareUnsigned(dw1, loPow10dw1)
-            val cmp0 = compareUnsigned(dw0, loPow10dw0)
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp210 = if (cmp2 != 0) cmp2 else cmp10
-            val cmp = if (cmp210 < 0) 1 else -1
-            return cmp
-        }
-        val dw3x2 = (dw3 shl 1) or (dw2 ushr -1)
-        val dw2x2 = (dw2 shl 1) or (dw1 ushr -1)
-        val dw1x2 = (dw1 shl 1) or (dw0 ushr -1)
-        val dw0x2 = dw0 shl 1
-        val hiPow10dw3 = POW10[pow10Offset + 4 + 3]
-        val hiPow10dw2 = POW10[pow10Offset + 4 + 2]
-        val hiPow10dw1 = POW10[pow10Offset + 4 + 1]
-        val hiPow10dw0 = POW10[pow10Offset + 4 + 0]
-        val goLoCmp3 = compareUnsigned(dw3, loPow10dw3)
-        val goLoCmp2 = compareUnsigned(dw2, loPow10dw2)
-        val goLoCmp1 = compareUnsigned(dw1, loPow10dw1)
-        val goLoCmp0 = compareUnsigned(dw1, loPow10dw0)
-        val goLoCmp10 = goLoCmp1 or (((goLoCmp1 and 1) - 1) and goLoCmp0)
-        val goLoCmp32 = goLoCmp3 or (((goLoCmp3 and 1) - 1) and goLoCmp2)
-        val goLoCmp3210 = goLoCmp32 or (((goLoCmp32 and 1) - 1) and goLoCmp10)
-        val goLo = goLoCmp3210 < 0
-
-        val pow10dw3 = if (goLo) loPow10dw3 else hiPow10dw3
-        val pow10dw2 = if (goLo) loPow10dw2 else hiPow10dw2
-        val pow10dw1 = if (goLo) loPow10dw1 else hiPow10dw1
-        val pow10dw0 = if (goLo) loPow10dw0 else hiPow10dw0
-
-        val cmp3 = compareUnsigned(dw3x2, pow10dw3)
-        val cmp2 = compareUnsigned(dw2x2, pow10dw2)
-        val cmp1 = compareUnsigned(dw1x2, pow10dw1)
-        val cmp0 = compareUnsigned(dw0x2, pow10dw0)
-        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-        val cmp32 = if (cmp3 != 0) cmp3 else cmp2
-        val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
-        val cmp = cmp3210
-        return cmp
-    }
-
     fun compareWithHalfPow10_1(dw0: Long, pow10: Int): Int {
         assert(pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_128)
         val pow10Dw0 = POW10[pow10]
@@ -561,23 +370,28 @@ internal object U256Pow10 {
 
     fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
         assert(pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAX_DIGIT_LEN)
-        val pow10Offset = pow10Offset(pow10)
-        val pow10Dw0 = POW10[pow10Offset + 0]
-        val pow10Dw1 = POW10[pow10Offset + 1]
-        val pow10Dw2 = POW10[pow10Offset + 2]
-        val pow10Dw3 = POW10[pow10Offset + 3]
-        val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
-        val halfPow10Dw1 = (pow10Dw2 shl -1) or (pow10Dw1 ushr 1)
-        val halfPow10Dw2 = (pow10Dw3 shl -1) or (pow10Dw2 ushr 1)
-        val halfPow10Dw3 = pow10Dw3 ushr 1
-        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
-        val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
-        val cmp2 = compareUnsigned(dw2, halfPow10Dw2)
-        val cmp3 = compareUnsigned(dw3, halfPow10Dw3)
-        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-        val cmp32 = if (cmp3 != 0) cmp3 else cmp2
-        val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
-        return cmp3210
+        if (pow10 < MAX_DIGIT_LEN) {
+            val pow10Offset = pow10Offset(pow10)
+            val pow10Dw0 = POW10[pow10Offset + 0]
+            val pow10Dw1 = POW10[pow10Offset + 1]
+            val pow10Dw2 = POW10[pow10Offset + 2]
+            val pow10Dw3 = POW10[pow10Offset + 3]
+            val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
+            val halfPow10Dw1 = (pow10Dw2 shl -1) or (pow10Dw1 ushr 1)
+            val halfPow10Dw2 = (pow10Dw3 shl -1) or (pow10Dw2 ushr 1)
+            val halfPow10Dw3 = pow10Dw3 ushr 1
+            val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
+            val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
+            val cmp2 = compareUnsigned(dw2, halfPow10Dw2)
+            val cmp3 = compareUnsigned(dw3, halfPow10Dw3)
+            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+            val cmp32 = if (cmp3 != 0) cmp3 else cmp2
+            val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
+            return cmp3210
+        } else {
+            // when there are 78 digits then we are always LT_HALF
+            return -1
+        }
     }
 
     fun coeffIsPow10(x: U256) : Boolean {
