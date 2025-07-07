@@ -521,6 +521,65 @@ internal object U256Pow10 {
         return cmp
     }
 
+    fun compareWithHalfPow10_1(dw0: Long, pow10: Int): Int {
+        assert(pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_128)
+        val pow10Dw0 = POW10[pow10]
+        val halfPow10Dw0 = pow10Dw0 ushr 1
+        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
+        return cmp0
+    }
+
+    fun compareWithHalfPow10_2(dw1: Long, dw0: Long, pow10: Int): Int {
+        assert(pow10 >= MIN_POW10_DIGIT_LEN_128 && pow10 < MIN_POW10_DIGIT_LEN_192)
+        val pow10Offset = pow10Offset(pow10)
+        val pow10Dw0 = POW10[pow10Offset + 0]
+        val pow10Dw1 = POW10[pow10Offset + 1]
+        val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
+        val halfPow10Dw1 = pow10Dw1 ushr 1
+        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
+        val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
+        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+        return cmp10
+    }
+
+    fun compareWithHalfPow10_3(dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
+        assert(pow10 >= MIN_POW10_DIGIT_LEN_192 && pow10 < MIN_POW10_DIGIT_LEN_256)
+        val pow10Offset = pow10Offset(pow10)
+        val pow10Dw0 = POW10[pow10Offset + 0]
+        val pow10Dw1 = POW10[pow10Offset + 1]
+        val pow10Dw2 = POW10[pow10Offset + 2]
+        val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
+        val halfPow10Dw1 = (pow10Dw2 shl -1) or (pow10Dw1 ushr 1)
+        val halfPow10Dw2 = pow10Dw2 ushr 1
+        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
+        val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
+        val cmp2 = compareUnsigned(dw2, halfPow10Dw2)
+        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+        val cmp210 = if (cmp2 != 0) cmp2 else cmp10
+        return cmp210
+    }
+
+    fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
+        assert(pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAX_DIGIT_LEN)
+        val pow10Offset = pow10Offset(pow10)
+        val pow10Dw0 = POW10[pow10Offset + 0]
+        val pow10Dw1 = POW10[pow10Offset + 1]
+        val pow10Dw2 = POW10[pow10Offset + 2]
+        val pow10Dw3 = POW10[pow10Offset + 3]
+        val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
+        val halfPow10Dw1 = (pow10Dw2 shl -1) or (pow10Dw1 ushr 1)
+        val halfPow10Dw2 = (pow10Dw3 shl -1) or (pow10Dw2 ushr 1)
+        val halfPow10Dw3 = pow10Dw3 ushr 1
+        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
+        val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
+        val cmp2 = compareUnsigned(dw2, halfPow10Dw2)
+        val cmp3 = compareUnsigned(dw3, halfPow10Dw3)
+        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+        val cmp32 = if (cmp3 != 0) cmp3 else cmp2
+        val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
+        return cmp3210
+    }
+
     fun coeffIsPow10(x: U256) : Boolean {
         val xBitLen = x.bitLen
         val xDigitLen = x.digitLen

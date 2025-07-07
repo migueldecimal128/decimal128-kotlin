@@ -8,6 +8,10 @@ import com.decimal128.U256Pow10.compareWithHalfPow10_128
 import com.decimal128.U256Pow10.compareWithHalfPow10_192
 import com.decimal128.U256Pow10.compareWithHalfPow10_256
 import com.decimal128.U256Pow10.compareWithHalfPow10_64
+import com.decimal128.U256Pow10.compareWithHalfPow10_1
+import com.decimal128.U256Pow10.compareWithHalfPow10_2
+import com.decimal128.U256Pow10.compareWithHalfPow10_3
+import com.decimal128.U256Pow10.compareWithHalfPow10_4
 
 import java.lang.Long.compareUnsigned
 
@@ -28,14 +32,18 @@ value class Residue private constructor(val value:Int) {
         // FIXME - this method is fine, but it needs a better name
         //  ... and perhaps a better implementation
         fun residueFrom(c:U256) :Residue {
-            val bitLen = c.bitLen
-            return when {
-                bitLen == 0 -> EXACT
-                bitLen <= 64 -> RESIDUE_MAP[(compareWithHalfPow10_64(bitLen, c.dw0) + 2) and 0x03]
-                bitLen <= 128 -> RESIDUE_MAP[(compareWithHalfPow10_128(bitLen, c.dw1, c.dw0) + 2) and 0x03]
-                bitLen <= 192 -> RESIDUE_MAP[(compareWithHalfPow10_192(bitLen, c.dw2, c.dw1, c.dw0) + 2) and 0x03]
-                else -> RESIDUE_MAP[(compareWithHalfPow10_256(bitLen, c.dw3, c.dw2, c.dw1, c.dw0) + 2) and 0x03]
+            val digitLen = c.digitLen
+            if (digitLen == 0)
+                return EXACT
+            val cmp = when {
+                digitLen < MIN_POW10_DIGIT_LEN_128 -> compareWithHalfPow10_1(c.dw0, digitLen)
+                digitLen < MIN_POW10_DIGIT_LEN_192 -> compareWithHalfPow10_2(c.dw1, c.dw0, digitLen)
+                digitLen < MIN_POW10_DIGIT_LEN_256 -> compareWithHalfPow10_3(c.dw2, c.dw1, c.dw0, digitLen)
+                else -> compareWithHalfPow10_4(c.dw3, c.dw2, c.dw1, c.dw0, digitLen)
             }
+            val residueValue = (cmp + 2) and 0x03
+            val residue = if (RESIDUE_IS_VALUE_CLASS) Residue(residueValue) else RESIDUE_MAP[residueValue]
+            return residue
         }
 
 
