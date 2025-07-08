@@ -245,7 +245,8 @@ class TestFptestRead {
                 observed.div(operands[0], operands[1], ctx)
             }
             else -> {
-                return
+                throw RuntimeException("not impl" + fptest.op)
+                // return
             }
         }
         val expected = fptest.result()

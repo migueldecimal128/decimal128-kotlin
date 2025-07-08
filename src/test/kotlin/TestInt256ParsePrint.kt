@@ -7,9 +7,21 @@ import java.util.*
 
 class TestInt256ParsePrint {
 
-    val verbose = true
+    val regexPlusUnderscore = Regex("[+_]")
+    fun parseStringToBi(str: String): BigInteger {
+        val s = str.replace(regexPlusUnderscore, "")
+        val bi = when {
+            s.startsWith("0x") -> BigInteger(s.substring(2), 16)
+            s.startsWith("-0x") -> BigInteger(s.substring(3), 16).negate()
+            else -> BigInteger(s)
+        }
+        return bi
+    }
+
+    val verbose = false
 
     val tcs = arrayOf(
+        "5368225503980853049254831206148184042523111474414498591855",
         "0",
         "0_0",
         "1_0_0",
@@ -47,7 +59,6 @@ class TestInt256ParsePrint {
     }
 
 
-    val regexPlusUnderscore = Regex("[+_]")
     fun test1(tc: String) {
         if (verbose)
             println("$tc")

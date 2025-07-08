@@ -216,17 +216,20 @@ object Car {
         return z
     }
 
-    fun mutateShiftRight(x: IntArray, bitCount: Int): IntArray {
+    fun mutateShiftRight(x: IntArray, bitCount: Int) = mutateShiftRight(x, nonZeroLimbLen(x), bitCount)
+
+    fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
+        assert(xLen <= x.size)
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
-        if (wordShift >= x.size) {
-            x.fill(0)
+        if (wordShift >= xLen) {
+            x.fill(0, 0, xLen)
             return x
         }
-        val newLen = x.size - wordShift
+        val newLen = xLen - wordShift
         if (wordShift > 0) {
             System.arraycopy(x, wordShift, x, 0, newLen)
-            for (i in newLen..<x.size)
+            for (i in newLen..<xLen)
                 x[i] = 0
         }
         if (innerShift > 0) {
@@ -254,6 +257,26 @@ object Car {
             return
         }
         val newLen = x.size - wordShift
+        if (wordShift > 0) {
+            System.arraycopy(x, 0, x, wordShift, newLen)
+            for (i in wordShift - 1 downTo 0)
+                x[i] = 0
+        }
+        if (innerShift > 0) {
+            for (i in x.size - 1 downTo 1)
+                x[i] = (x[i] shl innerShift) or (x[i - 1] ushr -innerShift)
+            x[0] = x[0] shl innerShift
+        }
+    }
+
+    fun mutateShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
+        val wordShift = bitCount ushr 5
+        val innerShift = bitCount and ((1 shl 5) - 1)
+        if (wordShift >= xLen) {
+            x.fill(0, 0, xLen)
+            return
+        }
+        val newLen = xLen - wordShift
         if (wordShift > 0) {
             System.arraycopy(x, 0, x, wordShift, newLen)
             for (i in wordShift - 1 downTo 0)

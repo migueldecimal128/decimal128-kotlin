@@ -90,7 +90,7 @@ internal object Int256ParsePrint {
     fun u256ToHexChars(u: U256, hexitCount: Int, bytes: ByteArray, off: Int) {
         var hexitsRemaining = hexitCount
         var ich = off
-        for (i in u.bitLen ushr 6 downTo 0) {
+        for (i in (u.bitLen - 1) ushr 6 downTo 0) {
             val dw = u[i]
             val thisHexitCount = if ((hexitsRemaining and 0x0F) != 0) (hexitsRemaining and 0x0F) else 16
             u64ToHexChars(dw, thisHexitCount, bytes, ich)

@@ -46,6 +46,44 @@ object U256Set {
         z.bitLen = x.bitLen; z.digitLen = x.digitLen
     }
 
+    fun u256Set(z: U256, car: IntArray) {
+        val nonZeroLimbLen = Car.nonZeroLimbLen(car)
+        val carLen = car.size
+
+        val lo0 = if (carLen > 0) car[0].toLong() else 0L
+        val hi0 = if (carLen > 1) car[1].toLong() else 0L
+        val dw0 = (hi0 shl 32) or (lo0 and MASK32)
+        if (nonZeroLimbLen <= 2) {
+            z.u256Set64(dw0)
+            return
+        }
+
+        val lo1 = if (carLen > 2) car[2].toLong() else 0L
+        val hi1 = if (carLen > 3) car[3].toLong() else 0L
+        val dw1 = (hi1 shl 32) or (lo1 and MASK32)
+        if (nonZeroLimbLen <= 4) {
+            z.u256Set128(dw1, dw0)
+            return
+        }
+
+        val lo2 = if (carLen > 4) car[4].toLong() else 0L
+        val hi2 = if (carLen > 5) car[5].toLong() else 0L
+        val dw2 = (hi2 shl 32) or (lo2 and MASK32)
+        if (nonZeroLimbLen <= 6) {
+            z.u256Set192(dw2, dw1, dw0)
+            return
+        }
+
+        val lo3 = if (carLen > 6) car[6].toLong() else 0L
+        val hi3 = if (carLen > 7) car[7].toLong() else 0L
+        val dw3 = (hi3 shl 32) or (lo3 and MASK32)
+        if (nonZeroLimbLen <= 8) {
+            z.u256Set256(dw3, dw2, dw1, dw0)
+            return
+        }
+
+        throw RuntimeException("u256 overflow")
+    }
 
     fun u256Set(c: U256, x: LongArray, xOff: Int, xLen: Int) {
         c.u256SetZero()
@@ -282,52 +320,6 @@ object U256Set {
             else -> {
                 throw RuntimeException("overflow")
             }
-        }
-    }
-
-    fun u256SetShiftRight(z: U256, x: IntArray, xLen: Int, s: Int) {
-        assert(s < 32)
-        if (s == 0) {
-            u256Set(z, x, xLen)
-            return
-        }
-        z.u256SetZero()
-        if (xLen == 0)
-            return
-        var nonZeroIndex2 = (xLen + 1) ushr 1
-        var nonZeroVal = if ((xLen and 1) != 0) ((x[xLen - 1].toLong() and MASK32) shr s) else 0L
-        while (nonZeroVal == 0L && --nonZeroIndex2 >= 0) {
-            nonZeroVal = ((x[nonZeroIndex2*2 + 1].toLong() shl 32) or (x[nonZeroIndex2*2].toLong() and MASK32)) shr s
-        }
-        when (nonZeroIndex2) {
-            -1 -> {}
-            0 -> {
-                val z0 = nonZeroVal
-                z.u256Set64(z0)
-            }
-
-            1 -> {
-                val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
-                val z1 = nonZeroVal
-                z.u256Set128(z1, z0)
-            }
-
-            2 -> {
-                val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
-                val z1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
-                val z2 = nonZeroVal
-                z.u256Set192(z2, z1, z0)
-            }
-
-            3 -> {
-                val z0 = ((x[2] shl -s).toLong() shl 32) or (((x[1].toLong() shl 32) or (x[0].toLong() and MASK32)) shr s)
-                val z1 = ((x[4] shl -s).toLong() shl 32) or (((x[3].toLong() shl 32) or (x[2].toLong() and MASK32)) shr s)
-                val z2 = ((x[6] shl -s).toLong() shl 32) or (((x[5].toLong() shl 32) or (x[4].toLong() and MASK32)) shr s)
-                val z3 = nonZeroVal;
-                z.u256Set256(z3, z2, z1, z0)
-            }
-
-            else -> throw RuntimeException("overflow")
         }
     }
 

@@ -38,6 +38,12 @@ class Int256 : S256 {
         return quot
     }
 
+    operator fun rem(other: Int256): Int256 {
+        val mod = Int256()
+        mod.s256Mod(this, other)
+        return mod
+    }
+
     operator fun plusAssign(other: Int256) {
         this.s256Add(this, other)
     }

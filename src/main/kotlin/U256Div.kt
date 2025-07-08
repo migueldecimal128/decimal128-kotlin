@@ -126,7 +126,11 @@ object U256Div {
     }
 
     fun u256Mod(z: U256, x: U256, y: U256) {
-        assert(y.u256IsGTOne())
+        if (y.bitLen <= 64) {
+            val rem = u256DivModX64(z, x, y.dw0)
+            z.u256Set64(rem)
+            return
+        }
         if (x.bitLen < y.bitLen) {
             z.u256Set(x)
             return
@@ -142,9 +146,6 @@ object U256Div {
                 z.u256SetZero()
                 return
             }
-        }
-        if (y.bitLen <= 32) {
-            return DivDirect.modx32(z, x, y.dw0)
         }
         DivKnuth.knuthDivideWrapper(z, x, y, true)
     }

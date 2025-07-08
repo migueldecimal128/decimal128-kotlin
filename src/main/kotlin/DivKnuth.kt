@@ -48,16 +48,8 @@ object DivKnuth {
         val s = Integer.numberOfLeadingZeros(vnNonZeroVal)
 
         if (s != 0) {
-            for (i in n - 1 downTo 1) {
-                vn[i] = (vn[i] shl s) or (vn[i - 1] ushr -s)
-            }
-            vn[0] = vn[0] shl s
-
-            un[m] = un[m - 1] ushr -s
-            for (i in m - 1 downTo 1) {
-                un[i] = (un[i] shl s) or (un[i - 1] ushr -s)
-            }
-            un[0] = un[0] shl s
+            Car.mutateShiftLeft(un, m+1, s)
+            Car.mutateShiftLeft(vn, n, s)
         }
 
         q.fill(0)
@@ -65,7 +57,8 @@ object DivKnuth {
         knuthDivideCore(m, n)
 
         if (wantRemainder) {
-            u256SetShiftRight(z, un, n, s)
+            Car.mutateShiftRight(un, n, s)
+            u256Set(z, un)
             return EXACT
         }
 
@@ -144,11 +137,7 @@ object DivKnuth {
         //val n = 2
 
         if (s != 0) {
-            un[m] = un[m - 1] ushr -s
-            for (i in m - 1 downTo 1) {
-                un[i] = (un[i] shl s) or (un[i - 1] ushr -s)
-            }
-            un[0] = un[0] shl s
+            Car.mutateShiftLeft(un, m + 1, s)
         }
 
         q.fill(0)
@@ -201,11 +190,7 @@ object DivKnuth {
         //val n = 2
 
         if (s != 0) {
-            un[m] = un[m - 1] ushr -s
-            for (i in m - 1 downTo 1) {
-                un[i] = (un[i] shl s) or (un[i - 1] ushr -s)
-            }
-            un[0] = un[0] shl s
+            Car.mutateShiftLeft(un, m + 1, s)
         }
 
         q.fill(0)
