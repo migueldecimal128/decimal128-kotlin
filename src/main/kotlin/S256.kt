@@ -20,28 +20,34 @@ open class S256 : U256 {
     @JvmField
     internal var sign = false
 
-    fun s256SetZero() {
-        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L;
-        bitLen = 0; digitLen = 0;
+    internal fun s256SetZero() {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L
+        bitLen = 0; digitLen = 0
         sign = false
     }
 
-    fun s256SetSigned(n: Long) {
+    internal fun s256SetOne() {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L
+        bitLen = 1; digitLen = 1
+        sign = false
+    }
+
+    internal fun s256SetSigned(n: Long) {
         if (n >= 0)
             s256Set(false, 0L, 0L, 0L, n)
         else
             s256Set(true, 0L, 0L, 0L, -n) // this works for Long.MIN_VALUE too
     }
 
-    fun s256SetUnsigned(u: Long) = s256Set(false, 0L, 0L, 0L, u)
+    internal fun s256SetUnsigned(u: Long) = s256Set(false, 0L, 0L, 0L, u)
 
-    fun s256Set(x: S256) {
+    internal fun s256Set(x: S256) {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
         bitLen = x.bitLen; digitLen = x.digitLen
         sign = x.sign
     }
 
-    fun s256Set(sign: Boolean, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
+    internal fun s256Set(sign: Boolean, dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         u256Set256(dw3, dw2, dw1, dw0)
         this.sign = sign and (bitLen > 0)
     }
@@ -50,7 +56,7 @@ open class S256 : U256 {
 
     internal inline fun s256Sub(x: S256, y: S256) = s256AddImpl(x, ! y.sign, y)
 
-    fun s256AddImpl(x: S256, ySign: Boolean, y: S256) {
+    internal fun s256AddImpl(x: S256, ySign: Boolean, y: S256) {
         val xSign = x.sign
         if (xSign == ySign) {
             this.u256SetAdd(x, y)
@@ -104,6 +110,24 @@ open class S256 : U256 {
         this.sign = signQ and (this.bitLen > 0)
     }
 
+    internal fun s256Fma(x: S256, y: S256, a: S256) {
+        val prodSign = x.sign xor y.sign
+        if (prodSign == a.sign) {
+            u256SetFma(x, y, a)
+            this.sign = prodSign and (bitLen > 0)
+            return
+        }
+        val maxProdBitLen = x.bitLen + y.bitLen
+        val minProdBitLen = maxProdBitLen - 1
+        if (minProdBitLen > a.bitLen) {
+            u256SetFms(x, y, a)
+            this.sign = prodSign and (bitLen > 0)
+        }
+        val t = if (this !== a) this else S256()
+        t.s256Mul(x, y)
+        s256Add(t, a)
+    }
+
     internal inline fun s256SetScaleUpPow10(x: S256, pow10: Int) {
         this.u256SetScaleUpPow10(x, pow10)
         this.sign = x.sign and (bitLen > 0)
@@ -135,7 +159,7 @@ open class S256 : U256 {
         return nonZero and s
     }
 
-    fun s256UnscaledCompareTo(other: S256): Int {
+    internal fun s256UnscaledCompareTo(other: S256): Int {
         val thisSignum = this.signum()
         val otherSignum = other.signum()
 

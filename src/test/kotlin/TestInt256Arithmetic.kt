@@ -28,6 +28,7 @@ class TestInt256Arithmetic {
         val sum = biA + biB
         val diff = biA - biB
         val prod = biA * biB
+        val fma = biA * biB + diff
         val quot = if (biB.signum() == 0) BigInteger.ZERO else biA / biB
         val rem = if (biB.signum() == 0) BigInteger.ZERO else biA % biB
     }
@@ -92,18 +93,18 @@ class TestInt256Arithmetic {
         val b = Int256(strB)
         assertEquals(tc.biB.abs().bitLength(), b.bitLen)
         assertEquals(tc.biB.signum(), b.signum())
-
-        if (tc.sum.bitLength() <= 256) {
+        if (tc.sum.abs().bitLength() <= 256) {
             val sum = a + b
             assertEquals(tc.sum.toString(), "$sum")
         }
-        if (tc.diff.bitLength() <= 256) {
-            val diff = a - b
-            assertEquals(tc.diff.toString(), "$diff")
-        }
-        if (tc.prod.bitLength() <= 256) {
+        val diff = a - b
+        if (tc.prod.abs().bitLength() <= 256) {
             val prod = a * b
             assertEquals(tc.prod.toString(), "$prod")
+        }
+        if (tc.fma.abs().bitLength() <= 256) {
+            val fma = a.fma(b, diff)
+            assertEquals(tc.fma.toString(), fma.toString())
         }
         if (tc.biB.signum() != 0) {
             val quot = a / b

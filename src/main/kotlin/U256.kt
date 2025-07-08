@@ -75,7 +75,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     // of bitLen delta <= 1 and digitLen delta <= 1
     private fun updateLengthsAfterRoundUp() = updateLengths()
 
-    fun u256HasValidLengths(): Boolean {
+    internal fun u256HasValidLengths(): Boolean {
         if (bitLen != calcBitLen256(dw3, dw2, dw1, dw0))
             return false
         if (digitLen != U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))

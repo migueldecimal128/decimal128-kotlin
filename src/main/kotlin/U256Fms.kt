@@ -22,43 +22,40 @@ object U256Fms {
         val m1 = m.dw1
         val n0 = n.dw0
         val sBitLen = s.bitLen
-        require(sBitLen <= 128)
-        val s0 = s.dw0
-        val s1 = s.dw1
 
         val maxFusedBitLen = max(mBitLen + nBitLen, s.bitLen) + 1
         if (nBitLen <= 64) {
             when {
-                (mBitLen <= 64) ->
+                (mBitLen <= 64 && sBitLen <= 128) ->
                     _fms1x1x2(
                         z, maxFusedBitLen,
                         m0,
                         n0,
-                        s1, s0
+                        s.dw1, s.dw0
                     )
 
-                (mBitLen <= 128) ->
-                    _fms2x1x2(
+                (mBitLen <= 128 && sBitLen <= 192) ->
+                    _fms2x1x3(
                         z, maxFusedBitLen,
                         m1, m0,
                         n0,
-                        s1, s0
+                        s.dw2, s.dw1, s.dw0
                     )
 
                 (mBitLen <= 192) ->
-                    _fms3x1x2(
+                    _fms3x1x4(
                         z, maxFusedBitLen,
                         m.dw2, m1, m0,
                         n0,
-                        s1, s0
+                        s.dw3, s.dw2, s.dw1, s.dw0
                     )
 
                 else ->
-                    _fms4x1x2(
+                    _fms4x1x4(
                         z, maxFusedBitLen,
                         m.dw3, m.dw2, m1, m0,
                         n0,
-                        s1, s0
+                        s.dw3, s.dw2, s.dw1, s.dw0
                     )
             }
             return
@@ -67,24 +64,24 @@ object U256Fms {
         if (nBitLen <= 128) {
             when {
                 (mBitLen <= 128) ->
-                    _fms2x2x2(
+                    _fms2x2x4(
                         z, maxFusedBitLen,
                         m1, m0,
                         n1, n0,
-                        s1, s0
+                        s.dw3, s.dw2, s.dw1, s.dw0
                     )
                 (mBitLen <= 192) ->
-                    _fms3x2x2(
+                    _fms3x2x4(
                         z, maxFusedBitLen,
                         m.dw2, m1, m0,
                         n1, n0,
-                        s1, s0
+                        s.dw3, s.dw2, s.dw1, s.dw0
                     )
-                else ->  throw RuntimeException("coeff overflow")
+                else ->  throw RuntimeException("U256 overflow")
             }
             return
         }
-        throw RuntimeException("coeff overflow")
+        throw RuntimeException("U256 overflow")
     }
 
 
@@ -94,13 +91,11 @@ object U256Fms {
         assert(z.u256HasValidLengths())
         assert(x.u256HasValidLengths())
         assert(y.u256HasValidLengths())
-        assert(y.bitLen <= 128)
         assert(y.u256ScaledCompareTo(x, pow10) <= 0)
         val xBitLen = x.bitLen
         val x0 = x.dw0
         val x1 = x.dw1
-        val y0 = y.dw0
-        val y1 = y.dw1
+        val yBitLen = y.bitLen
         val p10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
         val p0 = POW10[pow10Offset + 0]
@@ -117,55 +112,55 @@ object U256Fms {
          */
         if (p10BitLen <= 64) {
             when {
-                (xBitLen <= 64) ->
+                (xBitLen <= 64 && yBitLen <= 128) ->
                     _fms1x1x2(z, maxFusedBitLen,
                         x0,
                         p0,
-                        y1, y0
+                        y.dw1, y.dw0
                     )
-                (xBitLen <= 128) ->
-                    _fms2x1x2(z, maxFusedBitLen,
+                (xBitLen <= 128 && yBitLen <= 192) ->
+                    _fms2x1x3(z, maxFusedBitLen,
                         x1, x0,
                         p0,
-                        y1, y0
+                        y.dw2, y.dw1, y.dw0
                     )
                 (xBitLen <= 192) ->
-                    _fms3x1x2(z, maxFusedBitLen,
+                    _fms3x1x4(z, maxFusedBitLen,
                         x.dw2, x1, x0,
                         p0,
-                        y1, y0
+                        y.dw3, y.dw2, y.dw1, y.dw0
                     )
                 else ->
-                    _fms4x1x2(z, maxFusedBitLen,
+                    _fms4x1x4(z, maxFusedBitLen,
                         x.dw3, x.dw2, x1, x0,
                         p0,
-                        y1, y0
+                        y.dw3, y.dw2, y.dw1, y.dw0
                     )
             }
             return
         }
         if (p10BitLen <= 128) {
             when {
-                (xBitLen <= 64) ->
-                    _fms2x1x2(
+                (xBitLen <= 64 && yBitLen <= 192) ->
+                    _fms2x1x3(
                         z, maxFusedBitLen,
                         p1, p0,
                         x0,
-                        y1, y0
+                        y.dw2, y.dw1, y.dw0
                     )
                 (xBitLen <= 128) ->
-                    _fms2x2x2(
+                    _fms2x2x4(
                         z, maxFusedBitLen,
                         x1, x0,
                         p1, p0,
-                        y1, y0
+                        y.dw3, y.dw2, y.dw1, y.dw0
                     )
                 (xBitLen <= 192) ->
-                    _fms3x2x2(
+                    _fms3x2x4(
                         z, maxFusedBitLen,
                         x.dw2, x1, x0,
                         p1, p0,
-                        y1, y0
+                        y.dw3, y.dw2, y.dw1, y.dw0
                     )
                 else ->  throw RuntimeException("coeff overflow")
             }
@@ -175,18 +170,18 @@ object U256Fms {
         if (p10BitLen <= 192) {
             when {
                 (xBitLen <= 64) ->
-                    _fms3x1x2(
+                    _fms3x1x4(
                         z, maxFusedBitLen,
                         p2, p1, p0,
                         x0,
-                        y1, y0
+                        y.dw3, y.dw2, y.dw1, y.dw0
                     )
                 (xBitLen <= 128) ->
-                    _fms3x2x2(
+                    _fms3x2x4(
                         z, maxFusedBitLen,
                         p2, p1, p0,
                         x1, x0,
-                        y1, y0
+                        y.dw3, y.dw2, y.dw1, y.dw0
                     )
                 else -> throw RuntimeException("coeff overflow")
             }
@@ -194,11 +189,11 @@ object U256Fms {
         }
         val p3 = POW10[pow10Offset + 3]
         if (xBitLen <= 64) {
-            _fms4x1x2(
+            _fms4x1x4(
                 z, maxFusedBitLen,
                 p3, p2, p1, p0,
                 x0,
-                y1, y0
+                y.dw3, y.dw2, y.dw1, y.dw0
             )
             return
         } else {
@@ -301,15 +296,15 @@ object U256Fms {
             f.u256Set256(f3, f2, f1, f0)
             return
         }
-        throw RuntimeException("coeff multiply overflow")
+        throw RuntimeException("U256 overflow")
     }
 
-    private fun _fms4x1x2(
+    private fun _fms4x1x4(
         f: U256,
         maxFusedBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
         y0: Long,
-        s1: Long, s0: Long
+        s3: Long, s2: Long, s1: Long, s0: Long
     ) {
         _fms4x4x4(f, maxFusedBitLen,
             x3, x2, x1, x0,
@@ -317,56 +312,56 @@ object U256Fms {
             0L, 0L,s1, s0)
     }
 
-    private fun _fms3x2x2(
+    private fun _fms3x2x4(
         f: U256,
         maxFusedBitLen: Int,
         x2: Long, x1: Long, x0: Long,
         y1: Long, y0: Long,
-        s1: Long, s0: Long
+        s3: Long, s2: Long, s1: Long, s0: Long
     ) {
         _fms4x4x4(f, maxFusedBitLen,
             0L, x2, x1, x0,
             0L, 0L, y1, y0,
-            0L, 0L,s1, s0)
+            s3, s2,s1, s0)
     }
 
-    private fun _fms3x1x2(
+    private fun _fms3x1x4(
         f: U256,
         maxFusedBitLen: Int,
         x2: Long, x1: Long, x0: Long,
         y0: Long,
-        s1: Long, s0: Long
+        s3: Long, s2: Long, s1: Long, s0: Long
     ) {
         _fms4x4x4(f, maxFusedBitLen,
             0L, x2, x1, x0,
             0L, 0L, 0L, y0,
-            0L, 0L,s1, s0)
+            s3, s2,s1, s0)
     }
 
-    private fun _fms2x2x2(
+    private fun _fms2x2x4(
         f: U256,
         maxFusedBitLen: Int,
         x1: Long, x0: Long,
         y1: Long, y0: Long,
-        s1: Long, s0: Long
+        s3: Long, s2: Long, s1: Long, s0: Long
     ) {
         _fms4x4x4(f, maxFusedBitLen,
             0L, 0L, x1, x0,
             0L, 0L, y1, y0,
-            0L, 0L,s1, s0)
+            s3, s2,s1, s0)
     }
 
-    private fun _fms2x1x2(
+    private fun _fms2x1x3(
         f: U256,
         maxFusedBitLen: Int,
         x1: Long, x0: Long,
         y0: Long,
-        s1: Long, s0: Long
+        s2: Long, s1: Long, s0: Long
     ) {
         _fms4x4x4(f, maxFusedBitLen,
             0L, 0L, x1, x0,
             0L, 0L, 0L, y0,
-            0L, 0L,s1, s0)
+            0L, s2,s1, s0)
     }
 
     private fun _fms1x1x2(

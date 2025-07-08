@@ -51,6 +51,12 @@ class Int256 : S256 {
         return div to mod
     }
 
+    fun fma(multiplier: Int256, addend: Int256): Int256 {
+        val prod = Int256()
+        prod.s256Fma(this, multiplier, addend)
+        return prod
+    }
+
     operator fun plusAssign(other: Int256) {
         this.s256Add(this, other)
     }
@@ -77,7 +83,9 @@ class Int256 : S256 {
 
     fun setZero(): Int256 {s256SetZero(); return this}
 
-    fun setSigned(n: Long): Int256 { s256SetSigned(n); return this }
+    fun setOne(): Int256 {s256SetOne(); return this}
+
+    fun set(n: Long): Int256 { s256SetSigned(n); return this }
 
     fun setUnsigned(u: Long): Int256 { s256SetUnsigned(u); return this }
 
