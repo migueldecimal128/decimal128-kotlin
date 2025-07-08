@@ -71,4 +71,18 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
             bytes[ib++] = 'i'.code.toByte()
         return String(bytes, 0, ib)
     }
+
+    fun add(x: Decimal, y: Decimal) = Decimal.newAdd(x, y, this)
+
+    fun subtract(x: Decimal, y: Decimal) = Decimal.newSub(x, y, this)
+
+    fun multiply(x: Decimal, y: Decimal) = Decimal.newMul(x, y, this)
+
+    fun divide(x: Decimal, y: Decimal) = Decimal.newDiv(x, y, this)
+
+    operator fun Decimal.plus(other: Decimal): Decimal = this@DecimalContext.add(this, other)
+    operator fun Decimal.minus(other: Decimal): Decimal = this@DecimalContext.subtract(this, other)
+    operator fun Decimal.times(other: Decimal): Decimal = this@DecimalContext.multiply(this, other)
+    operator fun Decimal.div(other: Decimal): Decimal = this@DecimalContext.divide(this, other)
+
 }
