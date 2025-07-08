@@ -16,7 +16,7 @@ object DivKnuth {
     private val vn = IntArray(9)
     private val un = IntArray(9)
 
-    fun knuthDivideWrapper(z: U256, x: U256, y: U256, wantRemainder: Boolean): Residue {
+    fun knuthDivideWrapper(quot: U256?, rem: U256?, x: U256, y: U256): Residue {
         assert(u256GTOne(y))
         assert(x.u256UnscaledCompareTo(y) > 0)
 
@@ -55,9 +55,9 @@ object DivKnuth {
 
         knuthDivideCore(m, n)
 
-        if (wantRemainder) {
+        if (rem != null) {
             Car.mutateShiftRight(un, n, s)
-            u256Set(z, un)
+            rem.u256Set(un, n)
             return EXACT
         }
 
@@ -65,7 +65,9 @@ object DivKnuth {
         // I will shift right by s-1
         // this will give me 2*remainder that I can compare with y
         val residue =
-            if (un[n - 1] < 0) {
+            if (rem != null) {
+                EXACT
+            } else if (un[n - 1] < 0) {
                 // msb of remainder is set ... doubling it will make it bigger than the divisor
                 GT_HALF
             } else {
@@ -108,11 +110,11 @@ object DivKnuth {
                         HALF
                 }
             }
-        u256Set(z, q, m)
+        quot?.u256Set(q, m)
         return residue
     }
 
-    fun knuthDivModX64(z: U256, x: U256, y0: Long): Long {
+    fun knuthDivModX64(quot: U256?, x: U256, y0: Long): Long {
         assert((y0 ushr 32) != 0L)
         assert(x.bitLen > 64)
 
@@ -145,7 +147,7 @@ object DivKnuth {
 
         val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
         val remainder = remainderNormalized ushr s
-        u256Set(z, q, m)
+        quot?.u256Set(q, m)
         return remainder
     }
 

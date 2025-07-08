@@ -84,7 +84,7 @@ object U256Div {
         assert(bitLenDelta >= 0)
         //TODO at this point I know that x.bitLen >= y.bitLen and x > y
         // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-        return DivKnuth.knuthDivideWrapper(z, x, y, false)
+        return DivKnuth.knuthDivideWrapper(z, null, x, y)
     }
 
     fun u256Mod(z: U256, x: U256, y: U256) {
@@ -109,7 +109,7 @@ object U256Div {
                 return
             }
         }
-        DivKnuth.knuthDivideWrapper(z, x, y, true)
+        DivKnuth.knuthDivideWrapper(null, z, x, y)
     }
 
 }
