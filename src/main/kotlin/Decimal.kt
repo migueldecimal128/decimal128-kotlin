@@ -36,9 +36,43 @@ class Decimal() : S256() {
     constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
 
     companion object {
+        fun newInstance(): Decimal = Decimal()
+
+        fun newInfinity(sign: Boolean = false) = Decimal().setInfinite(sign)
+
         fun newAdd(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
             val sum = Decimal()
             return addImpl(sum, x, y.sign, y, ctx)
+        }
+
+        fun newSub(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+            val diff = Decimal()
+            return addImpl(diff, x, !y.sign, y, ctx)
+        }
+
+        fun newMul(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+            val prod = Decimal()
+            return prod.mutateMul(x, y, ctx)
+        }
+
+        fun newSquare(x: Decimal, ctx: DecimalContext): Decimal {
+            val square = Decimal()
+            return square.mutateSquare(x, ctx)
+        }
+
+        fun newDiv(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+            val quot = Decimal()
+            return quot.mutateDiv(x, y, ctx)
+        }
+
+        fun newReciprocal(x: Decimal, ctx: DecimalContext): Decimal {
+            val recip = Decimal()
+            return recip.mutateReciprocal(x, ctx)
+        }
+
+        fun newSqrt(x: Decimal, ctx: DecimalContext): Decimal {
+            val sqrt = Decimal()
+            return sqrt.mutateSqrt(x, ctx)
         }
 
         private fun addImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
@@ -141,13 +175,13 @@ class Decimal() : S256() {
         //FIXME - see IEEE754r 6.2
     }
 
-    fun setNaN(ctx: DecimalContext) {
-        setZero()
+    internal fun setNaN(ctx: DecimalContext) {
+        s256SetZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
 
-    fun setNaN(payload: Int, ctx: DecimalContext) {
+    internal fun setNaN(payload: Int, ctx: DecimalContext) {
         sign = false
         u256Set64(payload.toLong())
         qExp = NON_FINITE_QNAN
@@ -159,7 +193,7 @@ class Decimal() : S256() {
         qExp = NON_FINITE_SNAN
     }
 
-    fun setInfinite(sign: Boolean) {
+    fun setInfinite(sign: Boolean = false) {
         // It is important that the coefficient of Infinity be non-zero because
         // multiply (for example) checks to see if the other operand is zero.
         // so we want the coefficient.isZero() to fail for Infinity
@@ -168,18 +202,20 @@ class Decimal() : S256() {
         this.sign = sign
     }
 
-    fun setInt(l: Long) {
+    fun set(l: Long): Decimal {
         this.qExp = 0
         this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
         u256Set64(abs)
+        return this
     }
 
-    fun setUInt(ul: Long) {
+    fun setUnsigned(ul: Long): Decimal {
         this.qExp = 0
         this.sign = false
         u256Set64(ul)
+        return this
     }
 
     fun set(x: Decimal): Decimal {
@@ -194,7 +230,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun setMaxFiniteMagnitude(ctx: DecimalContext) {
+    fun setMaxFiniteMagnitude(ctx: DecimalContext): Decimal {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
@@ -205,29 +241,36 @@ class Decimal() : S256() {
             super.u256Set128(POW10[offset + 1], POW10[offset] - 1)
         } else
             throw IllegalArgumentException()
+        return this
     }
 
-    fun setMinFiniteMagnitude(ctx: DecimalContext) {
+    fun setMinFiniteMagnitude(ctx: DecimalContext): Decimal {
         qExp = ctx.qTiny
         super.u256SetOne()
+        return this
     }
 
-    fun setNegate(x: Decimal) {
+    fun setNegate(x: Decimal): Decimal {
         set(x)
         this.sign = !this.sign
+        return this
     }
 
-    fun mutateNegate() {
+    fun mutateNegate(): Decimal {
         this.sign = !this.sign
+        return this
     }
 
-    fun mutateAbs() {
+    fun mutateAbs(): Decimal {
         this.sign = false
+        return this
     }
 
-    fun mutateCopySign(x: Decimal, y: Decimal) {
+    fun mutateCopySign(x: Decimal, y: Decimal): Decimal {
+        val sign = y.sign
         set(x)
-        this.sign = y.sign
+        this.sign = sign
+        return this
     }
 
     fun isNegative() = sign
@@ -268,7 +311,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun mutateSqr(x: Decimal, ctx: DecimalContext): Decimal {
+    fun mutateSquare(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
@@ -366,7 +409,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun mutateInverse(x: Decimal, ctx: DecimalContext): Decimal {
+    fun mutateReciprocal(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val quotientSign = x.sign
         when {
