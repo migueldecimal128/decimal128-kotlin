@@ -2,16 +2,11 @@ package com.decimal128
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
-import java.lang.Long.numberOfTrailingZeros
-import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
-import java.lang.Math.max
-import java.lang.Math.min
-import java.lang.Math.nextDown
 
 class TestDecimalSqrt{
 
@@ -94,7 +89,7 @@ class TestDecimalSqrt{
         val decSqrt = Decimal()
         dec.set(tc.bd)
         val ctx = DecimalContext.newDecimal128Context()
-        decSqrt.sqrt(dec, ctx)
+        decSqrt.mutateSqrt(dec, ctx)
         val expected = tc.sqrt
         assertEquals(expected.unscaledValue(), decSqrt.coeffToBigInteger())
         assertEquals(-expected.scale(), decSqrt.qExp)

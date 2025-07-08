@@ -90,7 +90,7 @@ class TestDecimalAddSub {
         val decimalA = newDecimal(bdA, ctx2)
         val decimalB = newDecimal(bdB, ctx2)
         val decimalS = Decimal()
-        decimalS.add(decimalA, decimalB, ctx)
+        decimalS.mutateAdd(decimalA, decimalB, ctx)
         if (verbose)
             println("decimalS:$decimalS")
         assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())

@@ -35,6 +35,65 @@ class Decimal() : S256() {
 
     constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
 
+    companion object {
+        fun newAdd(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+            val sum = Decimal()
+            return addImpl(sum, x, y.sign, y, ctx)
+        }
+
+        private fun addImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+            val xQ = x.qExp
+            if (xQ == y.qExp && xQ < MIN_SPECIAL_VALUE) {
+                z.qExp = xQ
+                z.s256AddImpl(x, ySign, y)
+                return z.roundAndFinalize(EXACT, ctx)
+            } else {
+                return scaledAddImpl(z, x, ySign, y, ctx)
+            }
+        }
+
+        private fun scaledAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+            val qX = x.qExp
+            val qY = y.qExp
+            val xSign = x.sign
+            val qMax = max(qX, qY)
+            when {
+                qMax < MIN_SPECIAL_VALUE -> {
+                    val residue = when {
+                        ! (xSign xor ySign) -> {
+                            z.sign = xSign
+                            MagnitudeAddSub.magScaledAdd(z, x, y)
+                        }
+                        (x.magnitudeCompareTo(y) >= 0) -> {
+                            z.sign = xSign
+                            MagnitudeAddSub.magSub(z, x, y)
+                        }
+                        else -> {
+                            z.sign = ySign
+                            MagnitudeAddSub.magSub(z, y, x)
+                        }
+                    }
+                    return z.roundAndFinalize(residue, ctx)
+                }
+                qMax == NON_FINITE_INF -> when {
+                    (xSign != ySign) && (qX == qY) -> {
+                        ctx.setInvalid()
+                        z.setNaN(ctx)
+                    }
+                    else -> {
+                        z.setInfinite(if (qX == NON_FINITE_INF) xSign else ySign)
+                    }
+                }
+                else -> {
+                    z.setNaN(x, y, ctx)
+                }
+            }
+            return z
+        }
+
+
+    }
+
     fun sciExp() = qExp + (digitLen - 1)
 
     fun setZero()  = setZero(false)
@@ -101,6 +160,9 @@ class Decimal() : S256() {
     }
 
     fun setInfinite(sign: Boolean) {
+        // It is important that the coefficient of Infinity be non-zero because
+        // multiply (for example) checks to see if the other operand is zero.
+        // so we want the coefficient.isZero() to fail for Infinity
         this.u256SetOne()
         this.qExp = NON_FINITE_INF
         this.sign = sign
@@ -120,19 +182,16 @@ class Decimal() : S256() {
         u256Set64(ul)
     }
 
-    fun set(x: Decimal) {
+    fun set(x: Decimal): Decimal {
         u256Set(x)
         this.qExp = x.qExp
         this.sign = x.sign
+        return this
     }
 
-    fun set(str: String) {
+    fun set(str: String): Decimal {
         DecimalParsePrint.decFromString(this, str, DEFAULT_128_CONTEXT)
-    }
-
-    fun setMag(x: Decimal) {
-        u256Set(x)
-        this.qExp = x.qExp
+        return this
     }
 
     fun setMaxFiniteMagnitude(ctx: DecimalContext) {
@@ -153,8 +212,6 @@ class Decimal() : S256() {
         super.u256SetOne()
     }
 
-    fun copy(x: Decimal) = set(x)
-
     fun setNegate(x: Decimal) {
         set(x)
         this.sign = !this.sign
@@ -164,16 +221,11 @@ class Decimal() : S256() {
         this.sign = !this.sign
     }
 
-    fun setAbs(x: Decimal) {
-        set(x)
-        this.sign = false
-    }
-
     fun mutateAbs() {
         this.sign = false
     }
 
-    fun copySign(x: Decimal, y: Decimal) {
+    fun mutateCopySign(x: Decimal, y: Decimal) {
         set(x)
         this.sign = y.sign
     }
@@ -185,69 +237,13 @@ class Decimal() : S256() {
     }
 
     // IEEE754-2008 5.4.1
-    fun add(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(x, y.sign, y, ctx)
+    fun mutateAdd(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun sub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(x, !y.sign, y, ctx)
-
-    private fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext) {
-        val xQ = x.qExp
-        if (xQ == y.qExp && xQ < MIN_SPECIAL_VALUE) {
-            this.qExp = xQ
-            s256AddImpl(x, ySign, y)
-            roundAndFinalize(EXACT, ctx)
-        } else {
-            scaledAddImpl(x, ySign, y, ctx)
-        }
-    }
-
-    private fun scaledAddImpl(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext) {
-        val qX = x.qExp
-        val qY = y.qExp
-        val xSign = x.sign
-        val qMax = max(qX, qY)
-        val qMin = min(qX, qY)
-        when {
-            qMax < MIN_SPECIAL_VALUE -> {
-                val residue = when {
-                    ! (xSign xor ySign) -> {
-                        this.sign = xSign
-                        MagnitudeAddSub.magScaledAdd(this, x, y)
-                    }
-                    (x.magnitudeCompareTo(y) >= 0) -> {
-                        this.sign = xSign
-                        MagnitudeAddSub.magSub(this, x, y)
-                    }
-                    else -> {
-                        this.sign = ySign
-                        MagnitudeAddSub.magSub(this, y, x)
-                    }
-                }
-                roundAndFinalize(residue, ctx)
-            }
-            qMax == NON_FINITE_INF -> when {
-                (xSign == ySign) -> {
-                    setInfinite(xSign)
-                }
-                qMin == NON_FINITE_INF -> {
-                    ctx.setInvalid()
-                    setNaN(ctx)
-                }
-                qX == NON_FINITE_INF -> {
-                    setInfinite(xSign)
-                }
-                else -> {
-                    setInfinite(ySign)
-                }
-            }
-            else -> {
-                setNaN(x, y, ctx)
-            }
-        }
-    }
+    fun mutateSub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun mul(x: Decimal, y: Decimal, ctx: DecimalContext) {
+    fun mutateMul(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
@@ -257,7 +253,7 @@ class Decimal() : S256() {
                 this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
-                roundAndFinalize(EXACT, ctx)
+                return roundAndFinalize(EXACT, ctx)
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.u256IsZero() || y.u256IsZero()) {
@@ -269,25 +265,27 @@ class Decimal() : S256() {
             }
             else -> setNaN(x, y, ctx)
         }
+        return this
     }
 
-    fun sqr(x: Decimal, ctx: DecimalContext) {
+    fun mutateSqr(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
                 this.u256SetSqr(x)
                 this.qExp = this.qExp shl 1
                 this.sign = false
-                roundAndFinalize(EXACT, ctx)            }
+                return roundAndFinalize(EXACT, ctx)            }
             qX == NON_FINITE_INF -> {
                 setInfinite(false)
             }
             else -> setNaN(x, ctx)
         }
+        return this
     }
 
     // IEEE754-2008 5.4.1
-    fun fma(x: Decimal, y: Decimal, a: Decimal, ctx: DecimalContext) {
+    fun mutateFma(x: Decimal, y: Decimal, a: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -296,16 +294,16 @@ class Decimal() : S256() {
         val productSign = x.sign xor y.sign
         when {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
-                var aT = if (this === a) Decimal(a) else a
+                val aT = if (this === a) Decimal(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
-                this.add(this, aT, ctx)
+                this.mutateAdd(this, aT, ctx)
             }
             qMaxXYA == NON_FINITE_INF -> when {
-                (x.u256IsZero() || y.u256IsZero()) -> {
+                (qMaxXY == NON_FINITE_INF) && (x.u256IsZero() || y.u256IsZero()) -> {
                     setNaN(ctx)
                 }
                 (qA == NON_FINITE_INF) -> {
@@ -319,9 +317,10 @@ class Decimal() : S256() {
                 this.setNaN(x, y, ctx)
             }
         }
+        return this
     }
 
-    fun div(x: Decimal, y: Decimal, ctx: DecimalContext) {
+    fun mutateDiv(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign
@@ -364,9 +363,10 @@ class Decimal() : S256() {
             }
             else -> setNaN(x, y, ctx)
         }
+        return this
     }
 
-    fun inv(x: Decimal, ctx: DecimalContext) {
+    fun mutateInverse(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val quotientSign = x.sign
         when {
@@ -380,10 +380,10 @@ class Decimal() : S256() {
             }
             else -> setNaN(x, ctx)
         }
-
+        return this
     }
 
-    fun sqrt(x: Decimal, ctx: DecimalContext) {
+    fun mutateSqrt(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         when {
             x.sign -> {
@@ -409,7 +409,7 @@ class Decimal() : S256() {
             }
             else -> setNaN(x, ctx)
         }
-
+        return this
     }
 
     fun compareTo(other: Decimal, ctx: DecimalContext) : Int {
@@ -493,32 +493,32 @@ class Decimal() : S256() {
     }
 
 
-    fun roundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext) {
+    fun mutateRoundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext): Decimal {
         //FIXME - deal with special values
         if (qExp < 0) {
             val residue = this.u256SetScaleDownPow10(x, -qExp)
             qExp = 0
             sign = x.sign
-            roundAndFinalize(residue, rd, ctx)
+            return roundAndFinalize(residue, rd, ctx)
         } else {
-            set(x)
+            return set(x)
         }
     }
 
     fun roundToIntegralTiesToEven(x: Decimal, ctx: DecimalContext) =
-        roundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
+        mutateRoundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
 
     fun roundToIntegralTiesToAway(x: Decimal, ctx: DecimalContext) =
-        roundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
+        mutateRoundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
 
     fun roundToIntegralTowardZero(x: Decimal, ctx: DecimalContext) =
-        roundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
+        mutateRoundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
 
     fun roundToIntegralTowardPositive(x: Decimal, ctx: DecimalContext) =
-        roundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
+        mutateRoundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
 
     fun roundToIntegralTowardNegative(x: Decimal, ctx: DecimalContext) =
-        roundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
+        mutateRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
 
     fun setNextUp(x: Decimal, ctx: DecimalContext) {
         set(x)
@@ -795,10 +795,10 @@ class Decimal() : S256() {
                 }
     }
 
-    fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
+    internal fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
 
-    fun roundAndFinalize(inboundResidue: Residue, roundingDirection: RoundingDirection, ctx: DecimalContext) {
+    private fun roundAndFinalize(inboundResidue: Residue, roundingDirection: RoundingDirection, ctx: DecimalContext): Decimal {
         val eMax = ctx.eMax
         val eMin = ctx.eMin
         val precision = ctx.precision
@@ -827,15 +827,15 @@ class Decimal() : S256() {
                         }
 
                     if (totalResidue == EXACT)
-                        return
+                        return this
 
                     ctx.setInexact()
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (!roundUp)
-                        return
+                        return this
                     super.u256MutateIncrement()
                     if (digitLen <= precision)
-                        return
+                        return this
                     assert(digitLen == precision + 1)
                     // if we rolled into another digit because of roundup
                     // then the result is EXACTly divisible by 10
@@ -845,7 +845,7 @@ class Decimal() : S256() {
                     assert(qExp + (digitLen - 1) == eExp + 1)
                     ++eExp
                     if (eExp <= eMax)
-                        return
+                        return this
                     // rounding caused overflow
                     // fall into next conditional and flow over
                 }
@@ -861,7 +861,7 @@ class Decimal() : S256() {
                     }
                     ctx.setOverflow()
                     ctx.setInexact()
-                    return
+                    return this
                 }
 
                 // 7.5.1: subnormal rounding (tiny result stays nonzero)
@@ -876,21 +876,21 @@ class Decimal() : S256() {
 
                     val totalResidue = scaleResidue.merge(inboundResidue)
                     if (totalResidue == EXACT)
-                        return
+                        return this
                     ctx.setInexact()
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (!roundUp)
-                        return
+                        return this
                     super.u256MutateIncrement()
                     if (digitLen <= precision)
-                        return
+                        return this
                     assert(digitLen == precision + 1)
                     // if we rolled into another digit because of roundup
                     // then the result is definitely divisible by 10
                     val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
                     assert(residueExact == Residue.EXACT)
                     ++qExp
-                    return
+                    return this
                 }
 
                 // underflow ... swamped non-zero value
@@ -903,11 +903,12 @@ class Decimal() : S256() {
                 qExp = ctx.qTiny
                 ctx.setUnderflow()
                 ctx.setInexact()
-                return
+                return this
             }
             // zero case
             qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
         }
+        return this
     }
 
 }

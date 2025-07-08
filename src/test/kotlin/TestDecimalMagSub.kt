@@ -170,7 +170,7 @@ class TestDecimalMagSub {
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
         val decD = Decimal()
-        decD.sub(decA, decB, ctx)
+        decD.mutateSub(decA, decB, ctx)
         val expectedCoeff = expected.unscaledValue()
         val expectedQExp = -expected.scale()
         val observedCoeff = decD.coeffToBigInteger()

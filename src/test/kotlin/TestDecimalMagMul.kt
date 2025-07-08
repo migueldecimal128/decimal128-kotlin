@@ -92,7 +92,7 @@ class TestDecimalMagMul {
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
         val decP = Decimal()
-        decP.mul(decA, decB, ctx)
+        decP.mutateMul(decA, decB, ctx)
         assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
         assertEquals(-expected.scale(), decP.qExp)
     }
