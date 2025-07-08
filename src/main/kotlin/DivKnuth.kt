@@ -3,11 +3,10 @@ package com.decimal128
 import com.decimal128.U256Compare.u256UnscaledCompare
 import com.decimal128.U256Compare.u256GTOne
 import com.decimal128.U256Set.u256Set
-import com.decimal128.U256Set.u256SetShiftRight
 import com.decimal128.Residue.Companion.EXACT
-import com.decimal128.Residue.Companion.GT_HALF
-import com.decimal128.Residue.Companion.HALF
 import com.decimal128.Residue.Companion.LT_HALF
+import com.decimal128.Residue.Companion.HALF
+import com.decimal128.Residue.Companion.GT_HALF
 import java.lang.Long.*
 
 object DivKnuth {
@@ -103,65 +102,12 @@ object DivKnuth {
                     val cmp = u256UnscaledCompare(y, un)
                     if (cmp > 0)
                         LT_HALF
-                    else if (cmp == 0)
-                        Residue.HALF
-                    else
+                    else if (cmp < 0)
                         GT_HALF
+                    else
+                        HALF
                 }
             }
-        u256Set(z, q, m)
-        return residue
-    }
-
-    fun knuthDivideWrapperx64(z: U256, x: U256, y0: Long, wantRemainder: Boolean): Residue {
-        assert((y0 ushr 32) != 0L)
-        assert(x.bitLen > 64)
-
-        un[0] = x.dw0.toInt()
-        un[1] = (x.dw0 ushr 32).toInt()
-        un[2] = x.dw1.toInt()
-        un[3] = (x.dw1 ushr 32).toInt()
-        un[4] = x.dw2.toInt()
-        un[5] = (x.dw2 ushr 32).toInt()
-        un[6] = x.dw3.toInt()
-        un[7] = (x.dw3 ushr 32).toInt()
-        un[8] = 0
-
-        val m = ((x.bitLen - 1) ushr 5) + 1
-
-        val s = numberOfLeadingZeros(y0)
-        val y0Normalized = y0 shl s
-
-        vn[0] = y0Normalized.toInt()
-        vn[1] = (y0Normalized ushr 32).toInt()
-        //val n = 2
-
-        if (s != 0) {
-            Car.mutateShiftLeft(un, m + 1, s)
-        }
-
-        q.fill(0)
-
-        knuthDivideCore(m, 2)
-
-        val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
-        val remainder = remainderNormalized ushr s
-        if (wantRemainder) {
-            z.u256Set64(remainder)
-            return EXACT
-        }
-
-        val residue = when {
-            remainder < 0 -> {
-                assert(compareUnsigned(remainder, y0) < 0)
-                // msb of remainder is set ... doubling it will make it bigger than the divisor
-                GT_HALF
-            }
-            remainder == 0L -> EXACT
-            compareUnsigned(2 * remainder, y0) < 0 -> LT_HALF
-            2 * remainder == y0 -> HALF
-            else -> GT_HALF
-        }
         u256Set(z, q, m)
         return residue
     }

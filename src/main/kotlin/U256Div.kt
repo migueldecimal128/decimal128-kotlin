@@ -20,47 +20,9 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
 object U256Div {
 
     fun u256Divx64(z: U256, x: U256, y0: Long): Residue {
-        if ((y0 shr 1) == 0L) {
-            if (y0 == 0L)
-                throw RuntimeException("div by zero")
-            z.u256Set(x)
-            return EXACT
-        }
-        val x0 = x.dw0
-        if (x.bitLen <= 64) {
-            val quot = divideUnsigned(x0, y0)
-            val rem = remainderUnsigned(x0, y0)
-            val residue = when {
-                rem == 0L -> EXACT
-                rem < 0L -> GT_HALF // hi bit set .. so doubling would be 65 bits ... GT y0
-                compareUnsigned(2 * rem, y0) < 0 -> LT_HALF // we are doubling the remainder here
-                2 * rem == y0 -> HALF   // so make sure divisor is small enough
-                else -> GT_HALF
-            }
-            z.u256Set64(quot)
-            return residue
-        }
-        if ((y0 and (y0 - 1)) == 0L) {
-            // y0 is an exact power of 2 ... just shift right.
-            // 0 and 1 cases handled above, so if we are here then ntz >= 1
-            val ntz = numberOfTrailingZeros(y0)
-            val mask = (1L shl ntz) - 1L
-            val rem = x0 and mask
-            val residue = when {
-                rem == 0L -> EXACT
-                2 * rem < y0 -> LT_HALF
-                2 * rem == y0 -> HALF
-                else -> GT_HALF
-            }
-            u256SetShiftRight(z, x, ntz)
-            return residue
-        }
-        //TODO at this point I know that x.bitLen >= y.bitLen and x > y
-        // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-        if ((y0 ushr 32) == 0L) {
-            return DivDirect.divx32(z, x, y0)
-        }
-        return DivKnuth.knuthDivideWrapperx64(z, x, y0, false)
+        val rem = u256DivModX64(z, x, y0)
+        val residue = Residue.residueFromRemainderDivisor(rem, y0)
+        return residue
     }
 
     fun u256DivModX64(z: U256, x: U256, y0: Long): Long {

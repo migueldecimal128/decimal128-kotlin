@@ -104,6 +104,17 @@ value class Residue private constructor(val value:Int) {
             return EXACT
         }
 
+        fun residueFromRemainderDivisor(remainder: Long, divisor: Long): Residue {
+            val residue = when {
+                remainder == 0L -> EXACT
+                remainder < 0L -> GT_HALF // hi bit set .. so doubling would be 65 bits ... GT y0
+                compareUnsigned(2 * remainder, divisor) < 0 -> LT_HALF // we are doubling the remainder here
+                compareUnsigned(2 * remainder, divisor) > 0 -> GT_HALF
+                else -> HALF
+            }
+            return residue
+        }
+
         fun residueFromRemainderDivisor(remainder: IntArray, divisor: IntArray): Residue {
             if (Car.isZero(remainder))
                 return EXACT
