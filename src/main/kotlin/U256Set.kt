@@ -3,9 +3,9 @@ package com.decimal128
 @Suppress("NOTHING_TO_INLINE")
 object U256Set {
 
-    fun u256SetZero(z: U256) {
-        z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = 0L;
-        z.bitLen = 0; z.digitLen = 0
+    fun u256SetZero(u: U256) {
+        u.dw3 = 0L; u.dw2 = 0L; u.dw1 = 0L; u.dw0 = 0L;
+        u.bitLen = 0; u.digitLen = 0
     }
 
     fun u256SetOne(z: U256) {
@@ -13,40 +13,40 @@ object U256Set {
         z.bitLen = 1; z.digitLen = 1
     }
 
-    fun u256Set64(z: U256, d0: Long) {
-        z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L
-        z.dw0 = d0
-        z.bitLen = calcBitLen64(d0)
-        z.digitLen = U256Pow10.calcDigitLen64(z.bitLen, d0)
+    fun u256Set64(u: U256, d0: Long) {
+        u.dw3 = 0L; u.dw2 = 0L; u.dw1 = 0L
+        u.dw0 = d0
+        u.bitLen = calcBitLen64(d0)
+        u.digitLen = U256Pow10.calcDigitLen64(u.bitLen, d0)
     }
 
-    fun u256Set128(z: U256, d1: Long, d0: Long) {
-        z.dw3 = 0L; z.dw2 = 0L
-        z.dw1 = d1; z.dw0 = d0
-        z.bitLen = calcBitLen128(d1, d0)
-        z.digitLen = U256Pow10.calcDigitLen128(z.bitLen, d1, d0)
+    fun u256Set128(u: U256, d1: Long, d0: Long) {
+        u.dw3 = 0L; u.dw2 = 0L
+        u.dw1 = d1; u.dw0 = d0
+        u.bitLen = calcBitLen128(d1, d0)
+        u.digitLen = U256Pow10.calcDigitLen128(u.bitLen, d1, d0)
     }
 
-    fun u256Set192(z: U256, d2: Long, d1: Long, d0: Long) {
-        z.dw3 = 0L
-        z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
-        z.bitLen = calcBitLen192(d2, d1, d0)
-        z.digitLen = U256Pow10.calcDigitLen192(z.bitLen, d2, d1, d0)
+    fun u256Set192(u: U256, d2: Long, d1: Long, d0: Long) {
+        u.dw3 = 0L
+        u.dw2 = d2; u.dw1 = d1; u.dw0 = d0
+        u.bitLen = calcBitLen192(d2, d1, d0)
+        u.digitLen = U256Pow10.calcDigitLen192(u.bitLen, d2, d1, d0)
     }
 
 
-    fun u256Set256(z: U256, d3: Long, d2: Long, d1: Long, d0: Long) {
-        z.dw3 = d3; z.dw2 = d2; z.dw1 = d1; z.dw0 = d0
-        z.bitLen = calcBitLen256(d3, d2, d1, d0)
-        z.digitLen = U256Pow10.calcDigitLen256(z.bitLen, d3, d2, d1, d0)
+    fun u256Set256(u: U256, d3: Long, d2: Long, d1: Long, d0: Long) {
+        u.dw3 = d3; u.dw2 = d2; u.dw1 = d1; u.dw0 = d0
+        u.bitLen = calcBitLen256(d3, d2, d1, d0)
+        u.digitLen = U256Pow10.calcDigitLen256(u.bitLen, d3, d2, d1, d0)
     }
 
-    fun u256Set(z: U256, x: U256) {
-        z.dw3 = x.dw3; z.dw2 = x.dw2; z.dw1 = x.dw1; z.dw0 = x.dw0
-        z.bitLen = x.bitLen; z.digitLen = x.digitLen
+    fun u256Set(u: U256, x: U256) {
+        u.dw3 = x.dw3; u.dw2 = x.dw2; u.dw1 = x.dw1; u.dw0 = x.dw0
+        u.bitLen = x.bitLen; u.digitLen = x.digitLen
     }
 
-    fun u256Set(z: U256, car: IntArray) {
+    fun u256Set(u: U256, car: IntArray) {
         val nonZeroLimbLen = Car.nonZeroLimbLen(car)
         val carLen = car.size
 
@@ -54,7 +54,7 @@ object U256Set {
         val hi0 = if (carLen > 1) car[1].toLong() else 0L
         val dw0 = (hi0 shl 32) or (lo0 and MASK32)
         if (nonZeroLimbLen <= 2) {
-            z.u256Set64(dw0)
+            u.u256Set64(dw0)
             return
         }
 
@@ -62,7 +62,7 @@ object U256Set {
         val hi1 = if (carLen > 3) car[3].toLong() else 0L
         val dw1 = (hi1 shl 32) or (lo1 and MASK32)
         if (nonZeroLimbLen <= 4) {
-            z.u256Set128(dw1, dw0)
+            u.u256Set128(dw1, dw0)
             return
         }
 
@@ -70,7 +70,7 @@ object U256Set {
         val hi2 = if (carLen > 5) car[5].toLong() else 0L
         val dw2 = (hi2 shl 32) or (lo2 and MASK32)
         if (nonZeroLimbLen <= 6) {
-            z.u256Set192(dw2, dw1, dw0)
+            u.u256Set192(dw2, dw1, dw0)
             return
         }
 
@@ -78,15 +78,15 @@ object U256Set {
         val hi3 = if (carLen > 7) car[7].toLong() else 0L
         val dw3 = (hi3 shl 32) or (lo3 and MASK32)
         if (nonZeroLimbLen <= 8) {
-            z.u256Set256(dw3, dw2, dw1, dw0)
+            u.u256Set256(dw3, dw2, dw1, dw0)
             return
         }
 
         throw RuntimeException("u256 overflow")
     }
 
-    fun u256Set(c: U256, x: LongArray, xOff: Int, xLen: Int) {
-        c.u256SetZero()
+    fun u256Set(u: U256, x: LongArray, xOff: Int, xLen: Int) {
+        u.u256SetZero()
         if (xLen == 0)
             return
         var nonZeroIndex = xLen
@@ -98,20 +98,20 @@ object U256Set {
             -1 -> {}
             0 -> {
                 val c0 = nonZeroVal
-                c.u256Set64(c0)
+                u.u256Set64(c0)
             }
 
             1 -> {
                 val c0 = x[xOff + 0]
                 val c1 = nonZeroVal
-                c.u256Set128(c1, c0)
+                u.u256Set128(c1, c0)
             }
 
             2 -> {
                 val c0 = x[xOff + 0]
                 val c1 = x[xOff + 1]
                 val c2 = nonZeroVal
-                c.u256Set192(c2, c1, c0)
+                u.u256Set192(c2, c1, c0)
             }
 
             3 -> {
@@ -119,15 +119,15 @@ object U256Set {
                 val c1 = x[xOff + 1]
                 val c2 = x[xOff + 2]
                 val c3 = nonZeroVal
-                c.u256Set256(c3, c2, c1, c0)
+                u.u256Set256(c3, c2, c1, c0)
             }
 
             else -> throw RuntimeException("overflow")
         }
     }
 
-    fun u256Set(c: U256, x: IntArray, xLen: Int) {
-        c.u256SetZero()
+    fun u256Set(u: U256, x: IntArray, xLen: Int) {
+        u.u256SetZero()
         if (xLen == 0)
             return
         var nonZeroIndex2 = (xLen + 1) ushr 1
@@ -139,20 +139,20 @@ object U256Set {
             -1 -> {}
             0 -> {
                 val c0 = nonZeroVal
-                c.u256Set64(c0)
+                u.u256Set64(c0)
             }
 
             1 -> {
                 val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32)
                 val c1 = nonZeroVal
-                c.u256Set128(c1, c0)
+                u.u256Set128(c1, c0)
             }
 
             2 -> {
                 val c0 = (x[1].toLong() shl 32) or (x[0].toLong() and MASK32)
                 val c1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32)
                 val c2 = nonZeroVal
-                c.u256Set192(c2, c1, c0)
+                u.u256Set192(c2, c1, c0)
             }
 
             3 -> {
@@ -160,7 +160,7 @@ object U256Set {
                 val c1 = (x[3].toLong() shl 32) or (x[2].toLong() and MASK32);
                 val c2 = (x[5].toLong() shl 32) or (x[4].toLong() and MASK32);
                 val c3 = nonZeroVal;
-                c.u256Set256(c3, c2, c1, c0)
+                u.u256Set256(c3, c2, c1, c0)
             }
 
             else -> throw RuntimeException("overflow")

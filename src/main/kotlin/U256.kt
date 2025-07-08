@@ -184,6 +184,8 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256Set(x: LongArray, xOff: Int, xLen: Int) = U256Set.u256Set(this, x, xOff, xLen)
 
+    internal inline fun u256Set(x: IntArray, xLen: Int) = U256Set.u256Set(this, x, xLen)
+
     internal inline fun u256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         U256Set.u256SetShiftRight(this, x, xOff, xLen, bitCount)
 
