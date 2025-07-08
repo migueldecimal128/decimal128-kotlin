@@ -1,9 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.numberOfLeadingZeros
-import java.lang.Math.max
-import java.lang.Math.min
-
 const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
@@ -123,7 +119,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256SetDiv(x: U256, y: U256) = U256Div.u256Div(this, x, y)
 
-    internal inline fun u256SetDivX64(x: U256, y0: Long) = U256Div.u256Divx64(this, x, y0)
+    internal inline fun u256SetDivX64(x: U256, y0: Long) = U256Div.u256DivX64(this, x, y0)
 
     internal inline fun u256SetMod(x: U256, y: U256) = U256Div.u256Mod(this, x, y)
 

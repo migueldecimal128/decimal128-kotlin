@@ -1,10 +1,8 @@
 package com.decimal128
 
 import com.decimal128.U256Compare.u256UnscaledCompare
-import com.decimal128.U256Set.u256SetShiftRight
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
-import com.decimal128.Residue.Companion.HALF
 import com.decimal128.Residue.Companion.LT_HALF
 import java.lang.Long.*
 
@@ -19,24 +17,24 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
 
 object U256Div {
 
-    fun u256Divx64(z: U256, x: U256, y0: Long): Residue {
+    fun u256DivX64(z: U256, x: U256, y0: Long): Residue {
         val rem = u256DivModX64(z, x, y0)
         val residue = Residue.residueFromRemainderDivisor(rem, y0)
         return residue
     }
 
-    fun u256DivModX64(z: U256, x: U256, y0: Long): Long {
+    fun u256DivModX64(z: U256?, x: U256, y0: Long): Long {
         if ((y0 shr 1) == 0L) {
             if (y0 == 0L)
                 throw RuntimeException("div by zero")
-            z.u256Set(x)
+            z?.u256Set(x)
             return 0
         }
         val x0 = x.dw0
         if (x.bitLen <= 64) {
             val quot = divideUnsigned(x0, y0)
             val rem = remainderUnsigned(x0, y0)
-            z.u256Set64(quot)
+            z?.u256Set64(quot)
             return rem
         }
         if ((y0 and (y0 - 1)) == 0L) {
@@ -45,7 +43,7 @@ object U256Div {
             val ntz = numberOfTrailingZeros(y0)
             val mask = (1L shl ntz) - 1L
             val rem = x0 and mask
-            u256SetShiftRight(z, x, ntz)
+            z?.u256SetShiftRight(x, ntz)
             return rem
         }
         //TODO at this point I know that x.bitLen >= y.bitLen and x > y
@@ -56,60 +54,60 @@ object U256Div {
         return DivKnuth.knuthDivModX64(z, x, y0)
     }
 
-    fun u256Div(z: U256, x: U256, y: U256): Residue {
-        if (y.bitLen <= 64)
-            return u256Divx64(z, x, y.dw0)
+    fun u256Div(z: U256, x: U256, y: U256) = u256DivMod(z, null, x, y)
+
+    fun u256Mod(z: U256, x: U256, y: U256) = u256DivMod(null, z, x, y)
+
+    private fun u256DivMod(quot: U256?, rem: U256?, x: U256, y: U256): Residue {
+        if (y.bitLen <= 64) {
+            val y0 = y.dw0
+            val r0 = u256DivModX64(quot, x, y0)
+            if (rem != null) {
+                rem.u256Set64(r0)
+                return EXACT
+            }
+            val residue = Residue.residueFromRemainderDivisor(r0, y0)
+            return residue
+        }
         val bitLenDelta = x.bitLen - y.bitLen
         if (bitLenDelta < 0) {
+            rem?.u256Set(x)
             val residue = when {
-                x.bitLen == 0 -> EXACT
+                rem != null || x.bitLen == 0 -> EXACT
                 bitLenDelta <= -2 -> LT_HALF
                 else -> Residue.residueFromRemainderDivisor(x, y)
             }
-            z.u256SetZero()
+            quot?.u256SetZero()
             return residue
         }
         if (bitLenDelta == 0) {
             val cmp = u256UnscaledCompare(x, y)
             if (cmp < 0) {
-                val residue = Residue.residueFromRemainderDivisor(x, y)
-                z.u256SetZero()
+                rem?.u256Set(x)
+                val residue = if (rem != null) EXACT else GT_HALF
+                quot?.u256SetZero()
                 return residue
-            }
-            if (cmp == 0) {
-                z.u256SetOne()
+            } else if (cmp > 0) {
+                val t = when {
+                    rem != null && rem !== y -> rem
+                    quot != null && quot !== y -> quot
+                    else -> Int256()
+                }
+                t.u256SetSub(x, y)
+                val residue = Residue.residueFromRemainderDivisor(t, y)
+                rem?.u256Set(t)
+                quot?.u256SetOne()
+                return residue
+            } else {
+                rem?.u256SetZero()
+                quot?.u256SetOne()
                 return EXACT
             }
         }
         assert(bitLenDelta >= 0)
         //TODO at this point I know that x.bitLen >= y.bitLen and x > y
         // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-        return DivKnuth.knuthDivideWrapper(z, null, x, y)
-    }
-
-    fun u256Mod(z: U256, x: U256, y: U256) {
-        if (y.bitLen <= 64) {
-            val rem = u256DivModX64(z, x, y.dw0)
-            z.u256Set64(rem)
-            return
-        }
-        if (x.bitLen < y.bitLen) {
-            z.u256Set(x)
-            return
-        }
-        if (x.bitLen == y.bitLen) {
-            val cmp = u256UnscaledCompare(x, y)
-            if (cmp < 0) {
-                val residue = Residue.residueFromRemainderDivisor(x, y)
-                z.u256Set(x)
-                return
-            }
-            if (cmp == 0) {
-                z.u256SetZero()
-                return
-            }
-        }
-        DivKnuth.knuthDivideWrapper(null, z, x, y)
+        return DivKnuth.knuthDivideWrapper(quot, rem, x, y)
     }
 
 }

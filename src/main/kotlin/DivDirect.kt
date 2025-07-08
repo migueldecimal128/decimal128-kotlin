@@ -138,7 +138,7 @@ object DivDirect {
         return rem
     }
 
-    fun divModX32(z: U256, x: U256, y0: Long): Long {
+    fun divModX32(z: U256?, x: U256, y0: Long): Long {
         val xBitLen = x.bitLen
         val rem = when {
             ((y0 > 1L) && (y0 ushr 32) == 0L) -> when {
@@ -148,7 +148,7 @@ object DivDirect {
                 else ->           divMod256x32(z, x.dw3, x.dw2, x.dw1, x.dw0, y0)
             }
             (y0 == 1L) -> {
-                z.u256Set(x)
+                z?.u256Set(x)
                 0L
             }
             else -> throw IllegalArgumentException()
@@ -156,7 +156,7 @@ object DivDirect {
         return rem
     }
 
-    fun divMod256x32(z: U256, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
+    fun divMod256x32(z: U256?, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x3
@@ -197,11 +197,11 @@ object DivDirect {
         val q1 = (w3 shl 32) or w2
         val q0 = (w1 shl 32) or w0
 
-        z.u256Set256(q3, q2, q1, q0)
+        z?.u256Set256(q3, q2, q1, q0)
         return rem
     }
 
-    fun divMod192x32(z: U256, x2: Long, x1: Long, x0: Long, y0: Long): Long {
+    fun divMod192x32(z: U256?, x2: Long, x1: Long, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x2
@@ -233,11 +233,11 @@ object DivDirect {
         val q1 = (w3 shl 32) or w2
         val q0 = (w1 shl 32) or w0
 
-        z.u256Set192(q2, q1, q0)
+        z?.u256Set192(q2, q1, q0)
         return rem
     }
 
-    fun divMod128x32(z: U256, x1: Long, x0: Long, y0: Long): Long {
+    fun divMod128x32(z: U256?, x1: Long, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x1
@@ -260,11 +260,11 @@ object DivDirect {
         val q1 = (w3 shl 32) or w2
         val q0 = (w1 shl 32) or w0
 
-        z.u256Set128(q1, q0)
+        z?.u256Set128(q1, q0)
         return rem
     }
 
-    fun divMod64x32(z: U256, x0: Long, y0: Long): Long {
+    fun divMod64x32(z: U256?, x0: Long, y0: Long): Long {
         assert((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x0
@@ -278,7 +278,7 @@ object DivDirect {
 
         val q0 = (w1 shl 32) or w0
 
-        z.u256Set64(q0)
+        z?.u256Set64(q0)
         return rem
     }
 
