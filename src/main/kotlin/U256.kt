@@ -123,6 +123,8 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256SetMod(x: U256, y: U256) = U256Div.u256Mod(this, x, y)
 
+    internal inline fun u256SetDivMod(rem: U256, x: U256, y: U256) = U256Div.u256DivMod(this, rem, x, y)
+
     internal inline fun u256SetScaleUpPow10(x: U256, pow10: Int) = U256ScalePow10.u256ScaleUpPow10(this, x, pow10)
 
     internal inline fun u256SetScaleDownPow10(x: U256, pow10: Int) = U256ScalePow10.u256ScaleDownPow10(this, x, pow10)

@@ -58,7 +58,7 @@ object U256Div {
 
     fun u256Mod(z: U256, x: U256, y: U256) = u256DivMod(null, z, x, y)
 
-    private fun u256DivMod(quot: U256?, rem: U256?, x: U256, y: U256): Residue {
+    fun u256DivMod(quot: U256?, rem: U256?, x: U256, y: U256): Residue {
         if (y.bitLen <= 64) {
             val y0 = y.dw0
             val r0 = u256DivModX64(quot, x, y0)

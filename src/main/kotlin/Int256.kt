@@ -44,6 +44,13 @@ class Int256 : S256 {
         return mod
     }
 
+    fun divMod(other: Int256): Pair<Int256, Int256> {
+        val div = Int256()
+        val mod = Int256()
+        div.s256DivMod(mod, this, other)
+        return div to mod
+    }
+
     operator fun plusAssign(other: Int256) {
         this.s256Add(this, other)
     }

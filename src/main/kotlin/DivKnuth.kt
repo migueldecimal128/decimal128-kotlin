@@ -58,7 +58,6 @@ object DivKnuth {
         if (rem != null) {
             Car.mutateShiftRight(un, n, s)
             rem.u256Set(un, n)
-            return EXACT
         }
 
         // shifting right by s will denormalize to normal remainder

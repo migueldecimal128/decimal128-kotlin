@@ -93,7 +93,15 @@ open class S256 : U256 {
 
     internal inline fun s256Mod(x: S256, y: S256) {
         this.u256SetMod(x, y)
-        this.sign = (x.sign xor y.sign) and (bitLen > 0)
+        this.sign = x.sign and (bitLen > 0)
+    }
+
+    internal fun s256DivMod(mod: S256, x: S256, y: S256) {
+        val signQ = x.sign xor y.sign
+        val signR = x.sign
+        this.u256SetDivMod(mod, x, y)
+        mod.sign = signR and (mod.bitLen > 0)
+        this.sign = signQ and (this.bitLen > 0)
     }
 
     internal inline fun s256SetScaleUpPow10(x: S256, pow10: Int) {

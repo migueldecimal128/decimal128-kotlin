@@ -19,7 +19,7 @@ private fun parseStringToBi(str: String): BigInteger {
 
 class TestInt256Arithmetic {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val strA: String, val strB: String) {
         constructor(biA: BigInteger, biB: BigInteger) : this(biA.toString(), biB.toString())
@@ -33,6 +33,7 @@ class TestInt256Arithmetic {
     }
 
     val tcs = arrayOf(
+        TC("-109946764", "-2"),
         TC("40000000000000000000", "20000000000000000001"),
         TC("400000000000000000000", "30000000000000000000"),
         TC("902475526234364831190", "359661921088628968292"),
@@ -65,14 +66,14 @@ class TestInt256Arithmetic {
     val random = Random()
 
     fun randBi(): BigInteger {
-        val bitLen = random.nextInt(0, 128)
+        val bitLen = random.nextInt(0, 256)
         val bi = BigInteger(bitLen, random)
-        return bi
+        return if (random.nextBoolean()) bi.negate() else bi
     }
 
     @Test
     fun testRandom() {
-        for (i in 0..<10000) {
+        for (i in 0..<50000) {
             val biA = randBi()
             val biB = randBi()
             val tc = TC(biA, biB)
@@ -86,10 +87,10 @@ class TestInt256Arithmetic {
         if (verbose)
             println("$strA +-*/% $strB")
         val a = Int256(strA)
-        assertEquals(tc.biA.bitLength(), a.bitLen)
+        assertEquals(tc.biA.abs().bitLength(), a.bitLen)
         assertEquals(tc.biA.signum(), a.signum())
         val b = Int256(strB)
-        assertEquals(tc.biB.bitLength(), b.bitLen)
+        assertEquals(tc.biB.abs().bitLength(), b.bitLen)
         assertEquals(tc.biB.signum(), b.signum())
 
         if (tc.sum.bitLength() <= 256) {
@@ -109,6 +110,11 @@ class TestInt256Arithmetic {
             assertEquals(tc.quot.toString(), "$quot")
             val rem = a % b
             assertEquals(tc.rem.toString(), "$rem")
+
+            val (quot2, rem2) = a.divMod(b)
+            assertEquals(quot, quot2)
+            assertEquals(rem, rem2)
+
         }
     }
 }
