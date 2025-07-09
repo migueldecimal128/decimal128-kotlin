@@ -233,16 +233,16 @@ class TestFptestRead {
             println(fptest.fptestStr)
         when (fptest.op) {
             "+" -> {
-                observed.mutateAdd(operands[0], operands[1], ctx)
+                observed.setAdd(operands[0], operands[1], ctx)
             }
             "-" -> {
-                observed.mutateSub(operands[0], operands[1], ctx)
+                observed.setSub(operands[0], operands[1], ctx)
             }
             "*" -> {
-                observed.mutateMul(operands[0], operands[1], ctx)
+                observed.setMultiply(operands[0], operands[1], ctx)
             }
             "/" -> {
-                observed.mutateDiv(operands[0], operands[1], ctx)
+                observed.setDivide(operands[0], operands[1], ctx)
             }
             else -> {
                 throw RuntimeException("not impl" + fptest.op)

@@ -100,7 +100,7 @@ class TestDecimalMagnitudeDiv {
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
         val decQ = Decimal()
-        decQ.mutateDiv(decA, decB, ctx)
+        decQ.setDivide(decA, decB, ctx)
         if (verbose)
             println("magQ:$decQ")
         val biExpected = expected.unscaledValue()

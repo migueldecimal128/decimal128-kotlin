@@ -40,40 +40,25 @@ class Decimal() : S256() {
 
         fun newInfinity(sign: Boolean = false) = Decimal().setInfinite(sign)
 
-        fun newAdd(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
-            val sum = Decimal()
-            return addImpl(sum, x, y.sign, y, ctx)
-        }
+        fun newAdd(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            addImpl(Decimal(), x, y.sign, y, ctx)
 
-        fun newSub(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
-            val diff = Decimal()
-            return addImpl(diff, x, !y.sign, y, ctx)
-        }
+        fun newSub(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            addImpl(Decimal(), x, !y.sign, y, ctx)
 
-        fun newMul(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
-            val prod = Decimal()
-            return prod.mutateMul(x, y, ctx)
-        }
+        fun newMul(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            Decimal().setMultiply(x, y, ctx)
 
-        fun newSquare(x: Decimal, ctx: DecimalContext): Decimal {
-            val square = Decimal()
-            return square.mutateSquare(x, ctx)
-        }
+        fun newSquare(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            Decimal().setSquare(x, ctx)
 
-        fun newDiv(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
-            val quot = Decimal()
-            return quot.mutateDiv(x, y, ctx)
-        }
+        fun newDiv(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal().setDivide(x, y, ctx)
 
-        fun newReciprocal(x: Decimal, ctx: DecimalContext): Decimal {
-            val recip = Decimal()
-            return recip.mutateReciprocal(x, ctx)
-        }
+        fun newReciprocal(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            Decimal().setReciprocal(x, ctx)
 
-        fun newSqrt(x: Decimal, ctx: DecimalContext): Decimal {
-            val sqrt = Decimal()
-            return sqrt.mutateSqrt(x, ctx)
-        }
+        fun newSqrt(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            Decimal().setSqrt(x, ctx)
 
         private fun addImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
             val xQ = x.qExp
@@ -279,14 +264,24 @@ class Decimal() : S256() {
         return qExp <= NON_FINITE_INF
     }
 
-    // IEEE754-2008 5.4.1
-    fun mutateAdd(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, y.sign, y, ctx)
+    fun add(y: Decimal) = newAdd(this, y)
+    fun subtract(y: Decimal) = newSub(this, y)
+    fun multiply(y: Decimal) = newMul(this, y)
+    fun divide(y: Decimal) = newDiv(this, y)
+
+    fun add(y: Decimal, ctx: DecimalContext) = newAdd(this, y, ctx)
+    fun subtract(y: Decimal, ctx: DecimalContext) = newSub(this, y, ctx)
+    fun multiply(y: Decimal, ctx: DecimalContext) = newMul(this, y, ctx)
+    fun divide(y: Decimal, ctx: DecimalContext) = newDiv(this, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun mutateSub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
+    fun setAdd(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun mutateMul(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+    fun setSub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
+
+    // IEEE754-2008 5.4.1
+    fun setMultiply(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
@@ -311,7 +306,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun mutateSquare(x: Decimal, ctx: DecimalContext): Decimal {
+    fun setSquare(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
@@ -328,7 +323,7 @@ class Decimal() : S256() {
     }
 
     // IEEE754-2008 5.4.1
-    fun mutateFma(x: Decimal, y: Decimal, a: Decimal, ctx: DecimalContext): Decimal {
+    fun setFma(x: Decimal, y: Decimal, a: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -343,7 +338,7 @@ class Decimal() : S256() {
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
-                this.mutateAdd(this, aT, ctx)
+                this.setAdd(this, aT, ctx)
             }
             qMaxXYA == NON_FINITE_INF -> when {
                 (qMaxXY == NON_FINITE_INF) && (x.u256IsZero() || y.u256IsZero()) -> {
@@ -363,7 +358,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun mutateDiv(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+    fun setDivide(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign
@@ -409,7 +404,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun mutateReciprocal(x: Decimal, ctx: DecimalContext): Decimal {
+    fun setReciprocal(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val quotientSign = x.sign
         when {
@@ -426,7 +421,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun mutateSqrt(x: Decimal, ctx: DecimalContext): Decimal {
+    fun setSqrt(x: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         when {
             x.sign -> {
@@ -548,19 +543,19 @@ class Decimal() : S256() {
         }
     }
 
-    fun roundToIntegralTiesToEven(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTiesToEven(x: Decimal, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
 
-    fun roundToIntegralTiesToAway(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTiesToAway(x: Decimal, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
 
-    fun roundToIntegralTowardZero(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTowardZero(x: Decimal, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
 
-    fun roundToIntegralTowardPositive(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTowardPositive(x: Decimal, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
 
-    fun roundToIntegralTowardNegative(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTowardNegative(x: Decimal, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
 
     fun setNextUp(x: Decimal, ctx: DecimalContext) {

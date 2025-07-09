@@ -89,7 +89,7 @@ class TestDecimalSqrt{
         val decSqrt = Decimal()
         dec.set(tc.bd)
         val ctx = DecimalContext.newDecimal128Context()
-        decSqrt.mutateSqrt(dec, ctx)
+        decSqrt.setSqrt(dec, ctx)
         val expected = tc.sqrt
         assertEquals(expected.unscaledValue(), decSqrt.coeffToBigInteger())
         assertEquals(-expected.scale(), decSqrt.qExp)
