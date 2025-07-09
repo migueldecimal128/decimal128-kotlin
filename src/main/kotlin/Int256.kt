@@ -51,6 +51,12 @@ class Int256 : S256 {
         return div to mod
     }
 
+    fun square(): Int256 {
+        val square = Int256()
+        square.u256SetSqr(this)
+        return square
+    }
+
     fun fma(multiplier: Int256, addend: Int256): Int256 {
         val prod = Int256()
         prod.s256Fma(this, multiplier, addend)

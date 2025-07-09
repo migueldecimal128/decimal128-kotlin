@@ -72,17 +72,27 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
         return String(bytes, 0, ib)
     }
 
-    fun add(x: Decimal, y: Decimal) = Decimal.newAdd(x, y, this)
+    private fun add(x: Decimal, y: Decimal) = Decimal.newAdd(x, y, this)
 
-    fun subtract(x: Decimal, y: Decimal) = Decimal.newSub(x, y, this)
+    private fun subtract(x: Decimal, y: Decimal) = Decimal.newSub(x, y, this)
 
-    fun multiply(x: Decimal, y: Decimal) = Decimal.newMul(x, y, this)
+    private fun multiply(x: Decimal, y: Decimal) = Decimal.newMul(x, y, this)
 
-    fun divide(x: Decimal, y: Decimal) = Decimal.newDiv(x, y, this)
+    private fun divide(x: Decimal, y: Decimal) = Decimal.newDiv(x, y, this)
 
     operator fun Decimal.plus(other: Decimal): Decimal = this@DecimalContext.add(this, other)
     operator fun Decimal.minus(other: Decimal): Decimal = this@DecimalContext.subtract(this, other)
     operator fun Decimal.times(other: Decimal): Decimal = this@DecimalContext.multiply(this, other)
     operator fun Decimal.div(other: Decimal): Decimal = this@DecimalContext.divide(this, other)
+
+    private fun mutateAdd(x: Decimal, y: Decimal) = x.mutateAdd(y, this)
+    private fun mutateSub(x: Decimal, y: Decimal) = x.mutateSub(y, this)
+    private fun mutateMul(x: Decimal, y: Decimal) = x.mutateMul(y, this)
+    private fun mutateDiv(x: Decimal, y: Decimal) = x.mutateDiv(y, this)
+
+    operator fun Decimal.plusAssign(other: Decimal) = this@DecimalContext.mutateAdd(this, other)
+    operator fun Decimal.minusAssign(other: Decimal) = this@DecimalContext.mutateSub(this, other)
+    operator fun Decimal.timesAssign(other: Decimal) = this@DecimalContext.mutateMul(this, other)
+    operator fun Decimal.divAssign(other: Decimal) = this@DecimalContext.mutateDiv(this, other)
 
 }

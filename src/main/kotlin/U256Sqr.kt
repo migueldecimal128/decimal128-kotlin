@@ -10,6 +10,7 @@ internal object U256Sqr {
             (xBitLen <= 64) -> {
                 val p1 = unsignedMultiplyHigh(x.dw0, x.dw0)
                 val p0 = x.dw0 * x.dw0
+                z.u256Set128(p1, p0)
                 return
             }
             (xBitLen <= 96) -> {

@@ -239,10 +239,10 @@ class TestFptestRead {
                 observed.setSub(operands[0], operands[1], ctx)
             }
             "*" -> {
-                observed.setMultiply(operands[0], operands[1], ctx)
+                observed.setMul(operands[0], operands[1], ctx)
             }
             "/" -> {
-                observed.setDivide(operands[0], operands[1], ctx)
+                observed.setDiv(operands[0], operands[1], ctx)
             }
             else -> {
                 throw RuntimeException("not impl" + fptest.op)

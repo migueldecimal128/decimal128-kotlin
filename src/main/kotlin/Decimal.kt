@@ -47,12 +47,12 @@ class Decimal() : S256() {
             addImpl(Decimal(), x, !y.sign, y, ctx)
 
         fun newMul(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            Decimal().setMultiply(x, y, ctx)
+            Decimal().setMul(x, y, ctx)
 
         fun newSquare(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             Decimal().setSquare(x, ctx)
 
-        fun newDiv(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal().setDivide(x, y, ctx)
+        fun newDiv(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal().setDiv(x, y, ctx)
 
         fun newReciprocal(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             Decimal().setReciprocal(x, ctx)
@@ -272,7 +272,19 @@ class Decimal() : S256() {
     fun add(y: Decimal, ctx: DecimalContext) = newAdd(this, y, ctx)
     fun subtract(y: Decimal, ctx: DecimalContext) = newSub(this, y, ctx)
     fun multiply(y: Decimal, ctx: DecimalContext) = newMul(this, y, ctx)
+    fun square(ctx: DecimalContext) = newSquare(this, ctx)
     fun divide(y: Decimal, ctx: DecimalContext) = newDiv(this, y, ctx)
+    fun reciprocal(ctx: DecimalContext) = newReciprocal(this, ctx)
+    fun sqrt(ctx: DecimalContext) = newSqrt(this, ctx)
+
+    fun mutateAdd(y: Decimal, ctx: DecimalContext) { setAdd(this, y, ctx) }
+    fun mutateSub(y: Decimal, ctx: DecimalContext) { setSub(this, y, ctx) }
+    fun mutateMul(y: Decimal, ctx: DecimalContext) { setMul(this, y, ctx) }
+    fun mutateSquare(ctx: DecimalContext) { setSquare(this, ctx) }
+    fun mutateDiv(y: Decimal, ctx: DecimalContext) { setDiv(this, y, ctx) }
+    fun mutateReciprocal(ctx: DecimalContext) { setReciprocal(this, ctx) }
+    fun mutateSqrt(ctx: DecimalContext) { setSqrt(this, ctx) }
+
 
     // IEEE754-2008 5.4.1
     fun setAdd(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, y.sign, y, ctx)
@@ -281,7 +293,7 @@ class Decimal() : S256() {
     fun setSub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun setMultiply(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+    fun setMul(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
@@ -358,7 +370,7 @@ class Decimal() : S256() {
         return this
     }
 
-    fun setDivide(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+    fun setDiv(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign

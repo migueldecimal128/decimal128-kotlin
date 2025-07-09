@@ -28,12 +28,14 @@ class TestInt256Arithmetic {
         val sum = biA + biB
         val diff = biA - biB
         val prod = biA * biB
+        val square = biA * biA
         val fma = biA * biB + diff
         val quot = if (biB.signum() == 0) BigInteger.ZERO else biA / biB
         val rem = if (biB.signum() == 0) BigInteger.ZERO else biA % biB
     }
 
     val tcs = arrayOf(
+        TC("3197824510127148320975196855018397016390888109434956601035021933749603692011", "-37"),
         TC("-109946764", "-2"),
         TC("40000000000000000000", "20000000000000000001"),
         TC("400000000000000000000", "30000000000000000000"),
@@ -97,14 +99,23 @@ class TestInt256Arithmetic {
             val sum = a + b
             assertEquals(tc.sum.toString(), "$sum")
         }
+
         val diff = a - b
+        assertEquals(tc.diff.toString(), "$diff")
+
         if (tc.prod.abs().bitLength() <= 256) {
             val prod = a * b
             assertEquals(tc.prod.toString(), "$prod")
+
+            val fmaBitLen = tc.fma.abs().bitLength()
+            if (fmaBitLen <= 256) {
+                val fma = a.fma(b, diff)
+                assertEquals(tc.fma.toString(), fma.toString())
+            }
         }
-        if (tc.fma.abs().bitLength() <= 256) {
-            val fma = a.fma(b, diff)
-            assertEquals(tc.fma.toString(), fma.toString())
+        if (tc.square.bitLength() <= 256) {
+            val square = a.square()
+            assertEquals(tc.square.toString(), square.toString())
         }
         if (tc.biB.signum() != 0) {
             val quot = a / b
