@@ -96,8 +96,8 @@ class Decimal() : S256() {
                 }
                 qMax == NON_FINITE_INF -> when {
                     (xSign != ySign) && (qX == qY) -> {
-                        ctx.signalInvalid()
                         z.setNaN(ctx)
+                        return ctx.signalInvalid(z)
                     }
                     else -> {
                         z.setInfinite(if (qX == NON_FINITE_INF) xSign else ySign)
@@ -131,7 +131,7 @@ class Decimal() : S256() {
         setZero()
         if (maxQ == NON_FINITE_SNAN) {
             ctx.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
-            ctx.signalInvalid()
+            ctx.signalInvalid(this)
         }
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
@@ -307,8 +307,8 @@ class Decimal() : S256() {
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.u256IsZero() || y.u256IsZero()) {
-                    ctx.signalInvalid()
                     setNaN(ctx)
+                    return ctx.signalInvalid(this)
                 } else {
                     setInfinite(productSign)
                 }
@@ -386,20 +386,20 @@ class Decimal() : S256() {
                     (x.bitLen > 0) -> {
                         // finite division by zero
                         setInfinite(quotientSign)
-                        ctx.signalDivByZero()
+                        return ctx.signalDivByZero(this)
                     }
                     else -> {
                         // zero divided by zero
                         setNaN(ctx)
-                        ctx.signalInvalid()
+                        return ctx.signalInvalid(this)
                     }
                 }
             }
             qMaxXY == NON_FINITE_INF -> {
                 when {
                     (qX == NON_FINITE_INF && qY == NON_FINITE_INF) -> {
-                        ctx.signalInvalid()
                         setNaN(ctx)
+                        return ctx.signalInvalid(this)
                     }
 
                     (qX == NON_FINITE_INF) -> {
@@ -438,7 +438,7 @@ class Decimal() : S256() {
         when {
             x.sign -> {
                 setNaN(ctx)
-                ctx.signalInvalid()
+                return ctx.signalInvalid(this)
             }
             qX < MIN_SPECIAL_VALUE -> {
                 when {

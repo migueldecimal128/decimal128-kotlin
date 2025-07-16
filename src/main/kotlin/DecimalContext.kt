@@ -48,8 +48,8 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
     fun signalInexact() { inexact = true }
     fun signalUnderflow() { underflow = true }
     fun signalOverflow() { overflow = true }
-    fun signalDivByZero() { divByZero = true }
-    fun signalInvalid() { invalid = true }
+    fun signalDivByZero(z: Decimal): Decimal { divByZero = true; return z }
+    fun signalInvalid(z: Decimal): Decimal { invalid = true; return z }
 
     fun operandIsSignalingNaN(decimal: Decimal) {
         if (trapInvalid)
