@@ -96,7 +96,7 @@ class Decimal() : S256() {
                 }
                 qMax == NON_FINITE_INF -> when {
                     (xSign != ySign) && (qX == qY) -> {
-                        ctx.setInvalid()
+                        ctx.signalInvalid()
                         z.setNaN(ctx)
                     }
                     else -> {
@@ -131,7 +131,7 @@ class Decimal() : S256() {
         setZero()
         if (maxQ == NON_FINITE_SNAN) {
             ctx.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
-            ctx.setInvalid()
+            ctx.signalInvalid()
         }
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
@@ -307,7 +307,7 @@ class Decimal() : S256() {
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.u256IsZero() || y.u256IsZero()) {
-                    ctx.setInvalid()
+                    ctx.signalInvalid()
                     setNaN(ctx)
                 } else {
                     setInfinite(productSign)
@@ -386,19 +386,19 @@ class Decimal() : S256() {
                     (x.bitLen > 0) -> {
                         // finite division by zero
                         setInfinite(quotientSign)
-                        ctx.setDivByZero()
+                        ctx.signalDivByZero()
                     }
                     else -> {
                         // zero divided by zero
                         setNaN(ctx)
-                        ctx.setInvalid()
+                        ctx.signalInvalid()
                     }
                 }
             }
             qMaxXY == NON_FINITE_INF -> {
                 when {
                     (qX == NON_FINITE_INF && qY == NON_FINITE_INF) -> {
-                        ctx.setInvalid()
+                        ctx.signalInvalid()
                         setNaN(ctx)
                     }
 
@@ -438,7 +438,7 @@ class Decimal() : S256() {
         when {
             x.sign -> {
                 setNaN(ctx)
-                ctx.setInvalid()
+                ctx.signalInvalid()
             }
             qX < MIN_SPECIAL_VALUE -> {
                 when {
@@ -857,7 +857,7 @@ class Decimal() : S256() {
                 var eExp = qExp + (digitLen - 1)
                 // IEEE754-2008 7.5: detect tininess on the unrounded result
                 if (eExp < eMin) {
-                    ctx.setUnderflow() // IEEE754-2008 7.5 Underflow page 38
+                    ctx.signalUnderflow() // IEEE754-2008 7.5 Underflow page 38
                 }
 
                 val excess = max(0, digitLen - precision)
@@ -879,7 +879,7 @@ class Decimal() : S256() {
                     if (totalResidue == EXACT)
                         return this
 
-                    ctx.setInexact()
+                    ctx.signalInexact()
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (!roundUp)
                         return this
@@ -909,8 +909,8 @@ class Decimal() : S256() {
                     } else {
                         setMaxFiniteMagnitude(ctx)
                     }
-                    ctx.setOverflow()
-                    ctx.setInexact()
+                    ctx.signalOverflow()
+                    ctx.signalInexact()
                     return this
                 }
 
@@ -927,7 +927,7 @@ class Decimal() : S256() {
                     val totalResidue = scaleResidue.merge(inboundResidue)
                     if (totalResidue == EXACT)
                         return this
-                    ctx.setInexact()
+                    ctx.signalInexact()
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (!roundUp)
                         return this
@@ -951,8 +951,8 @@ class Decimal() : S256() {
                     setMinFiniteMagnitude(ctx)
                 }
                 qExp = ctx.qTiny
-                ctx.setUnderflow()
-                ctx.setInexact()
+                ctx.signalUnderflow()
+                ctx.signalInexact()
                 return this
             }
             // zero case

@@ -44,12 +44,12 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
         trapInvalid = t
     }
 
-    fun setInexact() { inexact = true }
-    fun setInexact(inexact:Boolean) { this.inexact = this.inexact or inexact}
-    fun setUnderflow() { underflow = true }
-    fun setOverflow() { overflow = true }
-    fun setDivByZero() { divByZero = true }
-    fun setInvalid() { invalid = true }
+    //
+    fun signalInexact() { inexact = true }
+    fun signalUnderflow() { underflow = true }
+    fun signalOverflow() { overflow = true }
+    fun signalDivByZero() { divByZero = true }
+    fun signalInvalid() { invalid = true }
 
     fun operandIsSignalingNaN(decimal: Decimal) {
         if (trapInvalid)
