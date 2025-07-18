@@ -26,9 +26,15 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     @JvmField
     internal var dw0 = d0
     @JvmField
-    internal var bitLen = calcBitLen256(d3, d2, d1, d0)
+    internal var _bitLen: Short = calcBitLen256(d3, d2, d1, d0).toShort()
+    internal var bitLen: Int
+        get() = _bitLen.toInt()
+        set(value: Int) { _bitLen = value.toShort() }
     @JvmField
-    internal var digitLen = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
+    internal var _digitLen: Byte = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0).toByte()
+    internal var digitLen: Int
+        get() = _digitLen.toInt()
+        set(value: Int) { _digitLen = value.toByte() }
 
     internal inline fun u256SetZero() = U256Set.u256SetZero(this)
 
