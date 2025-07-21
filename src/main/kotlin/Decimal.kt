@@ -909,9 +909,7 @@ class Decimal() : S256() {
                     } else {
                         setMaxFiniteMagnitude(ctx)
                     }
-                    ctx.signalOverflow()
-                    ctx.signalInexact()
-                    return this
+                    return ctx.signalInexactOverflow(this)
                 }
 
                 // 7.5.1: subnormal rounding (tiny result stays nonzero)

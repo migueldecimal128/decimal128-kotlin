@@ -47,7 +47,7 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
     //
     fun signalInexact() { inexact = true }
     fun signalUnderflow() { underflow = true }
-    fun signalOverflow() { overflow = true }
+    fun signalInexactOverflow(z: Decimal): Decimal { overflow = true; inexact = true; return z}
     fun signalDivByZero(z: Decimal): Decimal { divByZero = true; return z }
     fun signalInvalid(z: Decimal): Decimal { invalid = true; return z }
 
