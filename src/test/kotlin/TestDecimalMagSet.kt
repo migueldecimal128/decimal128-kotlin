@@ -24,6 +24,7 @@ class TestDecimalMagSet {
     }
 
     val cases = arrayOf(
+        TC("1e-6175"),
         TC("0E+6145", ROUND_TIES_TO_AWAY),
         TC("3.05079656515623149897192850E-6151", ROUND_TOWARD_ZERO),
         TC("2.2170825345518895501686941901839130E-5813"),

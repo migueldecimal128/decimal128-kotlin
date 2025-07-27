@@ -45,9 +45,10 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
     }
 
     //
-    fun signalInexact() { inexact = true }
-    fun signalUnderflow() { underflow = true }
-    fun signalInexactOverflow(z: Decimal): Decimal { overflow = true; inexact = true; return z}
+    fun signalInexact(z: Decimal): Decimal { inexact = true; return z }
+    fun signalUnderflow(z: Decimal): Decimal { underflow = true; return z }
+    fun signalInexactUnderflow(z: Decimal): Decimal { inexact = true; underflow = true; return z }
+    fun signalInexactOverflow(z: Decimal): Decimal { inexact = true; overflow = true; return z}
     fun signalDivByZero(z: Decimal): Decimal { divByZero = true; return z }
     fun signalInvalid(z: Decimal): Decimal { invalid = true; return z }
 
@@ -56,6 +57,11 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
             throw RuntimeException("invalid sNaN seen")
     }
 
+    // x == inexact
+    // u == underflow
+    // o == overflow
+    // z == divByZero
+    // i == invalid
     fun getFptestExceptionsString(): String {
         val bytes = ByteArray(5)
         var ib = 0
