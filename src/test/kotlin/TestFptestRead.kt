@@ -15,6 +15,9 @@ class TestFptestRead {
     val verbose = false
 
     val tcs = arrayOf (
+        "d64+ 0 xu +6e-398 +0e105 -> +6e178 u",
+        "d64* =0 i -160000e-271 -625000000e-141 -> +1e-398",
+        "d64+ =0 i +1e-398 +0e-398 -> +1e-398 ",
         "d128+ =0 xu -5414267123623525953667080660113040e-6176 +5414267123623525953667080660113039e-6176 -> -1e3040 u",
         "d64+ =0 xu -2073006932212847e-398 +1599988532498004e-398 -> -473018399714843e178 u",
         "d64+ =0 xu -2073006932212847e-398 +1599988532498004e-398 -> -473018399714843e178 u",
@@ -56,8 +59,26 @@ class TestFptestRead {
     }
 
     val badCases = arrayOf (
+        "d64+ 0 xo +8096804903999112e369 +8128923351043907e369 -> +1622572825504301e-206 o",
+        "d64+ 0 xo -4100000000000000e355 -9999999999999977e369 -> -1000000000000001e-206 o",
+        "d64+ 0 xo -9619596163790245e369 -3804038362097600e368 -> -1000000000000000e-206 o",
+        "d64+ 0 xo -9323523658066863e361 -9999999906764764e369 -> -1000000000000000e-206 o",
+        "d64+ 0 xo +9999999999994263e369 +5751970035499092e357 -> +1000000000000001e-206 o",
+        "d64+ 0 xo +9993748163439678e369 +6251836560323261e366 -> +1000000000000000e-206 o",
+        "d64+ 0 xo +9621719000000000e360 +9999999990378281e369 -> +1000000000000000e-206 o",
+        "d64+ =0 xo -9081030182497474e369 -5897948016606959e369 -> -1497897819910443e-206 o",
+        "d64+ =0 xo +7247338377022046e369 +8540154290575367e369 -> +1578749266759741e-206 o",
+        "d64+ =0 xo -5103308018897212e369 -6620982393283973e369 -> -1172429041218118e-206 o",
+        "d64+ =0 xo +9162354442836365e369 +1708030689477041e369 -> +1087038513231341e-206 o",
+        "d64+ =0 xo -9999999999999956e369 -6132400880895693e355 -> -1000000000000002e-206 o",
+        "d64+ =0 xo -6503623069072396e362 -9999999349637703e369 -> -1000000000000001e-206 o",
+        "d64+ =0 xo -8163160715582000e357 -9999999999991837e369 -> -1000000000000000e-206 o",
+        "d64+ =0 xo +9999999991564134e369 +8435886432584849e360 -> +1000000000000002e-206 o",
+        "d64+ =0 xo +9992869578034892e369 +7130421965112000e366 -> +1000000000000000e-206 o",
+        "d64+ =0 xo +8561373866473000e366 +9991438626133527e369 -> +1000000000000000e-206 o",
+        "d128+ =0 xu -5414267123623525953667080660113040e-6176 +5414267123623525953667080660113039e-6176 -> -1e3040 u",
         "d128+ =0 xu +0e1620 +1e-6176 -> +1e3040 u",
-        //"d64+ =0 xu -2073006932212847e-398 +1599988532498004e-398 -> -473018399714843e178 u",
+        "d64+ =0 xu -2073006932212847e-398 +1599988532498004e-398 -> -473018399714843e178 u",
         "d64+ =0 xu -1383509241006312e-398 +1300790449786174e-398 -> -82718791220138e178 u",
         "d64+ =0 xu -3214222826997667e-398 +3208948004124495e-398 -> -5274822873172e178 u",
         "d64+ =0 xu +6084817746929578e-398 -5225527196945912e-398 -> +859290549983666e178 u",
@@ -103,14 +124,15 @@ class TestFptestRead {
         if (badCases.contains(fptest.fptestStr))
             return true
         val result = fptest.result()
+
         if (result != null && result.qExp in -3104..-3000)
             return true
         if (fptest.hasTrap("o") && fptest.expectsSignal("o") && ctx.overflow)
             return true
+
         val hasTrapU = fptest.hasTrap("u")
         val expectsSignalU = fptest.expectsSignal("u")
-        val underflow = ctx.underflow
-        if (hasTrapU && expectsSignalU && underflow && result != null) {
+        if (hasTrapU && expectsSignalU && result != null) {
             if (result.qExp in 38..179)
                 return true
             if (result.qExp in -201..-37)
@@ -126,6 +148,7 @@ class TestFptestRead {
             if (result.qExp in -2972..-2034)
                 return true
         }
+
         return false
     }
 
@@ -137,7 +160,7 @@ class TestFptestRead {
         "Decimal-Basic-Types-Intermediate.fptest",
         "Decimal-Clamping.fptest",
         "Decimal-Mul-Trailing-Zeros.fptest",
-        "Decimal-Overflow.fptest",
+        "Decimal-Overflow-correctedByMTH.fptest",
         "Decimal-Rounding.fptest",
         "Decimal-Trailing-And-Leading-Zeros-Input.fptest",
         "Decimal-Trailing-And-Leading-Zeros-Result.fptest",
@@ -191,6 +214,12 @@ class TestFptestRead {
                     val result = tokens[i++]
 
                     val exceptions = if (i < tokens.size) tokens[i] else ""
+                    if (isDecimal64 && result.endsWith("e-206")) {
+                        if (traps == "xu" && exceptions.contains('u'))
+                            println("underflow correction needed? $fptestStr")
+                        else if (traps == "xo" && exceptions.contains('o'))
+                            println("overflow correction needed? $fptestStr")
+                    }
 
                     return Fptest(fptestStr, format, op, round, traps, operands, result, exceptions)
                 }
@@ -303,8 +332,8 @@ class TestFptestRead {
                         println("bad case:${fptest.fptestStr}")
                     return
                 }
-                if (verbose)
-                    println("expected:$expected observed:$observed")
+                println(fptest.fptestStr)
+                println("expected:$expected observed:$observed")
                 assertEquals(IEEE754_EQ, cmp754)
             }
             val expectedExceptions = fptest.exceptions
@@ -312,11 +341,14 @@ class TestFptestRead {
             val observedExceptions = ctx.getFptestExceptionsString()
             val observedExceptionsSinU = observedExceptions.replace("u", "")
             assertEquals(expectedExceptionsSinU, observedExceptionsSinU)
-            if (observedExceptions.contains("u") && !expectedExceptions.contains("u"))
+            if (observedExceptions.contains("u") && !expectedExceptions.contains("u")) {
+                println(fptest.fptestStr)
                 println(">>>>>>>>>> I reported underflow but FPtest did not")
+                throw RuntimeException()
+            }
 
         } else {
-            println("expected trap not yet handled")
+            //println("expected trap not yet handled")
         }
 
     }

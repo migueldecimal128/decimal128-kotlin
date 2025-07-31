@@ -860,7 +860,7 @@ class Decimal() : S256() {
                 val excess = max(0, digitLen - precision)
                 val myQTiny = ctx.qTiny - excess      // threshold for normalized
 
-                // 2) Normalized result: round only if bd has >34 digits
+                // 2) Normalized result: round only if bd has >precision digits
                 if (eExp <= eMax && qExp >= myQTiny) {
                     val totalResidue =
                         if (excess == 0) {
@@ -874,7 +874,10 @@ class Decimal() : S256() {
                         }
 
                     if (totalResidue == EXACT) {
-                        return if (isTiny) ctx.signalUnderflow(this) else this
+                        // 7.5 Underflow
+                        // If the rounded result is exact, no flag is raised
+                        // and no inexact exception is signaled.
+                        return this
                     }
 
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
@@ -922,7 +925,10 @@ class Decimal() : S256() {
 
                     val totalResidue = scaleResidue.merge(inboundResidue)
                     if (totalResidue == EXACT) {
-                        return if (isTiny) ctx.signalUnderflow(this) else this
+                        // 7.5 Underflow
+                        // If the rounded result is exact, no flag is raised
+                        // and no inexact exception is signaled.
+                        return this
                     }
                     val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
                     if (roundUp) {
