@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "2.0.21"
+    kotlin("multiplatform") version "2.2.0"
     id("org.jetbrains.dokka") version "2.0.0"
 }
 
@@ -18,21 +18,6 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     maven(url="https://dl.bintray.com/kotlin/dokka")
-}
-
-dependencies {
-    testImplementation(kotlin("test"))
-
-    // Is applied universally
-    dokkaPlugin("org.jetbrains.dokka:mathjax-plugin:2.0.0")
-
-    // Is applied for the single-module dokkaHtml task only
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:2.0.0")
-
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 tasks.dokkaHtml {
@@ -73,4 +58,33 @@ tasks.register<Test>("testHsdis") {
 
 kotlin {
     jvmToolchain(21)
+
+    jvm {
+//	   	   withJava()
+    }
+
+    sourceSets {
+	    val commonMain by getting
+	    val commonTest by getting
+		val jvmMain   by getting  // your existing code lives here
+		val jvmTest   by getting {
+			dependencies {
+       					  implementation(kotlin("test"))     // <-- pulls in kotlin-test on jvmTest
+						 }
+		}
+    }
+}
+
+// configure *all* Test tasks (including the MPP-generated jvmTest) to use JUnit Platform:
+tasks.withType<Test> {
+  useJUnitPlatform()
+  testLogging {
+    events          = setOf(
+      TestLogEvent.FAILED,
+      TestLogEvent.SKIPPED,
+      TestLogEvent.STANDARD_OUT,
+      TestLogEvent.STANDARD_ERROR
+    )
+    showStandardStreams = true
+  }
 }

@@ -153,7 +153,7 @@ class TestFptestRead {
     }
 
 
-    val prefix = "src/test/resources/fptest/"
+    val prefix = "src/jvmTest/resources/fptest/"
 
     val fptestFiles = arrayOf(
         "Decimal-Basic-Types-Inputs.fptest",
