@@ -1,6 +1,6 @@
 package com.decimal128
 
-import java.lang.Math.max
+import kotlin.math.max
 
 object U256DivPow10 {
 

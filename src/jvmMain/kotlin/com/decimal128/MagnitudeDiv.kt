@@ -2,7 +2,7 @@ package com.decimal128
 
 import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
-import java.lang.Math.min
+import kotlin.math.min
 
 object MagnitudeDiv {
 

@@ -2,7 +2,7 @@ package com.decimal128
 
 import java.lang.Long.compareUnsigned
 import java.lang.Long.numberOfLeadingZeros
-import java.lang.Math.max
+import kotlin.math.max
 
 private const val POW10_DWORD_COUNT =
     POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT

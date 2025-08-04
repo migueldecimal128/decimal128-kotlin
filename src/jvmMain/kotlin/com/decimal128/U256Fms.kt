@@ -2,7 +2,7 @@ package com.decimal128
 
 import com.decimal128.U256Pow10.pow10BitLen
 import com.decimal128.U256Pow10.pow10Offset
-import java.lang.Math.max
+import kotlin.math.max
 import java.lang.Math.unsignedMultiplyHigh
 
 object U256Fms {

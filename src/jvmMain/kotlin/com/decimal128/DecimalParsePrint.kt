@@ -2,8 +2,8 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 import java.nio.charset.StandardCharsets
-import java.lang.Math.max
-import java.lang.Math.min
+import kotlin.math.max
+import kotlin.math.min
 
 private const val SPECIAL_NAMES =
     ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16) or

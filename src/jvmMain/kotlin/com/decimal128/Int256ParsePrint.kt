@@ -2,7 +2,7 @@ package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
 import java.nio.charset.StandardCharsets
-import java.lang.Math.max
+import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09

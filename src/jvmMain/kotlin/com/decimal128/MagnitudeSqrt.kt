@@ -2,8 +2,8 @@ package com.decimal128
 
 import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
-import java.lang.Math.max
-import java.lang.Math.min
+import kotlin.math.max
+import kotlin.math.min
 
 object MagnitudeSqrt {
     val verbose = false
