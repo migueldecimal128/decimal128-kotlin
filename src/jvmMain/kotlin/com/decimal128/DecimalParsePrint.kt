@@ -149,7 +149,7 @@ object DecimalParsePrint {
     fun decToString(x: Decimal) : String {
         val bytes = ByteArray(MAX_DEC34_CHAR_LEN)
         val cb = decToChars(x, bytes, 0, MAX_DEC34_CHAR_LEN)
-        return String(bytes, 0, cb, StandardCharsets.UTF_8)
+        return String(bytes, 0, cb)
     }
 
     fun decToChars(x: Decimal, bytes: ByteArray, off: Int, len: Int) : Int {

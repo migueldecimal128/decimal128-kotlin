@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
-import java.nio.charset.StandardCharsets
 import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
@@ -19,7 +18,7 @@ internal object Int256ParsePrint {
             val bytes = ByteArray(u.digitLen + s)
             bytes[0] = '-'.code.toByte() // if positive then this will be overwritten
             u256ToChars(u, bytes, s)
-            return String(bytes, StandardCharsets.UTF_8)
+            return String(bytes)
         } else {
             return SINGLE_DIGIT_NUMBERS[(10 and -s) + u.dw0.toInt()]
         }
@@ -84,7 +83,7 @@ internal object Int256ParsePrint {
         bytes[s    ] = '0'.code.toByte()
         bytes[s + 1] = 'x'.code.toByte()
         u256ToHexChars(u, hexitCount, bytes, s + 2)
-        return String(bytes, StandardCharsets.UTF_8)
+        return String(bytes)
     }
 
     fun u256ToHexChars(u: U256, hexitCount: Int, bytes: ByteArray, off: Int) {

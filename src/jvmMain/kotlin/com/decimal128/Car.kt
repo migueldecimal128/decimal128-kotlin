@@ -2,7 +2,6 @@ package com.decimal128
 
 import java.lang.Integer.compareUnsigned
 import java.lang.Long.*
-import java.nio.charset.StandardCharsets
 import kotlin.math.min
 import kotlin.math.max
 
@@ -516,7 +515,7 @@ object Car {
             ++j
             --k
         }
-        return String(bytes, 0, ib, StandardCharsets.UTF_8)
+        return String(bytes, 0, ib)
     }
 
     fun renderChunkReversed(n: Int, minDigitCount: Int, bytes: ByteArray, off: Int): Int {
