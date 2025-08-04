@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
 import kotlin.math.min
 
@@ -19,7 +18,7 @@ object MagnitudeDiv {
             }
             val qPreferred = x.qExp - y.qExp
             var qZ = x.qExp - y.qExp - numeratorScale
-            var ntz = numberOfTrailingZeros(z.dw0)
+            var ntz = z.dw0.countTrailingZeroBits()
             if (residue == Residue.EXACT && qZ < qPreferred && ntz > 0) {
                 if (qZ + 1 < qPreferred) {
                     val quot = U256()

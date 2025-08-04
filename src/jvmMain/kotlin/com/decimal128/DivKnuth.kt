@@ -44,7 +44,7 @@ object DivKnuth {
         val vnNonZeroIndex = ((y.bitLen - 1) ushr 5)
         val vnNonZeroVal = vn[vnNonZeroIndex]
         val n = vnNonZeroIndex + 1
-        val s = Integer.numberOfLeadingZeros(vnNonZeroVal)
+        val s = vnNonZeroVal.countLeadingZeroBits()
 
         if (s != 0) {
             Car.mutateShiftLeft(un, m+1, s)
@@ -129,7 +129,7 @@ object DivKnuth {
 
         val m = ((x.bitLen - 1) ushr 5) + 1
 
-        val s = numberOfLeadingZeros(y0)
+        val s = y0.countLeadingZeroBits()
         val y0Normalized = y0 shl s
 
         vn[0] = y0Normalized.toInt()

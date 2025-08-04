@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.numberOfTrailingZeros
 import java.lang.Math.unsignedMultiplyHigh
 import kotlin.math.max
 import kotlin.math.min
@@ -119,7 +118,7 @@ object MagnitudeSqrt {
 
         val residue2 = if (residual2.u256IsZero()) Residue.EXACT else Residue.LT_HALF
         var qZ = (radicand.qExp - scaleUp) / 2
-        var ntz = numberOfTrailingZeros(sqrt.dw0)
+        var ntz = sqrt.dw0.countTrailingZeroBits()
         if (residue2 == Residue.EXACT && qZ < qPreferred && ntz > 0) {
             if (qZ + 1 < qPreferred) {
                 val quot = U256()

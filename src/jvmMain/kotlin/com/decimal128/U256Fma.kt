@@ -205,9 +205,9 @@ object U256Fma {
         val xBitLen = x.bitLen
         val aBitLen = (
                 if (a1 == 0L)
-                    64 - java.lang.Long.numberOfLeadingZeros(a0)
+                    64 - a0.countLeadingZeroBits()
                 else
-                    128 - java.lang.Long.numberOfLeadingZeros(a1)
+                    128 - a1.countLeadingZeroBits()
                 )
         val p10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -321,7 +321,7 @@ object U256Fma {
             z.u256Set64(a0)
             return
         }
-        val aBitLen = 64 - java.lang.Long.numberOfLeadingZeros(a0)
+        val aBitLen = 64 - a0.countLeadingZeroBits()
         val p10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
         val p0 = POW10[pow10Offset + 0]

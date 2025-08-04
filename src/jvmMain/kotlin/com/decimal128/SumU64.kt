@@ -331,7 +331,7 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
 
     // Base and normalization shift
     val B = 1L shl 32
-    val s = numberOfLeadingZeros(y)
+    val s = y.countLeadingZeroBits()
 
     // Normalize divisor
     val yNorm = y shl s

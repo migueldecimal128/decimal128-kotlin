@@ -40,7 +40,7 @@ object U256Div {
         if ((y0 and (y0 - 1)) == 0L) {
             // y0 is an exact power of 2 ... just shift right.
             // 0 and 1 cases handled above, so if we are here then ntz >= 1
-            val ntz = numberOfTrailingZeros(y0)
+            val ntz = y0.countTrailingZeroBits()
             val mask = (1L shl ntz) - 1L
             val rem = x0 and mask
             z?.u256SetShiftRight(x, ntz)

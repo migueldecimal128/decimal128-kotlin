@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
-import java.lang.Long.numberOfLeadingZeros
 import kotlin.math.max
 
 private const val POW10_DWORD_COUNT =
@@ -156,7 +155,7 @@ internal object U256Pow10 {
         var pow10_64 = 0L
         for (i in 0..<MIN_POW10_DIGIT_LEN_128) {
             pow10_64 = if (i == 0) 1L else pow10_64 * 10L
-            val bitLen = 64 - numberOfLeadingZeros(pow10_64)
+            val bitLen = 64 - pow10_64.countLeadingZeroBits()
             POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
             POW10[i] = pow10_64
         }
@@ -244,7 +243,7 @@ internal object U256Pow10 {
     }
 
     fun calcDigitLen64(dw0: Long) : Int {
-        val bitLen = 64 - numberOfLeadingZeros(dw0)
+        val bitLen = 64 - dw0.countLeadingZeroBits()
         return calcDigitLen64(bitLen, dw0)
     }
 

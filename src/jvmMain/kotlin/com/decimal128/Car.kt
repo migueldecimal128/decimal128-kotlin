@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Integer.compareUnsigned
-import java.lang.Integer.numberOfLeadingZeros
 import java.lang.Long.*
 import java.nio.charset.StandardCharsets
 import kotlin.math.min
@@ -41,7 +40,7 @@ object Car {
     inline fun newWithBitLen(bitLen: Int) = IntArray((bitLen + 0x1F) ushr 5)
 
     fun newAdd(x: IntArray, n: Int): IntArray {
-        val newBitLen = bitLen(x) + (32 - numberOfLeadingZeros(n)) + 1
+        val newBitLen = bitLen(x) + (32 - n.countLeadingZeroBits()) + 1
         val z = newCopyWithBitLen(x, newBitLen)
         return mutateAdd(z, n)
     }
@@ -127,7 +126,7 @@ object Car {
     }
 
     fun newMul(x: IntArray, n: Int): IntArray {
-        val newBitLen = bitLen(x) + 32 - numberOfLeadingZeros(n)
+        val newBitLen = bitLen(x) + 32 - n.countLeadingZeroBits()
         val prod = newCopyWithBitLen(x, newBitLen)
         mutateMul(prod, n)
         return prod
@@ -292,7 +291,7 @@ object Car {
     fun bitLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
-                return 32 - numberOfLeadingZeros(x[i]) + (i * 32)
+                return 32 - x[i].countLeadingZeroBits() + (i * 32)
         return 0
     }
 
@@ -423,7 +422,7 @@ object Car {
         // Step D1: Normalize
         val vn = newCopy(v, n)
         val un = newCopy(u, m + 1)
-        val shift = Integer.numberOfLeadingZeros(vn[n - 1])
+        val shift = vn[n - 1].countLeadingZeroBits()
         if (shift > 0) {
             mutateShiftLeft(vn, shift)
             mutateShiftLeft(un, shift)

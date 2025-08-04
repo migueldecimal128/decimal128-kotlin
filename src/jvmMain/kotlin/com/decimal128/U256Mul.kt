@@ -41,7 +41,7 @@ internal object U256Mul {
                     (n0 and (n0 - 1) == 0L) -> {
                         // also handles n0 == 1
                         // even power of 2 ... just shift
-                        val ntz = java.lang.Long.numberOfTrailingZeros(n0)
+                        val ntz = n0.countTrailingZeroBits()
                         z.u256SetShiftLeft(m, ntz)
                     }
 

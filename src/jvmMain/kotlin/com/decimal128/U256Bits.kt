@@ -4,7 +4,7 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen64(dw0: Long): Int {
-    val nlz0 = numberOfLeadingZeros(dw0)
+    val nlz0 = dw0.countLeadingZeroBits()
     val bitLen = 64 - nlz0
     return bitLen
 }
@@ -12,8 +12,8 @@ inline fun calcBitLen64(dw0: Long): Int {
 @Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
-    val nlz1 = numberOfLeadingZeros(dw1)
-    val nlz0 = numberOfLeadingZeros(dw0)
+    val nlz1 = dw1.countLeadingZeroBits()
+    val nlz0 = dw0.countLeadingZeroBits()
     val bitLen = 128 - nlz1 - (nlz0 and dw1IsZeroMask)
     return bitLen
 }
@@ -22,9 +22,9 @@ inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
 inline fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
     val dw2IsZeroMask = ((dw2 or -dw2) shr 63).inv().toInt()
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
-    val nlz2 = numberOfLeadingZeros(dw2)
-    val nlz1 = numberOfLeadingZeros(dw1)
-    val nlz0 = numberOfLeadingZeros(dw0)
+    val nlz2 = dw2.countLeadingZeroBits()
+    val nlz1 = dw1.countLeadingZeroBits()
+    val nlz0 = dw0.countLeadingZeroBits()
     val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
     val bitLen = 192 - nlz2 - (nlz10 and dw2IsZeroMask)
     return bitLen
@@ -37,10 +37,10 @@ inline fun calcBitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
     val dw23 = dw2 or dw3
     val dw23IsZeroMask = ((dw23 or -dw23) shr 63).inv().toInt()
 
-    val nlz3 = numberOfLeadingZeros(dw3)
-    val nlz2 = numberOfLeadingZeros(dw2)
-    val nlz1 = numberOfLeadingZeros(dw1)
-    val nlz0 = numberOfLeadingZeros(dw0)
+    val nlz3 = dw3.countLeadingZeroBits()
+    val nlz2 = dw2.countLeadingZeroBits()
+    val nlz1 = dw1.countLeadingZeroBits()
+    val nlz0 = dw0.countLeadingZeroBits()
     val nlz23 = nlz3 + (nlz2 and dw3IsZeroMask)
     val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
     val bitLen = 256 - nlz23 - (nlz10 and dw23IsZeroMask)
@@ -55,11 +55,11 @@ private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 @Suppress("NOTHING_TO_INLINE")
 object U256Bits {
 
-    fun numberOfTrailingZeros(x: U256): Int {
-        val ntz0 = numberOfTrailingZeros(x.dw0)
-        val ntz1 = 64 + numberOfTrailingZeros(x.dw1)
-        val ntz2 = 128 + numberOfTrailingZeros(x.dw2)
-        val ntz3 = 192 + numberOfTrailingZeros(x.dw3)
+    fun ntz(x: U256): Int {
+        val ntz0 = x.dw0.countTrailingZeroBits()
+        val ntz1 = 64 + x.dw1.countTrailingZeroBits()
+        val ntz2 = 128 + x.dw2.countTrailingZeroBits()
+        val ntz3 = 192 + x.dw3.countTrailingZeroBits()
         val ntz01 = if (x.dw0 != 0L) ntz0 else ntz1
         val ntz23 = if (x.dw2 != 0L) ntz2 else ntz3
         val ntz0123 = if ((x.dw0 or x.dw1) != 0L) ntz01 else ntz23
@@ -207,7 +207,7 @@ object U256Bits {
         var nlz: Int
         while (true) {
             loBits = getDwordAtBitIndex(x, loBits64Index) and loBitsMask
-            nlz = numberOfLeadingZeros(loBits)
+            nlz = loBits.countLeadingZeroBits()
             if (loBits64Index == 0 || nlz <= 11)
                 break
             loBits64Index = java.lang.Math.max(loBits64Index - nlz, 0)

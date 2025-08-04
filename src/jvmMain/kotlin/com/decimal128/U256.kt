@@ -212,7 +212,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256MutateDecrement() = U256Add.u256MutateDecrement(this)
 
-    internal inline fun u256NumberOfTrailingZeros() = U256Bits.numberOfTrailingZeros(this)
+    internal inline fun u256Ntz() = U256Bits.ntz(this)
 
     internal inline fun u256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
 

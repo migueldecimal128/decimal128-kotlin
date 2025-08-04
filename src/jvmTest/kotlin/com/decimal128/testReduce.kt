@@ -86,7 +86,7 @@ class TestReduce {
     val coeffReduceDivTmp = U256()
 
     fun calcReductionPow10(x: U256): Int {
-        val ntz = x.u256NumberOfTrailingZeros()
+        val ntz = x.u256Ntz()
         if ((x.bitLen - ntz) <= 64) {
             val dw = x.u256DwordAtBitIndex(ntz)
             return calcReductionPow5_64(dw, ntz)
