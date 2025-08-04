@@ -146,7 +146,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
 
     internal operator fun set(index: Int, value: Long) {
-        assert(digitLen == -1)
+        check(digitLen == -1)
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -162,7 +162,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     }
 
     internal inline fun u256DisableIndexSetAndUpdateLengths() {
-        assert(digitLen == -1)
+        check(digitLen == -1)
         U256Bits.updateLengths(this)
     }
 

@@ -5,12 +5,12 @@ import java.lang.Long.compareUnsigned
 object U256Sub {
 
     fun u256SubUnscaled(z: U256, x: U256, y: U256) { // minuend - subtrahend
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(x.u256UnscaledCompareTo(y) >= 0)
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(x.u256UnscaledCompareTo(y) >= 0)
         val xBitLen = x.bitLen
-        assert(xBitLen >= y.bitLen)
+        check(xBitLen >= y.bitLen)
 
         val d0 = x.dw0 - y.dw0
         if (xBitLen <= 64) {
@@ -43,38 +43,38 @@ object U256Sub {
         val carry3a = if (compareUnsigned(d3a, x.dw3) > 0) 1L else 0L
         val d3 = d3a - carry2
         val carry3 = if (compareUnsigned(d3, d3a) > 0) 1L else carry3a
-        assert(carry3 == 0L)
+        check(carry3 == 0L)
 
         z.u256Set256(d3, d2, d1, d0)
     }
 
     fun u256SubScaled(z: U256, x: U256, scaleDelta: Int, y: U256) {
-        assert(scaleDelta > 0)
-        assert(scaleDelta <= 40)
-        assert(x.digitLen + scaleDelta < 79)
+        check(scaleDelta > 0)
+        check(scaleDelta <= 40)
+        check(x.digitLen + scaleDelta < 79)
 
-        assert((x.dw3 or x.dw2) == 0L)
-        assert((y.dw3 or y.dw2) == 0L)
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(z.u256HasValidLengths())
+        check((x.dw3 or x.dw2) == 0L)
+        check((y.dw3 or y.dw2) == 0L)
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(z.u256HasValidLengths())
 
-        assert(y.u256ScaledCompareTo(x, scaleDelta) <= 0)
+        check(y.u256ScaledCompareTo(x, scaleDelta) <= 0)
 
         U256Fms.u256FmsPow10(z, x, scaleDelta, y)
     }
 
     fun u256SubScaled(z: U256, x: U256, y: U256, scaleDelta: Int) {
-        assert(scaleDelta > 0)
-        assert(scaleDelta < 34)
+        check(scaleDelta > 0)
+        check(scaleDelta < 34)
 
-        assert((x.dw3 or x.dw2) == 0L)
-        assert((y.dw3 or y.dw2) == 0L)
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(z.u256HasValidLengths())
+        check((x.dw3 or x.dw2) == 0L)
+        check((y.dw3 or y.dw2) == 0L)
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(z.u256HasValidLengths())
 
-        assert(x.u256ScaledCompareTo(y, scaleDelta) >= 0)
+        check(x.u256ScaledCompareTo(y, scaleDelta) >= 0)
 
         U256Fms.u256FmsPow10(z, x, y, scaleDelta)
     }

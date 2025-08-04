@@ -8,16 +8,16 @@ import java.lang.Math.unsignedMultiplyHigh
 object U256Fma {
 
     fun u256Fma(z: U256, x: U256, y: U256, a: U256) {
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(a.u256HasValidLengths())
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(a.u256HasValidLengths())
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
         val mBitLen = m.bitLen
         val nBitLen = n.bitLen
-        assert(mBitLen >= nBitLen)
+        check(mBitLen >= nBitLen)
         val aBitLen = a.bitLen
         val m0 = m.dw0
         val m1 = m.dw1
@@ -87,10 +87,10 @@ object U256Fma {
     }
 
     fun u256FmaPow10(z: U256, x: U256, pow10: Int, a: U256) {
-        assert(pow10 >= 0)
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
-        assert(a.u256HasValidLengths())
+        check(pow10 >= 0)
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
+        check(a.u256HasValidLengths())
         val xBitLen = x.bitLen
         val aBitLen = a.bitLen
         val p10BitLen = pow10BitLen(pow10)
@@ -199,9 +199,9 @@ object U256Fma {
     }
 
     fun u256FmaPow10(z: U256, x: U256, pow10: Int, a1: Long, a0: Long) {
-        assert(pow10 >= 0)
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
+        check(pow10 >= 0)
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
         val xBitLen = x.bitLen
         val aBitLen = (
                 if (a1 == 0L)
@@ -313,9 +313,9 @@ object U256Fma {
     }
 
     fun u256FmaPow10(z: U256, x: U256, pow10: Int, a0: Long) {
-        assert(pow10 >= 0)
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
+        check(pow10 >= 0)
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
         val xBitLen = x.bitLen
         if (xBitLen == 0) {
             z.u256Set64(a0)
@@ -481,7 +481,7 @@ object U256Fma {
         val pp22Lo = x2 * y2
         val (carry4, f4) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         if ((carry4 or f4) == 0L) {
-            assert(maxFusedBitLen in 257..258)
+            check(maxFusedBitLen in 257..258)
             f.u256Set256(f3, f2, f1, f0)
             return
         }
@@ -530,7 +530,7 @@ object U256Fma {
         val (carry3, f3) = sumU64(carry2, pp20Hi, pp30Lo, a3)
         val (carry4, f4) = sumU64(carry3, pp30Hi)
         if ((carry4 or f4) == 0L) {
-            assert(maxFusedBitLen in 257..258)
+            check(maxFusedBitLen in 257..258)
             f.u256Set256(f3, f2, f1, f0)
             return
         }
@@ -583,7 +583,7 @@ object U256Fma {
         val (carry3, f3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo, a3)
         val (carry4, f4) = sumU64(carry3, pp21Hi)
         if ((carry4 or f4) == 0L) {
-            assert(maxFusedBitLen in 257..258)
+            check(maxFusedBitLen in 257..258)
             f.u256Set256(f3, f2, f1, f0)
             return
         }
@@ -629,7 +629,7 @@ object U256Fma {
         }
         val (carry3, f3) = sumU64(carry2, pp20Hi, a3)
         if (carry3 == 0L) {
-            assert(maxFusedBitLen in 257..258)
+            check(maxFusedBitLen in 257..258)
             f.u256Set256(f3, f2, f1, f0)
             return
         }
@@ -677,7 +677,7 @@ object U256Fma {
         }
         val (carry3, f3) = sumU64(carry2, pp11Hi, a3)
         if (carry3 == 0L) {
-            assert(maxFusedBitLen in 257..258)
+            check(maxFusedBitLen in 257..258)
             f.u256Set256(f3, f2, f1, f0)
             return
         }

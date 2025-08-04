@@ -96,13 +96,13 @@ internal object Int256ParsePrint {
             hexitsRemaining -= thisHexitCount
             ich += thisHexitCount
         }
-        assert(hexitsRemaining == 0)
-        assert(ich == bytes.size)
+        check(hexitsRemaining == 0)
+        check(ich == bytes.size)
     }
 
     fun u64ToHexChars(dw: Long, hexitCount: Int, bytes: ByteArray, off: Int) {
         var t = dw
-        assert(hexitCount in 1..16)
+        check(hexitCount in 1..16)
         for (i in hexitCount - 1 downTo 0) {
             val h = (t and 0x0FL).toInt()
             val ch = if (h < 10) '0' + h else 'A' - 10 + h

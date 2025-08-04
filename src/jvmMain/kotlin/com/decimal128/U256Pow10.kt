@@ -168,18 +168,18 @@ internal object U256Pow10 {
             val pow10Offset = pow10Offset(i)
             when {
                 bitLen <= 128 -> {
-                    assert(i in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
+                    check(i in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
                     POW10[pow10Offset + 0] = pow10.dw0
                     POW10[pow10Offset + 1] = pow10.dw1
                 }
                 bitLen <= 192 -> {
-                    assert(i in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
+                    check(i in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
                     POW10[pow10Offset + 0] = pow10.dw0
                     POW10[pow10Offset + 1] = pow10.dw1
                     POW10[pow10Offset + 2] = pow10.dw2
                 }
                 bitLen <= 256 -> {
-                    assert(i in MIN_POW10_DIGIT_LEN_256..<MAX_DIGIT_LEN)
+                    check(i in MIN_POW10_DIGIT_LEN_256..<MAX_DIGIT_LEN)
                     POW10[pow10Offset + 0] = pow10.dw0
                     POW10[pow10Offset + 1] = pow10.dw1
                     POW10[pow10Offset + 2] = pow10.dw2
@@ -330,7 +330,7 @@ internal object U256Pow10 {
     }
 
     fun compareWithHalfPow10_1(dw0: Long, pow10: Int): Int {
-        assert(pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_128)
+        check(pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_128)
         val pow10Dw0 = POW10[pow10]
         val halfPow10Dw0 = pow10Dw0 ushr 1
         val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
@@ -338,7 +338,7 @@ internal object U256Pow10 {
     }
 
     fun compareWithHalfPow10_2(dw1: Long, dw0: Long, pow10: Int): Int {
-        assert(pow10 >= MIN_POW10_DIGIT_LEN_128 && pow10 < MIN_POW10_DIGIT_LEN_192)
+        check(pow10 >= MIN_POW10_DIGIT_LEN_128 && pow10 < MIN_POW10_DIGIT_LEN_192)
         val pow10Offset = pow10Offset(pow10)
         val pow10Dw0 = POW10[pow10Offset + 0]
         val pow10Dw1 = POW10[pow10Offset + 1]
@@ -351,7 +351,7 @@ internal object U256Pow10 {
     }
 
     fun compareWithHalfPow10_3(dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
-        assert(pow10 >= MIN_POW10_DIGIT_LEN_192 && pow10 < MIN_POW10_DIGIT_LEN_256)
+        check(pow10 >= MIN_POW10_DIGIT_LEN_192 && pow10 < MIN_POW10_DIGIT_LEN_256)
         val pow10Offset = pow10Offset(pow10)
         val pow10Dw0 = POW10[pow10Offset + 0]
         val pow10Dw1 = POW10[pow10Offset + 1]
@@ -368,7 +368,7 @@ internal object U256Pow10 {
     }
 
     fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
-        assert(pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAX_DIGIT_LEN)
+        check(pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAX_DIGIT_LEN)
         if (pow10 < MAX_DIGIT_LEN) {
             val pow10Offset = pow10Offset(pow10)
             val pow10Dw0 = POW10[pow10Offset + 0]

@@ -11,7 +11,7 @@ import kotlin.math.min
 object MagnitudeAddSub {
 
     fun magScaledAdd(z: Decimal, x: Decimal, y: Decimal): Residue {
-        assert(x.qExp != y.qExp) // should be caught earlier
+        check(x.qExp != y.qExp) // should be caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
         //    u256AddUnscaled(z, x, y)
@@ -20,7 +20,7 @@ object MagnitudeAddSub {
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
-        assert(m.qExp > n.qExp)
+        check(m.qExp > n.qExp)
         val qDelta = m.qExp - n.qExp
         val headroom = PRECISION_34 - m.digitLen
         val shiftLeft = min(qDelta, headroom)
@@ -30,7 +30,7 @@ object MagnitudeAddSub {
                 val shiftRight = qAlign - n.qExp
                 val residue = when {
                     shiftRight == 0 -> {
-                        assert(shiftLeft > 0)
+                        check(shiftLeft > 0)
                         u256AddScaled(z, m, shiftLeft, n)
                         Residue.EXACT
                     }
@@ -79,8 +79,8 @@ object MagnitudeAddSub {
     // uses Guard and Round digits
     // decrements when non-exact so that standard round and finalize routine can be called
     fun magSub(z: Decimal, x: Decimal, y: Decimal): Residue {
-        assert(x.magnitudeCompareTo(y) >= 0)
-        assert(x.qExp != y.qExp) // should be caught earlier
+        check(x.magnitudeCompareTo(y) >= 0)
+        check(x.qExp != y.qExp) // should be caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
         //    U256Sub.u256SubUnscaled(z, x, y)
@@ -96,7 +96,7 @@ object MagnitudeAddSub {
                     val shiftRight = qAlign - y.qExp
                     val residue = when {
                         shiftRight == 0 -> {
-                            assert(shiftLeft > 0)
+                            check(shiftLeft > 0)
                             u256SubScaled(z, x, shiftLeft, y)
                             Residue.EXACT
                         }
@@ -161,7 +161,7 @@ object MagnitudeAddSub {
                 return EXACT
             }
             val qDeltaY = y.qExp - x.qExp
-            assert(qDeltaY < PRECISION_34)
+            check(qDeltaY < PRECISION_34)
             U256Sub.u256SubScaled(z, x, y, qDeltaY)
             z.qExp = x.qExp
             val zDigitLen = z.digitLen

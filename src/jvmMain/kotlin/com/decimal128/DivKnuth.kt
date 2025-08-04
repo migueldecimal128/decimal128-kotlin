@@ -17,8 +17,8 @@ object DivKnuth {
     private val un = IntArray(9)
 
     fun knuthDivideWrapper(quot: U256?, rem: U256?, x: U256, y: U256): Residue {
-        assert(u256GTOne(y))
-        assert(x.u256UnscaledCompareTo(y) > 0)
+        check(u256GTOne(y))
+        check(x.u256UnscaledCompareTo(y) > 0)
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()
@@ -114,8 +114,8 @@ object DivKnuth {
     }
 
     fun knuthDivModX64(quot: U256?, x: U256, y0: Long): Long {
-        assert((y0 ushr 32) != 0L)
-        assert(x.bitLen > 64)
+        check((y0 ushr 32) != 0L)
+        check(x.bitLen > 64)
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()

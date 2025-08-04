@@ -26,7 +26,7 @@ internal object U256Mul {
         val nBitLen = n.bitLen
         val maxProdBitLen = mBitLen + nBitLen
         // mBitLen >= nBitLen
-        assert(m.bitLen >= n.bitLen)
+        check(m.bitLen >= n.bitLen)
         val m0 = m.dw0
         val n0 = n.dw0
         when {
@@ -83,7 +83,7 @@ internal object U256Mul {
     }
 
     fun u256Mul(z: U256, x: U256, yBitLen: Int, y1: Long, y0: Long) {
-        assert(yBitLen in 65..128)
+        check(yBitLen in 65..128)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -104,7 +104,7 @@ internal object U256Mul {
     }
 
     fun u256Mul(z: U256, x: U256, yBitLen: Int, y2: Long, y1: Long, y0: Long) {
-        assert(yBitLen in 129..192)
+        check(yBitLen in 129..192)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -119,7 +119,7 @@ internal object U256Mul {
     }
 
     fun u256Mul(z: U256, x: U256, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
-        assert(yBitLen in 193..256)
+        check(yBitLen in 193..256)
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -186,7 +186,7 @@ internal object U256Mul {
         val pp22Lo = x2 * y2
         val (carry4, p4) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         if ((carry4 or p4) == 0L) {
-            assert(maxBitLen == 257)
+            check(maxBitLen == 257)
             p.u256Set256(p3, p2, p1, p0)
             return
         }
@@ -232,7 +232,7 @@ internal object U256Mul {
         }
         val (carry3, p3) = sumU64(carry2, pp20Hi, pp30Lo)
         if (carry3 == 0L) {
-            assert(maxBitLen == 257)
+            check(maxBitLen == 257)
             p.u256Set256(p3, p2, p1, p0)
             return
         }
@@ -282,7 +282,7 @@ internal object U256Mul {
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo)
         if (carry3 == 0L) {
-            assert(maxBitLen == 257)
+            check(maxBitLen == 257)
             p.u256Set256(p3, p2, p1, p0)
             return
         }

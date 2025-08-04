@@ -127,7 +127,7 @@ class Decimal() : S256() {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
-        assert(maxQ >= NON_FINITE_QNAN)
+        check(maxQ >= NON_FINITE_QNAN)
         setZero()
         if (maxQ == NON_FINITE_SNAN) {
             ctx.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
@@ -142,7 +142,7 @@ class Decimal() : S256() {
         val qY = y.qExp
         val qA = a.qExp
         val qMaxXYA = max(max(qX, qY), qA)
-        assert(qMaxXYA >= NON_FINITE_QNAN)
+        check(qMaxXYA >= NON_FINITE_QNAN)
         setZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
@@ -154,7 +154,7 @@ class Decimal() : S256() {
 
     private fun setNaN(x: Decimal, ctx: DecimalContext) {
         val q = x.qExp
-        assert(q >= NON_FINITE_QNAN)
+        check(q >= NON_FINITE_QNAN)
         setZero()
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
@@ -868,8 +868,8 @@ class Decimal() : S256() {
                         } else {
                             val roundingResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess)
                             qExp += excess
-                            assert(digitLen == precision)
-                            assert(eExp == qExp + (digitLen - 1))
+                            check(digitLen == precision)
+                            check(eExp == qExp + (digitLen - 1))
                             roundingResidue.merge(inboundResidue)
                         }
 
@@ -885,13 +885,13 @@ class Decimal() : S256() {
                         super.u256MutateIncrement()
                     if (!roundUp || digitLen <= precision)
                         return if (isTiny) ctx.signalInexactUnderflow(this) else ctx.signalInexact(this)
-                    assert(digitLen == precision + 1)
+                    check(digitLen == precision + 1)
                     // if we rolled into another digit because of roundup
                     // then the result is EXACTly divisible by 10
                     val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
-                    assert(residueExact == Residue.EXACT)
+                    check(residueExact == Residue.EXACT)
                     ++qExp
-                    assert(qExp + (digitLen - 1) == eExp + 1)
+                    check(qExp + (digitLen - 1) == eExp + 1)
                     ++eExp
                     if (eExp <= eMax)
                         return ctx.signalInexact(this)
@@ -901,7 +901,7 @@ class Decimal() : S256() {
 
                 // 1) Overflow => +/- Infinity
                 if (eExp > eMax) {
-                    assert(! isTiny)
+                    check(! isTiny)
                     // overflow IEEE754-2008 7.4 Overflow page 37
                     if (roundingDirection.overflowsToInfinity(sign)) {
                         super.u256SetOne()
@@ -913,15 +913,15 @@ class Decimal() : S256() {
                 }
 
                 // 7.5.1: subnormal rounding (tiny result stays nonzero)
-                assert(isTiny)
+                check(isTiny)
                 val myQMin = ctx.qTiny - digitLen           // threshold for subnormal cohort
                 val overlap = qExp - myQMin
                 if (overlap >= 0) {
                     val excess2 = super.digitLen - overlap
                     val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess2)
                     qExp += excess2
-                    assert(digitLen <= precision)
-                    assert(eExp == qExp + (digitLen - 1))
+                    check(digitLen <= precision)
+                    check(eExp == qExp + (digitLen - 1))
 
                     val totalResidue = scaleResidue.merge(inboundResidue)
                     if (totalResidue == EXACT) {
@@ -934,11 +934,11 @@ class Decimal() : S256() {
                     if (roundUp) {
                         super.u256MutateIncrement()
                         if (digitLen > precision) {
-                            assert(digitLen == precision + 1)
+                            check(digitLen == precision + 1)
                             // if we rolled into another digit because of roundup
                             // then the result is definitely divisible by 10
                             val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
-                            assert(residueExact == Residue.EXACT)
+                            check(residueExact == Residue.EXACT)
                             ++qExp
                         }
                     }

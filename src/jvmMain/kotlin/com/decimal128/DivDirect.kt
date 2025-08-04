@@ -35,7 +35,7 @@ object DivDirect {
     }
 
     fun modx32(z: U256, x: U256, y0: Long) {
-        assert((y0 ushr 32) == 0L && y0 > 1L)
+        check((y0 ushr 32) == 0L && y0 > 1L)
         val rem =
             if ((x.dw3 or x.dw2) == 0L) {
                 if (x.dw1 == 0L)
@@ -51,7 +51,7 @@ object DivDirect {
     }
 
     fun mod256x32(z: U256, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x3
         val dividend7 = (rem shl 32) or (x3 ushr 32)
@@ -82,7 +82,7 @@ object DivDirect {
     }
 
     fun mod192x32(z: U256, x2: Long, x1: Long, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
@@ -107,7 +107,7 @@ object DivDirect {
     }
 
     fun mod128x32(z: U256, x1: Long, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
@@ -126,7 +126,7 @@ object DivDirect {
     }
 
     fun mod64x32(z: U256, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
@@ -157,7 +157,7 @@ object DivDirect {
     }
 
     fun divMod256x32(z: U256?, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x3
         val dividend7 = (rem shl 32) or (x3 ushr 32)
@@ -202,7 +202,7 @@ object DivDirect {
     }
 
     fun divMod192x32(z: U256?, x2: Long, x1: Long, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
@@ -238,7 +238,7 @@ object DivDirect {
     }
 
     fun divMod128x32(z: U256?, x1: Long, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
@@ -265,7 +265,7 @@ object DivDirect {
     }
 
     fun divMod64x32(z: U256?, x0: Long, y0: Long): Long {
-        assert((y0 ushr 32) == 0L)
+        check((y0 ushr 32) == 0L)
         var rem = 0L
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)

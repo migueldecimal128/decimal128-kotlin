@@ -5,7 +5,7 @@ import kotlin.math.max
 object U256DivPow10 {
 
     fun divPow10(z: U256, x: U256, pow10: Int): Residue {
-        assert(pow10 >= 0)
+        check(pow10 >= 0)
         val xBitLen = x.bitLen
         if (pow10 < MAGIC_POW10_MAXX) {
             if (xBitLen <= 64)
@@ -29,7 +29,7 @@ object U256DivPow10 {
         // perform a two-step
         val step1a = K_MAXX - 1
         val step2a = pow10 - step1a
-        assert(step2a < K_MAXX)
+        check(step2a < K_MAXX)
         val step2 = max(step2a, BARRETT_POW10_MAXX - 1)
         val step1 = pow10 - step2
         val residue1 = DivRangeRecipMulPow10.rangeDivPow10(z, x, step1)

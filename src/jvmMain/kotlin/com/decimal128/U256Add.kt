@@ -76,14 +76,14 @@ object U256Add {
     }
 
     fun u256AddScaled(z: U256, x: U256, scaleDelta: Int, y: U256) {
-        assert(scaleDelta > 0)
-        assert(scaleDelta < PRECISION_34)
+        check(scaleDelta > 0)
+        check(scaleDelta < PRECISION_34)
 
-//        assert((x.dw3 or x.dw2) == 0L)
-//        assert((y.dw3 or y.dw2) == 0L)
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(z.u256HasValidLengths())
+//        check((x.dw3 or x.dw2) == 0L)
+//        check((y.dw3 or y.dw2) == 0L)
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(z.u256HasValidLengths())
 
         u256ScaleFmaPow10(z, x, scaleDelta, y)
     }

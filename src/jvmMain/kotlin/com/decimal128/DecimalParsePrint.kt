@@ -90,7 +90,7 @@ private fun u64ToChars(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len
 
 private fun u128ToChars(digitLen: Int, dw1: Long, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
     var digitLenT = digitLen
-    assert(dw1 != 0L)
+    check(dw1 != 0L)
     val divisor = 1_000_000_000L
     val mu = 0x44B82FA09
     val (q1, q0, r0) = barrettDivMod_32_128(dw1, dw0, divisor, mu)

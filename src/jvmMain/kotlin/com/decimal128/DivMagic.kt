@@ -90,8 +90,8 @@ object DivMagic {
     // 32-bit divisor
 
     fun magicDivPow10_64(z: U256, x0: Long, pow10: Int): Residue {
-        assert(pow10 in 0..<MAGIC_POW10_MAXX)
-        assert(initialized)
+        check(pow10 in 0..<MAGIC_POW10_MAXX)
+        check(initialized)
         val remainder = magicDivModPow10_64(z, x0, pow10)
         val residue = Residue.residueFromRemainderPow10(remainder, pow10)
         return residue

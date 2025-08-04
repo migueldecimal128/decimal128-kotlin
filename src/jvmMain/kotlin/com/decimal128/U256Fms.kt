@@ -8,16 +8,16 @@ import java.lang.Math.unsignedMultiplyHigh
 object U256Fms {
 
     fun u256Fms(z: U256, x: U256, y: U256, s: U256) {
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(s.u256HasValidLengths())
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(s.u256HasValidLengths())
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
         val mBitLen = m.bitLen
         val nBitLen = n.bitLen
-        assert(mBitLen >= nBitLen)
+        check(mBitLen >= nBitLen)
         val m0 = m.dw0
         val m1 = m.dw1
         val n0 = n.dw0
@@ -87,11 +87,11 @@ object U256Fms {
 
 
     fun u256FmsPow10(z: U256, x: U256, pow10: Int, y: U256) {
-        assert(pow10 > 0)
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(y.u256ScaledCompareTo(x, pow10) <= 0)
+        check(pow10 > 0)
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(y.u256ScaledCompareTo(x, pow10) <= 0)
         val xBitLen = x.bitLen
         val x0 = x.dw0
         val x1 = x.dw1
@@ -202,12 +202,12 @@ object U256Fms {
     }
 
     fun u256FmsPow10(z: U256, x: U256, y: U256, pow10: Int) {
-        assert(pow10 > 0)
-        assert(z.u256HasValidLengths())
-        assert(x.u256HasValidLengths())
-        assert(y.u256HasValidLengths())
-        assert(x.bitLen <= 128)
-        assert(x.u256ScaledCompareTo(y, pow10) >= 0)
+        check(pow10 > 0)
+        check(z.u256HasValidLengths())
+        check(x.u256HasValidLengths())
+        check(y.u256HasValidLengths())
+        check(x.bitLen <= 128)
+        check(x.u256ScaledCompareTo(y, pow10) >= 0)
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
         val p10BitLen = pow10BitLen(pow10)

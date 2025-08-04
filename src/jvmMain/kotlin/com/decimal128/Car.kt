@@ -52,7 +52,7 @@ object Car {
             carry = t ushr 32
             if (carry == 0L)
                 break
-            assert(carry == 1L)
+            check(carry == 1L)
         }
         return x
     }
@@ -78,7 +78,7 @@ object Car {
             val t = U32(x[i]) + U32(y[i]) + carry
             x[i] = t.toInt()
             carry = t ushr 32
-            assert(carry in 0L..1L)
+            check(carry in 0L..1L)
             ++i
         }
         while (carry == 1L && i < x.size) {
@@ -113,7 +113,7 @@ object Car {
             val t = U32(x[i]) - U32(y[i]) - borrow
             x[i] = t.toInt()
             borrow = t ushr 63
-            assert(borrow in 0L..1L)
+            check(borrow in 0L..1L)
             ++i
         }
         while (borrow == 1L && i < x.size) {
@@ -217,7 +217,7 @@ object Car {
     fun mutateShiftRight(x: IntArray, bitCount: Int) = mutateShiftRight(x, nonZeroLimbLen(x), bitCount)
 
     fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
-        assert(xLen <= x.size)
+        check(xLen <= x.size)
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
         if (wordShift >= xLen) {

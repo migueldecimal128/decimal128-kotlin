@@ -153,7 +153,7 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
-    assert(borrowIn in 0..1)
+    check(borrowIn in 0..1)
     // First subtract b from a:
     val diffAB = dwA - dwB
     val borrow1 = if (compareUnsigned(dwA, dwB) < 0) 1L else 0L

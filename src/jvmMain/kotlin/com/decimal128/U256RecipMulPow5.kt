@@ -23,7 +23,7 @@ object U256RecipMulPow5 {
 
         var fractionBitsRemaining = fractionBitLen
         var stickyBitsFracCompare = 0
-        assert((fractionBitLen + 63) ushr 6 >= mLen)
+        check((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
 
@@ -185,7 +185,7 @@ object U256RecipMulPow5 {
             quotient[quotientIndex++] = q0
         }
 
-        assert(fractionBitsRemaining <= 0)
+        check(fractionBitsRemaining <= 0)
         val q4 = ((z4 ushr shiftRight) and shiftRightNonZeroMask)
         if (q4 != 0L)
             quotient[quotientIndex] = q4
@@ -212,7 +212,7 @@ object U256RecipMulPow5 {
 
         var fractionBitsRemaining = fractionBitLen
         var stickyBitsFracCompare = 0
-        assert((fractionBitLen + 63) ushr 6 >= mLen)
+        check((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
 
@@ -333,7 +333,7 @@ object U256RecipMulPow5 {
             val q0 = (z3 shl shiftLeft) or ((z2 ushr shiftRight) and shiftRightNonZeroMask)
             quotient[quotientIndex++] = q0
         }
-        assert(fractionBitsRemaining <= 0)
+        check(fractionBitsRemaining <= 0)
         val q3 = ((z3 ushr shiftRight) and shiftRightNonZeroMask)
         if (q3 != 0L)
             quotient[quotientIndex] = q3
@@ -360,7 +360,7 @@ object U256RecipMulPow5 {
 
         var fractionBitsRemaining = fractionBitLen
         var stickyBitsFracCompare = 0
-        assert((fractionBitLen + 63) ushr 6 >= mLen)
+        check((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
 
@@ -447,7 +447,7 @@ object U256RecipMulPow5 {
             val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
             quotient[quotientIndex++] = q0
         }
-        assert(fractionBitsRemaining <= 0)
+        check(fractionBitsRemaining <= 0)
         val q2 = ((z2 ushr shiftRight) and shiftRightNonZeroMask)
         if (q2 != 0L)
             quotient[quotientIndex] = q2
@@ -474,7 +474,7 @@ object U256RecipMulPow5 {
 
         var fractionBitsRemaining = fractionBitLen
         var stickyBitsFracCompare = 0
-        assert((fractionBitLen + 63) ushr 6 >= mLen)
+        check((fractionBitLen + 63) ushr 6 >= mLen)
 
         var z_1 = 0L
 
@@ -531,7 +531,7 @@ object U256RecipMulPow5 {
             val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
             quotient[quotientIndex++] = q0
         }
-        assert(fractionBitsRemaining <= 0)
+        check(fractionBitsRemaining <= 0)
         val q1 = ((z1 ushr shiftRight) and shiftRightNonZeroMask)
         if (q1 != 0L)
             quotient[quotientIndex] = q1
