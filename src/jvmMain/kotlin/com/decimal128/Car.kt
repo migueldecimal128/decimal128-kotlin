@@ -26,6 +26,25 @@ object Car {
         return true
     }
 
+    fun testBit(x: IntArray, bitIndex: Int): Boolean {
+        val wordIndex = bitIndex ushr 5
+        if (wordIndex >= x.size)
+            return false
+        val word = x[wordIndex]
+        val bitMask = 1 shl (bitIndex and 0x1F)
+        return (word and bitMask) != 0
+    }
+
+    fun toLong(x: IntArray): Long {
+        return when (x.size) {
+            0 -> 0
+            1 -> U32(x[0])
+            else -> (x[1].toLong() shl 32) or U32(x[0])
+        }
+    }
+
+    fun newFromLong(n: Long): IntArray = intArrayOf(n.toInt(), (n ushr 32).toInt())
+
     fun nonZeroLimbLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
@@ -372,6 +391,12 @@ object Car {
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
         return q
+    }
+
+    fun newMod(x: IntArray, y: IntArray): IntArray {
+        val divMod = newDivMod(x, y)
+        val rem = divMod[1]
+        return rem
     }
 
     fun newDivMod(x: IntArray, y: IntArray): Array<IntArray> {

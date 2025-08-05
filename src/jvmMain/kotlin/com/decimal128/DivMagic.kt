@@ -1,56 +1,64 @@
 package com.decimal128
 
-import java.math.BigInteger
-
 object DivMagic {
 
     data class Magic(val m: Long, val add: Boolean, val s: Int)
 
     /**
-     * Compute magic number and shift for unsigned division by d (any 1 ≤ d < 2^64).
-     * Returns:
-     *   m   = low 64 bits of the “true” multiplier,
-     *   add = true if the true multiplier had bit-64 set (i.e. needed 65 bits),
-     *   s   = the right-shift amount beyond 64.
+     * Compute magic number and shift for unsigned division by d (1 ≤ d < 2^64),
+     * using your Car arbitrary-precision type instead of BigInteger.
      */
     fun magicu64(d: Long): Magic {
         require(d != 0L) { "divisor must be nonzero" }
         val N = 64
-        val twoPowN = BigInteger.ONE.shiftLeft(N)           // 2^64
-        // Reconstruct the unsigned 64-bit divisor in a BigInteger:
-        val hi32 = d ushr 32                             // logical shift, bits 63–32
-        val lo32 = d and 0xFFFFFFFFL                     // bits 31–0
-        val biD = BigInteger.valueOf(hi32)
-            .shiftLeft(32)
-            .or(BigInteger.valueOf(lo32))
-        // anc = 2^N - 1 - ((2^N - 1) mod d)
-        val biN1   = twoPowN - BigInteger.ONE
-        val anc    = biN1 - biN1.mod(biD)
 
-        val twoPowNminus1 = BigInteger.ONE.shiftLeft(N - 1)       // 2^(N-1)
-        var p       = (N - 1).toLong()
-        var q1      = twoPowNminus1.divide(anc)
-        var r1      = twoPowNminus1.remainder(anc)
-        var q2      = twoPowNminus1.divide(biD)
-        var r2      = twoPowNminus1.remainder(biD)
-        var delta: BigInteger
+        // 1) build Car version of 2^N and of the unsigned divisor
+        val carD       = Car.newFromLong(d)
 
+        // 2) anc = 2^N − 1 − ((2^N − 1) mod d)
+        val carN1      = intArrayOf(-1, -1)
+        val anc        = Car.newSub(carN1, Car.newMod(carN1, carD))
+
+        // 3) initialize p, q1/r1 for anc and q2/r2 for d
+        var p          = (N - 1).toLong()
+        val twoPowN1   = Car.newFromLong(Long.MIN_VALUE) // Car.ONE.shiftLeft(N - 1)         // 2^(N−1)
+        var (q1, r1)   = Car.newDivMod(twoPowN1, anc)
+        var (q2, r2)   = Car.newDivMod(twoPowN1, carD)
+        lateinit var delta: IntArray
+
+        // 4) loop exactly as in the BigInteger version
         do {
             p += 1
-            q1 = q1.shiftLeft(1); r1 = r1.shiftLeft(1)
-            if (r1 >= anc) { q1 += BigInteger.ONE; r1 -= anc }
-            q2 = q2.shiftLeft(1); r2 = r2.shiftLeft(1)
-            if (r2 >= biD)  { q2 += BigInteger.ONE; r2 -= biD }
-            delta = biD - r2
-        } while (q1 < delta || (q1 == delta && r1 == BigInteger.ZERO))
 
-        val Mtrue   = q2 + BigInteger.ONE
-        val addFlag = Mtrue.testBit(N)                    // was bit-64 set?
-        val m_mod   = Mtrue.clearBit(N).toLong()           // low 64 bits as signed Long
-        val s        = (p - N).toInt()
+            // double q1/r1 mod anc
+            q1 = Car.newShiftLeft(q1, 1)
+            r1 = Car.newShiftLeft(r1, 1)
+            if (Car.compare(r1, anc) >= 0) {
+                q1 = Car.mutateAdd(q1, 1)
+                r1 = Car.mutateSub(r1, anc)
+            }
+
+            // double q2/r2 mod biD
+            q2 = Car.newShiftLeft(q2, 1)
+            r2 = Car.newShiftLeft(r2, 1)
+            if (Car.compare(r2, carD) >= 0) {
+                q2 = Car.mutateAdd(q2, 1)
+                r2 = Car.mutateSub(r2, carD)
+            }
+
+            // prepare loop‐exit test
+            delta = Car.newSub(carD, r2)
+        } while (Car.compare(q1, delta) < 0 || (Car.compare(q1, delta) == 0 && Car.isZero(r1)))
+
+        // 5) extract the “true” multiplier and shift
+        val Mtrue   = Car.newAdd(q2, 1)
+        val addFlag = Car.testBit(Mtrue, N)                    // bit-64 set?
+        val m_mod   = Car.toLong(Mtrue)           // low 64 bits
+        val s       = (p - N).toInt()
 
         return Magic(m_mod, addFlag, s)
     }
+
 
     private var initialized = false
     val MAGIC_FLAG_AND_SHIFT_POW10 = ByteArray(MAGIC_POW10_MAXX)
