@@ -9,7 +9,6 @@ import com.decimal128.U256Pow10.compareWithHalfPow10_2
 import com.decimal128.U256Pow10.compareWithHalfPow10_3
 import com.decimal128.U256Pow10.compareWithHalfPow10_4
 
-import java.lang.Long.compareUnsigned
 
 private const val RESIDUE_IS_VALUE_CLASS = true
 @JvmInline
@@ -83,22 +82,22 @@ value class Residue private constructor(val value:Int) {
             }
             val s3 = (r.dw3 shl 1) or (r.dw2 ushr -1)
             if (s3 != d.dw3) {
-                val cmp = compareUnsigned(s3, d.dw3)
+                val cmp = unsignedCompare(s3, d.dw3)
                 return if (cmp < 0) LT_HALF else GT_HALF
             }
             val s2 = (r.dw2 shl 1) or (r.dw1 ushr -1)
             if (s2 != d.dw2) {
-                val cmp = compareUnsigned(s2, d.dw2)
+                val cmp = unsignedCompare(s2, d.dw2)
                 return if (cmp < 0) LT_HALF else GT_HALF
             }
             val s1 = (r.dw1 shl 1) or (r.dw0 ushr -1)
             if (s1 != d.dw1) {
-                val cmp = compareUnsigned(s1, d.dw1)
+                val cmp = unsignedCompare(s1, d.dw1)
                 return if (cmp < 0) LT_HALF else GT_HALF
             }
             val s0 = (r.dw0 shl 1)
             if (s0 != d.dw0) {
-                val cmp = compareUnsigned(s0, d.dw0)
+                val cmp = unsignedCompare(s0, d.dw0)
                 return if (cmp < 0) LT_HALF else GT_HALF
             }
             return EXACT
@@ -108,8 +107,8 @@ value class Residue private constructor(val value:Int) {
             val residue = when {
                 remainder == 0L -> EXACT
                 remainder < 0L -> GT_HALF // hi bit set .. so doubling would be 65 bits ... GT y0
-                compareUnsigned(2 * remainder, divisor) < 0 -> LT_HALF // we are doubling the remainder here
-                compareUnsigned(2 * remainder, divisor) > 0 -> GT_HALF
+                unsignedLT(2 * remainder, divisor) -> LT_HALF // we are doubling the remainder here
+                unsignedCompare(2 * remainder, divisor) > 0 -> GT_HALF
                 else -> HALF
             }
             return residue
@@ -131,7 +130,7 @@ value class Residue private constructor(val value:Int) {
         fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue {
             val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
             val pow10div2 = POW10[pow10] ushr 1
-            val cmp = compareUnsigned(remainder, pow10div2)
+            val cmp = unsignedCompare(remainder, pow10div2)
             val index = ((cmp + 2) and nonZeroMask) and 0x03
             //val residue = RESIDUE_MAP[index and 0x03]
             val residue = if (RESIDUE_IS_VALUE_CLASS) Residue(index) else RESIDUE_MAP[index]

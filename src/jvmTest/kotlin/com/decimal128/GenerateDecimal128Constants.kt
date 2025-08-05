@@ -26,10 +26,7 @@ class GenerateDecimal128Constants {
     @Test
     fun generateConstants() {
         for (constant in constants) {
-            if (constant != null)
-                generateHexConstant(constant)
-            else
-                println()
+            generateHexConstant(constant)
         }
     }
 

@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.compareUnsigned
 import java.math.BigInteger
 
 object DivMagic {
@@ -108,7 +107,7 @@ object DivMagic {
                 val carryAmount = 1L shl -s
                 val pHiUncorrected = umulHigh(x0, m)
                 val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
-                val carry = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) carryAmount else 0L
+                val carry = if (unsignedLT(pHiCorrected, pHiUncorrected)) carryAmount else 0L
                 val qHat = pHiCorrected ushr s
                 val q0 = carry + qHat
 
@@ -144,7 +143,7 @@ object DivMagic {
         val pHiUncorrected = umulHigh(x0, m)
         val pLo = x0 * m
         val pHiCorrected = pHiUncorrected + (x0 and addMask)
-        val qCarryAdd = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) qPotentialCarry else 0L
+        val qCarryAdd = if (unsignedLT(pHiCorrected, pHiUncorrected)) qPotentialCarry else 0L
         val qHat = pHiCorrected ushr s
         val q0 = qCarryAdd + qHat
 

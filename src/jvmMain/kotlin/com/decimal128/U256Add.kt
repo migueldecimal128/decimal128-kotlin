@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.compareUnsigned
 import com.decimal128.U256ScalePow10.u256ScaleFmaPow10
 import kotlin.math.max
 
@@ -35,7 +34,7 @@ object U256Add {
             z.u256Set64(p0)
             return
         }
-        val carry0 = if (compareUnsigned(p0, x0) < 0) 1L else 0L
+        val carry0 = if (unsignedLT(p0, x0)) 1L else 0L
         val x1 = x.dw1
         val y1 = y.dw1
         if (maxBitLen < 128) {
@@ -44,9 +43,9 @@ object U256Add {
             return
         }
         val p1a = x1 + y1
-        val carry1a = if (compareUnsigned(p1a, x1) < 0) 1L else 0L
+        val carry1a = if (unsignedLT(p1a, x1)) 1L else 0L
         val p1 = p1a + carry0
-        val carry1 = if (compareUnsigned(p1, carry0) < 0) 1L else carry1a
+        val carry1 = if (unsignedLT(p1, carry0)) 1L else carry1a
 
         val x2 = x.dw2
         val y2 = y.dw2
@@ -56,9 +55,9 @@ object U256Add {
             return
         }
         val p2a = x2 + y2
-        val carry2a = if (compareUnsigned(p2a, x2) < 0) 1L else 0L
+        val carry2a = if (unsignedLT(p2a, x2)) 1L else 0L
         val p2 = p2a + carry1
-        val carry2 = if (compareUnsigned(p2, carry1) < 0) 1L else carry2a
+        val carry2 = if (unsignedLT(p2, carry1)) 1L else carry2a
 
         val x3 = x.dw3
         val y3 = y.dw3
@@ -67,9 +66,9 @@ object U256Add {
             z.u256Set256(p3, p2, p1, p0)
         }
         val p3a = x3 + y3
-        val carry3a = if (compareUnsigned(p3a, x3) < 0) 1L else 0L
+        val carry3a = if (unsignedLT(p3a, x3)) 1L else 0L
         val p3 = p3a + carry2
-        val carry3 = if (compareUnsigned(p3, carry2) < 0) 1L else carry3a
+        val carry3 = if (unsignedLT(p3, carry2)) 1L else carry3a
         if (carry3 != 0L)
             throw RuntimeException("coefficient add overflow x:$x y:$y")
         z.u256Set256(p3, p2, p1, p0)

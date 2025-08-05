@@ -193,7 +193,7 @@ object DivKnuth {
 
             // correct estimate
             while ((qhat ushr 32) != 0L ||
-                compareUnsigned(
+                unsignedCompare(
                     qhat * vn_2, (rhat shl 32) + (un[j + n - 2].toLong() and MASK32)
                 ) > 0
             ) {

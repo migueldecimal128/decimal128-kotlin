@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.compareUnsigned
 
 object U256Sub {
 
@@ -17,7 +16,7 @@ object U256Sub {
             z.u256Set64(d0)
             return
         }
-        val carry0 = if (compareUnsigned(d0, x.dw0) > 0) 1L else 0L
+        val carry0 = if (unsignedCompare(d0, x.dw0) > 0) 1L else 0L
 
         if (xBitLen <= 128) {
             val d1 = x.dw1 - y.dw1 - carry0
@@ -25,9 +24,9 @@ object U256Sub {
             return
         }
         val d1a = x.dw1 - y.dw1
-        val carry1a = if (compareUnsigned(d1a, x.dw1) > 0) 1L else 0L
+        val carry1a = if (unsignedCompare(d1a, x.dw1) > 0) 1L else 0L
         val d1 = d1a - carry0
-        val carry1 = if (compareUnsigned(d1, d1a) > 0) 1L else carry1a
+        val carry1 = if (unsignedCompare(d1, d1a) > 0) 1L else carry1a
 
         if (xBitLen <= 192) {
             val d2 = x.dw2 - y.dw2 - carry1
@@ -35,14 +34,14 @@ object U256Sub {
             return
         }
         val d2a = x.dw2 - y.dw2
-        val carry2a = if (compareUnsigned(d2a, x.dw2) > 0) 1L else 0L
+        val carry2a = if (unsignedCompare(d2a, x.dw2) > 0) 1L else 0L
         val d2 = d2a - carry1
-        val carry2 = if (compareUnsigned(d2, d2a) > 0) 1L else carry2a
+        val carry2 = if (unsignedCompare(d2, d2a) > 0) 1L else carry2a
 
         val d3a = x.dw3 - y.dw3
-        val carry3a = if (compareUnsigned(d3a, x.dw3) > 0) 1L else 0L
+        val carry3a = if (unsignedCompare(d3a, x.dw3) > 0) 1L else 0L
         val d3 = d3a - carry2
-        val carry3 = if (compareUnsigned(d3, d3a) > 0) 1L else carry3a
+        val carry3 = if (unsignedCompare(d3, d3a) > 0) 1L else carry3a
         check(carry3 == 0L)
 
         z.u256Set256(d3, d2, d1, d0)

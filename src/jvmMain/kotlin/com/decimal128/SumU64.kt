@@ -4,140 +4,140 @@ import java.lang.Long.*
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
     return carryAB to sumAB
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumABC = sumAB + dwC
-    val carryABC = carryAB + if (compareUnsigned(sumABC, sumAB) < 0) 1L else 0L
+    val carryABC = carryAB + if (unsignedLT(sumABC, sumAB)) 1L else 0L
     return carryABC to sumABC
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumCD = dwC + dwD
-    val carryCD = if (compareUnsigned(sumCD, dwC) < 0) 1L else 0L
+    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
 
     val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (compareUnsigned(sumABCD, sumAB) < 0) 1L else 0L
+    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
     return carryABCD to sumABCD
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumCD = dwC + dwD
-    val carryCD = if (compareUnsigned(sumCD, dwC) < 0) 1L else 0L
+    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
 
     val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (compareUnsigned(sumABCD, sumAB) < 0) 1L else 0L
+    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
 
     val sumABCDE = sumABCD + dwE
-    val carryABCDE = carryABCD + if (compareUnsigned(sumABCDE, sumABCD) < 0) 1L else 0L
+    val carryABCDE = carryABCD + if (unsignedLT(sumABCDE, sumABCD)) 1L else 0L
     return carryABCDE to sumABCDE
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumCD = dwC + dwD
-    val carryCD = if (compareUnsigned(sumCD, dwC) < 0) 1L else 0L
+    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
 
     val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (compareUnsigned(sumABCD, sumAB) < 0) 1L else 0L
+    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
 
     val sumEF = dwE + dwF
-    val carryEF = if (compareUnsigned(sumEF, dwE) < 0) 1L else 0L
+    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
 
     val sumABCDEF = sumABCD + sumEF
-    val carryABCDEF = carryABCD + carryEF + if (compareUnsigned(sumABCDEF, sumABCD) < 0) 1L else 0L
+    val carryABCDEF = carryABCD + carryEF + if (unsignedLT(sumABCDEF, sumABCD)) 1L else 0L
     return carryABCDEF to sumABCDEF
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumCD = dwC + dwD
-    val carryCD = if (compareUnsigned(sumCD, dwC) < 0) 1L else 0L
+    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
 
     val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (compareUnsigned(sumABCD, sumAB) < 0) 1L else 0L
+    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
 
     val sumEF = dwE + dwF
-    val carryEF = if (compareUnsigned(sumEF, dwE) < 0) 1L else 0L
+    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
 
     val sumEFG = sumEF + dwG
-    val carryEFG = carryEF + if (compareUnsigned(sumEFG, dwG) < 0) 1L else 0L
+    val carryEFG = carryEF + if (unsignedLT(sumEFG, dwG)) 1L else 0L
 
     val sumABCDEFG = sumABCD + sumEFG
-    val carryABCDEFG = carryABCD + carryEFG + if (compareUnsigned(sumABCDEFG, sumABCD) < 0) 1L else 0L
+    val carryABCDEFG = carryABCD + carryEFG + if (unsignedLT(sumABCDEFG, sumABCD)) 1L else 0L
     return carryABCDEFG to sumABCDEFG
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumCD = dwC + dwD
-    val carryCD = if (compareUnsigned(sumCD, dwC) < 0) 1L else 0L
+    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
 
     val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (compareUnsigned(sumABCD, sumAB) < 0) 1L else 0L
+    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
 
     val sumEF = dwE + dwF
-    val carryEF = if (compareUnsigned(sumEF, dwE) < 0) 1L else 0L
+    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
 
     val sumGH = dwG + dwH
-    val carryGH = if (compareUnsigned(sumGH, dwG) < 0) 1L else 0L
+    val carryGH = if (unsignedLT(sumGH, dwG)) 1L else 0L
 
     val sumEFGH = sumEF + sumGH
-    val carryEFGH = carryEF + carryGH + if (compareUnsigned(sumEFGH, sumEF) < 0) 1L else 0L
+    val carryEFGH = carryEF + carryGH + if (unsignedLT(sumEFGH, sumEF)) 1L else 0L
 
     val sumABCDEFGH = sumABCD + sumEFGH
-    val carryABCDEFGH = carryABCD + carryEFGH + if (compareUnsigned(sumABCDEFGH, sumABCD) < 0) 1L else 0L
+    val carryABCDEFGH = carryABCD + carryEFGH + if (unsignedLT(sumABCDEFGH, sumABCD)) 1L else 0L
     return carryABCDEFGH to sumABCDEFGH
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
-    val carryAB = if (compareUnsigned(sumAB, dwA) < 0) 1L else 0L
+    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     val sumCD = dwC + dwD
-    val carryCD = if (compareUnsigned(sumCD, dwC) < 0) 1L else 0L
+    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
 
     val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (compareUnsigned(sumABCD, sumAB) < 0) 1L else 0L
+    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
 
     val sumEF = dwE + dwF
-    val carryEF = if (compareUnsigned(sumEF, dwE) < 0) 1L else 0L
+    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
 
     val sumGH = dwG + dwH
-    val carryGH = if (compareUnsigned(sumGH, dwG) < 0) 1L else 0L
+    val carryGH = if (unsignedLT(sumGH, dwG)) 1L else 0L
 
     val sumEFGH = sumEF + sumGH
-    val carryEFGH = carryEF + carryGH + if (compareUnsigned(sumEFGH, sumEF) < 0) 1L else 0L
+    val carryEFGH = carryEF + carryGH + if (unsignedLT(sumEFGH, sumEF)) 1L else 0L
 
     val sumABCDEFGH = sumABCD + sumEFGH
-    val carryABCDEFGH = carryABCD + carryEFGH + if (compareUnsigned(sumABCDEFGH, sumABCD) < 0) 1L else 0L
+    val carryABCDEFGH = carryABCD + carryEFGH + if (unsignedLT(sumABCDEFGH, sumABCD)) 1L else 0L
 
     val sumABCDEFGHI = sumABCDEFGH + dwI
-    val carryABCDEFGHI = carryABCDEFGH + if (compareUnsigned(sumABCDEFGHI, dwI) < 0) 1L else 0L
+    val carryABCDEFGHI = carryABCDEFGH + if (unsignedLT(sumABCDEFGHI, dwI)) 1L else 0L
 
     return carryABCDEFGHI to sumABCDEFGHI
 }
@@ -146,7 +146,7 @@ import java.lang.Long.*
 // returns borrow 0 or 1
 /*inline*/ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
     val diffAZ = dwA - dwZ
-    val borrowAZ = if (compareUnsigned(diffAZ, dwA) > 0) 1L else 0L
+    val borrowAZ = if (unsignedCompare(diffAZ, dwA) > 0) 1L else 0L
     return borrowAZ to diffAZ
 }
 
@@ -155,16 +155,16 @@ import java.lang.Long.*
     check(borrowIn in 0..1)
     // First subtract b from a:
     val diffAB = dwA - dwB
-    val borrow1 = if (compareUnsigned(dwA, dwB) < 0) 1L else 0L
+    val borrow1 = if (unsignedLT(dwA, dwB)) 1L else 0L
     val totalDiff = diffAB - borrowIn
-    val totalBorrow = if (compareUnsigned(diffAB, borrowIn) < 0) 1L else borrow1
+    val totalBorrow = if (unsignedLT(diffAB, borrowIn)) 1L else borrow1
     return totalBorrow to totalDiff
 }
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val s0 = x0 + y0
-    val carry0 = if (compareUnsigned(s0, x0) < 0) 1L else 0L
+    val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
     val s1 = carry0 + x1 + y1
     return s1 to s0
 }
@@ -172,7 +172,7 @@ import java.lang.Long.*
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU128U64(x1: Long, x0: Long, y0: Long) : Pair<Long, Long> {
     val s0 = x0 + y0
-    val carry0 = if (compareUnsigned(s0, x0) < 0) 1L else 0L
+    val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
     val s1 = carry0 + x1
     return s1 to s0
 }
@@ -180,7 +180,7 @@ import java.lang.Long.*
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val d0 = x0 - y0
-    val borrow0 = if (compareUnsigned(x0, y0) < 0) 1L else 0L
+    val borrow0 = if (unsignedLT(x0, y0)) 1L else 0L
     val d1 = x1 - y1 - borrow0
     return d1 to d0
 }
@@ -356,13 +356,13 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val u32 = (un4 shl 32) or un3
         var qhat = divideUnsigned(u32, vn1)
         var rhat = remainderUnsigned(u32, vn1)
-        if (compareUnsigned(qhat, B) >= 0 ||
-            compareUnsigned(qhat * vn0, (rhat shl 32) + un2) > 0
+        if (unsignedCompare(qhat, B) >= 0 ||
+            unsignedCompare(qhat * vn0, (rhat shl 32) + un2) > 0
         ) {
             qhat -= 1L; rhat += vn1
-            if (compareUnsigned(rhat, B) < 0 &&
-                (compareUnsigned(qhat, B) >= 0 ||
-                        compareUnsigned(qhat * vn0, (rhat shl 32) + un2) > 0)
+            if (unsignedLT(rhat, B) &&
+                (unsignedCompare(qhat, B) >= 0 ||
+                        unsignedCompare(qhat * vn0, (rhat shl 32) + un2) > 0)
             ) qhat -= 1L
         }
         // Multiply & subtract with full carry handling
@@ -372,24 +372,24 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val p0_lo = p0 and MASK32
         val p0_hi = p0 ushr 32
         val p1_lo_raw = (p1 and MASK32) + p0_hi
-        val carry1 = if (compareUnsigned(p1_lo_raw, B) >= 0) 1L else 0L
+        val carry1 = if (unsignedCompare(p1_lo_raw, B) >= 0) 1L else 0L
         val p1_mid = p1_lo_raw and MASK32
         val p1_hi = (p1 ushr 32) + carry1
         // subtract at un2
         var t = un2 - p0_lo
-        borrow = if (compareUnsigned(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCompare(t, un2) > 0) 1L else 0L; un2 = t and MASK32
         // subtract at un3
         t = un3 - p1_mid - borrow
-        borrow = if (compareUnsigned(t, un3) > 0) 1L else 0L; un3 = t and MASK32
+        borrow = if (unsignedCompare(t, un3) > 0) 1L else 0L; un3 = t and MASK32
         // subtract at un4
         t = un4 - p1_hi - borrow
-        borrow = if (compareUnsigned(t, un4) > 0) 1L else 0L; un4 = t and MASK32
+        borrow = if (unsignedCompare(t, un4) > 0) 1L else 0L; un4 = t and MASK32
         if (borrow != 0L) {
             qhat -= 1L
             // add back V aligned
             var carry = 0L
-            t = un2 + vn0; carry = if (compareUnsigned(t, un2) < 0) 1L else 0L; un2 = t and MASK32
-            t = un3 + vn1 + carry; carry = if (compareUnsigned(t, un3) < 0 || (carry == 1L && t == un3)) 1L else 0L; un3 = t and MASK32
+            t = un2 + vn0; carry = if (unsignedLT(t, un2)) 1L else 0L; un2 = t and MASK32
+            t = un3 + vn1 + carry; carry = if (unsignedLT(t, un3) || (carry == 1L && t == un3)) 1L else 0L; un3 = t and MASK32
             un4 = (un4 + carry) and MASK32
         }
         q2 = qhat
@@ -400,13 +400,13 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val u21 = (un3 shl 32) or un2
         var qhat = divideUnsigned(u21, vn1)
         var rhat = remainderUnsigned(u21, vn1)
-        if (compareUnsigned(qhat, B) >= 0 ||
-            compareUnsigned(qhat * vn0, (rhat shl 32) + un1) > 0
+        if (unsignedCompare(qhat, B) >= 0 ||
+            unsignedCompare(qhat * vn0, (rhat shl 32) + un1) > 0
         ) {
             qhat -= 1L; rhat += vn1
-            if (compareUnsigned(rhat, B) < 0 &&
-                (compareUnsigned(qhat, B) >= 0 ||
-                        compareUnsigned(qhat * vn0, (rhat shl 32) + un1) > 0)
+            if (unsignedLT(rhat, B) &&
+                (unsignedCompare(qhat, B) >= 0 ||
+                        unsignedCompare(qhat * vn0, (rhat shl 32) + un1) > 0)
             ) qhat -= 1L
         }
         var borrow = 0L
@@ -415,20 +415,20 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val p0_lo = p0 and MASK32
         val p0_hi = p0 ushr 32
         val p1_lo_raw = (p1 and MASK32) + p0_hi
-        val carry1 = if (compareUnsigned(p1_lo_raw, B) >= 0) 1L else 0L
+        val carry1 = if (unsignedCompare(p1_lo_raw, B) >= 0) 1L else 0L
         val p1_mid = p1_lo_raw and MASK32
         val p1_hi = (p1 ushr 32) + carry1
         var t = un1 - p0_lo
-        borrow = if (compareUnsigned(t, un1) > 0) 1L else 0L; un1 = t and MASK32
+        borrow = if (unsignedCompare(t, un1) > 0) 1L else 0L; un1 = t and MASK32
         t = un2 - p1_mid - borrow
-        borrow = if (compareUnsigned(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCompare(t, un2) > 0) 1L else 0L; un2 = t and MASK32
         t = un3 - p1_hi - borrow
-        borrow = if (compareUnsigned(t, un3) > 0) 1L else 0L; un3 = t and MASK32
+        borrow = if (unsignedCompare(t, un3) > 0) 1L else 0L; un3 = t and MASK32
         if (borrow != 0L) {
             qhat -= 1L
             var carry = 0L
-            t = un1 + vn0; carry = if (compareUnsigned(t, un1) < 0) 1L else 0L; un1 = t and MASK32
-            t = un2 + vn1 + carry; carry = if (compareUnsigned(t, un2) < 0 || (carry == 1L && t == un2)) 1L else 0L; un2 = t and MASK32
+            t = un1 + vn0; carry = if (unsignedLT(t, un1)) 1L else 0L; un1 = t and MASK32
+            t = un2 + vn1 + carry; carry = if (unsignedLT(t, un2) || (carry == 1L && t == un2)) 1L else 0L; un2 = t and MASK32
             un3 = (un3 + carry) and MASK32
         }
         q1 = qhat
@@ -439,13 +439,13 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val u10 = (un2 shl 32) or un1
         var qhat = divideUnsigned(u10, vn1)
         var rhat = remainderUnsigned(u10, vn1)
-        if (compareUnsigned(qhat, B) >= 0 ||
-            compareUnsigned(qhat * vn0, (rhat shl 32) + un0) > 0
+        if (unsignedCompare(qhat, B) >= 0 ||
+            unsignedCompare(qhat * vn0, (rhat shl 32) + un0) > 0
         ) {
             qhat -= 1L; rhat += vn1
-            if (compareUnsigned(rhat, B) < 0 &&
-                (compareUnsigned(qhat, B) >= 0 ||
-                        compareUnsigned(qhat * vn0, (rhat shl 32) + un0) > 0)
+            if (unsignedLT(rhat, B) &&
+                (unsignedCompare(qhat, B) >= 0 ||
+                        unsignedCompare(qhat * vn0, (rhat shl 32) + un0) > 0)
             ) qhat -= 1L
         }
         var borrow = 0L
@@ -454,20 +454,20 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val p0_lo = p0 and MASK32
         val p0_hi = p0 ushr 32
         val p1_lo_raw = (p1 and MASK32) + p0_hi
-        val carry1 = if (compareUnsigned(p1_lo_raw, B) >= 0) 1L else 0L
+        val carry1 = if (unsignedCompare(p1_lo_raw, B) >= 0) 1L else 0L
         val p1_mid = p1_lo_raw and MASK32
         val p1_hi = (p1 ushr 32) + carry1
         var t = un0 - p0_lo
-        borrow = if (compareUnsigned(t, un0) > 0) 1L else 0L; un0 = t and MASK32
+        borrow = if (unsignedCompare(t, un0) > 0) 1L else 0L; un0 = t and MASK32
         t = un1 - p1_mid - borrow
-        borrow = if (compareUnsigned(t, un1) > 0) 1L else 0L; un1 = t and MASK32
+        borrow = if (unsignedCompare(t, un1) > 0) 1L else 0L; un1 = t and MASK32
         t = un2 - p1_hi - borrow
-        borrow = if (compareUnsigned(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCompare(t, un2) > 0) 1L else 0L; un2 = t and MASK32
         if (borrow != 0L) {
             qhat -= 1L
             var carry = 0L
-            t = un0 + vn0; carry = if (compareUnsigned(t, un0) < 0) 1L else 0L; un0 = t and MASK32
-            t = un1 + vn1 + carry; carry = if (compareUnsigned(t, un1) < 0 || (carry == 1L && t == un1)) 1L else 0L; un1 = t and MASK32
+            t = un0 + vn0; carry = if (unsignedLT(t, un0)) 1L else 0L; un0 = t and MASK32
+            t = un1 + vn1 + carry; carry = if (unsignedLT(t, un1) || (carry == 1L && t == un1)) 1L else 0L; un1 = t and MASK32
             un2 = (un2 + carry) and MASK32
         }
         q0 = qhat

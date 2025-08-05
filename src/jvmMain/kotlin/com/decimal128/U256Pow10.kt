@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.compareUnsigned
 import kotlin.math.max
 
 private const val POW10_DWORD_COUNT =
@@ -258,7 +257,7 @@ internal object U256Pow10 {
         val hiDigitCount = loDigitCount + 1
         val pow10Offset = pow10Offset(loDigitCount)
         val p0 = POW10[pow10Offset + 0]
-        val cmp0 = compareUnsigned(dw0, p0)
+        val cmp0 = unsignedCompare(dw0, p0)
         val ret = if (cmp0 < 0) loDigitCount else hiDigitCount
         return ret
     }
@@ -271,8 +270,8 @@ internal object U256Pow10 {
                 val pow10Offset = pow10Offset(loDigitCount)
                 val p1 = POW10[pow10Offset + 1]
                 val p0 = POW10[pow10Offset + 0]
-                val cmp1 = compareUnsigned(dw1, p1)
-                val cmp0 = compareUnsigned(dw0, p0)
+                val cmp1 = unsignedCompare(dw1, p1)
+                val cmp0 = unsignedCompare(dw0, p0)
                 val cmp10 = if (cmp1 != 0) cmp1 else cmp0
                 val ret = if (cmp10 < 0) loDigitCount else hiDigitCount
                 return ret
@@ -290,9 +289,9 @@ internal object U256Pow10 {
                 val p2 = POW10[pow10Offset + 2]
                 val p1 = POW10[pow10Offset + 1]
                 val p0 = POW10[pow10Offset + 0]
-                val cmp2 = compareUnsigned(dw2, p2)
-                val cmp1 = compareUnsigned(dw1, p1)
-                val cmp0 = compareUnsigned(dw0, p0)
+                val cmp2 = unsignedCompare(dw2, p2)
+                val cmp1 = unsignedCompare(dw1, p1)
+                val cmp0 = unsignedCompare(dw0, p0)
                 val cmp10 = if (cmp1 != 0) cmp1 else cmp0
                 val cmp210 = if (cmp2 != 0) cmp2 else cmp10
                 val ret = if (cmp210 < 0) loDigitCount else hiDigitCount
@@ -313,10 +312,10 @@ internal object U256Pow10 {
                 val p2 = POW10[pow10Offset + 2]
                 val p1 = POW10[pow10Offset + 1]
                 val p0 = POW10[pow10Offset + 0]
-                val cmp3 = compareUnsigned(dw3, p3)
-                val cmp2 = compareUnsigned(dw2, p2)
-                val cmp1 = compareUnsigned(dw1, p1)
-                val cmp0 = compareUnsigned(dw0, p0)
+                val cmp3 = unsignedCompare(dw3, p3)
+                val cmp2 = unsignedCompare(dw2, p2)
+                val cmp1 = unsignedCompare(dw1, p1)
+                val cmp0 = unsignedCompare(dw0, p0)
                 val cmp32 = if (cmp3 != 0) cmp3 else cmp2
                 val cmp10 = if (cmp1 != 0) cmp1 else cmp0
                 val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
@@ -333,7 +332,7 @@ internal object U256Pow10 {
         check(pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_128)
         val pow10Dw0 = POW10[pow10]
         val halfPow10Dw0 = pow10Dw0 ushr 1
-        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
+        val cmp0 = unsignedCompare(dw0, halfPow10Dw0)
         return cmp0
     }
 
@@ -344,8 +343,8 @@ internal object U256Pow10 {
         val pow10Dw1 = POW10[pow10Offset + 1]
         val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
         val halfPow10Dw1 = pow10Dw1 ushr 1
-        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
-        val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
+        val cmp0 = unsignedCompare(dw0, halfPow10Dw0)
+        val cmp1 = unsignedCompare(dw1, halfPow10Dw1)
         val cmp10 = if (cmp1 != 0) cmp1 else cmp0
         return cmp10
     }
@@ -359,9 +358,9 @@ internal object U256Pow10 {
         val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
         val halfPow10Dw1 = (pow10Dw2 shl -1) or (pow10Dw1 ushr 1)
         val halfPow10Dw2 = pow10Dw2 ushr 1
-        val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
-        val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
-        val cmp2 = compareUnsigned(dw2, halfPow10Dw2)
+        val cmp0 = unsignedCompare(dw0, halfPow10Dw0)
+        val cmp1 = unsignedCompare(dw1, halfPow10Dw1)
+        val cmp2 = unsignedCompare(dw2, halfPow10Dw2)
         val cmp10 = if (cmp1 != 0) cmp1 else cmp0
         val cmp210 = if (cmp2 != 0) cmp2 else cmp10
         return cmp210
@@ -379,10 +378,10 @@ internal object U256Pow10 {
             val halfPow10Dw1 = (pow10Dw2 shl -1) or (pow10Dw1 ushr 1)
             val halfPow10Dw2 = (pow10Dw3 shl -1) or (pow10Dw2 ushr 1)
             val halfPow10Dw3 = pow10Dw3 ushr 1
-            val cmp0 = compareUnsigned(dw0, halfPow10Dw0)
-            val cmp1 = compareUnsigned(dw1, halfPow10Dw1)
-            val cmp2 = compareUnsigned(dw2, halfPow10Dw2)
-            val cmp3 = compareUnsigned(dw3, halfPow10Dw3)
+            val cmp0 = unsignedCompare(dw0, halfPow10Dw0)
+            val cmp1 = unsignedCompare(dw1, halfPow10Dw1)
+            val cmp2 = unsignedCompare(dw2, halfPow10Dw2)
+            val cmp3 = unsignedCompare(dw3, halfPow10Dw3)
             val cmp10 = if (cmp1 != 0) cmp1 else cmp0
             val cmp32 = if (cmp3 != 0) cmp3 else cmp2
             val cmp3210 = if (cmp32 != 0) cmp32 else cmp10

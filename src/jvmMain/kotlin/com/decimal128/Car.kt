@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Integer.compareUnsigned
 import java.lang.Long.*
 import kotlin.math.min
 import kotlin.math.max
@@ -322,7 +321,7 @@ object Car {
             if (y[i] != 0)
                 return -1
         for (i in minSize - 1 downTo 0) {
-            val cmp = compareUnsigned(x[i], y[i])
+            val cmp = unsignedCompare(x[i], y[i])
             if (cmp != 0)
                 return cmp
         }
@@ -334,7 +333,7 @@ object Car {
         return when {
             (limbLen > 1) -> 1
             (limbLen == 0) -> if (y == 0) 0 else -1
-            else -> compareUnsigned(x[0], y)
+            else -> unsignedCompare(x[0], y)
         }
     }
 
@@ -444,7 +443,7 @@ object Car {
 
             // correct estimate
             while ((qhat ushr 32) != 0L ||
-                compareUnsigned(
+                unsignedCompare(
                     qhat * vn_2, (rhat shl 32) + U32(un[j + n - 2])
                 ) > 0
             ) {

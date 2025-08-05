@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.compareUnsigned
 
 object U256RecipMulPow5 {
 
@@ -77,7 +76,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = compareUnsigned((z_0 and mask), mX)
+                    val cmp = unsignedCompare((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
@@ -254,7 +253,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = compareUnsigned((z_0 and mask), mX)
+                    val cmp = unsignedCompare((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
@@ -392,7 +391,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = compareUnsigned((z_0 and mask), mX)
+                    val cmp = unsignedCompare((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
@@ -498,7 +497,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = compareUnsigned((z_0 and mask), mX)
+                    val cmp = unsignedCompare((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {

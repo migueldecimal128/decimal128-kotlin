@@ -237,6 +237,7 @@ class DoubleDouble(a: Double, b: Double) {
         this.lo = l
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     inline fun setMulBetter(a: DoubleDouble, b: DoubleDouble) {
         // hi×hi
         val p  = a.hi * b.hi
