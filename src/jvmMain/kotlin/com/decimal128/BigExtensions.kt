@@ -104,3 +104,10 @@ fun DoubleDouble.setBigInteger(n: BigInteger) {
     // final normalization!
     this.setQuickTwoSum(hi, lo0)
 }
+
+private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HALF_UP,
+    RoundingMode.DOWN, RoundingMode.CEILING, RoundingMode.FLOOR)
+
+fun RoundingDirection.mapToRoundingMode() = ROUNDING_MODE_MAP[value]
+
+

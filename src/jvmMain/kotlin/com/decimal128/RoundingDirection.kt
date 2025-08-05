@@ -1,9 +1,5 @@
 package com.decimal128
 
-import java.math.RoundingMode
-
-private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HALF_UP,
-    RoundingMode.DOWN, RoundingMode.CEILING, RoundingMode.FLOOR)
 private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
     "ROUND_TOWARD_ZERO", "ROUND_TOWARD_POSITIVE", "ROUND_TOWARD_NEGATIVE")
 
@@ -37,8 +33,6 @@ value class RoundingDirection private constructor(val value:Int) {
     }
 
     fun negate(sign: Boolean) = if (sign) negate() else this
-
-    fun mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
     fun overflowsToInfinity(sign: Boolean): Boolean {
         val toInfinity = when (this.value) {
