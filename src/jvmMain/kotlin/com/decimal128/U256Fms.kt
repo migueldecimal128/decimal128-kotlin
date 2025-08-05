@@ -3,7 +3,6 @@ package com.decimal128
 import com.decimal128.U256Pow10.pow10BitLen
 import com.decimal128.U256Pow10.pow10Offset
 import kotlin.math.max
-import java.lang.Math.unsignedMultiplyHigh
 
 object U256Fms {
 
@@ -219,7 +218,7 @@ object U256Fms {
         val p0 = POW10[pow10Offset + 0]
         val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
 
-        val pp00Hi = unsignedMultiplyHigh(y0, p0)
+        val pp00Hi = umulHigh(y0, p0)
         val pp00Lo = y0 * p0
         val pp10Lo = y1 * p0
         val pp01Lo = y0 * p1
@@ -239,7 +238,7 @@ object U256Fms {
         y3: Long, y2: Long, y1: Long, y0: Long,
         s3: Long, s2: Long, s1: Long, s0: Long
     ) {
-        val pp00Hi = unsignedMultiplyHigh(x0, y0)
+        val pp00Hi = umulHigh(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo - s0
@@ -247,9 +246,9 @@ object U256Fms {
             return
         }
         val (borrow0, f0) = diffU64(pp00Lo, s0)
-        val pp01Hi = unsignedMultiplyHigh(x0, y1)
+        val pp01Hi = umulHigh(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = unsignedMultiplyHigh(x1, y0)
+        val pp10Hi = umulHigh(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = pp00Hi + pp01Lo + pp10Lo - s1 - borrow0
@@ -259,11 +258,11 @@ object U256Fms {
         val (carry1, f1p) = sumU64(pp00Hi, pp01Lo, pp10Lo)
         val (borrow1, f1) = diffU64withBorrow(f1p, s1, borrow0)
 
-        val pp11Hi = unsignedMultiplyHigh(x1, y1)
+        val pp11Hi = umulHigh(x1, y1)
         val pp11Lo = x1 * y1
-        val pp02Hi = unsignedMultiplyHigh(x0, y2)
+        val pp02Hi = umulHigh(x0, y2)
         val pp02Lo = x0 * y2
-        val pp20Hi = unsignedMultiplyHigh(x2, y0)
+        val pp20Hi = umulHigh(x2, y0)
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo - s2 - borrow1
@@ -273,13 +272,13 @@ object U256Fms {
         val (carry2, f2p) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo)
         val (borrow2, f2) = diffU64withBorrow(f2p, s2, borrow1)
 
-        val pp12Hi = unsignedMultiplyHigh(x1, y2)
+        val pp12Hi = umulHigh(x1, y2)
         val pp12Lo = x1 * y2
-        val pp21Hi = unsignedMultiplyHigh(x2, y1)
+        val pp21Hi = umulHigh(x2, y1)
         val pp21Lo = x2 * y1
-        val pp03Hi = unsignedMultiplyHigh(x0, y3)
+        val pp03Hi = umulHigh(x0, y3)
         val pp03Lo = x0 * y3
-        val pp30Hi = unsignedMultiplyHigh(x3, y0)
+        val pp30Hi = umulHigh(x3, y0)
         val pp30Lo = x3 * y0
 
         if (maxFusedBitLen <= 256) {

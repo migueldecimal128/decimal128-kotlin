@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Long.compareUnsigned
-import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
 
 object DivMagic {
@@ -107,13 +106,13 @@ object DivMagic {
                 val correctionMask = (flagAndShift shr 31).toLong()
 
                 val carryAmount = 1L shl -s
-                val pHiUncorrected = unsignedMultiplyHigh(x0, m)
+                val pHiUncorrected = umulHigh(x0, m)
                 val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
                 val carry = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) carryAmount else 0L
                 val qHat = pHiCorrected ushr s
                 val q0 = carry + qHat
 
-                val reconstructedHi = unsignedMultiplyHigh(q0, denom)
+                val reconstructedHi = umulHigh(q0, denom)
                 val reconstructedLo = q0 * denom
                 val rHat = x0 - reconstructedLo
                 val remainder = rHat + (-reconstructedHi and denom)
@@ -142,7 +141,7 @@ object DivMagic {
         val s = flagAndShift.toInt() and 0x3F
         val qPotentialCarry = 1L shl -s
         val addMask = flagAndShift shr 63
-        val pHiUncorrected = unsignedMultiplyHigh(x0, m)
+        val pHiUncorrected = umulHigh(x0, m)
         val pLo = x0 * m
         val pHiCorrected = pHiUncorrected + (x0 and addMask)
         val qCarryAdd = if (compareUnsigned(pHiCorrected, pHiUncorrected) < 0) qPotentialCarry else 0L
@@ -156,7 +155,7 @@ object DivMagic {
         // with x0==2**64-1 and denom==100 the multiply stays in 64 bits
         // therefore correction is not ever needed ...
         // ... AS LONG AS THIS IS NEVER USED FOR ANYTHING SMALLER THAN 10**2 == 100
-        //val reconstructedHi = unsignedMultiplyHigh(q0, denom)
+        //val reconstructedHi = umulHigh(q0, denom)
         val reconstructedLo = q0 * denom
         val rHat = x0 - reconstructedLo
         val r = rHat // + (-reconstructedHi and x0)

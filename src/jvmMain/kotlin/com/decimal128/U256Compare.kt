@@ -3,7 +3,6 @@ package com.decimal128
 import com.decimal128.U256Pow10.pow10BitLen
 import com.decimal128.U256Pow10.pow10Offset
 import java.lang.Long.compareUnsigned
-import java.lang.Math.unsignedMultiplyHigh
 
 object U256Compare {
 
@@ -88,7 +87,7 @@ object U256Compare {
     }
 
     private fun _cmp128x64x64(x1: Long, x0: Long, y0: Long, pow10: Long) : Int {
-        val p1 = unsignedMultiplyHigh(y0, pow10)
+        val p1 = umulHigh(y0, pow10)
         val p0 = y0 * pow10
 
         val cmp1 = compareUnsigned(x1, p1)
@@ -98,12 +97,12 @@ object U256Compare {
     }
 
     private fun _cmp128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long) : Int {
-        val pp00Hi = unsignedMultiplyHigh(m0, n0)
+        val pp00Hi = umulHigh(m0, n0)
         val pp00Lo = m0 * n0
         val p0 = pp00Lo
         val cmp0 = compareUnsigned(x0, p0)
 
-        val pp10Hi = unsignedMultiplyHigh(m1, n0)
+        val pp10Hi = umulHigh(m1, n0)
         val pp10Lo = m1 * n0
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
         val cmp1 = compareUnsigned(x1, p1)
@@ -142,18 +141,18 @@ object U256Compare {
     }
 
     private fun _EQ128x64x64(x1: Long, x0: Long, y0: Long, pow10: Long) : Boolean {
-        val p1 = unsignedMultiplyHigh(y0, pow10)
+        val p1 = umulHigh(y0, pow10)
         val p0 = y0 * pow10
 
         return ((x1 - p1) or (x0 - p0)) == 0L
     }
 
     private fun _EQ128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long) : Boolean {
-        val pp00Hi = unsignedMultiplyHigh(m0, n0)
+        val pp00Hi = umulHigh(m0, n0)
         val pp00Lo = m0 * n0
         val p0 = pp00Lo
 
-        val pp10Hi = unsignedMultiplyHigh(m1, n0)
+        val pp10Hi = umulHigh(m1, n0)
         val pp10Lo = m1 * n0
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
 

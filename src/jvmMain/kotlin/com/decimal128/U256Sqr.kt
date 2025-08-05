@@ -1,14 +1,12 @@
 package com.decimal128
 
-import java.lang.Math.unsignedMultiplyHigh
-
 internal object U256Sqr {
 
     fun u256Sqr(z: U256, x: U256) {
         val xBitLen = x.bitLen
         when {
             (xBitLen <= 64) -> {
-                val p1 = unsignedMultiplyHigh(x.dw0, x.dw0)
+                val p1 = umulHigh(x.dw0, x.dw0)
                 val p0 = x.dw0 * x.dw0
                 z.u256Set128(p1, p0)
                 return
@@ -28,17 +26,17 @@ internal object U256Sqr {
         p: U256,
         x1: Long, x0: Long
     ) {
-        val pp00Hi = unsignedMultiplyHigh(x0, x0)
+        val pp00Hi = umulHigh(x0, x0)
         val pp00Lo = x0 * x0
         val p0 = pp00Lo
 
-        val pp01Hi = unsignedMultiplyHigh(x0, x1)
+        val pp01Hi = umulHigh(x0, x1)
         val pp01Lo = x0 * x1
         val pp10Hi = pp01Hi
         val pp10Lo = pp01Lo
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
 
-        val pp11Hi = unsignedMultiplyHigh(x1, x1)
+        val pp11Hi = umulHigh(x1, x1)
         val pp11Lo = x1 * x1
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
 

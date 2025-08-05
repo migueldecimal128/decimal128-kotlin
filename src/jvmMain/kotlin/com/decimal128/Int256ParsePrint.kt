@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Math.unsignedMultiplyHigh
 import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
@@ -54,11 +53,11 @@ internal object Int256ParsePrint {
         var d = dw0
         var i = count - 1
         do {
-            val qA = unsignedMultiplyHigh(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+            val qA = umulHigh(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
             val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-            val qB = unsignedMultiplyHigh(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+            val qB = umulHigh(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
             val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-            val qC = unsignedMultiplyHigh(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+            val qC = umulHigh(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
             val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
 
             val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC

@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Math.unsignedMultiplyHigh
 import kotlin.math.min
 
 object MagnitudeDiv {
@@ -33,7 +32,7 @@ object MagnitudeDiv {
                             while (true) {
                                 // val q = t / 10
                                 // val r = t % 10
-                                val q = unsignedMultiplyHigh(t, M) ushr 3
+                                val q = umulHigh(t, M) ushr 3
                                 val r = t - (q * 10)
                                 if (r != 0L)
                                     break

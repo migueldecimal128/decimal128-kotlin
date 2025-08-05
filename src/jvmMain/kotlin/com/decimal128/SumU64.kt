@@ -1,6 +1,5 @@
 package com.decimal128
 import java.lang.Long.*
-import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
@@ -188,7 +187,7 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
         /*inline*/ fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
-    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Hi = umulHigh(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
 
@@ -199,7 +198,7 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
-    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Hi = umulHigh(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
     val pp01Lo = x0 * y1
@@ -211,11 +210,11 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun umul128x64to192(x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Hi = umulHigh(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
 
-    val pp10Hi = unsignedMultiplyHigh(x1, y0)
+    val pp10Hi = umulHigh(x1, y0)
     val pp10Lo = x1 * y0
     val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
 
@@ -226,11 +225,11 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun umul192x64to192(x2: Long, x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Hi = umulHigh(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
 
-    val pp10Hi = unsignedMultiplyHigh(x1, y0)
+    val pp10Hi = umulHigh(x1, y0)
     val pp10Lo = x1 * y0
     val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
 
@@ -242,13 +241,13 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
         /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = unsignedMultiplyHigh(x0, y0)
+    val pp00Hi = umulHigh(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
 
-    val pp01Hi = unsignedMultiplyHigh(x0, y1)
+    val pp01Hi = umulHigh(x0, y1)
     val pp01Lo = x0 * y1
-    val pp10Hi = unsignedMultiplyHigh(x1, y0)
+    val pp10Hi = umulHigh(x1, y0)
     val pp10Lo = x1 * y0
     val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
 
@@ -260,11 +259,11 @@ import java.lang.Math.unsignedMultiplyHigh
 
 @Suppress("NOTHING_TO_INLINE")
         /*inline*/ fun usqr96to192(x1: Long, x0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = unsignedMultiplyHigh(x0, x0)
+    val pp00Hi = umulHigh(x0, x0)
     val pp00Lo = x0 * x0
     val p0 = pp00Lo
 
-    val pp01Hi = unsignedMultiplyHigh(x0, x1)
+    val pp01Hi = umulHigh(x0, x1)
     val pp01Lo = x0 * x1
     val pp10Hi = pp01Hi
     val pp10Lo = pp01Lo
