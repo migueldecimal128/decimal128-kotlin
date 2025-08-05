@@ -85,10 +85,10 @@ object U256Bits {
         val m2 = MASK_BITS_2_MOD_4
         val m3 = MASK_BITS_3_MOD_4
 
-        val count0 = bitCount(dw0 and m0)
-        val count1 = bitCount(dw0 and m1)
-        val count2 = bitCount(dw0 and m2)
-        val count3 = bitCount(dw0 and m3)
+        val count0 = (dw0 and m0).countOneBits()
+        val count1 = (dw0 and m1).countOneBits()
+        val count2 = (dw0 and m2).countOneBits()
+        val count3 = (dw0 and m3).countOneBits()
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
@@ -101,10 +101,10 @@ object U256Bits {
         val m2 = MASK_BITS_2_MOD_4
         val m3 = MASK_BITS_3_MOD_4
 
-        val count0 = bitCount(dw1 and m0) + bitCount(dw0 and m0)
-        val count1 = bitCount(dw1 and m1) + bitCount(dw0 and m1)
-        val count2 = bitCount(dw1 and m2) + bitCount(dw0 and m2)
-        val count3 = bitCount(dw1 and m3) + bitCount(dw0 and m3)
+        val count0 = (dw1 and m0).countOneBits() + (dw0 and m0).countOneBits()
+        val count1 = (dw1 and m1).countOneBits() + (dw0 and m1).countOneBits()
+        val count2 = (dw1 and m2).countOneBits() + (dw0 and m2).countOneBits()
+        val count3 = (dw1 and m3).countOneBits() + (dw0 and m3).countOneBits()
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
@@ -117,10 +117,10 @@ object U256Bits {
         val m2 = MASK_BITS_2_MOD_4
         val m3 = MASK_BITS_3_MOD_4
 
-        val count0 = bitCount(dw2 and m0) + bitCount(dw1 and m0) + bitCount(dw0 and m0)
-        val count1 = bitCount(dw2 and m1) + bitCount(dw1 and m1) + bitCount(dw0 and m1)
-        val count2 = bitCount(dw2 and m2) + bitCount(dw1 and m2) + bitCount(dw0 and m2)
-        val count3 = bitCount(dw2 and m3) + bitCount(dw1 and m3) + bitCount(dw0 and m3)
+        val count0 = (dw2 and m0).countOneBits() + (dw1 and m0).countOneBits() + (dw0 and m0).countOneBits()
+        val count1 = (dw2 and m1).countOneBits() + (dw1 and m1).countOneBits() + (dw0 and m1).countOneBits()
+        val count2 = (dw2 and m2).countOneBits() + (dw1 and m2).countOneBits() + (dw0 and m2).countOneBits()
+        val count3 = (dw2 and m3).countOneBits() + (dw1 and m3).countOneBits() + (dw0 and m3).countOneBits()
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
@@ -133,14 +133,14 @@ object U256Bits {
         val m2 = MASK_BITS_2_MOD_4
         val m3 = MASK_BITS_3_MOD_4
 
-        val count0 = bitCount(dw3 and m0) + bitCount(dw2 and m0) +
-                bitCount(dw1 and m0) + bitCount(dw0 and m0)
-        val count1 = bitCount(dw3 and m1) + bitCount(dw2 and m1) +
-                bitCount(dw1 and m1) + bitCount(dw0 and m1)
-        val count2 = bitCount(dw3 and m2) + bitCount(dw2 and m2) +
-                bitCount(dw1 and m2) + bitCount(dw0 and m2)
-        val count3 = bitCount(dw3 and m3) + bitCount(dw2 and m3) +
-                bitCount(dw1 and m3) + bitCount(dw0 and m3)
+        val count0 = (dw3 and m0).countOneBits() + (dw2 and m0).countOneBits() +
+                (dw1 and m0).countOneBits() + (dw0 and m0).countOneBits()
+        val count1 = (dw3 and m1).countOneBits() + (dw2 and m1).countOneBits() +
+                (dw1 and m1).countOneBits() + (dw0 and m1).countOneBits()
+        val count2 = (dw3 and m2).countOneBits() + (dw2 and m2).countOneBits() +
+                (dw1 and m2).countOneBits() + (dw0 and m2).countOneBits()
+        val count3 = (dw3 and m3).countOneBits() + (dw2 and m3).countOneBits() +
+                (dw1 and m3).countOneBits() + (dw0 and m3).countOneBits()
 
         val weightedSum = count0 * 1 + count1 * 2 + count2 * 4 + count3 * 3
         val ret = ((weightedSum * 838861) ushr 22) * 5 == weightedSum
