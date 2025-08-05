@@ -1,7 +1,5 @@
 package com.decimal128
 
-import java.math.MathContext
-
 class DecimalContext(val decimalFormat: DecimalFormat) {
     constructor() : this(DecimalFormat.DECIMAL_128)
     constructor(decimalFormat: DecimalFormat, roundingDirection:RoundingDirection) :
@@ -21,10 +19,6 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
     val eMin = decimalFormat.eMin
     val qMax = decimalFormat.qMax
     val qTiny = decimalFormat.qTiny
-
-    fun getMathContext() : MathContext {
-        return MathContext(precision, roundingDirection.mapToRoundingMode())
-    }
 
     var invalid = false
         private set

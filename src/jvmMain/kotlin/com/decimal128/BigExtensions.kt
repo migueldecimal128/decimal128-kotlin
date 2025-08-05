@@ -110,4 +110,8 @@ private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HAL
 
 fun RoundingDirection.mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
+fun DecimalContext.getMathContext() : MathContext {
+    return MathContext(precision, roundingDirection.mapToRoundingMode())
+}
+
 
