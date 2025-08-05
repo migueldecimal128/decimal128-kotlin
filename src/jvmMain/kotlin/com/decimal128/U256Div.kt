@@ -4,7 +4,6 @@ import com.decimal128.U256Compare.u256UnscaledCompare
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.LT_HALF
-import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
@@ -32,8 +31,8 @@ object U256Div {
         }
         val x0 = x.dw0
         if (x.bitLen <= 64) {
-            val quot = divideUnsigned(x0, y0)
-            val rem = remainderUnsigned(x0, y0)
+            val quot = unsignedDiv(x0, y0)
+            val rem = unsignedMod(x0, y0)
             z?.u256Set64(quot)
             return rem
         }

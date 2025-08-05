@@ -105,13 +105,13 @@ object DivMagic {
                 val correctionMask = (flagAndShift shr 31).toLong()
 
                 val carryAmount = 1L shl -s
-                val pHiUncorrected = umulHigh(x0, m)
+                val pHiUncorrected = unsignedMulHi(x0, m)
                 val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
                 val carry = if (unsignedLT(pHiCorrected, pHiUncorrected)) carryAmount else 0L
                 val qHat = pHiCorrected ushr s
                 val q0 = carry + qHat
 
-                val reconstructedHi = umulHigh(q0, denom)
+                val reconstructedHi = unsignedMulHi(q0, denom)
                 val reconstructedLo = q0 * denom
                 val rHat = x0 - reconstructedLo
                 val remainder = rHat + (-reconstructedHi and denom)
@@ -140,7 +140,7 @@ object DivMagic {
         val s = flagAndShift.toInt() and 0x3F
         val qPotentialCarry = 1L shl -s
         val addMask = flagAndShift shr 63
-        val pHiUncorrected = umulHigh(x0, m)
+        val pHiUncorrected = unsignedMulHi(x0, m)
         val pLo = x0 * m
         val pHiCorrected = pHiUncorrected + (x0 and addMask)
         val qCarryAdd = if (unsignedLT(pHiCorrected, pHiUncorrected)) qPotentialCarry else 0L

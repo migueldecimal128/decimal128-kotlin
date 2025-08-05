@@ -53,11 +53,11 @@ internal object Int256ParsePrint {
         var d = dw0
         var i = count - 1
         do {
-            val qA = umulHigh(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+            val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
             val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-            val qB = umulHigh(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+            val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
             val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-            val qC = umulHigh(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+            val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
             val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
 
             val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC

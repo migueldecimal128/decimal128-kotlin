@@ -1,6 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.*
 import kotlin.math.min
 import kotlin.math.max
 
@@ -321,7 +320,7 @@ object Car {
             if (y[i] != 0)
                 return -1
         for (i in minSize - 1 downTo 0) {
-            val cmp = unsignedCompare(x[i], y[i])
+            val cmp = unsignedCmp(x[i], y[i])
             if (cmp != 0)
                 return cmp
         }
@@ -333,7 +332,7 @@ object Car {
         return when {
             (limbLen > 1) -> 1
             (limbLen == 0) -> if (y == 0) 0 else -1
-            else -> unsignedCompare(x[0], y)
+            else -> unsignedCmp(x[0], y)
         }
     }
 
@@ -345,8 +344,8 @@ object Car {
         var carry = 0L
         for (i in x.size - 1 downTo 0) {
             val t = (carry shl 32) + U32(x[i])
-            val q = divideUnsigned(t, n64)
-            val r = remainderUnsigned(t, n64)
+            val q = unsignedDiv(t, n64)
+            val r = unsignedMod(t, n64)
             x[i] = q.toInt()
             carry = r
         }
@@ -438,12 +437,12 @@ object Car {
             //if (hi == 0L && lo < vn_1) // this would short-circuit,
             //    continue               // but probability is astronomically small
             val num = (hi shl 32) or lo
-            var qhat = divideUnsigned(num, vn_1)
-            var rhat = remainderUnsigned(num, vn_1)
+            var qhat = unsignedDiv(num, vn_1)
+            var rhat = unsignedMod(num, vn_1)
 
             // correct estimate
             while ((qhat ushr 32) != 0L ||
-                unsignedCompare(
+                unsignedCmp(
                     qhat * vn_2, (rhat shl 32) + U32(un[j + n - 2])
                 ) > 0
             ) {

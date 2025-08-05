@@ -53,16 +53,16 @@ object U256RecipMulPow5 {
         while (mI < mLen) {
             val mX = m[mOff + mI]
 
-            val pp01_0 = umulHigh(mX, n0)
+            val pp01_0 = unsignedMulHi(mX, n0)
             val pp00_0 = mX * n0
 
-            val pp11_0 = umulHigh(mX, n1)
+            val pp11_0 = unsignedMulHi(mX, n1)
             val pp10_0 = mX * n1
 
-            val pp21_0 = umulHigh(mX, n2)
+            val pp21_0 = unsignedMulHi(mX, n2)
             val pp20_0 = mX * n2
 
-            val pp31_0 = umulHigh(mX, n3)
+            val pp31_0 = unsignedMulHi(mX, n3)
             val pp30_0 = mX * n3
 
             val (carry_0, z_0) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
@@ -76,7 +76,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = unsignedCompare((z_0 and mask), mX)
+                    val cmp = unsignedCmp((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
@@ -233,13 +233,13 @@ object U256RecipMulPow5 {
         while (mI < mLen) {
             val mX = m[mOff + mI]
 
-            val pp01_0 = umulHigh(mX, n0)
+            val pp01_0 = unsignedMulHi(mX, n0)
             val pp00_0 = mX * n0
 
-            val pp11_0 = umulHigh(mX, n1)
+            val pp11_0 = unsignedMulHi(mX, n1)
             val pp10_0 = mX * n1
 
-            val pp21_0 = umulHigh(mX, n2)
+            val pp21_0 = unsignedMulHi(mX, n2)
             val pp20_0 = mX * n2
 
             val (carry_0, z_0) = sumU64(pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
@@ -253,7 +253,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = unsignedCompare((z_0 and mask), mX)
+                    val cmp = unsignedCmp((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
@@ -374,10 +374,10 @@ object U256RecipMulPow5 {
         while (mI < mLen) {
             val mX = m[mOff + mI]
 
-            val pp01_0 = umulHigh(mX, n0)
+            val pp01_0 = unsignedMulHi(mX, n0)
             val pp00_0 = mX * n0
 
-            val pp11_0 = umulHigh(mX, n1)
+            val pp11_0 = unsignedMulHi(mX, n1)
             val pp10_0 = mX * n1
 
             val (carry_0, z_0) = sumU64(pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
@@ -391,7 +391,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = unsignedCompare((z_0 and mask), mX)
+                    val cmp = unsignedCmp((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {
@@ -483,7 +483,7 @@ object U256RecipMulPow5 {
         while (mI < mLen) {
             val mX = m[mOff + mI]
 
-            val pp01_0 = umulHigh(mX, n0)
+            val pp01_0 = unsignedMulHi(mX, n0)
             val pp00_0 = mX * n0
 
             val (carry_0, z_0) = sumU64(pp01_1, pp00_0, carry_1)
@@ -497,7 +497,7 @@ object U256RecipMulPow5 {
                         -1L
                     }
                 if (mask != 0L) {
-                    val cmp = unsignedCompare((z_0 and mask), mX)
+                    val cmp = unsignedCmp((z_0 and mask), mX)
                     stickyBitsFracCompare = if (cmp != 0) cmp else stickyBitsFracCompare
                 }
             } else {

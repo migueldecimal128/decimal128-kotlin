@@ -1,7 +1,5 @@
 package com.decimal128
 
-import java.lang.Long.*
-
 @Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen64(dw0: Long): Int {
     val nlz0 = dw0.countLeadingZeroBits()

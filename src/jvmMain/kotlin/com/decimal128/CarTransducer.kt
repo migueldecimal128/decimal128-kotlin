@@ -45,7 +45,7 @@ object CarTransducer {
         if (cmpBitLen != 0)
             return cmpBitLen
         for (i in car.size - 1 downTo 0) {
-            val cmp = unsignedCompare(car[i], bi.shiftRight(i * 32).toInt())
+            val cmp = unsignedCmp(car[i], bi.shiftRight(i * 32).toInt())
             if (cmp != 0)
                 return cmp
         }

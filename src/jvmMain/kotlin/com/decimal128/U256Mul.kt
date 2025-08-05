@@ -70,7 +70,7 @@ internal object U256Mul {
         when {
             (xBitLen <= 64) -> {
                 val x0 = x.dw0
-                val pHi = umulHigh(x0, y0)
+                val pHi = unsignedMulHi(x0, y0)
                 val pLo = x0 * y0
                 z.u256Set128(pHi, pLo)
                 return
@@ -138,16 +138,16 @@ internal object U256Mul {
         x3: Long, x2: Long, x1: Long, x0: Long,
         y3: Long, y2: Long, y1: Long, y0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxBitLen <= 64) {
             p.u256Set64(p0)
             return
         }
-        val pp01Hi = umulHigh(x0, y1)
+        val pp01Hi = unsignedMulHi(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxBitLen <= 128) {
             val p1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxBitLen
@@ -155,11 +155,11 @@ internal object U256Mul {
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-        val pp11Hi = umulHigh(x1, y1)
+        val pp11Hi = unsignedMulHi(x1, y1)
         val pp11Lo = x1 * y1
-        val pp02Hi = umulHigh(x0, y2)
+        val pp02Hi = unsignedMulHi(x0, y2)
         val pp02Lo = x0 * y2
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxBitLen <= 192) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo
@@ -167,13 +167,13 @@ internal object U256Mul {
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo)
-        val pp12Hi = umulHigh(x1, y2)
+        val pp12Hi = unsignedMulHi(x1, y2)
         val pp12Lo = x1 * y2
-        val pp21Hi = umulHigh(x2, y1)
+        val pp21Hi = unsignedMulHi(x2, y1)
         val pp21Lo = x2 * y1
-        val pp03Hi = umulHigh(x0, y3)
+        val pp03Hi = unsignedMulHi(x0, y3)
         val pp03Lo = x0 * y3
-        val pp30Hi = umulHigh(x3, y0)
+        val pp30Hi = unsignedMulHi(x3, y0)
         val pp30Lo = x3 * y0
 
         if (maxBitLen <= 256) {
@@ -198,14 +198,14 @@ internal object U256Mul {
         x3: Long, x2: Long, x1: Long, x0: Long,
         y0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxBitLen <= 64) {
             p.u256Set64(p0)
             return
         }
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxBitLen <= 128) {
             val p1 = pp00Hi + pp10Lo // no carry possible because of maxBitLen
@@ -213,7 +213,7 @@ internal object U256Mul {
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxBitLen <= 192) {
             val p2 = carry1 + pp10Hi + pp20Lo
@@ -221,7 +221,7 @@ internal object U256Mul {
             return
         }
         val (carry2, p2) = sumU64(carry1, pp10Hi, pp20Lo)
-        val pp30Hi = umulHigh(x3, y0)
+        val pp30Hi = unsignedMulHi(x3, y0)
         val pp30Lo = x3 * y0
 
         if (maxBitLen <= 256) {
@@ -244,16 +244,16 @@ internal object U256Mul {
         x2: Long, x1: Long, x0: Long,
         y1: Long, y0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxBitLen <= 64) {
             p.u256Set64(p0)
             return
         }
-        val pp01Hi = umulHigh(x0, y1)
+        val pp01Hi = unsignedMulHi(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxBitLen <= 128) {
             val p1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxBitLen
@@ -261,9 +261,9 @@ internal object U256Mul {
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-        val pp11Hi = umulHigh(x1, y1)
+        val pp11Hi = unsignedMulHi(x1, y1)
         val pp11Lo = x1 * y1
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxBitLen <= 192) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp20Lo
@@ -271,7 +271,7 @@ internal object U256Mul {
             return
         }
         val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo)
-        val pp21Hi = umulHigh(x2, y1)
+        val pp21Hi = unsignedMulHi(x2, y1)
         val pp21Lo = x2 * y1
 
         if (maxBitLen <= 256) {
@@ -294,14 +294,14 @@ internal object U256Mul {
         x2: Long, x1: Long, x0: Long,
         y0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxBitLen <= 64) {
             p.u256Set64(p0)
             return
         }
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxBitLen <= 128) {
             val p1 = pp00Hi + pp10Lo // no carry possible because of maxBitLen
@@ -309,7 +309,7 @@ internal object U256Mul {
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxBitLen <= 192) {
             val p2 = carry1 + pp10Hi + pp20Lo
@@ -328,16 +328,16 @@ internal object U256Mul {
         x1: Long, x0: Long,
         y1: Long, y0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxBitLen <= 64) {
             p.u256Set64(p0)
             return
         }
-        val pp01Hi = umulHigh(x0, y1)
+        val pp01Hi = unsignedMulHi(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxBitLen <= 128) {
             val p1 = pp00Hi + pp01Lo + pp10Lo // no carry possible because of maxBitLen
@@ -345,7 +345,7 @@ internal object U256Mul {
             return
         }
         val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-        val pp11Hi = umulHigh(x1, y1)
+        val pp11Hi = unsignedMulHi(x1, y1)
         val pp11Lo = x1 * y1
         if (maxBitLen <= 192) {
             val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo
@@ -364,14 +364,14 @@ internal object U256Mul {
         x1: Long, x0: Long,
         y0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         val p0 = pp00Lo
         if (maxBitLen <= 64) {
             p.u256Set64(p0)
             return
         }
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxBitLen <= 128) {
             val p1 = pp00Hi + pp10Lo // no carry possible because of maxBitLen

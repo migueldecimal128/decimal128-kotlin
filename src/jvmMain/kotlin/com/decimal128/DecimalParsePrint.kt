@@ -23,13 +23,13 @@ private fun u64ToChars_x(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, l
     var d = dw0
     var i = count - 1
     do {
-        val qA = umulHigh(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitA = d - (qA * 10L)
-        val qB = umulHigh(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitB = qA - (qB * 10L)
-        val qC = umulHigh(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitC = qB - (qC * 10L)
-        val qD = umulHigh(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qD = unsignedMulHi(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitD = qC - (qD * 10L)
 
         bytes[off + i - 0] = ('0'.code + digitA).toByte()
@@ -60,11 +60,11 @@ private fun u64ToChars(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len
     var d = dw0
     var i = count - 1
     do {
-        val qA = umulHigh(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-        val qB = umulHigh(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-        val qC = umulHigh(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+        val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
         //val qD = umulHigh(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
         //val digitD = qC - (qD * 10L)
@@ -109,21 +109,21 @@ private inline fun barrettDivMod_32_128(dw1: Long, dw0: Long, denom: Long, mu: L
     val dwB = dw0 ushr 32
     val dwG = dw1
 
-    val qGhat = umulHigh(dwG, mu)
+    val qGhat = unsignedMulHi(dwG, mu)
     val rGhat = dwG - (qGhat * denom)
     val adjustG = rGhat >= denom
     val qG = qGhat + if (adjustG) 1L else 0L
     val rG = rGhat - if (adjustG) denom else 0L
 
     val ppB = (rG shl 32) or dwB
-    val qBhat = umulHigh(ppB, mu)
+    val qBhat = unsignedMulHi(ppB, mu)
     val rBhat = ppB - (qBhat * denom)
     val adjustB = rBhat >= denom
     val qB = qBhat + if (adjustB) 1L else 0L
     val rB = rBhat - if (adjustB) denom else 0L
 
     val ppA = (rB shl 32) or dwA
-    val qAhat = umulHigh(ppA, mu)
+    val qAhat = unsignedMulHi(ppA, mu)
     val rAhat = ppA - (qAhat * denom)
     val adjustA = rAhat >= denom
     val qA = qAhat + if (adjustA) 1L else 0L

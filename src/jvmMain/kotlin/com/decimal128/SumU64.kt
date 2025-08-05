@@ -1,5 +1,4 @@
 package com.decimal128
-import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
@@ -146,7 +145,7 @@ import java.lang.Long.*
 // returns borrow 0 or 1
 /*inline*/ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
     val diffAZ = dwA - dwZ
-    val borrowAZ = if (unsignedCompare(diffAZ, dwA) > 0) 1L else 0L
+    val borrowAZ = if (unsignedCmp(diffAZ, dwA) > 0) 1L else 0L
     return borrowAZ to diffAZ
 }
 
@@ -187,7 +186,7 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
         /*inline*/ fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
-    val pp00Hi = umulHigh(x0, y0)
+    val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
 
@@ -198,7 +197,7 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
-    val pp00Hi = umulHigh(x0, y0)
+    val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
     val pp01Lo = x0 * y1
@@ -210,11 +209,11 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun umul128x64to192(x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = umulHigh(x0, y0)
+    val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
 
-    val pp10Hi = umulHigh(x1, y0)
+    val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
 
@@ -225,11 +224,11 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun umul192x64to192(x2: Long, x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = umulHigh(x0, y0)
+    val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
 
-    val pp10Hi = umulHigh(x1, y0)
+    val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
 
@@ -241,13 +240,13 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
         /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = umulHigh(x0, y0)
+    val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
 
-    val pp01Hi = umulHigh(x0, y1)
+    val pp01Hi = unsignedMulHi(x0, y1)
     val pp01Lo = x0 * y1
-    val pp10Hi = umulHigh(x1, y0)
+    val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
 
@@ -259,11 +258,11 @@ import java.lang.Long.*
 
 @Suppress("NOTHING_TO_INLINE")
         /*inline*/ fun usqr96to192(x1: Long, x0: Long): Triple<Long, Long, Long> {
-    val pp00Hi = umulHigh(x0, x0)
+    val pp00Hi = unsignedMulHi(x0, x0)
     val pp00Lo = x0 * x0
     val p0 = pp00Lo
 
-    val pp01Hi = umulHigh(x0, x1)
+    val pp01Hi = unsignedMulHi(x0, x1)
     val pp01Lo = x0 * x1
     val pp10Hi = pp01Hi
     val pp10Lo = pp01Lo
@@ -284,8 +283,8 @@ fun udivMod128x64to128(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> 
 
     // 1) special-case “pure 64-bit” dividend
     if (x1 == 0L) {
-        val q0 = divideUnsigned(x0, y0)
-        val r0  = remainderUnsigned(x0, y0)
+        val q0 = unsignedDiv(x0, y0)
+        val r0  = unsignedMod(x0, y0)
         return Triple(0L, q0, r0)
     } else {
         return udivMod128x64to128_stage2(x1, x0, y0)
@@ -303,13 +302,13 @@ fun udivMod128x64to128_stage2(x1: Long, x0: Long, y0: Long) : Triple<Long, Long,
         val u0 = x0 and MASK32
 
         val t3 = u3
-        val q3 = divideUnsigned(t3, v0); val r3 = remainderUnsigned(t3, v0)
+        val q3 = unsignedDiv(t3, v0); val r3 = unsignedMod(t3, v0)
         val t2 = (r3 shl 32) or u2
-        val q2 = divideUnsigned(t2, v0); val r2 = remainderUnsigned(t2, v0)
+        val q2 = unsignedDiv(t2, v0); val r2 = unsignedMod(t2, v0)
         val t1 = (r2 shl 32) or u1
-        val q1 = divideUnsigned(t1, v0); val r1 = remainderUnsigned(t1, v0)
+        val q1 = unsignedDiv(t1, v0); val r1 = unsignedMod(t1, v0)
         val t0 = (r1 shl 32) or u0
-        val q0 = divideUnsigned(t0, v0); val r0 = remainderUnsigned(t0, v0)
+        val q0 = unsignedDiv(t0, v0); val r0 = unsignedMod(t0, v0)
 
         val qDw1 = (q3 shl 32) or q2
         val qDw0 = (q1 shl 32) or q0
@@ -354,15 +353,15 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
     var q2: Long
     run {
         val u32 = (un4 shl 32) or un3
-        var qhat = divideUnsigned(u32, vn1)
-        var rhat = remainderUnsigned(u32, vn1)
-        if (unsignedCompare(qhat, B) >= 0 ||
-            unsignedCompare(qhat * vn0, (rhat shl 32) + un2) > 0
+        var qhat = unsignedDiv(u32, vn1)
+        var rhat = unsignedMod(u32, vn1)
+        if (unsignedCmp(qhat, B) >= 0 ||
+            unsignedCmp(qhat * vn0, (rhat shl 32) + un2) > 0
         ) {
             qhat -= 1L; rhat += vn1
             if (unsignedLT(rhat, B) &&
-                (unsignedCompare(qhat, B) >= 0 ||
-                        unsignedCompare(qhat * vn0, (rhat shl 32) + un2) > 0)
+                (unsignedCmp(qhat, B) >= 0 ||
+                        unsignedCmp(qhat * vn0, (rhat shl 32) + un2) > 0)
             ) qhat -= 1L
         }
         // Multiply & subtract with full carry handling
@@ -372,18 +371,18 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val p0_lo = p0 and MASK32
         val p0_hi = p0 ushr 32
         val p1_lo_raw = (p1 and MASK32) + p0_hi
-        val carry1 = if (unsignedCompare(p1_lo_raw, B) >= 0) 1L else 0L
+        val carry1 = if (unsignedCmp(p1_lo_raw, B) >= 0) 1L else 0L
         val p1_mid = p1_lo_raw and MASK32
         val p1_hi = (p1 ushr 32) + carry1
         // subtract at un2
         var t = un2 - p0_lo
-        borrow = if (unsignedCompare(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32
         // subtract at un3
         t = un3 - p1_mid - borrow
-        borrow = if (unsignedCompare(t, un3) > 0) 1L else 0L; un3 = t and MASK32
+        borrow = if (unsignedCmp(t, un3) > 0) 1L else 0L; un3 = t and MASK32
         // subtract at un4
         t = un4 - p1_hi - borrow
-        borrow = if (unsignedCompare(t, un4) > 0) 1L else 0L; un4 = t and MASK32
+        borrow = if (unsignedCmp(t, un4) > 0) 1L else 0L; un4 = t and MASK32
         if (borrow != 0L) {
             qhat -= 1L
             // add back V aligned
@@ -398,15 +397,15 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
     var q1: Long
     run {
         val u21 = (un3 shl 32) or un2
-        var qhat = divideUnsigned(u21, vn1)
-        var rhat = remainderUnsigned(u21, vn1)
-        if (unsignedCompare(qhat, B) >= 0 ||
-            unsignedCompare(qhat * vn0, (rhat shl 32) + un1) > 0
+        var qhat = unsignedDiv(u21, vn1)
+        var rhat = unsignedMod(u21, vn1)
+        if (unsignedCmp(qhat, B) >= 0 ||
+            unsignedCmp(qhat * vn0, (rhat shl 32) + un1) > 0
         ) {
             qhat -= 1L; rhat += vn1
             if (unsignedLT(rhat, B) &&
-                (unsignedCompare(qhat, B) >= 0 ||
-                        unsignedCompare(qhat * vn0, (rhat shl 32) + un1) > 0)
+                (unsignedCmp(qhat, B) >= 0 ||
+                        unsignedCmp(qhat * vn0, (rhat shl 32) + un1) > 0)
             ) qhat -= 1L
         }
         var borrow = 0L
@@ -415,15 +414,15 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val p0_lo = p0 and MASK32
         val p0_hi = p0 ushr 32
         val p1_lo_raw = (p1 and MASK32) + p0_hi
-        val carry1 = if (unsignedCompare(p1_lo_raw, B) >= 0) 1L else 0L
+        val carry1 = if (unsignedCmp(p1_lo_raw, B) >= 0) 1L else 0L
         val p1_mid = p1_lo_raw and MASK32
         val p1_hi = (p1 ushr 32) + carry1
         var t = un1 - p0_lo
-        borrow = if (unsignedCompare(t, un1) > 0) 1L else 0L; un1 = t and MASK32
+        borrow = if (unsignedCmp(t, un1) > 0) 1L else 0L; un1 = t and MASK32
         t = un2 - p1_mid - borrow
-        borrow = if (unsignedCompare(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32
         t = un3 - p1_hi - borrow
-        borrow = if (unsignedCompare(t, un3) > 0) 1L else 0L; un3 = t and MASK32
+        borrow = if (unsignedCmp(t, un3) > 0) 1L else 0L; un3 = t and MASK32
         if (borrow != 0L) {
             qhat -= 1L
             var carry = 0L
@@ -437,15 +436,15 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
     var q0: Long
     run {
         val u10 = (un2 shl 32) or un1
-        var qhat = divideUnsigned(u10, vn1)
-        var rhat = remainderUnsigned(u10, vn1)
-        if (unsignedCompare(qhat, B) >= 0 ||
-            unsignedCompare(qhat * vn0, (rhat shl 32) + un0) > 0
+        var qhat = unsignedDiv(u10, vn1)
+        var rhat = unsignedMod(u10, vn1)
+        if (unsignedCmp(qhat, B) >= 0 ||
+            unsignedCmp(qhat * vn0, (rhat shl 32) + un0) > 0
         ) {
             qhat -= 1L; rhat += vn1
             if (unsignedLT(rhat, B) &&
-                (unsignedCompare(qhat, B) >= 0 ||
-                        unsignedCompare(qhat * vn0, (rhat shl 32) + un0) > 0)
+                (unsignedCmp(qhat, B) >= 0 ||
+                        unsignedCmp(qhat * vn0, (rhat shl 32) + un0) > 0)
             ) qhat -= 1L
         }
         var borrow = 0L
@@ -454,15 +453,15 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
         val p0_lo = p0 and MASK32
         val p0_hi = p0 ushr 32
         val p1_lo_raw = (p1 and MASK32) + p0_hi
-        val carry1 = if (unsignedCompare(p1_lo_raw, B) >= 0) 1L else 0L
+        val carry1 = if (unsignedCmp(p1_lo_raw, B) >= 0) 1L else 0L
         val p1_mid = p1_lo_raw and MASK32
         val p1_hi = (p1 ushr 32) + carry1
         var t = un0 - p0_lo
-        borrow = if (unsignedCompare(t, un0) > 0) 1L else 0L; un0 = t and MASK32
+        borrow = if (unsignedCmp(t, un0) > 0) 1L else 0L; un0 = t and MASK32
         t = un1 - p1_mid - borrow
-        borrow = if (unsignedCompare(t, un1) > 0) 1L else 0L; un1 = t and MASK32
+        borrow = if (unsignedCmp(t, un1) > 0) 1L else 0L; un1 = t and MASK32
         t = un2 - p1_hi - borrow
-        borrow = if (unsignedCompare(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32
         if (borrow != 0L) {
             qhat -= 1L
             var carry = 0L

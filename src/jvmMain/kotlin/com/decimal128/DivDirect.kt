@@ -4,8 +4,6 @@ import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.GT_HALF
 import com.decimal128.Residue.Companion.HALF
 import com.decimal128.Residue.Companion.LT_HALF
-import java.lang.Long.divideUnsigned
-import java.lang.Long.remainderUnsigned
 
 object DivDirect {
 
@@ -55,28 +53,28 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x3
         val dividend7 = (rem shl 32) or (x3 ushr 32)
-        rem = remainderUnsigned(dividend7, y0)
+        rem = unsignedMod(dividend7, y0)
         // Process lo 32 bits of x3
         val dividend6 = (rem shl 32) or (x3 and MASK32)
-        rem = remainderUnsigned(dividend6, y0)
+        rem = unsignedMod(dividend6, y0)
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        rem = remainderUnsigned(dividend5, y0)
+        rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32)
-        rem = remainderUnsigned(dividend4, y0)
+        rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = remainderUnsigned(dividend3, y0)
+        rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32)
-        rem = remainderUnsigned(dividend2, y0)
+        rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = remainderUnsigned(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        rem = remainderUnsigned(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         return rem
     }
@@ -86,22 +84,22 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        rem = remainderUnsigned(dividend5, y0)
+        rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32)
-        rem = remainderUnsigned(dividend4, y0)
+        rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = remainderUnsigned(dividend3, y0)
+        rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32)
-        rem = remainderUnsigned(dividend2, y0)
+        rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = remainderUnsigned(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        rem = remainderUnsigned(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         return rem
     }
@@ -111,16 +109,16 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = remainderUnsigned(dividend3, y0)
+        rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32)
-        rem = remainderUnsigned(dividend2, y0)
+        rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = remainderUnsigned(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        rem = remainderUnsigned(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         return rem
     }
@@ -130,10 +128,10 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = remainderUnsigned(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        rem = remainderUnsigned(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         return rem
     }
@@ -161,36 +159,36 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x3
         val dividend7 = (rem shl 32) or (x3 ushr 32)
-        val w7 = divideUnsigned(dividend7, y0)
-        rem = remainderUnsigned(dividend7, y0)
+        val w7 = unsignedDiv(dividend7, y0)
+        rem = unsignedMod(dividend7, y0)
         // Process lo 32 bits of x3
         val dividend6 = (rem shl 32) or (x3 and MASK32)
-        val w6 = divideUnsigned(dividend6, y0)
-        rem = remainderUnsigned(dividend6, y0)
+        val w6 = unsignedDiv(dividend6, y0)
+        rem = unsignedMod(dividend6, y0)
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        val w5 = divideUnsigned(dividend5, y0)
-        rem = remainderUnsigned(dividend5, y0)
+        val w5 = unsignedDiv(dividend5, y0)
+        rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32)
-        val w4 = divideUnsigned(dividend4, y0)
-        rem = remainderUnsigned(dividend4, y0)
+        val w4 = unsignedDiv(dividend4, y0)
+        rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        val w3 = divideUnsigned(dividend3, y0)
-        rem = remainderUnsigned(dividend3, y0)
+        val w3 = unsignedDiv(dividend3, y0)
+        rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32)
-        val w2 = divideUnsigned(dividend2, y0)
-        rem = remainderUnsigned(dividend2, y0)
+        val w2 = unsignedDiv(dividend2, y0)
+        rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        val w1 = divideUnsigned(dividend1, y0)
-        rem = remainderUnsigned(dividend1, y0)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        val w0 = divideUnsigned(dividend0, y0)
-        rem = remainderUnsigned(dividend0, y0)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         val q3 = (w7 shl 32) or w6
         val q2 = (w5 shl 32) or w4
@@ -206,28 +204,28 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        val w5 = divideUnsigned(dividend5, y0)
-        rem = remainderUnsigned(dividend5, y0)
+        val w5 = unsignedDiv(dividend5, y0)
+        rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32)
-        val w4 = divideUnsigned(dividend4, y0)
-        rem = remainderUnsigned(dividend4, y0)
+        val w4 = unsignedDiv(dividend4, y0)
+        rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        val w3 = divideUnsigned(dividend3, y0)
-        rem = remainderUnsigned(dividend3, y0)
+        val w3 = unsignedDiv(dividend3, y0)
+        rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32)
-        val w2 = divideUnsigned(dividend2, y0)
-        rem = remainderUnsigned(dividend2, y0)
+        val w2 = unsignedDiv(dividend2, y0)
+        rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        val w1 = divideUnsigned(dividend1, y0)
-        rem = remainderUnsigned(dividend1, y0)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        val w0 = divideUnsigned(dividend0, y0)
-        rem = remainderUnsigned(dividend0, y0)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         val q2 = (w5 shl 32) or w4
         val q1 = (w3 shl 32) or w2
@@ -242,20 +240,20 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        val w3 = divideUnsigned(dividend3, y0)
-        rem = remainderUnsigned(dividend3, y0)
+        val w3 = unsignedDiv(dividend3, y0)
+        rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32)
-        val w2 = divideUnsigned(dividend2, y0)
-        rem = remainderUnsigned(dividend2, y0)
+        val w2 = unsignedDiv(dividend2, y0)
+        rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        val w1 = divideUnsigned(dividend1, y0)
-        rem = remainderUnsigned(dividend1, y0)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        val w0 = divideUnsigned(dividend0, y0)
-        rem = remainderUnsigned(dividend0, y0)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         val q1 = (w3 shl 32) or w2
         val q0 = (w1 shl 32) or w0
@@ -269,12 +267,12 @@ object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        val w1 = divideUnsigned(dividend1, y0)
-        rem = remainderUnsigned(dividend1, y0)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32)
-        val w0 = divideUnsigned(dividend0, y0)
-        rem = remainderUnsigned(dividend0, y0)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = unsignedMod(dividend0, y0)
 
         val q0 = (w1 shl 32) or w0
 

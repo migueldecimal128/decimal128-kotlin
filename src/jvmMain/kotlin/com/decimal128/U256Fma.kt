@@ -432,7 +432,7 @@ object U256Fma {
         y3: Long, y2: Long, y1: Long, y0: Long,
         a3: Long, a2: Long, a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
@@ -440,9 +440,9 @@ object U256Fma {
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
-        val pp01Hi = umulHigh(x0, y1)
+        val pp01Hi = unsignedMulHi(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
@@ -450,11 +450,11 @@ object U256Fma {
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
-        val pp11Hi = umulHigh(x1, y1)
+        val pp11Hi = unsignedMulHi(x1, y1)
         val pp11Lo = x1 * y1
-        val pp02Hi = umulHigh(x0, y2)
+        val pp02Hi = unsignedMulHi(x0, y2)
         val pp02Lo = x0 * y2
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo + a2
@@ -462,13 +462,13 @@ object U256Fma {
             return
         }
         val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
-        val pp12Hi = umulHigh(x1, y2)
+        val pp12Hi = unsignedMulHi(x1, y2)
         val pp12Lo = x1 * y2
-        val pp21Hi = umulHigh(x2, y1)
+        val pp21Hi = unsignedMulHi(x2, y1)
         val pp21Lo = x2 * y1
-        val pp03Hi = umulHigh(x0, y3)
+        val pp03Hi = unsignedMulHi(x0, y3)
         val pp03Lo = x0 * y3
-        val pp30Hi = umulHigh(x3, y0)
+        val pp30Hi = unsignedMulHi(x3, y0)
         val pp30Lo = x3 * y0
 
         if (maxFusedBitLen <= 256) {
@@ -494,7 +494,7 @@ object U256Fma {
         y0: Long,
         a3: Long, a2: Long, a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
@@ -502,7 +502,7 @@ object U256Fma {
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp10Lo + a1
@@ -510,7 +510,7 @@ object U256Fma {
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp10Hi + pp20Lo + a2
@@ -518,7 +518,7 @@ object U256Fma {
             return
         }
         val (carry2, f2) = sumU64(carry1, pp10Hi, pp20Lo, a2)
-        val pp30Hi = umulHigh(x3, y0)
+        val pp30Hi = unsignedMulHi(x3, y0)
         val pp30Lo = x3 * y0
 
         if (maxFusedBitLen <= 256) {
@@ -543,7 +543,7 @@ object U256Fma {
         y1: Long, y0: Long,
         a3: Long, a2: Long, a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
@@ -551,9 +551,9 @@ object U256Fma {
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
-        val pp01Hi = umulHigh(x0, y1)
+        val pp01Hi = unsignedMulHi(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
@@ -561,9 +561,9 @@ object U256Fma {
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
-        val pp11Hi = umulHigh(x1, y1)
+        val pp11Hi = unsignedMulHi(x1, y1)
         val pp11Lo = x1 * y1
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp20Lo + a2
@@ -571,7 +571,7 @@ object U256Fma {
             return
         }
         val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo, a2)
-        val pp21Hi = umulHigh(x2, y1)
+        val pp21Hi = unsignedMulHi(x2, y1)
         val pp21Lo = x2 * y1
 
         if (maxFusedBitLen <= 256) {
@@ -596,7 +596,7 @@ object U256Fma {
         y0: Long,
         a3: Long, a2: Long, a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
@@ -604,7 +604,7 @@ object U256Fma {
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp10Lo + a1
@@ -612,7 +612,7 @@ object U256Fma {
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
-        val pp20Hi = umulHigh(x2, y0)
+        val pp20Hi = unsignedMulHi(x2, y0)
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp10Hi + pp20Lo + a2
@@ -642,7 +642,7 @@ object U256Fma {
         y1: Long, y0: Long,
         a3: Long, a2: Long, a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
@@ -650,9 +650,9 @@ object U256Fma {
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
-        val pp01Hi = umulHigh(x0, y1)
+        val pp01Hi = unsignedMulHi(x0, y1)
         val pp01Lo = x0 * y1
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
@@ -660,7 +660,7 @@ object U256Fma {
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
-        val pp11Hi = umulHigh(x1, y1)
+        val pp11Hi = unsignedMulHi(x1, y1)
         val pp11Lo = x1 * y1
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + a2
@@ -690,7 +690,7 @@ object U256Fma {
         y0: Long,
         a2: Long, a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
@@ -698,7 +698,7 @@ object U256Fma {
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
-        val pp10Hi = umulHigh(x1, y0)
+        val pp10Hi = unsignedMulHi(x1, y0)
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp10Lo + a1
@@ -724,7 +724,7 @@ object U256Fma {
         y0: Long,
         a1: Long, a0: Long
     ) {
-        val pp00Hi = umulHigh(x0, y0)
+        val pp00Hi = unsignedMulHi(x0, y0)
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0

@@ -20,13 +20,13 @@ object U256Compare {
     fun u256UnscaledCompare(x:U256, y:U256) : Int {
         if (x.bitLen != y.bitLen)
             return x.bitLen.compareTo(y.bitLen)
-        val cmp0 = unsignedCompare(x.dw0, y.dw0)
-        val cmp1 = unsignedCompare(x.dw1, y.dw1)
+        val cmp0 = unsignedCmp(x.dw0, y.dw0)
+        val cmp1 = unsignedCmp(x.dw1, y.dw1)
         val cmp10 = if (cmp1 != 0) cmp1 else cmp0
         if (x.bitLen <= 128)
             return cmp10
-        val cmp2 = unsignedCompare(x.dw2, y.dw2)
-        val cmp3 = unsignedCompare(x.dw3, y.dw3)
+        val cmp2 = unsignedCmp(x.dw2, y.dw2)
+        val cmp3 = unsignedCmp(x.dw3, y.dw3)
         val cmp32 = if (cmp3 != 0) cmp3 else cmp2
         val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
         return cmp3210
@@ -36,15 +36,15 @@ object U256Compare {
         require(y.size >= 8)
         val y3 = (y[7].toLong() shl 32) or (y[6].toLong() and MASK32)
         if (x.dw3 != y3)
-            return unsignedCompare(x.dw3, y3)
+            return unsignedCmp(x.dw3, y3)
         val y2 = (y[5].toLong() shl 32) or (y[4].toLong() and MASK32)
         if (x.dw2 != y2)
-            return unsignedCompare(x.dw2, y2)
+            return unsignedCmp(x.dw2, y2)
         val y1 = (y[3].toLong() shl 32) or (y[2].toLong() and MASK32)
         if (x.dw1 != y1)
-            return unsignedCompare(x.dw1, y1)
+            return unsignedCmp(x.dw1, y1)
         val y0 = (y[1].toLong() shl 32) or (y[0].toLong() and MASK32)
-        return unsignedCompare(x.dw0, y0)
+        return unsignedCmp(x.dw0, y0)
     }
 
     fun u256UnscaledEQ(x:U256, y:U256) : Boolean {
@@ -86,25 +86,25 @@ object U256Compare {
     }
 
     private fun _cmp128x64x64(x1: Long, x0: Long, y0: Long, pow10: Long) : Int {
-        val p1 = umulHigh(y0, pow10)
+        val p1 = unsignedMulHi(y0, pow10)
         val p0 = y0 * pow10
 
-        val cmp1 = unsignedCompare(x1, p1)
-        val cmp0 = unsignedCompare(x0, p0)
+        val cmp1 = unsignedCmp(x1, p1)
+        val cmp0 = unsignedCmp(x0, p0)
         val cmp10 = if (cmp1 != 0) cmp1 else cmp0
         return cmp10
     }
 
     private fun _cmp128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long) : Int {
-        val pp00Hi = umulHigh(m0, n0)
+        val pp00Hi = unsignedMulHi(m0, n0)
         val pp00Lo = m0 * n0
         val p0 = pp00Lo
-        val cmp0 = unsignedCompare(x0, p0)
+        val cmp0 = unsignedCmp(x0, p0)
 
-        val pp10Hi = umulHigh(m1, n0)
+        val pp10Hi = unsignedMulHi(m1, n0)
         val pp10Lo = m1 * n0
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-        val cmp1 = unsignedCompare(x1, p1)
+        val cmp1 = unsignedCmp(x1, p1)
         val cmp10 = if (cmp1 != 0) cmp1 else cmp0
         val p2 = carry1 + pp10Hi
         val cmp210 = if (p2 != 0L) -1 else cmp10
@@ -140,18 +140,18 @@ object U256Compare {
     }
 
     private fun _EQ128x64x64(x1: Long, x0: Long, y0: Long, pow10: Long) : Boolean {
-        val p1 = umulHigh(y0, pow10)
+        val p1 = unsignedMulHi(y0, pow10)
         val p0 = y0 * pow10
 
         return ((x1 - p1) or (x0 - p0)) == 0L
     }
 
     private fun _EQ128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long) : Boolean {
-        val pp00Hi = umulHigh(m0, n0)
+        val pp00Hi = unsignedMulHi(m0, n0)
         val pp00Lo = m0 * n0
         val p0 = pp00Lo
 
-        val pp10Hi = umulHigh(m1, n0)
+        val pp10Hi = unsignedMulHi(m1, n0)
         val pp10Lo = m1 * n0
         val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
 

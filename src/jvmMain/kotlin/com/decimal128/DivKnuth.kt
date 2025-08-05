@@ -2,12 +2,10 @@ package com.decimal128
 
 import com.decimal128.U256Compare.u256UnscaledCompare
 import com.decimal128.U256Compare.u256GTOne
-import com.decimal128.U256Set.u256Set
 import com.decimal128.Residue.Companion.EXACT
 import com.decimal128.Residue.Companion.LT_HALF
 import com.decimal128.Residue.Companion.HALF
 import com.decimal128.Residue.Companion.GT_HALF
-import java.lang.Long.*
 
 object DivKnuth {
 
@@ -188,12 +186,12 @@ object DivKnuth {
             //if (hi == 0L && lo < vn_1) // this would short-circuit,
             //    continue               // but probability is astronomically small
             val num = (hi shl 32) or lo
-            var qhat = divideUnsigned(num, vn_1)
-            var rhat = remainderUnsigned(num, vn_1)
+            var qhat = unsignedDiv(num, vn_1)
+            var rhat = unsignedMod(num, vn_1)
 
             // correct estimate
             while ((qhat ushr 32) != 0L ||
-                unsignedCompare(
+                unsignedCmp(
                     qhat * vn_2, (rhat shl 32) + (un[j + n - 2].toLong() and MASK32)
                 ) > 0
             ) {
