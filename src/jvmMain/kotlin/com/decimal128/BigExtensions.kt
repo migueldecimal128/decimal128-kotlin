@@ -70,3 +70,37 @@ fun Decimal.set(bi: BigInteger, ctx: DecimalContext) {
     val bd = BigDecimal(bi, MathContext(70, RoundingMode.HALF_EVEN))
     set(bd, DecimalContext.newDecimal128Context())
 }
+
+fun newDoubleDoubleFromBigInteger(bi: BigInteger): DoubleDouble {
+    val dd = DoubleDouble()
+    dd.setBigInteger(bi)
+    return dd
+}
+
+fun DoubleDouble.setBigInteger(n: BigInteger) {
+    this.hi = 0.0
+    this.lo = 0.0
+    val sign = n.signum()
+    if (sign == 0) {
+        return
+    }
+    val abs   = n.abs()
+    val L     = abs.bitLength()
+    if (L <= 53) {
+        this.hi = sign * abs.toDouble()
+        return
+    }
+    val shift = L - 53
+    val top53 = abs.shiftRight(shift)
+    val m     = top53.toLong() and ((1L shl 53) - 1)
+    val exp   = L - 1
+    val mant  = m and ((1L shl 52) - 1)
+    val bits  = ((if (sign<0)1L else 0L) shl 63) or
+            ((exp+1023).toLong() shl 52) or
+            mant
+    val hi    = Double.fromBits(bits)
+    val rem   = abs.subtract(top53.shiftLeft(shift))
+    val lo0   = sign * rem.toDouble()
+    // final normalization!
+    this.setQuickTwoSum(hi, lo0)
+}

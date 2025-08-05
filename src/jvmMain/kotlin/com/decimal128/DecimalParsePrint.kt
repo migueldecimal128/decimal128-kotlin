@@ -1,7 +1,6 @@
 package com.decimal128
 
 import java.lang.Math.unsignedMultiplyHigh
-import java.nio.charset.StandardCharsets
 import kotlin.math.max
 import kotlin.math.min
 

@@ -1,7 +1,5 @@
 package com.decimal128
 
-import java.math.BigInteger
-
 class DoubleDouble(a: Double, b: Double) {
     constructor() : this(0.0, 0.0)
     var hi = a
@@ -25,20 +23,6 @@ class DoubleDouble(a: Double, b: Double) {
             val lo = (a - (hi - z)) + (b - z)
             return DoubleDouble(hi, lo)
         }
-
-        fun newFromBigInteger(n: BigInteger): DoubleDouble {
-            val dd = DoubleDouble()
-            dd.setBigInteger(n)
-            return dd
-        }
-/*
-        fun newFromCoeff(c: Coeff): DoubleDouble {
-            val dd = DoubleDouble()
-            dd.setCoeff(c)
-            return dd;
-        }
-
- */
 
         fun newAdd(x: DoubleDouble, y:DoubleDouble): DoubleDouble {
             val s = newTwoSum(x.hi, y.hi)
@@ -396,34 +380,6 @@ class DoubleDouble(a: Double, b: Double) {
         val hi2 = q1 + q2
         lo = q2 - (hi2 - q1)
         hi = hi2
-    }
-
-    fun setBigInteger(n: BigInteger) {
-        hi = 0.0
-        lo = 0.0
-        val sign = n.signum()
-        if (sign == 0) {
-            return
-        }
-        val abs   = n.abs()
-        val L     = abs.bitLength()
-        if (L <= 53) {
-            hi = sign * abs.toDouble()
-            return
-        }
-        val shift = L - 53
-        val top53 = abs.shiftRight(shift)
-        val m     = top53.toLong() and ((1L shl 53) - 1)
-        val exp   = L - 1
-        val mant  = m and ((1L shl 52) - 1)
-        val bits  = ((if (sign<0)1L else 0L) shl 63) or
-                ((exp+1023).toLong() shl 52) or
-                mant
-        val hi    = Double.fromBits(bits)
-        val rem   = abs.subtract(top53.shiftLeft(shift))
-        val lo0   = sign * rem.toDouble()
-        // final normalization!
-        setQuickTwoSum(hi, lo0)
     }
 
     fun mutate2x() {
