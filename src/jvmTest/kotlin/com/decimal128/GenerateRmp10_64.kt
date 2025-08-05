@@ -9,7 +9,7 @@ import java.lang.Math.min
 class GenerateRmp10_64 {
     companion object {
 
-        val verbose = true
+        val verbose = false
 
         // there can be errors here, but we are specifically testing and this will do for starters
         val rho = Math.log(10.0) / Math.log(2.0)

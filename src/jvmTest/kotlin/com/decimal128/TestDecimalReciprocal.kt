@@ -8,7 +8,7 @@ import java.util.*
 
 class TestDecimalReciprocal{
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bd: BigDecimal) {
         constructor(str: String) : this(BigDecimal(str))

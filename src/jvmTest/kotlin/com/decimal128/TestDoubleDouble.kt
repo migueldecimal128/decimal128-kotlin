@@ -5,7 +5,7 @@ import java.math.BigInteger
 
 class TestDoubleDouble {
 
-    val verbose = true
+    val verbose = false
 
     inner class TC(val biA: BigInteger, val biB: BigInteger, val biC: BigInteger, val biD: BigInteger) {
         constructor(strA: String, strB: String, strC: String, strD: String) : this(BigInteger(strA), BigInteger(strB), BigInteger(strC), BigInteger(strD))

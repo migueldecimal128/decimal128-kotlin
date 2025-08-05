@@ -6,7 +6,7 @@ import java.math.BigInteger.ONE
 
 class TestCalcDigitLenFromBitLen {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testCalcDigitLenFromBitLen() {

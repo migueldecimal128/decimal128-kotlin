@@ -11,7 +11,7 @@ val FIVE = BigInteger.valueOf(5L)
 
 class TestIsTwoFiveSmooth {
 
-    val verbose = true
+    val verbose = false
 
     val maxPow5 = 111
     val POWERS5 = LongArray(4 * maxPow5)

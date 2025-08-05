@@ -5,7 +5,7 @@ import java.math.BigDecimal
 
 class TestDecimalQuantize {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdX: BigDecimal, val bdY: BigDecimal, val ctx: DecimalContext) {
         constructor(strX: String, strY: String) :

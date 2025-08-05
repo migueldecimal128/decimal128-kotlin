@@ -6,7 +6,7 @@ import java.math.BigInteger
 
 class TestU256ToFromDoubleDouble {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val str: String) {
         val coeff = run { val coeff = U256(); coeff.u256Set(str); coeff}

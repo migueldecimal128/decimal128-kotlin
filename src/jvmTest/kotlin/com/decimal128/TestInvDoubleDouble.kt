@@ -10,7 +10,7 @@ class TestInvDoubleDouble{
 
     // FIXME this test is incomplete/broken
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bd: BigDecimal) {
         constructor(str: String) : this(BigDecimal(str))

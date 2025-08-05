@@ -6,7 +6,7 @@ import java.math.BigInteger
 
 class TestU256ToFromDouble {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val str: String) {
         val d = str.toDouble()
