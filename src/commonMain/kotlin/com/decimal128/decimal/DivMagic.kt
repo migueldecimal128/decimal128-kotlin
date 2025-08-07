@@ -1,0 +1,174 @@
+package com.decimal128.decimal
+
+object DivMagic {
+
+    data class Magic(val m: Long, val add: Boolean, val s: Int)
+
+    /**
+     * Compute magic number and shift for unsigned division by d (1 ≤ d < 2^64),
+     * using your Car arbitrary-precision type instead of BigInteger.
+     */
+    fun magicu64(d: Long): Magic {
+        require(d != 0L) { "divisor must be nonzero" }
+        val N = 64
+
+        // 1) build Car version of 2^N and of the unsigned divisor
+        val carD       = Car.newFromLong(d)
+
+        // 2) anc = 2^N − 1 − ((2^N − 1) mod d)
+        val carN1      = intArrayOf(-1, -1)
+        val anc        = Car.newSub(carN1, Car.newMod(carN1, carD))
+
+        // 3) initialize p, q1/r1 for anc and q2/r2 for d
+        var p          = (N - 1).toLong()
+        val twoPowN1   = Car.newFromLong(Long.MIN_VALUE) // Car.ONE.shiftLeft(N - 1)         // 2^(N−1)
+        var (q1, r1)   = Car.newDivMod(twoPowN1, anc)
+        var (q2, r2)   = Car.newDivMod(twoPowN1, carD)
+        lateinit var delta: IntArray
+
+        // 4) loop exactly as in the BigInteger version
+        do {
+            p += 1
+
+            // double q1/r1 mod anc
+            q1 = Car.newOrMutateShiftLeft(q1, 1)
+            r1 = Car.newOrMutateShiftLeft(r1, 1)
+            if (Car.compare(r1, anc) >= 0) {
+                Car.mutateAdd(q1, 1)
+                Car.mutateSub(r1, anc)
+            }
+
+            // double q2/r2 mod biD
+            q2 = Car.newOrMutateShiftLeft(q2, 1)
+            r2 = Car.newOrMutateShiftLeft(r2, 1)
+            if (Car.compare(r2, carD) >= 0) {
+                Car.mutateAdd(q2, 1)
+                Car.mutateSub(r2, carD)
+            }
+
+            // prepare loop‐exit test
+            delta = Car.newSub(carD, r2)
+        } while (Car.LT(q1, delta) || (Car.EQ(q1, delta) && Car.isZero(r1)))
+
+        // 5) extract the “true” multiplier and shift
+        val Mtrue   = Car.newAdd(q2, 1)
+        val addFlag = Car.testBit(Mtrue, N)                    // bit-64 set?
+        val m_mod   = Car.toLong(Mtrue)           // low 64 bits
+        val s       = (p - N).toInt()
+
+        return Magic(m_mod, addFlag, s)
+    }
+
+
+    private var initialized = false
+    val MAGIC_FLAG_AND_SHIFT_POW10 = ByteArray(MAGIC_POW10_MAXX)
+
+    fun initializeMagicPow10_64() {
+        if (initialized)
+            return
+        initialized = true
+        POW10[MAGIC_POW10_M_OFFSET + 0] = 1
+        MAGIC_FLAG_AND_SHIFT_POW10[0] = Byte.MIN_VALUE
+        for (k in 1..<MAGIC_POW10_MAXX) {
+            val d     = POW10[k]
+            val magic = magicu64(d)
+            POW10[MAGIC_POW10_M_OFFSET + k]   = magic.m
+            MAGIC_FLAG_AND_SHIFT_POW10[k] =
+                (if (magic.add) 0x80 or magic.s else magic.s).toByte()
+        }
+    }
+
+    init {
+        initializeMagicPow10_64()
+    }
+
+
+    // Magic division allows a 64-bit dividend and a 64-bit divisor
+    // However, on a 64-bit machine it cannot be used for multi-word
+    // division beyond 32-bit limbs because a 32-bit remainder has to
+    // get shifted up.
+    // 64-bit limbs would require a 128-bit divide operation
+    // Therefore, with a restriction of 32-bit limbs, Barrett Reduction
+    // is smaller, faster, cleaner than Magic division
+    //
+    // Magic is still the right thing to do for small divisors, since
+    // it has the 64-bit range in the divisor ... compared with Barrett
+    // 32-bit divisor
+
+    fun magicDivPow10_64(z: U256, x0: Long, pow10: Int): Residue {
+        check(pow10 in 0..<MAGIC_POW10_MAXX)
+        check(initialized)
+        val remainder = magicDivModPow10_64(z, x0, pow10)
+        val residue = Residue.residueFromRemainderPow10(remainder, pow10)
+        return residue
+    }
+
+    private fun magicDivModPow10_64(z: U256, x0: Long, pow10: Int): Long {
+        when {
+            pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
+                val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
+                val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
+                val denom = POW10[pow10]
+                val s = flagAndShift and 0x3F
+                val correctionMask = (flagAndShift shr 31).toLong()
+
+                val carryAmount = 1L shl -s
+                val pHiUncorrected = unsignedMulHi(x0, m)
+                val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
+                val carry = if (unsignedLT(pHiCorrected, pHiUncorrected)) carryAmount else 0L
+                val qHat = pHiCorrected ushr s
+                val q0 = carry + qHat
+
+                val reconstructedHi = unsignedMulHi(q0, denom)
+                val reconstructedLo = q0 * denom
+                val rHat = x0 - reconstructedLo
+                val remainder = rHat + (-reconstructedHi and denom)
+
+                z.u256Set64(q0)
+                return remainder
+            }
+            pow10 == 0 -> {
+                z.u256Set64(x0)
+                return 0L
+            }
+            else ->
+                throw RuntimeException()
+        }
+    }
+
+    private fun magicDivModPow10_64(
+        q: U256,
+        x0: Long,
+        pow10: Int,
+        m: Long,
+        flagAndShift: Long
+    ): Long {
+        //val biX0 = BigInteger.valueOf(x0 ushr 32).shiftLeft(32).or(BigInteger.valueOf(x0 and 0xFFFFFFFFL))
+        val denom = POW10[pow10]
+        val s = flagAndShift.toInt() and 0x3F
+        val qPotentialCarry = 1L shl -s
+        val addMask = flagAndShift shr 63
+        val pHiUncorrected = unsignedMulHi(x0, m)
+        val pLo = x0 * m
+        val pHiCorrected = pHiUncorrected + (x0 and addMask)
+        val qCarryAdd = if (unsignedLT(pHiCorrected, pHiUncorrected)) qPotentialCarry else 0L
+        val qHat = pHiCorrected ushr s
+        val q0 = qCarryAdd + qHat
+
+        // NOTE ...
+        // this multiply will overflow only when Q0 is very large and denom is very small
+        // for denom = 10**1 the magic correction flag is not set, the multiply cannot overflow
+        // for denom = 10**2 the magic correction flag is set.
+        // with x0==2**64-1 and denom==100 the multiply stays in 64 bits
+        // therefore correction is not ever needed ...
+        // ... AS LONG AS THIS IS NEVER USED FOR ANYTHING SMALLER THAN 10**2 == 100
+        //val reconstructedHi = umulHigh(q0, denom)
+        val reconstructedLo = q0 * denom
+        val rHat = x0 - reconstructedLo
+        val r = rHat // + (-reconstructedHi and x0)
+
+        q.u256Set64(q0)
+        return r
+    }
+
+}
