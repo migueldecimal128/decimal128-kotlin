@@ -1,9 +1,11 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.CarTransducer.carFromBi
-import com.decimal128.decimal.CarTransducer.carFromString
-import com.decimal128.decimal.CarTransducer.carToBi
-import com.decimal128.decimal.CarTransducer.carToString
+import com.decimal128.cardinal.Car
+import com.decimal128.cardinal.CarTransducer
+import com.decimal128.cardinal.CarTransducer.carFromBi
+import com.decimal128.cardinal.CarTransducer.carFromString
+import com.decimal128.cardinal.CarTransducer.carToBi
+import com.decimal128.cardinal.CarTransducer.carToString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigInteger

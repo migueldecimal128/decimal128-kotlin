@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.cardinal.Car
+
 @Suppress("NOTHING_TO_INLINE")
 object U256Set {
 

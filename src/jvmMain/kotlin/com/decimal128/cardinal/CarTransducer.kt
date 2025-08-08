@@ -1,5 +1,6 @@
-package com.decimal128.decimal
+package com.decimal128.cardinal
 
+import com.decimal128.decimal.unsignedCmp
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.math.max

@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.cardinal.Car
+
 object DivMagic {
 
     data class Magic(val m: Long, val add: Boolean, val s: Int)

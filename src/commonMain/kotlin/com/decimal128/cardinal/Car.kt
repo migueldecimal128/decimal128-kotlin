@@ -1,5 +1,8 @@
-package com.decimal128.decimal
+package com.decimal128.cardinal
 
+import com.decimal128.decimal.unsignedCmp
+import com.decimal128.decimal.unsignedDiv
+import com.decimal128.decimal.unsignedMod
 import kotlin.math.min
 import kotlin.math.max
 
@@ -86,6 +89,39 @@ object Car {
         return x
     }
 
+    fun newAdd(x: IntArray, l: Long): IntArray {
+        val newBitLen = max(bitLen(x), (64 - l.countLeadingZeroBits())) + 1
+        val z = newCopyWithBitLen(x, newBitLen)
+        return mutateAdd(z, l)
+    }
+
+    fun newOrMutateAdd(x: IntArray, l: Long): IntArray {
+        val newBitLen = max(bitLen(x), (64 - l.countLeadingZeroBits())) + 1
+        val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
+        return mutateAdd(z, l)
+    }
+
+    fun mutateAdd(x: IntArray, l: Long): IntArray {
+        if (x.size > 0) {
+            val t0 = U32(x[0]) + (l and 0xFFFF_FFFFL)
+            x[0] = t0.toInt()
+            if (x.size > 1) {
+                var carry = t0 ushr 32
+                val t1 = U32(x[1]) + (l ushr 32) + carry
+                x[1] = t1.toInt()
+                carry = t1 ushr 32
+                var i = 2
+                while (carry > 0L && i < x.size) {
+                    val t = U32(x[i]) + carry
+                    x[i++] = t.toInt()
+                    carry = t ushr 32
+                    check(carry <= 1L)
+                }
+            }
+        }
+        return x
+    }
+
     fun newAdd(x: IntArray, y: IntArray): IntArray {
         val newBitLen = max(bitLen(x), bitLen(y)) + 1
         val z = newCopyWithBitLen(x, newBitLen)
@@ -131,6 +167,28 @@ object Car {
         return x
     }
 
+    fun newSub(x: IntArray, l: Long) = mutateSub(newCopy(x), l)
+
+    fun mutateSub(x: IntArray, l: Long): IntArray {
+        if (x.size > 0) {
+            val t0 = U32(x[0]) - (l and 0xFFFF_FFFFL)
+            x[0] = t0.toInt()
+            if (x.size > 1) {
+                var borrow = t0 ushr 63
+                val t1 = U32(x[1]) - (l ushr 32) - borrow
+                x[1] = t1.toInt()
+                borrow = t1 ushr 63
+                var i = 2
+                while (borrow > 0L && i < x.size) {
+                    val t = U32(x[i]) - borrow
+                    x[i++] = t.toInt()
+                    borrow = t ushr 63
+                }
+            }
+        }
+        return x
+    }
+
     fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x), y)
 
     fun mutateSub(x: IntArray, y: IntArray): IntArray {
@@ -153,14 +211,22 @@ object Car {
     }
 
     fun newMul(x: IntArray, n: Int): IntArray {
-        val newBitLen = bitLen(x) + (32 - n.countLeadingZeroBits())
+        val bitLenX = bitLen(x)
+        val bitLenN = 32 - n.countLeadingZeroBits()
+        if (bitLenX == 0 || bitLenN == 0)
+            return EMPTY_CAR
+        val newBitLen = bitLenX + bitLenN
         val prod = newCopyWithBitLen(x, newBitLen)
         mutateMul(prod, n)
         return prod
     }
 
     fun newOrMutateMul(x: IntArray, n: Int): IntArray {
-        val newBitLen = bitLen(x) + (32 - n.countLeadingZeroBits())
+        val bitLenX = bitLen(x)
+        val bitLenN = 32 - n.countLeadingZeroBits()
+        if (bitLenX == 0 || bitLenN == 0)
+            return EMPTY_CAR
+        val newBitLen = bitLenX + bitLenN
         val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
         return mutateAdd(z, n)
     }
@@ -174,6 +240,43 @@ object Car {
             carry = t ushr 32
         }
         return x
+    }
+
+    fun newMul(x: IntArray, l: Long): IntArray {
+        val lo = l and 0xFFFF_FFFFL
+        val hi = l ushr 32
+        if (hi == 0L)
+            return newMul(x, lo.toInt())
+        val xBitLen = bitLen(x)
+        if (xBitLen == 0 || l == 0L)
+            return EMPTY_CAR
+        val newBitLen = bitLen(x) + (64 - l.countLeadingZeroBits())
+        val z = newWithBitLen(newBitLen)
+
+        var t = U32(x[0]) * lo
+        z[0] = t.toInt()
+        var carry        = t ushr 32
+
+        t = U32(x[0]) * hi
+        var prevHighLow   = t and 0xFFFF_FFFFL
+        var prevHighCarry = t ushr 32
+
+        // i = 1…n-1: do both halves in one pass
+        for (i in 1 until z.size) {
+            val xi = if (i < x.size) U32(x[i]) else 0L
+
+            // 1) combine previous high-half, previous low-half carry, and xi * a
+            val s = prevHighLow + carry + xi * lo
+            z[i] = s.toInt()
+            carry = s ushr 32
+
+            // 2) compute this limb’s high-half product for next iteration
+            t = xi * hi + prevHighCarry
+            prevHighLow   = t and 0xFFFF_FFFFL
+            prevHighCarry = t ushr 32
+        }
+
+        return z
     }
 
     fun newMul(x: IntArray, y: IntArray): IntArray {
@@ -374,6 +477,19 @@ object Car {
         }
     }
 
+    fun compare(x: IntArray, y: Long): Int {
+        val limbLen = nonZeroLimbLen(x)
+        return when {
+            (limbLen > 2) -> 1
+            (limbLen == 2) -> {
+                val xT = (x[1].toLong() shl 32) or U32(x[0])
+                unsignedCmp(xT, y)
+            }
+            (limbLen == 1) -> if ((y ushr 32) == 0L) unsignedCmp(x[0], y.toInt()) else -1
+            else -> if (y == 0L) 0 else -1
+        }
+    }
+
     // returns a 32 bit value as a Long
     fun mutateDivideRemainder(x: IntArray, n: Int): Long {
         if (n == 0)
@@ -396,6 +512,12 @@ object Car {
         return q
     }
 
+    fun newDiv(x: IntArray, l: Long): IntArray {
+        val lo = l.toInt()
+        val hi = (l ushr 32).toInt()
+        return if (hi == 0) newDiv(x, lo) else newDiv(x, intArrayOf(lo, hi))
+    }
+
     fun newDiv(x: IntArray, y: IntArray): IntArray {
         val n = nonZeroLimbLen(y)
         if (n < 2)
@@ -410,6 +532,18 @@ object Car {
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
         return q
+    }
+
+    fun newMod(x: IntArray, n: Int): IntArray {
+        val q = newCopy(x)
+        val rem = mutateDivideRemainder(q, n)
+        return if (rem == 0L) EMPTY_CAR else intArrayOf(rem.toInt())
+    }
+
+    fun newMod(x: IntArray, l: Long): IntArray {
+        val lo = l.toInt()
+        val hi = (l ushr 32).toInt()
+        return if (hi == 0) newMod(x, lo) else newMod(x, intArrayOf(lo, hi))
     }
 
     fun newMod(x: IntArray, y: IntArray): IntArray {
