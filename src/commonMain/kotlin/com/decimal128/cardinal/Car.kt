@@ -50,9 +50,9 @@ object Car {
         return if (x.isEmpty()) 0 else x[0]
     }
 
-    fun newFromLong(n: Long): IntArray = intArrayOf(n.toInt(), (n ushr 32).toInt())
+    fun newFromInt(n: Int): IntArray = if (n != 0) intArrayOf(n) else EMPTY_CAR
 
-    fun newFromInt(n: Int): IntArray = intArrayOf(n)
+    fun newFromLong(l: Long): IntArray = if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else EMPTY_CAR
 
     fun nonZeroLimbLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
@@ -62,7 +62,7 @@ object Car {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun newWithBitLen(bitLen: Int) = IntArray((bitLen + 0x1F) ushr 5)
+    inline fun newWithBitLen(bitLen: Int) = if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else EMPTY_CAR
 
     fun newAdd(x: IntArray, n: Int): IntArray {
         val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
@@ -156,58 +156,86 @@ object Car {
     fun newSub(x: IntArray, n: Int) = mutateSub(newCopy(x), n)
 
     fun mutateSub(x: IntArray, n: Int): IntArray {
+        var orAccumulator = 0
         var borrow = U32(n)
         for (i in x.indices) {
             val t = U32(x[i]) - borrow
-            x[i] = t.toInt()
+            val xi = t.toInt()
+            x[i] = xi
+            orAccumulator = orAccumulator or xi
             borrow = t ushr 63
             if (borrow == 0L)
                 break
         }
-        return x
+        return if (orAccumulator != 0 && borrow == 0L)
+            x
+        else
+            EMPTY_CAR
     }
 
     fun newSub(x: IntArray, l: Long) = mutateSub(newCopy(x), l)
 
     fun mutateSub(x: IntArray, l: Long): IntArray {
-        if (x.size > 0) {
+        var orAccumulator = 0
+        var borrow = 0L
+        if (x.isNotEmpty()) {
             val t0 = U32(x[0]) - (l and 0xFFFF_FFFFL)
-            x[0] = t0.toInt()
+            val x0 = t0.toInt()
+            x[0] = x0
+            orAccumulator = orAccumulator or x0
             if (x.size > 1) {
-                var borrow = t0 ushr 63
+                borrow = t0 ushr 63
                 val t1 = U32(x[1]) - (l ushr 32) - borrow
-                x[1] = t1.toInt()
+                val x1 = t1.toInt()
+                x[1] = x1
+                orAccumulator = orAccumulator or x1
                 borrow = t1 ushr 63
                 var i = 2
                 while (borrow > 0L && i < x.size) {
                     val t = U32(x[i]) - borrow
-                    x[i++] = t.toInt()
+                    val xi = t.toInt()
+                    x[i++] = xi
+                    orAccumulator = orAccumulator or xi
                     borrow = t ushr 63
                 }
             }
         }
-        return x
+        return if (orAccumulator != 0 && borrow == 0L)
+            x
+        else
+            EMPTY_CAR
     }
 
     fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x), y)
 
     fun mutateSub(x: IntArray, y: IntArray): IntArray {
+        var orAccumulator = 0
         var borrow = 0L
         val min = min(x.size, y.size)
         var i = 0
         while (i < min) {
             val t = U32(x[i]) - U32(y[i]) - borrow
-            x[i] = t.toInt()
+            val xi = t.toInt()
+            x[i] = xi
+            orAccumulator = orAccumulator or xi
             borrow = t ushr 63
             check(borrow in 0L..1L)
             ++i
         }
         while (borrow == 1L && i < x.size) {
             val t = U32(x[i]) - borrow
-            x[i] = t.toInt()
+            val xi = t.toInt()
+            x[i] = xi
+            orAccumulator = orAccumulator or xi
             borrow = t ushr 63
+            ++i
         }
-        return x
+        while (borrow == 0L && i < y.size)
+            borrow = y[i++].toLong()
+        return if (orAccumulator != 0 && borrow == 0L)
+            x
+        else
+            EMPTY_CAR
     }
 
     fun newMul(x: IntArray, n: Int): IntArray {
@@ -299,9 +327,12 @@ object Car {
     fun newCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
 
     fun newCopy(src: IntArray, newWordLen: Int): IntArray {
-        val dst = IntArray(newWordLen)
-        copy(dst, src)
-        return dst
+        if (newWordLen > 0) {
+            val dst = IntArray(newWordLen)
+            copy(dst, src)
+            return dst
+        }
+        return EMPTY_CAR
     }
 
     fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
@@ -322,26 +353,27 @@ object Car {
     }
 
     fun newShiftRight(x: IntArray, bitCount: Int): IntArray {
+        require(bitCount >= 0)
         val newBitLen = bitLen(x) - bitCount
+        if (newBitLen <= 0)
+            return EMPTY_CAR
         val newWordLen = (newBitLen + 0x1F) ushr 5
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
         val z = IntArray(max(newWordLen, 0))
-        if (newWordLen > 0) {
-            if (innerShift != 0) {
-                val iLast = z.size - 1
-                for (i in 0..<iLast)
-                    z[i] = (x[i + wordShift + 1] shl -innerShift) or (x[i + wordShift] ushr innerShift)
-                val srcIndex = iLast + wordShift + 1
-                z[iLast] = (
-                        if (srcIndex < x.size)
-                            (x[iLast + wordShift + 1] shl -innerShift)
-                        else
-                            0) or (x[iLast + wordShift] ushr innerShift)
-            } else {
-                for (i in z.indices)
-                    z[i] = x[i + wordShift]
-            }
+        if (innerShift != 0) {
+            val iLast = z.size - 1
+            for (i in 0..<iLast)
+                z[i] = (x[i + wordShift + 1] shl -innerShift) or (x[i + wordShift] ushr innerShift)
+            val srcIndex = iLast + wordShift + 1
+            z[iLast] = (
+                    if (srcIndex < x.size)
+                        (x[iLast + wordShift + 1] shl -innerShift)
+                    else
+                        0) or (x[iLast + wordShift] ushr innerShift)
+        } else {
+            for (i in z.indices)
+                z[i] = x[i + wordShift]
         }
         return z
     }
@@ -349,6 +381,7 @@ object Car {
     fun mutateShiftRight(x: IntArray, bitCount: Int) = mutateShiftRight(x, nonZeroLimbLen(x), bitCount)
 
     fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
+        require(bitCount >= 0)
         check(xLen <= x.size)
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
@@ -663,7 +696,9 @@ object Car {
         return 0
     }
 
-    fun toString(car: IntArray): String {
+    fun toString(car: IntArray) = toString(false, car)
+
+    fun toString(isNegative: Boolean, car: IntArray): String {
         val bitLen = bitLen(car)
         if (bitLen <= 64) {
             if (bitLen == 0)
@@ -674,9 +709,11 @@ object Car {
             return t.toString()
         }
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
+        val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
         val t = newCopy(car)
         val bytes = ByteArray(maxDigitLen)
-        var ib = 0
+        bytes[0] = '-'.code.toByte()
+        var ib = if (isNegative) 1 else 0
         do {
             val chunk = mutateDivideRemainder(t, 1_000_000_000).toInt()
             ib = renderChunkReversed(chunk, 9, bytes, ib)
@@ -685,9 +722,9 @@ object Car {
         var j = 0
         var k = ib - 1
         while (j < k) {
-            val t = bytes[j]
+            val t0 = bytes[j]
             bytes[j] = bytes[k]
-            bytes[k] = t
+            bytes[k] = t0
             ++j
             --k
         }
@@ -707,10 +744,13 @@ object Car {
         return ib
     }
 
-    fun newFromString(str: String): IntArray {
+    fun newFromString(str: String) = newFromString(false, str)
+
+    fun newFromString(isNegative: Boolean, str: String): IntArray {
+        var i = if (isNegative) 1 else 0
         val strLen = str.length
         when {
-            (strLen == 0) ->
+            (strLen - i <= 0) ->
                 throw IllegalArgumentException("cannot parse empty string")
             //str.startsWith("0x") -> {
             //    return newFromHexString(str)
@@ -719,7 +759,6 @@ object Car {
         var totalDigitCount = 0
         var accumulator = 0
         var accumulatorDigitCount = 0
-        var i = 0
         while (i < strLen && str[i] == '0')
             ++i
 
