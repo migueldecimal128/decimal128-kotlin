@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.cardinal.Car
+import com.decimal128.hugeint.Car
 
 object DivMagic {
 

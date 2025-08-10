@@ -1,4 +1,4 @@
-package com.decimal128.cardinal
+package com.decimal128.hugeint
 
 import com.decimal128.decimal.unsignedCmp
 import com.decimal128.decimal.unsignedDiv
@@ -7,13 +7,11 @@ import kotlin.math.min
 import kotlin.math.max
 
 
-// CAR == Cardinal ARray
-// the word 'cardinal' has fallen out of use, but is an unsigned integer
-// ... the "cardinality" of a set
+// magia == MAGnitude IntArray
 
-object Car {
+object Magia {
 
-    val EMPTY_CAR = IntArray(0)
+    val ZERO = IntArray(0)
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
@@ -65,9 +63,9 @@ object Car {
         return if (x.isEmpty()) 0 else x[0]
     }
 
-    fun newFromInt(n: Int): IntArray = if (n != 0) intArrayOf(n) else EMPTY_CAR
+    fun newFromInt(n: Int): IntArray = if (n != 0) intArrayOf(n) else ZERO
 
-    fun newFromLong(l: Long): IntArray = if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else EMPTY_CAR
+    fun newFromLong(l: Long): IntArray = if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else ZERO
 
     fun nonZeroLimbLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
@@ -77,7 +75,7 @@ object Car {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun newWithBitLen(bitLen: Int) = if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else EMPTY_CAR
+    inline fun newWithBitLen(bitLen: Int) = if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
 
     fun newAdd(x: IntArray, n: Int): IntArray {
         val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
@@ -185,7 +183,7 @@ object Car {
         return if (orAccumulator != 0 && borrow == 0L)
             x
         else
-            EMPTY_CAR
+            ZERO
     }
 
     fun newSub(x: IntArray, l: Long) = mutateSub(newCopy(x), l)
@@ -218,7 +216,7 @@ object Car {
         return if (orAccumulator != 0 && borrow == 0L)
             x
         else
-            EMPTY_CAR
+            ZERO
     }
 
     fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x), y)
@@ -226,6 +224,8 @@ object Car {
     fun mutateSub(x: IntArray, y: IntArray): IntArray {
         var orAccumulator = 0
         var borrow = 0L
+        if (y.isEmpty())
+            return x
         val min = min(x.size, y.size)
         var i = 0
         while (i < min) {
@@ -250,14 +250,14 @@ object Car {
         return if (orAccumulator != 0 && borrow == 0L)
             x
         else
-            EMPTY_CAR
+            ZERO
     }
 
     fun newMul(x: IntArray, n: Int): IntArray {
         val bitLenX = bitLen(x)
         val bitLenN = 32 - n.countLeadingZeroBits()
         if (bitLenX == 0 || bitLenN == 0)
-            return EMPTY_CAR
+            return ZERO
         val newBitLen = bitLenX + bitLenN
         val prod = newCopyWithBitLen(x, newBitLen)
         mutateMul(prod, n)
@@ -268,7 +268,7 @@ object Car {
         val bitLenX = bitLen(x)
         val bitLenN = 32 - n.countLeadingZeroBits()
         if (bitLenX == 0 || bitLenN == 0)
-            return EMPTY_CAR
+            return ZERO
         val newBitLen = bitLenX + bitLenN
         val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
         return mutateAdd(z, n)
@@ -292,7 +292,7 @@ object Car {
             return newMul(x, lo.toInt())
         val xBitLen = bitLen(x)
         if (xBitLen == 0 || l == 0L)
-            return EMPTY_CAR
+            return ZERO
         val newBitLen = bitLen(x) + (64 - l.countLeadingZeroBits())
         val z = newWithBitLen(newBitLen)
 
@@ -347,7 +347,7 @@ object Car {
             copy(dst, src)
             return dst
         }
-        return EMPTY_CAR
+        return ZERO
     }
 
     fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
@@ -371,7 +371,7 @@ object Car {
         require(bitCount >= 0)
         val newBitLen = bitLen(x) - bitCount
         if (newBitLen <= 0)
-            return EMPTY_CAR
+            return ZERO
         val newWordLen = (newBitLen + 0x1F) ushr 5
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
@@ -557,7 +557,7 @@ object Car {
     fun newDiv(x: IntArray, n: Int): IntArray {
         val q = newCopy(x)
         mutateDivideRemainder(q, n)
-        return if (nonZeroLimbLen(q) > 0) q else EMPTY_CAR
+        return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
     fun newDiv(x: IntArray, l: Long): IntArray {
@@ -572,20 +572,20 @@ object Car {
             return newDiv(x, y[0])
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return EMPTY_CAR
+            return ZERO
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
         val r = null
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
-        return if (nonZeroLimbLen(q) > 0) q else EMPTY_CAR
+        return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
     fun newMod(x: IntArray, n: Int): IntArray {
         val q = newCopy(x)
         val rem = mutateDivideRemainder(q, n)
-        return if (rem == 0L) EMPTY_CAR else intArrayOf(rem.toInt())
+        return if (rem == 0L) ZERO else intArrayOf(rem.toInt())
     }
 
     fun newMod(x: IntArray, l: Long): IntArray {
@@ -597,7 +597,7 @@ object Car {
     fun newMod(x: IntArray, y: IntArray): IntArray {
         val divMod = newDivMod(x, y)
         val rem = divMod[1]
-        return if (nonZeroLimbLen(rem) > 0) rem else EMPTY_CAR
+        return if (nonZeroLimbLen(rem) > 0) rem else ZERO
     }
 
     fun newDivMod(x: IntArray, y: IntArray): Array<IntArray> {
@@ -608,8 +608,8 @@ object Car {
             var div = newCopy(x)
             val rem = mutateDivideRemainder(div, y[0])
             if (nonZeroLimbLen(div) == 0)
-                div = EMPTY_CAR
-            return arrayOf(div, if (rem != 0L) intArrayOf(rem.toInt()) else EMPTY_CAR)
+                div = ZERO
+            return arrayOf(div, if (rem != 0L) intArrayOf(rem.toInt()) else ZERO)
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
@@ -620,7 +620,7 @@ object Car {
         val r = IntArray(m + 1)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
-        return arrayOf(if (nonZeroLimbLen(q) > 0) q else EMPTY_CAR, if (nonZeroLimbLen(r) > 0) r else EMPTY_CAR)
+        return arrayOf(if (nonZeroLimbLen(q) > 0) q else ZERO, if (nonZeroLimbLen(r) > 0) r else ZERO)
     }
 
     /**
@@ -780,7 +780,7 @@ object Car {
 
         val bitLen = ((strLen - i) * 13607 + 4095) ushr 12
         if (bitLen == 0)
-            return EMPTY_CAR
+            return ZERO
         val z = newWithBitLen(bitLen)
 
         while (i < strLen) {
@@ -811,7 +811,7 @@ object Car {
 
     fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
         if (len <= 0)
-            return EMPTY_CAR
+            return ZERO
         val car = IntArray((len + 3) ushr 2)
         var ib = off + len - 1
         var iw = 0

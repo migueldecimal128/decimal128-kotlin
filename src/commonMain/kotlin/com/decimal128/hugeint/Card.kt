@@ -1,4 +1,4 @@
-package com.decimal128.cardinal
+package com.decimal128.hugeint
 
 class Card private constructor(val car: IntArray) {
 

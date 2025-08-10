@@ -1,8 +1,8 @@
-package com.decimal128.cardinal
+package com.decimal128.hugeint
 
-import com.decimal128.cardinal.HugeIntExtensions.EQ
-import com.decimal128.cardinal.HugeIntExtensions.toBigInteger
-import com.decimal128.cardinal.HugeIntExtensions.toHugeInt
+import com.decimal128.hugeint.HugeIntExtensions.EQ
+import com.decimal128.hugeint.HugeIntExtensions.toBigInteger
+import com.decimal128.hugeint.HugeIntExtensions.toHugeInt
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -23,6 +23,9 @@ class TestHugeInt {
 
     @Test
     fun testProblemChild() {
+        testAdd(BigInteger.ZERO, BigInteger.ZERO)
+        testAdd(BigInteger("-4418548"), BigInteger.ZERO)
+        testSub(BigInteger("-4418548"), BigInteger.ZERO)
         testRoundTripShift(BigInteger("-485"))
         testRoundTripShift(BigInteger("20000000000000000000000000"))
         testRoundTripStr("-999999999")
@@ -105,7 +108,7 @@ class TestHugeInt {
 
     @Test
     fun testArithmetic() {
-        for (i in 0..<1000) {
+        for (i in 0..<10000) {
             val biA = randBi()
             testAdd(biA, biA)
             testSub(biA, biA)
@@ -133,9 +136,13 @@ class TestHugeInt {
     fun testAdd(biA: BigInteger, biB: BigInteger) {
         val hiA = biA.toHugeInt()
         val hiB = biB.toHugeInt()
-        val hiSum = hiA + hiB
+        if (verbose)
+            println("biA:$biA hiA:$hiA   biB:$biB hiB:$hiB")
 
+        val hiSum = hiA + hiB
         val biSum = biA + biB
+        if (! hiSum.EQ(biSum))
+            println("biSum:$biSum hiSum:$hiSum")
 
         assert(hiSum.EQ(biSum))
         if (biSum.signum() == 0)
@@ -146,8 +153,12 @@ class TestHugeInt {
 
         val hiA = biA.toHugeInt()
         val hiB = biB.toHugeInt()
+        if (verbose)
+            println("biA:$biA hiA:$hiA   biB:$biB hiB:$hiB")
         val hiDiff = hiA - hiB
         val biDiff = biA - biB
+        if (! hiDiff.EQ(biDiff))
+            println("biDiff:$biDiff hiDiff:$hiDiff")
         assert(hiDiff.EQ(biDiff))
         if (biDiff.signum() == 0)
             assert(hiDiff === HugeInt.ZERO)

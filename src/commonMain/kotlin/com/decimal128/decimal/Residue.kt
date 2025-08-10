@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.cardinal.Car
+import com.decimal128.hugeint.Car
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO

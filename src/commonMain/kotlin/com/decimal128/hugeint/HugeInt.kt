@@ -1,14 +1,13 @@
-package com.decimal128.cardinal
+package com.decimal128.hugeint
 
-import com.decimal128.decimal.NAN_DIV_BY_ZERO
 import kotlin.math.absoluteValue
 
-class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
+class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
 
 
     companion object {
         // all zero values *must* point to this instance of ZERO
-        val ZERO = HugeInt(false, Car.EMPTY_CAR)
+        val ZERO = HugeInt(false, Magia.ZERO)
 
         fun fromInt(n: Int): HugeInt = when {
             n > 0 -> HugeInt(false, intArrayOf(n))
@@ -24,8 +23,8 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         fun fromULong(ul: ULong) = if (ul != 0uL) HugeInt(true, intArrayOf(ul.toInt(), (ul shr 32).toInt())) else ZERO
         fun fromString(str: String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
-            val car = Car.newFromString(sign, str)
-            return if (car.isNotEmpty()) HugeInt(sign, Car.newFromString(sign, str)) else ZERO
+            val magia = Magia.newFromString(sign, str)
+            return if (magia.isNotEmpty()) HugeInt(sign, Magia.newFromString(sign, str)) else ZERO
         }
         fun fromBigEndianBytes(bytes: ByteArray) = fromBigEndianBytes(bytes, bytes.size)
         fun fromBigEndianBytes(bytes: ByteArray, len: Int): HugeInt {
@@ -37,16 +36,16 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
                 ++ib
             if (ib == len)
                 return if (signMask == 0) ZERO else HugeInt(true, intArrayOf(1))
-            val car: IntArray = Car.newFromBigEndianBytes(signMask, bytes, ib, len-ib)
+            val magia: IntArray = Magia.newFromBigEndianBytes(signMask, bytes, ib, len-ib)
             if (signMask != 0) {
                 var carry = 1L
-                for (i in car.indices) {
-                    val t = (car[i].inv().toLong() and 0xFFFF_FFFFL) + carry
-                    car[i] = t.toInt()
+                for (i in magia.indices) {
+                    val t = (magia[i].inv().toLong() and 0xFFFF_FFFFL) + carry
+                    magia[i] = t.toInt()
                     carry = t ushr 32
                 }
             }
-            return HugeInt(signMask != 0, car)
+            return HugeInt(signMask != 0, magia)
         }
     }
 
@@ -54,10 +53,10 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     fun isNotZero() = this !== ZERO
     fun isNegative() = sign
     fun signum() = if (sign) -1 else if (isZero()) 0 else 1
-    fun magnitudeBitLen() = Car.bitLen(car)
+    fun magnitudeBitLen() = Magia.bitLen(magia)
     fun isMagnitudePowerOfTwo(): Boolean {
         var bitSeen = false
-        for (w in this.car) {
+        for (w in this.magia) {
             if (w == 0)
                 continue
             if ((w and (w - 1)) != 0)
@@ -85,20 +84,20 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     }
 
     fun fitsInt(): Boolean {
-        val bitLen = Car.bitLen(car)
-        return bitLen <= 31 || sign && bitLen == 32 && car[0] == Int.MIN_VALUE
+        val bitLen = Magia.bitLen(magia)
+        return bitLen <= 31 || sign && bitLen == 32 && magia[0] == Int.MIN_VALUE
     }
-    fun fitsUInt() = !sign && Car.bitLen(car) <= 32
+    fun fitsUInt() = !sign && Magia.bitLen(magia) <= 32
 
     fun fitsLong(): Boolean {
-        val bitLen = Car.bitLen(car)
-        return bitLen <= 63 || sign && bitLen == 64 && car[0] == 0 && car[1] == Int.MIN_VALUE
+        val bitLen = Magia.bitLen(magia)
+        return bitLen <= 63 || sign && bitLen == 64 && magia[0] == 0 && magia[1] == Int.MIN_VALUE
     }
-    fun fitsULong() = !sign && Car.bitLen(car) <= 64
+    fun fitsULong() = !sign && Magia.bitLen(magia) <= 64
 
     fun toInt(): Int {
-        val bitLen = Car.bitLen(car)
-        val magnitude = car[0]
+        val bitLen = Magia.bitLen(magia)
+        val magnitude = magia[0]
         return if (!sign) {
             if (bitLen <= 31) magnitude else Int.MAX_VALUE
         } else {
@@ -107,8 +106,8 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     }
 
     fun toUInt(): UInt {
-        val bitLen = Car.bitLen(car)
-        val magnitude = car[0]
+        val bitLen = Magia.bitLen(magia)
+        val magnitude = magia[0]
         return if (!sign) {
             if (bitLen <= 32) magnitude.toUInt() else UInt.MAX_VALUE
         } else {
@@ -117,11 +116,11 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     }
 
     fun toLong(): Long {
-        val bitLen = Car.bitLen(car)
-        val magnitude = when (car.size) {
+        val bitLen = Magia.bitLen(magia)
+        val magnitude = when (magia.size) {
             0 -> 0L
-            1 -> car[0].toLong() and 0xFFFF_FFFFL
-            else -> (car[1].toLong() shl 32) or (car[0].toLong() and 0xFFFF_FFFFL)
+            1 -> magia[0].toLong() and 0xFFFF_FFFFL
+            else -> (magia[1].toLong() shl 32) or (magia[0].toLong() and 0xFFFF_FFFFL)
         }
         return if (!sign) {
             if (bitLen <= 63) magnitude else Long.MAX_VALUE
@@ -131,11 +130,11 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     }
 
     fun toULong(): ULong {
-        val bitLen = Car.bitLen(car)
-        val magnitude = when (car.size) {
+        val bitLen = Magia.bitLen(magia)
+        val magnitude = when (magia.size) {
             0 -> 0L
-            1 -> car[0].toLong() and 0xFFFF_FFFFL
-            else -> (car[1].toLong() shl 32) or (car[0].toLong() and 0xFFFF_FFFFL)
+            1 -> magia[0].toLong() and 0xFFFF_FFFFL
+            else -> (magia[1].toLong() shl 32) or (magia[0].toLong() and 0xFFFF_FFFFL)
         }
         return if (!sign) {
             if (bitLen <= 64) magnitude.toULong() else ULong.MAX_VALUE
@@ -144,21 +143,25 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         }
     }
 
-    // note that I am sharing the car with negate
-    fun negate() = if (isNotZero()) HugeInt(!sign, car) else ZERO
-    fun abs() = if (sign) HugeInt(false, car) else this
+    // note that I am sharing the magia with negate and abs
+    fun negate() = if (isNotZero()) HugeInt(!sign, magia) else ZERO
+    fun abs() = if (sign) HugeInt(false, magia) else this
 
     private fun addSubImpl(isSub: Boolean, other: HugeInt): HugeInt {
+        if (other === ZERO)
+            return this
+        if (this === ZERO)
+            return if (isSub) other.negate() else other
         val otherSign = other.sign xor isSub
         if (this.sign == otherSign)
-            return HugeInt(this.sign, Car.newAdd(this.car, other.car))
+            return HugeInt(this.sign, Magia.newAdd(this.magia, other.magia))
         val cmp = this.magnitudeCompareTo(other)
         if (cmp == 0)
             return ZERO
         return if (cmp < 0)
-            HugeInt(otherSign, Car.newSub(other.car, this.car))
+            HugeInt(otherSign, Magia.newSub(other.magia, this.magia))
         else
-            HugeInt(sign, Car.newSub(this.car, other.car))
+            HugeInt(sign, Magia.newSub(this.magia, other.magia))
     }
 
     private fun addSubImpl(isSub: Boolean, n: Int): HugeInt {
@@ -170,14 +173,14 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     private fun addSubImpl(isSub: Boolean, un: UInt): HugeInt {
         val otherSign = false
         if (this.sign == otherSign)
-            return HugeInt(this.sign, Car.newAdd(this.car, un.toInt()))
+            return HugeInt(this.sign, Magia.newAdd(this.magia, un.toInt()))
         val cmp = this.magnitudeCompareTo(un)
         if (cmp == 0)
             return ZERO
         return if (cmp > 0) {
-            HugeInt(sign, Car.newSub(this.car, un.toInt()))
+            HugeInt(sign, Magia.newSub(this.magia, un.toInt()))
         } else {
-            HugeInt(otherSign, intArrayOf(un.toInt() - car[0]))
+            HugeInt(otherSign, intArrayOf(un.toInt() - magia[0]))
         }
     }
 
@@ -190,16 +193,16 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     private fun addSubImpl(isSub: Boolean, ul: ULong): HugeInt {
         val otherSign = false
         if (this.sign == otherSign)
-            return HugeInt(this.sign, Car.newAdd(this.car, ul.toLong()))
+            return HugeInt(this.sign, Magia.newAdd(this.magia, ul.toLong()))
         val cmp = this.magnitudeCompareTo(ul)
         if (cmp == 0)
             return ZERO
         return if (cmp > 0) {
-            HugeInt(sign, Car.newSub(this.car, ul.toLong()))
+            HugeInt(sign, Magia.newSub(this.magia, ul.toLong()))
         } else {
             val thisMag = this.toULong()
             val diff = ul - thisMag
-            HugeInt(otherSign, Car.newFromLong(diff.toLong()))
+            HugeInt(otherSign, Magia.newFromLong(diff.toLong()))
         }
     }
 
@@ -217,13 +220,13 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
 
     operator fun times(other: HugeInt): HugeInt {
         return if (isNotZero() && other.isNotZero())
-            HugeInt(this.sign xor other.sign, Car.newMul(this.car, other.car))
+            HugeInt(this.sign xor other.sign, Magia.newMul(this.magia, other.magia))
         else
             ZERO
     }
     operator fun times(n: Int): HugeInt {
         return if (isNotZero() && n != 0)
-            HugeInt(this.sign xor (n < 0), Car.newMul(this.car, n.absoluteValue))
+            HugeInt(this.sign xor (n < 0), Magia.newMul(this.magia, n.absoluteValue))
         else
             ZERO
     }
@@ -231,17 +234,17 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         return if (isNotZero() && un != 0u)
             ZERO
         else
-            HugeInt(this.sign, Car.newMul(this.car, un.toInt()))
+            HugeInt(this.sign, Magia.newMul(this.magia, un.toInt()))
     }
     operator fun times(l: Long): HugeInt {
         return if (isNotZero() && l != 0L)
-            HugeInt(this.sign xor (l < 0), Car.newMul(this.car, l.absoluteValue))
+            HugeInt(this.sign xor (l < 0), Magia.newMul(this.magia, l.absoluteValue))
         else
             ZERO
     }
     operator fun times(ul: ULong): HugeInt {
         return if (isNotZero() && ul != 0uL)
-            HugeInt(this.sign, Car.newMul(this.car, ul.toLong()))
+            HugeInt(this.sign, Magia.newMul(this.magia, ul.toLong()))
         else
             ZERO
     }
@@ -250,7 +253,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (other.isZero())
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Car.newDiv(this.car, other.car)
+            val quot = Magia.newDiv(this.magia, other.magia)
             if (quot.isNotEmpty())
                 return HugeInt(this.sign xor other.sign, quot)
         }
@@ -260,7 +263,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (n == 0)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Car.newDiv(this.car, n.absoluteValue)
+            val quot = Magia.newDiv(this.magia, n.absoluteValue)
             if (quot.isNotEmpty())
                 return HugeInt(this.sign xor (n < 0), quot)
         }
@@ -270,7 +273,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (un == 0u)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Car.newDiv(this.car, un.toInt())
+            val quot = Magia.newDiv(this.magia, un.toInt())
             if (quot.isNotEmpty())
                 return HugeInt(this.sign, quot)
         }
@@ -280,7 +283,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (l == 0L)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Car.newDiv(this.car, l.absoluteValue)
+            val quot = Magia.newDiv(this.magia, l.absoluteValue)
             if (quot.isNotEmpty())
                 return HugeInt(this.sign xor (l < 0), quot)
         }
@@ -290,7 +293,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
         if (isZero()) {
-            val quot = Car.newDiv(this.car, ul.toLong())
+            val quot = Magia.newDiv(this.magia, ul.toLong())
             if (quot.isNotEmpty())
                 return HugeInt(this.sign, quot)
         }
@@ -301,7 +304,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (other.isZero())
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Car.newMod(this.car, other.car)
+            val rem = Magia.newMod(this.magia, other.magia)
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
@@ -311,7 +314,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (n == 0)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Car.newMod(this.car, n.absoluteValue)
+            val rem = Magia.newMod(this.magia, n.absoluteValue)
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
@@ -321,7 +324,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (un == 0u)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Car.newMod(this.car, un.toInt())
+            val rem = Magia.newMod(this.magia, un.toInt())
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
@@ -331,7 +334,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (l == 0L)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Car.newMod(this.car, l.absoluteValue)
+            val rem = Magia.newMod(this.magia, l.absoluteValue)
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
@@ -341,7 +344,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Car.newMod(this.car, ul.toLong())
+            val rem = Magia.newMod(this.magia, ul.toLong())
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
@@ -349,37 +352,37 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
     }
 
     infix fun ushr(bitCount: Int): HugeInt {
-        val car = Car.newShiftRight(this.car, bitCount)
-        return if (car.isNotEmpty()) HugeInt(this.sign, car) else ZERO
+        val magia = Magia.newShiftRight(this.magia, bitCount)
+        return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
     }
 
     infix fun shr(bitCount: Int): HugeInt {
         if (! sign)
             return ushr(bitCount)
-        val roundDown = Car.testAnyBitInLowerN(this.car, bitCount)
-        var car = Car.newShiftRight(this.car, bitCount)
+        val roundDown = Magia.testAnyBitInLowerN(this.magia, bitCount)
+        var magia = Magia.newShiftRight(this.magia, bitCount)
         if (roundDown)
-            car = Car.newOrMutateAdd(car, 1)
-        return if (car.isNotEmpty()) HugeInt(this.sign, car) else ZERO
+            magia = Magia.newOrMutateAdd(magia, 1)
+        return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
     }
 
     infix fun shl(bitCount: Int): HugeInt {
         return if (isNotZero())
-            HugeInt(this.sign, Car.newShiftLeft(this.car, bitCount))
+            HugeInt(this.sign, Magia.newShiftLeft(this.magia, bitCount))
         else
             ZERO
     }
 
-    fun magnitudeCompareTo(other: HugeInt): Int = Car.compare(this.car, other.car)
-    fun magnitudeCompareTo(n: Int): Int = Car.compare(this.car, n)
-    fun magnitudeCompareTo(un: UInt): Int = Car.compare(this.car, un.toInt())
-    fun magnitudeCompareTo(l: Long): Int = Car.compare(this.car, l)
-    fun magnitudeCompareTo(ul: ULong): Int = Car.compare(this.car, ul.toLong())
+    fun magnitudeCompareTo(other: HugeInt): Int = Magia.compare(this.magia, other.magia)
+    fun magnitudeCompareTo(n: Int): Int = Magia.compare(this.magia, n)
+    fun magnitudeCompareTo(un: UInt): Int = Magia.compare(this.magia, un.toInt())
+    fun magnitudeCompareTo(l: Long): Int = Magia.compare(this.magia, l)
+    fun magnitudeCompareTo(ul: ULong): Int = Magia.compare(this.magia, ul.toLong())
 
     fun compareTo(other: HugeInt): Int {
         if (this.sign != other.sign)
             return if (this.sign) -1 else 1
-        val cmp = Car.compare(this.car, other.car)
+        val cmp = Magia.compare(this.magia, other.magia)
         return if (this.sign) cmp else -cmp
     }
 
@@ -387,37 +390,37 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         if (this.sign != (n < 0))
             return if (this.sign) -1 else 1
         val mag = if (n < 0) -n else n
-        val cmp = Car.compare(this.car, mag)
+        val cmp = Magia.compare(this.magia, mag)
         return if (this.sign) cmp else -cmp
     }
 
     fun compareTo(un: UInt): Int {
         if (this.sign)
             return -1
-        return Car.compare(this.car, un.toInt())
+        return Magia.compare(this.magia, un.toInt())
     }
 
     fun compareTo(l: Long): Int {
         if (this.sign != (l < 0))
             return if (this.sign) -1 else 1
         val mag = if (l < 0) -l else l
-        val cmp = Car.compare(this.car, mag)
+        val cmp = Magia.compare(this.magia, mag)
         return if (this.sign) cmp else -cmp
     }
 
     fun compareTo(ul: ULong): Int {
         if (this.sign)
             return -1
-        return Car.compare(this.car, ul.toLong())
+        return Magia.compare(this.magia, ul.toLong())
     }
 
     override fun equals(other: Any?): Boolean {
         return ((other is HugeInt) &&
                 (this.sign == other.sign) &&
-                Car.EQ(this.car, other.car))
+                Magia.EQ(this.magia, other.magia))
     }
 
-    override fun toString() = Car.toString(this.sign, this.car)
+    override fun toString() = Magia.toString(this.sign, this.magia)
 
     fun toBigEndianByteArray(): ByteArray {
         val byteLen = calc2sComplementByteLength()
@@ -445,8 +448,8 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         var i = 0
         val complementMask = if (sign) -1 else 0
         bytes[0] = complementMask.toByte()
-        while (remaining > 0 && i < car.size) {
-            var w = car[i] xor complementMask
+        while (remaining > 0 && i < magia.size) {
+            var w = magia[i] xor complementMask
             var j = 4
             do {
                 bytes[dest--] = w.toByte()

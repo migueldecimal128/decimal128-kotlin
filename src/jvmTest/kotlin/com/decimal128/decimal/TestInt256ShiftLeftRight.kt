@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.cardinal.Car
+import com.decimal128.hugeint.Car
 import com.decimal128.decimal.U256Set.u256Set
 import com.decimal128.decimal.U256Set.u256SetShiftLeft
 import com.decimal128.decimal.U256Set.u256SetShiftRight

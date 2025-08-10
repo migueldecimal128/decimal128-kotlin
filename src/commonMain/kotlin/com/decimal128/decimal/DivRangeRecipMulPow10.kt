@@ -2,7 +2,7 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.cardinal.Car
+import com.decimal128.hugeint.Car
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul4
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul3
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul2

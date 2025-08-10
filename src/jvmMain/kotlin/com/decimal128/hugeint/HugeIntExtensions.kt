@@ -1,9 +1,6 @@
-package com.decimal128.cardinal
+package com.decimal128.hugeint
 
-import com.decimal128.decimal.unsignedCmp
-import java.math.BigDecimal
 import java.math.BigInteger
-import kotlin.math.max
 
 
 object HugeIntExtensions {
