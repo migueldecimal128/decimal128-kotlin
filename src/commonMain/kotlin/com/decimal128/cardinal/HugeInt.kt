@@ -7,6 +7,7 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
 
 
     companion object {
+        // all zero values *must* point to this instance of ZERO
         val ZERO = HugeInt(false, Car.EMPTY_CAR)
 
         fun fromInt(n: Int): HugeInt = when {
@@ -26,12 +27,63 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
             val car = Car.newFromString(sign, str)
             return if (car.isNotEmpty()) HugeInt(sign, Car.newFromString(sign, str)) else ZERO
         }
+        fun fromBigEndianBytes(bytes: ByteArray) = fromBigEndianBytes(bytes, bytes.size)
+        fun fromBigEndianBytes(bytes: ByteArray, len: Int): HugeInt {
+            if (len == 0 || len > bytes.size)
+                return ZERO
+            val signMask = bytes[0].toInt() shr 7 // 0 or 0xFFFF_FFFF
+            var ib = 0
+            while (ib < len && bytes[ib].toInt() == signMask)
+                ++ib
+            if (ib == len)
+                return if (signMask == 0) ZERO else HugeInt(true, intArrayOf(1))
+            val car: IntArray = Car.newFromBigEndianBytes(signMask, bytes, ib, len-ib)
+            if (signMask != 0) {
+                var carry = 1L
+                for (i in car.indices) {
+                    val t = (car[i].inv().toLong() and 0xFFFF_FFFFL) + carry
+                    car[i] = t.toInt()
+                    carry = t ushr 32
+                }
+            }
+            return HugeInt(signMask != 0, car)
+        }
     }
 
     fun isZero() = this === ZERO
     fun isNotZero() = this !== ZERO
     fun isNegative() = sign
     fun signum() = if (sign) -1 else if (isZero()) 0 else 1
+    fun magnitudeBitLen() = Car.bitLen(car)
+    fun isMagnitudePowerOfTwo(): Boolean {
+        var bitSeen = false
+        for (w in this.car) {
+            if (w == 0)
+                continue
+            if ((w and (w - 1)) != 0)
+                return false
+            if (bitSeen)
+                return false
+            bitSeen = true
+        }
+        return bitSeen
+    }
+
+    fun bitLengthBigIntegerStyle(): Int {
+        val magBitLen = magnitudeBitLen()
+        val isNegPowerOfTwo = sign && isMagnitudePowerOfTwo()
+        val bitLengthBigIntegerStyle = magBitLen - if (isNegPowerOfTwo) 1 else 0
+        return bitLengthBigIntegerStyle
+    }
+
+    fun calc2sComplementByteLength(): Int {
+        if (isZero())
+            return 1
+        val bitLen2sComplement = bitLengthBigIntegerStyle() + 1
+        val byteLength = (bitLen2sComplement + 7) ushr 3
+        return byteLength
+    }
+
     fun fitsInt(): Boolean {
         val bitLen = Car.bitLen(car)
         return bitLen <= 31 || sign && bitLen == 32 && car[0] == Int.MIN_VALUE
@@ -91,6 +143,10 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
             0uL
         }
     }
+
+    // note that I am sharing the car with negate
+    fun negate() = if (isNotZero()) HugeInt(!sign, car) else ZERO
+    fun abs() = if (sign) HugeInt(false, car) else this
 
     private fun addSubImpl(isSub: Boolean, other: HugeInt): HugeInt {
         val otherSign = other.sign xor isSub
@@ -296,6 +352,17 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         val car = Car.newShiftRight(this.car, bitCount)
         return if (car.isNotEmpty()) HugeInt(this.sign, car) else ZERO
     }
+
+    infix fun shr(bitCount: Int): HugeInt {
+        if (! sign)
+            return ushr(bitCount)
+        val roundDown = Car.testAnyBitInLowerN(this.car, bitCount)
+        var car = Car.newShiftRight(this.car, bitCount)
+        if (roundDown)
+            car = Car.newOrMutateAdd(car, 1)
+        return if (car.isNotEmpty()) HugeInt(this.sign, car) else ZERO
+    }
+
     infix fun shl(bitCount: Int): HugeInt {
         return if (isNotZero())
             HugeInt(this.sign, Car.newShiftLeft(this.car, bitCount))
@@ -344,6 +411,61 @@ class HugeInt private constructor(val sign: Boolean, val car: IntArray) {
         return Car.compare(this.car, ul.toLong())
     }
 
+    override fun equals(other: Any?): Boolean {
+        return ((other is HugeInt) &&
+                (this.sign == other.sign) &&
+                Car.EQ(this.car, other.car))
+    }
+
     override fun toString() = Car.toString(this.sign, this.car)
+
+    fun toBigEndianByteArray(): ByteArray {
+        val byteLen = calc2sComplementByteLength()
+        val bytes = ByteArray(byteLen)
+        val magBitLen = magnitudeBitLen()
+        val magByteLen = (magBitLen + 7) ushr 3
+        writeBigEndianBytes(bytes, byteLen - magByteLen, magByteLen)
+        return bytes
+    }
+
+    fun toBigEndianByteArray(bytes: ByteArray): Int {
+        val byteLen = calc2sComplementByteLength()
+        if (bytes.size < byteLen)
+            throw IllegalArgumentException("ByteArray too small")
+        val magBitLen = magnitudeBitLen()
+        val magByteLen = (magBitLen + 7) ushr 3
+        writeBigEndianBytes(bytes, byteLen - magByteLen, magByteLen)
+        return byteLen
+    }
+
+    private fun writeBigEndianBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
+        val last = offset + magByteLen - 1
+        var dest = last
+        var remaining = magByteLen
+        var i = 0
+        val complementMask = if (sign) -1 else 0
+        bytes[0] = complementMask.toByte()
+        while (remaining > 0 && i < car.size) {
+            var w = car[i] xor complementMask
+            var j = 4
+            do {
+                bytes[dest--] = w.toByte()
+                w = w ushr 8
+                --remaining
+                --j
+            } while (remaining > 0 && j > 0)
+            ++i
+        }
+        if (sign) {
+            var carry = 1
+            var k = last
+            while (carry > 0 && k >= 0) {
+                val t = (bytes[k].toInt() and 0xFF) + carry
+                bytes[k] = t.toByte()
+                carry = t ushr 8
+                --k
+            }
+        }
+    }
 
 }

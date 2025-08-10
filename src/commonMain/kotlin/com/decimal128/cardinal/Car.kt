@@ -38,6 +38,21 @@ object Car {
         return (word and bitMask) != 0
     }
 
+    fun testAnyBitInLowerN(x: IntArray, bitCount: Int): Boolean {
+        val lastBitIndex = bitCount - 1
+        val lastWordIndex = lastBitIndex ushr 5
+        for (i in 0..<lastWordIndex) {
+            if (i == x.size)
+                return false
+            if (x[i] != 0)
+                return true
+        }
+        if (lastWordIndex == x.size)
+            return false
+        val bitMask = -1 ushr (0x1F - (lastBitIndex and 0x1F))
+        return (x[lastWordIndex] and bitMask) != 0
+    }
+
     fun toLong(x: IntArray): Long {
         return when (x.size) {
             0 -> 0
@@ -542,7 +557,7 @@ object Car {
     fun newDiv(x: IntArray, n: Int): IntArray {
         val q = newCopy(x)
         mutateDivideRemainder(q, n)
-        return q
+        return if (nonZeroLimbLen(q) > 0) q else EMPTY_CAR
     }
 
     fun newDiv(x: IntArray, l: Long): IntArray {
@@ -557,14 +572,14 @@ object Car {
             return newDiv(x, y[0])
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return IntArray(1)
+            return EMPTY_CAR
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
         val r = null
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
-        return q
+        return if (nonZeroLimbLen(q) > 0) q else EMPTY_CAR
     }
 
     fun newMod(x: IntArray, n: Int): IntArray {
@@ -582,15 +597,19 @@ object Car {
     fun newMod(x: IntArray, y: IntArray): IntArray {
         val divMod = newDivMod(x, y)
         val rem = divMod[1]
-        return rem
+        return if (nonZeroLimbLen(rem) > 0) rem else EMPTY_CAR
     }
 
     fun newDivMod(x: IntArray, y: IntArray): Array<IntArray> {
         val n = nonZeroLimbLen(y)
-        if (n < 2) {
-            val div = newCopy(x)
+        if (n <= 1) {
+            if (n == 0)
+                throw ArithmeticException("div by zero")
+            var div = newCopy(x)
             val rem = mutateDivideRemainder(div, y[0])
-            return arrayOf(div, intArrayOf(rem.toInt()))
+            if (nonZeroLimbLen(div) == 0)
+                div = EMPTY_CAR
+            return arrayOf(div, if (rem != 0L) intArrayOf(rem.toInt()) else EMPTY_CAR)
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
@@ -601,7 +620,7 @@ object Car {
         val r = IntArray(m + 1)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
-        return arrayOf(q, r)
+        return arrayOf(if (nonZeroLimbLen(q) > 0) q else EMPTY_CAR, if (nonZeroLimbLen(r) > 0) r else EMPTY_CAR)
     }
 
     /**
@@ -700,26 +719,23 @@ object Car {
 
     fun toString(isNegative: Boolean, car: IntArray): String {
         val bitLen = bitLen(car)
-        if (bitLen <= 64) {
+        if (bitLen < 2) {
             if (bitLen == 0)
                 return "0"
-            val lo = car[0].toULong() and 0xFFFF_FFFFuL
-            val hi = if (bitLen <= 32) 0uL else car[1].toULong() shl 32
-            val t = hi or lo
-            return t.toString()
+            return if (isNegative) "-1" else "1"
         }
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
         val t = newCopy(car)
-        val bytes = ByteArray(maxDigitLen)
+        val bytes = ByteArray(maxSignedLen)
         bytes[0] = '-'.code.toByte()
-        var ib = if (isNegative) 1 else 0
-        do {
+        var j = if (isNegative) 1 else 0
+        var ib = j
+        while (compare(t, 1_000_000_000) >= 0) {
             val chunk = mutateDivideRemainder(t, 1_000_000_000).toInt()
             ib = renderChunkReversed(chunk, 9, bytes, ib)
-        } while (compare(t, 1_000_000_000) >= 0)
+        }
         ib = renderChunkReversed(t[0], 1, bytes, ib)
-        var j = 0
         var k = ib - 1
         while (j < k) {
             val t0 = bytes[j]
@@ -763,8 +779,9 @@ object Car {
             ++i
 
         val bitLen = ((strLen - i) * 13607 + 4095) ushr 12
-        val wordLen = (bitLen + 0x1F) ushr 5
-        val z = IntArray(wordLen)
+        if (bitLen == 0)
+            return EMPTY_CAR
+        val z = newWithBitLen(bitLen)
 
         while (i < strLen) {
             val ch = str[i++]
@@ -790,6 +807,35 @@ object Car {
             mutateAdd(mutateMul(z, pow10), accumulator)
         }
         return z
+    }
+
+    fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
+        if (len <= 0)
+            return EMPTY_CAR
+        val car = IntArray((len + 3) ushr 2)
+        var ib = off + len - 1
+        var iw = 0
+        var remaining = len
+        while (remaining >= 4) {
+            val b3 = bytes[ib - 3].toInt() and 0xFF
+            val b2 = bytes[ib - 2].toInt() and 0xFF
+            val b1 = bytes[ib - 1].toInt() and 0xFF
+            val b0 = bytes[ib - 0].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            car[iw++] = w
+            ib -= 4
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            val b3 = prefix and 0xFF
+            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else prefix) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else prefix) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            car[iw++] = w
+            check(iw == car.size)
+        }
+        return car
     }
 
 }
