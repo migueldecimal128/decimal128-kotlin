@@ -412,6 +412,15 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
     }
 
+    fun sqr(): HugeInt {
+        if (this.isNotZero()) {
+            check(Magia.nonZeroLimbLen(this.magia) > 0)
+            val magiaSqr = Magia.newSqr(this.magia)
+            return HugeInt(false, magiaSqr)
+        }
+        return ZERO
+    }
+
     infix fun ushr(bitCount: Int): HugeInt {
         val magia = Magia.newShiftRight(this.magia, bitCount)
         return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
@@ -447,33 +456,23 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return if (this.sign) cmp else -cmp
     }
 
-    fun compareTo(n: Int): Int {
-        if (this.sign != (n < 0))
+    fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
+    fun compareTo(un: UInt) = compareToHelper(false, un.toULong())
+    fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
+    fun compareTo(ul: ULong) = compareToHelper(false, ul)
+
+    private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
+        if (this.sign != ulSign)
             return if (this.sign) -1 else 1
-        val mag = if (n < 0) -n else n
-        val cmp = Magia.compare(this.magia, mag)
-        return if (this.sign) cmp else -cmp
+        val cmp = Magia.compare(this.magia, ulMag.toLong())
+        return if (! ulSign) cmp else -cmp
     }
 
-    fun compareTo(un: UInt): Int {
-        if (this.sign)
-            return -1
-        return Magia.compare(this.magia, un.toInt())
-    }
-
-    fun compareTo(l: Long): Int {
-        if (this.sign != (l < 0))
-            return if (this.sign) -1 else 1
-        val mag = if (l < 0) -l else l
-        val cmp = Magia.compare(this.magia, mag)
-        return if (this.sign) cmp else -cmp
-    }
-
-    fun compareTo(ul: ULong): Int {
-        if (this.sign)
-            return -1
-        return Magia.compare(this.magia, ul.toLong())
-    }
+    fun EQ(other: HugeInt): Boolean = (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
+    fun EQ(n: Int): Boolean = compareTo(n) == 0
+    fun EQ(un: UInt): Boolean = compareTo(un) == 0
+    fun EQ(l: Long): Boolean = compareTo(l) == 0
+    fun EQ(ul: ULong): Boolean = compareTo(ul) == 0
 
     override fun equals(other: Any?): Boolean {
         return ((other is HugeInt) &&

@@ -23,6 +23,8 @@ class TestHugeInt {
 
     @Test
     fun testProblemChild() {
+        testSqr(BigInteger("12345678901234567890123456789012345678901234567890"))
+        testSqr(BigInteger("99999999999"))
         testAdd(BigInteger.ZERO, BigInteger.ZERO)
         testAdd(BigInteger("-4418548"), BigInteger.ZERO)
         testSub(BigInteger("-4418548"), BigInteger.ZERO)
@@ -115,6 +117,7 @@ class TestHugeInt {
             testMul(biA, biA)
             testDiv(biA, biA)
             testMod(biA, biA)
+            testSqr(biA)
 
             val biB = randBi()
             testAdd(biA, biB)
@@ -122,6 +125,7 @@ class TestHugeInt {
             testMul(biA, biB)
             testDiv(biA, biB)
             testMod(biA, biB)
+            testSqr(biB)
 
             val biC = biA.add(ONE)
             testAdd(biA, biC)
@@ -129,6 +133,7 @@ class TestHugeInt {
             testMul(biA, biC)
             testDiv(biA, biC)
             testMod(biA, biC)
+            testSqr(biC)
 
         }
     }
@@ -200,6 +205,19 @@ class TestHugeInt {
         assert(hiRem.EQ(biRem))
         if (biRem.signum() == 0)
             assert(hiRem === HugeInt.ZERO)
+    }
+
+    fun testSqr(bi: BigInteger) {
+        val hi = bi.toHugeInt()
+        val biSqr = bi * bi
+        val hiSqr = hi.sqr()
+        val hiSqrMul = hi * hi
+        if (! hiSqr.EQ(biSqr))
+            println("hi:$hi hiSqr:$hiSqr biSqr:$biSqr")
+        assert(hiSqr.EQ(biSqr))
+        if (! hiSqr.EQ(hiSqrMul))
+            println("hi:$hi hiSqr:$hiSqr hiSqr2:$hiSqrMul")
+        assert(hiSqr.EQ(hiSqrMul))
     }
 
     fun testBigEndianByteArray(bi: BigInteger) {

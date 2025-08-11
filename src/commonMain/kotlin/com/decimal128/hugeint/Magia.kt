@@ -341,6 +341,64 @@ object Magia {
         return p
     }
 
+    fun newSqr(x: IntArray): IntArray {
+        val xLen = nonZeroLimbLen(x)
+        if (xLen == 0)
+            return ZERO
+
+        val p = IntArray(2 * xLen)
+
+        // 1) Cross terms: for i<j, add (a[i]*a[j]) twice into p[i+j]
+        // these terms are doubled
+        for (i in 0..<xLen) {
+            val xi = U32(x[i])
+            var carry = 0L
+            for (j in (i + 1)..<xLen) {
+                val prod = xi * U32(x[j])        // 32x32 -> 64
+                // add once
+                val t1 = prod + U32(p[i + j]) + carry
+                val p1 = t1 and 0xFFFF_FFFFL
+                carry = t1 ushr 32
+                // add second time (doubling) — avoids (prod << 1) overflow
+                val t2 = prod + p1
+                p[i + j] = t2.toInt()
+                carry += t2 ushr 32
+            }
+            // flush carry to the next limb(s)
+            var k = i + xLen
+            while (carry != 0L) {
+                val t = U32(p[k]) + carry
+                p[k] = t.toInt()
+                carry = t ushr 32
+                k++
+            }
+        }
+
+        // 2) Diagonals: add a[i]^2 into columns 2*i and 2*i+1
+        // terms on the diagonal are not doubled
+        for (i in 0 until xLen) {
+            val sq = U32(x[i]) * U32(x[i])      // 64-bit
+            // add low 32 to p[2*i]
+            var t = U32(p[2 * i]) + (sq and 0xFFFF_FFFFL)
+            p[2 * i] = t.toInt()
+            var carry = t ushr 32
+            // add high 32 (and carry) to p[2*i+1]
+            t = U32(p[2 * i + 1]) + (sq ushr 32) + carry
+            p[2 * i + 1] = t.toInt()
+            carry = t ushr 32
+            // propagate any remaining carry
+            var k = 2 * i + 2
+            while (carry != 0L) {
+                t = U32(p[k]) + carry
+                p[k] = t.toInt()
+                carry = t ushr 32
+                k++
+            }
+        }
+
+        return p
+    }
+
     fun newCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
 
     fun newCopy(src: IntArray, newWordLen: Int): IntArray {
