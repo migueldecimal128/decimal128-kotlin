@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
+import com.decimal128.hugeint.Magia
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import com.decimal128.decimal.U256Compare.u256GTOne
 import com.decimal128.decimal.Residue.Companion.EXACT
@@ -46,8 +46,8 @@ object DivKnuth {
         val s = vnNonZeroVal.countLeadingZeroBits()
 
         if (s != 0) {
-            Car.mutateShiftLeft(un, m+1, s)
-            Car.mutateShiftLeft(vn, n, s)
+            Magia.mutateShiftLeft(un, m+1, s)
+            Magia.mutateShiftLeft(vn, n, s)
         }
 
         q.fill(0)
@@ -55,7 +55,7 @@ object DivKnuth {
         knuthDivideCore(m, n)
 
         if (rem != null) {
-            Car.mutateShiftRight(un, n, s)
+            Magia.mutateShiftRight(un, n, s)
             rem.u256Set(un, n)
         }
 
@@ -136,7 +136,7 @@ object DivKnuth {
         //val n = 2
 
         if (s != 0) {
-            Car.mutateShiftLeft(un, m + 1, s)
+            Magia.mutateShiftLeft(un, m + 1, s)
         }
 
         q.fill(0)
