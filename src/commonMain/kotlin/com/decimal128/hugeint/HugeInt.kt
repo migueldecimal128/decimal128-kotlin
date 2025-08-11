@@ -8,6 +8,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     companion object {
         // all zero values *must* point to this instance of ZERO
         val ZERO = HugeInt(false, Magia.ZERO)
+        val ONE = HugeInt(false, Magia.ONE)
+        val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
 
         fun fromInt(n: Int): HugeInt = when {
             n > 0 -> HugeInt(false, intArrayOf(n))
@@ -35,7 +37,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             while (ib < len && bytes[ib].toInt() == signMask)
                 ++ib
             if (ib == len)
-                return if (signMask == 0) ZERO else HugeInt(true, intArrayOf(1))
+                return if (signMask == 0) ZERO else NEG_ONE
             val magia: IntArray = Magia.newFromBigEndianBytes(signMask, bytes, ib, len-ib)
             if (signMask != 0) {
                 var carry = 1L
@@ -151,6 +153,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     // note that I am sharing the magia with negate and abs
+    // but *no* mutation of magia is allowed
     fun negate() = if (isNotZero()) HugeInt(!sign, magia) else ZERO
     fun abs() = if (sign) HugeInt(false, magia) else this
 
@@ -420,6 +423,35 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
+    fun pow(n: Int): HugeInt {
+        return when {
+            n < 0 -> throw ArithmeticException("cannot raise HugeInt to negative power:$n")
+            n == 0 -> ONE
+            this.isZero() -> ZERO
+            n == 1 -> this
+            n == 2 -> sqr()
+            else -> {
+                val resultSign = this.sign && ((n and 1) != 0)
+                var baseMag = this.magia
+                var resultMag = Magia.ONE
+                var exp = n
+                while (true) {
+                    if ((exp and 1) != 0)
+                        resultMag = Magia.newMul(resultMag, baseMag)
+                    exp = exp ushr 1
+                    if (exp == 0)
+                        break
+                    baseMag = Magia.newSqr(baseMag)
+                }
+                HugeInt(resultSign, resultMag)
+            }
+        }
+    }
+
+
+
+
 
     infix fun ushr(bitCount: Int): HugeInt {
         val magia = Magia.newShiftRight(this.magia, bitCount)

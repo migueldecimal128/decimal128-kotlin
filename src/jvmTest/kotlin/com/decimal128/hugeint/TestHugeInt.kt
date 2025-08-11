@@ -118,6 +118,7 @@ class TestHugeInt {
             testDiv(biA, biA)
             testMod(biA, biA)
             testSqr(biA)
+            testPow(biA)
 
             val biB = randBi()
             testAdd(biA, biB)
@@ -126,6 +127,7 @@ class TestHugeInt {
             testDiv(biA, biB)
             testMod(biA, biB)
             testSqr(biB)
+            testPow(biB)
 
             val biC = biA.add(ONE)
             testAdd(biA, biC)
@@ -134,6 +136,7 @@ class TestHugeInt {
             testDiv(biA, biC)
             testMod(biA, biC)
             testSqr(biC)
+            testPow(biC)
 
         }
     }
@@ -218,6 +221,14 @@ class TestHugeInt {
         if (! hiSqr.EQ(hiSqrMul))
             println("hi:$hi hiSqr:$hiSqr hiSqr2:$hiSqrMul")
         assert(hiSqr.EQ(hiSqrMul))
+    }
+
+    fun testPow(bi: BigInteger) {
+        val hi = bi.toHugeInt()
+        val n = random.nextInt(10)
+        val biPow = bi.pow(n)
+        val hiPow = hi.pow(n)
+        assert(hiPow.EQ(biPow))
     }
 
     fun testBigEndianByteArray(bi: BigInteger) {
