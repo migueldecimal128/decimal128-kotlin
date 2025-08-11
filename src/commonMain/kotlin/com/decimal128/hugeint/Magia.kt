@@ -63,8 +63,6 @@ object Magia {
         return if (x.isEmpty()) 0 else x[0]
     }
 
-    fun newFromInt(n: Int): IntArray = if (n != 0) intArrayOf(n) else ZERO
-
     fun newFromLong(l: Long): IntArray = if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else ZERO
 
     fun nonZeroLimbLen(x: IntArray): Int {
@@ -323,18 +321,22 @@ object Magia {
     }
 
     fun newMul(x: IntArray, y: IntArray): IntArray {
-        val p = IntArray(x.size + y.size)
-        for (i in x.indices) {
+        val xLen = nonZeroLimbLen(x)
+        val yLen = nonZeroLimbLen(y)
+        if (xLen == 0 || yLen == 0)
+            return ZERO
+        val p = IntArray(xLen + yLen)
+        for (i in 0..<xLen) {
             val xLimb = U32(x[i])
             var carry = 0L
-            for (j in y.indices) {
+            for (j in 0..<yLen) {
                 val yLimb = U32(y[j])
                 val t = xLimb * yLimb + U32(p[i + j]) + carry
                 p[i + j] = t.toInt()
                 carry = t ushr 32
             }
-            if (i + y.size < p.size)
-                p[i + y.size] = carry.toInt()
+            if (i + yLen < p.size)
+                p[i + yLen] = carry.toInt()
         }
         return p
     }
@@ -747,7 +749,7 @@ object Magia {
         return String(bytes, 0, ib)
     }
 
-    fun renderChunkReversed(n: Int, minDigitCount: Int, bytes: ByteArray, off: Int): Int {
+    private fun renderChunkReversed(n: Int, minDigitCount: Int, bytes: ByteArray, off: Int): Int {
         var t = U32(n)
         var ib = off
         val minIb = ib + minDigitCount

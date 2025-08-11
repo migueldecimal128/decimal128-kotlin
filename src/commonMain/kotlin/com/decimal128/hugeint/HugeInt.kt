@@ -47,6 +47,13 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             }
             return HugeInt(signMask != 0, magia)
         }
+
+        fun canonicalizeZero(sign: Boolean, magia: IntArray ): HugeInt {
+            if (magia === Magia.ZERO)
+                return ZERO
+            check(Magia.nonZeroLimbLen(magia) > 0)
+            return HugeInt(sign, magia)
+        }
     }
 
     fun isZero() = this === ZERO
@@ -156,12 +163,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         if (this.sign == otherSign)
             return HugeInt(this.sign, Magia.newAdd(this.magia, other.magia))
         val cmp = this.magnitudeCompareTo(other)
-        if (cmp == 0)
-            return ZERO
-        return if (cmp < 0)
-            HugeInt(otherSign, Magia.newSub(other.magia, this.magia))
-        else
-            HugeInt(sign, Magia.newSub(this.magia, other.magia))
+        val ret = when {
+            cmp > 0 -> HugeInt(sign, Magia.newSub(this.magia, other.magia))
+            cmp < 0 -> HugeInt(otherSign, Magia.newSub(other.magia, this.magia))
+            else -> ZERO
+        }
+        return ret
     }
 
     private fun addSubImpl(isSub: Boolean, n: Int): HugeInt {
@@ -171,17 +178,22 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     private fun addSubImpl(isSub: Boolean, un: UInt): HugeInt {
+        if (un == 0u)
+            return this
+        if (isZero()) {
+            val magia = intArrayOf(un.toInt())
+            return HugeInt(isSub, magia)
+        }
         val otherSign = false
         if (this.sign == otherSign)
             return HugeInt(this.sign, Magia.newAdd(this.magia, un.toInt()))
         val cmp = this.magnitudeCompareTo(un)
-        if (cmp == 0)
-            return ZERO
-        return if (cmp > 0) {
-            HugeInt(sign, Magia.newSub(this.magia, un.toInt()))
-        } else {
-            HugeInt(otherSign, intArrayOf(un.toInt() - magia[0]))
+        val ret = when {
+            cmp > 0 -> HugeInt(sign, Magia.newSub(this.magia, un.toInt()))
+            cmp < 0 -> HugeInt(otherSign, intArrayOf(un.toInt() - this.magia[0]))
+            else -> ZERO
         }
+        return ret
     }
 
     private fun addSubImpl(isSub: Boolean, l: Long): HugeInt {
@@ -191,19 +203,23 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     private fun addSubImpl(isSub: Boolean, ul: ULong): HugeInt {
+        val hi = ul shr 32
+        if (hi == 0uL)
+            return addSubImpl(isSub, hi.toUInt())
         val otherSign = false
         if (this.sign == otherSign)
             return HugeInt(this.sign, Magia.newAdd(this.magia, ul.toLong()))
         val cmp = this.magnitudeCompareTo(ul)
-        if (cmp == 0)
-            return ZERO
-        return if (cmp > 0) {
-            HugeInt(sign, Magia.newSub(this.magia, ul.toLong()))
-        } else {
-            val thisMag = this.toULong()
-            val diff = ul - thisMag
-            HugeInt(otherSign, Magia.newFromLong(diff.toLong()))
+        val ret = when {
+            cmp > 0 -> HugeInt(sign, Magia.newSub(this.magia, ul.toLong()))
+            cmp < 0 -> {
+                val thisMag = this.toULong()
+                val diff = ul - thisMag
+                HugeInt(otherSign, Magia.newFromLong(diff.toLong()))
+            }
+            else -> ZERO
         }
+        return ret
     }
 
     operator fun plus(other: HugeInt): HugeInt = this.addSubImpl(false, other)
@@ -349,6 +365,51 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 return HugeInt(this.sign, rem)
         }
         return ZERO
+    }
+
+    fun divMod(other: HugeInt): Pair<HugeInt, HugeInt> {
+        return when {
+            other.isZero() -> throw ArithmeticException("div by zero")
+            this.isNotZero() -> divModHelper(other.sign, other.magia)
+            else -> ZERO to other
+        }
+    }
+
+    private fun divModHelper(otherSign: Boolean, otherMagia: IntArray): Pair<HugeInt, HugeInt> {
+        val (magiaQuot, magiaRem) = Magia.newDivMod(this.magia, otherMagia)
+        val hiQuot = if (magiaQuot.isNotEmpty()) HugeInt(this.sign xor otherSign, magiaQuot) else ZERO
+        val hiRem = if (magiaRem.isNotEmpty()) HugeInt(this.sign, magiaRem) else ZERO
+        return hiQuot to hiRem
+    }
+
+    fun divMod(n: Int): Pair<HugeInt, HugeInt> = divModIntHelper(n < 0, n.absoluteValue)
+    fun divMod(un: UInt): Pair<HugeInt, HugeInt> = divModIntHelper(false, un.toInt())
+
+    private fun divModIntHelper(nSign: Boolean, nMag: Int): Pair<HugeInt, HugeInt> {
+        return when {
+            nMag == 0 -> throw ArithmeticException("div by zero")
+            this.isNotZero() -> {
+                val quot = Magia.newCopy(this.magia)
+                val remN = Magia.mutateDivideRemainder(quot, nMag).toInt()
+                val hiQuot = if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
+                val hiRem = if (remN != 0) HugeInt(this.sign, intArrayOf(remN)) else ZERO
+                return hiQuot to hiRem
+            }
+            else -> ZERO to HugeInt(nSign, intArrayOf(nMag))
+        }
+    }
+
+    fun divMod(l: Long): Pair<HugeInt, HugeInt> = divModLongHelper(l < 0, l.absoluteValue)
+    fun divMod(ul: ULong): Pair<HugeInt, HugeInt> = divModLongHelper(false, ul.toLong())
+
+    private fun divModLongHelper(lSign: Boolean, lMag: Long): Pair<HugeInt, HugeInt> {
+        val lo = lMag.toInt()
+        val hi = (lMag ushr 32).toInt()
+        return when {
+            lMag == 0L -> throw ArithmeticException("div by zero")
+            hi == 0 -> divModIntHelper(lSign, lo)
+            else -> divModHelper(lSign, intArrayOf(lo, hi))
+        }
     }
 
     infix fun ushr(bitCount: Int): HugeInt {
