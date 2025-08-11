@@ -90,7 +90,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     fun isNegative() = sign
     fun signum() = if (sign) -1 else if (isZero()) 0 else 1
     fun magnitudeBitLen() = Magia.bitLen(magia)
-    fun magnitudeIntLen() = (Magia.bitLen(magia) + 31) ushr 5
+    fun magnitudeIntArrayLen() = (Magia.bitLen(magia) + 31) ushr 5
+    fun magnitudeLongArrayLen() = (Magia.bitLen(magia) + 63) ushr 6
     fun isMagnitudePowerOfTwo(): Boolean {
         var bitSeen = false
         for (w in this.magia) {
