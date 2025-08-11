@@ -9,6 +9,7 @@ import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_1
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_2
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_3
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_4
+import com.decimal128.hugeint.HugeInt
 
 
 private const val RESIDUE_IS_VALUE_CLASS = true
@@ -120,6 +121,19 @@ value class Residue private constructor(val value:Int) {
                 return EXACT
             val remainderDoubled = Car.newShiftLeft(remainder, 1)
             val cmp = Car.compare(remainderDoubled, divisor)
+            return when {
+                cmp < 0 -> LT_HALF
+                cmp == 0 -> HALF
+                else -> GT_HALF
+            }
+
+        }
+
+        fun residueFromRemainderDivisor(remainder: HugeInt, divisor: HugeInt): Residue {
+            if (remainder.isZero())
+                return EXACT
+            val remainderDoubled = remainder shl 1
+            val cmp = remainderDoubled.compareTo(divisor)
             return when {
                 cmp < 0 -> LT_HALF
                 cmp == 0 -> HALF

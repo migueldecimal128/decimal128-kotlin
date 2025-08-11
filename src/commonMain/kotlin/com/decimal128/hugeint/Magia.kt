@@ -165,7 +165,7 @@ object Magia {
         return x
     }
 
-    fun newSub(x: IntArray, n: Int) = mutateSub(newCopy(x), n)
+    fun newSub(x: IntArray, n: Int) = mutateSub(newMinimumCopy(x), n)
 
     fun mutateSub(x: IntArray, n: Int): IntArray {
         var orAccumulator = 0
@@ -185,7 +185,7 @@ object Magia {
             ZERO
     }
 
-    fun newSub(x: IntArray, l: Long) = mutateSub(newCopy(x), l)
+    fun newSub(x: IntArray, l: Long) = mutateSub(newMinimumCopy(x), l)
 
     fun mutateSub(x: IntArray, l: Long): IntArray {
         var orAccumulator = 0
@@ -218,7 +218,7 @@ object Magia {
             ZERO
     }
 
-    fun newSub(x: IntArray, y: IntArray) = mutateSub(newCopy(x), y)
+    fun newSub(x: IntArray, y: IntArray) = mutateSub(newMinimumCopy(x), y)
 
     fun mutateSub(x: IntArray, y: IntArray): IntArray {
         var orAccumulator = 0
@@ -400,7 +400,7 @@ object Magia {
         return p
     }
 
-    fun newCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
+    fun newMinimumCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
 
     fun newCopy(src: IntArray, newWordLen: Int): IntArray {
         if (newWordLen > 0) {
@@ -541,11 +541,11 @@ object Magia {
     }
 
     fun newAnd(x: IntArray, y: IntArray): IntArray {
-        val m = min(x.size, y.size)
+        val m = min(nonZeroLimbLen(x), nonZeroLimbLen(y))
         val z = IntArray(m)
         for (i in 0..<m)
             z[i] = x[i] and y[i]
-        return z
+        return if (nonZeroLimbLen(x) > 0) z else ZERO
     }
 
     fun mutateAnd(x: IntArray, y: IntArray): IntArray {
@@ -555,6 +555,54 @@ object Magia {
         for (i in m..<x.size)
             x[i] = 0
         return x
+    }
+
+    fun newOr(x: IntArray, y: IntArray): IntArray {
+        val xLen = nonZeroLimbLen(x)
+        val yLen = nonZeroLimbLen(y)
+        val maxLen = max(xLen, yLen)
+        val minLen = min(xLen, yLen)
+        if (maxLen == 0)
+            return ZERO
+        val z = IntArray(maxLen)
+        var i = 0
+        while (i < maxLen) {
+            z[i] = x[i] or y[i]
+            ++i
+        }
+        while (i < xLen) {
+            z[i] = x[i]
+            ++i
+        }
+        while (i < yLen) {
+            z[i] = y[i]
+            ++i
+        }
+        return z
+    }
+
+    fun newXor(x: IntArray, y: IntArray): IntArray {
+        val xLen = nonZeroLimbLen(x)
+        val yLen = nonZeroLimbLen(y)
+        val maxLen = max(xLen, yLen)
+        val minLen = min(xLen, yLen)
+        if (maxLen == 0)
+            return ZERO
+        val z = IntArray(maxLen)
+        var i = 0
+        while (i < maxLen) {
+            z[i] = x[i] xor y[i]
+            ++i
+        }
+        while (i < xLen) {
+            z[i] = x[i]
+            ++i
+        }
+        while (i < yLen) {
+            z[i] = y[i]
+            ++i
+        }
+        return if (nonZeroLimbLen(z) > 0) z else ZERO
     }
 
     fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
@@ -616,7 +664,7 @@ object Magia {
     }
 
     fun newDiv(x: IntArray, n: Int): IntArray {
-        val q = newCopy(x)
+        val q = newMinimumCopy(x)
         mutateDivideRemainder(q, n)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
@@ -644,7 +692,7 @@ object Magia {
     }
 
     fun newMod(x: IntArray, n: Int): IntArray {
-        val q = newCopy(x)
+        val q = newMinimumCopy(x)
         val rem = mutateDivideRemainder(q, n)
         return if (rem == 0L) ZERO else intArrayOf(rem.toInt())
     }
@@ -666,7 +714,7 @@ object Magia {
         if (n <= 1) {
             if (n == 0)
                 throw ArithmeticException("div by zero")
-            var div = newCopy(x)
+            var div = newMinimumCopy(x)
             val rem = mutateDivideRemainder(div, y[0])
             if (nonZeroLimbLen(div) == 0)
                 div = ZERO
@@ -674,7 +722,7 @@ object Magia {
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return arrayOf(IntArray(1), newCopy(x))
+            return arrayOf(IntArray(1), newMinimumCopy(x))
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
@@ -787,7 +835,7 @@ object Magia {
         }
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
-        val t = newCopy(car)
+        val t = newMinimumCopy(car)
         val bytes = ByteArray(maxSignedLen)
         bytes[0] = '-'.code.toByte()
         var j = if (isNegative) 1 else 0

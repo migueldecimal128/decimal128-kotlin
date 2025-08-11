@@ -11,6 +11,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         val ONE = HugeInt(false, Magia.ONE)
         val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
 
+        @Suppress("NOTHING_TO_INLINE")
+        private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
+
         fun fromInt(n: Int): HugeInt = when {
             n > 0 -> HugeInt(false, intArrayOf(n))
             n < 0 -> HugeInt(true, intArrayOf(-n))
@@ -56,6 +59,30 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             check(Magia.nonZeroLimbLen(magia) > 0)
             return HugeInt(sign, magia)
         }
+
+        fun buildBitMask(bitIndex: Int, bitCount: Int): HugeInt {
+            if (bitCount == 0)
+                return ZERO
+            if (bitIndex < 0 || bitCount < 0)
+                throw IllegalArgumentException("illegal negative arg bitIndex:$bitIndex bitCount:$bitCount")
+            val bitLen = bitIndex + bitCount
+            val magia = Magia.newWithBitLen(bitLen)
+            var wordIndex = bitIndex ushr 5
+            val initialInnerIndex = bitIndex and 0x1F
+            val initialBitCount = Math.min(bitCount, 32 - initialInnerIndex)
+            val initialMask = (((1L shl initialBitCount) - 1) shl initialInnerIndex).toInt()
+            magia[wordIndex++] = initialMask
+            var remainingBitCount = bitCount - initialBitCount
+            if (remainingBitCount > 0) {
+                while (remainingBitCount > 32) {
+                    magia[wordIndex++] = -1
+                    remainingBitCount -= 32
+                }
+                if (remainingBitCount > 0)
+                    magia[wordIndex] = (1 shl remainingBitCount) - 1
+            }
+            return HugeInt(false, magia)
+        }
     }
 
     fun isZero() = this === ZERO
@@ -63,6 +90,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     fun isNegative() = sign
     fun signum() = if (sign) -1 else if (isZero()) 0 else 1
     fun magnitudeBitLen() = Magia.bitLen(magia)
+    fun magnitudeIntLen() = (Magia.bitLen(magia) + 31) ushr 5
     fun isMagnitudePowerOfTwo(): Boolean {
         var bitSeen = false
         for (w in this.magia) {
@@ -76,6 +104,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return bitSeen
     }
+
+    fun testBit(bitIndex: Int): Boolean = Magia.testBit(this.magia, bitIndex)
 
     fun bitLengthBigIntegerStyle(): Int {
         val magBitLen = magnitudeBitLen()
@@ -103,6 +133,16 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return bitLen <= 63 || sign && bitLen == 64 && magia[0] == 0 && magia[1] == Int.MIN_VALUE
     }
     fun fitsULong() = !sign && Magia.bitLen(magia) <= 64
+
+    fun toIntRaw() = if (magia.size != 0) magia[0] else 0
+    fun toUIntRaw() = toIntRaw().toUInt()
+    fun toLongRaw() = when {
+        magia.size == 0 -> 0L
+        magia.size == 1 -> U32(magia[0])
+        else -> (U32(magia[1]) shl 32) or (U32(magia[0]))
+    }
+    fun toULongRaw() = toLongRaw().toULong()
+
 
     fun toInt(): Int {
         val bitLen = Magia.bitLen(magia)
@@ -392,7 +432,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return when {
             nMag == 0 -> throw ArithmeticException("div by zero")
             this.isNotZero() -> {
-                val quot = Magia.newCopy(this.magia)
+                val quot = Magia.newMinimumCopy(this.magia)
                 val remN = Magia.mutateDivideRemainder(quot, nMag).toInt()
                 val hiQuot = if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
                 val hiRem = if (remN != 0) HugeInt(this.sign, intArrayOf(remN)) else ZERO
@@ -451,9 +491,25 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
 
 
 
+    infix fun and(other: HugeInt): HugeInt {
+        val magiaAnd = Magia.newAnd(this.magia, other.magia)
+        return if (magiaAnd.isNotEmpty()) HugeInt(false, magiaAnd) else ZERO
+    }
+
+    infix fun or(other: HugeInt): HugeInt {
+        val magiaOr = Magia.newOr(this.magia, other.magia)
+        return if (magiaOr.isNotEmpty()) HugeInt(false, magiaOr) else ZERO
+    }
+
+    infix fun xor(other: HugeInt): HugeInt {
+        val magiaXor = Magia.newXor(this.magia, other.magia)
+        return if (magiaXor.isNotEmpty()) HugeInt(false, magiaXor) else ZERO
+    }
 
 
     infix fun ushr(bitCount: Int): HugeInt {
+        if (bitCount == 0)
+            return this
         val magia = Magia.newShiftRight(this.magia, bitCount)
         return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
     }
@@ -481,17 +537,17 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     fun magnitudeCompareTo(l: Long): Int = Magia.compare(this.magia, l)
     fun magnitudeCompareTo(ul: ULong): Int = Magia.compare(this.magia, ul.toLong())
 
-    fun compareTo(other: HugeInt): Int {
+    operator fun compareTo(other: HugeInt): Int {
         if (this.sign != other.sign)
             return if (this.sign) -1 else 1
         val cmp = Magia.compare(this.magia, other.magia)
         return if (this.sign) cmp else -cmp
     }
 
-    fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
-    fun compareTo(un: UInt) = compareToHelper(false, un.toULong())
-    fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
-    fun compareTo(ul: ULong) = compareToHelper(false, ul)
+    operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
+    operator fun compareTo(un: UInt) = compareToHelper(false, un.toULong())
+    operator fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
+    operator fun compareTo(ul: ULong) = compareToHelper(false, ul)
 
     private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
         if (this.sign != ulSign)
@@ -500,11 +556,19 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return if (! ulSign) cmp else -cmp
     }
 
-    fun EQ(other: HugeInt): Boolean = (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
-    fun EQ(n: Int): Boolean = compareTo(n) == 0
-    fun EQ(un: UInt): Boolean = compareTo(un) == 0
-    fun EQ(l: Long): Boolean = compareTo(l) == 0
-    fun EQ(ul: ULong): Boolean = compareTo(ul) == 0
+    infix fun EQ(other: HugeInt): Boolean = (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
+    infix fun EQ(n: Int): Boolean = compareTo(n) == 0
+    infix fun EQ(un: UInt): Boolean = compareTo(un) == 0
+    infix fun EQ(l: Long): Boolean = compareTo(l) == 0
+    infix fun EQ(ul: ULong): Boolean = compareTo(ul) == 0
+
+    infix fun NE(other: HugeInt): Boolean = (this.sign != other.sign) || !Magia.EQ(this.magia, other.magia)
+    infix fun NE(n: Int): Boolean = compareTo(n) != 0
+    infix fun NE(un: UInt): Boolean = compareTo(un) != 0
+    infix fun NE(l: Long): Boolean = compareTo(l) != 0
+    infix fun NE(ul: ULong): Boolean = compareTo(ul) != 0
+
+
 
     override fun equals(other: Any?): Boolean {
         return ((other is HugeInt) &&
@@ -561,6 +625,33 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 --k
             }
         }
+    }
+
+    fun toLittleEndianIntArray(): IntArray {
+        if (sign)
+            throw RuntimeException("not implemented for negative value")
+        return Magia.newMinimumCopy(magia)
+    }
+
+    fun toLittleEndianLongArray(): LongArray {
+        if (sign)
+            throw RuntimeException("not implemented for negative value")
+        val intLen = Magia.nonZeroLimbLen(magia)
+        val longLen = (intLen + 1) ushr 1
+        val z = LongArray(longLen)
+        var iw = 0
+        var il = 0
+        while (intLen - iw >= 2) {
+            val lo = U32(magia[iw])
+            val hi = magia[iw + 1].toLong() shl 32
+            val l = hi or lo
+            z[il] = l
+            ++il
+            iw += 2
+        }
+        if (iw < intLen)
+            z[il] = U32(magia[iw])
+        return z
     }
 
 }
