@@ -19,12 +19,14 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             n < 0 -> HugeInt(true, intArrayOf(-n))
             else -> ZERO
         }
+        fun fromIntUnsigned(n: Int) = fromUInt(n.toUInt())
         fun fromUInt(un: UInt) = if (un != 0u) HugeInt(false, intArrayOf(un.toInt())) else ZERO
         fun fromLong(l: Long) = when {
             l > 0L -> HugeInt(false, intArrayOf(l.toInt(), (l ushr 32).toInt()))
             l < 0L -> HugeInt(true, intArrayOf(-l.toInt(), (-l ushr 32).toInt()))
             else -> ZERO
         }
+        fun fromLongUnsigned(l: Long) = fromULong(l.toULong())
         fun fromULong(ul: ULong) = if (ul != 0uL) HugeInt(false, intArrayOf(ul.toInt(), (ul shr 32).toInt())) else ZERO
         fun fromString(str: String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'

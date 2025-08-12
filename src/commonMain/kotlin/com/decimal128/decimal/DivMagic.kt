@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
+import com.decimal128.hugeint.HugeInt
 
 object DivMagic {
 
@@ -8,54 +8,53 @@ object DivMagic {
 
     /**
      * Compute magic number and shift for unsigned division by d (1 ≤ d < 2^64),
-     * using your Car arbitrary-precision type instead of BigInteger.
+     * using your HugeInt arbitrary-precision type instead of BigInteger.
      */
     fun magicu64(d: Long): Magic {
         require(d != 0L) { "divisor must be nonzero" }
         val N = 64
 
-        // 1) build Car version of 2^N and of the unsigned divisor
-        val carD       = Car.newFromLong(d)
+        // 1) build HugeInt version of 2^N and of the unsigned divisor
+        val hiD        = HugeInt.fromLongUnsigned(d)
 
-        // 2) anc = 2^N − 1 − ((2^N − 1) mod d)
-        val carN1      = intArrayOf(-1, -1)
-        val anc        = Car.newSub(carN1, Car.newMod(carN1, carD))
+        // 2) anc = (2^N − 1) − ((2^N − 1) mod d)
+        val nBitMask   = HugeInt.withBitMask(N)
+        val anc      = nBitMask - (nBitMask % hiD)
 
         // 3) initialize p, q1/r1 for anc and q2/r2 for d
         var p          = (N - 1).toLong()
-        val twoPowN1   = Car.newFromLong(Long.MIN_VALUE) // Car.ONE.shiftLeft(N - 1)         // 2^(N−1)
-        var (q1, r1)   = Car.newDivMod(twoPowN1, anc)
-        var (q2, r2)   = Car.newDivMod(twoPowN1, carD)
-        lateinit var delta: IntArray
+        val twoPowN1 = HugeInt.withSetBit(N - 1)         // 2^(N−1)
 
-        // 4) loop exactly as in the BigInteger version
+        var (q1, r1) = twoPowN1.divMod(anc)
+        var (q2, r2) = twoPowN1.divMod(hiD)
+        lateinit var delta: HugeInt
+
         do {
             p += 1
 
             // double q1/r1 mod anc
-            q1 = Car.newOrMutateShiftLeft(q1, 1)
-            r1 = Car.newOrMutateShiftLeft(r1, 1)
-            if (Car.compare(r1, anc) >= 0) {
-                Car.mutateAdd(q1, 1)
-                Car.mutateSub(r1, anc)
+            q1 = q1 shl 1
+            r1 = r1 shl 1
+            if (r1 >= anc) {
+                q1 += 1
+                r1 -= anc
             }
 
             // double q2/r2 mod biD
-            q2 = Car.newOrMutateShiftLeft(q2, 1)
-            r2 = Car.newOrMutateShiftLeft(r2, 1)
-            if (Car.compare(r2, carD) >= 0) {
-                Car.mutateAdd(q2, 1)
-                Car.mutateSub(r2, carD)
+            q2 = q2 shl 1
+            r2 = r2 shl 1
+            if (r2 >= hiD) {
+                q2 += 1
+                r2 -= hiD
             }
 
-            // prepare loop‐exit test
-            delta = Car.newSub(carD, r2)
-        } while (Car.LT(q1, delta) || (Car.EQ(q1, delta) && Car.isZero(r1)))
+            delta = hiD - r2
+        } while (q1 < delta || q1 == delta && r1.isZero())
 
         // 5) extract the “true” multiplier and shift
-        val Mtrue   = Car.newAdd(q2, 1)
-        val addFlag = Car.testBit(Mtrue, N)                    // bit-64 set?
-        val m_mod   = Car.toLong(Mtrue)           // low 64 bits
+        val Mtrue   = q2 + 1
+        val addFlag = Mtrue.testBit(N)            // bit-64 set?
+        val m_mod   = Mtrue.toLongRaw()           // low 64 bits
         val s       = (p - N).toInt()
 
         return Magic(m_mod, addFlag, s)
@@ -81,7 +80,7 @@ object DivMagic {
     }
 
     init {
-        initializeMagicPow10_64()
+        //initializeMagicPow10_64()
     }
 
 
@@ -99,6 +98,7 @@ object DivMagic {
 
     fun magicDivPow10_64(z: U256, x0: Long, pow10: Int): Residue {
         check(pow10 in 0..<MAGIC_POW10_MAXX)
+        initializeMagicPow10_64()
         check(initialized)
         val remainder = magicDivModPow10_64(z, x0, pow10)
         val residue = Residue.residueFromRemainderPow10(remainder, pow10)
