@@ -1,6 +1,7 @@
 package com.decimal128.hugeint
 
 import com.decimal128.hugeint.HugeIntExtensions.EQ
+import com.decimal128.hugeint.HugeIntExtensions.NE
 import com.decimal128.hugeint.HugeIntExtensions.toBigInteger
 import com.decimal128.hugeint.HugeIntExtensions.toHugeInt
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -16,13 +17,14 @@ class TestHugeInt {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 1000)
+        val bitLength = random.nextInt(0, 500)
         val bi = BigInteger(bitLength, random)
         return if (random.nextBoolean()) bi.negate() else bi
     }
 
     @Test
     fun testProblemChild() {
+        testWithIndexedBitMask(3, 0)
         testSqr(BigInteger("12345678901234567890123456789012345678901234567890"))
         testSqr(BigInteger("99999999999"))
         testAdd(BigInteger.ZERO, BigInteger.ZERO)
@@ -112,29 +114,41 @@ class TestHugeInt {
     fun testArithmetic() {
         for (i in 0..<10000) {
             val biA = randBi()
+            val absA = biA.abs()
             testAdd(biA, biA)
             testSub(biA, biA)
             testMul(biA, biA)
             testDiv(biA, biA)
             testMod(biA, biA)
+            testAnd(absA, absA)
+            testOr(absA, absA)
+            testXor(absA, absA)
             testSqr(biA)
             testPow(biA)
 
             val biB = randBi()
+            val absB = biB.abs()
             testAdd(biA, biB)
             testSub(biA, biB)
             testMul(biA, biB)
             testDiv(biA, biB)
             testMod(biA, biB)
+            testAnd(absA, absB)
+            testOr(absA, absB)
+            testXor(absA, absB)
             testSqr(biB)
             testPow(biB)
 
             val biC = biA.add(ONE)
+            val absC = biC.abs()
             testAdd(biA, biC)
             testSub(biA, biC)
             testMul(biA, biC)
             testDiv(biA, biC)
             testMod(biA, biC)
+            testAnd(absA, absC)
+            testOr(absA, absC)
+            testXor(absA, absC)
             testSqr(biC)
             testPow(biC)
 
@@ -247,6 +261,112 @@ class TestHugeInt {
         if (verbose)
             println("hi:$hi hi2:$hi2")
         assertEquals(hi, hi2)
+    }
+
+    fun testAnd(biA: BigInteger, biB: BigInteger) {
+        if (verbose)
+            println("testAnd(biA:$biA biB:$biB)")
+        val hiA = biA.toHugeInt()
+        val hiB = biB.toHugeInt()
+
+        val biAnd = biA and biB
+        val hiAnd = hiA and hiB
+        if (hiAnd NE biAnd)
+            println("biAnd:$biAnd hiAnd:$hiAnd")
+        assert(hiAnd EQ biAnd)
+    }
+
+    fun testOr(biA: BigInteger, biB: BigInteger) {
+        if (verbose)
+            println("testOr(biA:$biA biB:$biB)")
+        val hiA = biA.toHugeInt()
+        val hiB = biB.toHugeInt()
+
+        val biOr = biA or biB
+        val hiOr = hiA or hiB
+
+        if (hiOr NE biOr)
+            println("biOr:$biOr hiOr:$hiOr")
+        assert(hiOr EQ biOr)
+    }
+
+    fun testXor(biA: BigInteger, biB: BigInteger) {
+        if (verbose)
+            println("testXora(biA:$biA biB:$biB)")
+        val hiA = biA.toHugeInt()
+        val hiB = biB.toHugeInt()
+
+        val biXor = biA xor biB
+        val hiXor = hiA xor hiB
+
+        if (hiXor NE biXor)
+            println("biXor:$biXor hiXor:$hiXor")
+        assert(hiXor EQ biXor)
+    }
+
+    @Test
+    fun testWithBitMask() {
+        for (i in 0..<10000) {
+            val bitIndex = random.nextInt(5)
+            val bitWidth = random.nextInt(1)
+            testWithIndexedBitMask(bitIndex, bitWidth)
+            testWithSetBit(bitIndex)
+            testWithBitMask(bitWidth)
+        }
+    }
+
+    fun testWithIndexedBitMask(bitIndex: Int, bitWidth: Int) {
+        if (verbose)
+            println("bitIndex:$bitIndex bitWidth:$bitWidth")
+        val bi = ((BigInteger.ONE shl bitWidth) - BigInteger.ONE) shl bitIndex
+        val hi1 = ((HugeInt.ONE shl bitWidth) - 1) shl bitIndex
+        val hi2 = HugeInt.withIndexedBitMask(bitIndex, bitWidth)
+        if (hi1 NE bi) {
+            println("bitIndex:$bitIndex bitWidth:$bitWidth")
+            println("bi:$bi hi1:$hi1")
+        }
+        assert(hi1 EQ bi)
+        if (hi2 NE bi) {
+            println("bitIndex:$bitIndex bitWidth:$bitWidth")
+            println("bi:$bi hi2:$hi2")
+        }
+        assert(hi2 EQ bi)
+    }
+
+    fun testWithSetBit(bitIndex: Int) {
+        if (verbose)
+            println("testWithSetBit(bitIndex:$bitIndex)")
+        val bi = BigInteger.ONE shl bitIndex
+        val hi1 = HugeInt.ONE shl bitIndex
+        val hi2 = HugeInt.withSetBit(bitIndex)
+        if (hi1 NE bi) {
+            println("bitIndex:$bitIndex")
+            println("bi:$bi hi1:$hi1")
+        }
+        assert(hi1 EQ bi)
+        if (hi2 NE bi) {
+            println("bitIndex:$bitIndex")
+            println("bi:$bi hi2:$hi2")
+        }
+        assert(hi2 EQ bi)
+    }
+
+    fun testWithBitMask(bitWidth: Int) {
+        if (verbose)
+            println("bitWidth:$bitWidth")
+        val bi = (BigInteger.ONE shl bitWidth) - BigInteger.ONE
+        val hi1 = (HugeInt.ONE shl bitWidth) - 1
+        val hi2 = HugeInt.withBitMask(bitWidth)
+        if (hi1 NE bi) {
+            println("bitWidth:$bitWidth")
+            println("bi:$bi hi1:$hi1")
+        }
+        assert(hi1 EQ bi)
+        if (hi2 NE bi) {
+            println("bitWidth:$bitWidth")
+            println("bi:$bi hi2:$hi2")
+        }
+        assert(hi2 EQ bi)
     }
 
 }

@@ -60,19 +60,21 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             return HugeInt(sign, magia)
         }
 
-        fun buildBitMask(bitIndex: Int, bitCount: Int): HugeInt {
-            if (bitCount == 0)
-                return ZERO
-            if (bitIndex < 0 || bitCount < 0)
-                throw IllegalArgumentException("illegal negative arg bitIndex:$bitIndex bitCount:$bitCount")
-            val bitLen = bitIndex + bitCount
+        fun withIndexedBitMask(bitIndex: Int, bitWidth: Int): HugeInt {
+            if (bitIndex < 0 || bitWidth < 0)
+                throw IllegalArgumentException("illegal negative arg bitIndex:$bitIndex bitCount:$bitWidth")
+            if (bitWidth <= 1)
+                return if (bitWidth == 0) ZERO else withSetBit(bitIndex)
+            if (bitIndex == 0)
+                return withBitMask(bitWidth)
+            val bitLen = bitIndex + bitWidth
             val magia = Magia.newWithBitLen(bitLen)
             var wordIndex = bitIndex ushr 5
             val initialInnerIndex = bitIndex and 0x1F
-            val initialBitCount = Math.min(bitCount, 32 - initialInnerIndex)
+            val initialBitCount = Math.min(bitWidth, 32 - initialInnerIndex)
             val initialMask = (((1L shl initialBitCount) - 1) shl initialInnerIndex).toInt()
             magia[wordIndex++] = initialMask
-            var remainingBitCount = bitCount - initialBitCount
+            var remainingBitCount = bitWidth - initialBitCount
             if (remainingBitCount > 0) {
                 while (remainingBitCount > 32) {
                     magia[wordIndex++] = -1
@@ -81,6 +83,28 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 if (remainingBitCount > 0)
                     magia[wordIndex] = (1 shl remainingBitCount) - 1
             }
+            return HugeInt(false, magia)
+        }
+
+        fun withSetBit(bitIndex: Int): HugeInt {
+            if (bitIndex < 0)
+                throw IllegalArgumentException("negative bitIndex:$bitIndex")
+            if (bitIndex == 0)
+                return ONE
+            val magia = Magia.newWithBitLen(bitIndex + 1)
+            magia[magia.lastIndex] = 1 shl (bitIndex and 0x1F)
+            return HugeInt(false, magia)
+        }
+
+        fun withBitMask(bitWidth: Int): HugeInt {
+            if (bitWidth < 0)
+                throw IllegalArgumentException("negative bitWidth:$bitWidth")
+            if (bitWidth == 0)
+                return ZERO
+            val magia = Magia.newWithBitLen(bitWidth)
+            magia.fill(-1)
+            val leadingZeroCount = (magia.size * 32) - bitWidth
+            magia[magia.lastIndex] = -1 ushr leadingZeroCount
             return HugeInt(false, magia)
         }
     }
@@ -203,7 +227,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             return this
         if (this === ZERO)
             return if (isSub) other.negate() else other
-        val otherSign = other.sign xor isSub
+        val otherSign = isSub xor other.sign
         if (this.sign == otherSign)
             return HugeInt(this.sign, Magia.newAdd(this.magia, other.magia))
         val cmp = this.magnitudeCompareTo(other)
@@ -216,7 +240,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     private fun addSubImpl(isSub: Boolean, n: Int): HugeInt {
-        val otherSign = (n < 0) xor isSub
+        val otherSign = n < 0
         val otherMag = n.absoluteValue
         return addSubImpl(isSub xor otherSign, otherMag.toUInt())
     }
@@ -228,7 +252,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             val magia = intArrayOf(un.toInt())
             return HugeInt(isSub, magia)
         }
-        val otherSign = false
+        val otherSign = isSub
         if (this.sign == otherSign)
             return HugeInt(this.sign, Magia.newAdd(this.magia, un.toInt()))
         val cmp = this.magnitudeCompareTo(un)
@@ -241,7 +265,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     private fun addSubImpl(isSub: Boolean, l: Long): HugeInt {
-        val otherSign = (l < 0L) xor isSub
+        val otherSign = l < 0L
         val otherMag = l.absoluteValue
         return addSubImpl(isSub xor otherSign, otherMag.toULong())
     }
@@ -250,7 +274,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         val hi = ul shr 32
         if (hi == 0uL)
             return addSubImpl(isSub, hi.toUInt())
-        val otherSign = false
+        val otherSign = isSub
         if (this.sign == otherSign)
             return HugeInt(this.sign, Magia.newAdd(this.magia, ul.toLong()))
         val cmp = this.magnitudeCompareTo(ul)

@@ -11,6 +11,8 @@ object HugeIntExtensions {
 
     fun HugeInt.compareTo(bi: BigInteger) = this.compareTo(bi.toHugeInt())
 
-    fun HugeInt.EQ(bi: BigInteger) = this.compareTo(bi) == 0
+    infix fun HugeInt.EQ(bi: BigInteger) = this.compareTo(bi) == 0
+
+    infix fun HugeInt.NE(bi: BigInteger) = this.compareTo(bi) != 0
 
 }

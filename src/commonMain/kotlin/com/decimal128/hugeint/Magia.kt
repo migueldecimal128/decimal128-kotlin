@@ -541,9 +541,9 @@ object Magia {
     }
 
     fun newAnd(x: IntArray, y: IntArray): IntArray {
-        val m = min(nonZeroLimbLen(x), nonZeroLimbLen(y))
-        val z = IntArray(m)
-        for (i in 0..<m)
+        val minLen = min(nonZeroLimbLen(x), nonZeroLimbLen(y))
+        val z = IntArray(minLen)
+        for (i in z.indices)
             z[i] = x[i] and y[i]
         return if (nonZeroLimbLen(x) > 0) z else ZERO
     }
@@ -566,7 +566,7 @@ object Magia {
             return ZERO
         val z = IntArray(maxLen)
         var i = 0
-        while (i < maxLen) {
+        while (i < minLen) {
             z[i] = x[i] or y[i]
             ++i
         }
@@ -590,7 +590,7 @@ object Magia {
             return ZERO
         val z = IntArray(maxLen)
         var i = 0
-        while (i < maxLen) {
+        while (i < minLen) {
             z[i] = x[i] xor y[i]
             ++i
         }
