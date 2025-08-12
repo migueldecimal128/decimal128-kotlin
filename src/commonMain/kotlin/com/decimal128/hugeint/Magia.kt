@@ -9,6 +9,11 @@ import kotlin.math.max
 
 // magia == MAGnitude IntArray
 
+private const val UPPERCASE_DELTA = 'x'.code - 'X'.code
+
+private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
+
+
 object Magia {
 
     val ZERO = IntArray(0)
@@ -885,14 +890,14 @@ object Magia {
         var j = bytes.size
         while (nybbleCount > 0) {
             var w = magia[i++]
-            val chunk = Math.min(8, nybbleCount)
-            for (k in 0..<chunk) {
+            val stepCount = Math.min(8, nybbleCount)
+            repeat (stepCount) {
                 val nybble = w and 0x0F
                 val ch = nybble + if (nybble < 10) '0'.code else 'A'.code - 10
                 bytes[--j] = ch.toByte()
                 w = w ushr 4
             }
-            nybbleCount -= chunk
+            nybbleCount -= stepCount
         }
         return String(bytes)
     }
@@ -905,9 +910,8 @@ object Magia {
         when {
             (strLen - i <= 0) ->
                 throw IllegalArgumentException("cannot parse empty string")
-            //str.startsWith("0x") -> {
-            //    return newFromHexString(str)
-            //}
+            i+1 < str.length && str[i] == '0' && (str[i+1] == 'x' || str[i+1] == 'X') ->
+                return newFromHexString(isNegative, str)
         }
         var totalDigitCount = 0
         var accumulator = 0
@@ -946,6 +950,65 @@ object Magia {
         return z
     }
 
+    fun newFromHexString(str: String) = newFromHexString(false, str)
+
+    fun newFromHexString(isNegative: Boolean, str: String): IntArray {
+        var strLen = str.length
+        var i = if (isNegative) 1 else 0
+        if (i+1 < strLen && str[i] == '0' && (str[i+1].code or UPPERCASE_DELTA) == 'x'.code)
+            i += 2
+        var leadingZeroSeen = false
+        while (i < strLen && str[i] == '0') {
+            ++i
+            leadingZeroSeen = true
+        }
+        var nybbleCount = 0
+        val off = i
+        for (j in off..<strLen) {
+            val ch = str[j]
+            if (! isHexAsciiCharOrUnderscore(ch))
+                throw RuntimeException("invalid hex format:$str")
+            nybbleCount += if (ch == '_') 0 else 1
+        }
+        if (nybbleCount == 0) {
+            if (leadingZeroSeen)
+                return ZERO
+            throw RuntimeException("invalid hex format:$str")
+        }
+        val z = newWithBitLen(nybbleCount shl 2)
+        var j = strLen
+        var k = 0
+        var nybblesLeft = nybbleCount
+        do {
+            var w = 0
+            val stepCount = min(nybblesLeft, 8)
+            var n = 0
+            do {
+                val ch = str[--j]
+                val nybble = ch.code - when {
+                    ch <= '9' -> '0'.code
+                    ch <= 'F' -> 'A'.code - 10
+                    ch >= 'a' -> 'a'.code - 10
+                    ch == '_'-> continue
+                    else -> throw IllegalStateException()
+                }
+                w = w or (nybble shl (n shl 2))
+                ++n
+            } while (n < stepCount)
+            z[k++] = w
+            nybblesLeft -= stepCount
+        } while (nybblesLeft > 0)
+        return z
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun isHexAsciiCharOrUnderscore(c: Char): Boolean {
+        val idx = c.code - '0'.code
+        if (idx < 0 || idx > 'f'.code - '0'.code)
+            return false
+        return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
+    }
+
     fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
         if (len <= 0)
             return ZERO
@@ -973,6 +1036,6 @@ object Magia {
             check(iw == car.size)
         }
         return car
-    }
+   }
 
 }

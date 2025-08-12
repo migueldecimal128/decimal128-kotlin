@@ -24,6 +24,8 @@ class TestHugeInt {
 
     @Test
     fun testProblemChild() {
+        testHexStr(BigInteger("123"))
+        testHexStr(BigInteger("12345678901234567890123456789012345678901234567890"))
         testWithIndexedBitMask(3, 0)
         testSqr(BigInteger("12345678901234567890123456789012345678901234567890"))
         testSqr(BigInteger("99999999999"))
@@ -85,6 +87,30 @@ class TestHugeInt {
         val hi = bi.toHugeInt()
         val hiHexStr = hi.toHexString()
         assertEquals(biHexStr, hiHexStr)
+
+        val roundTrip1 = HugeInt.fromHexString(hiHexStr)
+        assertEquals(hi, roundTrip1)
+
+        val roundTrip2 = HugeInt.fromString(hiHexStr)
+        assertEquals(hi, roundTrip2)
+
+        val roundTrip3 = HugeInt.fromString(hiHexStr.uppercase())
+        assertEquals(hi, roundTrip3)
+
+        val roundTrip4 = HugeInt.fromString(hiHexStr.lowercase())
+        assertEquals(hi, roundTrip4)
+
+        var with_ = hiHexStr
+        repeat (5) {
+            val i = random.nextInt(with_.length)
+            if (i >= 3)
+                with_ = with_.substring(0, i) + '_' + with_.substring(i)
+        }
+        if (verbose)
+            println("with_:$with_")
+        val roundTrip5 = HugeInt.fromString(with_)
+        assertEquals(hi, roundTrip5)
+
     }
 
     fun testRoundTripShift(bi: BigInteger) {

@@ -4,7 +4,6 @@ import kotlin.math.absoluteValue
 
 class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
 
-
     companion object {
         // all zero values *must* point to this instance of ZERO
         val ZERO = HugeInt(false, Magia.ZERO)
@@ -31,7 +30,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         fun fromString(str: String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
             val magia = Magia.newFromString(sign, str)
-            return if (magia.isNotEmpty()) HugeInt(sign, Magia.newFromString(sign, str)) else ZERO
+            return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
+        }
+        fun fromHexString(str:String): HugeInt {
+            val sign = str.isNotEmpty() && str[0] == '-'
+            val magia = Magia.newFromHexString(sign, str)
+            return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
         fun fromBigEndianBytes(bytes: ByteArray) = fromBigEndianBytes(bytes, bytes.size)
         fun fromBigEndianBytes(bytes: ByteArray, len: Int): HugeInt {
