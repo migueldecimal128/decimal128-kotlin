@@ -824,10 +824,10 @@ object Magia {
         return 0
     }
 
-    fun toString(car: IntArray) = toString(false, car)
+    fun toString(magia: IntArray) = toString(false, magia)
 
-    fun toString(isNegative: Boolean, car: IntArray): String {
-        val bitLen = bitLen(car)
+    fun toString(isNegative: Boolean, magia: IntArray): String {
+        val bitLen = bitLen(magia)
         if (bitLen < 2) {
             if (bitLen == 0)
                 return "0"
@@ -835,7 +835,7 @@ object Magia {
         }
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
-        val t = newMinimumCopy(car)
+        val t = newMinimumCopy(magia)
         val bytes = ByteArray(maxSignedLen)
         bytes[0] = '-'.code.toByte()
         var j = if (isNegative) 1 else 0
@@ -867,6 +867,34 @@ object Magia {
             t = divTen
         }
         return ib
+    }
+
+    fun toHexString(magia: IntArray) = toHexString(false, magia)
+
+    fun toHexString(isNegative: Boolean, magia: IntArray): String {
+        val bitLen = bitLen(magia)
+        var nybbleCount = (bitLen + 3) ushr 2
+        val strLen = (if (isNegative) 1 else 0) + 2 + max(nybbleCount, 1)
+        val bytes = ByteArray(strLen)
+        bytes[0] = '-'.code.toByte()
+        val n = if (isNegative) 1 else 0
+        bytes[n + 0] = '0'.code.toByte()
+        bytes[n + 1] = 'x'.code.toByte()
+        bytes[n + 2] = '0'.code.toByte()
+        var i = 0
+        var j = bytes.size
+        while (nybbleCount > 0) {
+            var w = magia[i++]
+            val chunk = Math.min(8, nybbleCount)
+            for (k in 0..<chunk) {
+                val nybble = w and 0x0F
+                val ch = nybble + if (nybble < 10) '0'.code else 'A'.code - 10
+                bytes[--j] = ch.toByte()
+                w = w ushr 4
+            }
+            nybbleCount -= chunk
+        }
+        return String(bytes)
     }
 
     fun newFromString(str: String) = newFromString(false, str)

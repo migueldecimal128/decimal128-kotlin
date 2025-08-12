@@ -55,6 +55,7 @@ class TestHugeInt {
             testRoundTripStr(bi.toString())
             testRoundTripShift(bi)
             testBigEndianByteArray(bi)
+            testHexStr(bi)
         }
     }
 
@@ -68,12 +69,22 @@ class TestHugeInt {
     }
 
     fun testRoundTripStr(str: String) {
-
         if (verbose)
             println("testRoundTripStr($str)")
         val hi = HugeInt.fromString(str)
         val str2 = hi.toString()
         assertEquals(str, str2)
+    }
+
+    fun testHexStr(bi: BigInteger) {
+        val biSign = bi.signum() < 0
+        val biAbs = bi.abs()
+        val biHexStr = (if (biSign) "-0x" else "0x") + biAbs.toString(16).uppercase()
+        if (verbose)
+            println("testHexStr($biHexStr)")
+        val hi = bi.toHugeInt()
+        val hiHexStr = hi.toHexString()
+        assertEquals(biHexStr, hiHexStr)
     }
 
     fun testRoundTripShift(bi: BigInteger) {

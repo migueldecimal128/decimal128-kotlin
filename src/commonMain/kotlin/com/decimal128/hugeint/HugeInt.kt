@@ -604,6 +604,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     override fun toString() = Magia.toString(this.sign, this.magia)
+    fun toHexString() = Magia.toHexString(this.sign, this.magia)
 
     fun toBigEndianByteArray(): ByteArray {
         val byteLen = calc2sComplementByteLength()
