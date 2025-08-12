@@ -25,7 +25,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             l < 0L -> HugeInt(true, intArrayOf(-l.toInt(), (-l ushr 32).toInt()))
             else -> ZERO
         }
-        fun fromULong(ul: ULong) = if (ul != 0uL) HugeInt(true, intArrayOf(ul.toInt(), (ul shr 32).toInt())) else ZERO
+        fun fromULong(ul: ULong) = if (ul != 0uL) HugeInt(false, intArrayOf(ul.toInt(), (ul shr 32).toInt())) else ZERO
         fun fromString(str: String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
             val magia = Magia.newFromString(sign, str)
@@ -566,7 +566,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         if (this.sign != other.sign)
             return if (this.sign) -1 else 1
         val cmp = Magia.compare(this.magia, other.magia)
-        return if (this.sign) cmp else -cmp
+        return if (this.sign) -cmp else cmp
     }
 
     operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
