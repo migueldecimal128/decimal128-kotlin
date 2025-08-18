@@ -137,6 +137,12 @@ object DivRangeRecipMulPow10 {
         val C_max_prime = if (k == 1) C_max else Car.newShiftRight(C_max, k - 1)
         val maxProd = Car.newMul(C_max_prime, M)
 
+        val C_max_hi = tenPowQ_hi
+        val C_max_prime_hi = C_max_hi shr (k - 1)
+        val maxProd_hi = C_max_prime_hi * M_hi
+
+        require (maxProd_hi EQ maxProd)
+
         if (!isValid(tenPowQ, k, M, S))
             return null
         //println("tenPowQ is valid")
