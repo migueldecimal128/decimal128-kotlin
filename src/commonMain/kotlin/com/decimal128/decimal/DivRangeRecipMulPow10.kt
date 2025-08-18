@@ -147,18 +147,30 @@ object DivRangeRecipMulPow10 {
             return null
         //println("tenPowQ is valid")
         val half = Car.newShiftRight(tenPowK, 1)
+        val half_hi = tenPowK_hi shr 1
+        require (half_hi EQ half)
+
         if (!isValid(half, k, M, S))
             return null
         //println("half is valid")
         val nines5 = Car.newSub(tenPowQ, half)
+        val nines5_hi = tenPowQ_hi - half_hi
+        require (nines5_hi EQ nines5)
+
         if (!isValid(nines5, k, M, S))
             return null
         //println("nines5 is valid")
         val nines5down = Car.newSub(nines5, 1)
+        val nines5down_hi = nines5_hi - 1
+        require (nines5down_hi EQ nines5down)
+
         if (!isValid(nines5down, k, M, S))
             return null
         //println("nines5down is valid")
         val nines5up = Car.newAdd(nines5, 1)
+        val nines5up_hi = nines5_hi + 1
+        require (nines5up_hi EQ nines5up)
+
         if (!isValid(nines5up, k, M, S))
             return null
         //println("nines5up is valid")
