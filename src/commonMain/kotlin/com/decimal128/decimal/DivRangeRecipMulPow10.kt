@@ -121,65 +121,43 @@ object DivRangeRecipMulPow10 {
         val x_hi = twoPowY_hi + fivePowK_hi - 1
         val M_hi = x_hi / fivePowK_hi
 
-        val twoPowY = Car.newShiftLeft(ONE, y)
-        val fivePowK = POW_5[k]
-        val tenPowK = POW_10[k]
-        val tenPowQ = POW_10[q]
-        val x = Car.newAdd(twoPowY, fivePowK)
-        Car.mutateSub(x, 1)
-        val M = Car.newCopy(Car.newDiv(x, fivePowK)) // eliminate leading zero words
-        //val M_hi = HugeInt.fromLittleEndianIntArray(M)
-        require (M_hi EQ M)
-        //println("q:$q k:$k y:$y x:${Car.toString(x)} / fivePowK:${Car.toString(fivePowK)} => M:${Car.toString(M)}")
         val S = y
-
-        val C_max = tenPowQ // for me C_max == 10**q
-        val C_max_prime = if (k == 1) C_max else Car.newShiftRight(C_max, k - 1)
-        val maxProd = Car.newMul(C_max_prime, M)
 
         val C_max_hi = tenPowQ_hi
         val C_max_prime_hi = C_max_hi shr (k - 1)
         val maxProd_hi = C_max_prime_hi * M_hi
 
-        require (maxProd_hi EQ maxProd)
-
-        if (!isValid(tenPowQ, k, M, S))
+        if (!isValid(tenPowQ_hi, k, M_hi, S))
             return null
         //println("tenPowQ is valid")
-        val half = Car.newShiftRight(tenPowK, 1)
         val half_hi = tenPowK_hi shr 1
-        require (half_hi EQ half)
 
-        if (!isValid(half, k, M, S))
+        if (!isValid(half_hi, k, M_hi, S))
             return null
         //println("half is valid")
-        val nines5 = Car.newSub(tenPowQ, half)
         val nines5_hi = tenPowQ_hi - half_hi
-        require (nines5_hi EQ nines5)
 
-        if (!isValid(nines5, k, M, S))
+        if (!isValid(nines5_hi, k, M_hi, S))
             return null
         //println("nines5 is valid")
-        val nines5down = Car.newSub(nines5, 1)
         val nines5down_hi = nines5_hi - 1
-        require (nines5down_hi EQ nines5down)
 
-        if (!isValid(nines5down, k, M, S))
+        if (!isValid(nines5down_hi, k, M_hi, S))
             return null
         //println("nines5down is valid")
-        val nines5up = Car.newAdd(nines5, 1)
         val nines5up_hi = nines5_hi + 1
-        require (nines5up_hi EQ nines5up)
 
-        if (!isValid(nines5up, k, M, S))
+        if (!isValid(nines5up_hi, k, M_hi, S))
             return null
         //println("nines5up is valid")
 
-        val bitLen = Car.bitLen(maxProd)
+        val bitLen = maxProd_hi.magnitudeBitLen()
         return TableEntry(q, k, bitLen, M_hi, y)
     }
 
-    private fun isValid(dividend: IntArray, k: Int, M: IntArray, S: Int): Boolean {
+    private fun isValid(dividend_hi: HugeInt, k: Int, M_hi: HugeInt, S: Int): Boolean {
+        val dividend = dividend_hi.toLittleEndianIntArray()
+        val M = M_hi.toLittleEndianIntArray()
         val tenPowK = POW_10[k]
         val quotRem = Car.newDivMod(dividend, tenPowK)
         val expectedQuot = quotRem[0]
@@ -294,6 +272,10 @@ object DivRangeRecipMulPow10 {
     private fun releaseTemporaryStorage() {
         POW_5 = EMPTY
         POW_10 = EMPTY
+
+        POW_5_HI = emptyArray()
+        POW_10_HI = POW_5_HI
+
         recipTable = emptyArray()
     }
 
