@@ -59,6 +59,11 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             return HugeInt(signMask != 0, magia)
         }
 
+        fun fromLittleEndianIntArray(leIntArray: IntArray): HugeInt {
+            val magia = Magia.newMinimumCopy(leIntArray)
+            return if (magia.isNotEmpty()) HugeInt(false, magia) else ZERO
+        }
+
         fun canonicalizeZero(sign: Boolean, magia: IntArray ): HugeInt {
             if (magia === Magia.ZERO)
                 return ZERO
@@ -599,7 +604,11 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     infix fun NE(l: Long): Boolean = compareTo(l) != 0
     infix fun NE(ul: ULong): Boolean = compareTo(ul) != 0
 
-
+    infix fun EQ(littleEndianIntArray: IntArray): Boolean =
+        (this.sign == false) && Magia.EQ(this.magia, littleEndianIntArray)
+    infix fun NE(littleEndianIntArray: IntArray): Boolean = !(this EQ littleEndianIntArray)
+    infix fun compareTo(littleEndianIntArray: IntArray) =
+        if (this.sign) -1 else Magia.compare(this.magia, littleEndianIntArray)
 
     override fun equals(other: Any?): Boolean {
         return ((other is HugeInt) &&

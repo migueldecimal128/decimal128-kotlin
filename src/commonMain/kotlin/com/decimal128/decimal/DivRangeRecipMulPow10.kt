@@ -3,6 +3,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.hugeint.Car
+import com.decimal128.hugeint.HugeInt
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul4
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul3
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul2
@@ -21,18 +22,25 @@ object DivRangeRecipMulPow10 {
     private var POW_10 = Array<IntArray>(Q_MAXX) { ONE }
     private var POW_5 = Array<IntArray>(K_MAXX) { ONE }
 
+    private var POW_10_HI = Array<HugeInt>(Q_MAXX) { HugeInt.ONE }
+    private var POW_5_HI = Array<HugeInt>(K_MAXX) { HugeInt.ONE }
+
     private fun calcPowTables() {
-        for (i in 1..<Q_MAXX)
-            POW_10[i] = Car.newMul(POW_10[i-1], 10)
-        for (i in 1..<K_MAXX)
-            POW_5[i] = Car.newMul(POW_5[i-1], 5)
+        for (i in 1..<Q_MAXX) {
+            POW_10[i] = Car.newMul(POW_10[i - 1], 10)
+            POW_10_HI[i] = POW_10_HI[i - 1] * 10
+        }
+        for (i in 1..<K_MAXX) {
+            POW_5[i] = Car.newMul(POW_5[i - 1], 5)
+            POW_5_HI[i] = POW_5_HI[i - 1] * 5
+        }
     }
 
-    private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: IntArray, val S: Int) {
+    private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: HugeInt, val S: Int) {
         var qMin = qMax
         fun prodDwordLen() = (prodBitLen + 0x3f) ushr 6
 
-        override fun toString() = if (qMax == -1) "[NULL]" else "[q:$qMin-$qMax k:$k bitLen:$prodBitLen M:${Car.toString(M)} S:$S]"
+        override fun toString() = if (qMax == -1) "[NULL]" else "[q:$qMin-$qMax k:$k bitLen:$prodBitLen M:$M S:$S]"
     }
 
     // qMin = 8 bits
@@ -43,7 +51,7 @@ object DivRangeRecipMulPow10 {
     // mDwordLen = 16 bits
     private fun packDescriptor(te: TableEntry): Long {
         val prodDwordLen = te.prodDwordLen()
-        val MDwordLen = (te.M.size + 1) ushr 1
+        val MDwordLen = te.M.magnitudeLongArrayLen()
         val descriptor = (te.qMin.toLong() shl 56) or
                 (te.qMax.toLong() shl 48) or
                 (te.k.toLong() shl 40) or
@@ -60,7 +68,7 @@ object DivRangeRecipMulPow10 {
     private fun unpackS(d: Long) = (d ushr 16).toInt() and 0xFFFF
     private fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
 
-    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, ONE, -1)
+    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, HugeInt.ONE, -1)
 
     private var recipTable : Array<Array<TableEntry>> = Array(Q_MAXX) { Array<TableEntry>(K_MAXX) { NULL_TABLE_ENTRY} }
 
@@ -106,6 +114,13 @@ object DivRangeRecipMulPow10 {
     }
 
     private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
+        val twoPowY_hi = HugeInt.ONE shl y
+        val fivePowK_hi = POW_5_HI[k]
+        val tenPowK_hi = POW_10_HI[k]
+        val tenPowQ_hi = POW_10_HI[q]
+        val x_hi = twoPowY_hi + fivePowK_hi - 1
+        val M_hi = x_hi / fivePowK_hi
+
         val twoPowY = Car.newShiftLeft(ONE, y)
         val fivePowK = POW_5[k]
         val tenPowK = POW_10[k]
@@ -113,6 +128,8 @@ object DivRangeRecipMulPow10 {
         val x = Car.newAdd(twoPowY, fivePowK)
         Car.mutateSub(x, 1)
         val M = Car.newCopy(Car.newDiv(x, fivePowK)) // eliminate leading zero words
+        //val M_hi = HugeInt.fromLittleEndianIntArray(M)
+        require (M_hi EQ M)
         //println("q:$q k:$k y:$y x:${Car.toString(x)} / fivePowK:${Car.toString(fivePowK)} => M:${Car.toString(M)}")
         val S = y
 
@@ -141,7 +158,7 @@ object DivRangeRecipMulPow10 {
         //println("nines5up is valid")
 
         val bitLen = Car.bitLen(maxProd)
-        return TableEntry(q, k, bitLen, M, y)
+        return TableEntry(q, k, bitLen, M_hi, y)
     }
 
     private fun isValid(dividend: IntArray, k: Int, M: IntArray, S: Int): Boolean {
@@ -233,15 +250,19 @@ object DivRangeRecipMulPow10 {
     private fun serialize(te: TableEntry): Int {
         val offset = iRRP
         appendLong(packDescriptor(te))
+        val mLimbs = te.M.toLittleEndianLongArray()
+        for (mLimb in mLimbs)
+            appendLong(mLimb)
+        /*
         val M = te.M
         for (i in 0..<(M.size and 0x7FFF_FFFE) step 2) {
             val mLimb = (M[i + 1].toLong() shl 32) + (M[i].toLong() and 0xFFFF_FFFFL)
-            appendLong(mLimb)
         }
         if ((M.size and 1) != 0) {
             val mLimb = M[M.size - 1].toLong() and 0xFFFF_FFFFL
             appendLong(mLimb)
         }
+         */
         return offset
     }
 
