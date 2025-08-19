@@ -550,7 +550,7 @@ object Magia {
         val z = IntArray(minLen)
         for (i in z.indices)
             z[i] = x[i] and y[i]
-        return if (nonZeroLimbLen(x) > 0) z else ZERO
+        return if (nonZeroLimbLen(z) > 0) z else ZERO
     }
 
     fun mutateAnd(x: IntArray, y: IntArray): IntArray {

@@ -163,23 +163,66 @@ object DivRangeRecipMulPow10 {
         val expectedQuot = quotRem[0]
         val expectedResidue = Residue.residueFromRemainderDivisor(quotRem[1], tenPowK)
 
+        val tenPowK_hi = POW_10_HI[k]
+        val (expectedQuot_hi, expectedRem_hi) = dividend_hi.divMod(tenPowK_hi)
+        val expectedResidue_hi = Residue.residueFromRemainderDivisor(expectedRem_hi, tenPowK_hi)
+        require (expectedQuot_hi EQ expectedQuot)
+        require (expectedRem_hi EQ quotRem[1])
+        require (expectedResidue_hi == expectedResidue)
+
         val dividendAlfa = if (k == 1) dividend else Car.newShiftRight(dividend, k - 1)
         val maskAlfa = Car.mutateSub(Car.newShiftLeft(ONE, k - 1), 1)
         val fracAlfa = Car.newAnd(dividend, maskAlfa)
         val stickyAlfa = Car.bitLen(fracAlfa) > 0
         //println("dividendAlfa:${Car.toString(dividendAlfa)} fracAlfa:${Car.toString(fracAlfa)} stickyAlfa:$stickyAlfa")
 
+        val dividendAlfa_hi = dividend_hi shr (k - 1)
+        require (dividendAlfa_hi EQ dividendAlfa)
+        val maskAlfa_hi = HugeInt.withBitMask(k - 1)
+        require (maskAlfa_hi EQ maskAlfa)
+        val fracAlfa_hi = dividend_hi and maskAlfa_hi
+        require (fracAlfa_hi EQ fracAlfa)
+        val stickyAlfa_hi = fracAlfa_hi.isNotZero()
+        if (stickyAlfa_hi != stickyAlfa) {
+            println(
+                "dividend_hi:$dividend_hi maskAlfa_hi:$maskAlfa_hi fracAlfa_hi:$fracAlfa_hi stickyAlfa_hi:$stickyAlfa_hi stickyAlfa:$stickyAlfa"
+            )
+            println("foo!")
+        }
+        require (stickyAlfa_hi == stickyAlfa)
+
         val prod = Car.newMul(dividendAlfa, M)
         val quotPlusRound = Car.newShiftRight(prod, S)
         val quot = Car.newShiftRight(quotPlusRound, 1)
         val round = (quotPlusRound[0] and 1) > 0
+
+        val prod_hi = dividendAlfa_hi * M_hi
+        val quotPlusRound_hi = prod_hi ushr S
+        val quot_hi = quotPlusRound_hi ushr 1
+        val round_hi = quotPlusRound_hi.testBit(0)
+
+        require (prod_hi EQ prod)
+        require (quotPlusRound_hi EQ quotPlusRound)
+        require (quot_hi EQ quot)
+        require (round_hi == round)
+
         //println("prod:${Car.toString(prod)} quotPlusRound:${Car.toString(quotPlusRound)} quot:${Car.toString(quot)} round:$round")
-        if (! Car.EQ(expectedQuot, quot))
+        if (! Car.EQ(expectedQuot, quot)) {
+            require (expectedQuot_hi NE quot_hi)
             return false
+        }
         val fracBeta = Car.newSub(prod, Car.newShiftLeft(quotPlusRound, S))
         val stickyBeta = Car.compare(fracBeta, M) >= 0
 
+        val fracBeta_hi = prod_hi - (quotPlusRound_hi shl S)
+        val stickyBeta_hi = fracBeta_hi >= M_hi
+
+        require (fracBeta_hi EQ fracBeta)
+        require (stickyBeta_hi == stickyBeta)
+
         val sticky = stickyAlfa or stickyBeta
+
+        val sticky_hi = stickyAlfa_hi or stickyBeta_hi
 
         val residue = when {
             round && sticky -> Residue.GT_HALF
@@ -187,6 +230,15 @@ object DivRangeRecipMulPow10 {
             sticky -> Residue.LT_HALF
             else -> Residue.EXACT
         }
+
+        val residue_hi = when {
+            round_hi and sticky_hi -> Residue.GT_HALF
+            round_hi -> Residue.HALF
+            sticky_hi -> Residue.LT_HALF
+            else -> Residue.EXACT
+        }
+
+        require (residue_hi == residue)
 
         return expectedResidue == residue
     }
