@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
@@ -114,19 +113,6 @@ value class Residue private constructor(val value:Int) {
                 else -> HALF
             }
             return residue
-        }
-
-        fun residueFromRemainderDivisor(remainder: IntArray, divisor: IntArray): Residue {
-            if (Car.isZero(remainder))
-                return EXACT
-            val remainderDoubled = Car.newShiftLeft(remainder, 1)
-            val cmp = Car.compare(remainderDoubled, divisor)
-            return when {
-                cmp < 0 -> LT_HALF
-                cmp == 0 -> HALF
-                else -> GT_HALF
-            }
-
         }
 
         fun residueFromRemainderDivisor(remainder: HugeInt, divisor: HugeInt): Residue {
