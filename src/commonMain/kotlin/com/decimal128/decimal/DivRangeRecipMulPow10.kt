@@ -2,7 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
 import com.decimal128.hugeint.HugeInt
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul4
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul3
@@ -17,23 +16,14 @@ const val K_MAXX = Q_MAXX - 34
 
 object DivRangeRecipMulPow10 {
 
-    private var EMPTY: Array<IntArray> = emptyArray()
-    private var ONE = intArrayOf(1)
-    private var POW_10 = Array<IntArray>(Q_MAXX) { ONE }
-    private var POW_5 = Array<IntArray>(K_MAXX) { ONE }
-
-    private var POW_10_HI = Array<HugeInt>(Q_MAXX) { HugeInt.ONE }
-    private var POW_5_HI = Array<HugeInt>(K_MAXX) { HugeInt.ONE }
+    private var POW_10 = Array<HugeInt>(Q_MAXX) { HugeInt.ONE }
+    private var POW_5 = Array<HugeInt>(K_MAXX) { HugeInt.ONE }
 
     private fun calcPowTables() {
-        for (i in 1..<Q_MAXX) {
-            POW_10[i] = Car.newMul(POW_10[i - 1], 10)
-            POW_10_HI[i] = POW_10_HI[i - 1] * 10
-        }
-        for (i in 1..<K_MAXX) {
-            POW_5[i] = Car.newMul(POW_5[i - 1], 5)
-            POW_5_HI[i] = POW_5_HI[i - 1] * 5
-        }
+        for (i in 1..<Q_MAXX)
+            POW_10[i] = POW_10[i - 1] * 10
+        for (i in 1..<K_MAXX)
+            POW_5[i] = POW_5[i - 1] * 5
     }
 
     private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: HugeInt, val S: Int) {
@@ -114,131 +104,76 @@ object DivRangeRecipMulPow10 {
     }
 
     private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
-        val twoPowY_hi = HugeInt.ONE shl y
-        val fivePowK_hi = POW_5_HI[k]
-        val tenPowK_hi = POW_10_HI[k]
-        val tenPowQ_hi = POW_10_HI[q]
-        val x_hi = twoPowY_hi + fivePowK_hi - 1
-        val M_hi = x_hi / fivePowK_hi
+        val twoPowY = HugeInt.ONE shl y
+        val fivePowK = POW_5[k]
+        val tenPowK = POW_10[k]
+        val tenPowQ = POW_10[q]
+        val x = twoPowY + fivePowK - 1
+        val M = x / fivePowK
 
         val S = y
 
-        val C_max_hi = tenPowQ_hi
-        val C_max_prime_hi = C_max_hi shr (k - 1)
-        val maxProd_hi = C_max_prime_hi * M_hi
+        val C_max = tenPowQ
+        val C_max_prime = C_max shr (k - 1)
+        val maxProd = C_max_prime * M
 
-        if (!isValid(tenPowQ_hi, k, M_hi, S))
+        if (!isValid(tenPowQ, k, M, S))
             return null
         //println("tenPowQ is valid")
-        val half_hi = tenPowK_hi shr 1
+        val half = tenPowK shr 1
 
-        if (!isValid(half_hi, k, M_hi, S))
+        if (!isValid(half, k, M, S))
             return null
         //println("half is valid")
-        val nines5_hi = tenPowQ_hi - half_hi
+        val nines5 = tenPowQ - half
 
-        if (!isValid(nines5_hi, k, M_hi, S))
+        if (!isValid(nines5, k, M, S))
             return null
         //println("nines5 is valid")
-        val nines5down_hi = nines5_hi - 1
+        val nines5down = nines5 - 1
 
-        if (!isValid(nines5down_hi, k, M_hi, S))
+        if (!isValid(nines5down, k, M, S))
             return null
         //println("nines5down is valid")
-        val nines5up_hi = nines5_hi + 1
+        val nines5up = nines5 + 1
 
-        if (!isValid(nines5up_hi, k, M_hi, S))
+        if (!isValid(nines5up, k, M, S))
             return null
         //println("nines5up is valid")
 
-        val bitLen = maxProd_hi.magnitudeBitLen()
-        return TableEntry(q, k, bitLen, M_hi, y)
+        val bitLen = maxProd.magnitudeBitLen()
+        return TableEntry(q, k, bitLen, M, y)
     }
 
-    private fun isValid(dividend_hi: HugeInt, k: Int, M_hi: HugeInt, S: Int): Boolean {
-        val dividend = dividend_hi.toLittleEndianIntArray()
-        val M = M_hi.toLittleEndianIntArray()
+    private fun isValid(dividend: HugeInt, k: Int, M: HugeInt, S: Int): Boolean {
         val tenPowK = POW_10[k]
-        val quotRem = Car.newDivMod(dividend, tenPowK)
-        val expectedQuot = quotRem[0]
-        val expectedResidue = Residue.residueFromRemainderDivisor(quotRem[1], tenPowK)
+        val (expectedQuot, expectedRem) = dividend.divMod(tenPowK)
+        val expectedResidue = Residue.residueFromRemainderDivisor(expectedRem, tenPowK)
 
-        val tenPowK_hi = POW_10_HI[k]
-        val (expectedQuot_hi, expectedRem_hi) = dividend_hi.divMod(tenPowK_hi)
-        val expectedResidue_hi = Residue.residueFromRemainderDivisor(expectedRem_hi, tenPowK_hi)
-        require (expectedQuot_hi EQ expectedQuot)
-        require (expectedRem_hi EQ quotRem[1])
-        require (expectedResidue_hi == expectedResidue)
+        val dividendAlfa = dividend shr (k - 1)
+        val maskAlfa = HugeInt.withBitMask(k - 1)
+        val fracAlfa = dividend and maskAlfa
+        val stickyAlfa = fracAlfa.isNotZero()
 
-        val dividendAlfa = if (k == 1) dividend else Car.newShiftRight(dividend, k - 1)
-        val maskAlfa = Car.mutateSub(Car.newShiftLeft(ONE, k - 1), 1)
-        val fracAlfa = Car.newAnd(dividend, maskAlfa)
-        val stickyAlfa = Car.bitLen(fracAlfa) > 0
-        //println("dividendAlfa:${Car.toString(dividendAlfa)} fracAlfa:${Car.toString(fracAlfa)} stickyAlfa:$stickyAlfa")
+        val prod = dividendAlfa * M
+        val quotPlusRound = prod ushr S
+        val quot = quotPlusRound ushr 1
+        val round = quotPlusRound.testBit(0)
 
-        val dividendAlfa_hi = dividend_hi shr (k - 1)
-        require (dividendAlfa_hi EQ dividendAlfa)
-        val maskAlfa_hi = HugeInt.withBitMask(k - 1)
-        require (maskAlfa_hi EQ maskAlfa)
-        val fracAlfa_hi = dividend_hi and maskAlfa_hi
-        require (fracAlfa_hi EQ fracAlfa)
-        val stickyAlfa_hi = fracAlfa_hi.isNotZero()
-        if (stickyAlfa_hi != stickyAlfa) {
-            println(
-                "dividend_hi:$dividend_hi maskAlfa_hi:$maskAlfa_hi fracAlfa_hi:$fracAlfa_hi stickyAlfa_hi:$stickyAlfa_hi stickyAlfa:$stickyAlfa"
-            )
-            println("foo!")
-        }
-        require (stickyAlfa_hi == stickyAlfa)
-
-        val prod = Car.newMul(dividendAlfa, M)
-        val quotPlusRound = Car.newShiftRight(prod, S)
-        val quot = Car.newShiftRight(quotPlusRound, 1)
-        val round = (quotPlusRound[0] and 1) > 0
-
-        val prod_hi = dividendAlfa_hi * M_hi
-        val quotPlusRound_hi = prod_hi ushr S
-        val quot_hi = quotPlusRound_hi ushr 1
-        val round_hi = quotPlusRound_hi.testBit(0)
-
-        require (prod_hi EQ prod)
-        require (quotPlusRound_hi EQ quotPlusRound)
-        require (quot_hi EQ quot)
-        require (round_hi == round)
-
-        //println("prod:${Car.toString(prod)} quotPlusRound:${Car.toString(quotPlusRound)} quot:${Car.toString(quot)} round:$round")
-        if (! Car.EQ(expectedQuot, quot)) {
-            require (expectedQuot_hi NE quot_hi)
+        if (expectedQuot NE quot)
             return false
-        }
-        val fracBeta = Car.newSub(prod, Car.newShiftLeft(quotPlusRound, S))
-        val stickyBeta = Car.compare(fracBeta, M) >= 0
 
-        val fracBeta_hi = prod_hi - (quotPlusRound_hi shl S)
-        val stickyBeta_hi = fracBeta_hi >= M_hi
-
-        require (fracBeta_hi EQ fracBeta)
-        require (stickyBeta_hi == stickyBeta)
+        val fracBeta = prod - (quotPlusRound shl S)
+        val stickyBeta = fracBeta >= M
 
         val sticky = stickyAlfa or stickyBeta
 
-        val sticky_hi = stickyAlfa_hi or stickyBeta_hi
-
         val residue = when {
-            round && sticky -> Residue.GT_HALF
+            round and sticky -> Residue.GT_HALF
             round -> Residue.HALF
             sticky -> Residue.LT_HALF
             else -> Residue.EXACT
         }
-
-        val residue_hi = when {
-            round_hi and sticky_hi -> Residue.GT_HALF
-            round_hi -> Residue.HALF
-            sticky_hi -> Residue.LT_HALF
-            else -> Residue.EXACT
-        }
-
-        require (residue_hi == residue)
 
         return expectedResidue == residue
     }
@@ -322,11 +257,8 @@ object DivRangeRecipMulPow10 {
     }
 
     private fun releaseTemporaryStorage() {
-        POW_5 = EMPTY
-        POW_10 = EMPTY
-
-        POW_5_HI = emptyArray()
-        POW_10_HI = POW_5_HI
+        POW_5 = emptyArray()
+        POW_10 = POW_5
 
         recipTable = emptyArray()
     }
