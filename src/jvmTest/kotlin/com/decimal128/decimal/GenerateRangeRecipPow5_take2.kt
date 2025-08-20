@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
+import com.decimal128.hugeint.Magia
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul1
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul2
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul3
@@ -25,10 +25,10 @@ object GenerateRangeRecipPow5_take2 {
     private const val GT_HALF = 3
 
     private fun getResidue(remainder: IntArray, denominator: IntArray): Int {
-        if (Car.isZero(remainder))
+        if (Magia.isZero(remainder))
             return EXACT
-        val remainderDoubled = Car.newShiftLeft(remainder, 1)
-        val cmp = Car.compare(remainderDoubled, denominator)
+        val remainderDoubled = Magia.newShiftLeft(remainder, 1)
+        val cmp = Magia.compare(remainderDoubled, denominator)
         return when {
             cmp < 0 -> LT_HALF
             cmp == 0 -> HALF
@@ -43,16 +43,16 @@ object GenerateRangeRecipPow5_take2 {
 
     private fun calcPowTables() {
         for (i in 1..<Q_MAXX)
-            POW_10[i] = Car.newMul(POW_10[i-1], 10)
+            POW_10[i] = Magia.newMul(POW_10[i-1], 10)
         for (i in 1..<K_MAXX)
-            POW_5[i] = Car.newMul(POW_5[i-1], 5)
+            POW_5[i] = Magia.newMul(POW_5[i-1], 5)
     }
 
     private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: IntArray, val S: Int) {
         var qMin = qMax
         fun prodDwordLen() = (prodBitLen + 0x3f) ushr 6
 
-        override fun toString() = if (qMax == -1) "[NULL]" else "[q:$qMin-$qMax k:$k bitLen:$prodBitLen M:${Car.toString(M)} S:$S]"
+        override fun toString() = if (qMax == -1) "[NULL]" else "[q:$qMin-$qMax k:$k bitLen:$prodBitLen M:${Magia.toString(M)} S:$S]"
     }
 
     // qMin = 8 bits
@@ -126,66 +126,66 @@ object GenerateRangeRecipPow5_take2 {
     }
 
     private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
-        val twoPowY = Car.newShiftLeft(ONE, y)
+        val twoPowY = Magia.newShiftLeft(ONE, y)
         val fivePowK = POW_5[k]
         val tenPowK = POW_10[k]
         val tenPowQ = POW_10[q]
-        val x = Car.newAdd(twoPowY, fivePowK)
-        Car.mutateSub(x, 1)
-        val M = Car.newCopy(Car.newDiv(x, fivePowK)) // eliminate leading zero words
-        //println("q:$q k:$k y:$y x:${Car.toString(x)} / fivePowK:${Car.toString(fivePowK)} => M:${Car.toString(M)}")
+        val x = Magia.newAdd(twoPowY, fivePowK)
+        Magia.mutateSub(x, 1)
+        val M = Magia.newMinimumCopy(Magia.newDiv(x, fivePowK)) // eliminate leading zero words
+        //println("q:$q k:$k y:$y x:${Magia.toString(x)} / fivePowK:${Magia.toString(fivePowK)} => M:${Magia.toString(M)}")
         val S = y
 
         val C_max = tenPowQ // for me C_max == 10**q
-        val C_max_prime = if (k == 1) C_max else Car.newShiftRight(C_max, k - 1)
-        val maxProd = Car.newMul(C_max_prime, M)
+        val C_max_prime = if (k == 1) C_max else Magia.newShiftRight(C_max, k - 1)
+        val maxProd = Magia.newMul(C_max_prime, M)
 
         if (!isValid(tenPowQ, k, M, S))
             return null
         //println("tenPowQ is valid")
-        val half = Car.newShiftRight(tenPowK, 1)
+        val half = Magia.newShiftRight(tenPowK, 1)
         if (!isValid(half, k, M, S))
             return null
         //println("half is valid")
-        val nines5 = Car.newSub(tenPowQ, half)
+        val nines5 = Magia.newSub(tenPowQ, half)
         if (!isValid(nines5, k, M, S))
             return null
         //println("nines5 is valid")
-        val nines5down = Car.newSub(nines5, 1)
+        val nines5down = Magia.newSub(nines5, 1)
         if (!isValid(nines5down, k, M, S))
             return null
         //println("nines5down is valid")
-        val nines5up = Car.newAdd(nines5, 1)
+        val nines5up = Magia.newAdd(nines5, 1)
         if (!isValid(nines5up, k, M, S))
             return null
         //println("nines5up is valid")
 
-        val bitLen = Car.bitLen(maxProd)
+        val bitLen = Magia.bitLen(maxProd)
         return TableEntry(q, k, bitLen, M, y)
     }
 
     private fun isValid(dividend: IntArray, k: Int, M: IntArray, S: Int): Boolean {
         val tenPowK = POW_10[k]
-        val quotRem = Car.newDivMod(dividend, tenPowK)
+        val quotRem = Magia.newDivMod(dividend, tenPowK)
         val expectedQuot = quotRem[0]
         val expectedResidue = getResidue(quotRem[1], tenPowK)
-        //println("expectedQuot:${Car.toString(expectedQuot)} rem:${Car.toString(quotRem[1])} expectedResidue:$expectedResidue")
+        //println("expectedQuot:${Magia.toString(expectedQuot)} rem:${Magia.toString(quotRem[1])} expectedResidue:$expectedResidue")
 
-        val dividendAlfa = if (k == 1) dividend else Car.newShiftRight(dividend, k - 1)
-        val maskAlfa = Car.mutateSub(Car.newShiftLeft(ONE, k - 1), 1)
-        val fracAlfa = Car.newAnd(dividend, maskAlfa)
-        val stickyAlfa = Car.bitLen(fracAlfa) > 0
-        //println("dividendAlfa:${Car.toString(dividendAlfa)} fracAlfa:${Car.toString(fracAlfa)} stickyAlfa:$stickyAlfa")
+        val dividendAlfa = if (k == 1) dividend else Magia.newShiftRight(dividend, k - 1)
+        val maskAlfa = Magia.mutateSub(Magia.newShiftLeft(ONE, k - 1), 1)
+        val fracAlfa = Magia.newAnd(dividend, maskAlfa)
+        val stickyAlfa = Magia.bitLen(fracAlfa) > 0
+        //println("dividendAlfa:${Magia.toString(dividendAlfa)} fracAlfa:${Magia.toString(fracAlfa)} stickyAlfa:$stickyAlfa")
 
-        val prod = Car.newMul(dividendAlfa, M)
-        val quotPlusRound = Car.newShiftRight(prod, S)
-        val quot = Car.newShiftRight(quotPlusRound, 1)
+        val prod = Magia.newMul(dividendAlfa, M)
+        val quotPlusRound = Magia.newShiftRight(prod, S)
+        val quot = Magia.newShiftRight(quotPlusRound, 1)
         val round = (quotPlusRound[0] and 1) > 0
-        //println("prod:${Car.toString(prod)} quotPlusRound:${Car.toString(quotPlusRound)} quot:${Car.toString(quot)} round:$round")
-        if (! Car.EQ(expectedQuot, quot))
+        //println("prod:${Magia.toString(prod)} quotPlusRound:${Magia.toString(quotPlusRound)} quot:${Magia.toString(quot)} round:$round")
+        if (! Magia.EQ(expectedQuot, quot))
             return false
-        val fracBeta = Car.newSub(prod, Car.newShiftLeft(quotPlusRound, S))
-        val stickyBeta = Car.compare(fracBeta, M) >= 0
+        val fracBeta = Magia.newSub(prod, Magia.newShiftLeft(quotPlusRound, S))
+        val stickyBeta = Magia.compare(fracBeta, M) >= 0
 
         val sticky = stickyAlfa or stickyBeta
 
