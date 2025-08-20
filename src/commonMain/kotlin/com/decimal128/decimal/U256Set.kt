@@ -1,7 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
-import com.decimal128.hugeint.HugeInt
+import com.decimal128.hugeint.Magia
 
 @Suppress("NOTHING_TO_INLINE")
 object U256Set {
@@ -49,7 +48,7 @@ object U256Set {
         u.bitLen = x.bitLen; u.digitLen = x.digitLen
     }
 
-    fun u256Set(u: U256, car: IntArray)  = u256Set(u, car, Car.nonZeroLimbLen(car))
+    fun u256Set(u: U256, car: IntArray)  = u256Set(u, car, Magia.nonZeroLimbLen(car))
 
     fun u256Set(u: U256, car: IntArray, carLen: Int) {
         val carSize = car.size
