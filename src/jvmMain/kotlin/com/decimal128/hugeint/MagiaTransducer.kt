@@ -9,12 +9,12 @@ import kotlin.math.max
 // CAR == Cardinal ARray
 // cardinal has fallen out of use, but is an unsigned integer
 // the "cardinality" of a set
-object CarTransducer {
+object MagiaTransducer {
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
-    fun carToBi(x: IntArray): BigInteger {
+    fun magiaToBi(x: IntArray): BigInteger {
         var bi = BigInteger.valueOf(U32(x[0]))
         for (i in x.size-1 downTo 1) {
             val t = BigInteger.valueOf(U32(x[i])).shiftLeft(i * 32)
@@ -23,7 +23,7 @@ object CarTransducer {
         return bi
     }
 
-    fun carFromBi(bi: BigInteger): IntArray {
+    fun magiaFromBi(bi: BigInteger): IntArray {
         val bitLen = bi.bitLength()
         val wordLen = (bitLen + 0x1F) ushr 5
         val car = IntArray(max(1, wordLen))
@@ -32,31 +32,31 @@ object CarTransducer {
         return car
     }
 
-    fun carToString(car: IntArray): String {
-        return carToBi(car).toString()
+    fun magiaToString(magia: IntArray): String {
+        return magiaToBi(magia).toString()
     }
 
-    fun carFromString(str: String): IntArray {
-        return carFromBi(BigInteger(str))
+    fun magiaFromString(str: String): IntArray {
+        return magiaFromBi(BigInteger(str))
     }
 
-    fun compare(car: IntArray, bi: BigInteger): Int {
-        val carBitLen = Car.bitLen(car)
+    fun compare(magia: IntArray, bi: BigInteger): Int {
+        val carBitLen = Magia.bitLen(magia)
         val cmpBitLen = carBitLen.compareTo(bi.bitLength())
         if (cmpBitLen != 0)
             return cmpBitLen
-        for (i in car.size - 1 downTo 0) {
-            val cmp = unsignedCmp(car[i], bi.shiftRight(i * 32).toInt())
+        for (i in magia.size - 1 downTo 0) {
+            val cmp = unsignedCmp(magia[i], bi.shiftRight(i * 32).toInt())
             if (cmp != 0)
                 return cmp
         }
         return 0
     }
 
-    fun EQ(car: IntArray, bi:BigInteger) = compare(car, bi) == 0
+    fun EQ(magia: IntArray, bi:BigInteger) = compare(magia, bi) == 0
 
-    fun calcDigitCount(car: IntArray): Int {
-        val bi = carToBi(car)
+    fun calcDigitCount(magia: IntArray): Int {
+        val bi = magiaToBi(magia)
         val bd = BigDecimal(bi)
         val precision = bd.precision()
         return precision

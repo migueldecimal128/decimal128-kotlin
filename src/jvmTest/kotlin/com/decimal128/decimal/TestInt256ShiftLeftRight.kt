@@ -1,9 +1,9 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Car
 import com.decimal128.decimal.U256Set.u256Set
 import com.decimal128.decimal.U256Set.u256SetShiftLeft
 import com.decimal128.decimal.U256Set.u256SetShiftRight
+import com.decimal128.hugeint.Magia
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
@@ -61,7 +61,7 @@ class TestInt256ShiftLeftRight {
 
         val right2 = Int256()
         val car = biToIntArrayWithExtra(biLeft)
-        val carShift = Car.mutateShiftRight(car, rightShift)
+        val carShift = Magia.mutateShiftRight(car, rightShift)
         u256Set(right2, carShift)
         assertEquals(biRight.toString(), right2.toString())
     }
