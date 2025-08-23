@@ -196,11 +196,7 @@ class Decimal() : S256() {
     }
 
     fun setInfinite(sign: Boolean = false) {
-        // FIXME ... allow zero for
-        // It is important that the coefficient of Infinity be non-zero because
-        // multiply (for example) checks to see if the other operand is zero.
-        // so we want the coefficient.isZero() to fail for Infinity
-        this.u256SetOne()
+        this.u256SetZero()
         this.qExp = NON_FINITE_INF
         this.sign = sign
     }
@@ -324,7 +320,7 @@ class Decimal() : S256() {
                 return roundAndFinalize(EXACT, ctx)
             }
             qMaxXY == NON_FINITE_INF -> {
-                if (x.u256IsZero() || y.u256IsZero()) {
+                if (x.isZero() || y.isZero()) {
                     setNaN(ctx)
                     return ctx.signalInvalid(this)
                 } else {
@@ -371,7 +367,7 @@ class Decimal() : S256() {
                 this.setAdd(this, aT, ctx)
             }
             qMaxXYA == NON_FINITE_INF -> when {
-                (qMaxXY == NON_FINITE_INF) && (x.u256IsZero() || y.u256IsZero()) -> {
+                (qMaxXY == NON_FINITE_INF) && (x.isZero() || y.isZero()) -> {
                     setNaN(ctx)
                 }
                 (qA == NON_FINITE_INF) -> {
@@ -839,6 +835,7 @@ class Decimal() : S256() {
     fun isNormal() = qExp < NON_FINITE_INF && sciExp() >= -6143
     fun isFinite() = qExp < NON_FINITE_INF
     fun isZero() = qExp < NON_FINITE_INF && u256IsZero()
+    fun isFiniteNonZero() = qExp < NON_FINITE_INF && !u256IsZero()
     fun isSubnormal() = qExp < NON_FINITE_INF && sciExp() < -6143
     fun isInfinite() = qExp == NON_FINITE_INF
     fun isNaN() = qExp in NON_FINITE_QNAN..NON_FINITE_SNAN
