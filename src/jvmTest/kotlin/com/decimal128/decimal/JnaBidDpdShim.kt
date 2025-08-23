@@ -11,16 +11,16 @@ interface JnaBidDpdShim : Library {
     }
 
     // decimal128 (16 bytes)
-    fun d128_dpd_from_string(s: String, out16: ByteArray): Int
-    fun d128_dpd_to_string(in16: ByteArray, out: ByteArray, outCap: Int): Int
-    fun d128_bid_from_string(s: String, out16: ByteArray): Int
-    fun d128_bid_to_string(in16: ByteArray, out: ByteArray, outCap: Int): Int
+    fun d128_dpd_le_from_string(s: String, out16: ByteArray): Int
+    fun d128_dpd_le_to_string(in16: ByteArray, out: ByteArray, outCap: Int): Int
+    fun d128_bid_le_from_string(s: String, out16: ByteArray): Int
+    fun d128_bid_le_to_string(in16: ByteArray, out: ByteArray, outCap: Int): Int
 
     // decimal64 (8 bytes)
-    fun d64_dpd_from_string(s: String, out8: ByteArray): Int
-    fun d64_dpd_to_string(in8: ByteArray, out: ByteArray, outCap: Int): Int
-    fun d64_bid_from_string(s: String, out8: ByteArray): Int
-    fun d64_bid_to_string(in8: ByteArray, out: ByteArray, outCap: Int): Int
+    fun d64_dpd_le_from_string(s: String, out8: ByteArray): Int
+    fun d64_dpd_le_to_string(in8: ByteArray, out: ByteArray, outCap: Int): Int
+    fun d64_bid_le_from_string(s: String, out8: ByteArray): Int
+    fun d64_bid_le_to_string(in8: ByteArray, out: ByteArray, outCap: Int): Int
 }
 
 // tiny helpers
