@@ -250,6 +250,7 @@ object DecimalParsePrint {
         var ch: Char
 
         var sign = false
+        var hasSignChar = false
         var fractionalDigitCount = 0
         var coeff19 = 0L
         var coeff34 = 0L
@@ -265,7 +266,8 @@ object DecimalParsePrint {
                 if (ich == strLen)
                     break@no_more_chars
                 ch = str[ich++]
-                if (ch == '+' || ch == '-') {
+                hasSignChar = ch == '+' || ch == '-'
+                if (hasSignChar) {
                     sign = (ch == '-')
                     if (ich == strLen)
                         break@no_more_chars
@@ -363,10 +365,10 @@ object DecimalParsePrint {
             x.roundAndFinalize(residue, ctx)
             return
         } while (false)
-        val lc = str.lowercase()
+        val lc = str.substring(if (hasSignChar) 1 else 0).lowercase()
         when (lc) {
-            in lcInfinityStrings -> x.setInfinite(lc[0] == '-')
-            in lcNanStrings -> if (lc[0] == 's') x.setSNaN(ctx) else x.setNaN(ctx)
+            in lcInfinityStrings -> x.setInfinite(sign)
+            in lcNanStrings -> x.setNaN(lc[0] == 's', sign, 0L, 0L)
             else -> x.setNaN(NAN_INVALID_SYNTAX, ctx)
         }
     }

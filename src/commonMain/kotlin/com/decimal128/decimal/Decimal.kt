@@ -110,8 +110,11 @@ class Decimal() : S256() {
             return z
         }
 
-        fun fromDecimal128LittleEndianBidEncoding(littleEndianLongs: LongArray) =
-            Decimal128BidSerDe.toLittleEndianBid128(Decimal(), littleEndianLongs)
+        fun decodeLittleEndianBidDecimal128(littleEndianLongs: LongArray) =
+            Decimal128BidSerDe.decodeLittleEndianBid128(littleEndianLongs, Decimal())
+        fun decodeLittleEndianBidDecimal128(littleEndianBytes: ByteArray) =
+            Decimal128BidSerDe.decodeLittleEndianBid128(littleEndianBytes, Decimal())
+
     }
 
     fun sciExp() = qExp + (digitLen - 1)
@@ -174,9 +177,9 @@ class Decimal() : S256() {
         //FIXME - see IEEE754r 6.2
     }
 
-    internal fun setNaN(isSignaling: Int, sign: Boolean, payloadHi: Long, payloadLo: Long) {
+    internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
         this.sign = sign
-        this.qExp = if (isSignaling == 0) NON_FINITE_QNAN else NON_FINITE_SNAN
+        this.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
         this.dw3 = 0
         this.dw2 = 0
         this.dw1 = payloadHi and ((1L shl (110 - 64)) - 1L)
@@ -860,8 +863,10 @@ class Decimal() : S256() {
                 }
     }
 
-    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = Decimal128BidSerDe.toLittleEndianBid128(this, littleEndianLongs)
-    fun toDecimal128LittleEndianBidEncoding(littleEndianBytes: ByteArray) = Decimal128BidSerDe.toLittleEndianBid128(this, littleEndianBytes)
+    fun encodeLittleEndianLongsBid128() = encodeLittleEndianBid128(LongArray(2))
+    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = Decimal128BidSerDe.encodeLittleEndianBid128(this, littleEndianLongs)
+    fun encodeLittleEndianBytesBid128() = encodeLittleEndianBid128(ByteArray(16))
+    fun encodeLittleEndianBid128(littleEndianBytes: ByteArray) = Decimal128BidSerDe.encodeLittleEndianBid128(this, littleEndianBytes)
 
     internal fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
@@ -922,8 +927,7 @@ class Decimal() : S256() {
                     check(! isTiny)
                     // overflow IEEE754-2008 7.4 Overflow page 37
                     if (roundingDirection.overflowsToInfinity(sign)) {
-                        super.u256SetOne()
-                        qExp = NON_FINITE_INF
+                        setInfinite(sign)
                     } else {
                         setMaxFiniteMagnitude(ctx)
                     }

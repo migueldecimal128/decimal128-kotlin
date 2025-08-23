@@ -2,17 +2,18 @@ package com.decimal128.decimal
 
 object Decimal128BidSerDe {
 
-    fun toLittleEndianBid128(d: Decimal, longsLittleEndian: LongArray): LongArray {
-        val bidDecimal128Hi = toBid128Hi(d)
+    fun encodeLittleEndianBid128(d: Decimal, littleEndianLongs: LongArray): LongArray {
+        require(littleEndianLongs.size == 2)
+        val bidDecimal128Hi = encodeBid128Hi(d)
         val bidDecimal128Lo = d.dw0
-        longsLittleEndian[0] = bidDecimal128Lo
-        longsLittleEndian[1] = bidDecimal128Hi
-        return longsLittleEndian
+        littleEndianLongs[0] = bidDecimal128Lo
+        littleEndianLongs[1] = bidDecimal128Hi
+        return littleEndianLongs
     }
 
-    fun toLittleEndianBid128(d: Decimal, littleEndianBytes: ByteArray): ByteArray {
-        check(littleEndianBytes.size == 16)
-        val bidDecimal128Hi = toBid128Hi(d)
+    fun encodeLittleEndianBid128(d: Decimal, littleEndianBytes: ByteArray): ByteArray {
+        require(littleEndianBytes.size == 16)
+        val bidDecimal128Hi = encodeBid128Hi(d)
         val bidDecimal128Lo = d.dw0
         for (i in 0..7) {
             littleEndianBytes[    i] = (bidDecimal128Lo ushr (i shl 3)).toByte()
@@ -21,7 +22,7 @@ object Decimal128BidSerDe {
         return littleEndianBytes
     }
 
-    fun toBid128Hi(d: Decimal): Long {
+    fun encodeBid128Hi(d: Decimal): Long {
         val decimal128 = DecimalFormat.DECIMAL_128
         val sign = if (d.sign) 1L shl 63 else 0L
         val qExp = d.qExp
@@ -43,7 +44,23 @@ object Decimal128BidSerDe {
         return bidDecimal128Hi
     }
 
-    fun fromBidDecimal128Longs(bid128Hi: Long, bid128Lo: Long, d: Decimal): Decimal {
+    fun decodeLittleEndianBid128(littleEndianLongs: LongArray, d: Decimal): Decimal {
+        require(littleEndianLongs.size == 2)
+        return decodeBid128Longs(littleEndianLongs[1], littleEndianLongs[0], d)
+    }
+
+    fun decodeLittleEndianBid128(littleEndianBytes: ByteArray, d: Decimal): Decimal {
+        require(littleEndianBytes.size == 16)
+        var bid128Hi = 0L
+        var bid128Lo = 0L
+        for (i in 0..7) {
+            bid128Lo = bid128Lo or ((littleEndianBytes[    i].toLong() and 0xFFL) shl (i shl 3))
+            bid128Hi = bid128Hi or ((littleEndianBytes[8 + i].toLong() and 0xFFL) shl (i shl 3))
+        }
+    return decodeBid128Longs(bid128Hi, bid128Lo, d)
+    }
+
+    fun decodeBid128Longs(bid128Hi: Long, bid128Lo: Long, d: Decimal): Decimal {
         val decimal128 = DecimalFormat.DECIMAL_128
         val sign = bid128Hi < 0
         val combination = (bid128Hi ushr 46).toInt() and 0x1FFFF
@@ -60,7 +77,7 @@ object Decimal128BidSerDe {
             (combination and 0x1F000) == 0x1E000 ->
                 d.setInfinite(sign)
             (combination and 0x1F000) == 0x1F000 ->
-                d.setNaN(combination and 0x800, sign, significand110Hi, bid128Lo)
+                d.setNaN((combination and 0x800) == 0x800, sign, significand110Hi, bid128Lo)
             else -> {
                 // large-form finite pattern ⇒ non-canonical for decimal128:
                 // E = bits [15:2] (G2..Gw+3), C := 0, keep sign S.
