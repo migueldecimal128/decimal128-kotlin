@@ -69,22 +69,34 @@ kotlin {
 		val jvmMain   by getting  // your existing code lives here
 		val jvmTest   by getting {
 			dependencies {
-       					  implementation(kotlin("test"))     // <-- pulls in kotlin-test on jvmTest
-						 }
+                implementation(kotlin("test"))     // <-- pulls in kotlin-test on jvmTest
+                implementation("net.java.dev.jna:jna:5.17.0")
+			}
 		}
     }
 }
 
+val nativeInputDir = layout.projectDirectory.dir("native/darwin-x86_64")
+val nativeTestDir  = layout.buildDirectory.dir("native/darwin-x86_64")
+
+tasks.register<Copy>("copyNativeForTests") {
+    from(nativeInputDir)
+    into(nativeTestDir)
+}
+
 // configure *all* Test tasks (including the MPP-generated jvmTest) to use JUnit Platform:
 tasks.withType<Test> {
-  useJUnitPlatform()
-  testLogging {
-    events          = setOf(
-      TestLogEvent.FAILED,
-      TestLogEvent.SKIPPED,
-      TestLogEvent.STANDARD_OUT,
-      TestLogEvent.STANDARD_ERROR
-    )
-    showStandardStreams = true
-  }
+    dependsOn("copyNativeForTests")
+    systemProperty("jna.library.path", nativeTestDir.get().asFile.absolutePath)
+
+    useJUnitPlatform()
+    testLogging {
+        events          = setOf(
+            TestLogEvent.FAILED,
+            TestLogEvent.SKIPPED,
+            TestLogEvent.STANDARD_OUT,
+            TestLogEvent.STANDARD_ERROR
+        )
+        showStandardStreams = true
+    }
 }

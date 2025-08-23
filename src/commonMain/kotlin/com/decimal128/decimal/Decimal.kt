@@ -178,6 +178,13 @@ class Decimal() : S256() {
         qExp = NON_FINITE_SNAN
     }
 
+    internal fun setSNaN(payload: Int, ctx: DecimalContext) {
+        sign = false
+        u256Set64(payload.toLong())
+        qExp = NON_FINITE_SNAN
+        //FIXME - see IEEE754r 6.2
+    }
+
     fun setInfinite(sign: Boolean = false) {
         // It is important that the coefficient of Infinity be non-zero because
         // multiply (for example) checks to see if the other operand is zero.
