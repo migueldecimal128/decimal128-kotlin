@@ -110,7 +110,8 @@ class Decimal() : S256() {
             return z
         }
 
-
+        fun fromDecimal128LittleEndianBidEncoding(littleEndianLongs: LongArray) =
+            Decimal128BidSerDe.toLittleEndianBid128(Decimal(), littleEndianLongs)
     }
 
     fun sciExp() = qExp + (digitLen - 1)
@@ -173,6 +174,15 @@ class Decimal() : S256() {
         //FIXME - see IEEE754r 6.2
     }
 
+    internal fun setNaN(isSignaling: Int, sign: Boolean, payloadHi: Long, payloadLo: Long) {
+        this.sign = sign
+        this.qExp = if (isSignaling == 0) NON_FINITE_QNAN else NON_FINITE_SNAN
+        this.dw3 = 0
+        this.dw2 = 0
+        this.dw1 = payloadHi and ((1L shl (110 - 64)) - 1L)
+        this.dw0 = payloadLo
+    }
+
     fun setSNaN(ctx: DecimalContext) {
         setZero()
         qExp = NON_FINITE_SNAN
@@ -186,6 +196,7 @@ class Decimal() : S256() {
     }
 
     fun setInfinite(sign: Boolean = false) {
+        // FIXME ... allow zero for
         // It is important that the coefficient of Infinity be non-zero because
         // multiply (for example) checks to see if the other operand is zero.
         // so we want the coefficient.isZero() to fail for Infinity
@@ -851,6 +862,9 @@ class Decimal() : S256() {
                     else -> "?que? $qExp"
                 }
     }
+
+    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = Decimal128BidSerDe.toLittleEndianBid128(this, littleEndianLongs)
+    fun toDecimal128LittleEndianBidEncoding(littleEndianBytes: ByteArray) = Decimal128BidSerDe.toLittleEndianBid128(this, littleEndianBytes)
 
     internal fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
