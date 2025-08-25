@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 
 class TestEncodeDecideBid128 {
 
-    val verbose = true
+    cxxxval verbose = false
 
     val tcs = arrayOf(
         "nanABC",
@@ -32,6 +32,19 @@ class TestEncodeDecideBid128 {
     fun testCases() {
         for (tc in tcs)
             test1(tc)
+    }
+
+    val fptestOperandFilename = "/fptestOperandsUniq.txt"
+
+    @Test
+    fun testFptestOperands() {
+        this::class.java.getResourceAsStream(fptestOperandFilename)!!
+            .bufferedReader()
+            .useLines { lines ->
+                lines.forEach { line ->
+                    test1(line)
+                }
+            }
     }
 
     fun test1(str: String) {

@@ -8,7 +8,13 @@ import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.io.File
+import java.io.PrintWriter
 import java.nio.charset.StandardCharsets
+
+val captureOperandText = false
+val operandCaptureFilename = "src/jvmTest/resources/fptestOperandsRaw.txt"
+var operandPrintWriter: PrintWriter? = null
+
 
 class TestFptestRead {
 
@@ -169,8 +175,11 @@ class TestFptestRead {
 
     @Test
     fun testReadFptestFiles() {
+        if (captureOperandText)
+            operandPrintWriter = File(operandCaptureFilename).printWriter()
         for (fptestFile in fptestFiles)
             read1(prefix + fptestFile)
+        operandPrintWriter?.close()
     }
 
     class Fptest(val fptestStr: String,
@@ -262,7 +271,10 @@ class TestFptestRead {
                 when (t) {
                     "Q" -> d.setNaN(ctx)
                     "S" -> d.setSNaN(ctx)
-                    else -> DecimalParsePrint.decFromString(d, t, false, ctx)
+                    else -> {
+                        operandPrintWriter?.println(t)
+                        DecimalParsePrint.decFromString(d, t, false, ctx)
+                    }
                 }
                 ret.add(d)
             }
