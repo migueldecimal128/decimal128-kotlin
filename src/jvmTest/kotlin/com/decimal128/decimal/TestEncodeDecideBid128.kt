@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 
 class TestEncodeDecideBid128 {
 
-    cxxxval verbose = false
+    val verbose = false
 
     val tcs = arrayOf(
         "nanABC",
