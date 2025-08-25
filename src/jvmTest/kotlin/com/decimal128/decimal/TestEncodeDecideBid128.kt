@@ -9,6 +9,9 @@ class TestEncodeDecideBid128 {
     val verbose = true
 
     val tcs = arrayOf(
+        "nanABC",
+        "nan(123)",
+        "NaN123456789", // payloads not yet handled
         "99999999999999999999999999999999999E6111",
         "-inf",
         "+NaN",
@@ -17,7 +20,6 @@ class TestEncodeDecideBid128 {
         "1", "+1", "-1", "1e0", "1e+0", "1e-0", "+1e0", "+1e+0", "+1e-0", "-1e0", "-1e+0", "-1e-0",
         "10", "+10", "-10", "1e1", "1e+1", "1e-1", "+1e1", "+1e+1", "+1e-1", "-1e1", "-1e+1", "-1e-1",
         "NaN", "+NaN", "-NaN",
-        //"NaN123456789", payloads not yet handled
         "Inf", "infinity", "+Inf", "+INFINITY", "-INF", "-Infinity",
         "1.234567890123456789012345678901234e6144",
         "9999999999999999999999999999999999E6111",
@@ -35,7 +37,7 @@ class TestEncodeDecideBid128 {
     fun test1(str: String) {
         if (verbose)
             println(str)
-        val d = Decimal(str)
+        val d = Decimal(str, zeroNanPayload = true)
         val dEncoded = d.encodeLittleEndianBytesBid128()
 
         val bid128LE = ByteArray(16)

@@ -30,7 +30,11 @@ class Decimal() : S256() {
     }
 
     constructor(str: String): this() {
-        DecimalParsePrint.decFromString(this, str, DEFAULT_128_CONTEXT)
+        DecimalParsePrint.decFromString(this, str, false, DEFAULT_128_CONTEXT)
+    }
+
+    constructor(str: String, zeroNanPayload: Boolean) : this() {
+        DecimalParsePrint.decFromString(this, str, zeroNanPayload, DEFAULT_128_CONTEXT)
     }
 
     constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
@@ -228,7 +232,7 @@ class Decimal() : S256() {
     }
 
     fun set(str: String): Decimal {
-        DecimalParsePrint.decFromString(this, str, DEFAULT_128_CONTEXT)
+        DecimalParsePrint.decFromString(this, str, false, DEFAULT_128_CONTEXT)
         return this
     }
 

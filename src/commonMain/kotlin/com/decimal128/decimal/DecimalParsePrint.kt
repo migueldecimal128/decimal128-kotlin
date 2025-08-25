@@ -230,14 +230,7 @@ object DecimalParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
-    val lcInfinityStrings = arrayOf(
-        "inf", "infinity", "+inf", "+infinity", "-inf", "-infinity"
-    )
-    val lcNanStrings = arrayOf(
-        "nan", "qnan", "snan"
-    )
-
-    fun decFromString(x: Decimal, str: String, ctx: DecimalContext) {
+    fun decFromString(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) {
         var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
         var significantDigitCount = 0 // does not count leading zeros
         var ichDot = -1
@@ -366,10 +359,44 @@ object DecimalParsePrint {
             return
         } while (false)
         val lc = str.substring(if (hasSignChar) 1 else 0).lowercase()
-        when (lc) {
-            in lcInfinityStrings -> x.setInfinite(sign)
-            in lcNanStrings -> x.setNaN(lc[0] == 's', sign, 0L, 0L)
-            else -> x.setNaN(NAN_INVALID_SYNTAX, ctx)
+        when {
+            lc == "inf" || lc == "infinity" -> x.setInfinite(sign)
+            isNaNString(lc, 33, sign, zeroNanPayload, x) -> {}
+            else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
         }
+    }
+
+    fun isNaNString(lcStr: String, maxPayloadDigits: Int, sign: Boolean, zeroNanPayload: Boolean, x: Decimal): Boolean {
+        if (lcStr.isEmpty())
+            return false
+        val isSignaling = lcStr[0] == 's'
+        var ich = if (isSignaling || lcStr[0] == 'q') 1 else 0
+        if (lcStr.length < ich + 3)
+            return false
+        if (lcStr[ich + 0] != 'n' || lcStr[ich + 1] != 'a' || lcStr[ich + 2] != 'n')
+            return false
+        ich += 3
+        x.setZero()
+        var digitCount = 0
+        var accumulator = 0L
+        while (ich < lcStr.length) {
+            val ch = lcStr[ich]
+            if (ch !in '0'..'9')
+                return false
+            accumulator = (accumulator * 10L) + (ch - '0').toLong()
+            ++digitCount
+            if (digitCount > maxPayloadDigits)
+                return false
+            if ((digitCount and 0x0F) == 0 && !zeroNanPayload) {
+                x.u256MutateFmaPow10(16, accumulator)
+                accumulator = 0L
+            }
+            ++ich
+        }
+        if ((digitCount and 0x0F) > 0 && !zeroNanPayload)
+            x.u256MutateFmaPow10(digitCount and 0x0F, accumulator)
+        x.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
+        x.sign = sign
+        return true
     }
 }
