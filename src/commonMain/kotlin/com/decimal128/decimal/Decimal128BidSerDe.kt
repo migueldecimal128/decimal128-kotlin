@@ -46,7 +46,7 @@ object Decimal128BidSerDe {
 
     fun decodeLittleEndianBid128(littleEndianLongs: LongArray, d: Decimal): Decimal {
         require(littleEndianLongs.size == 2)
-        return decodeBid128Longs(littleEndianLongs[1], littleEndianLongs[0], d)
+        return decodeBid128Longs(d, littleEndianLongs[1], littleEndianLongs[0])
     }
 
     fun decodeLittleEndianBid128(littleEndianBytes: ByteArray, d: Decimal): Decimal {
@@ -57,10 +57,10 @@ object Decimal128BidSerDe {
             bid128Lo = bid128Lo or ((littleEndianBytes[    i].toLong() and 0xFFL) shl (i shl 3))
             bid128Hi = bid128Hi or ((littleEndianBytes[8 + i].toLong() and 0xFFL) shl (i shl 3))
         }
-    return decodeBid128Longs(bid128Hi, bid128Lo, d)
+    return decodeBid128Longs(d, bid128Hi, bid128Lo)
     }
 
-    fun decodeBid128Longs(bid128Hi: Long, bid128Lo: Long, d: Decimal): Decimal {
+    fun decodeBid128Longs(d: Decimal, bid128Hi: Long, bid128Lo: Long): Decimal {
         val decimal128 = DecimalFormat.DECIMAL_128
         val sign = bid128Hi < 0
         val combination = (bid128Hi ushr 46).toInt() and 0x1FFFF
@@ -71,6 +71,11 @@ object Decimal128BidSerDe {
                 val qExp = biasedExponent + decimal128.qTiny
                 val mostSignificant3 = (combination and 0x07).toLong() shl (110 - 64)
                 d.u256Set128(mostSignificant3 or significand110Hi, bid128Lo)
+                // IEEE754-2019 3.5.2 p21
+                //  If the value exceeds the maximum, the significand c is
+                //  non-canonical and the value used for c is zero.
+                if (d.digitLen > 34)
+                    d.u256SetZero()
                 d.qExp = qExp
                 d.sign = sign
             }

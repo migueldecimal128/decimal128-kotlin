@@ -6,9 +6,11 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 
 class TestEncodeDecideBid128 {
 
-    val verbose = false
+    val verbose = true
 
     val tcs = arrayOf(
+        "SNaN",
+        "QNaN",
         "nanABC",
         "nan(123)",
         "NaN123456789", // payloads not yet handled
@@ -58,8 +60,8 @@ class TestEncodeDecideBid128 {
 
         //if (! (bid128LE contentEquals dEncoded)) {
         if (verbose) {
-            println(" bid128LE:${bid128LE.hex()}")
-            println(" dEncoded:${dEncoded.hex()}")
+            println(" bid128LE:${bid128LE.littleEndianSpacedHex()}")
+            println(" dEncoded:${dEncoded.littleEndianSpacedHex()}")
         }
         assertArrayEquals(bid128LE, dEncoded)
     }

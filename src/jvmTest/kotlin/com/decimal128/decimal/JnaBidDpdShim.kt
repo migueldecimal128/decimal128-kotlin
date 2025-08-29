@@ -24,7 +24,8 @@ interface JnaBidDpdShim : Library {
 }
 
 // tiny helpers
-fun ByteArray.hex() = joinToString(" ") { "%02X".format(it.toUByte().toInt()) }
+fun ByteArray.littleEndianSpacedHex() = joinToString(" ") { "%02X".format(it.toUByte().toInt()) }
+//fun ByteArray.bigEndianHex() = joinToString(" ") { "%02X".format(it.toUByte().toInt()) xxx }
 fun ByteArray.cString(): String {
     var end = 0
     while (end < size && this[end] != 0.toByte()) end++

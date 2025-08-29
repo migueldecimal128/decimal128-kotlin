@@ -240,7 +240,7 @@ object DecimalParsePrint {
 
         val strLen = str.length
         var ich = 0
-        var ch: Char
+        var ch = '0'
 
         var sign = false
         var hasSignChar = false
@@ -362,6 +362,8 @@ object DecimalParsePrint {
         when {
             lc == "inf" || lc == "infinity" -> x.setInfinite(sign)
             isNaNString(lc, 33, sign, zeroNanPayload, x) -> {}
+            ich == 1 && ch == '[' && isValidBidHexDecimal(lc, x) -> {}
+            ich == 1 && ch == '#' && isValidDpdHexDecimal(lc, x) -> {}
             else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
         }
     }
@@ -399,4 +401,59 @@ object DecimalParsePrint {
         x.sign = sign
         return true
     }
+
+    fun isValidBidHexDecimal(lcStr: String, x: Decimal): Boolean {
+        if (lcStr[0] != '[' || lcStr[lcStr.lastIndex] != ']' ||
+            lcStr.length !in 34..35 || (lcStr.length == 35 && lcStr[17] != ','))
+            return false
+        val commaOffset = if (lcStr.length == 34) 0 else 1
+        var bidHi = 0L
+        var bidLo = 0L
+        for (i in 0..15) {
+            val leftShift = 60 - (i shl 2)
+            val chHi = lcStr[i + 1]
+            val hiNybble = when (chHi) {
+                in '0'..'9' -> chHi - '0'
+                in 'a'..'f' -> chHi - 'a' + 10
+                else -> return false
+            }
+            bidHi = bidHi or (hiNybble.toLong() shl leftShift)
+            val chLo = lcStr[17 + commaOffset + i]
+            val loNybble = when (chLo) {
+                in '0'..'9' -> chLo - '0'
+                in 'a'..'f' -> chLo - 'a' + 10
+                else -> return false
+            }
+            bidLo = bidLo or (loNybble.toLong() shl leftShift)
+        }
+        x.setBid128(bidHi, bidLo)
+        return true
+    }
+
+    fun isValidDpdHexDecimal(lcStr: String, x: Decimal): Boolean {
+        if (lcStr.length != 33 || lcStr[0] != '#')
+            return false
+        var dpdHi = 0L
+        var dpdLo = 0L
+        for (i in 0..15) {
+            val leftShift = 60 - (i shl 2)
+            val chHi = lcStr[i + 1]
+            val hiNybble = when (chHi) {
+                in '0'..'9' -> chHi - '0'
+                in 'a'..'f' -> chHi - 'a' + 10
+                else -> return false
+            }
+            dpdHi = dpdHi or (hiNybble.toLong() shl leftShift)
+            val chLo = lcStr[i + 17]
+            val loNybble = when (chLo) {
+                in '0'..'9' -> chLo - '0'
+                in 'a'..'f' -> chLo - 'a' + 10
+                else -> return false
+            }
+            dpdLo = dpdLo or (loNybble.toLong() shl leftShift)
+        }
+        x.setDpd128(dpdHi, dpdLo)
+        return true
+    }
+
 }

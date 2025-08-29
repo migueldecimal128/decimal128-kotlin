@@ -32,8 +32,8 @@ class TestJnaBidDpdShim {
             jnaBidDpdShim.d128_bid_le_to_string(d128_bid, sBuf, sBuf.size)
             val d128_bid_rt = sBuf.cString()
 
-            println("d128 DPD hex: ${d128_dpd.hex()}  rt=\"$d128_dpd_rt\"")
-            println("d128 BID hex: ${d128_bid.hex()}  rt=\"$d128_bid_rt\"")
+            println("d128 DPD hex: ${d128_dpd.littleEndianSpacedHex()}  rt=\"$d128_dpd_rt\"")
+            println("d128 BID hex: ${d128_bid.littleEndianSpacedHex()}  rt=\"$d128_bid_rt\"")
 
             // --- decimal64 ---
             val d64_dpd = ByteArray(8)
@@ -47,8 +47,8 @@ class TestJnaBidDpdShim {
             jnaBidDpdShim.d64_bid_le_to_string(d64_bid, sBuf2, sBuf2.size)
             val d64_bid_rt = sBuf2.cString()
 
-            println(" d64 DPD hex: ${d64_dpd.hex()}  rt=\"$d64_dpd_rt\"")
-            println(" d64 BID hex: ${d64_bid.hex()}  rt=\"$d64_bid_rt\"")
+            println(" d64 DPD hex: ${d64_dpd.littleEndianSpacedHex()}  rt=\"$d64_dpd_rt\"")
+            println(" d64 BID hex: ${d64_bid.littleEndianSpacedHex()}  rt=\"$d64_bid_rt\"")
         }
     }
 

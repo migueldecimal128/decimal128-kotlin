@@ -236,6 +236,10 @@ class Decimal() : S256() {
         return this
     }
 
+    fun setBid128(bid128Hi: Long, bid128Lo: Long) = Decimal128BidSerDe.decodeBid128Longs(this, bid128Hi, bid128Lo)
+
+    fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = Decimal128DpdSerDe.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
+
     fun setMaxFiniteMagnitude(ctx: DecimalContext): Decimal {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
