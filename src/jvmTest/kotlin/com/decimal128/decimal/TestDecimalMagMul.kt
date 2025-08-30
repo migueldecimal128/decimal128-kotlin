@@ -27,6 +27,7 @@ class TestDecimalMagMul {
     }
 
     val cases = arrayOf(
+        TC("2.132605340208488890479E+1158", "4.6211615602131956617E+5175"),
         TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.ROUND_TOWARD_POSITIVE),
         TC("1", "0"),
         TC("1", "0e-6176"),
@@ -93,7 +94,8 @@ class TestDecimalMagMul {
         val decB = newDecimal(bdB)
         val decP = Decimal()
         decP.setMul(decA, decB, ctx)
-        assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
+        if (decP.qExp != NON_FINITE_INF)
+            assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
         assertEquals(-expected.scale(), decP.qExp)
     }
 

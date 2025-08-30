@@ -10,7 +10,7 @@ import java.util.*
 
 class TestDecimalMagSet {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdA: BigDecimal, val ctx: DecimalContext) {
         constructor(str: String, rd: RoundingDirection) : this(BigDecimal(str), DecimalContext(rd))
@@ -131,7 +131,7 @@ class TestDecimalMagSet {
         val biCoeff = dec.coeffToBigInteger()
         if (verbose)
             println("coeff:$biCoeff + expQ:${dec.qExp}")
-        if (biRounded != biCoeff || expRounded != dec.qExp) {
+        if ((biRounded != biCoeff && expRounded != NON_FINITE_INF) || expRounded != dec.qExp) {
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
             println("coeff:$biCoeff + expQ:${dec.qExp}")
             assertEquals(biRounded, biCoeff)

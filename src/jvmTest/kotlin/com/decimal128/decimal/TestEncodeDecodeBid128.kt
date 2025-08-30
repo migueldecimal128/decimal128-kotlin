@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 
 
-class TestEncodeDecideBid128 {
+class TestEncodeDecodeBid128 {
 
     val verbose = true
 

@@ -28,6 +28,7 @@ class TestDecimalMagnitudeDiv {
     }
 
     val cases = arrayOf(
+        TC("5.8331E+4541", "1.06765154850769863710859340415777E-5653", RoundingDirection.ROUND_TOWARD_POSITIVE),
         TC("8.62772233398E+826", "3.37229718376401328925734846797201E-3185"),
         TC("1", "2"),
         TC("0E+4519", "4.14999526830484824E+2722"),
@@ -112,7 +113,8 @@ class TestDecimalMagnitudeDiv {
             println(" => qExpExpected:$qExpExpected qExpObserved:$qExpObserved")
             println(" => biExpected:$biExpected biObserved:$biObserved")
         }
-        assertEquals(biExpected, biObserved)
+        if (qExpExpected != NON_FINITE_INF)
+            assertEquals(biExpected, biObserved)
         assertEquals(qExpExpected, qExpObserved)
     }
 }
