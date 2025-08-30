@@ -84,8 +84,8 @@ object Decimal128BidSerDe {
             (combination and 0x1F000) == 0x1F000 ->
                 d.setNaN((combination and 0x800) == 0x800, sign, significand110Hi, bid128Lo)
             else -> {
-                // large-form finite pattern ⇒ non-canonical for decimal128:
-                // E = bits [15:2] (G2..Gw+3), C := 0, keep sign S.
+                // large-form finite pattern => non-canonical for decimal128:
+                // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
                 val E = (combination ushr 1) and 0x3FFF   // 14 bits
                 d.u256SetZero()
                 d.qExp = E + decimal128.qTiny             // preserve exponent

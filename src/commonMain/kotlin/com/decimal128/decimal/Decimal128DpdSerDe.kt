@@ -2,12 +2,11 @@ package com.decimal128.decimal
 
 object Decimal128DpdSerDe {
 
-    fun decodeDpd128Longs(d: Decimal, dpd128Hi: Long, dpd128Lo: Long): Decimal {
-        throw RuntimeException("not impl")
-    }
-
-    fun encodeDpdDeclet(n: Int): Int {
+    fun encodeDpdDeclet(n: Long): Long {
         require(n in 0..999) { "n must be in 0..999" }
+
+        if (n == 0L)
+            return 0L
 
         // reciprocal-multiply digit extraction (optimized for n <= 999)
         val q10  = (n * 205) ushr 11      // n / 10
@@ -58,8 +57,11 @@ object Decimal128DpdSerDe {
      * Mapping: bit9..bit0 → p q r s t u v w x y
      * Equations: Cowlishaw's dpd2bcd (handles canonical + non-canonical).
      */
-    fun decodeDpdDeclet(declet: Int): Int {
+    fun decodeDpdDeclet(declet: Long): Long {
         require(declet in 0..1023) { "declet must be 10 bits" }
+
+        if (declet == 0L)
+            return 0L
 
         // Unpack to bits p..y
         val p = (declet ushr 9) and 1
@@ -106,6 +108,50 @@ object Decimal128DpdSerDe {
         require(d0 in 0..9) { "d0 out of range: $d0" }
 
         return d2 * 100 + d1 * 10 + d0
+    }
+
+    fun decodeDpd128Longs(d: Decimal, dpd128Hi: Long, dpd128Lo: Long): Decimal {
+        val decimal128 = DecimalFormat.DECIMAL_128
+        val sign = dpd128Hi < 0
+        val combination = (dpd128Hi ushr 46).toInt() and 0x1FFFF
+        val significand110Hi = dpd128Hi and ((1L shl (110 - 64)) - 1L)
+        when {
+            (combination and 0x18000) != 0x18000 -> {
+                val biasedExponent = combination ushr 3
+                val qExp = biasedExponent + decimal128.qTiny
+                val mostSignificant3 = (combination and 0x07).toLong() shl (110 - 64)
+                val decletsHi6 = (mostSignificant3 shl 50) or (significand110Hi shl 4) or (dpd128Lo ushr 60)
+                val decletsLo6 = dpd128Lo and ((1L shl 60) - 1L)
+                val binHi = binFromDeclets6(decletsHi6)
+                val binLo = binFromDeclets6(decletsLo6)
+                d.u256Set64(binHi)
+                d.u256SetFmaPow10(d, 18, binLo)
+                d.qExp = qExp
+                d.sign = sign
+            }
+            (combination and 0x1F000) == 0x1E000 ->
+                d.setInfinite(sign)
+            (combination and 0x1F000) == 0x1F000 ->
+                d.setNaN((combination and 0x800) == 0x800, sign, significand110Hi, dpd128Lo)
+            else -> {
+                // large-form finite pattern => non-canonical for decimal128:
+                // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
+                val E = (combination ushr 1) and 0x3FFF   // 14 bits
+                d.u256SetZero()
+                d.qExp = E + decimal128.qTiny             // preserve exponent
+                d.sign = sign                             // preserve sign (±0)
+            }
+        }
+        return d
+    }
+
+    fun binFromDeclets6(declets6: Long): Long {
+        if (declets6 == 0L)
+            return 0L
+        var bin = decodeDpdDeclet(declets6 ushr 50)
+        for (shift in 40 downTo 0 step 10)
+            bin = (bin * 1000L) + decodeDpdDeclet((declets6 ushr shift) and 0x3FFL)
+        return bin
     }
 
 }

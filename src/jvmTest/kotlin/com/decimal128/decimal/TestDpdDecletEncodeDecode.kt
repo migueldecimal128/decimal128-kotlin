@@ -7,7 +7,7 @@ class TestDpdDecletEncodeDecode {
 
     @Test
     fun testEncodeDeclets() {
-        for (n in 0..999) {
+        for (n in 0L..999L) {
             val enc = Decimal128DpdSerDe.encodeDpdDeclet(n)
             val dec = Decimal128DpdSerDe.decodeDpdDeclet(enc)
             if (dec != n) {
@@ -21,9 +21,9 @@ class TestDpdDecletEncodeDecode {
     fun testDecodeDeclets() {
         // Test all 1024 possible declets
         var nonCanonCount = 0
-        for (d in 0..1023) {
+        for (d in 0L..1023L) {
             val valDecoded = Decimal128DpdSerDe.decodeDpdDeclet(d)
-            if (valDecoded in 0..999) {
+            if (valDecoded in 0L..999L) {
                 val reEnc = Decimal128DpdSerDe.encodeDpdDeclet(valDecoded)
                 if (reEnc != d) nonCanonCount++
             } else {

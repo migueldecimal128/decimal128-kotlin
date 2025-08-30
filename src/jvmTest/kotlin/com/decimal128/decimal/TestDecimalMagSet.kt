@@ -10,7 +10,7 @@ import java.util.*
 
 class TestDecimalMagSet {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val bdA: BigDecimal, val ctx: DecimalContext) {
         constructor(str: String, rd: RoundingDirection) : this(BigDecimal(str), DecimalContext(rd))
@@ -24,6 +24,8 @@ class TestDecimalMagSet {
     }
 
     val cases = arrayOf(
+        TC("9.9999999999999999999999999999999995E+6144"), // overflow to Infinity
+
         TC("1e-6175"),
         TC("0E+6145", ROUND_TIES_TO_AWAY),
         TC("3.05079656515623149897192850E-6151", ROUND_TOWARD_ZERO),
@@ -32,7 +34,7 @@ class TestDecimalMagSet {
         TC("11e-6177"),
 
         TC("9.9999999999999999999999999999999994E+6144"),
-        TC("9.9999999999999999999999999999999995E+6144"),
+        TC("9.9999999999999999999999999999999995E+6144"), // overflow to Infinity
 
         TC("7.36956901257177558648652733739540513555E-6144"), // double rounding!
 
