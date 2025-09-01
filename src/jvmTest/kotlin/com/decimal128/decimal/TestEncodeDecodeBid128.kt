@@ -6,9 +6,16 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 
 class TestEncodeDecodeBid128 {
 
-    val verbose = true
+    val verbose = false
 
     val tcs = arrayOf(
+        "-100000000000000000000000000000000e-6175",
+        "1e-6176",
+        "10e-6176",
+        "1e-6175",
+        "1e0",
+        "0e0",
+        "123",
         "SNaN",
         "QNaN",
         "nanABC",
@@ -53,16 +60,38 @@ class TestEncodeDecodeBid128 {
         if (verbose)
             println(str)
         val d = Decimal(str, zeroNanPayload = true)
-        val dEncoded = d.encodeLittleEndianBytesBid128()
+        val bidLeBytes = d.encodeLittleEndianBytesBid128()
+        val bidLeLongs = d.encodeLittleEndianLongsBid128()
+        val bidBeBytes = d.encodeBigEndianBytesBid128()
+        val bidBeLongs = d.encodeBigEndianLongsBid128()
 
         val bid128LE = ByteArray(16)
         check(jnaBidDpdShim.d128_bid_le_from_string(str, bid128LE) == 0)
 
         //if (! (bid128LE contentEquals dEncoded)) {
         if (verbose) {
-            println(" bid128LE:${bid128LE.littleEndianSpacedHex()}")
-            println(" dEncoded:${dEncoded.littleEndianSpacedHex()}")
+            println(" bid128LE:${bid128LE.spacedHex()}")
+            println(" bidLeBytes:${bidLeBytes.spacedHex()}")
+            println(" bidLeLongs:${bidLeLongs.spacedHex()}")
+            println(" bidBeBytes:${bidBeBytes.spacedHex()}")
+            println(" bidBeLongs:${bidBeLongs.spacedHex()}")
         }
-        assertArrayEquals(bid128LE, dEncoded)
+        assertArrayEquals(bid128LE, bidLeBytes)
+
+        val dBeBytes = Decimal.decodeBigEndianBid128(bidBeBytes)
+        val dBeLongs = Decimal.decodeBigEndianBid128(bidBeLongs)
+        val dLeBytes = Decimal.decodeLittleEndianBid128(bidLeBytes)
+        val dLeLongs = Decimal.decodeLittleEndianBid128(bidLeLongs)
+
+        if (verbose) {
+            println("dBeBytes:$dBeBytes")
+            println("dBeLongs:$dBeLongs")
+            println("dLeBytes:$dLeBytes")
+            println("dLeLongs:$dLeLongs")
+        }
+        assert(d.isNaN() && dBeBytes.isNaN() || d == dBeBytes)
+//        assert(d.isNaN() && dBeLongs.isNaN() || d == dBeLongs)
+//        assert(d.isNaN() && dLeBytes.isNaN() || d == dLeBytes)
+//        assert(d.isNaN() && dLeLongs.isNaN() || d == dLeLongs)
     }
 }

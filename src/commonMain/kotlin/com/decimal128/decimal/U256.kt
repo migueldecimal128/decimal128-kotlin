@@ -127,6 +127,8 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256SetDivX64(x: U256, y0: Long) = U256Div.u256DivX64(this, x, y0)
 
+    internal inline fun u256SetDivModX64(x: U256, y0: Long) = U256Div.u256DivModX64(this, x, y0)
+
     internal inline fun u256SetMod(x: U256, y: U256) = U256Div.u256Mod(this, x, y)
 
     internal inline fun u256SetDivMod(rem: U256, x: U256, y: U256) = U256Div.u256DivMod(this, rem, x, y)
@@ -222,6 +224,6 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     override fun equals(other: Any?) = other is U256 && U256Compare.u256UnscaledEQ(this, other)
 
-    internal inline fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else toString()
+    internal inline fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else Int256ParsePrint.int256ToString(false, this)
 
 }

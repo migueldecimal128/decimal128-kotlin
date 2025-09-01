@@ -114,10 +114,23 @@ class Decimal() : S256() {
             return z
         }
 
-        fun decodeLittleEndianBidDecimal128(littleEndianLongs: LongArray) =
-            Decimal128BidSerDe.decodeLittleEndianBid128(littleEndianLongs, Decimal())
-        fun decodeLittleEndianBidDecimal128(littleEndianBytes: ByteArray) =
-            Decimal128BidSerDe.decodeLittleEndianBid128(littleEndianBytes, Decimal())
+        fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
+            SerDeBid128.decodeLittleEndianBid128(Decimal(), littleEndianLongs)
+        fun decodeLittleEndianBid128(littleEndianBytes: ByteArray) =
+            SerDeBid128.decodeLittleEndianBid128(Decimal(), littleEndianBytes)
+        fun decodeBigEndianBid128(bigEndianLongs: LongArray) =
+            SerDeBid128.decodeBigEndianBid128(Decimal(), bigEndianLongs)
+        fun decodeBigEndianBid128(bigEndianBytes: ByteArray) =
+            SerDeBid128.decodeBigEndianBid128(Decimal(), bigEndianBytes)
+
+        fun decodeLittleEndianDpd128(littleEndianLongs: LongArray) =
+            SerDeDpd128.decodeLittleEndianDpd128(Decimal(), littleEndianLongs)
+        fun decodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
+            SerDeDpd128.decodeLittleEndianDpd128(Decimal(), littleEndianBytes)
+        fun decodeBigEndianDpd128(bigEndianLongs: LongArray) =
+            SerDeDpd128.decodeBigEndianDpd128(Decimal(), bigEndianLongs)
+        fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
+            SerDeDpd128.decodeBigEndianDpd128(Decimal(), bigEndianBytes)
 
     }
 
@@ -236,9 +249,9 @@ class Decimal() : S256() {
         return this
     }
 
-    fun setBid128(bid128Hi: Long, bid128Lo: Long) = Decimal128BidSerDe.decodeBid128Longs(this, bid128Hi, bid128Lo)
+    fun setBid128(bid128Hi: Long, bid128Lo: Long) = SerDeBid128.decodeBid128Longs(this, bid128Hi, bid128Lo)
 
-    fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = Decimal128DpdSerDe.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
+    fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = SerDeDpd128.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
 
     fun setMaxFiniteMagnitude(ctx: DecimalContext): Decimal {
         qExp = ctx.qMax
@@ -860,21 +873,53 @@ class Decimal() : S256() {
     // 5.7.3 Decimal operation
     fun sameQuantum(x: Decimal) = (this.qExp == x.qExp)
 
+    // FIXME ... implement this so that there are fewer memory allocations
     override fun toString() : String {
-        return (if (sign) '-' else '+') +
-                when {
-                    (qExp < MIN_SPECIAL_VALUE) -> super.toString() + "E" + qExp
-                    qExp == NON_FINITE_INF -> "Inf"
-                    qExp == NON_FINITE_QNAN -> "NaN" + super.u256ToNaNDiagnosticString()
-                    qExp == NON_FINITE_SNAN -> "sNaN" + super.u256ToNaNDiagnosticString()
-                    else -> "?que? $qExp"
-                }
+        var nanStr = "NaN"
+        when {
+            (qExp < MIN_SPECIAL_VALUE) -> {
+                return super.toString() + "E" + qExp
+            }
+
+            qExp == NON_FINITE_INF -> {
+                return if (sign) "-Inf" else "+Inf"
+            }
+
+            qExp == NON_FINITE_QNAN -> {
+                if (sign)
+                    nanStr = "-NaN"
+            }
+
+            qExp == NON_FINITE_SNAN -> {
+                nanStr = if (sign) "-sNaN" else "+sNaN"
+            }
+
+            else -> throw RuntimeException("?que? $qExp")
+        }
+        if (u256IsZero())
+            return nanStr
+        return nanStr + super.u256ToNaNDiagnosticString()
     }
 
     fun encodeLittleEndianLongsBid128() = encodeLittleEndianBid128(LongArray(2))
-    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = Decimal128BidSerDe.encodeLittleEndianBid128(this, littleEndianLongs)
+    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = SerDeBid128.encodeLittleEndianBid128(this, littleEndianLongs)
     fun encodeLittleEndianBytesBid128() = encodeLittleEndianBid128(ByteArray(16))
-    fun encodeLittleEndianBid128(littleEndianBytes: ByteArray) = Decimal128BidSerDe.encodeLittleEndianBid128(this, littleEndianBytes)
+    fun encodeLittleEndianBid128(littleEndianBytes: ByteArray) = SerDeBid128.encodeLittleEndianBid128(this, littleEndianBytes)
+
+    fun encodeLittleEndianLongsDpd128() = encodeLittleEndianDpd128(LongArray(2))
+    fun encodeLittleEndianDpd128(littleEndianLongs: LongArray) = SerDeDpd128.encodeLittleEndianDpd128(littleEndianLongs, this)
+    fun encodeLittleEndianBytesDpd128() = encodeLittleEndianDpd128(ByteArray(16))
+    fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray) = SerDeDpd128.encodeLittleEndianDpd128(littleEndianBytes, this)
+
+    fun encodeBigEndianLongsBid128() = encodeBigEndianBid128(LongArray(2))
+    fun encodeBigEndianBid128(BigEndianLongs: LongArray) = SerDeBid128.encodeBigEndianBid128(this, BigEndianLongs)
+    fun encodeBigEndianBytesBid128() = encodeBigEndianBid128(ByteArray(16))
+    fun encodeBigEndianBid128(BigEndianBytes: ByteArray) = SerDeBid128.encodeBigEndianBid128(this, BigEndianBytes)
+
+    fun encodeBigEndianLongsDpd128() = encodeBigEndianDpd128(LongArray(2))
+    fun encodeBigEndianDpd128(bigEndianLongs: LongArray) = SerDeDpd128.encodeBigEndianDpd128(bigEndianLongs, this)
+    fun encodeBigEndianBytesDpd128() = encodeBigEndianDpd128(ByteArray(16))
+    fun encodeBigEndianDpd128(bigEndianBytes: ByteArray) = SerDeDpd128.encodeBigEndianDpd128(bigEndianBytes, this)
 
     internal fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
