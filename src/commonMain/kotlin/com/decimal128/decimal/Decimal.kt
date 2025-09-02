@@ -880,9 +880,13 @@ class Decimal() : S256() {
         var nanStr = "NaN"
         when {
             (qExp < MIN_SPECIAL_VALUE) -> {
-                val printLen = maxDebugPrintLength()
-                val chars = CharArray(printLen)
-                return super.toString() + "E" + qExp
+                val printLen = calcDebugPrintLength()
+                val utf8 = ByteArray(printLen)
+                val i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+                utf8[i] = 'E'.code.toByte()
+                val j = Int256ParsePrint.intToUtf8(qExp, utf8, i + 1)
+                check (j == utf8.size)
+                return String(utf8)
             }
 
             qExp == NON_FINITE_INF -> {
@@ -909,12 +913,12 @@ class Decimal() : S256() {
         return String(utf8)
     }
 
-    fun maxDebugPrintLength(): Int {
+    fun calcDebugPrintLength(): Int {
         val signLen = if (sign) 1 else 0
         val coeffLen = Math.max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (qExp < 0) 1 else 0
-        val expDigitLen = U256Pow10.calcDigitLen64(Math.abs(qExp).toLong())
+        val expDigitLen = Math.max(U256Pow10.calcDigitLen64(Math.abs(qExp).toLong()), 1)
         return signLen + coeffLen + expELen + expSignLen + expDigitLen
     }
 

@@ -20,6 +20,7 @@ class TestCalcDigitCount64 {
 
     @Test
     fun test() {
+        test1(0uL)
         test1(8uL)
         test1(16uL)
         test1(32uL)

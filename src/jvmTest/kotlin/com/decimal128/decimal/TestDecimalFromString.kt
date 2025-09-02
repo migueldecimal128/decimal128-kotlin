@@ -57,7 +57,7 @@ class TestDecimalFromString {
 
     @Test
     fun testProblemChild() {
-        val strVal = "111111111222222222233333333334444444444"
+        val strVal = "6.0914620588E-363"
         val bdRaw = BigDecimal(strVal)
         val bd = bdToIeeeDecimal128(bdRaw, RoundingMode.HALF_EVEN)
         val str = bdToDecimal128String(bd)

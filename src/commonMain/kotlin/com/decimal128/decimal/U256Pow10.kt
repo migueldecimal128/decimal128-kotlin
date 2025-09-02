@@ -241,6 +241,11 @@ internal object U256Pow10 {
         return ((bitLen * 19729) ushr 16) + 1
     }
 
+    /**
+     * Calcs the number of decimal digits in the unsigned long.
+     * note that the value 0L returns 0
+     */
+
     fun calcDigitLen64(dw0: Long) : Int {
         val bitLen = 64 - dw0.countLeadingZeroBits()
         return calcDigitLen64(bitLen, dw0)

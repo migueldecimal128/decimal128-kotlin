@@ -54,6 +54,24 @@ internal object Int256ParsePrint {
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
     }
 
+    fun intToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
+        var nAbs = n
+        var offT = off
+        if (n < 0) {
+            nAbs = -n
+            offT = off + 1
+            utf8[off] = '-'.code.toByte()
+        }
+        if (nAbs < 10) {
+            utf8[offT] = ('0' + nAbs).code.toByte()
+            return offT + 1
+        }
+
+        val digitLen = U256Pow10.calcDigitLen64(nAbs.toLong())
+        u64ToUtf8(digitLen, nAbs.toLong(), utf8, offT)
+        return offT + digitLen
+    }
+
     private fun u64ToUtf8(digitLen: Int, dw0: Long, utf8: ByteArray, off: Int) {
         val last = off + digitLen + (-digitLen shr 31)
         val count = last + 1 - off
