@@ -14,40 +14,47 @@ internal object Int256ParsePrint {
     fun int256ToString(sign: Boolean, u: U256): String {
         val s = if (sign) 1 else 0
         if (u.digitLen > 1) {
-            val bytes = ByteArray(u.digitLen + s)
-            bytes[0] = '-'.code.toByte() // if positive then this will be overwritten
-            u256ToChars(u, bytes, s)
-            return String(bytes)
+            val utf8 = ByteArray(u.digitLen + s)
+            utf8[0] = '-'.code.toByte() // if positive then this will be overwritten
+            u256ToUtf8(u, utf8, s)
+            return String(utf8)
         } else {
             return SINGLE_DIGIT_NUMBERS[(10 and -s) + u.dw0.toInt()]
         }
     }
 
-    fun u256ToChars(u: U256, bytes: ByteArray, off: Int) {
+    fun int256ToUtf8(sign: Boolean, u: U256, utf8: ByteArray, off: Int): Int {
+        val s = if (sign) 1 else 0
+        utf8[off] = '-'.code.toByte() // if positive then this will be overwritten
+        u256ToUtf8(u, utf8, off + s)
+        return off + s + Math.max(1, u.digitLen)
+    }
+
+    fun u256ToUtf8(u: U256, utf8: ByteArray, off: Int) {
         if (u.bitLen <= 64) {
-            u64ToChars(u.digitLen, u.dw0, bytes, off)
+            u64ToUtf8(u.digitLen, u.dw0, utf8, off)
             return
         }
         val t = U256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToChars(9, r, bytes, off + ich)
+            u64ToUtf8(9, r, utf8, off + ich)
         }
         while (t.bitLen > 128) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_192(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToChars(9, r, bytes, off + ich)
+            u64ToUtf8(9, r, utf8, off + ich)
         }
         while (t.bitLen > 64) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToChars(9, r, bytes, off + ich)
+            u64ToUtf8(9, r, utf8, off + ich)
         }
-        u64ToChars(max(1, t.digitLen), t.dw0, bytes, off)
+        u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
     }
 
-    private fun u64ToChars(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int) {
+    private fun u64ToUtf8(digitLen: Int, dw0: Long, utf8: ByteArray, off: Int) {
         val last = off + digitLen + (-digitLen shr 31)
         val count = last + 1 - off
         var d = dw0
@@ -63,9 +70,9 @@ internal object Int256ParsePrint {
             val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
             val tB = i - 1; val maskB = -tB shr 31; val iB = tB and maskB
 
-            bytes[off + iC] = digitC
-            bytes[off + iB] = digitB
-            bytes[off + i] = digitA
+            utf8[off + iC] = digitC
+            utf8[off + iB] = digitB
+            utf8[off + i] = digitA
 
             d = qC
             i -= 3
@@ -81,31 +88,31 @@ internal object Int256ParsePrint {
         bytes[0    ] = '-'.code.toByte()
         bytes[s    ] = '0'.code.toByte()
         bytes[s + 1] = 'x'.code.toByte()
-        u256ToHexChars(u, hexitCount, bytes, s + 2)
+        u256ToHexUtf8(u, hexitCount, bytes, s + 2)
         return String(bytes)
     }
 
-    fun u256ToHexChars(u: U256, hexitCount: Int, bytes: ByteArray, off: Int) {
+    fun u256ToHexUtf8(u: U256, hexitCount: Int, utf8: ByteArray, off: Int) {
         var hexitsRemaining = hexitCount
         var ich = off
         for (i in (u.bitLen - 1) ushr 6 downTo 0) {
             val dw = u[i]
             val thisHexitCount = if ((hexitsRemaining and 0x0F) != 0) (hexitsRemaining and 0x0F) else 16
-            u64ToHexChars(dw, thisHexitCount, bytes, ich)
+            u64ToHexUtf8(dw, thisHexitCount, utf8, ich)
             hexitsRemaining -= thisHexitCount
             ich += thisHexitCount
         }
         check(hexitsRemaining == 0)
-        check(ich == bytes.size)
+        check(ich == utf8.size)
     }
 
-    fun u64ToHexChars(dw: Long, hexitCount: Int, bytes: ByteArray, off: Int) {
+    fun u64ToHexUtf8(dw: Long, hexitCount: Int, utf8: ByteArray, off: Int) {
         var t = dw
         check(hexitCount in 1..16)
         for (i in hexitCount - 1 downTo 0) {
             val h = (t and 0x0FL).toInt()
             val ch = if (h < 10) '0' + h else 'A' - 10 + h
-            bytes[off + i] = ch.code.toByte()
+            utf8[off + i] = ch.code.toByte()
             t = t ushr 4
         }
     }

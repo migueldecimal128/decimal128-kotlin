@@ -221,9 +221,8 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     open fun toHexString() = Int256ParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() = Int256ParsePrint.int256ToString(false, this)
+    fun u256ToUtf8(bytes: ByteArray, off: Int) = Int256ParsePrint.int256ToUtf8(false, this, bytes, off)
 
     override fun equals(other: Any?) = other is U256 && U256Compare.u256UnscaledEQ(this, other)
-
-    internal inline fun u256ToNaNDiagnosticString() = if (u256IsZero()) "" else Int256ParsePrint.int256ToString(false, this)
 
 }

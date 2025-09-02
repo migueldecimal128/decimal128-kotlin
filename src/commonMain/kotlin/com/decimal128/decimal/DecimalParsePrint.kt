@@ -54,7 +54,7 @@ private fun u64ToChars_x(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, l
     return count
 }
 
-private fun u64ToChars(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
+private fun u64ToUtf8(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
     val last = off + digitLen + (-digitLen shr 31)
     val count = last + 1 - off
     var d = dw0
@@ -96,9 +96,9 @@ private fun u128ToChars(digitLen: Int, dw1: Long, dw0: Long, bytes: ByteArray, o
             if (q1 != 0L)
                 u128ToChars(digitLen - 9, q1, q0, bytes, off, len)
             else
-                u64ToChars(digitLen - 9, q0, bytes, off, len)
+                u64ToUtf8(digitLen - 9, q0, bytes, off, len)
             )
-    val cbLo = u64ToChars(9, r0, bytes, off + cbHi, len - cbHi)
+    val cbLo = u64ToUtf8(9, r0, bytes, off + cbHi, len - cbHi)
     return cbHi + cbLo
 }
 
@@ -196,7 +196,7 @@ object DecimalParsePrint {
             // render integer coeff, including a single 0
             if (len - ib < x.digitLen)
                 break@insufficient_buffer
-            Int256ParsePrint.u256ToChars(x, bytes, ib)
+            Int256ParsePrint.u256ToUtf8(x, bytes, ib)
             ib += max(x.digitLen, 1) // if x.digitLen == 0 then 1
             if (isNonSciDecimal) {
                 if (isNonSciDecimalGE1) {
@@ -223,7 +223,7 @@ object DecimalParsePrint {
                 val expDigitLen = U256Pow10.calcDigitLen64(expAbs)
                 if (limit - ib < expDigitLen)
                     break@insufficient_buffer
-                ib += u64ToChars(expDigitLen, expAbs, bytes, ib, limit - ib)
+                ib += u64ToUtf8(expDigitLen, expAbs, bytes, ib, limit - ib)
             }
             return ib - off
         } while (false)

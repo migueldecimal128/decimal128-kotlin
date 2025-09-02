@@ -874,10 +874,14 @@ class Decimal() : S256() {
     fun sameQuantum(x: Decimal) = (this.qExp == x.qExp)
 
     // FIXME ... implement this so that there are fewer memory allocations
-    override fun toString() : String {
+    override fun toString() = toDebugString()
+
+    fun toDebugString() : String {
         var nanStr = "NaN"
         when {
             (qExp < MIN_SPECIAL_VALUE) -> {
+                val printLen = maxDebugPrintLength()
+                val chars = CharArray(printLen)
                 return super.toString() + "E" + qExp
             }
 
@@ -898,7 +902,20 @@ class Decimal() : S256() {
         }
         if (u256IsZero())
             return nanStr
-        return nanStr + super.u256ToNaNDiagnosticString()
+        val utf8 = ByteArray(nanStr.length + digitLen)
+        for (i in nanStr.indices)
+            utf8[i] = nanStr[i].code.toByte()
+        u256ToUtf8(utf8, nanStr.length)
+        return String(utf8)
+    }
+
+    fun maxDebugPrintLength(): Int {
+        val signLen = if (sign) 1 else 0
+        val coeffLen = Math.max(digitLen, 1)
+        val expELen = 1
+        val expSignLen = if (qExp < 0) 1 else 0
+        val expDigitLen = U256Pow10.calcDigitLen64(Math.abs(qExp).toLong())
+        return signLen + coeffLen + expELen + expSignLen + expDigitLen
     }
 
     fun encodeLittleEndianLongsBid128() = encodeLittleEndianBid128(LongArray(2))
