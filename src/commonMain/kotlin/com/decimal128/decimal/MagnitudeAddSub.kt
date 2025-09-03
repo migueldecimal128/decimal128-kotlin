@@ -11,7 +11,7 @@ import kotlin.math.min
 object MagnitudeAddSub {
 
     fun magScaledAdd(z: Decimal, x: Decimal, y: Decimal): Residue {
-        check(x.qExp != y.qExp) // should be caught earlier
+        check(x.qExp != y.qExp) // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
         //    u256AddUnscaled(z, x, y)

@@ -6,8 +6,8 @@ import java.io.File
 
 class TestDecTest {
 
-    private val veryVerbose = true
-    private val verbose = true
+    private val veryVerbose = false
+    private val verbose = false
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -44,6 +44,10 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
+        "rounding:    floor",
+        "dqadd71720 add  0        0E-19  ->  0E-19",
+        "rounding: half_even",
+        "dqadd7728 add -00.00 0E+3  -> 0.00",
         "dqadd7882 add -NaN26    NaN28 -> -NaN26",
         "dqadd7841 add  sNaN -Inf   ->  NaN  Invalid_operation",
         "dqadd7861 add  NaN1   -Inf    ->  NaN1",

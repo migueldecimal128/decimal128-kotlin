@@ -67,8 +67,22 @@ class Decimal() : S256() {
         private fun addImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
             val xQ = x.qExp
             if (xQ == y.qExp && xQ < MIN_SPECIAL_VALUE) {
+                if (x.bitLen == 0 && y.bitLen == 0 && x.sign == ySign) {
+                    // IEEE754-2019 6.3 The sign bit
+                    // However, under all rounding-direction attributes,
+                    // when x is zero, x + x and x − (−x) have the sign of x.
+                    return z.set(x)
+                }
                 z.qExp = xQ
                 z.s256AddImpl(x.sign, x, ySign, y)
+                // IEEE754-2019 6.3 The sign bit
+                // When the sum of two operands with opposite signs
+                // (or the difference of two operands with like signs) is
+                // exactly zero, the sign of that sum (or difference)
+                // shall be +0 under all rounding-direction attributes except
+                // roundTowardNegative; under that attribute, the sign of an
+                // exact zero sum (or difference) shall be −0.
+                z.sign = z.sign or ((z.bitLen == 0) and ctx.isRoundTowardNegative)
                 return z.roundAndFinalize(EXACT, ctx)
             } else {
                 return scaledAddImpl(z, x, ySign, y, ctx)
@@ -80,14 +94,24 @@ class Decimal() : S256() {
             val qY = y.qExp
             val xSign = x.sign
             val qMax = max(qX, qY)
+            val xIsZero = x.bitLen == 0
+            val yIsZero = y.bitLen == 0
             when {
                 qMax < MIN_SPECIAL_VALUE -> {
                     val residue = when {
-                        ! (xSign xor ySign) -> {
+                        xIsZero and yIsZero and (xSign == ySign) -> {
+                            // IEEE754-2019 6.3 The sign big
+                            // However, under all rounding-direction attributes,
+                            // when x is zero, x + x and x − (−x) have the sign of x.
+                            z.s256Set(x) // sign of X
+                            z.qExp = Math.min(qX, qY)
+                            return z
+                        }
+                        xSign == ySign -> {
                             z.sign = xSign
                             MagnitudeAddSub.magScaledAdd(z, x, y)
                         }
-                        (x.magnitudeCompareTo(y) >= 0) -> {
+                        x.magnitudeCompareTo(y) >= 0 -> {
                             val res = MagnitudeAddSub.magSub(z, x, y)
                             z.sign = xSign and (z.bitLen > 0)
                             res
@@ -97,6 +121,7 @@ class Decimal() : S256() {
                             MagnitudeAddSub.magSub(z, y, x)
                         }
                     }
+                    z.sign = z.sign or ((z.bitLen == 0) and ctx.isRoundTowardNegative)
                     return z.roundAndFinalize(residue, ctx)
                 }
                 qMax == NON_FINITE_INF -> when {
