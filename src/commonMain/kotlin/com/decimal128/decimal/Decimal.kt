@@ -874,23 +874,67 @@ class Decimal() : S256() {
     fun sameQuantum(x: Decimal) = (this.qExp == x.qExp)
 
     // FIXME ... implement this so that there are fewer memory allocations
-    override fun toString() = toDebugString()
+    override fun toString(): String {
+        return when {
+            qExp == 0 -> super.toString()
+            qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString()
+            qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
+            else -> toNormalizedScientificString()
+        }
+    }
 
-    fun toDebugString() : String {
+    @Suppress("NOTHING_TO_INLINE")
+    private /*inline*/ fun toDecimalPointString() : String {
+        val digitsRightOfDecimal = -qExp
+        val leadingZeroCount = Math.max(1 + digitsRightOfDecimal - digitLen, 0)
+        val signLen = if (sign) 1 else 0
+        val decimalPointLen = 1
+        val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
+        val utf8 = ByteArray(totalLen)
+        utf8[0] = '-'.code.toByte() // overwritten when positive
+        for (i in signLen..leadingZeroCount) // there is one extra here
+            utf8[i] = '0'.code.toByte()
+        u256ToUtf8(utf8, signLen + leadingZeroCount)
+        moveBytesUp1(utf8, totalLen - digitsRightOfDecimal - 1, digitsRightOfDecimal)
+        //for (i in totalLen-1 downTo totalLen-digitsRightOfDecimal)
+        //    utf8[i] = utf8[i - 1]
+        utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
+        return String(utf8)
+    }
+
+    private fun moveBytesUp1(bytes: ByteArray, off: Int, len: Int) {
+        for (i in off + len - 1 downTo off)
+            bytes[i + 1] = bytes[i]
+    }
+
+    private /*inline*/ fun toNormalizedScientificString(): String {
+        val eExp = sciExp()
+        val signLen = if (sign) 1 else 0
+        val decimalPointLen = if (digitLen > 1) 1 else 0
+        val printedDigitLen = Math.max(digitLen, 1)
+        val expELen = 1
+        val expSignLen = if (eExp < 0) 1 else 0
+        val expDigitLen = Math.max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
+        val utf8 = ByteArray(totalLen)
+        var i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+        if (digitLen > 1) {
+            val insertionPoint = signLen + 1
+            moveBytesUp1(utf8, insertionPoint, digitLen - 1)
+            utf8[insertionPoint] = '.'.code.toByte()
+            ++i
+        }
+        utf8[i] = 'E'.code.toByte()
+        val j = Int256ParsePrint.intToUtf8(eExp, utf8, i+1)
+        check (j == utf8.size)
+        return String(utf8)
+    }
+
+    private fun toSpecialValueString() : String {
         var nanStr = "NaN"
         when {
-            (qExp < MIN_SPECIAL_VALUE) -> {
-                val printLen = calcDebugPrintLength()
-                val utf8 = ByteArray(printLen)
-                val i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
-                utf8[i] = 'E'.code.toByte()
-                val j = Int256ParsePrint.intToUtf8(qExp, utf8, i + 1)
-                check (j == utf8.size)
-                return String(utf8)
-            }
-
             qExp == NON_FINITE_INF -> {
-                return if (sign) "-Inf" else "+Inf"
+                return if (sign) "-Infinity" else "Infinity"
             }
 
             qExp == NON_FINITE_QNAN -> {
@@ -899,7 +943,7 @@ class Decimal() : S256() {
             }
 
             qExp == NON_FINITE_SNAN -> {
-                nanStr = if (sign) "-sNaN" else "+sNaN"
+                nanStr = if (sign) "-sNaN" else "sNaN"
             }
 
             else -> throw RuntimeException("?que? $qExp")
@@ -911,6 +955,20 @@ class Decimal() : S256() {
             utf8[i] = nanStr[i].code.toByte()
         u256ToUtf8(utf8, nanStr.length)
         return String(utf8)
+    }
+
+    fun toDebugString() : String {
+        if (qExp < MIN_SPECIAL_VALUE) {
+            val printLen = calcDebugPrintLength()
+            val utf8 = ByteArray(printLen)
+            val i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+            utf8[i] = 'E'.code.toByte()
+            val j = Int256ParsePrint.intToUtf8(qExp, utf8, i + 1)
+            check(j == utf8.size)
+            return String(utf8)
+        } else {
+            return toSpecialValueString()
+        }
     }
 
     fun calcDebugPrintLength(): Int {
