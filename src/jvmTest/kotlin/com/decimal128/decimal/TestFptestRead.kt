@@ -9,11 +9,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.io.File
 import java.io.PrintWriter
-import java.nio.charset.StandardCharsets
 
-val captureOperandText = false
-val operandCaptureFilename = "src/jvmTest/resources/fptestOperandsRaw.txt"
-var operandPrintWriter: PrintWriter? = null
+private val captureOperandText = false
+private val operandCaptureFilename = "src/jvmTest/resources/fptestOperandsRaw.txt"
+private var operandPrintWriter: PrintWriter? = null
 
 
 class TestFptestRead {
@@ -292,7 +291,7 @@ class TestFptestRead {
 
     fun read1(fptestFile: String) {
 
-        val file = File(fptestFile).bufferedReader(StandardCharsets.UTF_8)
+        val file = File(fptestFile).bufferedReader()
         for (line in file.readLines()) {
             val fptest = Fptest.parseFptest(line)
             if (fptest != null) {
