@@ -88,8 +88,9 @@ class Decimal() : S256() {
                             MagnitudeAddSub.magScaledAdd(z, x, y)
                         }
                         (x.magnitudeCompareTo(y) >= 0) -> {
-                            z.sign = xSign
-                            MagnitudeAddSub.magSub(z, x, y)
+                            val res = MagnitudeAddSub.magSub(z, x, y)
+                            z.sign = xSign and (z.bitLen > 0)
+                            res
                         }
                         else -> {
                             z.sign = ySign
@@ -149,11 +150,13 @@ class Decimal() : S256() {
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
         check(maxQ >= NON_FINITE_QNAN)
-        setZero()
+        this.set(if (maxQ == xQ) x else y)
         if (maxQ == NON_FINITE_SNAN) {
             ctx.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
             ctx.signalInvalid(this)
         }
+        // note that a sNaN gets mapped to a NaN with sNaN + Infinity ...
+        // ... according to MFColishaw decTest
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -829,6 +832,12 @@ class Decimal() : S256() {
             }
         }
         return false
+    }
+
+    fun exactlyEQ(other: Decimal): Boolean {
+        return dw0 == other.dw0 && dw1 == other.dw1 &&
+                dw2 == other.dw2 && dw3 == other.dw3 &&
+                qExp == other.qExp && sign == other.sign
     }
 
     override fun hashCode(): Int {

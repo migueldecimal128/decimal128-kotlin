@@ -59,8 +59,17 @@ open class S256 : U256 {
     internal fun s256AddImpl(x: S256, ySign: Boolean, y: S256) {
         val xSign = x.sign
         if (xSign == ySign) {
-            this.u256SetAdd(x, y)
-            this.sign = ySign and (bitLen > 0)
+            if (x.bitLen == 0 && y.bitLen == 0) {
+                // IEEE754-2019 6.3 The sign bit
+                // ...
+                // However, under all rounding-direction attributes,
+                // when x is zero, x + x and x − (−x) have the sign of x.
+                this.s256Set(x)
+                // note that sign gets copied directly from x
+            } else {
+                this.u256SetAdd(x, y)
+                this.sign = ySign and (bitLen > 0)
+            }
         } else {
             val cmp = u256UnscaledCompare(x, y)
             when {

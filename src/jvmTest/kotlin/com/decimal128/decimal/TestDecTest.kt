@@ -6,7 +6,7 @@ import java.io.File
 
 class TestDecTest {
 
-    private val veryVerbose = false
+    private val veryVerbose = true
     private val verbose = true
 
     private val prefix = "src/jvmTest/resources/dectest/"
@@ -44,6 +44,12 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
+        "dqadd7882 add -NaN26    NaN28 -> -NaN26",
+        "dqadd7841 add  sNaN -Inf   ->  NaN  Invalid_operation",
+        "dqadd7861 add  NaN1   -Inf    ->  NaN1",
+        "dqadd7728 add -00.00 0E+3  -> 0.00",
+        "dqadd7735 add -0    -0     -> -0     -- IEEE 754 special case",
+        "dqadd7728 add -00.00 0E+3  -> 0.00",
         "rounding:half_up",
         "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded",
     )
@@ -71,10 +77,10 @@ class TestDecTest {
     fun processLine(line: String) {
         if (veryVerbose)
             println("line:$line")
-        val trimmed = line.trim()
+        val commentIndex = line.indexOf("--")
+        val trimmed = (if (commentIndex >= 0) line.substring(0, commentIndex) else line).trim()
         when {
             trimmed.length == 0 -> {}
-            trimmed.startsWith("--") -> {}
             processDirective(trimmed) -> {}
             processTest(trimmed) -> {}
             else -> {
@@ -191,12 +197,16 @@ class TestDecTest {
             val ctx = buildContext()
             if (ctx == null)
                 return
+            if (verbose)
+                println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
                 "add" -> Decimal.newAdd(op1, op2, ctx)
                 "subtract" -> Decimal.newSub(op1, op2, ctx)
                 else -> return
             }
-            check(res.isNaN() && observed.isNaN() || res == observed)
+            if (verbose)
+                println("    observed:$observed")
+            require (res.exactlyEQ(observed))
         }
     }
 
