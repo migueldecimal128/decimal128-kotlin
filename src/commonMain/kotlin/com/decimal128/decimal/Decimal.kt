@@ -68,7 +68,7 @@ class Decimal() : S256() {
             val xQ = x.qExp
             if (xQ == y.qExp && xQ < MIN_SPECIAL_VALUE) {
                 z.qExp = xQ
-                z.s256AddImpl(x, ySign, y)
+                z.s256AddImpl(x.sign, x, ySign, y)
                 return z.roundAndFinalize(EXACT, ctx)
             } else {
                 return scaledAddImpl(z, x, ySign, y, ctx)

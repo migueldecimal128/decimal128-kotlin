@@ -19,6 +19,7 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
     val eMin = decimalFormat.eMin
     val qMax = decimalFormat.qMax
     val qTiny = decimalFormat.qTiny
+    val isRoundTowardNegative = roundingDirection == RoundingDirection.ROUND_TOWARD_NEGATIVE
 
     var invalid = false
         private set
