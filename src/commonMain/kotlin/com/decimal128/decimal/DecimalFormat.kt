@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
-class DecimalFormat(val precision: Int, val eMax: Int, val roundingDirection: RoundingDirection) {
+class DecimalFormat(val precision: Int, val eMax: Int, val eMin: Int, val roundingDirection: RoundingDirection) {
+    constructor(precision: Int, eMax: Int, roundingDirection: RoundingDirection) : this(precision, eMax, -(eMax - 1), roundingDirection)
     constructor(roundingDirection: RoundingDirection) : this(34, 6144, roundingDirection)
 
     companion object {
@@ -9,7 +10,6 @@ class DecimalFormat(val precision: Int, val eMax: Int, val roundingDirection: Ro
         val DECIMAL_128_EXTENDED = DecimalFormat(38, 9999, RoundingDirection.ROUND_TIES_TO_EVEN)
     }
 
-    val eMin = -(eMax - 1)
     val qMax = eMax - (precision - 1)
     val qTiny = eMin - (precision - 1)
 

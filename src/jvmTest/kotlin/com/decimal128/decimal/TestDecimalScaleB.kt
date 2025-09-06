@@ -46,7 +46,7 @@ class TestDecimalScaleB {
                 if (s.isFinite())
                     BigDecimal(s.toString())
                 else
-                    BigDecimal("1e1000000000")
+                    BigDecimal("1E+2147483645")
                 )
         assertEquals(expected, observed)
     }

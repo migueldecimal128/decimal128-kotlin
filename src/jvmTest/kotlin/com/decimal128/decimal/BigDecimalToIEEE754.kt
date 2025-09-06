@@ -12,11 +12,11 @@ private const val EMAX  =  6144
 private const val QTINY = EMIN - (P34 - 1) // -6176
 private const val QMAX  = EMAX - (P34 - 1) // 6111
 
-private const val INFINITY_SCALE = 1000000000
+private const val INFINITY_SCALE = Integer.MAX_VALUE - 2
 private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
 private val NEG_INFINITY_SURROGATE = POS_INFINITY_SURROGATE.negate()
-private const val QNAN_SCALE = 1000000001
-private const val SNAN_SCALE = 1000000002
+private const val QNAN_SCALE = Integer.MAX_VALUE - 1
+private const val SNAN_SCALE = Integer.MAX_VALUE
 private val MAX_FINITE =
     BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
 private val NEG_MAX_FINITE = MAX_FINITE.negate()

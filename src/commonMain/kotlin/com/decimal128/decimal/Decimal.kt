@@ -10,13 +10,13 @@ import com.decimal128.decimal.Class754.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val MIN_SPECIAL_VALUE = 1000000000
-internal const val NON_FINITE_INF = 1000000000
-internal const val NON_FINITE_QNAN = 1000000001
-internal const val NON_FINITE_SNAN = 1000000002
+internal const val MIN_SPECIAL_VALUE = Integer.MAX_VALUE - 2
+internal const val NON_FINITE_INF = Integer.MAX_VALUE - 2
+internal const val NON_FINITE_QNAN = Integer.MAX_VALUE - 1
+internal const val NON_FINITE_SNAN = Integer.MAX_VALUE
 
-const val CAPPED_EXP_MIN = -25000
-const val CAPPED_EXP_MAX = 25000
+const val CAPPED_EXP_MIN = -2000000000
+const val CAPPED_EXP_MAX = 2000000000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 

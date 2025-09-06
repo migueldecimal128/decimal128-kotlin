@@ -39,6 +39,7 @@ class TestDecTest {
     )
 
     private val dectestFiles = arrayOf(
+        //"add.decTest",
         "dqMultiply.decTest",
         "dqAdd.decTest",
         "dqSubtract.decTest",
@@ -110,7 +111,7 @@ class TestDecTest {
             "precision" -> {
                 val p = value.toInt()
                 require (p >= 3)
-                require (p <= 34)
+                require (p <= 38)
                 precision = p
             }
             "rounding" -> {
@@ -120,13 +121,13 @@ class TestDecTest {
             "maxexponent" -> {
                 val e = value.toInt()
                 require (e >= 0)
-                require (e <= 9999)
+                require (e <= 999999999)
                 maxExponent = e
             }
             "minexponent" -> {
                 val e = value.toInt()
                 require (e <= 0)
-                require (e >= -9999)
+                require (e >= -999999999)
                 minExponent = e
             }
             "version" -> version = value
@@ -239,7 +240,8 @@ class TestDecTest {
     }
 
     fun buildContext(): DecimalContext? {
-        require (minExponent == -(maxExponent - 1))
+        // relax this requirement
+        // require (minExponent == -(maxExponent - 1))
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= roundingDirections.size)
             return null
