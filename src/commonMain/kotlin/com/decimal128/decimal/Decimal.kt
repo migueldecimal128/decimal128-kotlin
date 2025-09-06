@@ -474,6 +474,7 @@ class Decimal() : S256() {
 
                     else -> {
                         setZero(quotientSign)
+                        qExp = ctx.qTiny
                     }
                 }
             }
