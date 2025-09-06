@@ -6,10 +6,11 @@ import java.math.RoundingMode
 import java.lang.Math.max
 import java.lang.Math.min
 
-private const val P34       = 34
-private const val EMIN      = -6143
-private const val EMAX      =  6144
-private const val ETINY     = EMIN - (P34 - 1)            // -6176
+private const val P34   = 34
+private const val EMIN  = -6143
+private const val EMAX  =  6144
+private const val QTINY = EMIN - (P34 - 1) // -6176
+private const val QMAX  = EMAX - (P34 - 1) // 6111
 
 private const val INFINITY_SCALE = 1000000000
 private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
@@ -19,9 +20,9 @@ private const val SNAN_SCALE = 1000000002
 private val MAX_FINITE =
     BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
 private val NEG_MAX_FINITE = MAX_FINITE.negate()
-private val MIN_FINITE = BigDecimal.ONE.scaleByPowerOfTen(ETINY)
+private val MIN_FINITE = BigDecimal.ONE.scaleByPowerOfTen(QTINY)
 private val NEG_MIN_FINITE = MIN_FINITE.negate()
-private val ZERO_TINY = BigDecimal.ZERO.scaleByPowerOfTen(ETINY)
+private val ZERO_TINY = BigDecimal.ZERO.scaleByPowerOfTen(QTINY)
 private val NEG_ZERO_TINY = ZERO_TINY.negate()
 
 fun strToBdIeeeDecimal128(str: String, rm: RoundingMode): BigDecimal {
@@ -48,11 +49,11 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     val p       = bd.precision()
     var e       = q + p - 1
     val excess  = max(0, p - p34)
-    val qTiny   = ETINY - excess                      // threshold for normalized
-    val qMin    = ETINY - p                           // threshold for subnormal cohort
+    val qTiny   = QTINY - excess                      // threshold for normalized
+    val qMin    = QTINY - p                           // threshold for subnormal cohort
 
     // 2) Normalized result: round only if bd has >34 digits
-    if (e <= EMAX && q >= qTiny) {
+    if (q <= QMAX && q >= qTiny) {
         if (excess == 0)
             return bd
         val rounded = bd.round(MathContext(p34, rm))
@@ -65,6 +66,16 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
         // rounding caused overflow
         // fall into next conditional
     }
+    if (e <= EMAX && q > QMAX) {
+        // clamp/fold-down case
+        val qExcess = q - QMAX
+        val headroom = P34 - p
+        val oldScale = bd.scale()
+        if (headroom >= qExcess) {
+            val bdClamp = bd.setScale(-QMAX)
+            return bdClamp
+        }
+    }
     // 1) Overflow ⇒ ±Infinity
     if (e > EMAX) {
         if (overflowsToInfinity(rm, sign))
@@ -76,9 +87,9 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
 
     // 3) Subnormal cohort: one rounding to ULP_sub = 10^ETINY
     if (q >= qMin) {
-        val ulpSub = BigDecimal.ONE.scaleByPowerOfTen(ETINY)
+        val ulpSub = BigDecimal.ONE.scaleByPowerOfTen(QTINY)
         val k      = bd.divide(ulpSub, 0, rm)         // single rounding here
-        val result = k.scaleByPowerOfTen(ETINY)
+        val result = k.scaleByPowerOfTen(QTINY)
         return if (bd.signum() < 0) result.negate() else result
     }
 

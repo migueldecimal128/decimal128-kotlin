@@ -6,8 +6,8 @@ import java.io.File
 
 class TestDecTest {
 
-    private val veryVerbose = false
-    private val verbose = false
+    private val veryVerbose = true
+    private val verbose = true
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -39,11 +39,15 @@ class TestDecTest {
     )
 
     private val dectestFiles = arrayOf(
+        "dqMultiply.decTest",
         "dqAdd.decTest",
         "dqSubtract.decTest",
+        "dqDivide.decTest",
+        //"dqRemainder.decTest",
     )
 
     val tcs = arrayOf(
+        "dqmul770 multiply 1e+40 1e+6101 -> 1.000000000000000000000000000000E+6141 Clamped",
         "rounding:    floor",
         "dqadd71720 add  0        0E-19  ->  0E-19",
         "rounding: half_even",
@@ -71,7 +75,7 @@ class TestDecTest {
     }
 
     fun read1(dectestFileName: String) {
-        if (verbose)
+        //if (verbose)
             println("dectestFileName: $dectestFileName")
         val file = File(dectestFileName).bufferedReader()
         for (line in file.readLines())
@@ -206,6 +210,9 @@ class TestDecTest {
             val observed = when (op) {
                 "add" -> Decimal.newAdd(op1, op2, ctx)
                 "subtract" -> Decimal.newSub(op1, op2, ctx)
+                "multiply" -> Decimal.newMul(op1, op2, ctx)
+                "divide" -> Decimal.newDiv(op1, op2, ctx)
+                //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 else -> return
             }
             if (verbose)

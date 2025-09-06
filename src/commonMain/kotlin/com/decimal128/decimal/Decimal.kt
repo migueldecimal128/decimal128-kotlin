@@ -1043,6 +1043,7 @@ class Decimal() : S256() {
         if (qExp < MIN_SPECIAL_VALUE) {
             if (bitLen != 0) {
                 var eExp = qExp + (digitLen - 1)
+                var qMax = ctx.qMax
                 // IEEE754-2008 7.5: detect tininess on the unrounded result
                 val isTiny = (eExp < ctx.eMin)
 
@@ -1051,16 +1052,24 @@ class Decimal() : S256() {
 
                 // 2) Normalized result: round only if bd has >precision digits
                 if (eExp <= eMax && qExp >= myQTiny) {
-                    val totalResidue =
-                        if (excess == 0) {
-                            inboundResidue
-                        } else {
-                            val roundingResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess)
-                            qExp += excess
-                            check(digitLen == precision)
-                            check(eExp == qExp + (digitLen - 1))
-                            roundingResidue.merge(inboundResidue)
-                        }
+                    var totalResidue = inboundResidue
+                    if (qExp > qMax) {
+                        // clamp/fold-over
+                        val qExcess = qExp - qMax
+                        U256ScalePow10.u256ScaleUpPow10(this, this, qExcess)
+                        check (digitLen <= precision)
+                        qExp -= qExcess
+                        check (qExp == qMax)
+                        check (inboundResidue == EXACT)
+                        return this
+                    }
+                    if (excess != 0) {
+                        val roundingResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess)
+                        qExp += excess
+                        check(digitLen == precision)
+                        check(eExp == qExp + (digitLen - 1))
+                        totalResidue = roundingResidue.merge(inboundResidue)
+                    }
 
                     if (totalResidue == EXACT) {
                         // 7.5 Underflow

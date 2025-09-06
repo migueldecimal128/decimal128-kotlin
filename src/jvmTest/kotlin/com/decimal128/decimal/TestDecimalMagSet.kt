@@ -24,6 +24,8 @@ class TestDecimalMagSet {
     }
 
     val cases = arrayOf(
+        TC("1e6144"),
+
         TC("9.9999999999999999999999999999999995E+6144"), // overflow to Infinity
 
         TC("1e-6175"),
