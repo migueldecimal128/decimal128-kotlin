@@ -47,6 +47,7 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
+        "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
         "dqmul770 multiply 1e+40 1e+6101 -> 1.000000000000000000000000000000E+6141 Clamped",
         "rounding:    floor",
         "dqadd71720 add  0        0E-19  ->  0E-19",

@@ -160,7 +160,7 @@ class Decimal() : S256() {
 
     }
 
-    fun sciExp() = qExp + (digitLen - 1)
+    fun sciExp() = qExp + (digitLen - (-digitLen ushr 31))
 
     fun setZero()  = setZero(false)
 
