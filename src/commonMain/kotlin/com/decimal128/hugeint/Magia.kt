@@ -9,7 +9,7 @@ import kotlin.math.max
 
 // magia == MAGnitude IntArray
 
-private const val UPPERCASE_DELTA = 'x'.code - 'X'.code
+private const val LOWERCASE_DELTA = 'x'.code - 'X'.code
 
 private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
 
@@ -910,7 +910,7 @@ object Magia {
         when {
             (strLen - i <= 0) ->
                 throw IllegalArgumentException("cannot parse empty string")
-            i+1 < str.length && str[i] == '0' && (str[i+1] == 'x' || str[i+1] == 'X') ->
+            i+1 < str.length && str[i] == '0' && (str[i+1].code or LOWERCASE_DELTA) == 'x'.code ->
                 return newFromHexString(isNegative, str)
         }
         var totalDigitCount = 0
@@ -955,7 +955,7 @@ object Magia {
     fun newFromHexString(isNegative: Boolean, str: String): IntArray {
         var strLen = str.length
         var i = if (isNegative) 1 else 0
-        if (i+1 < strLen && str[i] == '0' && (str[i+1].code or UPPERCASE_DELTA) == 'x'.code)
+        if (i+1 < strLen && str[i] == '0' && (str[i+1].code or LOWERCASE_DELTA) == 'x'.code)
             i += 2
         var leadingZeroSeen = false
         while (i < strLen && str[i] == '0') {
@@ -1009,10 +1009,11 @@ object Magia {
         return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
     }
 
+    // FIXME - what is going on here with prefix
     fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
         if (len <= 0)
             return ZERO
-        val car = IntArray((len + 3) ushr 2)
+        val magia = IntArray((len + 3) ushr 2)
         var ib = off + len - 1
         var iw = 0
         var remaining = len
@@ -1022,7 +1023,7 @@ object Magia {
             val b1 = bytes[ib - 1].toInt() and 0xFF
             val b0 = bytes[ib - 0].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
-            car[iw++] = w
+            magia[iw++] = w
             ib -= 4
             remaining -= 4
         }
@@ -1032,10 +1033,10 @@ object Magia {
             val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else prefix) and 0xFF
             val b0 = bytes[ib].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
-            car[iw++] = w
-            check(iw == car.size)
+            magia[iw++] = w
+            check(iw == magia.size)
         }
-        return car
+        return magia
    }
 
 }
