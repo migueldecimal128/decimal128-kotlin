@@ -20,7 +20,7 @@ import kotlin.math.absoluteValue
  * Implementation is sign-magnitude, with the zero value always being
  * non-negative.
  *
- * Binary boolean and bit manipulation functions work only on the
+ * Generally, HugeInt binary boolean and bit manipulation functions work only on the
  * magnitude, ignore the sign, and return non-negative results.
  * Note that this differs from java.math.BigInteger which claims: _All
  * operations behave as if BigIntegers were represented in twos-complement
@@ -250,11 +250,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      */
     fun signum() = if (sign) -1 else if (isZero()) 0 else 1
 
-    /**
-     * Bit-length of the magnitude.
-     */
-    fun magnitudeBitLen() = Magia.bitLen(magia)
-
     fun magnitudeIntArrayLen() = (Magia.bitLen(magia) + 31) ushr 5
     fun magnitudeLongArrayLen() = (Magia.bitLen(magia) + 63) ushr 6
 
@@ -273,38 +268,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             bitSeen = true
         }
         return bitSeen
-    }
-
-    /**
-     * Predicate to test whether the bit at the specified bitIndex is set.
-     */
-    fun testBit(bitIndex: Int): Boolean = Magia.testBit(this.magia, bitIndex)
-
-    /**
-     * Gives the same answer as BigInteger.bitLength().
-     *
-     * BigInteger.bitLength() tries to give a pseudo-twos-complement answer.
-     * They give the number of bits required, minus the sign bit.
-     * For non-negative values there is no confusion.
-     * For negative values BigInteger.bitLength() things become a little strange.
-     * `BigInteger("-1").bitLength() == 0` ... think about it :)
-     */
-    fun bitLengthBigIntegerStyle(): Int {
-        val magBitLen = magnitudeBitLen()
-        val isNegPowerOfTwo = sign && isMagnitudePowerOfTwo()
-        val bitLengthBigIntegerStyle = magBitLen - if (isNegPowerOfTwo) 1 else 0
-        return bitLengthBigIntegerStyle
-    }
-
-    /**
-     * Calculates the number of bytes required to represent this HugeInt in twos-complement.
-     */
-    fun calc2sComplementByteLength(): Int {
-        if (isZero())
-            return 1
-        val bitLen2sComplement = bitLengthBigIntegerStyle() + 1
-        val byteLength = (bitLen2sComplement + 7) ushr 3
-        return byteLength
     }
 
     /**
@@ -442,87 +405,42 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      */
     fun abs() = if (sign) HugeInt(false, magia) else this
 
-    /**
-     * HugeInt augend + HugeInt addend.
-     */
     operator fun plus(other: HugeInt): HugeInt = this.addSubImpl(false, other)
-    /**
-     * HugeInt augend + Int addend.
-     */
     operator fun plus(n: Int): HugeInt = this.addSubImpl(false, n)
-    /**
-     * HugeInt augend + UInt addend.
-     */
     operator fun plus(un: UInt): HugeInt = this.addSubImpl(false, un)
-    /**
-     * HugeInt augend + Long addend.
-     */
     operator fun plus(l: Long): HugeInt = this.addSubImpl(false, l)
-    /**
-     * HugeInt augend + ULong addend.
-     */
     operator fun plus(ul: ULong): HugeInt = this.addSubImpl(false, ul)
 
-    /**
-     * HugeInt minuend - HugeInt subtrahend.
-     */
     operator fun minus(other: HugeInt): HugeInt = this.addSubImpl(true, other)
-    /**
-     * HugeInt minuend - Int subtrahend.
-     */
     operator fun minus(n: Int): HugeInt = this.addSubImpl(true, n)
-    /**
-     * HugeInt minuend - UInt subtrahend.
-     */
     operator fun minus(un: UInt): HugeInt = this.addSubImpl(true, un)
-    /**
-     * HugeInt minuend - Long subtrahend.
-     */
     operator fun minus(l: Long): HugeInt = this.addSubImpl(true, l)
-    /**
-     * HugeInt minuend - ULong subtrahend.
-     */
     operator fun minus(ul: ULong): HugeInt = this.addSubImpl(true, ul)
 
-    /**
-     * HugeInt multiplicand * HugeInt multiplier.
-     */
     operator fun times(other: HugeInt): HugeInt {
         return if (isNotZero() && other.isNotZero())
             HugeInt(this.sign xor other.sign, Magia.newMul(this.magia, other.magia))
         else
             ZERO
     }
-    /**
-     * HugeInt multiplicand * Int multiplier.
-     */
     operator fun times(n: Int): HugeInt {
         return if (isNotZero() && n != 0)
             HugeInt(this.sign xor (n < 0), Magia.newMul(this.magia, n.absoluteValue))
         else
             ZERO
     }
-    /**
-     * HugeInt multiplicand * UInt multiplier.
-     */
     operator fun times(un: UInt): HugeInt {
         return if (isNotZero() && un != 0u)
             ZERO
         else
             HugeInt(this.sign, Magia.newMul(this.magia, un.toInt()))
     }
-    /**
-     * HugeInt multiplicand * Long multiplier.
-     */
     operator fun times(l: Long): HugeInt {
         return if (isNotZero() && l != 0L)
             HugeInt(this.sign xor (l < 0), Magia.newMul(this.magia, l.absoluteValue))
         else
             ZERO
     }
-    /**
-     * HugeInt multiplicand * ULong multiplier.
-     */
     operator fun times(ul: ULong): HugeInt {
         return if (isNotZero() && ul != 0uL)
             HugeInt(this.sign, Magia.newMul(this.magia, ul.toLong()))
@@ -530,9 +448,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             ZERO
     }
 
-    /**
-     * HugeInt dividend / HugeInt divisor.
-     */
     operator fun div(other: HugeInt): HugeInt {
         if (other.isZero())
             throw ArithmeticException("div by zero")
@@ -543,9 +458,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend / Int divisor.
-     */
     operator fun div(n: Int): HugeInt {
         if (n == 0)
             throw ArithmeticException("div by zero")
@@ -556,9 +468,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend / UInt divisor.
-     */
     operator fun div(un: UInt): HugeInt {
         if (un == 0u)
             throw ArithmeticException("div by zero")
@@ -569,9 +478,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend / Long divisor.
-     */
     operator fun div(l: Long): HugeInt {
         if (l == 0L)
             throw ArithmeticException("div by zero")
@@ -582,9 +488,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend / ULong divisor.
-     */
     operator fun div(ul: ULong): HugeInt {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
@@ -596,9 +499,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return ZERO
     }
 
-    /**
-     * HugeInt dividend % HugeInt divisor.
-     */
     operator fun rem(other: HugeInt): HugeInt {
         if (other.isZero())
             throw ArithmeticException("div by zero")
@@ -609,9 +509,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend % Int divisor.
-     */
     operator fun rem(n: Int): HugeInt {
         if (n == 0)
             throw ArithmeticException("div by zero")
@@ -622,9 +519,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend % UInt divisor.
-     */
     operator fun rem(un: UInt): HugeInt {
         if (un == 0u)
             throw ArithmeticException("div by zero")
@@ -635,9 +529,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend % Long divisor.
-     */
     operator fun rem(l: Long): HugeInt {
         if (l == 0L)
             throw ArithmeticException("div by zero")
@@ -648,9 +539,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
-    /**
-     * HugeInt dividend % ULong divisor.
-     */
     operator fun rem(ul: ULong): HugeInt {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
@@ -662,6 +550,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return ZERO
     }
 
+    /**
+     * Perform an integer division, returning quotient and remainder.
+     */
     fun divMod(other: HugeInt): Pair<HugeInt, HugeInt> {
         return when {
             other.isZero() -> throw ArithmeticException("div by zero")
@@ -669,43 +560,14 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             else -> ZERO to other
         }
     }
-
-    private fun divModHelper(otherSign: Boolean, otherMagia: IntArray): Pair<HugeInt, HugeInt> {
-        val (magiaQuot, magiaRem) = Magia.newDivMod(this.magia, otherMagia)
-        val hiQuot = if (magiaQuot.isNotEmpty()) HugeInt(this.sign xor otherSign, magiaQuot) else ZERO
-        val hiRem = if (magiaRem.isNotEmpty()) HugeInt(this.sign, magiaRem) else ZERO
-        return hiQuot to hiRem
-    }
-
     fun divMod(n: Int): Pair<HugeInt, HugeInt> = divModIntHelper(n < 0, n.absoluteValue)
     fun divMod(un: UInt): Pair<HugeInt, HugeInt> = divModIntHelper(false, un.toInt())
-
-    private fun divModIntHelper(nSign: Boolean, nMag: Int): Pair<HugeInt, HugeInt> {
-        return when {
-            nMag == 0 -> throw ArithmeticException("div by zero")
-            this.isNotZero() -> {
-                val quot = Magia.newMinimumCopy(this.magia)
-                val remN = Magia.mutateDivideRemainder(quot, nMag).toInt()
-                val hiQuot = if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
-                val hiRem = if (remN != 0) HugeInt(this.sign, intArrayOf(remN)) else ZERO
-                return hiQuot to hiRem
-            }
-            else -> ZERO to HugeInt(nSign, intArrayOf(nMag))
-        }
-    }
-
     fun divMod(l: Long): Pair<HugeInt, HugeInt> = divModLongHelper(l < 0, l.absoluteValue)
     fun divMod(ul: ULong): Pair<HugeInt, HugeInt> = divModLongHelper(false, ul.toLong())
 
-    private fun divModLongHelper(lSign: Boolean, lMag: Long): Pair<HugeInt, HugeInt> {
-        val lo = lMag.toInt()
-        val hi = (lMag ushr 32).toInt()
-        return when {
-            lMag == 0L -> throw ArithmeticException("div by zero")
-            hi == 0 -> divModIntHelper(lSign, lo)
-            else -> divModHelper(lSign, intArrayOf(lo, hi))
-        }
-    }
+    /**
+     * Compute the square of this HugeInt.
+     */
 
     fun sqr(): HugeInt {
         if (this.isNotZero()) {
@@ -716,6 +578,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return ZERO
     }
 
+    /**
+     * Raise this HugeInt to the n power.
+     *
+     * @param n must be >= 0
+     * @throws IllegalArgumentException when n < 0
+     */
     fun pow(n: Int): HugeInt {
         return when {
             n < 0 -> throw ArithmeticException("cannot raise HugeInt to negative power:$n")
@@ -741,53 +609,127 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
     }
 
+    /**
+     * Bit-length of the magnitude.
+     */
+    fun magnitudeBitLen() = Magia.bitLen(magia)
 
+    /**
+     * Gives the same answer as BigInteger.bitLength().
+     *
+     * BigInteger.bitLength() tries to give a pseudo-twos-complement answer.
+     * They give the number of bits required, minus the sign bit.
+     * For non-negative values there is no confusion.
+     * For negative values BigInteger.bitLength() things become a little strange.
+     * `BigInteger("-1").bitLength() == 0` ... think about it :)
+     */
+    fun bitLengthBigIntegerStyle(): Int {
+        val magBitLen = magnitudeBitLen()
+        val isNegPowerOfTwo = sign && isMagnitudePowerOfTwo()
+        val bitLengthBigIntegerStyle = magBitLen - if (isNegPowerOfTwo) 1 else 0
+        return bitLengthBigIntegerStyle
+    }
 
+    /**
+     * Calculates the number of bytes required to represent this HugeInt in twos-complement.
+     */
+    fun calc2sComplementByteLength(): Int {
+        if (isZero())
+            return 1
+        val bitLen2sComplement = bitLengthBigIntegerStyle() + 1
+        val byteLength = (bitLen2sComplement + 7) ushr 3
+        return byteLength
+    }
+
+    /**
+     * Predicate to test whether the bit at the specified bitIndex is set.
+     */
+    fun testBit(bitIndex: Int): Boolean = Magia.testBit(this.magia, bitIndex)
+
+    /**
+     * Perform a boolean AND of the two magnitudes, while ignoring the signs.
+     *
+     * Sign of the result is non-negative.
+     */
     infix fun and(other: HugeInt): HugeInt {
         val magiaAnd = Magia.newAnd(this.magia, other.magia)
         return if (magiaAnd.isNotEmpty()) HugeInt(false, magiaAnd) else ZERO
     }
 
+    /**
+     * Perform a boolean OR of the two magnitudes, while ignoring the signs.
+     *
+     * Sign of the result is non-negative.
+     */
     infix fun or(other: HugeInt): HugeInt {
         val magiaOr = Magia.newOr(this.magia, other.magia)
         return if (magiaOr.isNotEmpty()) HugeInt(false, magiaOr) else ZERO
     }
 
+    /**
+     * Perform a boolean XOR of the two magnitudes, while ignoring the signs.
+     *
+     * Sign of the result is non-negative.
+     */
     infix fun xor(other: HugeInt): HugeInt {
         val magiaXor = Magia.newXor(this.magia, other.magia)
         return if (magiaXor.isNotEmpty()) HugeInt(false, magiaXor) else ZERO
     }
 
-
+    /**
+     * Shifts the magnitude to the right, ignores the sign bit, and always
+     * return a non-negative result.
+     *
+     * @param bitCount >= 0
+     * @throws IllegalArgumentException when bitCount < 0
+     */
     infix fun ushr(bitCount: Int): HugeInt {
-        if (bitCount == 0)
-            return this
-        val magia = Magia.newShiftRight(this.magia, bitCount)
-        return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
+        return when {
+            bitCount < 0 -> throw IllegalArgumentException()
+            bitCount == 0 -> this
+            else -> {
+                val magia = Magia.newShiftRight(this.magia, bitCount)
+                return if (magia.isNotEmpty()) HugeInt(false, magia) else ZERO
+            }
+        }
     }
 
+    /**
+     * Performs a signed shift to the right, clamping at -1 for
+     * a negative input ... as with twos-complement.
+     *
+     * @param bitCount >= 0
+     * @throws IllegalArgumentException when bitCount < 0
+     */
     infix fun shr(bitCount: Int): HugeInt {
-        if (! sign)
-            return ushr(bitCount)
-        val roundDown = Magia.testAnyBitInLowerN(this.magia, bitCount)
-        var magia = Magia.newShiftRight(this.magia, bitCount)
-        if (roundDown)
-            magia = Magia.newOrMutateAdd(magia, 1)
-        return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
+        return when {
+            bitCount < 0 -> throw IllegalArgumentException()
+            bitCount == 0 -> this
+            else -> { // don't forget that we are now negative
+                val magia = Magia.newShiftRight(this.magia, bitCount)
+                when {
+                    magia.isNotEmpty() -> HugeInt(this.sign, magia)
+                    sign -> NEG_ONE
+                    else -> ZERO
+                }
+            }
+        }
     }
 
+    /**
+     * Shifts left by bitCount, retaining sign of the input.
+     *
+     * @param bitCount >= 0
+     * @throws IllegalArgumentException when bitCount < 0
+     */
     infix fun shl(bitCount: Int): HugeInt {
-        return if (isNotZero())
-            HugeInt(this.sign, Magia.newShiftLeft(this.magia, bitCount))
-        else
-            ZERO
+        return when {
+            bitCount < 0 -> throw IllegalArgumentException()
+            bitCount == 0 -> this
+            isZero() -> this
+            else -> HugeInt(this.sign, Magia.newShiftLeft(this.magia, bitCount))
+        }
     }
-
-    fun magnitudeCompareTo(other: HugeInt): Int = Magia.compare(this.magia, other.magia)
-    fun magnitudeCompareTo(n: Int): Int = Magia.compare(this.magia, n)
-    fun magnitudeCompareTo(un: UInt): Int = Magia.compare(this.magia, un.toInt())
-    fun magnitudeCompareTo(l: Long): Int = Magia.compare(this.magia, l)
-    fun magnitudeCompareTo(ul: ULong): Int = Magia.compare(this.magia, ul.toLong())
 
     operator fun compareTo(other: HugeInt): Int {
         if (this.sign != other.sign)
@@ -795,36 +737,40 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         val cmp = Magia.compare(this.magia, other.magia)
         return if (this.sign) -cmp else cmp
     }
-
     operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
     operator fun compareTo(un: UInt) = compareToHelper(false, un.toULong())
     operator fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
     operator fun compareTo(ul: ULong) = compareToHelper(false, ul)
 
-    private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
-        if (this.sign != ulSign)
-            return if (this.sign) -1 else 1
-        val cmp = Magia.compare(this.magia, ulMag.toLong())
-        return if (! ulSign) cmp else -cmp
-    }
+    /**
+     * Compares magnitudes, disregarding sign flags.
+     *
+     * @return -1,0,1
+     */
+    fun magnitudeCompareTo(other: HugeInt) = Magia.compare(this.magia, other.magia)
+    fun magnitudeCompareTo(n: Int) = Magia.compare(this.magia, n)
+    fun magnitudeCompareTo(un: UInt) = Magia.compare(this.magia, un.toInt())
+    fun magnitudeCompareTo(l: Long) = Magia.compare(this.magia, l)
+    fun magnitudeCompareTo(ul: ULong) = Magia.compare(this.magia, ul.toLong())
+    fun magnitudeCompareTo(littleEndianIntArray: IntArray) = Magia.compare(this.magia, littleEndianIntArray)
 
+    /**
+     * Comparison predicate for numerical equality.
+     */
     infix fun EQ(other: HugeInt): Boolean = (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
     infix fun EQ(n: Int): Boolean = compareTo(n) == 0
     infix fun EQ(un: UInt): Boolean = compareTo(un) == 0
     infix fun EQ(l: Long): Boolean = compareTo(l) == 0
     infix fun EQ(ul: ULong): Boolean = compareTo(ul) == 0
 
+    /**
+     * Comparison predicate for numerical inequality.
+     */
     infix fun NE(other: HugeInt): Boolean = (this.sign != other.sign) || !Magia.EQ(this.magia, other.magia)
     infix fun NE(n: Int): Boolean = compareTo(n) != 0
     infix fun NE(un: UInt): Boolean = compareTo(un) != 0
     infix fun NE(l: Long): Boolean = compareTo(l) != 0
     infix fun NE(ul: ULong): Boolean = compareTo(ul) != 0
-
-    infix fun EQ(littleEndianIntArray: IntArray): Boolean =
-        (this.sign == false) && Magia.EQ(this.magia, littleEndianIntArray)
-    infix fun NE(littleEndianIntArray: IntArray): Boolean = !(this EQ littleEndianIntArray)
-    infix fun compareTo(littleEndianIntArray: IntArray) =
-        if (this.sign) -1 else Magia.compare(this.magia, littleEndianIntArray)
 
     override fun equals(other: Any?): Boolean {
         return ((other is HugeInt) &&
@@ -847,41 +793,11 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     fun toBigEndianByteArray(bytes: ByteArray): Int {
         val byteLen = calc2sComplementByteLength()
         if (bytes.size < byteLen)
-            throw IllegalArgumentException("ByteArray too small")
+            throw IllegalArgumentException("target ByteArray too small")
         val magBitLen = magnitudeBitLen()
         val magByteLen = (magBitLen + 7) ushr 3
         writeBigEndianBytes(bytes, byteLen - magByteLen, magByteLen)
         return byteLen
-    }
-
-    private fun writeBigEndianBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
-        val last = offset + magByteLen - 1
-        var dest = last
-        var remaining = magByteLen
-        var i = 0
-        val complementMask = if (sign) -1 else 0
-        bytes[0] = complementMask.toByte()
-        while (remaining > 0 && i < magia.size) {
-            var w = magia[i] xor complementMask
-            var j = 4
-            do {
-                bytes[dest--] = w.toByte()
-                w = w ushr 8
-                --remaining
-                --j
-            } while (remaining > 0 && j > 0)
-            ++i
-        }
-        if (sign) {
-            var carry = 1
-            var k = last
-            while (carry > 0 && k >= 0) {
-                val t = (bytes[k].toInt() and 0xFF) + carry
-                bytes[k] = t.toByte()
-                carry = t ushr 8
-                --k
-            }
-        }
     }
 
     fun toLittleEndianIntArray(): IntArray {
@@ -984,6 +900,75 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             return ZERO
         check(Magia.nonZeroLimbLen(magia) > 0)
         return HugeInt(sign, magia)
+    }
+
+
+    private fun divModHelper(otherSign: Boolean, otherMagia: IntArray): Pair<HugeInt, HugeInt> {
+        val (magiaQuot, magiaRem) = Magia.newDivMod(this.magia, otherMagia)
+        val hiQuot = if (magiaQuot.isNotEmpty()) HugeInt(this.sign xor otherSign, magiaQuot) else ZERO
+        val hiRem = if (magiaRem.isNotEmpty()) HugeInt(this.sign, magiaRem) else ZERO
+        return hiQuot to hiRem
+    }
+
+    private fun divModIntHelper(nSign: Boolean, nMag: Int): Pair<HugeInt, HugeInt> {
+        return when {
+            nMag == 0 -> throw ArithmeticException("div by zero")
+            this.isNotZero() -> {
+                val quot = Magia.newMinimumCopy(this.magia)
+                val remN = Magia.mutateDivideRemainder(quot, nMag).toInt()
+                val hiQuot = if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
+                val hiRem = if (remN != 0) HugeInt(this.sign, intArrayOf(remN)) else ZERO
+                return hiQuot to hiRem
+            }
+            else -> ZERO to HugeInt(nSign, intArrayOf(nMag))
+        }
+    }
+
+    private fun divModLongHelper(lSign: Boolean, lMag: Long): Pair<HugeInt, HugeInt> {
+        val lo = lMag.toInt()
+        val hi = (lMag ushr 32).toInt()
+        return when {
+            lMag == 0L -> throw ArithmeticException("div by zero")
+            hi == 0 -> divModIntHelper(lSign, lo)
+            else -> divModHelper(lSign, intArrayOf(lo, hi))
+        }
+    }
+
+    private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
+        if (this.sign != ulSign)
+            return if (this.sign) -1 else 1
+        val cmp = Magia.compare(this.magia, ulMag.toLong())
+        return if (! ulSign) cmp else -cmp
+    }
+
+    private fun writeBigEndianBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
+        val last = offset + magByteLen - 1
+        var dest = last
+        var remaining = magByteLen
+        var i = 0
+        val complementMask = if (sign) -1 else 0
+        bytes[0] = complementMask.toByte()
+        while (remaining > 0 && i < magia.size) {
+            var w = magia[i] xor complementMask
+            var j = 4
+            do {
+                bytes[dest--] = w.toByte()
+                w = w ushr 8
+                --remaining
+                --j
+            } while (remaining > 0 && j > 0)
+            ++i
+        }
+        if (sign) {
+            var carry = 1
+            var k = last
+            while (carry > 0 && k >= 0) {
+                val t = (bytes[k].toInt() and 0xFF) + carry
+                bytes[k] = t.toByte()
+                carry = t ushr 8
+                --k
+            }
+        }
     }
 
 
