@@ -285,7 +285,7 @@ class TestHugeInt {
     fun testBigEndianByteArray(bi: BigInteger) {
         val hi = bi.toHugeInt()
         val biBytes = bi.toByteArray()
-        val hiBytes = hi.toBigEndianByteArray()
+        val hiBytes = hi.toBigEndianTwosComplementByteArray()
 
         val biHex = java.util.HexFormat.ofDelimiter(" ").withUpperCase().formatHex(biBytes)
         val hiHex = java.util.HexFormat.ofDelimiter(" ").withUpperCase().formatHex(hiBytes)
@@ -294,7 +294,7 @@ class TestHugeInt {
             println("biHex:$biHex hiHex:$hiHex")
         assertArrayEquals(biBytes, hiBytes)
 
-        val hi2 = HugeInt.fromBigEndianBytes(hiBytes)
+        val hi2 = HugeInt.fromBigEndianTwosComplementBytes(hiBytes)
         if (verbose)
             println("hi:$hi hi2:$hi2")
         assertEquals(hi, hi2)

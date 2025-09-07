@@ -87,7 +87,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * Also supports standard hex notation of leading `0x` after
          * the optional sign character. `-0xDEAD_BEEF`
          *
-         * @throws IllegalArgumentException empty string or invalid chars
+         * @throws kotlin.IllegalArgumentException empty string or invalid chars
          */
         @JvmStatic fun fromString(str: String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
@@ -100,7 +100,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          *
          * Optional leading sign char followed by optional `0x`
          *
-         * @throws IllegalArgumentException
+         * @throws kotlin.IllegalArgumentException
          */
         @JvmStatic fun fromHexString(str:String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
@@ -118,7 +118,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         //  perhaps I should pass in a flag saying whether or not the contents
         //  are twos-complment
         //  perhaps I should pass in a sign flag
-        @JvmStatic fun fromBigEndianBytes(bytes: ByteArray) = fromBigEndianBytes(bytes, 0, bytes.size)
+        @JvmStatic fun fromBigEndianTwosComplementBytes(bytes: ByteArray) =
+            fromBigEndianTwosComplementBytes(bytes, 0, bytes.size)
         /**
          * Converts specified byte sub-array in big-endian order to a HugeInt.
          *
@@ -126,9 +127,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          *
          * Zero length array returns HugeInt.ZERO
          *
-         * @throws IllegalArgumentException for invalid offset and/or length
+         * @throws kotlin.IllegalArgumentException for invalid offset and/or length
          */
-        @JvmStatic fun fromBigEndianBytes(bytes: ByteArray, off: Int, len: Int): HugeInt {
+        @JvmStatic fun fromBigEndianTwosComplementBytes(bytes: ByteArray, off: Int, len: Int): HugeInt {
             val limit = off + len
             if (off < 0 || limit > bytes.size)
                 throw IllegalArgumentException("invalid off:$off or len:$len for bytes.size:${bytes.size}")
@@ -153,18 +154,18 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
 
         /**
-         * Converts little-endian IntArray into an unsigned HugeInt.
+         * Converts little-endian IntArray into a HugeInt with the specified sign.
          */
         @JvmStatic
-        fun fromLittleEndianIntArray(leIntArray: IntArray): HugeInt {
-            val magia = Magia.newMinimumCopy(leIntArray)
-            return if (magia.isNotEmpty()) HugeInt(false, magia) else ZERO
+        fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray): HugeInt {
+            val magia = Magia.newMinimumCopy(littleEndianIntArray)
+            return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
 
         /**
          * Constructs a positive HugeInt with a single bit turned on at the zero-based bitIndex.
          *
-         * @throws IllegalArgumentException for a negative bitIndex
+         * @throws kotlin.IllegalArgumentException for a negative bitIndex
          */
         @JvmStatic
         fun withSetBit(bitIndex: Int): HugeInt {
@@ -199,7 +200,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * @param bitIndex 0-based indexing starting at the least-significant-bit
          * @param bitWidth number of bits to turn on
          *
-         * @throws IllegalArgumentException on negative bitIndex or negative bitWidth
+         * @throws kotlin.IllegalArgumentException on negative bitIndex or negative bitWidth
          */
         @JvmStatic
         fun withIndexedBitMask(bitIndex: Int, bitWidth: Int): HugeInt {
@@ -582,7 +583,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      * Raise this HugeInt to the n power.
      *
      * @param n must be >= 0
-     * @throws IllegalArgumentException when n < 0
+     * @throws kotlin.IllegalArgumentException when n < 0
      */
     fun pow(n: Int): HugeInt {
         return when {
@@ -681,7 +682,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      * return a non-negative result.
      *
      * @param bitCount >= 0
-     * @throws IllegalArgumentException when bitCount < 0
+     * @throws kotlin.IllegalArgumentException when bitCount < 0
      */
     infix fun ushr(bitCount: Int): HugeInt {
         return when {
@@ -699,7 +700,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      * a negative input ... as with twos-complement.
      *
      * @param bitCount >= 0
-     * @throws IllegalArgumentException when bitCount < 0
+     * @throws kotlin.IllegalArgumentException when bitCount < 0
      */
     infix fun shr(bitCount: Int): HugeInt {
         return when {
@@ -720,7 +721,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      * Shifts left by bitCount, retaining sign of the input.
      *
      * @param bitCount >= 0
-     * @throws IllegalArgumentException when bitCount < 0
+     * @throws kotlin.IllegalArgumentException when bitCount < 0
      */
     infix fun shl(bitCount: Int): HugeInt {
         return when {
@@ -781,22 +782,22 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     override fun toString() = Magia.toString(this.sign, this.magia)
     fun toHexString() = Magia.toHexString(this.sign, this.magia)
 
-    fun toBigEndianByteArray(): ByteArray {
+    fun toBigEndianTwosComplementByteArray(): ByteArray {
         val byteLen = calc2sComplementByteLength()
         val bytes = ByteArray(byteLen)
         val magBitLen = magnitudeBitLen()
         val magByteLen = (magBitLen + 7) ushr 3
-        writeBigEndianBytes(bytes, byteLen - magByteLen, magByteLen)
+        writeBigEndianTwosComplementBytes(bytes, byteLen - magByteLen, magByteLen)
         return bytes
     }
 
-    fun toBigEndianByteArray(bytes: ByteArray): Int {
+    fun toBigEndianTwosComplementByteArray(bytes: ByteArray): Int {
         val byteLen = calc2sComplementByteLength()
         if (bytes.size < byteLen)
             throw IllegalArgumentException("target ByteArray too small")
         val magBitLen = magnitudeBitLen()
         val magByteLen = (magBitLen + 7) ushr 3
-        writeBigEndianBytes(bytes, byteLen - magByteLen, magByteLen)
+        writeBigEndianTwosComplementBytes(bytes, byteLen - magByteLen, magByteLen)
         return byteLen
     }
 
@@ -941,7 +942,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return if (! ulSign) cmp else -cmp
     }
 
-    private fun writeBigEndianBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
+    private fun writeBigEndianTwosComplementBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
         val last = offset + magByteLen - 1
         var dest = last
         var remaining = magByteLen
