@@ -8,7 +8,7 @@ import kotlin.math.absoluteValue
  *
  * Provides basic arithmetic operations `+ - * / %` thru kotlin operator
  * overloading. Also provides overloaded operators functions where the
- * second operand is a primitive integer type, allowing expressions with
+ * other operand is a primitive integer type, allowing expressions with
  * a mixture of HugeInt and Int/UInt/Long/ULong values.
  *
  * HugeInt is a smaller, simpler implementation than java.math.BigInteger.
@@ -411,12 +411,20 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     operator fun plus(un: UInt): HugeInt = this.addSubImpl(false, un)
     operator fun plus(l: Long): HugeInt = this.addSubImpl(false, l)
     operator fun plus(ul: ULong): HugeInt = this.addSubImpl(false, ul)
+    operator fun Int.plus(other: HugeInt) = other.addSubImpl(false, this)
+    operator fun UInt.plus(other: HugeInt) = other.addSubImpl(false, this)
+    operator fun Long.plus(other: HugeInt) = other.addSubImpl(false, this)
+    operator fun ULong.plus(other: HugeInt) = other.addSubImpl(false, this)
 
     operator fun minus(other: HugeInt): HugeInt = this.addSubImpl(true, other)
     operator fun minus(n: Int): HugeInt = this.addSubImpl(true, n)
     operator fun minus(un: UInt): HugeInt = this.addSubImpl(true, un)
     operator fun minus(l: Long): HugeInt = this.addSubImpl(true, l)
     operator fun minus(ul: ULong): HugeInt = this.addSubImpl(true, ul)
+    operator fun Int.minus(other: HugeInt) = other.addSubImpl(true, this)
+    operator fun UInt.minus(other: HugeInt) = other.addSubImpl(true, this)
+    operator fun Long.minus(other: HugeInt) = other.addSubImpl(true, this)
+    operator fun ULong.minus(other: HugeInt) = other.addSubImpl(true, this)
 
     operator fun times(other: HugeInt): HugeInt {
         return if (isNotZero() && other.isNotZero())
@@ -448,6 +456,11 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         else
             ZERO
     }
+
+    operator fun Int.times(other: HugeInt) = other.times(this)
+    operator fun UInt.times(other: HugeInt) = other.times(this)
+    operator fun Long.times(other: HugeInt) = other.times(this)
+    operator fun ULong.times(other: HugeInt) = other.times(this)
 
     operator fun div(other: HugeInt): HugeInt {
         if (other.isZero())
@@ -696,8 +709,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     }
 
     /**
-     * Performs a signed shift to the right, clamping at -1 for
-     * a negative input ... as with twos-complement.
+     * Performs a signed shift to the right, giving the same results
+     * as twos-complement for negative input values.
      *
      * @param bitCount >= 0
      * @throws kotlin.IllegalArgumentException when bitCount < 0
@@ -706,13 +719,15 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         return when {
             bitCount < 0 -> throw IllegalArgumentException()
             bitCount == 0 -> this
-            else -> { // don't forget that we are now negative
-                val magia = Magia.newShiftRight(this.magia, bitCount)
-                when {
-                    magia.isNotEmpty() -> HugeInt(this.sign, magia)
-                    sign -> NEG_ONE
-                    else -> ZERO
+            else -> {
+                var magia = Magia.newShiftRight(this.magia, bitCount)
+                if (sign) {
+                    // mimic twos-complement behavior
+                    val roundDown = Magia.testAnyBitInLowerN(this.magia, bitCount)
+                    if (roundDown)
+                        magia = Magia.newOrMutateAdd(magia, 1)
                 }
+                return if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
             }
         }
     }

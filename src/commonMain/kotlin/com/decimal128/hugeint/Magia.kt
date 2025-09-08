@@ -950,6 +950,127 @@ object Magia {
         return z
     }
 
+    /**
+     * This layer works with magnitudes, so any optional leading sign char is ignored.
+     */
+    private fun newFromLatin1Iterator(src: Latin1Iterator): IntArray {
+        parseError@
+        do {
+            var leadingZeroSeen = false
+            var ch = src.nextChar()
+            if (ch == '-' || ch == '+') // discard leading sign
+                ch = src.nextChar()
+            if (ch == '0') { // discard leading zero
+                leadingZeroSeen = true
+                ch = src.nextChar()
+                if (ch == 'x' || ch == 'X')
+                    return newFromHexLatin1Iterator(src.reset())
+            }
+            while (ch == '0' || ch == '_') {
+                if (ch == '_' && !leadingZeroSeen)
+                    break@parseError
+                leadingZeroSeen = leadingZeroSeen or (ch == '0')
+                ch = src.nextChar() // discard all leading zeros
+            }
+            var accumulator = 0
+            var accumulatorDigitCount = 0
+            val remainingLen = src.remainingLen() + if (ch == '\u0000') 0 else 1
+            val bitLen = (remainingLen * 13607 + 4095) ushr 12
+            if (bitLen == 0) {
+                if (leadingZeroSeen)
+                    return ZERO
+                break@parseError
+            }
+            val z = newWithBitLen(bitLen)
+
+            while (ch in '0'..'9' || ch == '_') {
+                if (ch == '_') {
+                    ch = src.nextChar()
+                    continue
+                }
+                val n = ch - '0'
+                accumulator = accumulator * 10 + n
+                ++accumulatorDigitCount
+                if (accumulatorDigitCount < 9)
+                    continue
+                mutateAdd(mutateMul(z, 1000000000), accumulator)
+                accumulator = 0
+                accumulatorDigitCount = 0
+                ch = src.nextChar()
+            }
+            if (ch == '\u0000') {
+                if (accumulatorDigitCount > 0) {
+                    var pow10 = 1
+                    for (j in 0..<accumulatorDigitCount)
+                        pow10 *= 10
+                    mutateAdd(mutateMul(z, pow10), accumulator)
+                }
+                return z
+                }
+        } while (false)
+        throw IllegalArgumentException("integer parse error:$src")
+    }
+
+    fun newFromHexLatin1Iterator(src: Latin1Iterator): IntArray {
+        parseError@
+        do {
+            var leadingZeroSeen = false
+            var ch = src.nextChar()
+            if (ch == '+' || ch == '-')
+                ch = src.nextChar()
+            if (ch == '0') {
+                leadingZeroSeen = true
+                ch = src.nextChar()
+                if (ch == 'x' || ch == 'X')
+                    ch = src.nextChar()
+            }
+            while (ch == '0' || ch == '_') {
+                if (ch == '_' && !leadingZeroSeen)
+                    break@parseError
+                leadingZeroSeen = leadingZeroSeen or (ch == '0')
+            }
+            if (ch != '\u0000')
+                src.prevChar() // back up one
+            var nybbleCount = 0
+            while (src.hasNext()) {
+                ch = src.nextChar()
+                if (!isHexAsciiCharOrUnderscore(ch))
+                    break@parseError
+                nybbleCount += if (ch == '_') 0 else 1
+            }
+            if (nybbleCount == 0) {
+                if (leadingZeroSeen)
+                    return ZERO
+                break@parseError
+            }
+            val z = newWithBitLen(nybbleCount shl 2)
+            var k = 0
+            var nybblesLeft = nybbleCount
+            do {
+                var w = 0
+                val stepCount = min(nybblesLeft, 8)
+                var n = 0
+                do {
+                    ch = src.prevChar()
+                    val nybble = ch.code - when {
+                        ch <= '9' -> '0'.code
+                        ch <= 'F' -> 'A'.code - 10
+                        ch >= 'a' -> 'a'.code - 10
+                        ch == '_' -> continue
+                        else -> throw IllegalStateException()
+                    }
+                    w = w or (nybble shl (n shl 2))
+                    ++n
+                } while (n < stepCount)
+                z[k++] = w
+                nybblesLeft -= stepCount
+            } while (nybblesLeft > 0)
+            return z
+        } while (false)
+        throw IllegalArgumentException("integer parse error:$src")
+    }
+
+
     fun newFromHexString(str: String) = newFromHexString(false, str)
 
     fun newFromHexString(isNegative: Boolean, str: String): IntArray {
