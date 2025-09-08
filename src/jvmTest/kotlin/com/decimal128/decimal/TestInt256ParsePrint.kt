@@ -7,6 +7,8 @@ import java.util.*
 
 class TestInt256ParsePrint {
 
+    val verbose = false
+
     val regexPlusUnderscore = Regex("[+_]")
     fun parseStringToBi(str: String): BigInteger {
         val s = str.replace(regexPlusUnderscore, "")
@@ -18,14 +20,12 @@ class TestInt256ParsePrint {
         return bi
     }
 
-    val verbose = false
-
     val tcs = arrayOf(
+        "-0x0000_0001",
         "5368225503980853049254831206148184042523111474414498591855",
         "0",
         "0_0",
         "1_0_0",
-        "-0x0000_0001",
         "0xCafe_Babe",
         "-0xDeadBeef",
     )

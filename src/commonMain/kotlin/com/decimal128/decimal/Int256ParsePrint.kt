@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.hugeint.Latin1Iterator
+import com.decimal128.hugeint.StringLatin1Iterator
 import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
@@ -135,7 +137,10 @@ internal object Int256ParsePrint {
         }
     }
 
-    fun u256FromString(u: U256, allowSign: Boolean, str: String): Boolean {
+    fun u256FromString(u: U256, allowSign: Boolean, str: String) =
+        u256FromLatin1Iterator(u, allowSign, StringLatin1Iterator(str, 0, str.length))
+
+    fun u256FromString_old(u: U256, allowSign: Boolean, str: String): Boolean {
         u.u256SetZero()
         val strLen = str.length
         if (strLen == 0)
@@ -219,6 +224,114 @@ internal object Int256ParsePrint {
         }
         if (accumulatorHexitCount > 0)
             u.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
+    }
+
+    fun u256FromLatin1Iterator(u: U256, allowSign: Boolean, src: Latin1Iterator): Boolean {
+        u.u256SetZero()
+        parseError@
+        do {
+            var leadingZeroSeen = false
+            var ch = src.nextChar()
+            val sign = allowSign && ch == '-'
+            if (allowSign && (ch == '-' || ch == '+')) // discard leading sign
+                ch = src.nextChar()
+            if (ch == '0') { // discard leading zero
+                ch = src.nextChar()
+                if (ch == 'x' || ch == 'X')
+                    return u256FromHexLatin1Iterator(u, allowSign, src.reset())
+                leadingZeroSeen = true
+            }
+            while (ch == '0' || ch == '_') {
+                if (ch == '_' && !leadingZeroSeen)
+                    break@parseError
+                leadingZeroSeen = leadingZeroSeen or (ch == '0')
+                ch = src.nextChar() // discard all leading zeros
+            }
+            if (ch == '\u0000') {
+                if (leadingZeroSeen)
+                    return sign
+                break@parseError
+            }
+            var accumulator = 0L
+            var accumulatorDigitCount = 0
+            var chLast = '\u0000'
+            src.prevChar() // back up one char
+            while (true) {
+                chLast = ch
+                ch = src.nextChar()
+                if (ch !in '0'..'9') {
+                    if (ch == '_')
+                        continue
+                    break
+                }
+                val n = (ch - '0').toLong()
+                accumulator = accumulator * 10L + n
+                ++accumulatorDigitCount
+                if (accumulatorDigitCount < 19)
+                    continue
+                u.u256MutateFmaPow10(19, accumulator)
+                accumulator = 0L
+                accumulatorDigitCount = 0
+            }
+            if (ch != '\u0000' || chLast == '_')
+                break@parseError
+            if (accumulatorDigitCount > 0)
+                u.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
+            return sign
+        } while (false)
+        throw IllegalArgumentException("invalid integer syntax:$src")
+    }
+
+    private fun u256FromHexLatin1Iterator(u: U256, allowSign: Boolean, src: Latin1Iterator): Boolean {
+        u.u256SetZero()
+        parseError@
+        do {
+            var leadingZeroSeen = false
+            var ch = src.nextChar()
+            val sign = allowSign && ch == '-'
+            if (allowSign && (ch == '-' || ch == '+'))
+                ch = src.nextChar()
+            if (ch == '0') {
+                ch = src.nextChar()
+                if (ch == 'x' || ch == 'X')
+                    ch = src.nextChar()
+                else
+                    leadingZeroSeen = true
+            }
+            while (ch == '0' || ch == '_') {
+                if (ch == '_' && !leadingZeroSeen)
+                    break@parseError
+                leadingZeroSeen = leadingZeroSeen or (ch == '0')
+                ch = src.nextChar()
+            }
+            if (ch != '\u0000')
+                src.prevChar() // back up 1 char
+            var accumulator = 0L
+            var accumulatorHexitCount = 0
+            while (true) {
+                ch = src.nextChar()
+                val n = when {
+                    ch in '0'..'9' -> (ch - '0').toLong()
+                    (ch.code or 0x20) in 'a'.code..'f'.code ->
+                        (ch.code or 0x20) - 'a'.code + 10L
+
+                    ch == '_' -> continue
+                    ch == '\u0000' -> break
+                    else -> break@parseError
+                }
+                accumulator = (accumulator shl 4) or n
+                ++accumulatorHexitCount
+                if (accumulatorHexitCount < 16)
+                    continue
+                u.u256MutateShiftLeftOr(64, accumulator)
+                accumulator = 0
+                accumulatorHexitCount = 0
+            }
+            if (accumulatorHexitCount > 0)
+                u.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
+            return sign
+        } while (false)
+        throw NumberFormatException("invalid hex integer syntax:$src")
     }
 
 }
