@@ -902,58 +902,67 @@ object Magia {
         return String(bytes)
     }
 
-    fun newFromString(str: String) = newFromLatin1Iterator(StringLatin1Iterator(str))
+    fun newFromString(str: String) = newFromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
+    fun newFromString(str: String, off: Int, len: Int) = newFromLatin1Iterator(StringLatin1Iterator(str, off, len))
+    fun newFromCharSequence(csq: CharSequence) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+    fun newFromCharSequence(csq: CharSequence, off: Int, len: Int) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
+    fun newFromCharArray(chars: CharArray) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+    fun newFromCharArray(chars: CharArray, off: Int, len: Int) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
+    fun newFromByteArray(bytes: ByteArray) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+    fun newFromByteArray(bytes: ByteArray, off: Int, len: Int) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
 
-    fun newFromString(isNegative: Boolean, str: String): IntArray {
-        var i = if (isNegative) 1 else 0
-        val strLen = str.length
-        when {
-            (strLen - i <= 0) ->
-                throw IllegalArgumentException("cannot parse empty string")
-            i+1 < str.length && str[i] == '0' && (str[i+1].code or LOWERCASE_DELTA) == 'x'.code ->
-                return newFromHexString(isNegative, str)
-        }
-        var totalDigitCount = 0
-        var accumulator = 0
-        var accumulatorDigitCount = 0
-        while (i < strLen && str[i] == '0')
-            ++i
 
-        val bitLen = ((strLen - i) * 13607 + 4095) ushr 12
-        if (bitLen == 0)
-            return ZERO
-        val z = newWithBitLen(bitLen)
+    fun newFromHexString(str: String) = newFromHexLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
+    fun newFromHexString(str: String, off: Int, len: Int) = newFromHexLatin1Iterator(StringLatin1Iterator(str, off, len))
+    fun newFromHexCharSequence(csq: CharSequence) = newFromHexLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+    fun newFromHexCharSequence(csq: CharSequence, off: Int, len: Int) = newFromHexLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
+    fun newFromHexCharArray(chars: CharArray) = newFromHexLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+    fun newFromHexCharArray(chars: CharArray, off: Int, len: Int) = newFromHexLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
+    fun newFromHexByteArray(bytes: ByteArray) = newFromHexLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+    fun newFromHexByteArray(bytes: ByteArray, off: Int, len: Int) = newFromHexLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
 
-        while (i < strLen) {
-            val ch = str[i++]
-            if (ch !in '0'..'9') {
-                if (ch == '_' && i > 0)
-                    continue
-                throw IllegalArgumentException("unsigned integer parse error:$str")
-            }
-            val n = ch - '0'
-            ++totalDigitCount
-            accumulator = accumulator * 10 + n
-            ++accumulatorDigitCount
-            if (accumulatorDigitCount < 9)
-                continue
-            mutateAdd(mutateMul(z, 1000000000), accumulator)
-            accumulator = 0
-            accumulatorDigitCount = 0
-        }
-        if (accumulatorDigitCount > 0) {
-            var pow10 = 1
-            for (j in 0..<accumulatorDigitCount)
-                pow10 *= 10
-            mutateAdd(mutateMul(z, pow10), accumulator)
-        }
-        return z
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun isHexAsciiCharOrUnderscore(c: Char): Boolean {
+        val idx = c.code - '0'.code
+        if (idx < 0 || idx > 'f'.code - '0'.code)
+            return false
+        return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
     }
+
+    // FIXME - what is going on here with prefix
+    fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
+        if (len <= 0)
+            return ZERO
+        val magia = IntArray((len + 3) ushr 2)
+        var ib = off + len - 1
+        var iw = 0
+        var remaining = len
+        while (remaining >= 4) {
+            val b3 = bytes[ib - 3].toInt() and 0xFF
+            val b2 = bytes[ib - 2].toInt() and 0xFF
+            val b1 = bytes[ib - 1].toInt() and 0xFF
+            val b0 = bytes[ib - 0].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = w
+            ib -= 4
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            val b3 = prefix and 0xFF
+            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else prefix) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else prefix) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = w
+            check(iw == magia.size)
+        }
+        return magia
+   }
 
     /**
      * This layer works with magnitudes, so any optional leading sign char is ignored.
      */
-    private fun newFromLatin1Iterator(src: Latin1Iterator): IntArray {
+    fun newFromLatin1Iterator(src: Latin1Iterator): IntArray {
         parseError@
         do {
             var leadingZeroSeen = false
@@ -1014,7 +1023,7 @@ object Magia {
         throw IllegalArgumentException("integer parse error:$src")
     }
 
-    fun newFromHexLatin1Iterator(src: Latin1Iterator): IntArray {
+    private fun newFromHexLatin1Iterator(src: Latin1Iterator): IntArray {
         parseError@
         do {
             var leadingZeroSeen = false
@@ -1076,95 +1085,5 @@ object Magia {
         } while (false)
         throw IllegalArgumentException("integer parse error:$src")
     }
-
-
-    fun newFromHexString(str: String) = newFromHexLatin1Iterator(StringLatin1Iterator(str))
-
-    fun newFromHexString(isNegative: Boolean, str: String): IntArray {
-        var strLen = str.length
-        var i = if (isNegative) 1 else 0
-        if (i+1 < strLen && str[i] == '0' && (str[i+1].code or LOWERCASE_DELTA) == 'x'.code)
-            i += 2
-        var leadingZeroSeen = false
-        while (i < strLen && str[i] == '0') {
-            ++i
-            leadingZeroSeen = true
-        }
-        var nybbleCount = 0
-        val off = i
-        for (j in off..<strLen) {
-            val ch = str[j]
-            if (! isHexAsciiCharOrUnderscore(ch))
-                throw RuntimeException("invalid hex format:$str")
-            nybbleCount += if (ch == '_') 0 else 1
-        }
-        if (nybbleCount == 0) {
-            if (leadingZeroSeen)
-                return ZERO
-            throw RuntimeException("invalid hex format:$str")
-        }
-        val z = newWithBitLen(nybbleCount shl 2)
-        var j = strLen
-        var k = 0
-        var nybblesLeft = nybbleCount
-        do {
-            var w = 0
-            val stepCount = min(nybblesLeft, 8)
-            var n = 0
-            do {
-                val ch = str[--j]
-                val nybble = ch.code - when {
-                    ch <= '9' -> '0'.code
-                    ch <= 'F' -> 'A'.code - 10
-                    ch >= 'a' -> 'a'.code - 10
-                    ch == '_'-> continue
-                    else -> throw IllegalStateException()
-                }
-                w = w or (nybble shl (n shl 2))
-                ++n
-            } while (n < stepCount)
-            z[k++] = w
-            nybblesLeft -= stepCount
-        } while (nybblesLeft > 0)
-        return z
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun isHexAsciiCharOrUnderscore(c: Char): Boolean {
-        val idx = c.code - '0'.code
-        if (idx < 0 || idx > 'f'.code - '0'.code)
-            return false
-        return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
-    }
-
-    // FIXME - what is going on here with prefix
-    fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
-        if (len <= 0)
-            return ZERO
-        val magia = IntArray((len + 3) ushr 2)
-        var ib = off + len - 1
-        var iw = 0
-        var remaining = len
-        while (remaining >= 4) {
-            val b3 = bytes[ib - 3].toInt() and 0xFF
-            val b2 = bytes[ib - 2].toInt() and 0xFF
-            val b1 = bytes[ib - 1].toInt() and 0xFF
-            val b0 = bytes[ib - 0].toInt() and 0xFF
-            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
-            magia[iw++] = w
-            ib -= 4
-            remaining -= 4
-        }
-        if (remaining > 0) {
-            val b3 = prefix and 0xFF
-            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else prefix) and 0xFF
-            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else prefix) and 0xFF
-            val b0 = bytes[ib].toInt() and 0xFF
-            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
-            magia[iw++] = w
-            check(iw == magia.size)
-        }
-        return magia
-   }
 
 }

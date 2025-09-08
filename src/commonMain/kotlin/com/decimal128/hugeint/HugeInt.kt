@@ -89,10 +89,29 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          *
          * @throws kotlin.IllegalArgumentException empty string or invalid chars
          */
-        @JvmStatic fun fromString(str: String): HugeInt {
-            val sign = str.isNotEmpty() && str[0] == '-'
-            val magia = Magia.newFromString(str)
-            return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
+        @JvmStatic fun fromString(str: String) =
+            fromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
+        @JvmStatic fun fromString(str: String, off: Int, len: Int) =
+            fromLatin1Iterator(StringLatin1Iterator(str, off, len))
+        @JvmStatic fun fromCharSequence(csq: CharSequence) =
+            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+        @JvmStatic fun fromCharSequence(csq: CharSequence, off: Int, len: Int) =
+            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
+        @JvmStatic fun fromCharArray(chars: CharArray) =
+            fromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+        @JvmStatic fun fromCharArray(chars: CharArray, off: Int, len: Int) =
+            fromLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
+        @JvmStatic fun fromByteArray(bytes: ByteArray) =
+            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+        @JvmStatic fun fromByteArray(bytes: ByteArray, off: Int, len: Int) =
+            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
+
+
+
+        fun fromLatin1Iterator(src: Latin1Iterator): HugeInt {
+            val isNegative = src.peek() == '-'
+            val magia = Magia.newFromLatin1Iterator(src)
+            return if (magia.isNotEmpty()) HugeInt(isNegative, magia) else ZERO
         }
 
         /**

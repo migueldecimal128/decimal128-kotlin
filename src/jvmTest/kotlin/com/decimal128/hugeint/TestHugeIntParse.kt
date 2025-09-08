@@ -46,6 +46,34 @@ class TestHugeIntParse {
             val biStr = bi.toString()
             assertEquals(biStr, hiStr)
 
+            val sb = StringBuilder().append(str)
+            val hiCsq0 = HugeInt.fromCharSequence(sb)
+            assertEquals(hi, hiCsq0)
+
+            sb.setLength(0)
+            sb.append("<<").append(str).append('>')
+            val hiCsq1 = HugeInt.fromCharSequence(sb, 2, str.length)
+            assertEquals(hi, hiCsq1)
+
+            val chars = str.toCharArray()
+            val hiChars0 = HugeInt.fromCharArray(chars)
+            assertEquals(hi, hiChars0)
+
+            val chars2 = CharArray(chars.size + 4)
+            System.arraycopy(chars, 0, chars2, 2, chars.size)
+            val hiChars2 = HugeInt.fromCharArray(chars2, 2, chars.size)
+            assertEquals(hi, hiChars2)
+
+            val bytes = str.toByteArray()
+            val hiBytes0 = HugeInt.fromByteArray(bytes)
+            assertEquals(hi, hiBytes0)
+
+            val bytes2 = ByteArray(bytes.size + 4)
+            System.arraycopy(bytes, 0, bytes2, 2, bytes.size)
+            val hiBytes2 = HugeInt.fromByteArray(bytes2, 2, bytes.size)
+            assertEquals(hi, hiBytes2)
+
+
             if (str.contains("0x") || str.contains("0X"))
                 testHex(str)
         } catch (e: IllegalArgumentException) {
@@ -69,6 +97,35 @@ class TestHugeIntParse {
         val hiStr = hi0.toString()
         val biStr = bi.toString()
         assertEquals(biStr, hiStr)
+
+        val sb = StringBuilder()
+        sb.append(hexStr)
+        val hi3 = HugeInt.fromCharSequence(sb)
+        assertEquals(hi0, hi3)
+
+        sb.setLength(0)
+        sb.append('[').append(hexStr).append(']')
+        val hi4 = HugeInt.fromCharSequence(sb, 1, sb.length - 2)
+        assertEquals(hi0, hi4)
+
+        val chars0 = hexStr.toCharArray()
+        val hi5 = HugeInt.fromCharArray(chars0)
+        assertEquals(hi0, hi5)
+
+        val chars1 = CharArray(chars0.size + 20)
+        System.arraycopy(chars0, 0, chars1, 10, chars0.size)
+        val hi6 = HugeInt.fromCharArray(chars1, 10, chars1.size - 20)
+        assertEquals(hi0, hi6)
+
+        val bytes0 = hexStr.toByteArray()
+        val hi7 = HugeInt.fromByteArray(bytes0)
+        assertEquals(hi0, hi7)
+
+        val bytes1 = ByteArray(bytes0.size + 200)
+        System.arraycopy(bytes0, 0, bytes1, 100, bytes0.size)
+        val hi8 = HugeInt.fromByteArray(bytes1, 100, bytes1.size - 200)
+        assertEquals(hi0, hi8)
+
     }
 
     fun getBigInteger(str: String): BigInteger {
