@@ -902,7 +902,7 @@ object Magia {
         return String(bytes)
     }
 
-    fun newFromString(str: String) = newFromString(false, str)
+    fun newFromString(str: String) = newFromLatin1Iterator(StringLatin1Iterator(str))
 
     fun newFromString(isNegative: Boolean, str: String): IntArray {
         var i = if (isNegative) 1 else 0
@@ -961,10 +961,10 @@ object Magia {
             if (ch == '-' || ch == '+') // discard leading sign
                 ch = src.nextChar()
             if (ch == '0') { // discard leading zero
-                leadingZeroSeen = true
                 ch = src.nextChar()
                 if (ch == 'x' || ch == 'X')
                     return newFromHexLatin1Iterator(src.reset())
+                leadingZeroSeen = true
             }
             while (ch == '0' || ch == '_') {
                 if (ch == '_' && !leadingZeroSeen)
@@ -983,11 +983,15 @@ object Magia {
             }
             val z = newWithBitLen(bitLen)
 
-            while (ch in '0'..'9' || ch == '_') {
-                if (ch == '_') {
-                    ch = src.nextChar()
+            src.prevChar() // back up one
+            var chLast = '\u0000'
+            while (true) {
+                chLast = ch
+                ch = src.nextChar()
+                if (ch == '_')
                     continue
-                }
+                if (ch !in '0'..'9')
+                    break
                 val n = ch - '0'
                 accumulator = accumulator * 10 + n
                 ++accumulatorDigitCount
@@ -996,9 +1000,8 @@ object Magia {
                 mutateAdd(mutateMul(z, 1000000000), accumulator)
                 accumulator = 0
                 accumulatorDigitCount = 0
-                ch = src.nextChar()
             }
-            if (ch == '\u0000') {
+            if (ch == '\u0000' && chLast != '_') {
                 if (accumulatorDigitCount > 0) {
                     var pow10 = 1
                     for (j in 0..<accumulatorDigitCount)
@@ -1006,7 +1009,7 @@ object Magia {
                     mutateAdd(mutateMul(z, pow10), accumulator)
                 }
                 return z
-                }
+            }
         } while (false)
         throw IllegalArgumentException("integer parse error:$src")
     }
@@ -1019,15 +1022,17 @@ object Magia {
             if (ch == '+' || ch == '-')
                 ch = src.nextChar()
             if (ch == '0') {
-                leadingZeroSeen = true
                 ch = src.nextChar()
                 if (ch == 'x' || ch == 'X')
                     ch = src.nextChar()
+                else
+                    leadingZeroSeen = true
             }
             while (ch == '0' || ch == '_') {
                 if (ch == '_' && !leadingZeroSeen)
                     break@parseError
                 leadingZeroSeen = leadingZeroSeen or (ch == '0')
+                ch = src.nextChar()
             }
             if (ch != '\u0000')
                 src.prevChar() // back up one
@@ -1038,6 +1043,8 @@ object Magia {
                     break@parseError
                 nybbleCount += if (ch == '_') 0 else 1
             }
+            if (ch == '_') // last char seen was '_'
+                break@parseError
             if (nybbleCount == 0) {
                 if (leadingZeroSeen)
                     return ZERO
@@ -1071,7 +1078,7 @@ object Magia {
     }
 
 
-    fun newFromHexString(str: String) = newFromHexString(false, str)
+    fun newFromHexString(str: String) = newFromHexLatin1Iterator(StringLatin1Iterator(str))
 
     fun newFromHexString(isNegative: Boolean, str: String): IntArray {
         var strLen = str.length

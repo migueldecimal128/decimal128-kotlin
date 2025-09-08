@@ -102,8 +102,8 @@ class TestHugeInt {
 
         var with_ = hiHexStr
         repeat (5) {
-            val i = random.nextInt(with_.length)
-            if (i >= 3)
+            val i = random.nextInt(with_.length - 1)
+            if (i >= 4)
                 with_ = with_.substring(0, i) + '_' + with_.substring(i)
         }
         if (verbose)

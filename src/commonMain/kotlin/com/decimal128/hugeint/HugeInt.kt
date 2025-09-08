@@ -91,7 +91,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic fun fromString(str: String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
-            val magia = Magia.newFromString(sign, str)
+            val magia = Magia.newFromString(str)
             return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
 
@@ -104,7 +104,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic fun fromHexString(str:String): HugeInt {
             val sign = str.isNotEmpty() && str[0] == '-'
-            val magia = Magia.newFromHexString(sign, str)
+            val magia = Magia.newFromHexString(str)
             return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
 
