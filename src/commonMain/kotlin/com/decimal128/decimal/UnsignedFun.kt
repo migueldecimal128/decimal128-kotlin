@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 expect inline fun unsignedMulHi(x: Long, y: Long): Long
@@ -6,9 +8,9 @@ expect inline fun unsignedDiv(x: Long, y: Long): Long
 
 expect inline fun unsignedMod(x: Long, y: Long): Long
 
-expect inline fun unsignedCmp(x: Long, y: Long): Int
+inline fun unsignedCmp(x: Long, y: Long) = x.toULong().compareTo(y.toULong())
 
-expect inline fun unsignedCmp(x: Int, y: Int): Int
+inline fun unsignedCmp(x: Int, y: Int) = x.toUInt().compareTo(y.toUInt())
 
-expect inline fun unsignedLT(x: Long, y: Long): Boolean
+inline fun unsignedLT(x: Long, y: Long) = x.toULong() < y.toULong()
 

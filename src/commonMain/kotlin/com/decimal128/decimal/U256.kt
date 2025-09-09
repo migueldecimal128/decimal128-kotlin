@@ -7,10 +7,10 @@ private const val SIGNBIT = Long.MIN_VALUE
 @Suppress("NOTHING_TO_INLINE")
 open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
-    constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
-    constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
+    //constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
+    //constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
     constructor(dw0: Long) : this(0L, 0L, 0L, dw0)
-    constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
+    //constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
         Int256ParsePrint.u256FromString(this, false, str)

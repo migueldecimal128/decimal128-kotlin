@@ -1,13 +1,13 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
-@Suppress("NOTHING_TO_INLINE")
-/*inline*/ fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
+inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
     return carryAB to sumAB
 }
 
-@Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -17,7 +17,6 @@ package com.decimal128.decimal
     return carryABC to sumABC
 }
 
-@Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -30,7 +29,6 @@ package com.decimal128.decimal
     return carryABCD to sumABCD
 }
 
-@Suppress("NOTHING_TO_INLINE")
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -46,7 +44,7 @@ package com.decimal128.decimal
     return carryABCDE to sumABCDE
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -65,7 +63,7 @@ package com.decimal128.decimal
     return carryABCDEF to sumABCDEF
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -87,7 +85,7 @@ package com.decimal128.decimal
     return carryABCDEFG to sumABCDEFG
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -112,7 +110,7 @@ package com.decimal128.decimal
     return carryABCDEFGH to sumABCDEFGH
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -141,7 +139,7 @@ package com.decimal128.decimal
     return carryABCDEFGHI to sumABCDEFGHI
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 // returns borrow 0 or 1
 /*inline*/ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
     val diffAZ = dwA - dwZ
@@ -149,7 +147,7 @@ package com.decimal128.decimal
     return borrowAZ to diffAZ
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
     check(borrowIn in 0..1)
     // First subtract b from a:
@@ -160,7 +158,7 @@ package com.decimal128.decimal
     return totalBorrow to totalDiff
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun sumU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val s0 = x0 + y0
     val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
@@ -168,7 +166,7 @@ package com.decimal128.decimal
     return s1 to s0
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun sumU128U64(x1: Long, x0: Long, y0: Long) : Pair<Long, Long> {
     val s0 = x0 + y0
     val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
@@ -176,7 +174,7 @@ package com.decimal128.decimal
     return s1 to s0
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val d0 = x0 - y0
     val borrow0 = if (unsignedLT(x0, y0)) 1L else 0L
@@ -184,7 +182,7 @@ package com.decimal128.decimal
     return d1 to d0
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
         /*inline*/ fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -195,7 +193,7 @@ package com.decimal128.decimal
     return p1 to p0
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -207,7 +205,7 @@ package com.decimal128.decimal
     return p1 to p0
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun umul128x64to192(x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -222,7 +220,7 @@ package com.decimal128.decimal
     return Triple(p2, p1, p0)
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
 /*inline*/ fun umul192x64to192(x2: Long, x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -238,7 +236,7 @@ package com.decimal128.decimal
     return Triple(p2, p1, p0)
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
         /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -256,7 +254,7 @@ package com.decimal128.decimal
     return Triple(p2, p1, p0)
 }
 
-@Suppress("NOTHING_TO_INLINE")
+
         /*inline*/ fun usqr96to192(x1: Long, x0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, x0)
     val pp00Lo = x0 * x0
