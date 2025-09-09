@@ -65,34 +65,45 @@ class Decimal() : S256() {
             Decimal().setSqrt(x, ctx)
 
         private fun addImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
-            val xQ = x.qExp
-            if (xQ == y.qExp && xQ < MIN_SPECIAL_VALUE) {
-                if (x.bitLen == 0 && y.bitLen == 0 && x.sign == ySign) {
-                    // IEEE754-2019 6.3 The sign bit
-                    // However, under all rounding-direction attributes,
-                    // when x is zero, x + x and x − (−x) have the sign of x.
-                    return z.set(x)
-                }
-                z.qExp = xQ
-                // FIXME
-                //  removing this use of s256AddImpl would probably automagically
-                //  solve the signed integer problem above
-                z.s256AddImpl(x.sign, x, ySign, y)
-                // IEEE754-2019 6.3 The sign bit
-                // When the sum of two operands with opposite signs
-                // (or the difference of two operands with like signs) is
-                // exactly zero, the sign of that sum (or difference)
-                // shall be +0 under all rounding-direction attributes except
-                // roundTowardNegative; under that attribute, the sign of an
-                // exact zero sum (or difference) shall be −0.
-                z.sign = z.sign or ((z.bitLen == 0) and ctx.isRoundTowardNegative)
-                return z.roundAndFinalize(EXACT, ctx)
-            } else {
-                return scaledAddImpl(z, x, ySign, y, ctx)
+            val qMax = max(x.qExp, y.qExp)
+            return when {
+                qMax < MIN_SPECIAL_VALUE && x.qExp == y.qExp ->
+                    unscaledFiniteAddImpl(z, x, ySign, y, ctx)
+
+                qMax < MIN_SPECIAL_VALUE ->
+                    scaledFiniteAddImpl(z, x, ySign, y, ctx)
+
+                qMax == NON_FINITE_INF ->
+                    infiniteAddImpl(z, x, ySign, y, ctx)
+
+                else -> { z.setNaN(x, y, ctx); return z }
             }
         }
 
-        private fun scaledAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+        private fun unscaledFiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+            if (x.bitLen == 0 && y.bitLen == 0 && x.sign == ySign) {
+                // IEEE754-2019 6.3 The sign bit
+                // However, under all rounding-direction attributes,
+                // when x is zero, x + x and x − (−x) have the sign of x.
+                return z.set(x)
+            }
+            z.qExp = x.qExp
+            // FIXME
+            //  removing this use of s256AddImpl would probably automagically
+            //  solve the signed integer problem above
+            z.s256AddImpl(x.sign, x, ySign, y)
+            // IEEE754-2019 6.3 The sign bit
+            // When the sum of two operands with opposite signs
+            // (or the difference of two operands with like signs) is
+            // exactly zero, the sign of that sum (or difference)
+            // shall be +0 under all rounding-direction attributes except
+            // roundTowardNegative; under that attribute, the sign of an
+            // exact zero sum (or difference) shall be −0.
+            z.sign = z.sign or ((z.bitLen == 0) and ctx.isRoundTowardNegative)
+            return z.roundAndFinalize(EXACT, ctx)
+        }
+
+        private fun scaledFiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
             val qX = x.qExp
             val qY = y.qExp
             val xSign = x.sign
@@ -142,6 +153,19 @@ class Decimal() : S256() {
                 }
             }
             return z
+        }
+
+        private fun infiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+            val qX = x.qExp
+            val qY = y.qExp
+            check (qX == NON_FINITE_INF || qY == NON_FINITE_INF)
+            if (qX == qY && x.sign != ySign) {
+                z.setNaN(ctx)
+                return ctx.signalInvalid(z)
+            } else {
+                z.setInfinite(if (qX == NON_FINITE_INF) x.sign else ySign)
+                return z
+            }
         }
 
         fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
