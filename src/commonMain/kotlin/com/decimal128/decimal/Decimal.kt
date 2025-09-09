@@ -21,7 +21,8 @@ const val CAPPED_EXP_MAX = 2000000000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
-class Decimal() : S256() {
+class Decimal() : U256() {
+    var sign = false
     var qExp = 0
 
     constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
@@ -963,7 +964,7 @@ class Decimal() : S256() {
     // FIXME ... implement this so that there are fewer memory allocations
     override fun toString(): String {
         return when {
-            qExp == 0 -> super.toString()
+            qExp == 0 -> Int256ParsePrint.int256ToString(sign, this)
             qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString()
             qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
             else -> toNormalizedScientificString()
