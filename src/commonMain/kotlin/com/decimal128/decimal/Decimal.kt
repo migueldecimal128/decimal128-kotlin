@@ -7,6 +7,7 @@ import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
+import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
 
@@ -81,17 +82,39 @@ class Decimal() : S256() {
         }
 
         private fun unscaledFiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
-            if (x.bitLen == 0 && y.bitLen == 0 && x.sign == ySign) {
+            val xSign = x.sign
+            if (x.bitLen == 0 && y.bitLen == 0 && xSign == ySign) {
                 // IEEE754-2019 6.3 The sign bit
                 // However, under all rounding-direction attributes,
                 // when x is zero, x + x and x − (−x) have the sign of x.
                 return z.set(x)
             }
-            z.qExp = x.qExp
             // FIXME
             //  removing this use of s256AddImpl would probably automagically
             //  solve the signed integer problem above
-            z.s256AddImpl(x.sign, x, ySign, y)
+//            z.s256AddImpl(x.sign, x, ySign, y)
+            z.qExp = x.qExp
+            if (xSign == ySign) {
+                z.u256SetAdd(x, y)
+                z.sign = xSign
+            } else {
+                val cmp = u256UnscaledCompare(x, y)
+                when {
+                    (cmp > 0) -> {
+                        z.u256SetSub(x, y)
+                        z.sign = xSign and (z.bitLen > 0)
+                    }
+                    (cmp < 0) -> {
+                        z.u256SetSub(y, x)
+                        z.sign = ySign and (z.bitLen > 0)
+                    }
+                    else -> {
+                        z.sign = false
+                        z.u256SetZero()
+                    }
+                }
+            }
+
             // IEEE754-2019 6.3 The sign bit
             // When the sum of two operands with opposite signs
             // (or the difference of two operands with like signs) is
