@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 
 class TestDecimalToString2 {
 
-    val verbose = true
+    val verbose = false
 
     val tcs = arrayOf(
+        "-sNaN123456789012345678901234567890",
         "6.02E23",
         "0", "1", "-9",
         "0.0", "-0.0",
@@ -20,7 +21,8 @@ class TestDecimalToString2 {
         "-9.999999999999999999999999999999999E-999",
         "Infinity", "-Infinity",
         "NaN", "-NaN", "NaN123", "-NaN456789",
-        "sNaN", "-sNaN", "sNaN987654321", "-sNaN123456789012345678901234567890"
+        "sNaN", "-sNaN", "sNaN987654321",
+        "-sNaN123456789012345678901234567890",
     )
 
     @Test

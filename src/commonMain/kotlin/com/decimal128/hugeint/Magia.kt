@@ -902,13 +902,13 @@ object Magia {
         return String(bytes)
     }
 
-    fun newFromString(str: String) = newFromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
+    fun newFromString(str: String) = newFromLatin1Iterator(StringLatin1Iterator(str))
     fun newFromString(str: String, off: Int, len: Int) = newFromLatin1Iterator(StringLatin1Iterator(str, off, len))
-    fun newFromCharSequence(csq: CharSequence) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+    fun newFromCharSequence(csq: CharSequence) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq))
     fun newFromCharSequence(csq: CharSequence, off: Int, len: Int) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
-    fun newFromCharArray(chars: CharArray) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+    fun newFromCharArray(chars: CharArray) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars))
     fun newFromCharArray(chars: CharArray, off: Int, len: Int) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
-    fun newFromByteArray(bytes: ByteArray) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+    fun newFromByteArray(bytes: ByteArray) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes))
     fun newFromByteArray(bytes: ByteArray, off: Int, len: Int) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
 
 
@@ -963,7 +963,7 @@ object Magia {
      * This layer works with magnitudes, so any optional leading sign char is ignored.
      */
     fun newFromLatin1Iterator(src: Latin1Iterator): IntArray {
-        parseError@
+        invalid_syntax@
         do {
             var leadingZeroSeen = false
             var ch = src.nextChar()
@@ -977,7 +977,7 @@ object Magia {
             }
             while (ch == '0' || ch == '_') {
                 if (ch == '_' && !leadingZeroSeen)
-                    break@parseError
+                    break@invalid_syntax
                 leadingZeroSeen = leadingZeroSeen or (ch == '0')
                 ch = src.nextChar() // discard all leading zeros
             }
@@ -988,7 +988,7 @@ object Magia {
             if (bitLen == 0) {
                 if (leadingZeroSeen)
                     return ZERO
-                break@parseError
+                break@invalid_syntax
             }
             val z = newWithBitLen(bitLen)
 
@@ -1024,7 +1024,7 @@ object Magia {
     }
 
     private fun newFromHexLatin1Iterator(src: Latin1Iterator): IntArray {
-        parseError@
+        invalid_syntax@
         do {
             var leadingZeroSeen = false
             var ch = src.nextChar()
@@ -1039,7 +1039,7 @@ object Magia {
             }
             while (ch == '0' || ch == '_') {
                 if (ch == '_' && !leadingZeroSeen)
-                    break@parseError
+                    break@invalid_syntax
                 leadingZeroSeen = leadingZeroSeen or (ch == '0')
                 ch = src.nextChar()
             }
@@ -1049,15 +1049,15 @@ object Magia {
             while (src.hasNext()) {
                 ch = src.nextChar()
                 if (!isHexAsciiCharOrUnderscore(ch))
-                    break@parseError
+                    break@invalid_syntax
                 nybbleCount += if (ch == '_') 0 else 1
             }
             if (ch == '_') // last char seen was '_'
-                break@parseError
+                break@invalid_syntax
             if (nybbleCount == 0) {
                 if (leadingZeroSeen)
                     return ZERO
-                break@parseError
+                break@invalid_syntax
             }
             val z = newWithBitLen(nybbleCount shl 2)
             var k = 0

@@ -138,97 +138,11 @@ internal object Int256ParsePrint {
     }
 
     fun u256FromString(u: U256, allowSign: Boolean, str: String) =
-        u256FromLatin1Iterator(u, allowSign, StringLatin1Iterator(str, 0, str.length))
-
-    fun u256FromString_old(u: U256, allowSign: Boolean, str: String): Boolean {
-        u.u256SetZero()
-        val strLen = str.length
-        if (strLen == 0)
-            throw IllegalArgumentException("cannot parse empty string")
-        var totalDigitCount = 0
-        var accumulator = 0L
-        var accumulatorDigitCount = 0
-        var nonZeroSeen = false
-        var i = 0
-        val sign = (
-                if (allowSign && (str[0] == '-' || str[0] == '+')) {
-                    ++i
-                    str[0] == '-'
-                } else {
-                    false
-                })
-        if (i + 1 < strLen && str[i] == '0' && (str[i + 1].code or 0x20) == 'x'.code) {
-            u256FromHexString(u, str, i)
-            return sign
-        }
-        do {
-            if (str[i] == '_')
-                break
-            var ch = '0'
-            while (i < strLen) {
-                ch = str[i++]
-                if (ch !in '0'..'9') {
-                    if (ch == '_')
-                        continue
-                    break
-                }
-                val n = ch - '0'
-                ++totalDigitCount
-                nonZeroSeen = nonZeroSeen or (n > 0)
-                if (! nonZeroSeen)
-                    continue
-                accumulator = accumulator * 10 + n
-                ++accumulatorDigitCount
-                if (accumulatorDigitCount < 19)
-                    continue
-                u.u256MutateFmaPow10(19, accumulator)
-                accumulator = 0L
-                accumulatorDigitCount = 0
-            }
-            if (ch == '_')
-                break
-            if (accumulatorDigitCount > 0)
-                u.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
-            if (totalDigitCount > 0)
-                return sign
-        } while (false)
-        throw IllegalArgumentException("invalid syntax:$str")
-    }
-
-    private fun u256FromHexString(u: U256, str: String, ichStart: Int) {
-        val strLen = str.length
-        if (ichStart + 2 >= strLen)
-            throw IllegalArgumentException("hex string too short")
-        var accumulator = 0L
-        var accumulatorHexitCount = 0
-        var ich = ichStart + 2
-        while (ich < strLen) {
-            val ch = str[ich++]
-            if (ch == '_')
-                continue
-            val n = (
-                    if (ch in '0'..'9')
-                        ch - '0'
-                    else if ((ch.code or 0x20) in 'a'.code .. 'f'.code)
-                        (ch.code or 0x20) - 'a'.code + 10
-                    else
-                        throw IllegalArgumentException("invalid hex:" + str)
-                    )
-            accumulator = (accumulator shl 4) or n.toLong()
-            ++accumulatorHexitCount
-            if (accumulatorHexitCount < 16)
-                continue
-            u.u256MutateShiftLeftOr(64, accumulator)
-            accumulator = 0
-            accumulatorHexitCount = 0
-        }
-        if (accumulatorHexitCount > 0)
-            u.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
-    }
+        u256FromLatin1Iterator(u, allowSign, StringLatin1Iterator(str))
 
     fun u256FromLatin1Iterator(u: U256, allowSign: Boolean, src: Latin1Iterator): Boolean {
         u.u256SetZero()
-        parseError@
+        invalid_syntax@
         do {
             var leadingZeroSeen = false
             var ch = src.nextChar()
@@ -243,14 +157,14 @@ internal object Int256ParsePrint {
             }
             while (ch == '0' || ch == '_') {
                 if (ch == '_' && !leadingZeroSeen)
-                    break@parseError
+                    break@invalid_syntax
                 leadingZeroSeen = leadingZeroSeen or (ch == '0')
                 ch = src.nextChar() // discard all leading zeros
             }
             if (ch == '\u0000') {
                 if (leadingZeroSeen)
                     return sign
-                break@parseError
+                break@invalid_syntax
             }
             var accumulator = 0L
             var accumulatorDigitCount = 0
@@ -274,7 +188,7 @@ internal object Int256ParsePrint {
                 accumulatorDigitCount = 0
             }
             if (ch != '\u0000' || chLast == '_')
-                break@parseError
+                break@invalid_syntax
             if (accumulatorDigitCount > 0)
                 u.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
             return sign
@@ -284,7 +198,7 @@ internal object Int256ParsePrint {
 
     private fun u256FromHexLatin1Iterator(u: U256, allowSign: Boolean, src: Latin1Iterator): Boolean {
         u.u256SetZero()
-        parseError@
+        invalid_syntax@
         do {
             var leadingZeroSeen = false
             var ch = src.nextChar()
@@ -300,7 +214,7 @@ internal object Int256ParsePrint {
             }
             while (ch == '0' || ch == '_') {
                 if (ch == '_' && !leadingZeroSeen)
-                    break@parseError
+                    break@invalid_syntax
                 leadingZeroSeen = leadingZeroSeen or (ch == '0')
                 ch = src.nextChar()
             }
@@ -317,7 +231,7 @@ internal object Int256ParsePrint {
 
                     ch == '_' -> continue
                     ch == '\u0000' -> break
-                    else -> break@parseError
+                    else -> break@invalid_syntax
                 }
                 accumulator = (accumulator shl 4) or n
                 ++accumulatorHexitCount

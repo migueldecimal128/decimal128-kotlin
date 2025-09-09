@@ -48,11 +48,12 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
-        "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
-        "dqmul770 multiply 1e+40 1e+6101 -> 1.000000000000000000000000000000E+6141 Clamped",
+        "dqmul699 multiply -NaN    -sNaN89 -> -NaN89 Invalid_operation",
         "rounding:    floor",
         "dqadd71720 add  0        0E-19  ->  0E-19",
         "rounding: half_even",
+        "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
+        "dqmul770 multiply 1e+40 1e+6101 -> 1.000000000000000000000000000000E+6141 Clamped",
         "dqadd7728 add -00.00 0E+3  -> 0.00",
         "dqadd7882 add -NaN26    NaN28 -> -NaN26",
         "dqadd7841 add  sNaN -Inf   ->  NaN  Invalid_operation",

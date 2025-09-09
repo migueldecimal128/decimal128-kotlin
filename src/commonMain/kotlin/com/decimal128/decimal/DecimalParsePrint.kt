@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.hugeint.Latin1Iterator
+import com.decimal128.hugeint.StringLatin1Iterator
 import kotlin.math.max
 import kotlin.math.min
 
@@ -230,7 +232,9 @@ object DecimalParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
-    fun decFromString(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) {
+    fun decFromString(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) =
+        decFromText(x, StringLatin1Iterator(str), zeroNanPayload, ctx)
+    fun decFromString_old(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) {
         var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
         var significantDigitCount = 0 // does not count leading zeros
         var ichDot = -1
@@ -362,10 +366,132 @@ object DecimalParsePrint {
         when {
             lc == "inf" || lc == "infinity" -> x.setInfinite(sign)
             isNaNString(lc, 33, sign, zeroNanPayload, x) -> {}
-            ich == 1 && ch == '[' && isValidBidHexDecimal(lc, x) -> {}
+            ich == 1 && ch == '[' && isValidBidHexText(lc, x) -> {}
             ich == 1 && ch == '#' && isValidDpdHexDecimal(lc, x) -> {}
             else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
         }
+    }
+
+    fun decFromText(x: Decimal, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
+        // FIXME -- maxPayloadDigitLen belongs as part of DecimalContext
+        val maxPayloadDigitLen = 33
+        when {
+            isFiniteValueText(x, src, ctx) -> return
+            isInfinityText(x, src) -> return
+            isNanText(x, src, maxPayloadDigitLen, zeroNanPayload) -> return
+            else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
+        }
+    }
+
+    fun isFiniteValueText(x: Decimal, src: Latin1Iterator, ctx: DecimalContext): Boolean {
+        var hasCoefficientDigit = false
+        var significantDigitCount = 0 // does not count leading zeros
+        var hasDot = false
+        var hasExp = false
+        var hasExpDigit = false
+        var expSign = false
+        var expSignificantDigitCount = 0
+
+        var ch = src.nextChar()
+        var chLast = '\u0000'
+
+        val sign = ch == '-'
+        if (ch == '-' || ch == '+')
+            ch = src.nextChar()
+        var fractionalDigitCount = 0
+        var coeff19 = 0L
+        var coeff34 = 0L
+        var guardDigit = 0
+        var stickyBits = 0
+        var exp = 0
+
+        while (ch in '0'..'9' || ch == '.' || ch == '_') {
+            when {
+                ch in '0'..'9' -> {
+                    val n = ch - '0'
+                    hasCoefficientDigit = true
+                    significantDigitCount += (-(n or significantDigitCount)) ushr 31
+                    if (significantDigitCount <= 19) {
+                        coeff19 = coeff19 * 10L + n
+                    } else if (significantDigitCount <= 34) {
+                        coeff34 = coeff34 * 10L + n
+                    } else if (significantDigitCount == 35) {
+                        guardDigit = n
+                    } else {
+                        stickyBits = stickyBits or n
+                    }
+                    if (hasDot)
+                        ++fractionalDigitCount
+                }
+                ch == '.' -> {
+                    if (hasDot)
+                        return false
+                    if (chLast == '_')
+                        return false
+                    hasDot = true
+                }
+                ch == '_' -> {
+                    if (! hasCoefficientDigit)
+                        return false
+                    if (hasDot && fractionalDigitCount == 0)
+                        return false
+                }
+            }
+            chLast = ch
+            ch = src.nextChar()
+        }
+        if (ch == 'E' || ch == 'e') {
+            if (chLast == '_')
+                return false
+            hasExp = true
+            ch = src.nextChar()
+            if (ch == '_')
+                return false
+            if (ch == '+' || ch == '-') {
+                expSign = ch == '-'
+                ch = src.nextChar()
+            }
+            while (ch in '0'..'9' || ch == '_') {
+                if (ch != '_') {
+                    hasExpDigit = true
+                    val eDigit = ch - '0'
+                    expSignificantDigitCount +=
+                        (eDigit or -expSignificantDigitCount) ushr 31
+                    exp = exp * 10 + (ch - '0')
+                } else {
+                    if (! hasExpDigit)
+                        return false
+                }
+                chLast = ch
+                ch = src.nextChar()
+            }
+        }
+        if (ch != '\u0000' ||
+            chLast == '_' ||
+            ! hasCoefficientDigit ||
+            hasExp && !hasExpDigit ||
+            expSignificantDigitCount > 9)
+            return false
+        // we have at least one digit
+        val coeffDigitCount = min(34, significantDigitCount)
+        x.u256Set64(coeff19)
+        if (coeffDigitCount > 19) {
+            val pow10 = coeffDigitCount - 19
+            x.u256MutateFmaPow10(pow10, coeff34)
+        }
+        x.sign = sign
+        val signedExp = if (expSign) -exp else exp
+        val integerDigitCount = significantDigitCount - fractionalDigitCount
+        val discardedIntegerDigitCount = max(0, integerDigitCount - 34)
+        val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
+        x.qExp = qExp
+        if (((guardDigit or stickyBits) == 0) && (qExp >= ctx.qTiny) && (qExp <= ctx.qMax))
+            return true
+        val roundBit = if (guardDigit < 5) 0 else 1
+        val stickyBit = (-stickyBits) ushr 31
+        val residue = Residue.residueFrom(roundBit, stickyBit)
+        x.roundAndFinalize(residue, ctx)
+        return true
     }
 
     fun isNaNString(lcStr: String, maxPayloadDigits: Int, sign: Boolean, zeroNanPayload: Boolean, x: Decimal): Boolean {
@@ -402,7 +528,105 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isValidBidHexDecimal(lcStr: String, x: Decimal): Boolean {
+    fun isNanText(x: Decimal, src: Latin1Iterator, maxPayloadDigits: Int, zeroNanPayload: Boolean): Boolean {
+        src.reset()
+        x.setZero()
+        var ch = src.nextChar()
+        val sign = ch == '-'
+        if (ch == '-' || ch == '+')
+            ch = src.nextChar()
+        val hasS = (ch.code or 0x20) == 's'.code
+        if (hasS)
+            ch = src.nextChar()
+        for (target in "nan") {
+            if ((ch.code or 0x20) != target.code)
+                return false
+            ch = src.nextChar()
+        }
+        var payloadDigitCount = 0
+        var accumulatorDigitCount = 0
+        var accumulator19 = 0L
+        var accumulator33 = 0L
+        while (ch in '0'..'9') {
+            ++payloadDigitCount
+            val d = (ch - '0').toLong()
+            if (payloadDigitCount <= 19)
+                accumulator19 = (accumulator19 * 10L) + d
+            else if (payloadDigitCount <= 33)
+                accumulator33 = (accumulator33 * 10L) + d
+            else
+                return false
+            ch = src.nextChar()
+        }
+        if (ch != '\u0000')
+            return false
+        if (!zeroNanPayload && payloadDigitCount > 0) {
+            x.u256Set64(accumulator19)
+            if (payloadDigitCount > 19)
+                x.u256MutateFmaPow10(payloadDigitCount - 19, accumulator33)
+        }
+        x.sign = sign
+        x.qExp = if (hasS) NON_FINITE_SNAN else NON_FINITE_QNAN
+        return true
+    }
+
+    fun isInfinityText(x: Decimal, src: Latin1Iterator): Boolean {
+        src.reset()
+        var ch = src.nextChar()
+        val sign = ch == '-'
+        if (ch == '-' || ch == '+')
+            ch = src.nextChar()
+        var chLast = 0
+        for (target in "infinity") {
+            chLast = ch.code or 0x20
+            if (chLast != target.code)
+                return false
+            ch = src.nextChar()
+            if (ch == '\u0000')
+                break
+        }
+        if (ch != '\u0000' || (chLast != 'f'.code && chLast != 'y'.code))
+            return false
+        x.setInfinite(sign)
+        return true
+    }
+
+    fun isValidBidHexText(x: Decimal, src: Latin1Iterator): Boolean {
+        src.reset()
+        var ch = src.nextChar()
+        if (ch != '[')
+            return false
+        if (! parseHexDword(src, x))
+            return false
+        val bidHi = x.dw0
+        if (src.peek() == ',')
+            src.nextChar()
+        if (! parseHexDword(src, x))
+            return false
+        val bidLo = x.dw0
+        ch = src.nextChar()
+        if (ch != ']' || src.hasNext())
+            return false
+        x.setBid128(bidHi, bidLo)
+        return true
+    }
+
+    private fun parseHexDword(src: Latin1Iterator, x: Decimal): Boolean {
+        var dw = 0L
+        for (i in 0..15) {
+            val ch = src.nextChar()
+            when {
+                ch in '0'..'9' -> dw = (dw shl 4) or (ch - '0').toLong()
+                ch in 'A'..'F' -> dw = (dw shl 4) or (ch - 'A' + 10).toLong()
+                ch in 'a'..'f' -> dw = (dw shl 4) or (ch - 'a' + 10).toLong()
+                else -> return false
+            }
+        }
+        x.u256Set64(dw)
+        return true
+    }
+
+    fun isValidBidHexText(lcStr: String, x: Decimal): Boolean {
         if (lcStr[0] != '[' || lcStr[lcStr.lastIndex] != ']' ||
             lcStr.length !in 34..35 || (lcStr.length == 35 && lcStr[17] != ','))
             return false
@@ -427,6 +651,20 @@ object DecimalParsePrint {
             bidLo = bidLo or (loNybble.toLong() shl leftShift)
         }
         x.setBid128(bidHi, bidLo)
+        return true
+    }
+
+    fun isValidDpdHexText(x: Decimal, src: Latin1Iterator): Boolean {
+        src.reset()
+        if (src.nextChar() != '#')
+            return false
+        if (! parseHexDword(src, x))
+            return false
+        val dpdHi = x.dw0
+        if (! parseHexDword(src, x))
+            return false
+        val dpdLo = x.dw0
+        x.setDpd128(dpdHi, dpdLo)
         return true
     }
 
