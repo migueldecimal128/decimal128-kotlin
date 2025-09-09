@@ -74,6 +74,9 @@ class Decimal() : S256() {
                     return z.set(x)
                 }
                 z.qExp = xQ
+                // FIXME
+                //  removing this use of s256AddImpl would probably automagically
+                //  solve the signed integer problem above
                 z.s256AddImpl(x.sign, x, ySign, y)
                 // IEEE754-2019 6.3 The sign bit
                 // When the sum of two operands with opposite signs
@@ -100,10 +103,11 @@ class Decimal() : S256() {
                 qMax < MIN_SPECIAL_VALUE -> {
                     val residue = when {
                         xIsZero and yIsZero and (xSign == ySign) -> {
-                            // IEEE754-2019 6.3 The sign big
+                            // IEEE754-2019 6.3 The sign bit
                             // However, under all rounding-direction attributes,
                             // when x is zero, x + x and x − (−x) have the sign of x.
-                            z.s256Set(x) // sign of X
+                            z.setZero()
+                            z.sign = xSign
                             z.qExp = Math.min(qX, qY)
                             return z
                         }
@@ -210,7 +214,8 @@ class Decimal() : S256() {
     }
 
     internal fun setNaN(ctx: DecimalContext) {
-        s256SetZero()
+        setZero()
+        sign = false
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
