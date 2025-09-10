@@ -21,6 +21,10 @@ data class DecimalPreferences(
     val printAutoMinNoExponent: Int = -6,
     val printStyle: PrintStyle = PrintStyle.AUTO
 ) {
+    companion object {
+        val DEFAULT = DecimalPreferences()
+    }
+
     enum class PrintStyle { AUTO, ALWAYS_SCIENTIFIC, INTEGER_COEFFICIENT}
     enum class TextCase { MIXED_CASE, UPPER_CASE, LOWER_CASE }
 }
