@@ -9,53 +9,6 @@ private const val SPECIAL_NAMES =
     ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16) or
             ('s'.code.toLong() shl 24) or ('N'.code.toLong() shl 32) or ('a'.code.toLong() shl 40) or ('N'.code.toLong() shl 48)
 
-private fun copyBytes(str: String, bytes: ByteArray, off: Int, len: Int) : Int {
-    val strLen = str.length
-    if (strLen > len)
-        throw RuntimeException("insufficient buffer space")
-    for (i in 0..<strLen) {
-        bytes[off + i] = str[i].code.toByte()
-    }
-    return strLen
-}
-
-private fun u64ToChars_x(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
-    val last = off + digitLen + (-digitLen shr 31)
-    val count = last + 1 - off
-    var d = dw0
-    var i = count - 1
-    do {
-        val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitA = d - (qA * 10L)
-        val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitB = qA - (qB * 10L)
-        val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitC = qB - (qC * 10L)
-        val qD = unsignedMulHi(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitD = qC - (qD * 10L)
-
-        bytes[off + i - 0] = ('0'.code + digitA).toByte()
-        if (i == 0)
-            break
-
-        bytes[off + i - 1] = ('0'.code + digitB).toByte()
-        if (i == 1)
-            break
-
-        bytes[off + i - 2] = ('0'.code + digitC).toByte()
-        if (i == 2)
-            break
-
-        bytes[off + i - 3] = ('0'.code + digitD).toByte()
-        if (i == 3)
-            break
-
-        d = qD
-        i -= 4
-    } while (i >= 0)
-    return count
-}
-
 private fun u64ToUtf8(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
     val last = off + digitLen + (-digitLen shr 31)
     val count = last + 1 - off
@@ -86,57 +39,6 @@ private fun u64ToUtf8(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len:
         i -= 3
     } while (i >= 0)
     return count
-}
-
-private fun u128ToChars(digitLen: Int, dw1: Long, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
-    var digitLenT = digitLen
-    check(dw1 != 0L)
-    val divisor = 1_000_000_000L
-    val mu = 0x44B82FA09
-    val (q1, q0, r0) = barrettDivMod_32_128(dw1, dw0, divisor, mu)
-    val cbHi = (
-            if (q1 != 0L)
-                u128ToChars(digitLen - 9, q1, q0, bytes, off, len)
-            else
-                u64ToUtf8(digitLen - 9, q0, bytes, off, len)
-            )
-    val cbLo = u64ToUtf8(9, r0, bytes, off + cbHi, len - cbHi)
-    return cbHi + cbLo
-}
-
-@Suppress("NOTHING_TO_INLINE")
-private inline fun barrettDivMod_32_128(dw1: Long, dw0: Long, denom: Long, mu: Long): Triple<Long, Long, Long> {
-
-    val dwA = dw0 and 0xFFFF_FFFFL
-    val dwB = dw0 ushr 32
-    val dwG = dw1
-
-    val qGhat = unsignedMulHi(dwG, mu)
-    val rGhat = dwG - (qGhat * denom)
-    val adjustG = rGhat >= denom
-    val qG = qGhat + if (adjustG) 1L else 0L
-    val rG = rGhat - if (adjustG) denom else 0L
-
-    val ppB = (rG shl 32) or dwB
-    val qBhat = unsignedMulHi(ppB, mu)
-    val rBhat = ppB - (qBhat * denom)
-    val adjustB = rBhat >= denom
-    val qB = qBhat + if (adjustB) 1L else 0L
-    val rB = rBhat - if (adjustB) denom else 0L
-
-    val ppA = (rB shl 32) or dwA
-    val qAhat = unsignedMulHi(ppA, mu)
-    val rAhat = ppA - (qAhat * denom)
-    val adjustA = rAhat >= denom
-    val qA = qAhat + if (adjustA) 1L else 0L
-    val rA = rAhat - if (adjustA) denom else 0L
-
-    val remainder = rA
-
-    val q1 = qG
-    val q0 = (qB shl 32) or qA
-
-    return Triple(q1, q0, remainder)
 }
 
 private const val BYTE_ZERO = '0'.code.toByte()
@@ -242,6 +144,8 @@ object DecimalParsePrint {
             isFiniteValueText(x, src, ctx) -> return
             isInfinityText(x, src) -> return
             isNanText(x, src, maxPayloadDigitLen, zeroNanPayload) -> return
+            isValidBidHexText(x, src) -> return
+            isValidDpdHexText(x, src) -> return
             else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
         }
     }
@@ -357,40 +261,6 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isNaNString(lcStr: String, maxPayloadDigits: Int, sign: Boolean, zeroNanPayload: Boolean, x: Decimal): Boolean {
-        if (lcStr.isEmpty())
-            return false
-        val isSignaling = lcStr[0] == 's'
-        var ich = if (isSignaling || lcStr[0] == 'q') 1 else 0
-        if (lcStr.length < ich + 3)
-            return false
-        if (lcStr[ich + 0] != 'n' || lcStr[ich + 1] != 'a' || lcStr[ich + 2] != 'n')
-            return false
-        ich += 3
-        x.setZero()
-        var digitCount = 0
-        var accumulator = 0L
-        while (ich < lcStr.length) {
-            val ch = lcStr[ich]
-            if (ch !in '0'..'9')
-                return false
-            accumulator = (accumulator * 10L) + (ch - '0').toLong()
-            ++digitCount
-            if (digitCount > maxPayloadDigits)
-                return false
-            if ((digitCount and 0x0F) == 0 && !zeroNanPayload) {
-                x.u256MutateFmaPow10(16, accumulator)
-                accumulator = 0L
-            }
-            ++ich
-        }
-        if ((digitCount and 0x0F) > 0 && !zeroNanPayload)
-            x.u256MutateFmaPow10(digitCount and 0x0F, accumulator)
-        x.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-        x.sign = sign
-        return true
-    }
-
     fun isNanText(x: Decimal, src: Latin1Iterator, maxPayloadDigits: Int, zeroNanPayload: Boolean): Boolean {
         src.reset()
         x.setZero()
@@ -489,34 +359,6 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isValidBidHexText(lcStr: String, x: Decimal): Boolean {
-        if (lcStr[0] != '[' || lcStr[lcStr.lastIndex] != ']' ||
-            lcStr.length !in 34..35 || (lcStr.length == 35 && lcStr[17] != ','))
-            return false
-        val commaOffset = if (lcStr.length == 34) 0 else 1
-        var bidHi = 0L
-        var bidLo = 0L
-        for (i in 0..15) {
-            val leftShift = 60 - (i shl 2)
-            val chHi = lcStr[i + 1]
-            val hiNybble = when (chHi) {
-                in '0'..'9' -> chHi - '0'
-                in 'a'..'f' -> chHi - 'a' + 10
-                else -> return false
-            }
-            bidHi = bidHi or (hiNybble.toLong() shl leftShift)
-            val chLo = lcStr[17 + commaOffset + i]
-            val loNybble = when (chLo) {
-                in '0'..'9' -> chLo - '0'
-                in 'a'..'f' -> chLo - 'a' + 10
-                else -> return false
-            }
-            bidLo = bidLo or (loNybble.toLong() shl leftShift)
-        }
-        x.setBid128(bidHi, bidLo)
-        return true
-    }
-
     fun isValidDpdHexText(x: Decimal, src: Latin1Iterator): Boolean {
         src.reset()
         if (src.nextChar() != '#')
@@ -527,32 +369,6 @@ object DecimalParsePrint {
         if (! parseHexDword(src, x))
             return false
         val dpdLo = x.dw0
-        x.setDpd128(dpdHi, dpdLo)
-        return true
-    }
-
-    fun isValidDpdHexDecimal(lcStr: String, x: Decimal): Boolean {
-        if (lcStr.length != 33 || lcStr[0] != '#')
-            return false
-        var dpdHi = 0L
-        var dpdLo = 0L
-        for (i in 0..15) {
-            val leftShift = 60 - (i shl 2)
-            val chHi = lcStr[i + 1]
-            val hiNybble = when (chHi) {
-                in '0'..'9' -> chHi - '0'
-                in 'a'..'f' -> chHi - 'a' + 10
-                else -> return false
-            }
-            dpdHi = dpdHi or (hiNybble.toLong() shl leftShift)
-            val chLo = lcStr[i + 17]
-            val loNybble = when (chLo) {
-                in '0'..'9' -> chLo - '0'
-                in 'a'..'f' -> chLo - 'a' + 10
-                else -> return false
-            }
-            dpdLo = dpdLo or (loNybble.toLong() shl leftShift)
-        }
         x.setDpd128(dpdHi, dpdLo)
         return true
     }
