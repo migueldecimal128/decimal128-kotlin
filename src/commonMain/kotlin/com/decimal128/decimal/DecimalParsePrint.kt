@@ -148,11 +148,11 @@ object DecimalParsePrint {
 
     fun decToString(x: Decimal) : String {
         val bytes = ByteArray(MAX_DEC34_CHAR_LEN)
-        val cb = decToChars(x, bytes, 0, MAX_DEC34_CHAR_LEN)
+        val cb = decToUtf8(x, bytes, 0, MAX_DEC34_CHAR_LEN)
         return String(bytes, 0, cb)
     }
 
-    fun decToChars(x: Decimal, bytes: ByteArray, off: Int, len: Int) : Int {
+    fun decToUtf8(x: Decimal, bytes: ByteArray, off: Int, len: Int) : Int {
         if (off < 0 || len < 0)
             throw IllegalArgumentException()
         val q = x.qExp
@@ -234,145 +234,8 @@ object DecimalParsePrint {
 
     fun decFromString(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) =
         decFromText(x, StringLatin1Iterator(str), zeroNanPayload, ctx)
-    fun decFromString_old(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) {
-        var ichFirstSignificantDigit = -1 // strips leading zeros, but not the last one
-        var significantDigitCount = 0 // does not count leading zeros
-        var ichDot = -1
-        var ichExp = -1
-        var ichExpFirstSignificantDigit = -1 // strips leading zeros, but not the last one
-        var expSignificantDigitCount = 0
 
-        val strLen = str.length
-        var ich = 0
-        var ch = '0'
-
-        var sign = false
-        var hasSignChar = false
-        var fractionalDigitCount = 0
-        var coeff19 = 0L
-        var coeff34 = 0L
-        var guardDigit = 0
-        var stickyBits = 0
-        var expSign = 0
-        var exp = 0
-
-        invalid_syntax@
-        do {
-            no_more_chars@
-            do {
-                if (ich == strLen)
-                    break@no_more_chars
-                ch = str[ich++]
-                hasSignChar = ch == '+' || ch == '-'
-                if (hasSignChar) {
-                    sign = (ch == '-')
-                    if (ich == strLen)
-                        break@no_more_chars
-                    ch = str[ich++]
-                }
-                while (ch in '0'..'9' || ch == '.' || ch == '_') {
-                    when {
-                        ch in '0'..'9' -> {
-                            val n = ch - '0'
-                            significantDigitCount +=
-                                (-(n or significantDigitCount)) ushr 31
-                            ichFirstSignificantDigit = (
-                                    if ((ichFirstSignificantDigit or -significantDigitCount) < 0)
-                                        ich
-                                    else
-                                        ichFirstSignificantDigit
-                                    )
-                            if (significantDigitCount <= 19) {
-                                coeff19 = coeff19 * 10L + n
-                            } else if (significantDigitCount <= 34) {
-                                coeff34 = coeff34 * 10 + n
-                            } else if (significantDigitCount == 35) {
-                                guardDigit = n
-                            } else {
-                                stickyBits = stickyBits or n
-                            }
-                            if (ichDot >= 0)
-                                ++fractionalDigitCount
-                        }
-                        ch == '.' -> {
-                            if (ichDot >= 0)
-                                break@invalid_syntax
-                            ichDot = ich
-                        }
-                    }
-                    if (ich == strLen)
-                        break@no_more_chars
-                    ch = str[ich++]
-                }
-                if (ch == 'E' || ch == 'e') {
-                    ichExp = ich
-                    if (ich == strLen)
-                        break@no_more_chars
-                    ch = str[ich++]
-                    if (ch == '+' || ch == '-') {
-                        expSign = if (ch == '-') 1 else 0
-                        if (ich == strLen)
-                            break@no_more_chars
-                        ch = str[ich++]
-                    }
-                    while (ch in '0'..'9' || ch == '_') {
-                        if (ch in '0'..'9') {
-                            expSignificantDigitCount +=
-                                (('0' - ch) or -expSignificantDigitCount) ushr 31
-                            ichExpFirstSignificantDigit = (
-                                    if ((ichExpFirstSignificantDigit or -expSignificantDigitCount) < 0)
-                                        ich
-                                    else
-                                        ichExpFirstSignificantDigit
-                                    )
-                            exp = exp * 10 + (ch - '0')
-                        }
-                        if (ich == strLen)
-                            break@no_more_chars
-                        ch = str[ich++]
-                    }
-                }
-                // extraneous chars ... invalid syntax
-                break@invalid_syntax
-            } while (false)
-            // no more chars
-            if ((ichFirstSignificantDigit < 0) ||
-                (ichExp > 0 && ichExpFirstSignificantDigit < 0) ||
-                (expSignificantDigitCount > 9)
-                )
-                break@invalid_syntax
-            // we have at least one digit
-            val coeffDigitCount = min(34, significantDigitCount)
-            x.u256Set64(coeff19)
-            if (coeffDigitCount > 19) {
-                val pow10 = coeffDigitCount - 19
-                x.u256MutateFmaPow10(pow10, coeff34)
-                }
-            x.sign = sign
-            val signedExp = (exp xor -expSign) + expSign
-            val integerDigitCount = significantDigitCount - fractionalDigitCount
-            val discardedIntegerDigitCount = max(0, integerDigitCount - 34)
-            val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
-            x.qExp = qExp
-            if (((guardDigit or stickyBits) == 0) && (qExp >= ctx.qTiny) && (qExp <= ctx.qMax))
-                return
-            val roundBit = if (guardDigit < 5) 0 else 1
-            val stickyBit = (-stickyBits) ushr 31
-            val residue = Residue.residueFrom(roundBit, stickyBit)
-            x.roundAndFinalize(residue, ctx)
-            return
-        } while (false)
-        val lc = str.substring(if (hasSignChar) 1 else 0).lowercase()
-        when {
-            lc == "inf" || lc == "infinity" -> x.setInfinite(sign)
-            isNaNString(lc, 33, sign, zeroNanPayload, x) -> {}
-            ich == 1 && ch == '[' && isValidBidHexText(lc, x) -> {}
-            ich == 1 && ch == '#' && isValidDpdHexDecimal(lc, x) -> {}
-            else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
-        }
-    }
-
-    fun decFromText(x: Decimal, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
+    private fun decFromText(x: Decimal, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
         // FIXME -- maxPayloadDigitLen belongs as part of DecimalContext
         val maxPayloadDigitLen = 33
         when {
