@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 object SerDeBid128 {
 
-    fun encodeLittleEndianBid128(d: Decimal, littleEndianLongs: LongArray): LongArray {
+    fun encodeLittleEndianBid128(d: MutDec, littleEndianLongs: LongArray): LongArray {
         require(littleEndianLongs.size == 2)
         val bidDecimal128Hi = encodeBid128Hi(d)
         val bidDecimal128Lo = d.dw0
@@ -11,7 +11,7 @@ object SerDeBid128 {
         return littleEndianLongs
     }
 
-    fun encodeLittleEndianBid128(d: Decimal, littleEndianBytes: ByteArray): ByteArray {
+    fun encodeLittleEndianBid128(d: MutDec, littleEndianBytes: ByteArray): ByteArray {
         require(littleEndianBytes.size == 16)
         val bidDecimal128Hi = encodeBid128Hi(d)
         val bidDecimal128Lo = d.dw0
@@ -22,7 +22,7 @@ object SerDeBid128 {
         return littleEndianBytes
     }
 
-    fun encodeBigEndianBid128(d: Decimal, bigEndianLongs: LongArray): LongArray {
+    fun encodeBigEndianBid128(d: MutDec, bigEndianLongs: LongArray): LongArray {
         require(bigEndianLongs.size == 2)
         val bidDecimal128Hi = encodeBid128Hi(d)
         val bidDecimal128Lo = d.dw0
@@ -31,7 +31,7 @@ object SerDeBid128 {
         return bigEndianLongs
     }
 
-    fun encodeBigEndianBid128(d: Decimal, bigEndianBytes: ByteArray): ByteArray {
+    fun encodeBigEndianBid128(d: MutDec, bigEndianBytes: ByteArray): ByteArray {
         require(bigEndianBytes.size == 16)
         val bidDecimal128Hi = encodeBid128Hi(d)
         val bidDecimal128Lo = d.dw0
@@ -68,7 +68,7 @@ object SerDeBid128 {
         return signCombo
     }
 
-    fun encodeBid128Hi(d: Decimal): Long {
+    fun encodeBid128Hi(d: MutDec): Long {
         val mostSignificant3 = (d.dw1 ushr (110 - 64)).toInt() and 0x07
         val signCombo = encodeSignAndGCombinationFieldBid128(d.sign, d.qExp, mostSignificant3)
         val significand110Hi = d.dw1 and ((1L shl (110 - 64)) - 1L)
@@ -76,12 +76,12 @@ object SerDeBid128 {
         return bidDecimal128Hi
     }
 
-    fun decodeLittleEndianBid128(d: Decimal, littleEndianLongs: LongArray): Decimal {
+    fun decodeLittleEndianBid128(d: MutDec, littleEndianLongs: LongArray): MutDec {
         require(littleEndianLongs.size == 2)
         return decodeBid128Longs(d, littleEndianLongs[1], littleEndianLongs[0])
     }
 
-    fun decodeLittleEndianBid128(d: Decimal, littleEndianBytes: ByteArray): Decimal {
+    fun decodeLittleEndianBid128(d: MutDec, littleEndianBytes: ByteArray): MutDec {
         require(littleEndianBytes.size == 16)
         var bid128Hi = 0L
         var bid128Lo = 0L
@@ -92,12 +92,12 @@ object SerDeBid128 {
         return decodeBid128Longs(d, bid128Hi, bid128Lo)
     }
 
-    fun decodeBigEndianBid128(d: Decimal, bigEndianLongs: LongArray): Decimal {
+    fun decodeBigEndianBid128(d: MutDec, bigEndianLongs: LongArray): MutDec {
         require(bigEndianLongs.size == 2)
         return decodeBid128Longs(d, bigEndianLongs[0], bigEndianLongs[1])
     }
 
-    fun decodeBigEndianBid128(d: Decimal, bigEndianBytes: ByteArray): Decimal {
+    fun decodeBigEndianBid128(d: MutDec, bigEndianBytes: ByteArray): MutDec {
         require(bigEndianBytes.size == 16)
         var bidHi = 0L
         var bidLo = 0L
@@ -110,7 +110,7 @@ object SerDeBid128 {
         return decodeBid128Longs(d, bidHi, bidLo)
     }
 
-    fun decodeBid128Longs(d: Decimal, bid128Hi: Long, bid128Lo: Long): Decimal {
+    fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDec {
         val decimal128 = DecimalFormat.DECIMAL_128
         val sign = bid128Hi < 0
         val combination = (bid128Hi ushr 46).toInt() and 0x1FFFF

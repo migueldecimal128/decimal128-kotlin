@@ -84,8 +84,8 @@ class TestInvDoubleDouble{
     fun test1(tc: TC) {
         if (verbose)
             println("tc.bd:${tc.bd} tc.inv:${tc.inv}")
-        val dec = Decimal()
-        val decInv = Decimal()
+        val dec = MutDec()
+        val decInv = MutDec()
         dec.set(tc.bd)
         val ctx = DecimalContext.newDecimal128Context()
         setInv(decInv, dec, ctx)
@@ -96,7 +96,7 @@ class TestInvDoubleDouble{
         //TODO get setInv() to work using Newton-Raphson
     }
 
-    fun setInv(inv: Decimal, divisor: Decimal, ctx: DecimalContext) {
+    fun setInv(inv: MutDec, divisor: MutDec, ctx: DecimalContext) {
         if (divisor.bitLen <= 1) {
             if (divisor.bitLen == 0) {
                 inv.setInfinite(divisor.sign)

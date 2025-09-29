@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.util.*
 
-class TestDecimalMagnitudeDiv {
+class TestMutDecMagnitudeDiv {
 
     val verbose = false
 
@@ -100,7 +100,7 @@ class TestDecimalMagnitudeDiv {
 
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
-        val decQ = Decimal()
+        val decQ = MutDec()
         decQ.setDiv(decA, decB, ctx)
         if (verbose)
             println("magQ:$decQ")

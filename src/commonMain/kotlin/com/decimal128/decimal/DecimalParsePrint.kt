@@ -48,13 +48,13 @@ private const val BYTE_MINUS = '-'.code.toByte()
 
 object DecimalParsePrint {
 
-    fun decToString(x: Decimal) : String {
+    fun decToString(x: MutDec) : String {
         val bytes = ByteArray(MAX_DEC34_CHAR_LEN)
         val cb = decToUtf8(x, bytes, 0, MAX_DEC34_CHAR_LEN)
         return String(bytes, 0, cb)
     }
 
-    fun decToUtf8(x: Decimal, bytes: ByteArray, off: Int, len: Int) : Int {
+    fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int) : Int {
         if (off < 0 || len < 0)
             throw IllegalArgumentException()
         val q = x.qExp
@@ -134,10 +134,10 @@ object DecimalParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
-    fun decFromString(x: Decimal, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) =
+    fun decFromString(x: MutDec, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) =
         decFromText(x, StringLatin1Iterator(str), zeroNanPayload, ctx)
 
-    private fun decFromText(x: Decimal, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
+    private fun decFromText(x: MutDec, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
         // FIXME -- maxPayloadDigitLen belongs as part of DecimalContext
         val maxPayloadDigitLen = 33
         when {
@@ -150,7 +150,7 @@ object DecimalParsePrint {
         }
     }
 
-    fun isFiniteValueText(x: Decimal, src: Latin1Iterator, ctx: DecimalContext): Boolean {
+    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, ctx: DecimalContext): Boolean {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
@@ -261,7 +261,7 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isNanText(x: Decimal, src: Latin1Iterator, maxPayloadDigits: Int, zeroNanPayload: Boolean): Boolean {
+    fun isNanText(x: MutDec, src: Latin1Iterator, maxPayloadDigits: Int, zeroNanPayload: Boolean): Boolean {
         src.reset()
         x.setZero()
         var ch = src.nextChar()
@@ -303,7 +303,7 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isInfinityText(x: Decimal, src: Latin1Iterator): Boolean {
+    fun isInfinityText(x: MutDec, src: Latin1Iterator): Boolean {
         src.reset()
         var ch = src.nextChar()
         val sign = ch == '-'
@@ -324,7 +324,7 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isValidBidHexText(x: Decimal, src: Latin1Iterator): Boolean {
+    fun isValidBidHexText(x: MutDec, src: Latin1Iterator): Boolean {
         src.reset()
         var ch = src.nextChar()
         if (ch != '[')
@@ -344,7 +344,7 @@ object DecimalParsePrint {
         return true
     }
 
-    private fun parseHexDword(src: Latin1Iterator, x: Decimal): Boolean {
+    private fun parseHexDword(src: Latin1Iterator, x: MutDec): Boolean {
         var dw = 0L
         for (i in 0..15) {
             val ch = src.nextChar()
@@ -359,7 +359,7 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isValidDpdHexText(x: Decimal, src: Latin1Iterator): Boolean {
+    fun isValidDpdHexText(x: MutDec, src: Latin1Iterator): Boolean {
         src.reset()
         if (src.nextChar() != '#')
             return false

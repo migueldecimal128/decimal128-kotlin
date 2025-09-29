@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestDecimalMagSub {
+class TestMutDecMagSub {
 
     val verbose = false
 
@@ -169,7 +169,7 @@ class TestDecimalMagSub {
 
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
-        val decD = Decimal()
+        val decD = MutDec()
         decD.setSub(decA, decB, ctx)
         val expectedCoeff = expected.unscaledValue()
         val expectedQExp = -expected.scale()

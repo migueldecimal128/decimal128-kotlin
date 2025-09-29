@@ -2,10 +2,10 @@ package com.decimal128.decimal
 
 fun interface DecimalTrapHandler {
     companion object{
-        fun defaultUnderflowHandler(trapContext: DecimalTrapContext): Decimal {
+        fun defaultUnderflowHandler(trapContext: DecimalTrapContext): MutDec {
             // FIXME
-            return Decimal()
+            return MutDec()
         }
     }
-    fun execute(trapContext: DecimalTrapContext) : Decimal
+    fun execute(trapContext: DecimalTrapContext) : MutDec
 }

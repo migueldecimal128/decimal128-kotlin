@@ -11,7 +11,6 @@ import java.math.RoundingMode
 import java.util.*
 import java.lang.Math.max
 import java.lang.Math.min
-import java.lang.Math.nextDown
 
 class TestSqrt{
 
@@ -90,8 +89,8 @@ class TestSqrt{
     }
 
     fun test1(tc: TC) {
-        val dec = Decimal()
-        val decSqrt = Decimal()
+        val dec = MutDec()
+        val decSqrt = MutDec()
         dec.set(tc.bd)
         setSqrt(decSqrt, dec)
         val expected = tc.sqrt
@@ -99,7 +98,7 @@ class TestSqrt{
         assertEquals(-expected.scale(), decSqrt.qExp)
     }
 
-    fun setSqrt(sqrt: Decimal, radicand: Decimal) {
+    fun setSqrt(sqrt: MutDec, radicand: MutDec) {
         val qPreferred = radicand.qExp shr 1
         if (radicand.u256IsZero()) {
             val sciExp = radicand.sciExp()

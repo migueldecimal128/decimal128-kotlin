@@ -70,13 +70,13 @@ class TestEncodeDecodeDpd128 {
         val dpd128LE = ByteArray(16)
         require (jnaBidDpdShim.d128_dpd_le_from_string(str, dpd128LE) == 0)
 
-        val d = Decimal(str, zeroNanPayload = false)
+        val d = MutDec(str, zeroNanPayload = false)
         val dpdLeBytes = d.encodeLittleEndianBytesDpd128()
         if (verbose) {
             println(" dpd128LE:${dpd128LE.spacedHex()}")
             println(" dpdLeBytes:${dpdLeBytes.spacedHex()}")
         }
-        val d2 = Decimal.decodeLittleEndianDpd128(dpdLeBytes)
+        val d2 = MutDec.decodeLittleEndianDpd128(dpdLeBytes)
         if (verbose) {
             println("d:$d d2:$d2")
         }
@@ -94,10 +94,10 @@ class TestEncodeDecodeDpd128 {
         }
         assertArrayEquals(dpd128LE, dpdLeBytes)
 
-        val dBeBytes = Decimal.decodeBigEndianDpd128(dpdBeBytes)
-        val dBeLongs = Decimal.decodeBigEndianDpd128(dpdBeLongs)
-        val dLeBytes = Decimal.decodeLittleEndianDpd128(dpdLeBytes)
-        val dLeLongs = Decimal.decodeLittleEndianDpd128(dpdLeLongs)
+        val dBeBytes = MutDec.decodeBigEndianDpd128(dpdBeBytes)
+        val dBeLongs = MutDec.decodeBigEndianDpd128(dpdBeLongs)
+        val dLeBytes = MutDec.decodeLittleEndianDpd128(dpdLeBytes)
+        val dLeLongs = MutDec.decodeLittleEndianDpd128(dpdLeLongs)
 
         assert(d.isNaN() && dBeBytes.isNaN() || d == dBeBytes)
         assert(d.isNaN() && dBeLongs.isNaN() || d == dBeLongs)

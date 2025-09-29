@@ -6,7 +6,7 @@ import kotlin.math.min
 object MagnitudeSqrt {
     val verbose = false
 
-    fun magSqrt(sqrt: Decimal, radicand: Decimal): Residue {
+    fun magSqrt(sqrt: MutDec, radicand: MutDec): Residue {
         val qPreferred = radicand.qExp shr 1
         if (radicand.u256IsZero()) {
             sqrt.u256SetZero()

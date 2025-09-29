@@ -249,10 +249,10 @@ class TestFptestRead {
             }
         }
 
-        fun result(): Decimal? {
+        fun result(): MutDec? {
             if (result == "#")
                 return null
-            val dec = Decimal()
+            val dec = MutDec()
             val ctx = DecimalContext()
             when (result) {
                 "Q" -> dec.setNaN(ctx)
@@ -262,11 +262,11 @@ class TestFptestRead {
             return dec
         }
 
-        fun decOperands(): ArrayList<Decimal> {
-            val ret = ArrayList<Decimal>(operands.size)
+        fun decOperands(): ArrayList<MutDec> {
+            val ret = ArrayList<MutDec>(operands.size)
             val ctx = DecimalContext()
             for (t in operands) {
-                val d = Decimal()
+                val d = MutDec()
                 when (t) {
                     "Q" -> d.setNaN(ctx)
                     "S" -> d.setSNaN(ctx)
@@ -310,7 +310,7 @@ class TestFptestRead {
             format == "d64" -> DecimalContext(DecimalFormat.DECIMAL_64.withRoundingDirection(fptest.roundingDirection()))
             else -> throw IllegalStateException()
         }
-        val observed = Decimal()
+        val observed = MutDec()
         if (verbose)
             println(fptest.fptestStr)
         when (fptest.op) {

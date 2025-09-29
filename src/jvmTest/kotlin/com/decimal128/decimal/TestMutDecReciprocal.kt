@@ -6,7 +6,7 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.util.*
 
-class TestDecimalReciprocal{
+class TestMutDecReciprocal{
 
     val verbose = false
 
@@ -82,8 +82,8 @@ class TestDecimalReciprocal{
     fun test1(tc: TC) {
         if (verbose)
             println("tc.bd:${tc.bd} tc.inv:${tc.inv}")
-        val dec = Decimal()
-        val decInv = Decimal()
+        val dec = MutDec()
+        val decInv = MutDec()
         dec.set(tc.bd)
         val ctx = DecimalContext.newDecimal128Context()
         setInv(decInv, dec, ctx)
@@ -94,7 +94,7 @@ class TestDecimalReciprocal{
         //TODO get setInv() to work using Newton-Raphson
     }
 
-    fun setInv(inv: Decimal, divisor: Decimal, ctx: DecimalContext) {
+    fun setInv(inv: MutDec, divisor: MutDec, ctx: DecimalContext) {
         val scalePow10 = 36
         val scaleDouble = 1e36
 

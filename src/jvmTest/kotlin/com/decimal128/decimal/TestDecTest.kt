@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -39,7 +38,8 @@ class TestDecTest {
     )
 
     private val dectestFiles = arrayOf(
-        //"add.decTest",
+        "dqAbs.decTest",
+        "dqMinus.decTest",
         "dqMultiply.decTest",
         "dqAdd.decTest",
         "dqSubtract.decTest",
@@ -48,6 +48,8 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
+        "dqabs526 abs  -NaN22  -> -NaN22",
+        "dqabs523 abs  sNaN    ->  NaN   Invalid_operation",
         "dqmul699 multiply -NaN    -sNaN89 -> -NaN89 Invalid_operation",
         "rounding:    floor",
         "dqadd71720 add  0        0E-19  ->  0E-19",
@@ -78,7 +80,7 @@ class TestDecTest {
     }
 
     fun read1(dectestFileName: String) {
-        //if (verbose)
+        if (verbose)
             println("dectestFileName: $dectestFileName")
         val file = File(dectestFileName).bufferedReader()
         for (line in file.readLines())
@@ -182,7 +184,7 @@ class TestDecTest {
         return true
     }
 
-    private val MY_NAN = Decimal("sNaN")
+    private val MY_NAN = MutDec("sNaN")
 
     inner class DecTest(val id: String, val op: String, val operand1: String, val operand2: String, val operand3: String,
                   val result: String, val conditions: Array<String>) {
@@ -211,10 +213,13 @@ class TestDecTest {
             if (verbose)
                 println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
-                "add" -> Decimal.newAdd(op1, op2, ctx)
-                "subtract" -> Decimal.newSub(op1, op2, ctx)
-                "multiply" -> Decimal.newMul(op1, op2, ctx)
-                "divide" -> Decimal.newDiv(op1, op2, ctx)
+                "abs" -> MutDec.newAbs(op1, ctx)
+                "add" -> MutDec.newAdd(op1, op2, ctx)
+                "fma" -> MutDec.newFma(op1, op2, op3, ctx)
+                "subtract" -> MutDec.newSub(op1, op2, ctx)
+                "minus" -> MutDec.newNegate(op1, ctx)
+                "multiply" -> MutDec.newMul(op1, op2, ctx)
+                "divide" -> MutDec.newDiv(op1, op2, ctx)
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 else -> return
             }
@@ -224,7 +229,7 @@ class TestDecTest {
         }
     }
 
-    fun parseOperand(str: String): Decimal {
+    fun parseOperand(str: String): MutDec {
         if (str.length == 0)
             return MY_NAN
         var t = str
@@ -236,7 +241,7 @@ class TestDecTest {
             println("octothorpe not fully implemented")
             return MY_NAN
         }
-        val d = Decimal(t)
+        val d = MutDec(t)
         return d
     }
 

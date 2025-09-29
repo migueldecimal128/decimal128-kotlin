@@ -40,14 +40,14 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
     }
 
     //
-    fun signalInexact(z: Decimal): Decimal { inexact = true; return z }
-    fun signalUnderflow(z: Decimal): Decimal { underflow = true; return z }
-    fun signalInexactUnderflow(z: Decimal): Decimal { inexact = true; underflow = true; return z }
-    fun signalInexactOverflow(z: Decimal): Decimal { inexact = true; overflow = true; return z}
-    fun signalDivByZero(z: Decimal): Decimal { divByZero = true; return z }
-    fun signalInvalid(z: Decimal): Decimal { invalid = true; return z }
+    fun signalInexact(z: MutDec): MutDec { inexact = true; return z }
+    fun signalUnderflow(z: MutDec): MutDec { underflow = true; return z }
+    fun signalInexactUnderflow(z: MutDec): MutDec { inexact = true; underflow = true; return z }
+    fun signalInexactOverflow(z: MutDec): MutDec { inexact = true; overflow = true; return z}
+    fun signalDivByZero(z: MutDec): MutDec { divByZero = true; return z }
+    fun signalInvalid(z: MutDec): MutDec { invalid = true; return z }
 
-    fun operandIsSignalingNaN(decimal: Decimal) {
+    fun operandIsSignalingNaN(mutDec: MutDec) {
         if (trapInvalid)
             throw RuntimeException("invalid sNaN seen")
     }
@@ -73,27 +73,27 @@ class DecimalContext(val decimalFormat: DecimalFormat) {
         return String(bytes, 0, ib)
     }
 
-    private fun add(x: Decimal, y: Decimal) = Decimal.newAdd(x, y, this)
+    private fun add(x: MutDec, y: MutDec) = MutDec.newAdd(x, y, this)
 
-    private fun subtract(x: Decimal, y: Decimal) = Decimal.newSub(x, y, this)
+    private fun subtract(x: MutDec, y: MutDec) = MutDec.newSub(x, y, this)
 
-    private fun multiply(x: Decimal, y: Decimal) = Decimal.newMul(x, y, this)
+    private fun multiply(x: MutDec, y: MutDec) = MutDec.newMul(x, y, this)
 
-    private fun divide(x: Decimal, y: Decimal) = Decimal.newDiv(x, y, this)
+    private fun divide(x: MutDec, y: MutDec) = MutDec.newDiv(x, y, this)
 
-    operator fun Decimal.plus(other: Decimal): Decimal = this@DecimalContext.add(this, other)
-    operator fun Decimal.minus(other: Decimal): Decimal = this@DecimalContext.subtract(this, other)
-    operator fun Decimal.times(other: Decimal): Decimal = this@DecimalContext.multiply(this, other)
-    operator fun Decimal.div(other: Decimal): Decimal = this@DecimalContext.divide(this, other)
+    operator fun MutDec.plus(other: MutDec): MutDec = this@DecimalContext.add(this, other)
+    operator fun MutDec.minus(other: MutDec): MutDec = this@DecimalContext.subtract(this, other)
+    operator fun MutDec.times(other: MutDec): MutDec = this@DecimalContext.multiply(this, other)
+    operator fun MutDec.div(other: MutDec): MutDec = this@DecimalContext.divide(this, other)
 
-    private fun mutateAdd(x: Decimal, y: Decimal) = x.mutateAdd(y, this)
-    private fun mutateSub(x: Decimal, y: Decimal) = x.mutateSub(y, this)
-    private fun mutateMul(x: Decimal, y: Decimal) = x.mutateMul(y, this)
-    private fun mutateDiv(x: Decimal, y: Decimal) = x.mutateDiv(y, this)
+    private fun mutateAdd(x: MutDec, y: MutDec) = x.mutateAdd(y, this)
+    private fun mutateSub(x: MutDec, y: MutDec) = x.mutateSub(y, this)
+    private fun mutateMul(x: MutDec, y: MutDec) = x.mutateMul(y, this)
+    private fun mutateDiv(x: MutDec, y: MutDec) = x.mutateDiv(y, this)
 
-    operator fun Decimal.plusAssign(other: Decimal) = this@DecimalContext.mutateAdd(this, other)
-    operator fun Decimal.minusAssign(other: Decimal) = this@DecimalContext.mutateSub(this, other)
-    operator fun Decimal.timesAssign(other: Decimal) = this@DecimalContext.mutateMul(this, other)
-    operator fun Decimal.divAssign(other: Decimal) = this@DecimalContext.mutateDiv(this, other)
+    operator fun MutDec.plusAssign(other: MutDec) = this@DecimalContext.mutateAdd(this, other)
+    operator fun MutDec.minusAssign(other: MutDec) = this@DecimalContext.mutateSub(this, other)
+    operator fun MutDec.timesAssign(other: MutDec) = this@DecimalContext.mutateMul(this, other)
+    operator fun MutDec.divAssign(other: MutDec) = this@DecimalContext.mutateDiv(this, other)
 
 }

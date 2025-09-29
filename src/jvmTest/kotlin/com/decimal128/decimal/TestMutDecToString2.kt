@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 
 
-class TestDecimalToString2 {
+class TestMutDecToString2 {
 
     val verbose = true
 
@@ -35,7 +35,7 @@ class TestDecimalToString2 {
     fun test1(tc: String) {
         if (verbose)
             println("tc:$tc")
-        val dec = Decimal(tc)
+        val dec = MutDec(tc)
         val str = dec.toString()
         if (verbose)
             println(" -> dec:$str")

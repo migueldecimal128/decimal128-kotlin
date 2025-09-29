@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigDecimal.ONE
 
-class TestDecimalScaleB {
+class TestMutDecScaleB {
 
     class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecimalContext) {
         constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecimalContext())
@@ -38,9 +38,9 @@ class TestDecimalScaleB {
         val expected = tc.expected
         println("$bd pow10:$pow10 => $expected")
 
-        val d = Decimal()
+        val d = MutDec()
         d.set(bd)
-        val s = Decimal()
+        val s = MutDec()
         s.scaleB(d, pow10, tc.ctx)
         val observed = (
                 if (s.isFinite())

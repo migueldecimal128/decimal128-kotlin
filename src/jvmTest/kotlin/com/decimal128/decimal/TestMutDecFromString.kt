@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.*
 
-class TestDecimalFromString {
+class TestMutDecFromString {
     val verbose = false
 
     class TC(val strVal: String) {
@@ -77,7 +77,7 @@ class TestDecimalFromString {
         if (verbose)
             println("$strVal bd:$bd => expected:$expected")
 
-        val d = Decimal()
+        val d = MutDec()
         DecimalParsePrint.decFromString(d, strVal, false, DecimalContext())
         val observed = d
 

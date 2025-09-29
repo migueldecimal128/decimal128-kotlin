@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestDecimalMagFinalize {
+class TestMutDecMagFinalize {
 
     val verbose = false
 
@@ -60,7 +60,7 @@ class TestDecimalMagFinalize {
 
     fun test1(case: TC) {
         val bdA = case.bdA
-        val dec = Decimal()
+        val dec = MutDec()
         dec.set(bdA)
         println("bdA:$bdA => dec:$dec")
     }

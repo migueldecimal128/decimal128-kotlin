@@ -10,7 +10,7 @@ import kotlin.math.min
 
 object MagnitudeAddSub {
 
-    fun magScaledAdd(z: Decimal, x: Decimal, y: Decimal): Residue {
+    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec): Residue {
         check(x.qExp != y.qExp) // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
@@ -78,7 +78,7 @@ object MagnitudeAddSub {
 
     // uses Guard and Round digits
     // decrements when non-exact so that standard round and finalize routine can be called
-    fun magSub(z: Decimal, x: Decimal, y: Decimal): Residue {
+    fun magSub(z: MutDec, x: MutDec, y: MutDec): Residue {
         check(x.magnitudeCompareTo(y) >= 0)
         check(x.qExp != y.qExp) // should be caught earlier
         //if (x.qExp == y.qExp) {

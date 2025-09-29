@@ -8,7 +8,7 @@ data class DecimalTraps(
     val inexactHandler: DecimalTrapHandler?
     ) {
 
-    fun signalInvalid(trapContext: DecimalTrapContext): Decimal {
+    fun signalInvalid(trapContext: DecimalTrapContext): MutDec {
         if (invalidHandler != null)
             return invalidHandler.execute(trapContext)
         return trapContext.decValue

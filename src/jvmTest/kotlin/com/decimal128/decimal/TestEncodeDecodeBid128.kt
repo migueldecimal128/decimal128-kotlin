@@ -59,7 +59,7 @@ class TestEncodeDecodeBid128 {
     fun test1(str: String) {
         if (verbose)
             println(str)
-        val d = Decimal(str, zeroNanPayload = true)
+        val d = MutDec(str, zeroNanPayload = true)
         val bidLeBytes = d.encodeLittleEndianBytesBid128()
         val bidLeLongs = d.encodeLittleEndianLongsBid128()
         val bidBeBytes = d.encodeBigEndianBytesBid128()
@@ -78,10 +78,10 @@ class TestEncodeDecodeBid128 {
         }
         assertArrayEquals(bid128LE, bidLeBytes)
 
-        val dBeBytes = Decimal.decodeBigEndianBid128(bidBeBytes)
-        val dBeLongs = Decimal.decodeBigEndianBid128(bidBeLongs)
-        val dLeBytes = Decimal.decodeLittleEndianBid128(bidLeBytes)
-        val dLeLongs = Decimal.decodeLittleEndianBid128(bidLeLongs)
+        val dBeBytes = MutDec.decodeBigEndianBid128(bidBeBytes)
+        val dBeLongs = MutDec.decodeBigEndianBid128(bidBeLongs)
+        val dLeBytes = MutDec.decodeLittleEndianBid128(bidLeBytes)
+        val dLeLongs = MutDec.decodeLittleEndianBid128(bidLeLongs)
 
         if (verbose) {
             println("dBeBytes:$dBeBytes")

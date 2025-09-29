@@ -21,7 +21,7 @@ const val CAPPED_EXP_MAX = 2000000000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
-class Decimal() : U256() {
+class MutDec() : U256() {
     var sign = false
     var qExp = 0
 
@@ -39,43 +39,43 @@ class Decimal() : U256() {
         DecimalParsePrint.decFromString(this, str, zeroNanPayload, DEFAULT_128_CONTEXT)
     }
 
-    constructor(other: Decimal) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
+    constructor(other: MutDec) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
 
     companion object {
-        fun newInstance(): Decimal = Decimal()
+        fun newInstance(): MutDec = MutDec()
 
-        fun newInfinity(sign: Boolean = false) = Decimal().setInfinite(sign)
+        fun newInfinity(sign: Boolean = false) = MutDec().setInfinite(sign)
 
-        fun newAbs(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal(x).mutateAbs()
+        fun newAbs(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) = MutDec(x).mutateAbs()
 
-        fun newAdd(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            addImpl(Decimal(), x, y.sign, y, ctx)
+        fun newAdd(x: MutDec, y: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            addImpl(MutDec(), x, y.sign, y, ctx)
 
-        fun newSub(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            addImpl(Decimal(), x, !y.sign, y, ctx)
+        fun newSub(x: MutDec, y: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            addImpl(MutDec(), x, !y.sign, y, ctx)
 
-        fun newMul(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            Decimal().setMul(x, y, ctx)
+        fun newMul(x: MutDec, y: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            MutDec().setMul(x, y, ctx)
 
-        fun newFma(x: Decimal, y: Decimal, z: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            Decimal().setFma(x, y, z, ctx)
+        fun newFma(x: MutDec, y: MutDec, z: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            MutDec().setFma(x, y, z, ctx)
 
-        fun newNegate(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal(x).mutateNegate()
+        fun newNegate(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) = MutDec(x).mutateNegate()
 
-        fun newSquare(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            Decimal().setSquare(x, ctx)
+        fun newSquare(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            MutDec().setSquare(x, ctx)
 
-        fun newDiv(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal().setDiv(x, y, ctx)
+        fun newDiv(x: MutDec, y: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) = MutDec().setDiv(x, y, ctx)
 
-        fun newReciprocal(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            Decimal().setReciprocal(x, ctx)
+        fun newReciprocal(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            MutDec().setReciprocal(x, ctx)
 
-        fun newIntegral(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal(x).mutateToIntegral(ctx)
+        fun newIntegral(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) = MutDec(x).mutateToIntegral(ctx)
 
-        fun newSqrt(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
-            Decimal().setSqrt(x, ctx)
+        fun newSqrt(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            MutDec().setSqrt(x, ctx)
 
-        private fun addImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+        private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecimalContext): MutDec {
             val qMax = max(x.qExp, y.qExp)
             return when {
                 qMax < MIN_SPECIAL_VALUE && x.qExp == y.qExp ->
@@ -91,7 +91,7 @@ class Decimal() : U256() {
             }
         }
 
-        private fun unscaledFiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+        private fun unscaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecimalContext): MutDec {
             val xSign = x.sign
             if (x.bitLen == 0 && y.bitLen == 0 && xSign == ySign) {
                 // IEEE754-2019 6.3 The sign bit
@@ -136,7 +136,7 @@ class Decimal() : U256() {
             return z.roundAndFinalize(EXACT, ctx)
         }
 
-        private fun scaledFiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+        private fun scaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecimalContext): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             val xSign = x.sign
@@ -188,7 +188,7 @@ class Decimal() : U256() {
             return z
         }
 
-        private fun infiniteAddImpl(z: Decimal, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecimalContext): Decimal {
+        private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecimalContext): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             check (qX == NON_FINITE_INF || qY == NON_FINITE_INF)
@@ -202,22 +202,22 @@ class Decimal() : U256() {
         }
 
         fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
-            SerDeBid128.decodeLittleEndianBid128(Decimal(), littleEndianLongs)
+            SerDeBid128.decodeLittleEndianBid128(MutDec(), littleEndianLongs)
         fun decodeLittleEndianBid128(littleEndianBytes: ByteArray) =
-            SerDeBid128.decodeLittleEndianBid128(Decimal(), littleEndianBytes)
+            SerDeBid128.decodeLittleEndianBid128(MutDec(), littleEndianBytes)
         fun decodeBigEndianBid128(bigEndianLongs: LongArray) =
-            SerDeBid128.decodeBigEndianBid128(Decimal(), bigEndianLongs)
+            SerDeBid128.decodeBigEndianBid128(MutDec(), bigEndianLongs)
         fun decodeBigEndianBid128(bigEndianBytes: ByteArray) =
-            SerDeBid128.decodeBigEndianBid128(Decimal(), bigEndianBytes)
+            SerDeBid128.decodeBigEndianBid128(MutDec(), bigEndianBytes)
 
         fun decodeLittleEndianDpd128(littleEndianLongs: LongArray) =
-            SerDeDpd128.decodeLittleEndianDpd128(Decimal(), littleEndianLongs)
+            SerDeDpd128.decodeLittleEndianDpd128(MutDec(), littleEndianLongs)
         fun decodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
-            SerDeDpd128.decodeLittleEndianDpd128(Decimal(), littleEndianBytes)
+            SerDeDpd128.decodeLittleEndianDpd128(MutDec(), littleEndianBytes)
         fun decodeBigEndianDpd128(bigEndianLongs: LongArray) =
-            SerDeDpd128.decodeBigEndianDpd128(Decimal(), bigEndianLongs)
+            SerDeDpd128.decodeBigEndianDpd128(MutDec(), bigEndianLongs)
         fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
-            SerDeDpd128.decodeBigEndianDpd128(Decimal(), bigEndianBytes)
+            SerDeDpd128.decodeBigEndianDpd128(MutDec(), bigEndianBytes)
 
     }
 
@@ -231,7 +231,7 @@ class Decimal() : U256() {
         this.sign = sign
     }
 
-    private fun setNaN(x: Decimal, y: Decimal, ctx: DecimalContext) {
+    private fun setNaN(x: MutDec, y: MutDec, ctx: DecimalContext) {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
@@ -247,7 +247,7 @@ class Decimal() : U256() {
         //FIXME - see IEEE754r 6.2
     }
 
-    private fun setNaN(x: Decimal, y: Decimal, a: Decimal, ctx: DecimalContext) {
+    private fun setNaN(x: MutDec, y: MutDec, a: MutDec, ctx: DecimalContext) {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -262,7 +262,7 @@ class Decimal() : U256() {
         throw RuntimeException("sNaN operand")
     }
 
-    private fun setNaN(x: Decimal, ctx: DecimalContext) {
+    private fun setNaN(x: MutDec, ctx: DecimalContext) {
         val q = x.qExp
         check(q >= NON_FINITE_QNAN)
         setZero()
@@ -311,7 +311,7 @@ class Decimal() : U256() {
         this.sign = sign
     }
 
-    fun set(l: Long): Decimal {
+    fun set(l: Long): MutDec {
         this.qExp = 0
         this.sign = l < 0
         val mask = l shr 63
@@ -320,21 +320,21 @@ class Decimal() : U256() {
         return this
     }
 
-    fun setUnsigned(ul: Long): Decimal {
+    fun setUnsigned(ul: Long): MutDec {
         this.qExp = 0
         this.sign = false
         u256Set64(ul)
         return this
     }
 
-    fun set(x: Decimal): Decimal {
+    fun set(x: MutDec): MutDec {
         u256Set(x)
         this.qExp = x.qExp
         this.sign = x.sign
         return this
     }
 
-    fun set(str: String): Decimal {
+    fun set(str: String): MutDec {
         DecimalParsePrint.decFromString(this, str, false, DEFAULT_128_CONTEXT)
         return this
     }
@@ -343,7 +343,7 @@ class Decimal() : U256() {
 
     fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = SerDeDpd128.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
 
-    fun setMaxFiniteMagnitude(ctx: DecimalContext): Decimal {
+    fun setMaxFiniteMagnitude(ctx: DecimalContext): MutDec {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
@@ -357,19 +357,19 @@ class Decimal() : U256() {
         return this
     }
 
-    fun setMinFiniteMagnitude(ctx: DecimalContext): Decimal {
+    fun setMinFiniteMagnitude(ctx: DecimalContext): MutDec {
         qExp = ctx.qTiny
         super.u256SetOne()
         return this
     }
 
-    fun setNegate(x: Decimal): Decimal {
+    fun setNegate(x: MutDec): MutDec {
         set(x)
         this.sign = !this.sign
         return this
     }
 
-    fun mutateNegate(): Decimal {
+    fun mutateNegate(): MutDec {
         when (this.qExp) {
             NON_FINITE_QNAN -> {}
             NON_FINITE_SNAN -> this.qExp = NON_FINITE_QNAN
@@ -379,7 +379,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun mutateAbs(): Decimal {
+    fun mutateAbs(): MutDec {
         if (this.qExp >= NON_FINITE_QNAN)
             this.qExp = NON_FINITE_QNAN
         else
@@ -387,7 +387,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun mutateToIntegral(ctx: DecimalContext): Decimal {
+    fun mutateToIntegral(ctx: DecimalContext): MutDec {
         // FIXME ... not tested and not correct
         when {
             qExp < MIN_SPECIAL_VALUE -> {
@@ -401,28 +401,28 @@ class Decimal() : U256() {
                     when (ctx.roundingDirection) {
                         ROUND_TIES_TO_EVEN, ROUND_TIES_TO_AWAY -> {
                             if (eExp <= -2) {
-                                return Decimal()
+                                return MutDec()
                             }
-                            val half = Decimal(false, -1, 0L, 0L, 0L, 5L)
+                            val half = MutDec(false, -1, 0L, 0L, 0L, 5L)
                             val cmp = this.compareTo(half, ctx)
                             if (cmp < 0 || cmp == 0 && ctx.roundingDirection == ROUND_TIES_TO_EVEN) {
-                                return Decimal()
+                                return MutDec()
                             } else {
-                                return Decimal(false, 0, 0L, 0L, 0L, 1L)
+                                return MutDec(false, 0, 0L, 0L, 0L, 1L)
                             }
                         }
-                        ROUND_TOWARD_ZERO -> return Decimal()
+                        ROUND_TOWARD_ZERO -> return MutDec()
                         ROUND_TOWARD_NEGATIVE -> {
                             if (sign)
-                                return Decimal(false, 0, 0L, 0L, 0L, 1L)
+                                return MutDec(false, 0, 0L, 0L, 0L, 1L)
                             else
-                                return Decimal()
+                                return MutDec()
                         }
                         ROUND_TOWARD_POSITIVE -> {
                             if (!sign)
-                                return Decimal(false, 0, 0L, 0L, 0L, 1L)
+                                return MutDec(false, 0, 0L, 0L, 0L, 1L)
                             else
-                                return Decimal()
+                                return MutDec()
                         }
                     }
                 }
@@ -432,7 +432,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun mutateCopySign(x: Decimal, y: Decimal): Decimal {
+    fun mutateCopySign(x: MutDec, y: MutDec): MutDec {
         val sign = y.sign
         set(x)
         this.sign = sign
@@ -445,36 +445,36 @@ class Decimal() : U256() {
         return qExp <= NON_FINITE_INF
     }
 
-    fun add(y: Decimal) = newAdd(this, y)
-    fun subtract(y: Decimal) = newSub(this, y)
-    fun multiply(y: Decimal) = newMul(this, y)
-    fun divide(y: Decimal) = newDiv(this, y)
+    fun add(y: MutDec) = newAdd(this, y)
+    fun subtract(y: MutDec) = newSub(this, y)
+    fun multiply(y: MutDec) = newMul(this, y)
+    fun divide(y: MutDec) = newDiv(this, y)
 
-    fun add(y: Decimal, ctx: DecimalContext) = newAdd(this, y, ctx)
-    fun subtract(y: Decimal, ctx: DecimalContext) = newSub(this, y, ctx)
-    fun multiply(y: Decimal, ctx: DecimalContext) = newMul(this, y, ctx)
+    fun add(y: MutDec, ctx: DecimalContext) = newAdd(this, y, ctx)
+    fun subtract(y: MutDec, ctx: DecimalContext) = newSub(this, y, ctx)
+    fun multiply(y: MutDec, ctx: DecimalContext) = newMul(this, y, ctx)
     fun square(ctx: DecimalContext) = newSquare(this, ctx)
-    fun divide(y: Decimal, ctx: DecimalContext) = newDiv(this, y, ctx)
+    fun divide(y: MutDec, ctx: DecimalContext) = newDiv(this, y, ctx)
     fun reciprocal(ctx: DecimalContext) = newReciprocal(this, ctx)
     fun sqrt(ctx: DecimalContext) = newSqrt(this, ctx)
 
-    fun mutateAdd(y: Decimal, ctx: DecimalContext) { setAdd(this, y, ctx) }
-    fun mutateSub(y: Decimal, ctx: DecimalContext) { setSub(this, y, ctx) }
-    fun mutateMul(y: Decimal, ctx: DecimalContext) { setMul(this, y, ctx) }
+    fun mutateAdd(y: MutDec, ctx: DecimalContext) { setAdd(this, y, ctx) }
+    fun mutateSub(y: MutDec, ctx: DecimalContext) { setSub(this, y, ctx) }
+    fun mutateMul(y: MutDec, ctx: DecimalContext) { setMul(this, y, ctx) }
     fun mutateSquare(ctx: DecimalContext) { setSquare(this, ctx) }
-    fun mutateDiv(y: Decimal, ctx: DecimalContext) { setDiv(this, y, ctx) }
+    fun mutateDiv(y: MutDec, ctx: DecimalContext) { setDiv(this, y, ctx) }
     fun mutateReciprocal(ctx: DecimalContext) { setReciprocal(this, ctx) }
     fun mutateSqrt(ctx: DecimalContext) { setSqrt(this, ctx) }
 
 
     // IEEE754-2008 5.4.1
-    fun setAdd(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, y.sign, y, ctx)
+    fun setAdd(x: MutDec, y: MutDec, ctx: DecimalContext) = addImpl(this, x, y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun setSub(x: Decimal, y: Decimal, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
+    fun setSub(x: MutDec, y: MutDec, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun setMul(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+    fun setMul(x: MutDec, y: MutDec, ctx: DecimalContext): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
@@ -499,7 +499,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun setSquare(x: Decimal, ctx: DecimalContext): Decimal {
+    fun setSquare(x: MutDec, ctx: DecimalContext): MutDec {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
@@ -516,7 +516,7 @@ class Decimal() : U256() {
     }
 
     // IEEE754-2008 5.4.1
-    fun setFma(x: Decimal, y: Decimal, a: Decimal, ctx: DecimalContext): Decimal {
+    fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecimalContext): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -525,7 +525,7 @@ class Decimal() : U256() {
         val productSign = x.sign xor y.sign
         when {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
-                val aT = if (this === a) Decimal(a) else a
+                val aT = if (this === a) MutDec(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
@@ -551,7 +551,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun setDiv(x: Decimal, y: Decimal, ctx: DecimalContext): Decimal {
+    fun setDiv(x: MutDec, y: MutDec, ctx: DecimalContext): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign
@@ -598,7 +598,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun setReciprocal(x: Decimal, ctx: DecimalContext): Decimal {
+    fun setReciprocal(x: MutDec, ctx: DecimalContext): MutDec {
         val qX = x.qExp
         val quotientSign = x.sign
         when {
@@ -615,7 +615,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun setSqrt(x: Decimal, ctx: DecimalContext): Decimal {
+    fun setSqrt(x: MutDec, ctx: DecimalContext): MutDec {
         val qX = x.qExp
         when {
             x.sign -> {
@@ -644,7 +644,7 @@ class Decimal() : U256() {
         return this
     }
 
-    fun compareTo(other: Decimal, ctx: DecimalContext) : Int {
+    fun compareTo(other: MutDec, ctx: DecimalContext) : Int {
         val qMax = max(qExp, other.qExp)
         when {
             (qMax < MIN_SPECIAL_VALUE) -> {
@@ -680,7 +680,7 @@ class Decimal() : U256() {
         }
     }
 
-    fun magnitudeCompareTo(other: Decimal) : Int {
+    fun magnitudeCompareTo(other: MutDec) : Int {
         val thisIsZero = u256IsZero()
         val otherIsZero = other.u256IsZero()
         val eitherIsZero = thisIsZero or otherIsZero
@@ -706,7 +706,7 @@ class Decimal() : U256() {
         }
     }
 
-    fun magnitudeEQ(other: Decimal) : Boolean {
+    fun magnitudeEQ(other: MutDec) : Boolean {
         val thisIsZero = this.u256IsZero()
         val otherIsZero = other.u256IsZero()
         val bothAreZero = thisIsZero and otherIsZero
@@ -725,7 +725,7 @@ class Decimal() : U256() {
     }
 
 
-    fun mutateRoundToIntegral(x: Decimal, rd: RoundingDirection, ctx: DecimalContext): Decimal {
+    fun mutateRoundToIntegral(x: MutDec, rd: RoundingDirection, ctx: DecimalContext): MutDec {
         //FIXME - deal with special values
         if (qExp < 0) {
             val residue = this.u256SetScaleDownPow10(x, -qExp)
@@ -737,22 +737,22 @@ class Decimal() : U256() {
         }
     }
 
-    fun setRoundToIntegralTiesToEven(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTiesToEven(x: MutDec, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
 
-    fun setRoundToIntegralTiesToAway(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTiesToAway(x: MutDec, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
 
-    fun setRoundToIntegralTowardZero(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTowardZero(x: MutDec, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
 
-    fun setRoundToIntegralTowardPositive(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTowardPositive(x: MutDec, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
 
-    fun setRoundToIntegralTowardNegative(x: Decimal, ctx: DecimalContext) =
+    fun setRoundToIntegralTowardNegative(x: MutDec, ctx: DecimalContext) =
         mutateRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
 
-    fun setNextUp(x: Decimal, ctx: DecimalContext) {
+    fun setNextUp(x: MutDec, ctx: DecimalContext) {
         set(x)
         when {
             qExp > NON_FINITE_INF -> { return }
@@ -772,7 +772,7 @@ class Decimal() : U256() {
         roundAndFinalize(EXACT, ROUND_TOWARD_POSITIVE, ctx)
     }
 
-    fun setNextDown(x: Decimal, ctx: DecimalContext) {
+    fun setNextDown(x: MutDec, ctx: DecimalContext) {
         set(x)
         when {
             qExp > NON_FINITE_INF -> { return }
@@ -813,10 +813,10 @@ class Decimal() : U256() {
         u256MutateDecrement()
     }
 
-    fun minNum(x: Decimal, y: Decimal, ctx: DecimalContext) = minNum_helper(x, y, 0, ctx)
-    fun maxNum(x: Decimal, y: Decimal, ctx: DecimalContext) = minNum_helper(x, y, -1, ctx)
+    fun minNum(x: MutDec, y: MutDec, ctx: DecimalContext) = minNum_helper(x, y, 0, ctx)
+    fun maxNum(x: MutDec, y: MutDec, ctx: DecimalContext) = minNum_helper(x, y, -1, ctx)
 
-    private fun minNum_helper(x: Decimal, y: Decimal, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
+    private fun minNum_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax <= NON_FINITE_INF -> {
@@ -830,10 +830,10 @@ class Decimal() : U256() {
         }
     }
 
-    fun minNumMag(x: Decimal, y: Decimal, ctx: DecimalContext) = minNumMag_helper(x, y, 0, ctx)
-    fun maxNumMag(x: Decimal, y: Decimal, ctx: DecimalContext) = minNumMag_helper(x, y, -1, ctx)
+    fun minNumMag(x: MutDec, y: MutDec, ctx: DecimalContext) = minNumMag_helper(x, y, 0, ctx)
+    fun maxNumMag(x: MutDec, y: MutDec, ctx: DecimalContext) = minNumMag_helper(x, y, -1, ctx)
 
-    private fun minNumMag_helper(x: Decimal, y: Decimal, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
+    private fun minNumMag_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, ctx: DecimalContext) {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax < NON_FINITE_INF -> {
@@ -849,7 +849,7 @@ class Decimal() : U256() {
         return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
 
-    fun setScale(x: Decimal, pow10: Int, ctx: DecimalContext) {
+    fun setScale(x: MutDec, pow10: Int, ctx: DecimalContext) {
         set(x)
         val p10 = capExponentRange(pow10)
         if (qExp < NON_FINITE_INF) {
@@ -872,13 +872,13 @@ class Decimal() : U256() {
     }
 
     // IEEE754-2008 5.3.2
-    fun quantize(x: Decimal, y: Decimal, ctx: DecimalContext) {
+    fun quantize(x: MutDec, y: MutDec, ctx: DecimalContext) {
         val targetQ = y.qExp
         setScale(x, -targetQ, ctx)
     }
 
     // IEEE754-2008 5.3.3
-    fun scaleB(x: Decimal, pow10: Int, ctx: DecimalContext) {
+    fun scaleB(x: MutDec, pow10: Int, ctx: DecimalContext) {
         set(x)
         when {
             qExp <= NON_FINITE_INF -> {
@@ -897,13 +897,13 @@ class Decimal() : U256() {
         return qExp
     }
 
-    fun compareQuiet754(other: Decimal, ctx: DecimalContext): Compare754Result =
+    fun compareQuiet754(other: MutDec, ctx: DecimalContext): Compare754Result =
         compare754(other, false, ctx)
 
-    fun compareSignaling754(other: Decimal, ctx: DecimalContext): Compare754Result =
+    fun compareSignaling754(other: MutDec, ctx: DecimalContext): Compare754Result =
         compare754(other, true, ctx)
 
-    fun compare754(other: Decimal, isSignaling: Boolean, ctx: DecimalContext): Compare754Result {
+    fun compare754(other: MutDec, isSignaling: Boolean, ctx: DecimalContext): Compare754Result {
         val qMax = max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {
@@ -955,7 +955,7 @@ class Decimal() : U256() {
     }
 
     override fun equals(other: Any?) : Boolean {
-        if (other is Decimal) {
+        if (other is MutDec) {
             val qMax = max(qExp, other.qExp)
             return when {
                 qMax < NON_FINITE_INF -> when {
@@ -975,7 +975,7 @@ class Decimal() : U256() {
         return false
     }
 
-    fun exactlyEQ(other: Decimal): Boolean {
+    fun exactlyEQ(other: MutDec): Boolean {
         return dw0 == other.dw0 && dw1 == other.dw1 &&
                 dw2 == other.dw2 && dw3 == other.dw3 &&
                 qExp == other.qExp && sign == other.sign
@@ -1017,11 +1017,11 @@ class Decimal() : U256() {
     fun isCanonical() = true
     fun radix() = 10
 
-    fun totalOrder(x: Decimal) {
+    fun totalOrder(x: MutDec) {
         throw RuntimeException("not impl")
     }
     // 5.7.3 Decimal operation
-    fun sameQuantum(x: Decimal) = (this.qExp == x.qExp)
+    fun sameQuantum(x: MutDec) = (this.qExp == x.qExp)
 
     // FIXME ... implement this so that there are fewer memory allocations
     override fun toString(): String {
@@ -1153,7 +1153,7 @@ class Decimal() : U256() {
     internal fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
 
-    private fun roundAndFinalize(inboundResidue: Residue, roundingDirection: RoundingDirection, ctx: DecimalContext): Decimal {
+    private fun roundAndFinalize(inboundResidue: Residue, roundingDirection: RoundingDirection, ctx: DecimalContext): MutDec {
         val eMax = ctx.eMax
         val precision = ctx.precision
         if (qExp < MIN_SPECIAL_VALUE) {

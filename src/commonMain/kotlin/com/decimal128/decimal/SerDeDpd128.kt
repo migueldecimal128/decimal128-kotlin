@@ -6,42 +6,42 @@ private const val EIGHTEEN_NINES = TEN_POW_18 - 1L
 
 object SerDeDpd128 {
 
-    fun encodeBigEndianDpd128(bigEndianLongs: LongArray, d: Decimal): LongArray {
+    fun encodeBigEndianDpd128(bigEndianLongs: LongArray, d: MutDec): LongArray {
         require (d.digitLen <= 34)
         require (bigEndianLongs.size == 2)
         encodeDpd128(d, true, bigEndianLongs, null)
         return bigEndianLongs
     }
 
-    fun encodeBigEndianDpd128(bigEndianBytes: ByteArray, d: Decimal): ByteArray {
+    fun encodeBigEndianDpd128(bigEndianBytes: ByteArray, d: MutDec): ByteArray {
         require (d.digitLen <= 34)
         require(bigEndianBytes.size == 16)
         encodeDpd128(d, true, null, bigEndianBytes)
         return bigEndianBytes
     }
 
-    fun encodeLittleEndianDpd128(littleEndianLongs: LongArray, d: Decimal): LongArray {
+    fun encodeLittleEndianDpd128(littleEndianLongs: LongArray, d: MutDec): LongArray {
         require (d.digitLen <= 34)
         require(littleEndianLongs.size == 2)
         encodeDpd128(d, false, littleEndianLongs, null)
         return littleEndianLongs
     }
 
-    fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray, d: Decimal): ByteArray {
+    fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray, d: MutDec): ByteArray {
         require (d.digitLen <= 34)
         require(littleEndianBytes.size == 16)
         encodeDpd128(d, false, null, littleEndianBytes)
         return littleEndianBytes
     }
 
-    fun decodeBigEndianDpd128(d: Decimal, bigEndianLongs: LongArray): Decimal {
+    fun decodeBigEndianDpd128(d: MutDec, bigEndianLongs: LongArray): MutDec {
         require (d.digitLen <= 34)
         require (bigEndianLongs.size == 2)
         decodeDpd128Longs(d, bigEndianLongs[0], bigEndianLongs[1])
         return d
     }
 
-    fun decodeBigEndianDpd128(d: Decimal, bigEndianBytes: ByteArray): Decimal {
+    fun decodeBigEndianDpd128(d: MutDec, bigEndianBytes: ByteArray): MutDec {
         require (d.digitLen <= 34)
         require(bigEndianBytes.size == 16)
         var dpdHi = 0L
@@ -56,14 +56,14 @@ object SerDeDpd128 {
         return d
     }
 
-    fun decodeLittleEndianDpd128(d: Decimal, littleEndianLongs: LongArray): Decimal {
+    fun decodeLittleEndianDpd128(d: MutDec, littleEndianLongs: LongArray): MutDec {
         require (d.digitLen <= 34)
         require(littleEndianLongs.size == 2)
         decodeDpd128Longs(d, littleEndianLongs[1], littleEndianLongs[0])
         return d
     }
 
-    fun decodeLittleEndianDpd128(d: Decimal, littleEndianBytes: ByteArray): Decimal {
+    fun decodeLittleEndianDpd128(d: MutDec, littleEndianBytes: ByteArray): MutDec {
         require (d.digitLen <= 34)
         require(littleEndianBytes.size == 16)
         var dpdHi = 0L
@@ -78,7 +78,7 @@ object SerDeDpd128 {
         return d
     }
 
-    fun decodeDpd128Longs(d: Decimal, dpd128Hi: Long, dpd128Lo: Long): Decimal {
+    fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDec {
         val decimal128 = DecimalFormat.DECIMAL_128
         val sign = dpd128Hi < 0
         val combination = (dpd128Hi ushr 46).toInt() and 0x1FFFF
@@ -142,7 +142,7 @@ object SerDeDpd128 {
         return d
     }
 
-    private fun encodeDpd128(d: Decimal, isBigEndian: Boolean, longs: LongArray?, bytes: ByteArray?) {
+    private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, bytes: ByteArray?) {
         check (d.digitLen <= 34)
         var mostSigBcd4 = 0
         var declets5Hi = 0L

@@ -7,7 +7,7 @@ import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.*
 
-class TestDecimalToString {
+class TestMutDecToString {
 
     val verbose = false
 

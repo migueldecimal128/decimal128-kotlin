@@ -8,7 +8,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestDecimalMagSet {
+class TestMutDecMagSet {
 
     val verbose = false
 
@@ -126,7 +126,7 @@ class TestDecimalMagSet {
         val expRounded = case.expRounded
         val ctx = case.ctx
         val roundingMode = ctx.getMathContext().roundingMode
-        val dec = Decimal()
+        val dec = MutDec()
         if (verbose)
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
         dec.set(bdA, ctx)

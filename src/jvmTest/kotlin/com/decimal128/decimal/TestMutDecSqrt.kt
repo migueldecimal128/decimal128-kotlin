@@ -8,7 +8,7 @@ import java.math.MathContext
 import java.math.RoundingMode
 import java.util.*
 
-class TestDecimalSqrt{
+class TestMutDecSqrt{
 
     val verbose = false
 
@@ -85,8 +85,8 @@ class TestDecimalSqrt{
     }
 
     fun test1(tc: TC) {
-        val dec = Decimal()
-        val decSqrt = Decimal()
+        val dec = MutDec()
+        val decSqrt = MutDec()
         dec.set(tc.bd)
         val ctx = DecimalContext.newDecimal128Context()
         decSqrt.setSqrt(dec, ctx)

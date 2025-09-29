@@ -6,7 +6,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestDecimalMagCompare {
+class TestMutDecMagCompare {
 
     val verbose = false
 

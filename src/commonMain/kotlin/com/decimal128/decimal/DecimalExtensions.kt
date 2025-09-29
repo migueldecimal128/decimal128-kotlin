@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
 
-operator fun Decimal.plus(other: Decimal) = this.add(other)
-operator fun Decimal.minus(other: Decimal) = this.subtract(other)
-operator fun Decimal.times(other: Decimal) = this.multiply(other)
-operator fun Decimal.div(other: Decimal) = this.divide(other)
+operator fun MutDec.plus(other: MutDec) = this.add(other)
+operator fun MutDec.minus(other: MutDec) = this.subtract(other)
+operator fun MutDec.times(other: MutDec) = this.multiply(other)
+operator fun MutDec.div(other: MutDec) = this.divide(other)
 

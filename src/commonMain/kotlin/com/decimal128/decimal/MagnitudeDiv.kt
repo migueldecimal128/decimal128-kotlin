@@ -4,7 +4,7 @@ import kotlin.math.min
 
 object MagnitudeDiv {
 
-    fun magDiv(z: Decimal, x: Decimal, y: Decimal, ctx: DecimalContext): Residue {
+    fun magDiv(z: MutDec, x: MutDec, y: MutDec, ctx: DecimalContext): Residue {
         if (!x.u256IsZero()) {
             val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
             val yBitLen = y.bitLen

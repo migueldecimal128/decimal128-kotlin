@@ -1,13 +1,14 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.math.RoundingMode
 import java.util.*
 
-class TestDecimalMagMul {
+class TestMutDecAddSub {
 
     val verbose = false
 
@@ -23,30 +24,21 @@ class TestDecimalMagMul {
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
         val bdBIsFinite = bdIsFinite(bdB)
-        val bdP = bdToIeeeDecimal128(bdA.multiply(bdB), rm)
+        val bdP = bdToIeeeDecimal128(bdA.add(bdB), rm)
     }
 
     val cases = arrayOf(
-        TC("2.132605340208488890479E+1158", "4.6211615602131956617E+5175"),
-        TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.ROUND_TOWARD_POSITIVE),
-        TC("1", "0"),
-        TC("1", "0e-6176"),
+        TC("-4.949004E-4622", "2.06229042911321265462351537682015E-4592", ROUND_TIES_TO_AWAY),
+        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
+        TC("-3.87184285392449585406072732173794E+5253", "3.4414437429652711952247662511911E+2910"),
+        TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
+        TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),
+        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
+        TC("2.14402028641E+4038", "9.0688499219445651743894779402E-76", ROUND_TOWARD_POSITIVE),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
         TC("2", "3"),
         TC("0", "9e99"),
         )
-
-    @Test
-    fun testBrokenIeee() {
-        val bd = bdToIeeeDecimal128(BigDecimal.ZERO, RoundingMode.HALF_EVEN)
-        println("bd:$bd")
-    }
-
-    @Test
-    fun testProblemChild() {
-        val tc = TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.ROUND_TOWARD_POSITIVE)
-        test1(tc)
-    }
 
     @Test
     fun testCases() {
@@ -55,8 +47,14 @@ class TestDecimalMagMul {
     }
 
     @Test
+    fun testBigDecimalAddZero() {
+        val s0 = BigDecimal("0e-1").add(BigDecimal("0e-10"))
+        println(s0)
+    }
+
+    @Test
     fun testRandom() {
-        for (i in 0..<100000) {
+        for (i in 0..<10000) {
             val tc = TC(randBd(), randBd(), randDecimal128Context())
             if (tc.bdAIsFinite && tc.bdBIsFinite)
                 test1(tc)
@@ -71,11 +69,11 @@ class TestDecimalMagMul {
         val bi = BigInteger(bitLength, random)
         val exp = random.nextInt(3*4096) - 6176
         val bd = BigDecimal(bi).scaleByPowerOfTen(exp)
-        return bd
+        return if (random.nextBoolean()) bd.negate() else bd
     }
 
     fun randDecimal128Context(): DecimalContext {
-        val i = random.nextInt(5)
+        val i = random.nextInt(4)
         val ctx = DecimalContext(RoundingDirection.fromValue(i))
         return ctx
     }
@@ -88,15 +86,18 @@ class TestDecimalMagMul {
         val rm = ctx.roundingDirection.mapToRoundingMode()
 
         if (verbose)
-            println("bdA:$bdA * bdB:$bdB (rm:$rm) => expected:$expected")
+            println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
+        with (ctx) {
 
-        val decA = newDecimal(bdA)
-        val decB = newDecimal(bdB)
-        val decP = Decimal()
-        decP.setMul(decA, decB, ctx)
-        if (decP.qExp != NON_FINITE_INF)
-            assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
-        assertEquals(-expected.scale(), decP.qExp)
+            val decimalA = newDecimal(bdA)
+            val decimalB = newDecimal(bdB)
+            val decimalS = decimalA + decimalB
+            if (verbose)
+                println("decimalS:$decimalS")
+            assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())
+            assertEquals(expected.signum() < 0, decimalS.sign)
+            assertEquals(-expected.scale(), decimalS.qExp)
+        }
     }
 
 }

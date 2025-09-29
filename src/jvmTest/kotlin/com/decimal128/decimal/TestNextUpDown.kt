@@ -55,15 +55,15 @@ class TestNextUpDown {
 
     fun test1(bd: BigDecimal) {
         val n = newDecimal(bd)
-        val up = Decimal()
-        val down = Decimal()
+        val up = MutDec()
+        val down = MutDec()
         val ctx = DecimalContext()
         up.setNextUp(n, ctx)
         down.setNextDown(n, ctx)
 
         println("n:$n up:$up down:$down")
 
-        val t = Decimal()
+        val t = MutDec()
 
         t.setNextUp(down, ctx)
         assertEquals(n, t)

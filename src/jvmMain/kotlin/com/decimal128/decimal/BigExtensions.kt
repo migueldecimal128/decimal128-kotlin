@@ -38,24 +38,24 @@ fun U256.coeffToBigInteger(): BigInteger {
     return bi
 }
 
-fun newDecimal(bd: BigDecimal): Decimal = newDecimal(bd, DecimalContext.newDecimal128Context())
+fun newDecimal(bd: BigDecimal): MutDec = newDecimal(bd, DecimalContext.newDecimal128Context())
 
-fun newDecimal(bd: BigDecimal, ctx: DecimalContext): Decimal {
-    val dec = Decimal()
+fun newDecimal(bd: BigDecimal, ctx: DecimalContext): MutDec {
+    val dec = MutDec()
     dec.set(bd, ctx)
     return dec
 }
 
-fun Decimal.set(bd: BigDecimal) = this.set(bd, DecimalContext.newDecimal128Context())
+fun MutDec.set(bd: BigDecimal) = this.set(bd, DecimalContext.newDecimal128Context())
 
-fun Decimal.set(bd: BigDecimal, ctx: DecimalContext) {
+fun MutDec.set(bd: BigDecimal, ctx: DecimalContext) {
     this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
     this.roundAndFinalize(Residue.EXACT, ctx)
 }
 
-fun Decimal.set(bi: BigInteger, ctx: DecimalContext) {
+fun MutDec.set(bi: BigInteger, ctx: DecimalContext) {
     if (bi.bitLength() <= 256) {
         this.qExp = 0
         val sign = bi.signum() < 0

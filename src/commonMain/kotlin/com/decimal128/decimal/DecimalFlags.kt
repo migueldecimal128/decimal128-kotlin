@@ -20,14 +20,14 @@ class DecimalFlags {
     }
 
     //
-    fun signalInexact(z: Decimal): Decimal { inexact = true; return z }
-    fun signalUnderflow(z: Decimal): Decimal { underflow = true; return z }
-    fun signalInexactUnderflow(z: Decimal): Decimal { inexact = true; underflow = true; return z }
-    fun signalInexactOverflow(z: Decimal): Decimal { inexact = true; overflow = true; return z}
-    fun signalDivByZero(z: Decimal): Decimal { divByZero = true; return z }
-    fun signalInvalid(z: Decimal): Decimal { invalid = true; return z }
+    fun signalInexact(z: MutDec): MutDec { inexact = true; return z }
+    fun signalUnderflow(z: MutDec): MutDec { underflow = true; return z }
+    fun signalInexactUnderflow(z: MutDec): MutDec { inexact = true; underflow = true; return z }
+    fun signalInexactOverflow(z: MutDec): MutDec { inexact = true; overflow = true; return z}
+    fun signalDivByZero(z: MutDec): MutDec { divByZero = true; return z }
+    fun signalInvalid(z: MutDec): MutDec { invalid = true; return z }
 
-    fun operandIsSignalingNaN(decimal: Decimal) {
+    fun operandIsSignalingNaN(mutDec: MutDec) {
         if (trapInvalid)
             throw RuntimeException("invalid sNaN seen")
     }

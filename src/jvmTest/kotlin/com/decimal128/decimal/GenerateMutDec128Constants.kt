@@ -7,7 +7,7 @@ import java.math.BigInteger.*
 import java.lang.Math.ceil
 
 @OptIn(ExperimentalStdlibApi::class)
-class GenerateDecimal128Constants {
+class GenerateMutDec128Constants {
     class Constant(val rootName: String, val dwordCount: Int, val bi: BigInteger) {
         constructor(rootName: String, n: Long) : this(rootName, 0, BigInteger.valueOf(n))
     }

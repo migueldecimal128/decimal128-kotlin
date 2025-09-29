@@ -93,8 +93,8 @@ class TestSqrtDoubleDouble{
     }
 
     fun test1(tc: TC) {
-        val dec = Decimal()
-        val decSqrt = Decimal()
+        val dec = MutDec()
+        val decSqrt = MutDec()
         dec.set(tc.bd)
         setSqrt(decSqrt, dec)
         val expected = tc.sqrt
@@ -106,7 +106,7 @@ class TestSqrtDoubleDouble{
     var corrections1 = 0L
     var correctionsGT1 = 0L
 
-    fun setSqrt(sqrt: Decimal, radicand: Decimal) {
+    fun setSqrt(sqrt: MutDec, radicand: MutDec) {
         ++total
         val qPreferred = radicand.qExp shr 1
         if (radicand.u256IsZero()) {

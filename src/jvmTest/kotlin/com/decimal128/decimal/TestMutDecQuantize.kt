@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
-class TestDecimalQuantize {
+class TestMutDecQuantize {
 
     val verbose = false
 
@@ -36,9 +36,9 @@ class TestDecimalQuantize {
         if (verbose)
             println("bdX:$bdX bdY:$bdY targetQ:$targetQ => expected:$expected")
 
-        val d = Decimal()
-        val e = Decimal()
-        val f = Decimal()
+        val d = MutDec()
+        val e = MutDec()
+        val f = MutDec()
         d.set(bdX)
         e.set(bdY)
         f.quantize(d,e, tc.ctx)
