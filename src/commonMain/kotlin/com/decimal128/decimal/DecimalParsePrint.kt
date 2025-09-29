@@ -138,8 +138,7 @@ object DecimalParsePrint {
         decFromText(x, StringLatin1Iterator(str), zeroNanPayload, ctx)
 
     private fun decFromText(x: MutDec, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
-        // FIXME -- maxPayloadDigitLen belongs as part of DecimalContext
-        val maxPayloadDigitLen = 33
+        val maxPayloadDigitLen = ctx.precision - 1
         when {
             isFiniteValueText(x, src, ctx) -> return
             isInfinityText(x, src) -> return
@@ -277,26 +276,24 @@ object DecimalParsePrint {
             ch = src.nextChar()
         }
         var payloadDigitCount = 0
-        var accumulatorDigitCount = 0
         var accumulator19 = 0L
-        var accumulator33 = 0L
+        var accumulator38 = 0L
         while (ch in '0'..'9') {
-            ++payloadDigitCount
             val d = (ch - '0').toLong()
-            if (payloadDigitCount <= 19)
-                accumulator19 = (accumulator19 * 10L) + d
-            else if (payloadDigitCount <= 33)
-                accumulator33 = (accumulator33 * 10L) + d
-            else
-                return false
+            when {
+                payloadDigitCount < 19 -> accumulator19 = (accumulator19 * 10L) + d
+                payloadDigitCount < 38 -> accumulator38 = (accumulator38 * 10L) + d
+                else -> return false
+            }
+            ++payloadDigitCount
             ch = src.nextChar()
         }
-        if (ch != '\u0000')
+        if (ch != '\u0000' || payloadDigitCount > maxPayloadDigits)
             return false
         if (!zeroNanPayload && payloadDigitCount > 0) {
             x.u256Set64(accumulator19)
             if (payloadDigitCount > 19)
-                x.u256MutateFmaPow10(payloadDigitCount - 19, accumulator33)
+                x.u256MutateFmaPow10(payloadDigitCount - 19, accumulator38)
         }
         x.sign = sign
         x.qExp = if (hasS) NON_FINITE_SNAN else NON_FINITE_QNAN

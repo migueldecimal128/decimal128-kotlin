@@ -22,6 +22,8 @@ object MagnitudeAddSub {
         val n = if (flipFlop) y else x
         check(m.qExp > n.qExp)
         val qDelta = m.qExp - n.qExp
+        // FIXME
+        //  PRECISION needs to come from DecEnv
         val headroom = PRECISION_34 - m.digitLen
         val shiftLeft = min(qDelta, headroom)
         val qAlign = m.qExp - shiftLeft
@@ -161,6 +163,8 @@ object MagnitudeAddSub {
                 return EXACT
             }
             val qDeltaY = y.qExp - x.qExp
+            // FIXME
+            //  PRECISION needs to come from DecEnv
             check(qDeltaY < PRECISION_34)
             U256Sub.u256SubScaled(z, x, y, qDeltaY)
             z.qExp = x.qExp
