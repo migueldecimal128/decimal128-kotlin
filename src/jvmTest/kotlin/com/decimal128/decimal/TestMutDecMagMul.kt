@@ -12,7 +12,7 @@ class TestMutDecMagMul {
     val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
-        constructor(strA: String, strB: String, rd: RoundingDirection) :
+        constructor(strA: String, strB: String, rd: DecRounding) :
                 this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
         constructor(strA: String, strB: String) :
                 this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
@@ -28,7 +28,7 @@ class TestMutDecMagMul {
 
     val cases = arrayOf(
         TC("2.132605340208488890479E+1158", "4.6211615602131956617E+5175"),
-        TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.ROUND_TOWARD_POSITIVE),
+        TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", DecRounding.ROUND_TOWARD_POSITIVE),
         TC("1", "0"),
         TC("1", "0e-6176"),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
@@ -44,7 +44,7 @@ class TestMutDecMagMul {
 
     @Test
     fun testProblemChild() {
-        val tc = TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.ROUND_TOWARD_POSITIVE)
+        val tc = TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", DecRounding.ROUND_TOWARD_POSITIVE)
         test1(tc)
     }
 
@@ -76,7 +76,7 @@ class TestMutDecMagMul {
 
     fun randDecimal128Context(): DecimalContext {
         val i = random.nextInt(5)
-        val ctx = DecimalContext(RoundingDirection.fromValue(i))
+        val ctx = DecimalContext(DecRounding.fromValue(i))
         return ctx
     }
 

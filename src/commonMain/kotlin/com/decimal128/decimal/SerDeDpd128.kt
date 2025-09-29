@@ -79,7 +79,7 @@ object SerDeDpd128 {
     }
 
     fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDec {
-        val decimal128 = DecimalFormat.DECIMAL_128
+        val decimal128 = DecFormat.DECIMAL_128
         val sign = dpd128Hi < 0
         val combination = (dpd128Hi ushr 46).toInt() and 0x1FFFF
         val combinationHi2 = combination ushr 15
@@ -183,7 +183,7 @@ object SerDeDpd128 {
 
     fun encodeSignAndGCombinationFieldDpd128(sign: Boolean, qExp: Int, mostSigBcd4: Int) : Long {
         require (mostSigBcd4 in 0..9)
-        val decimal128 = DecimalFormat.DECIMAL_128
+        val decimal128 = DecFormat.DECIMAL_128
         val signBit = if (sign) 1L shl 63 else 0L
         val gCombinationField = when {
             qExp < MIN_SPECIAL_VALUE -> {

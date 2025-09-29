@@ -5,15 +5,15 @@ private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
 
 
 @JvmInline
-value class RoundingDirection private constructor(val value:Int) {
+value class DecRounding private constructor(val value:Int) {
     companion object {
-        val ROUND_TIES_TO_EVEN = RoundingDirection(0)
-        val ROUND_TIES_TO_AWAY = RoundingDirection(1)
-        val ROUND_TOWARD_ZERO = RoundingDirection(2)
-        val ROUND_TOWARD_POSITIVE = RoundingDirection(3)
-        val ROUND_TOWARD_NEGATIVE = RoundingDirection(4)
+        val ROUND_TIES_TO_EVEN = DecRounding(0)
+        val ROUND_TIES_TO_AWAY = DecRounding(1)
+        val ROUND_TOWARD_ZERO = DecRounding(2)
+        val ROUND_TOWARD_POSITIVE = DecRounding(3)
+        val ROUND_TOWARD_NEGATIVE = DecRounding(4)
 
-        fun fromValue(value:Int) : RoundingDirection {
+        fun fromValue(value:Int) : DecRounding {
             return when (value) {
                 0 -> ROUND_TIES_TO_EVEN
                 1 -> ROUND_TIES_TO_AWAY
@@ -28,7 +28,7 @@ value class RoundingDirection private constructor(val value:Int) {
 
     // roundTiesToEve, roundTiesToAway, and roundTiesTowardZero are the same independent of sign
     // roundTowardPositive and roundTowardNegative are complementary
-    fun negate() :RoundingDirection {
+    fun negate() :DecRounding {
         return if (value < 3) this else if (value == 3) ROUND_TOWARD_NEGATIVE else ROUND_TOWARD_POSITIVE
     }
 

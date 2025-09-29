@@ -1,9 +1,9 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_1
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_2
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_3
@@ -140,24 +140,24 @@ value class Residue private constructor(val value:Int) {
 
     }
 
-    fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =
-        ulpBias(roundingDirection, lsdwIsOdd) != 0L
+    fun ulpRoundUp(decRounding: DecRounding, lsdwIsOdd: Long) : Boolean =
+        ulpBias(decRounding, lsdwIsOdd) != 0L
 
-    fun ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) = ulpBiasY(roundingDirection, lsdwIsOdd)
+    fun ulpBias(decRounding: DecRounding, lsdwIsOdd: Long) = ulpBiasY(decRounding, lsdwIsOdd)
 
-    fun ulpBiasY(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
+    fun ulpBiasY(decRounding: DecRounding, lsdwIsOdd: Long) : Long {
         val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
 
         val biasMapEvenOdd = ULP_BIAS_MAP or ((lsdwIsOdd and 1) shl 2)
-        val bitIndex = (roundingDirection.value * 8) + (value and 0x03) // mask off isNegated bit
+        val bitIndex = (decRounding.value * 8) + (value and 0x03) // mask off isNegated bit
         val roundingMapShifted = biasMapEvenOdd shr bitIndex
         val bias = roundingMapShifted and 1
         return bias
     }
 
     // used in add case when there is no overlap
-    fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        return when (roundingDirection) {
+    fun ulpBiasX(decRounding: DecRounding, lsdwIsOdd: Long) : Long {
+        return when (decRounding) {
             ROUND_TIES_TO_EVEN -> when (value) {
                 LT_HALF.value -> 0L
                 HALF.value -> lsdwIsOdd and 1L

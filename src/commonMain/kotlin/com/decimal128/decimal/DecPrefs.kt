@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-data class DecimalPreferences(
+data class DecPrefs(
     val printCoefficientPlus: Boolean = false,
     val printNegativeZero: Boolean = true,
     val printExponentPlus: Boolean = false,
@@ -22,7 +22,7 @@ data class DecimalPreferences(
     val printStyle: PrintStyle = PrintStyle.AUTO
 ) {
     companion object {
-        val DEFAULT = DecimalPreferences()
+        val DEFAULT = DecPrefs()
     }
 
     enum class PrintStyle { AUTO, ALWAYS_SCIENTIFIC, INTEGER_COEFFICIENT}

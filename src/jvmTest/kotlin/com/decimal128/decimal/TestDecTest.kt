@@ -29,12 +29,12 @@ class TestDecTest {
         "half_down",
     )
 
-    private val roundingDirections = arrayOf(
-        RoundingDirection.ROUND_TIES_TO_EVEN,
-        RoundingDirection.ROUND_TIES_TO_AWAY,
-        RoundingDirection.ROUND_TOWARD_ZERO,
-        RoundingDirection.ROUND_TOWARD_POSITIVE,
-        RoundingDirection.ROUND_TOWARD_NEGATIVE,
+    private val decRoundings = arrayOf(
+        DecRounding.ROUND_TIES_TO_EVEN,
+        DecRounding.ROUND_TIES_TO_AWAY,
+        DecRounding.ROUND_TOWARD_ZERO,
+        DecRounding.ROUND_TOWARD_POSITIVE,
+        DecRounding.ROUND_TOWARD_NEGATIVE,
     )
 
     private val dectestFiles = arrayOf(
@@ -249,9 +249,9 @@ class TestDecTest {
         // relax this requirement
         // require (minExponent == -(maxExponent - 1))
         val roundingIndex = validRoundingStrings.indexOf(rounding)
-        if (roundingIndex < 0 || roundingIndex >= roundingDirections.size)
+        if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
-        val fmt = DecimalFormat(precision, maxExponent, roundingDirections[roundingIndex])
+        val fmt = DecFormat(precision, maxExponent, decRoundings[roundingIndex])
         val ctx = DecimalContext(fmt)
         return ctx
     }

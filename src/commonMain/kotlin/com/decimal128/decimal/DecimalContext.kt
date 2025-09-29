@@ -1,25 +1,25 @@
 package com.decimal128.decimal
 
-class DecimalContext(val decimalFormat: DecimalFormat) {
-    constructor() : this(DecimalFormat.DECIMAL_128)
-    constructor(decimalFormat: DecimalFormat, roundingDirection:RoundingDirection) :
-            this(decimalFormat.withRoundingDirection(roundingDirection))
-    constructor(roundingDirection: RoundingDirection) :
-            this(DecimalFormat.DECIMAL_128.withRoundingDirection(roundingDirection))
+class DecimalContext(val decFormat: DecFormat) {
+    constructor() : this(DecFormat.DECIMAL_128)
+    constructor(decFormat: DecFormat, decRounding:DecRounding) :
+            this(decFormat.withRoundingDirection(decRounding))
+    constructor(decRounding: DecRounding) :
+            this(DecFormat.DECIMAL_128.withRoundingDirection(decRounding))
 
     companion object {
 
-        fun newDecimal64Context() = DecimalContext(DecimalFormat.DECIMAL_64)
-        fun newDecimal128Context() = DecimalContext(DecimalFormat.DECIMAL_128)
-        fun newDecimal128ExtendedContext() = DecimalContext(DecimalFormat.DECIMAL_128_EXTENDED)
+        fun newDecimal64Context() = DecimalContext(DecFormat.DECIMAL_64)
+        fun newDecimal128Context() = DecimalContext(DecFormat.DECIMAL_128)
+        fun newDecimal128ExtendedContext() = DecimalContext(DecFormat.DECIMAL_128_EXTENDED)
     }
-    val precision = decimalFormat.precision
-    val roundingDirection = decimalFormat.roundingDirection
-    val eMax = decimalFormat.eMax
-    val eMin = decimalFormat.eMin
-    val qMax = decimalFormat.qMax
-    val qTiny = decimalFormat.qTiny
-    val isRoundTowardNegative = roundingDirection == RoundingDirection.ROUND_TOWARD_NEGATIVE
+    val precision = decFormat.precision
+    val roundingDirection = decFormat.decRounding
+    val eMax = decFormat.eMax
+    val eMin = decFormat.eMin
+    val qMax = decFormat.qMax
+    val qTiny = decFormat.qTiny
+    val isRoundTowardNegative = roundingDirection == DecRounding.ROUND_TOWARD_NEGATIVE
 
     var invalid = false
         private set

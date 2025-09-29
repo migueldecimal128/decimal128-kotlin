@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-class DecimalFlags {
+class DecFlags {
     var invalid = false
         private set
     var divByZero = false

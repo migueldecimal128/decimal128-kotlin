@@ -12,7 +12,7 @@ class TestMutDecMagnitudeDiv {
     val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
-        constructor(strA: String, strB: String, rd: RoundingDirection) :
+        constructor(strA: String, strB: String, rd: DecRounding) :
                 this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
         constructor(strA: String, strB: String) :
                 this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
@@ -28,16 +28,16 @@ class TestMutDecMagnitudeDiv {
     }
 
     val cases = arrayOf(
-        TC("5.8331E+4541", "1.06765154850769863710859340415777E-5653", RoundingDirection.ROUND_TOWARD_POSITIVE),
+        TC("5.8331E+4541", "1.06765154850769863710859340415777E-5653", DecRounding.ROUND_TOWARD_POSITIVE),
         TC("8.62772233398E+826", "3.37229718376401328925734846797201E-3185"),
         TC("1", "2"),
         TC("0E+4519", "4.14999526830484824E+2722"),
         TC("2.7710284E-1295", "2.912E-5964"),
         TC("3.4648355837009412658250388928553E-289", "1.432458417443E-546"),
-        TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", RoundingDirection.ROUND_TOWARD_POSITIVE),
-        TC("1.221824056626775696489E-5049", "6.4667951153346922410790519767E-4095", RoundingDirection.ROUND_TIES_TO_AWAY),
-        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.ROUND_TIES_TO_EVEN),
-        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.ROUND_TOWARD_ZERO),
+        TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", DecRounding.ROUND_TOWARD_POSITIVE),
+        TC("1.221824056626775696489E-5049", "6.4667951153346922410790519767E-4095", DecRounding.ROUND_TIES_TO_AWAY),
+        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",DecRounding.ROUND_TIES_TO_EVEN),
+        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",DecRounding.ROUND_TOWARD_ZERO),
         TC("1", "3"),
         TC("1", "2"),
         )
@@ -84,7 +84,7 @@ class TestMutDecMagnitudeDiv {
 
     fun randDecimal128Context(): DecimalContext {
         val i = random.nextInt(4)
-        val ctx = DecimalContext(RoundingDirection.fromValue(i))
+        val ctx = DecimalContext(DecRounding.fromValue(i))
         return ctx
     }
 

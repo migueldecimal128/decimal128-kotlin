@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -13,7 +13,7 @@ class TestMutDecAddSub {
     val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
-        constructor(strA: String, strB: String, rd: RoundingDirection) :
+        constructor(strA: String, strB: String, rd: DecRounding) :
                 this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
         constructor(strA: String, strB: String) :
                 this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
@@ -74,7 +74,7 @@ class TestMutDecAddSub {
 
     fun randDecimal128Context(): DecimalContext {
         val i = random.nextInt(4)
-        val ctx = DecimalContext(RoundingDirection.fromValue(i))
+        val ctx = DecimalContext(DecRounding.fromValue(i))
         return ctx
     }
 

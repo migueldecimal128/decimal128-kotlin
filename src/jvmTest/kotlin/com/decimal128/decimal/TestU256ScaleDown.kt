@@ -4,11 +4,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.lang.Math.min
@@ -18,18 +18,18 @@ class TestU256ScaleDown {
     val verbose = false
 
     class TC(
-        val biA: BigInteger, val pow10: Int, val sign: Boolean, val roundingDirection: RoundingDirection)
+        val biA: BigInteger, val pow10: Int, val sign: Boolean, val decRounding: DecRounding)
      {
 
         constructor(
             x: String, pow10: Int, sign: Boolean,
-            roundingDirection: RoundingDirection
+            decRounding: DecRounding
         ) :
-                this(BigInteger(x), pow10, sign, roundingDirection)
+                this(BigInteger(x), pow10, sign, decRounding)
 
          val bd = if (sign) BigDecimal(biA).negate() else BigDecimal(biA)
          val bdScaled = bd.scaleByPowerOfTen(-pow10)
-         val bdRounded = bdScaled.setScale(0, roundingDirection.mapToRoundingMode())
+         val bdRounded = bdScaled.setScale(0, decRounding.mapToRoundingMode())
          val inexact = bdScaled.compareTo(bdRounded) != 0
          val biRoundedAbs = bdRounded.toBigIntegerExact().abs()
          val biUnrounded = bdScaled.setScale(0, RoundingMode.DOWN).toBigIntegerExact().abs()
@@ -163,8 +163,8 @@ class TestU256ScaleDown {
 
     fun buildTestCase(bi:BigInteger, xPow10:Int) : TC {
         val sign = random.nextBoolean()
-        val roundingDirection = RoundingDirection.fromValue(random.nextInt(5))
-        val tc = TC(bi, xPow10, sign, roundingDirection)
+        val decRounding = DecRounding.fromValue(random.nextInt(5))
+        val tc = TC(bi, xPow10, sign, decRounding)
         return tc
     }
 
@@ -196,13 +196,13 @@ class TestU256ScaleDown {
         val coeffA = newCoeff(case.biA)
         val coeffObserved = U256()
         val pow10 = case.pow10
-        val ctx = DecimalContext(case.roundingDirection)
+        val ctx = DecimalContext(case.decRounding)
         if (verbose)
-            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.roundingDirection} expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.decRounding} expected:$expected")
         coeffObserved.u256SetScaleDownPow10(coeffA, pow10)
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
-            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.roundingDirection} expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.decRounding} expected:$expected")
         assertEquals(expected, observed)
     }
 

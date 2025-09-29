@@ -8,11 +8,11 @@ import com.decimal128.decimal.Residue.Companion.LT_HALF
 import com.decimal128.decimal.Residue.Companion.GT_HALF
 import com.decimal128.decimal.Residue.Companion.EXACT
 
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 
 
 
@@ -21,11 +21,11 @@ class TestResidueUlpRounding {
     val verbose = false
 
     class TC(
-        val roundingDirection: RoundingDirection, val residue: Residue, val lsdw: Long, val sign: Boolean,
+        val decRounding: DecRounding, val residue: Residue, val lsdw: Long, val sign: Boolean,
         val expectedBias: Long) {
 
             override fun toString() : String {
-            return "$roundingDirection $residue sign:$sign lsb:$lsdw expectedBias:$expectedBias"
+            return "$decRounding $residue sign:$sign lsb:$lsdw expectedBias:$expectedBias"
         }
     }
 
@@ -147,7 +147,7 @@ class TestResidueUlpRounding {
     fun test1(tc: TC) {
         if (verbose)
             println("$tc")
-        val effectiveRoundingDirection = tc.roundingDirection.negate(tc.sign)
+        val effectiveRoundingDirection = tc.decRounding.negate(tc.sign)
         val observedBias = tc.residue.ulpBias(effectiveRoundingDirection, tc.lsdw)
         assertEquals(tc.expectedBias, observedBias)
     }

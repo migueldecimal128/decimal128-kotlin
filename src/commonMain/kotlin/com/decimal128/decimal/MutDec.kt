@@ -1,11 +1,11 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
@@ -725,7 +725,7 @@ class MutDec() : U256() {
     }
 
 
-    fun mutateRoundToIntegral(x: MutDec, rd: RoundingDirection, ctx: DecimalContext): MutDec {
+    fun mutateRoundToIntegral(x: MutDec, rd: DecRounding, ctx: DecimalContext): MutDec {
         //FIXME - deal with special values
         if (qExp < 0) {
             val residue = this.u256SetScaleDownPow10(x, -qExp)
@@ -1153,7 +1153,7 @@ class MutDec() : U256() {
     internal fun roundAndFinalize(inboundResidue: Residue, ctx: DecimalContext) =
         roundAndFinalize(inboundResidue, ctx.roundingDirection, ctx)
 
-    private fun roundAndFinalize(inboundResidue: Residue, roundingDirection: RoundingDirection, ctx: DecimalContext): MutDec {
+    private fun roundAndFinalize(inboundResidue: Residue, decRounding: DecRounding, ctx: DecimalContext): MutDec {
         val eMax = ctx.eMax
         val precision = ctx.precision
         if (qExp < MIN_SPECIAL_VALUE) {
@@ -1194,7 +1194,7 @@ class MutDec() : U256() {
                         return this
                     }
 
-                    val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
+                    val roundUp = totalResidue.ulpRoundUp(decRounding.negate(sign), super.dw0)
                     if (roundUp)
                         super.u256MutateIncrement()
                     if (!roundUp || digitLen <= precision)
@@ -1217,7 +1217,7 @@ class MutDec() : U256() {
                 if (eExp > eMax) {
                     check(! isTiny)
                     // overflow IEEE754-2008 7.4 Overflow page 37
-                    if (roundingDirection.overflowsToInfinity(sign)) {
+                    if (decRounding.overflowsToInfinity(sign)) {
                         setInfinite(sign)
                     } else {
                         setMaxFiniteMagnitude(ctx)
@@ -1243,7 +1243,7 @@ class MutDec() : U256() {
                         // and no inexact exception is signaled.
                         return this
                     }
-                    val roundUp = totalResidue.ulpRoundUp(roundingDirection.negate(sign), super.dw0)
+                    val roundUp = totalResidue.ulpRoundUp(decRounding.negate(sign), super.dw0)
                     if (roundUp) {
                         super.u256MutateIncrement()
                         if (digitLen > precision) {
@@ -1257,7 +1257,7 @@ class MutDec() : U256() {
                     }
                 } else {
                     // underflow ... swamped non-zero value
-                    if (roundingDirection.underflowsToZero(sign)) {
+                    if (decRounding.underflowsToZero(sign)) {
                         super.u256SetZero()
                         qExp = ctx.qTiny
                     } else {

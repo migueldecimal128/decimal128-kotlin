@@ -1,10 +1,10 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.RoundingDirection.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.io.File
@@ -238,7 +238,7 @@ class TestFptestRead {
                 }
             }
 
-        fun roundingDirection(): RoundingDirection {
+        fun roundingDirection(): DecRounding {
             return when (round) {
                 "=0" -> ROUND_TIES_TO_EVEN
                 "=^" -> ROUND_TIES_TO_AWAY
@@ -306,8 +306,8 @@ class TestFptestRead {
         val format = fptest.format
         val operands = fptest.decOperands()
         val ctx = when {
-            format == "d128" -> DecimalContext(DecimalFormat.DECIMAL_128.withRoundingDirection(fptest.roundingDirection()))
-            format == "d64" -> DecimalContext(DecimalFormat.DECIMAL_64.withRoundingDirection(fptest.roundingDirection()))
+            format == "d128" -> DecimalContext(DecFormat.DECIMAL_128.withRoundingDirection(fptest.roundingDirection()))
+            format == "d64" -> DecimalContext(DecFormat.DECIMAL_64.withRoundingDirection(fptest.roundingDirection()))
             else -> throw IllegalStateException()
         }
         val observed = MutDec()

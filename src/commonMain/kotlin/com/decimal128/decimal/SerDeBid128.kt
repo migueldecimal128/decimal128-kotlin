@@ -47,7 +47,7 @@ object SerDeBid128 {
     @Suppress("NOTHING_TO_INLINE")
     private inline fun encodeSignAndGCombinationFieldBid128(sign: Boolean, qExp: Int, mostSigBits4: Int) : Long {
         require (mostSigBits4 in 0..9)
-        val decimal128 = DecimalFormat.DECIMAL_128
+        val decimal128 = DecFormat.DECIMAL_128
         val signBit = if (sign) 1L shl 63 else 0L
         val gCombinationField = when {
             qExp < MIN_SPECIAL_VALUE -> {
@@ -111,7 +111,7 @@ object SerDeBid128 {
     }
 
     fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDec {
-        val decimal128 = DecimalFormat.DECIMAL_128
+        val decimal128 = DecFormat.DECIMAL_128
         val sign = bid128Hi < 0
         val combination = (bid128Hi ushr 46).toInt() and 0x1FFFF
         val significand110Hi = bid128Hi and ((1L shl (110 - 64)) - 1L)

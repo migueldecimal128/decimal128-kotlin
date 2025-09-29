@@ -108,7 +108,7 @@ fun DoubleDouble.setBigInteger(n: BigInteger) {
 private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HALF_UP,
     RoundingMode.DOWN, RoundingMode.CEILING, RoundingMode.FLOOR)
 
-fun RoundingDirection.mapToRoundingMode() = ROUNDING_MODE_MAP[value]
+fun DecRounding.mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
 fun DecimalContext.getMathContext() : MathContext {
     return MathContext(precision, roundingDirection.mapToRoundingMode())
