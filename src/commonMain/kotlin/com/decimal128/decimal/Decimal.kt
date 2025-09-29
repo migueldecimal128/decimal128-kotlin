@@ -46,6 +46,8 @@ class Decimal() : U256() {
 
         fun newInfinity(sign: Boolean = false) = Decimal().setInfinite(sign)
 
+        fun newAbs(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal(x).mutateAbs()
+
         fun newAdd(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             addImpl(Decimal(), x, y.sign, y, ctx)
 
@@ -55,6 +57,11 @@ class Decimal() : U256() {
         fun newMul(x: Decimal, y: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             Decimal().setMul(x, y, ctx)
 
+        fun newFma(x: Decimal, y: Decimal, z: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
+            Decimal().setFma(x, y, z, ctx)
+
+        fun newNegate(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal(x).mutateNegate()
+
         fun newSquare(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             Decimal().setSquare(x, ctx)
 
@@ -62,6 +69,8 @@ class Decimal() : U256() {
 
         fun newReciprocal(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             Decimal().setReciprocal(x, ctx)
+
+        fun newIntegral(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) = Decimal(x).mutateToIntegral(ctx)
 
         fun newSqrt(x: Decimal, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             Decimal().setSqrt(x, ctx)
@@ -361,12 +370,65 @@ class Decimal() : U256() {
     }
 
     fun mutateNegate(): Decimal {
-        this.sign = !this.sign
+        when (this.qExp) {
+            NON_FINITE_QNAN -> {}
+            NON_FINITE_SNAN -> this.qExp = NON_FINITE_QNAN
+            NON_FINITE_INF -> this.sign = !this.sign
+            else -> this.sign = !this.sign && bitLen > 0
+        }
         return this
     }
 
     fun mutateAbs(): Decimal {
-        this.sign = false
+        if (this.qExp >= NON_FINITE_QNAN)
+            this.qExp = NON_FINITE_QNAN
+        else
+            this.sign = false
+        return this
+    }
+
+    fun mutateToIntegral(ctx: DecimalContext): Decimal {
+        // FIXME ... not tested and not correct
+        when {
+            qExp < MIN_SPECIAL_VALUE -> {
+                if (qExp < 0) {
+                    if (bitLen == 0) {
+                        qExp = 0
+                        return this
+                    }
+                    ctx.signalInexact(this)
+                    val eExp = sciExp()
+                    when (ctx.roundingDirection) {
+                        ROUND_TIES_TO_EVEN, ROUND_TIES_TO_AWAY -> {
+                            if (eExp <= -2) {
+                                return Decimal()
+                            }
+                            val half = Decimal(false, -1, 0L, 0L, 0L, 5L)
+                            val cmp = this.compareTo(half, ctx)
+                            if (cmp < 0 || cmp == 0 && ctx.roundingDirection == ROUND_TIES_TO_EVEN) {
+                                return Decimal()
+                            } else {
+                                return Decimal(false, 0, 0L, 0L, 0L, 1L)
+                            }
+                        }
+                        ROUND_TOWARD_ZERO -> return Decimal()
+                        ROUND_TOWARD_NEGATIVE -> {
+                            if (sign)
+                                return Decimal(false, 0, 0L, 0L, 0L, 1L)
+                            else
+                                return Decimal()
+                        }
+                        ROUND_TOWARD_POSITIVE -> {
+                            if (!sign)
+                                return Decimal(false, 0, 0L, 0L, 0L, 1L)
+                            else
+                                return Decimal()
+                        }
+                    }
+                }
+            }
+            qExp == NON_FINITE_SNAN -> qExp = NON_FINITE_QNAN
+        }
         return this
     }
 
