@@ -9,6 +9,7 @@ class TestEncodeDecodeBid128 {
     val verbose = false
 
     val tcs = arrayOf(
+        "inf",
         "-100000000000000000000000000000000e-6175",
         "1e-6176",
         "10e-6176",

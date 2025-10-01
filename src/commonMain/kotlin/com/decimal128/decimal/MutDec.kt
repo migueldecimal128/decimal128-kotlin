@@ -11,13 +11,13 @@ import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val MIN_SPECIAL_VALUE = Integer.MAX_VALUE - 2
-internal const val NON_FINITE_INF = Integer.MAX_VALUE - 2
-internal const val NON_FINITE_QNAN = Integer.MAX_VALUE - 1
-internal const val NON_FINITE_SNAN = Integer.MAX_VALUE
+internal const val MIN_SPECIAL_VALUE = Short.MAX_VALUE - 2
+internal const val NON_FINITE_INF = Short.MAX_VALUE - 2
+internal const val NON_FINITE_QNAN = Short.MAX_VALUE - 1
+internal const val NON_FINITE_SNAN = Short.MAX_VALUE.toInt()
 
-const val CAPPED_EXP_MIN = -2000000000
-const val CAPPED_EXP_MAX = 2000000000
+const val CAPPED_EXP_MIN = -32000
+const val CAPPED_EXP_MAX = 32000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 
@@ -306,6 +306,11 @@ class MutDec() : U256() {
     }
 
     fun setInfinite(sign: Boolean = false) {
+        // NOTE miguel 2025-09-30
+        //  Infinity must have coefficient zero (not one) because that is
+        //  what is required for BID and DPD encoding.
+        //  Changing the coefficient to one would make negation slightly
+        //  easier, but isn't worth doing
         this.u256SetZero()
         this.qExp = NON_FINITE_INF
         this.sign = sign
@@ -330,6 +335,13 @@ class MutDec() : U256() {
     fun set(x: MutDec): MutDec {
         u256Set(x)
         this.qExp = x.qExp
+        this.sign = x.sign
+        return this
+    }
+
+    fun set(x: Decimal): MutDec {
+        u256Set128(x.dw1, x.dw0)
+        this.qExp = x.qExp.toInt()
         this.sign = x.sign
         return this
     }

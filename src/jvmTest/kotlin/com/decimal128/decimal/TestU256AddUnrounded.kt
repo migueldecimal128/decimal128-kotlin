@@ -6,7 +6,7 @@ import java.util.*
 
 class TestU256AddUnrounded {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val biA:BigInteger, val biB:BigInteger) {
         val biSum = biA.add(biB)
