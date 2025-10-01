@@ -72,14 +72,19 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
         return true
     }
 
-    fun updateLengths() {
+    fun updateDigitLenBitLen() {
         bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
         digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
     }
 
+    fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
+        this.digitLen = digitLen
+        this.bitLen = bitLen
+    }
+
     //FIXME this case can probably be accelerated because
     // of bitLen delta <= 1 and digitLen delta <= 1
-    private fun updateLengthsAfterRoundUp() = updateLengths()
+    private fun updateLengthsAfterRoundUp() = updateDigitLenBitLen()
 
     internal fun u256HasValidLengths(): Boolean {
         if (bitLen != calcBitLen256(dw3, dw2, dw1, dw0))
@@ -165,7 +170,7 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
 
     internal inline fun u256DisableIndexSetAndUpdateLengths() {
         check(digitLen == -1)
-        U256Bits.updateLengths(this)
+        updateDigitLenBitLen()
     }
 
     internal inline fun u256Set64(d0: Long) = U256Set.u256Set64(this, d0)

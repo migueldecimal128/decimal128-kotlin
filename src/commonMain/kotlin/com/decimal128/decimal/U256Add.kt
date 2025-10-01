@@ -102,7 +102,7 @@ object U256Add {
         }
         // flag for roundup which occurs during multiplies while enableIndexSet is active
         if (z.digitLen >= 0)
-            U256Bits.updateLengths(z)
+            z.updateDigitLenBitLen()
     }
 
     fun u256MutateDecrement(z: U256) {
@@ -118,7 +118,7 @@ object U256Add {
                 }
             }
         }
-        U256Bits.updateLengths(z)
+        z.updateDigitLenBitLen()
     }
 
 

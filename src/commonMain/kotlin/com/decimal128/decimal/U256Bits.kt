@@ -230,12 +230,4 @@ object U256Bits {
             U256Sub.u256SubUnscaled(z, z, uLo)
     }
 
-    fun updateLengths(z: U256) {
-        z.bitLen = calcBitLen256(z.dw3, z.dw2, z.dw1, z.dw0)
-        z.digitLen = U256Pow10.calcDigitLen256(z.bitLen, z.dw3, z.dw2, z.dw1, z.dw0)
-    }
-
-
-
-
 }
