@@ -5,42 +5,36 @@ import com.decimal128.hugeint.Magia
 @Suppress("NOTHING_TO_INLINE")
 object U256Set {
 
-    fun u256SetZero(u: U256) {
-        u.dw3 = 0L; u.dw2 = 0L; u.dw1 = 0L; u.dw0 = 0L;
-        u.bitLen = 0; u.digitLen = 0
-    }
-
-    fun u256SetOne(z: U256) {
-        z.dw3 = 0L; z.dw2 = 0L; z.dw1 = 0L; z.dw0 = 1L;
-        z.bitLen = 1; z.digitLen = 1
-    }
-
     fun u256Set64(u: U256, d0: Long) {
         u.dw3 = 0L; u.dw2 = 0L; u.dw1 = 0L
         u.dw0 = d0
-        u.bitLen = calcBitLen64(d0)
-        u.digitLen = U256Pow10.calcDigitLen64(u.bitLen, d0)
+        val bitLen = calcBitLen64(d0)
+        val digitLen = U256Pow10.calcDigitLen64(bitLen, d0)
+        u.updateDigitLenBitLen(digitLen, bitLen)
     }
 
     fun u256Set128(u: U256, d1: Long, d0: Long) {
         u.dw3 = 0L; u.dw2 = 0L
         u.dw1 = d1; u.dw0 = d0
-        u.bitLen = calcBitLen128(d1, d0)
-        u.digitLen = U256Pow10.calcDigitLen128(u.bitLen, d1, d0)
+        val bitLen = calcBitLen128(d1, d0)
+        val digitLen = U256Pow10.calcDigitLen128(bitLen, d1, d0)
+        u.updateDigitLenBitLen(digitLen, bitLen)
     }
 
     fun u256Set192(u: U256, d2: Long, d1: Long, d0: Long) {
         u.dw3 = 0L
         u.dw2 = d2; u.dw1 = d1; u.dw0 = d0
-        u.bitLen = calcBitLen192(d2, d1, d0)
-        u.digitLen = U256Pow10.calcDigitLen192(u.bitLen, d2, d1, d0)
+        val bitLen = calcBitLen192(d2, d1, d0)
+        val digitLen = U256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
+        u.updateDigitLenBitLen(digitLen, bitLen)
     }
 
 
     fun u256Set256(u: U256, d3: Long, d2: Long, d1: Long, d0: Long) {
         u.dw3 = d3; u.dw2 = d2; u.dw1 = d1; u.dw0 = d0
-        u.bitLen = calcBitLen256(d3, d2, d1, d0)
-        u.digitLen = U256Pow10.calcDigitLen256(u.bitLen, d3, d2, d1, d0)
+        val bitLen = calcBitLen256(d3, d2, d1, d0)
+        val digitLen = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
+        u.updateDigitLenBitLen(digitLen, bitLen)
     }
 
     fun u256Set(u: U256, x: U256) {

@@ -36,9 +36,15 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
         get() = _digitLen.toInt()
         set(value: Int) { _digitLen = value.toByte() }
 
-    internal inline fun u256SetZero() = U256Set.u256SetZero(this)
+    fun u256SetZero() {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L;
+        bitLen = 0; digitLen = 0
+    }
 
-    internal inline fun u256SetOne() = U256Set.u256SetOne(this)
+    fun u256SetOne() {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L;
+        bitLen = 1; digitLen = 1
+    }
 
     internal inline fun u256IsZero() = bitLen == 0
 
