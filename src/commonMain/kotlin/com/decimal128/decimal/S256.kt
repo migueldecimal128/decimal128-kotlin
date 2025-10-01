@@ -22,13 +22,13 @@ open class S256 : U256 {
 
     internal fun s256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L
-        bitLen = 0; digitLen = 0
+        updateDigitLenBitLen(0, 0)
         sign = false
     }
 
     internal fun s256SetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L
-        bitLen = 1; digitLen = 1
+        updateDigitLenBitLen(1, 1)
         sign = false
     }
 
@@ -43,7 +43,7 @@ open class S256 : U256 {
 
     internal fun s256Set(x: S256) {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
-        bitLen = x.bitLen; digitLen = x.digitLen
+        updateDigitLenBitLen(x.digitLen, x.bitLen)
         sign = x.sign
     }
 

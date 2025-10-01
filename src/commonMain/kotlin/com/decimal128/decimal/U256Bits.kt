@@ -165,8 +165,9 @@ object U256Bits {
         z.dw1 = shifted and ((j shl 2) shr 63)
         z.dw2 = shifted and ((j shl 1) shr 63)
         z.dw3 = shifted and ((j      ) shr 63)
-        z.bitLen = pow2 + 1
-        z.digitLen = ((pow2 * 1233) ushr 12) + 1
+        val bitLen = pow2 + 1
+        val digitLen = ((pow2 * 1233) ushr 12) + 1
+        z.updateDigitLenBitLen(digitLen, bitLen)
     }
 
     fun u256ToFloorDouble(x: U256): Double {

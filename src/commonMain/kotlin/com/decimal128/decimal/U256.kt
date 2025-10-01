@@ -27,14 +27,12 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     internal var dw0: Long
     @JvmField
     internal var _bitLen: Short
-    internal var bitLen: Int
+    internal val bitLen: Int
         get() = _bitLen.toInt()
-        set(value: Int) { _bitLen = value.toShort() }
     @JvmField
     internal var _digitLen: Byte
-    internal var digitLen: Int
+    internal val digitLen: Int
         get() = _digitLen.toInt()
-        set(value: Int) { _digitLen = value.toByte() }
     init {
         this.dw3 = dw3
         this.dw2 = dw2
@@ -46,12 +44,12 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     fun u256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L;
-        bitLen = 0; digitLen = 0
+        updateDigitLenBitLen(0, 0)
     }
 
     fun u256SetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L;
-        bitLen = 1; digitLen = 1
+        updateDigitLenBitLen(1, 1)
     }
 
     internal inline fun u256IsZero() = bitLen == 0
@@ -87,13 +85,13 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
     fun updateDigitLenBitLen() {
-        bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
-        digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+        _bitLen = calcBitLen256(dw3, dw2, dw1, dw0).toShort()
+        _digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0).toByte()
     }
 
     fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
-        this.digitLen = digitLen
-        this.bitLen = bitLen
+        this._digitLen = digitLen.toByte()
+        this._bitLen = bitLen.toShort()
     }
 
     //FIXME this case can probably be accelerated because
@@ -178,12 +176,12 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
     internal inline fun u256EnableIndexSetAndZeroOut() {
-        digitLen = -1
+        _digitLen = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
     internal inline fun u256DisableIndexSetAndUpdateLengths() {
-        check(digitLen == -1)
+        check(_digitLen.toInt() == -1)
         updateDigitLenBitLen()
     }
 
@@ -197,7 +195,7 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     fun u256Set(x: U256) {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
-        bitLen = x.bitLen; digitLen = x.digitLen
+        _bitLen = x._bitLen; _digitLen = x._digitLen
     }
 
 
