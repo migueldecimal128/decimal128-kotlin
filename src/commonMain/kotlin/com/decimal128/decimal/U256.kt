@@ -195,7 +195,11 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun u256Set256(d3: Long, d2: Long, d1: Long, d0: Long)  = U256Set.u256Set256(this, d3, d2, d1, d0)
 
-    internal inline fun u256Set(x: U256) = U256Set.u256Set(this, x)
+    fun u256Set(x: U256) {
+        dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
+        bitLen = x.bitLen; digitLen = x.digitLen
+    }
+
 
     internal inline fun u256Set(str: String) = Int256ParsePrint.u256FromString(this, false, str)
 

@@ -37,11 +37,6 @@ object U256Set {
         u.updateDigitLenBitLen(digitLen, bitLen)
     }
 
-    fun u256Set(u: U256, x: U256) {
-        u.dw3 = x.dw3; u.dw2 = x.dw2; u.dw1 = x.dw1; u.dw0 = x.dw0
-        u.bitLen = x.bitLen; u.digitLen = x.digitLen
-    }
-
     fun u256Set(u: U256, car: IntArray)  = u256Set(u, car, Magia.nonZeroLimbLen(car))
 
     fun u256Set(u: U256, car: IntArray, carLen: Int) {
