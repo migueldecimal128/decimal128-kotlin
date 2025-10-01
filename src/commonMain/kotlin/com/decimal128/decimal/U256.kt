@@ -5,7 +5,7 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 @Suppress("NOTHING_TO_INLINE")
-open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
+open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     //constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     //constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -18,23 +18,31 @@ open class U256(d3: Long, d2: Long, d1: Long, d0: Long) {
     constructor(c: U256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
     @JvmField
-    internal var dw3 = d3
+    internal var dw3: Long
     @JvmField
-    internal var dw2 = d2
+    internal var dw2: Long
     @JvmField
-    internal var dw1 = d1
+    internal var dw1: Long
     @JvmField
-    internal var dw0 = d0
+    internal var dw0: Long
     @JvmField
-    internal var _bitLen: Short = calcBitLen256(d3, d2, d1, d0).toShort()
+    internal var _bitLen: Short
     internal var bitLen: Int
         get() = _bitLen.toInt()
         set(value: Int) { _bitLen = value.toShort() }
     @JvmField
-    internal var _digitLen: Byte = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0).toByte()
+    internal var _digitLen: Byte
     internal var digitLen: Int
         get() = _digitLen.toInt()
         set(value: Int) { _digitLen = value.toByte() }
+    init {
+        this.dw3 = dw3
+        this.dw2 = dw2
+        this.dw1 = dw1
+        this.dw0 = dw0
+        this._bitLen = calcBitLen256(dw3, dw2, dw1, dw0).toShort()
+        this._digitLen = U256Pow10.calcDigitLen256(this.bitLen, dw3, dw2, dw1, dw0).toByte()
+    }
 
     fun u256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L;
