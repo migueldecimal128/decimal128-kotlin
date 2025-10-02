@@ -11,13 +11,13 @@ import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val MIN_SPECIAL_VALUE = Short.MAX_VALUE - 2
-internal const val NON_FINITE_INF = Short.MAX_VALUE - 2
-internal const val NON_FINITE_QNAN = Short.MAX_VALUE - 1
-internal const val NON_FINITE_SNAN = Short.MAX_VALUE.toInt()
+internal const val MIN_SPECIAL_VALUE = 16381
+internal const val NON_FINITE_INF = 16381
+internal const val NON_FINITE_QNAN = 16382
+internal const val NON_FINITE_SNAN = 16383
 
-const val CAPPED_EXP_MIN = -32000
-const val CAPPED_EXP_MAX = 32000
+const val CAPPED_EXP_MIN = -16000
+const val CAPPED_EXP_MAX = 16000
 
 val DEFAULT_128_CONTEXT = DecimalContext.newDecimal128Context()
 

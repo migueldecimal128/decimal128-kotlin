@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
+
 data class DecEnv(
     val decFormat: DecFormat = DecFormat.DECIMAL_128,
     val decRounding: DecRounding = DecRounding.ROUND_TIES_TO_EVEN,
@@ -26,5 +28,15 @@ data class DecEnv(
         val blockVal = blockEnv.compute(block)
         decTraps?.delayedTrap(blockEnv)
         return blockVal
+    }
+
+    fun isRoundTowardNegative() = decRounding == ROUND_TOWARD_NEGATIVE
+
+    fun hasTrapHandler(decException: DecException) =
+        decTraps?.hasTrapHandler(decException) ?: false
+
+    fun signal(trapContext: DecExceptionContext): Decimal {
+        require(decTraps != null)
+        return decTraps.signal(trapContext)
     }
 }
