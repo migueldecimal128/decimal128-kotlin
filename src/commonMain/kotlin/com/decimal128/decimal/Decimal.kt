@@ -1,18 +1,15 @@
 package com.decimal128.decimal
 
-import kotlin.math.max
-import kotlin.math.min
-
 class Decimal private constructor(
     @field: JvmField internal val dw1: Long,
     @field: JvmField internal val dw0: Long,
-    @field: JvmField internal val lengths: Short,
+    @field: JvmField internal val packedLengths: Short,
     @field: JvmField internal val signExp: Short) {
 
     internal val bitLen: Int
-        get() = lengths.toInt() and 0x1FF
+        get() = packedLengths.toInt() and 0x1FF
     internal val digitLen: Int
-        get() = (lengths.toInt() and 0xFFFF) shr 9
+        get() = (packedLengths.toInt() and 0xFFFF) shr 9
 
     internal val sign: Boolean
         get() = signExp.toInt() < 0
@@ -70,13 +67,13 @@ class Decimal private constructor(
      }
 
     @Suppress("NOTHING_TO_INLINE")
-    internal inline fun isZero() = lengths.toInt() == 0
+    internal inline fun isZero() = packedLengths.toInt() == 0
 
     fun abs() = if (sign) negate() else this
 
     fun negate(): Decimal {
         return when {
-            qExp < NON_FINITE_INF -> Decimal(dw1, dw0, lengths, (signExp.toInt() xor 0x8000).toShort())
+            qExp < NON_FINITE_INF -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
             qExp == NON_FINITE_INF -> if (sign) POS_INFINITY else NEG_INFINITY
             qExp == NON_FINITE_QNAN -> this
             else -> NaN // sNaN -> qNaN

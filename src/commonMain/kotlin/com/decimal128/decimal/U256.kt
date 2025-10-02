@@ -26,20 +26,19 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     @JvmField
     internal var dw0: Long
     @JvmField
-    internal var _bitLen: Short
+    internal var packedLengths: Short
     internal val bitLen: Int
-        get() = _bitLen.toInt()
-    @JvmField
-    internal var _digitLen: Byte
+        get() = packedLengths.toInt() and 0x1FF
     internal val digitLen: Int
-        get() = _digitLen.toInt()
+        get() = (packedLengths.toInt() shr 9) and 0x07F
     init {
         this.dw3 = dw3
         this.dw2 = dw2
         this.dw1 = dw1
         this.dw0 = dw0
-        this._bitLen = calcBitLen256(dw3, dw2, dw1, dw0).toShort()
-        this._digitLen = U256Pow10.calcDigitLen256(this.bitLen, dw3, dw2, dw1, dw0).toByte()
+        val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
+        val digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+        this.packedLengths = packLengths(digitLen, bitLen)
     }
 
     fun u256SetZero() {
@@ -85,13 +84,13 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
     fun updateDigitLenBitLen() {
-        _bitLen = calcBitLen256(dw3, dw2, dw1, dw0).toShort()
-        _digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0).toByte()
+        val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
+        val digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+        updateDigitLenBitLen(digitLen, bitLen)
     }
 
     fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
-        this._digitLen = digitLen.toByte()
-        this._bitLen = bitLen.toShort()
+        this.packedLengths = packLengths(digitLen, bitLen)
     }
 
     //FIXME this case can probably be accelerated because
@@ -165,7 +164,7 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
     internal operator fun set(index: Int, value: Long) {
-        check(digitLen == -1)
+        check(packedLengths.toInt() == -1)
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -176,12 +175,12 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
     internal inline fun u256EnableIndexSetAndZeroOut() {
-        _digitLen = -1
+        packedLengths = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
     internal inline fun u256DisableIndexSetAndUpdateLengths() {
-        check(_digitLen.toInt() == -1)
+        check(packedLengths.toInt() == -1)
         updateDigitLenBitLen()
     }
 
@@ -195,7 +194,7 @@ open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     fun u256Set(x: U256) {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
-        _bitLen = x._bitLen; _digitLen = x._digitLen
+        packedLengths = x.packedLengths
     }
 
 
