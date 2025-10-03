@@ -72,6 +72,22 @@ data class DecEnv(
         return mutDec.set(decTraps.signal(trapContext))
     }
 
+    fun signalInvalid(mutDec: MutDec): MutDec {
+        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+            decFlags.set(INVALID_OPERATION)
+            return mutDec
+        }
+        return signal(INVALID_OPERATION, DecExceptionReason.OTHER, "whatever", mutDec)
+    }
+
+    fun signalDivByZero(mutDec: MutDec): MutDec {
+        if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
+            decFlags.set(DIV_BY_ZERO)
+            return mutDec
+        }
+        return signal(DIV_BY_ZERO, DecExceptionReason.OTHER, "whatever", mutDec)
+    }
+
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)
@@ -90,6 +106,11 @@ data class DecEnv(
         }
         val trap = if (decTraps.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
         return signal(trap, DecExceptionReason.OTHER, "whatever", mutDec)
+    }
+
+    fun operandIsSignalingNaN(mutDec: MutDec) {
+        if (hasTrapHandler(INVALID_OPERATION))
+            throw RuntimeException("invalid sNaN seen")
     }
 
 }

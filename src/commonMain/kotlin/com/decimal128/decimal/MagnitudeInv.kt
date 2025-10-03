@@ -9,4 +9,10 @@ object MagnitudeInv {
         //  Double -> DoubleDouble -> Decimal
         return MagnitudeDiv.magDiv(z, ONE, x, ctx)
     }
+
+    fun magInv(z: MutDec, x: MutDec, decEnv: DecEnv): Residue {
+        // TODO implement this as a Newton-Raphson
+        //  Double -> DoubleDouble -> Decimal
+        return MagnitudeDiv.magDiv(z, ONE, x, decEnv)
+    }
 }
