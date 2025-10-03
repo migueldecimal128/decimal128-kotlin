@@ -12,13 +12,13 @@ class TestMutDecMagSet {
 
     val verbose = false
 
-    class TC(val bdA: BigDecimal, val ctx: DecimalContext) {
-        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), DecimalContext(rd))
-        constructor(str: String) : this(BigDecimal(str), DecimalContext())
-        constructor(bdA: BigDecimal) : this(bdA, DecimalContext())
+    class TC(val bdA: BigDecimal, val decEnv: DecEnv) {
+        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), DecEnv().with(rd))
+        constructor(str: String) : this(BigDecimal(str), DecEnv())
+        constructor(bdA: BigDecimal) : this(bdA, DecEnv())
         val biA = bdA.unscaledValue()
         val expA = -bdA.scale()
-        val bdRounded = bdToIeeeDecimal128(bdA, ctx.getMathContext().roundingMode)
+        val bdRounded = bdToIeeeDecimal128(bdA, decEnv.decRounding.mapToRoundingMode())
         val biRounded = bdRounded.unscaledValue()
         val expRounded = -bdRounded.scale()
     }
@@ -113,10 +113,10 @@ class TestMutDecMagSet {
         return bd
     }
 
-    fun randDecimal128Context(): DecimalContext {
+    fun randDecimal128Context(): DecEnv {
         val i = random.nextInt(4)
-        val ctx = DecimalContext(DecRounding.fromValue(i))
-        return ctx
+        val decEnv = DecEnv().with(DecRounding.fromValue(i))
+        return decEnv
     }
 
     fun test1(case: TC) {
@@ -124,12 +124,12 @@ class TestMutDecMagSet {
         val bdRounded = case.bdRounded
         val biRounded = case.biRounded
         val expRounded = case.expRounded
-        val ctx = case.ctx
-        val roundingMode = ctx.getMathContext().roundingMode
+        val decEnv = case.decEnv
+        val roundingMode = decEnv.decRounding.mapToRoundingMode()
         val dec = MutDec()
         if (verbose)
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
-        dec.set(bdA, ctx)
+        dec.set(bdA, decEnv)
         val biCoeff = dec.coeffToBigInteger()
         if (verbose)
             println("coeff:$biCoeff + expQ:${dec.qExp}")

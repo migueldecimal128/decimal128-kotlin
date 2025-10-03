@@ -7,11 +7,11 @@ import java.math.BigDecimal.ONE
 
 class TestMutDecScaleB {
 
-    class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecimalContext) {
-        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecimalContext())
+    class TC(val bd: BigDecimal, val pow10: Int, val decEnv: DecEnv) {
+        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecEnv())
         val expected =
             bdToIeeeDecimal128(bd.scaleByPowerOfTen(pow10),
-                        ctx.roundingDirection.mapToRoundingMode())
+                        decEnv.decRounding.mapToRoundingMode())
     }
 
     val tcs = arrayOf(
@@ -41,7 +41,7 @@ class TestMutDecScaleB {
         val d = MutDec()
         d.set(bd)
         val s = MutDec()
-        s.scaleB(d, pow10, tc.ctx)
+        s.scaleB(d, pow10, tc.decEnv)
         val observed = (
                 if (s.isFinite())
                     BigDecimal(s.toString())

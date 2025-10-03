@@ -11,14 +11,14 @@ class TestMutDecMagMul {
 
     val verbose = false
 
-    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
-        constructor(strA: String, strB: String, rd: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
+    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val decEnv: DecEnv) {
+        constructor(strA: String, strB: String, decRounding: DecRounding) :
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv().with(decRounding))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecimalContext())
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecEnv())
 
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val rm = decEnv.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -74,18 +74,18 @@ class TestMutDecMagMul {
         return bd
     }
 
-    fun randDecimal128Context(): DecimalContext {
+    fun randDecimal128Context(): DecEnv {
         val i = random.nextInt(5)
-        val ctx = DecimalContext(DecRounding.fromValue(i))
-        return ctx
+        val decEnv = DecEnv().with(DecRounding.fromValue(i))
+        return decEnv
     }
 
     fun test1(tc: TC) {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val ctx = tc.ctx
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val decEnv = tc.decEnv
+        val rm = decEnv.decRounding.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA * bdB:$bdB (rm:$rm) => expected:$expected")
@@ -93,7 +93,7 @@ class TestMutDecMagMul {
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
         val decP = MutDec()
-        decP.setMul(decA, decB, ctx)
+        decP.setMul(decA, decB, decEnv)
         if (decP.qExp != NON_FINITE_INF)
             assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
         assertEquals(-expected.scale(), decP.qExp)

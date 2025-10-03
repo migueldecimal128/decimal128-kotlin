@@ -78,7 +78,7 @@ class TestMutDecFromString {
             println("$strVal bd:$bd => expected:$expected")
 
         val d = MutDec()
-        DecimalParsePrint.decFromString(d, strVal, false, DecimalContext())
+        DecimalParsePrint.decFromString(d, strVal, false, DecEnv())
         val observed = d
 
         val e = newDecimal(bd)

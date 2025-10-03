@@ -13,15 +13,15 @@ class TestMutDecMagSub {
 
     val verbose = false
 
-    class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: DecimalContext) {
+    class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val decEnv: DecEnv) {
         constructor(strA: String, strB: String, rd: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv().with(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecimalContext())
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecEnv())
 
         val flipFlop = bdXraw.compareTo(bdYraw) >= 0
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val rm = decEnv.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(if (flipFlop) bdXraw else bdYraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(if (flipFlop) bdYraw else bdXraw, rm)
@@ -151,18 +151,18 @@ class TestMutDecMagSub {
         return bd
     }
 
-    fun randDecimal128Context(): DecimalContext {
+    fun randDecimal128Context(): DecEnv {
         val i = random.nextInt(4)
-        val ctx = DecimalContext(DecRounding.fromValue(i))
-        return ctx
+        val decEnv = DecEnv().with(DecRounding.fromValue(i))
+        return decEnv
     }
 
     fun test1(tc: TC) {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val ctx = tc.ctx
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val decEnv = tc.decEnv
+        val rm = decEnv.decRounding.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA - bdB:$bdB (rm:$rm) => expected:$expected")
@@ -170,7 +170,7 @@ class TestMutDecMagSub {
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
         val decD = MutDec()
-        decD.setSub(decA, decB, ctx)
+        decD.setSub(decA, decB, decEnv)
         val expectedCoeff = expected.unscaledValue()
         val expectedQExp = -expected.scale()
         val observedCoeff = decD.coeffToBigInteger()

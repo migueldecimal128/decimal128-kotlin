@@ -7,15 +7,15 @@ class TestMutDecQuantize {
 
     val verbose = false
 
-    class TC(val bdX: BigDecimal, val bdY: BigDecimal, val ctx: DecimalContext) {
+    class TC(val bdX: BigDecimal, val bdY: BigDecimal, val decEnv: DecEnv) {
         constructor(strX: String, strY: String) :
-                this(BigDecimal(strX), BigDecimal(strY), DecimalContext())
+                this(BigDecimal(strX), BigDecimal(strY), DecEnv())
         val targetScale = bdY.scale()
         val targetQ = -targetScale
         val expected =
             bdToIeeeDecimal128(bdX.setScale(targetScale,
-                ctx.roundingDirection.mapToRoundingMode()),
-                ctx.roundingDirection.mapToRoundingMode())
+                decEnv.decRounding.mapToRoundingMode()),
+                decEnv.decRounding.mapToRoundingMode())
     }
 
     val tcs = arrayOf(
@@ -41,7 +41,7 @@ class TestMutDecQuantize {
         val f = MutDec()
         d.set(bdX)
         e.set(bdY)
-        f.quantize(d,e, tc.ctx)
+        f.quantize(d,e, tc.decEnv)
         if (verbose)
             println("f:$f")
     }

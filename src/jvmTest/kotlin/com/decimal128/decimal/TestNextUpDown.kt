@@ -57,21 +57,21 @@ class TestNextUpDown {
         val n = newDecimal(bd)
         val up = MutDec()
         val down = MutDec()
-        val ctx = DecimalContext()
-        up.setNextUp(n, ctx)
-        down.setNextDown(n, ctx)
+        val decEnv = DecEnv()
+        up.setNextUp(n, decEnv)
+        down.setNextDown(n, decEnv)
 
         println("n:$n up:$up down:$down")
 
         val t = MutDec()
 
-        t.setNextUp(down, ctx)
+        t.setNextUp(down, decEnv)
         assertEquals(n, t)
 
-        t.setNextDown(up, ctx)
+        t.setNextDown(up, decEnv)
         assertEquals(n, t)
 
-        assert(n.compareTo(up, ctx) < 0)
-        assert(n.compareTo(down, ctx) > 0)
+        assert(n.compareTo(up, decEnv) < 0)
+        assert(n.compareTo(down, decEnv) > 0)
     }
 }

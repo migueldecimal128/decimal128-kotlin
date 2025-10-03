@@ -38,24 +38,24 @@ fun U256.coeffToBigInteger(): BigInteger {
     return bi
 }
 
-fun newDecimal(bd: BigDecimal): MutDec = newDecimal(bd, DecimalContext.newDecimal128Context())
+fun newDecimal(bd: BigDecimal): MutDec = newDecimal(bd, DecEnv())
 
-fun newDecimal(bd: BigDecimal, ctx: DecimalContext): MutDec {
+fun newDecimal(bd: BigDecimal, decEnv: DecEnv): MutDec {
     val dec = MutDec()
-    dec.set(bd, ctx)
+    dec.set(bd, decEnv)
     return dec
 }
 
-fun MutDec.set(bd: BigDecimal) = this.set(bd, DecimalContext.newDecimal128Context())
+fun MutDec.set(bd: BigDecimal) = this.set(bd, DecEnv())
 
-fun MutDec.set(bd: BigDecimal, ctx: DecimalContext) {
+fun MutDec.set(bd: BigDecimal, decEnv: DecEnv) {
     this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
-    this.roundAndFinalize(Residue.EXACT, ctx)
+    this.roundAndFinalize(Residue.EXACT, decEnv)
 }
 
-fun MutDec.set(bi: BigInteger, ctx: DecimalContext) {
+fun MutDec.set(bi: BigInteger, decEnv: DecEnv) {
     if (bi.bitLength() <= 256) {
         this.qExp = 0
         val sign = bi.signum() < 0
@@ -68,7 +68,7 @@ fun MutDec.set(bi: BigInteger, ctx: DecimalContext) {
         u256Set256(d3, d2, d1, d0)
     }
     val bd = BigDecimal(bi, MathContext(70, RoundingMode.HALF_EVEN))
-    set(bd, DecimalContext.newDecimal128Context())
+    set(bd, DecEnv())
 }
 
 fun newDoubleDoubleFromBigInteger(bi: BigInteger): DoubleDouble {
@@ -110,8 +110,5 @@ private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HAL
 
 fun DecRounding.mapToRoundingMode() = ROUNDING_MODE_MAP[value]
 
-fun DecimalContext.getMathContext() : MathContext {
-    return MathContext(precision, roundingDirection.mapToRoundingMode())
-}
 
 

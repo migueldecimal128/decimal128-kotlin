@@ -11,14 +11,14 @@ class TestMutDecMagnitudeDiv {
 
     val verbose = false
 
-    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
+    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val decEnv: DecEnv) {
         constructor(strA: String, strB: String, rd: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv().with(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecimalContext())
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecEnv())
 
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val rm = decEnv.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -82,18 +82,18 @@ class TestMutDecMagnitudeDiv {
         return bd
     }
 
-    fun randDecimal128Context(): DecimalContext {
+    fun randDecimal128Context(): DecEnv {
         val i = random.nextInt(4)
-        val ctx = DecimalContext(DecRounding.fromValue(i))
-        return ctx
+        val decEnv = DecEnv().with(DecRounding.fromValue(i))
+        return decEnv
     }
 
     fun test1(tc: TC) {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val ctx = tc.ctx
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val decEnv = tc.decEnv
+        val rm = decEnv.decRounding.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")
@@ -101,7 +101,7 @@ class TestMutDecMagnitudeDiv {
         val decA = newDecimal(bdA)
         val decB = newDecimal(bdB)
         val decQ = MutDec()
-        decQ.setDiv(decA, decB, ctx)
+        decQ.setDiv(decA, decB, decEnv)
         if (verbose)
             println("magQ:$decQ")
         val biExpected = expected.unscaledValue()

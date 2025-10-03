@@ -196,7 +196,7 @@ class TestU256ScaleDown {
         val coeffA = newCoeff(case.biA)
         val coeffObserved = U256()
         val pow10 = case.pow10
-        val ctx = DecimalContext(case.decRounding)
+        val decEnv = DecEnv().with(case.decRounding)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.decRounding} expected:$expected")
         coeffObserved.u256SetScaleDownPow10(coeffA, pow10)
