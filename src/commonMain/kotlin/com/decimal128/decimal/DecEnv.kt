@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecException.*
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 
 data class DecEnv(
@@ -10,6 +11,21 @@ data class DecEnv(
     val decFlags: DecFlags = DecFlags(),
     val decTemps: DecTemps = DecTemps()
 ) {
+    val precision: Int
+        get() = decFormat.precision
+    val qTiny: Int
+        get() = decFormat.qTiny
+    val qMax: Int
+        get() = decFormat.qMax
+    val eMax: Int
+        get() = decFormat.eMax
+    val eMin: Int
+        get() = decFormat.eMin
+
+    companion object {
+        val DEFAULT_DECIMAL_128 = DecEnv()
+    }
+
     fun with(newDecFormat: DecFormat) =
         DecEnv(newDecFormat, decRounding, decPrefs, decTraps, decFlags, decTemps)
 
@@ -39,4 +55,41 @@ data class DecEnv(
         require(decTraps != null)
         return decTraps.signal(trapContext)
     }
+
+    fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, d: Decimal): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
+            decFlags.set(decException)
+            return d
+        }
+        val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
+        return decTraps.signal(trapContext)
+    }
+
+    fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, mutDec: MutDec): MutDec {
+        if (decTraps == null || !decTraps.hasTrapHandler(decException))
+            return mutDec
+        val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
+        return mutDec.set(decTraps.signal(trapContext))
+    }
+
+    fun signalInexactOverflow(mutDec: MutDec): MutDec {
+        if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(OVERFLOW)
+            decFlags.set(INEXACT)
+            return mutDec
+        }
+        val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
+        return signal(trap, DecExceptionReason.OTHER, "whatever", mutDec)
+    }
+
+    fun signalInexactUnderflow(mutDec: MutDec): MutDec {
+        if (decTraps == null || !decTraps.hasTrapHandler(UNDERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(UNDERFLOW)
+            decFlags.set(INEXACT)
+            return mutDec
+        }
+        val trap = if (decTraps.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
+        return signal(trap, DecExceptionReason.OTHER, "whatever", mutDec)
+    }
+
 }

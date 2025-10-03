@@ -1,34 +1,39 @@
 package com.decimal128.decimal
 
-class DecFlags {
-    var invalid = false
-        private set
-    var divByZero = false
-        private set
-    var overflow = false
-        private set
-    var underflow = false
-        private set
-    var inexact = false
-        private set
+import com.decimal128.decimal.DecException.*
 
-    var trapInvalid = false
-        private set
+class DecFlags {
+    var flags = 0
+
+    fun set(decException: DecException) {
+        flags = flags or (1 shl decException.ordinal)
+    }
+
+    fun reset(decException: DecException) {
+        flags = flags and (1 shl decException.ordinal).inv()
+    }
+
+    fun isSet(decException: DecException): Boolean {
+        return (flags and (1 shl decException.ordinal)) != 0
+    }
 
     fun trapInvalid(t: Boolean) {
-        trapInvalid = t
+        if (t)
+            set(INVALID_OPERATION)
+        else
+            reset(INVALID_OPERATION)
     }
 
     //
-    fun signalInexact(z: MutDec): MutDec { inexact = true; return z }
-    fun signalUnderflow(z: MutDec): MutDec { underflow = true; return z }
-    fun signalInexactUnderflow(z: MutDec): MutDec { inexact = true; underflow = true; return z }
-    fun signalInexactOverflow(z: MutDec): MutDec { inexact = true; overflow = true; return z}
-    fun signalDivByZero(z: MutDec): MutDec { divByZero = true; return z }
-    fun signalInvalid(z: MutDec): MutDec { invalid = true; return z }
+    fun signalInexact(z: MutDec): MutDec { set(INEXACT); return z }
+    fun signalUnderflow(z: MutDec): MutDec { set(UNDERFLOW); return z }
+    fun signalInexactUnderflow(z: MutDec): MutDec { set(INEXACT); set(UNDERFLOW); return z }
+    fun signalInexactOverflow(z: MutDec): MutDec { set(INEXACT); set(OVERFLOW); return z}
+    fun signalDivByZero(z: MutDec): MutDec { set(DIV_BY_ZERO); return z }
+    fun signalInvalid(z: MutDec): MutDec { set(INVALID_OPERATION); return z }
 
     fun operandIsSignalingNaN(mutDec: MutDec) {
-        if (trapInvalid)
+        if (isSet(INVALID_OPERATION))
             throw RuntimeException("invalid sNaN seen")
     }
 

@@ -7,6 +7,8 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
+import com.decimal128.decimal.DecException.INEXACT
+import com.decimal128.decimal.DecExceptionReason.IS_INEXACT
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
@@ -284,6 +286,13 @@ class MutDec() : U256() {
         //FIXME - see IEEE754r 6.2
     }
 
+    internal fun setNaN(payload: Int, decEnv: DecEnv) {
+        sign = false
+        u256Set64(payload.toLong())
+        qExp = NON_FINITE_QNAN
+        //FIXME - see IEEE754r 6.2
+    }
+
     internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
         this.sign = sign
         this.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
@@ -369,8 +378,28 @@ class MutDec() : U256() {
         return this
     }
 
+    fun setMaxFiniteMagnitude(decEnv: DecEnv): MutDec {
+        qExp = decEnv.qMax
+        // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
+        // 10000000000000000000000000000000000 (10**34)
+        val offset = U256Pow10.pow10Offset(decEnv.precision)
+        if (decEnv.precision < MIN_POW10_DIGIT_LEN_128) {
+            super.u256Set64(POW10[offset] - 1)
+        } else if (decEnv.precision < MIN_POW10_DIGIT_LEN_192) {
+            super.u256Set128(POW10[offset + 1], POW10[offset] - 1)
+        } else
+            throw IllegalArgumentException()
+        return this
+    }
+
     fun setMinFiniteMagnitude(ctx: DecimalContext): MutDec {
         qExp = ctx.qTiny
+        super.u256SetOne()
+        return this
+    }
+
+    fun setMinFiniteMagnitude(decEnv: DecEnv): MutDec {
+        qExp = decEnv.qTiny
         super.u256SetOne()
         return this
     }
@@ -1280,6 +1309,146 @@ class MutDec() : U256() {
             }
             // zero case
             qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
+        }
+        return this
+    }
+
+    internal fun roundAndFinalize(inboundResidue: Residue, decEnv: DecEnv): MutDec {
+        val decRounding = decEnv.decRounding
+        val eMax = decEnv.eMax
+        val precision = decEnv.precision
+        if (qExp < MIN_SPECIAL_VALUE) {
+            if (bitLen != 0) {
+                var eExp = qExp + (digitLen - 1)
+                var qMax = decEnv.qMax
+                // IEEE754-2008 7.5: detect tininess on the unrounded result
+                val isTiny = (eExp < decEnv.eMin)
+
+                val excess = max(0, digitLen - precision)
+                val myQTiny = decEnv.qTiny - excess      // threshold for normalized
+
+                // 2) Normalized result: round only if bd has >precision digits
+                if (eExp <= eMax && qExp >= myQTiny) {
+                    var totalResidue = inboundResidue
+                    if (qExp > qMax) {
+                        // clamp/fold-over
+                        val qExcess = qExp - qMax
+                        U256ScalePow10.u256ScaleUpPow10(this, this, qExcess)
+                        check (digitLen <= precision)
+                        qExp -= qExcess
+                        check (qExp == qMax)
+                        check (inboundResidue == EXACT)
+                        return this
+                    }
+                    if (excess != 0) {
+                        val roundingResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess)
+                        qExp += excess
+                        check(digitLen == precision)
+                        check(eExp == qExp + (digitLen - 1))
+                        totalResidue = roundingResidue.merge(inboundResidue)
+                    }
+
+                    if (totalResidue == EXACT) {
+                        // 7.5 Underflow
+                        // If the rounded result is exact, no flag is raised
+                        // and no inexact exception is signaled.
+                        return this
+                    }
+
+                    val roundUp = totalResidue.ulpRoundUp(decRounding.negate(sign), super.dw0)
+                    if (roundUp)
+                        super.u256MutateIncrement()
+                    if (!roundUp || digitLen <= precision) {
+                        return when {
+                            isTiny && decEnv.hasTrapHandler(DecException.UNDERFLOW) ->
+                                this.set(decEnv.signal(DecExceptionContext(
+                                            DecException.UNDERFLOW, DecExceptionReason.IS_TINY,
+                                            "roundAndFinalize", decEnv
+                                        )
+                                    )
+                                )
+
+                            decEnv.hasTrapHandler(INEXACT) ->
+                                this.set(decEnv.signal(DecExceptionContext(INEXACT, IS_INEXACT,
+                                    "roundAndFinalize", decEnv)))
+
+                            else -> this
+                        }
+                    }
+                    check(digitLen == precision + 1)
+                    // if we rolled into another digit because of roundup
+                    // then the result is EXACTly divisible by 10
+                    val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
+                    check(residueExact == Residue.EXACT)
+                    ++qExp
+                    check(qExp + (digitLen - 1) == eExp + 1)
+                    ++eExp
+                    if (eExp <= eMax) {
+                        if (decEnv.hasTrapHandler(INEXACT)) {
+                            return this.set(
+                                decEnv.signal(DecExceptionContext(INEXACT, IS_INEXACT,
+                                    "roundAndFinalize", decEnv)))
+                        }
+                    }
+                    // rounding caused overflow
+                    // fall into next conditional and flow over
+                }
+
+                // 1) Overflow => +/- Infinity
+                if (eExp > eMax) {
+                    check(! isTiny)
+                    // overflow IEEE754-2008 7.4 Overflow page 37
+                    if (decRounding.overflowsToInfinity(sign)) {
+                        setInfinite(sign)
+                    } else {
+                        setMaxFiniteMagnitude(decEnv)
+                    }
+                    return decEnv.signalInexactOverflow(this)
+                }
+
+                // 7.5.1: subnormal rounding (tiny result stays nonzero)
+                check(isTiny)
+                val myQMin = decEnv.qTiny - digitLen           // threshold for subnormal cohort
+                val overlap = qExp - myQMin
+                if (overlap >= 0) {
+                    val excess2 = super.digitLen - overlap
+                    val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess2)
+                    qExp += excess2
+                    check(digitLen <= precision)
+                    check(eExp == qExp + (digitLen - 1))
+
+                    val totalResidue = scaleResidue.merge(inboundResidue)
+                    if (totalResidue == EXACT) {
+                        // 7.5 Underflow
+                        // If the rounded result is exact, no flag is raised
+                        // and no inexact exception is signaled.
+                        return this
+                    }
+                    val roundUp = totalResidue.ulpRoundUp(decRounding.negate(sign), super.dw0)
+                    if (roundUp) {
+                        super.u256MutateIncrement()
+                        if (digitLen > precision) {
+                            check(digitLen == precision + 1)
+                            // if we rolled into another digit because of roundup
+                            // then the result is definitely divisible by 10
+                            val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
+                            check(residueExact == Residue.EXACT)
+                            ++qExp
+                        }
+                    }
+                } else {
+                    // underflow ... swamped non-zero value
+                    if (decRounding.underflowsToZero(sign)) {
+                        super.u256SetZero()
+                        qExp = decEnv.qTiny
+                    } else {
+                        setMinFiniteMagnitude(decEnv)
+                    }
+                }
+                return decEnv.signalInexactUnderflow(this)
+            }
+            // zero case
+            qExp = max(min(qExp, decEnv.qMax), decEnv.qTiny)
         }
         return this
     }

@@ -137,6 +137,9 @@ object DecimalParsePrint {
     fun decFromString(x: MutDec, str: String, zeroNanPayload: Boolean, ctx: DecimalContext) =
         decFromText(x, StringLatin1Iterator(str), zeroNanPayload, ctx)
 
+    fun decFromString(x: MutDec, str: String, zeroNanPayload: Boolean, decEnv: DecEnv) =
+        decFromText(x, StringLatin1Iterator(str), zeroNanPayload, decEnv)
+
     private fun decFromText(x: MutDec, src: Latin1Iterator, zeroNanPayload: Boolean, ctx: DecimalContext) {
         val maxPayloadDigitLen = ctx.precision - 1
         when {
@@ -146,6 +149,18 @@ object DecimalParsePrint {
             isValidBidHexText(x, src) -> return
             isValidDpdHexText(x, src) -> return
             else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, ctx)
+        }
+    }
+
+    private fun decFromText(x: MutDec, src: Latin1Iterator, zeroNanPayload: Boolean, decEnv: DecEnv) {
+        val maxPayloadDigitLen = decEnv.precision - 1
+        when {
+            isFiniteValueText(x, src, decEnv) -> return
+            isInfinityText(x, src) -> return
+            isNanText(x, src, maxPayloadDigitLen, zeroNanPayload) -> return
+            isValidBidHexText(x, src) -> return
+            isValidDpdHexText(x, src) -> return
+            else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, decEnv)
         }
     }
 
@@ -257,6 +272,117 @@ object DecimalParsePrint {
         val stickyBit = (-stickyBits) ushr 31
         val residue = Residue.residueFrom(roundBit, stickyBit)
         x.roundAndFinalize(residue, ctx)
+        return true
+    }
+
+    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, decEnv: DecEnv): Boolean {
+        var hasCoefficientDigit = false
+        var significantDigitCount = 0 // does not count leading zeros
+        var hasDot = false
+        var hasExp = false
+        var hasExpDigit = false
+        var expSign = false
+        var expSignificantDigitCount = 0
+
+        var ch = src.nextChar()
+        var chLast = '\u0000'
+
+        val sign = ch == '-'
+        if (ch == '-' || ch == '+')
+            ch = src.nextChar()
+        var fractionalDigitCount = 0
+        var coeff19 = 0L
+        var coeff34 = 0L
+        var guardDigit = 0
+        var stickyBits = 0
+        var exp = 0
+
+        while (ch in '0'..'9' || ch == '.' || ch == '_') {
+            when {
+                ch in '0'..'9' -> {
+                    val n = ch - '0'
+                    hasCoefficientDigit = true
+                    significantDigitCount += (-(n or significantDigitCount)) ushr 31
+                    if (significantDigitCount <= 19) {
+                        coeff19 = coeff19 * 10L + n
+                    } else if (significantDigitCount <= 34) {
+                        coeff34 = coeff34 * 10L + n
+                    } else if (significantDigitCount == 35) {
+                        guardDigit = n
+                    } else {
+                        stickyBits = stickyBits or n
+                    }
+                    if (hasDot)
+                        ++fractionalDigitCount
+                }
+                ch == '.' -> {
+                    if (hasDot)
+                        return false
+                    if (chLast == '_')
+                        return false
+                    hasDot = true
+                }
+                ch == '_' -> {
+                    if (! hasCoefficientDigit)
+                        return false
+                    if (hasDot && fractionalDigitCount == 0)
+                        return false
+                }
+            }
+            chLast = ch
+            ch = src.nextChar()
+        }
+        if (ch == 'E' || ch == 'e') {
+            if (chLast == '_')
+                return false
+            hasExp = true
+            ch = src.nextChar()
+            if (ch == '_')
+                return false
+            if (ch == '+' || ch == '-') {
+                expSign = ch == '-'
+                ch = src.nextChar()
+            }
+            while (ch in '0'..'9' || ch == '_') {
+                if (ch != '_') {
+                    hasExpDigit = true
+                    val eDigit = ch - '0'
+                    expSignificantDigitCount +=
+                        (eDigit or -expSignificantDigitCount) ushr 31
+                    exp = exp * 10 + (ch - '0')
+                } else {
+                    if (! hasExpDigit)
+                        return false
+                }
+                chLast = ch
+                ch = src.nextChar()
+            }
+        }
+        if (ch != '\u0000' ||
+            chLast == '_' ||
+            ! hasCoefficientDigit ||
+            hasExp && !hasExpDigit ||
+            expSignificantDigitCount > 9)
+            return false
+        // we have at least one digit
+        val coeffDigitCount = min(34, significantDigitCount)
+        x.u256Set64(coeff19)
+        if (coeffDigitCount > 19) {
+            val pow10 = coeffDigitCount - 19
+            x.u256MutateFmaPow10(pow10, coeff34)
+        }
+        x.sign = sign
+        val signedExp = if (expSign) -exp else exp
+        val integerDigitCount = significantDigitCount - fractionalDigitCount
+        val discardedIntegerDigitCount = max(0, integerDigitCount - 34)
+        val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
+        x.qExp = qExp
+        if (((guardDigit or stickyBits) == 0) && (qExp >= decEnv.qTiny) && (qExp <= decEnv.qMax))
+            return true
+        val roundBit = if (guardDigit < 5) 0 else 1
+        val stickyBit = (-stickyBits) ushr 31
+        val residue = Residue.residueFrom(roundBit, stickyBit)
+        x.roundAndFinalize(residue, decEnv)
         return true
     }
 

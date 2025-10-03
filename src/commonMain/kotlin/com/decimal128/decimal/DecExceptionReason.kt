@@ -9,5 +9,9 @@ enum class DecExceptionReason {
     INVALID_CONVERSION,         // e.g., fromString("abc")
     INVALID_SQUARE_ROOT,        // e.g., sqrt(-1)
     INVALID_QUANTIZE,           // e.g., quantize(Infinity, finite)
+
+    IS_TINY,
+    IS_INEXACT,
+
     OTHER,                       // A catch-all
 }
