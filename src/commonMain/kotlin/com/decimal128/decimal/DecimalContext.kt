@@ -74,27 +74,4 @@ class DecimalContext(val decFormat: DecFormat, val roundingDirection: DecRoundin
         return String(bytes, 0, ib)
     }
 
-    private fun add(x: MutDec, y: MutDec) = MutDec.newAdd(x, y, this)
-
-    private fun subtract(x: MutDec, y: MutDec) = MutDec.newSub(x, y, this)
-
-    private fun multiply(x: MutDec, y: MutDec) = MutDec.newMul(x, y, this)
-
-    private fun divide(x: MutDec, y: MutDec) = MutDec.newDiv(x, y, this)
-
-    operator fun MutDec.plus(other: MutDec): MutDec = this@DecimalContext.add(this, other)
-    operator fun MutDec.minus(other: MutDec): MutDec = this@DecimalContext.subtract(this, other)
-    operator fun MutDec.times(other: MutDec): MutDec = this@DecimalContext.multiply(this, other)
-    operator fun MutDec.div(other: MutDec): MutDec = this@DecimalContext.divide(this, other)
-
-    private fun mutateAdd(x: MutDec, y: MutDec) = x.mutateAdd(y, this)
-    private fun mutateSub(x: MutDec, y: MutDec) = x.mutateSub(y, this)
-    private fun mutateMul(x: MutDec, y: MutDec) = x.mutateMul(y, this)
-    private fun mutateDiv(x: MutDec, y: MutDec) = x.mutateDiv(y, this)
-
-    operator fun MutDec.plusAssign(other: MutDec) = this@DecimalContext.mutateAdd(this, other)
-    operator fun MutDec.minusAssign(other: MutDec) = this@DecimalContext.mutateSub(this, other)
-    operator fun MutDec.timesAssign(other: MutDec) = this@DecimalContext.mutateMul(this, other)
-    operator fun MutDec.divAssign(other: MutDec) = this@DecimalContext.mutateDiv(this, other)
-
 }

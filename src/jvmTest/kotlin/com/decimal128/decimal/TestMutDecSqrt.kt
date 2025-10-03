@@ -88,8 +88,8 @@ class TestMutDecSqrt{
         val dec = MutDec()
         val decSqrt = MutDec()
         dec.set(tc.bd)
-        val ctx = DecimalContext.newDecimal128Context()
-        decSqrt.setSqrt(dec, ctx)
+        val decEnv = DecEnv()
+        decSqrt.setSqrt(dec, decEnv)
         val expected = tc.sqrt
         assertEquals(expected.unscaledValue(), decSqrt.coeffToBigInteger())
         assertEquals(-expected.scale(), decSqrt.qExp)
