@@ -7,7 +7,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
-import com.decimal128.decimal.DecEnv.Companion.DEFAULT_DECIMAL_128
+import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
@@ -31,11 +31,11 @@ class MutDec() : U256() {
     }
 
     constructor(str: String): this() {
-        DecimalParsePrint.decFromString(this, str, false, DEFAULT_DECIMAL_128)
+        DecimalParsePrint.decFromString(this, str, false, DECIMAL128)
     }
 
     constructor(str: String, zeroNanPayload: Boolean) : this() {
-        DecimalParsePrint.decFromString(this, str, zeroNanPayload, DEFAULT_DECIMAL_128)
+        DecimalParsePrint.decFromString(this, str, zeroNanPayload, DECIMAL128)
     }
 
     constructor(other: MutDec) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
@@ -45,23 +45,23 @@ class MutDec() : U256() {
 
         fun newInfinity(sign: Boolean = false) = MutDec().setInfinite(sign)
 
-        fun newAbs(x: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) = MutDec(x).mutateAbs()
+        fun newAbs(x: MutDec, decEnv: DecEnv = DECIMAL128) = MutDec(x).mutateAbs()
 
-        fun newAdd(x: MutDec, y: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) =
+        fun newAdd(x: MutDec, y: MutDec, decEnv: DecEnv = DECIMAL128) =
             addImpl(MutDec(), x, y.sign, y, decEnv)
 
-        fun newSub(x: MutDec, y: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) =
+        fun newSub(x: MutDec, y: MutDec, decEnv: DecEnv = DECIMAL128) =
             addImpl(MutDec(), x, !y.sign, y, decEnv)
 
-        fun newMul(x: MutDec, y: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) =
+        fun newMul(x: MutDec, y: MutDec, decEnv: DecEnv = DECIMAL128) =
             MutDec().setMul(x, y, decEnv)
 
-        fun newFma(x: MutDec, y: MutDec, z: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) =
+        fun newFma(x: MutDec, y: MutDec, z: MutDec, decEnv: DecEnv = DECIMAL128) =
             MutDec().setFma(x, y, z, decEnv)
 
-        fun newNegate(x: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) = MutDec(x).mutateNegate()
+        fun newNegate(x: MutDec, decEnv: DecEnv = DECIMAL128) = MutDec(x).mutateNegate()
 
-        fun newDiv(x: MutDec, y: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) = MutDec().setDiv(x, y, decEnv)
+        fun newDiv(x: MutDec, y: MutDec, decEnv: DecEnv = DECIMAL128) = MutDec().setDiv(x, y, decEnv)
 
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, decEnv: DecEnv): MutDec {
             val qMax = max(x.qExp, y.qExp)
@@ -317,7 +317,7 @@ class MutDec() : U256() {
     }
 
     fun set(str: String): MutDec {
-        DecimalParsePrint.decFromString(this, str, false, DEFAULT_DECIMAL_128)
+        DecimalParsePrint.decFromString(this, str, false, DECIMAL128)
         return this
     }
 

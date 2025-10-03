@@ -27,7 +27,9 @@ data class DecEnv(
         get() = decFlags.isSet(OVERFLOW)
 
     companion object {
-        val DEFAULT_DECIMAL_128 = DecEnv()
+        val DECIMAL64 = DecEnv(DecFormat.DECIMAL_64)
+        val DECIMAL128 = DecEnv(DecFormat.DECIMAL_128)
+        val DECIMAL128_EXTENDED = DecEnv(DecFormat.DECIMAL_128_EXTENDED)
     }
 
     fun with(newDecFormat: DecFormat) =
@@ -134,4 +136,8 @@ data class DecEnv(
 
     fun newAdd(x: MutDec, y: MutDec) = MutDec.newAdd(x, y, this)
 
+    // Member-extension operator overloads:
+    operator fun Decimal.plus(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, this@DecEnv)
+    operator fun Decimal.minus(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, this@DecEnv)
+    operator fun Decimal.times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, this@DecEnv)
 }

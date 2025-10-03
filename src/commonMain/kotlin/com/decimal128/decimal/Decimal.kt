@@ -89,6 +89,16 @@ class Decimal private constructor(
     }
 
 
+    fun add(y: Decimal, decEnv: DecEnv) = D128Add.addImpl(this, y.sign, y, decEnv)
 
+    operator fun plus(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DecEnv.DECIMAL128)
+    operator fun minus(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DecEnv.DECIMAL128)
+    operator fun times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DecEnv.DECIMAL128)
+
+    override fun toString(): String {
+        val mutDec = MutDec()
+        mutDec.set(this)
+        return mutDec.toString()
+    }
 
 }
