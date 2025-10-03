@@ -8,8 +8,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
 import com.decimal128.decimal.DecEnv.Companion.DEFAULT_DECIMAL_128
-import com.decimal128.decimal.DecException.INEXACT
-import com.decimal128.decimal.DecExceptionReason.IS_INEXACT
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
@@ -483,6 +481,11 @@ class MutDec() : U256() {
         qExp = NON_FINITE_SNAN
     }
 
+    fun setSNaN(decEnv: DecEnv) {
+        setZero()
+        qExp = NON_FINITE_SNAN
+    }
+
     internal fun setSNaN(payload: Int, ctx: DecimalContext) {
         sign = false
         u256Set64(payload.toLong())
@@ -692,6 +695,9 @@ class MutDec() : U256() {
 
     // IEEE754-2008 5.4.1
     fun setSub(x: MutDec, y: MutDec, ctx: DecimalContext) = addImpl(this, x, !y.sign, y, ctx)
+
+    // IEEE754-2008 5.4.1
+    fun setSub(x: MutDec, y: MutDec, decEnv: DecEnv) = addImpl(this, x, !y.sign, y, decEnv)
 
     // IEEE754-2008 5.4.1
     fun setMul(x: MutDec, y: MutDec, ctx: DecimalContext): MutDec {
@@ -1878,7 +1884,7 @@ class MutDec() : U256() {
     internal fun roundAndFinalize(inboundResidue: Residue, decEnv: DecEnv) =
         roundAndFinalize(inboundResidue, decEnv.decRounding, decEnv)
 
-    internal fun roundAndFinalize(inboundResidue: Residue, decRounding: DecRounding, decEnv: DecEnv): MutDec {
+    private fun roundAndFinalize(inboundResidue: Residue, decRounding: DecRounding, decEnv: DecEnv): MutDec {
         val eMax = decEnv.eMax
         val precision = decEnv.precision
         if (qExp < MIN_SPECIAL_VALUE) {
@@ -1922,23 +1928,8 @@ class MutDec() : U256() {
                     val roundUp = totalResidue.ulpRoundUp(decRounding.negate(sign), super.dw0)
                     if (roundUp)
                         super.u256MutateIncrement()
-                    if (!roundUp || digitLen <= precision) {
-                        return when {
-                            isTiny && decEnv.hasTrapHandler(DecException.UNDERFLOW) ->
-                                this.set(decEnv.signal(DecExceptionContext(
-                                            DecException.UNDERFLOW, DecExceptionReason.IS_TINY,
-                                            "roundAndFinalize", decEnv
-                                        )
-                                    )
-                                )
-
-                            decEnv.hasTrapHandler(INEXACT) ->
-                                this.set(decEnv.signal(DecExceptionContext(INEXACT, IS_INEXACT,
-                                    "roundAndFinalize", decEnv)))
-
-                            else -> this
-                        }
-                    }
+                    if (!roundUp || digitLen <= precision)
+                        return if (isTiny) decEnv.signalInexactUnderflow(this) else decEnv.signalInexact(this)
                     check(digitLen == precision + 1)
                     // if we rolled into another digit because of roundup
                     // then the result is EXACTly divisible by 10
@@ -1947,9 +1938,8 @@ class MutDec() : U256() {
                     ++qExp
                     check(qExp + (digitLen - 1) == eExp + 1)
                     ++eExp
-                    if (eExp <= eMax) {
+                    if (eExp <= eMax)
                         return decEnv.signalInexact(this)
-                    }
                     // rounding caused overflow
                     // fall into next conditional and flow over
                 }

@@ -20,6 +20,8 @@ class TestFptestRead {
     val verbose = false
 
     val tcs = arrayOf (
+        "d128/ =0 -49642331588100000000000e1339 -34761812775252754060000000000e-3295 -> +1428070852031077636864738734302306e4595 x",
+
         "d64+ 0 xu +6e-398 +0e105 -> +6e178 u",
         "d64* =0 i -160000e-271 -625000000e-141 -> +1e-398",
         "d64+ =0 i +1e-398 +0e-398 -> +1e-398 ",
@@ -125,14 +127,14 @@ class TestFptestRead {
         "d128+ =0 xu +0e-4290 +6e-6176 -> +6e3040 u",
     )
 
-    fun isBadCase(fptest: Fptest, ctx: DecimalContext): Boolean {
+    fun isBadCase(fptest: Fptest, decEnv: DecEnv): Boolean {
         if (badCases.contains(fptest.fptestStr))
             return true
         val result = fptest.result()
 
         if (result != null && result.qExp in -3104..-3000)
             return true
-        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && ctx.overflow)
+        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && decEnv.overflow)
             return true
 
         val hasTrapU = fptest.hasTrap("u")
@@ -253,26 +255,28 @@ class TestFptestRead {
             if (result == "#")
                 return null
             val dec = MutDec()
-            val ctx = DecimalContext()
+            //val ctx = DecimalContext()
+            val decEnv = DecEnv()
             when (result) {
-                "Q" -> dec.setNaN(ctx)
-                "S" -> dec.setSNaN(ctx)
-                else -> DecimalParsePrint.decFromString(dec, result, false, ctx)
+                "Q" -> dec.setNaN(decEnv)
+                "S" -> dec.setSNaN(decEnv)
+                else -> DecimalParsePrint.decFromString(dec, result, false, decEnv)
             }
             return dec
         }
 
         fun decOperands(): ArrayList<MutDec> {
             val ret = ArrayList<MutDec>(operands.size)
-            val ctx = DecimalContext()
+            //val ctx = DecimalContext()
+            val decEnv = DecEnv()
             for (t in operands) {
                 val d = MutDec()
                 when (t) {
-                    "Q" -> d.setNaN(ctx)
-                    "S" -> d.setSNaN(ctx)
+                    "Q" -> d.setNaN(decEnv)
+                    "S" -> d.setSNaN(decEnv)
                     else -> {
                         operandPrintWriter?.println(t)
-                        DecimalParsePrint.decFromString(d, t, false, ctx)
+                        DecimalParsePrint.decFromString(d, t, false, decEnv)
                     }
                 }
                 ret.add(d)
@@ -305,9 +309,9 @@ class TestFptestRead {
     fun test1(fptest: Fptest) {
         val format = fptest.format
         val operands = fptest.decOperands()
-        val ctx = when {
-            format == "d128" -> DecimalContext(DecFormat.DECIMAL_128, fptest.roundingDirection())
-            format == "d64" -> DecimalContext(DecFormat.DECIMAL_64, fptest.roundingDirection())
+        val decEnv = when {
+            format == "d128" -> DecEnv(DecFormat.DECIMAL_128, fptest.roundingDirection())
+            format == "d64" -> DecEnv(DecFormat.DECIMAL_64, fptest.roundingDirection())
             else -> throw IllegalStateException()
         }
         val observed = MutDec()
@@ -315,16 +319,16 @@ class TestFptestRead {
             println(fptest.fptestStr)
         when (fptest.op) {
             "+" -> {
-                observed.setAdd(operands[0], operands[1], ctx)
+                observed.setAdd(operands[0], operands[1], decEnv)
             }
             "-" -> {
-                observed.setSub(operands[0], operands[1], ctx)
+                observed.setSub(operands[0], operands[1], decEnv)
             }
             "*" -> {
-                observed.setMul(operands[0], operands[1], ctx)
+                observed.setMul(operands[0], operands[1], decEnv)
             }
             "/" -> {
-                observed.setDiv(operands[0], operands[1], ctx)
+                observed.setDiv(operands[0], operands[1], decEnv)
             }
             else -> {
                 throw RuntimeException("not impl" + fptest.op)
@@ -333,12 +337,12 @@ class TestFptestRead {
         }
         val expected = fptest.result()
         if (expected != null) {
-            val cmp754 = expected.compareQuiet754(observed, ctx)
+            val cmp754 = expected.compareQuiet754(observed, decEnv)
             if (expected.isNaN()) {
                 assertTrue(observed.isNaN())
                 assertEquals(IEEE754_UNORDERED, cmp754)
             } else if (cmp754 != IEEE754_EQ) {
-                if (isBadCase(fptest, ctx)) {
+                if (isBadCase(fptest, decEnv)) {
                     if (verbose)
                         println("bad case:${fptest.fptestStr}")
                     return
@@ -349,7 +353,7 @@ class TestFptestRead {
             }
             val expectedExceptions = fptest.exceptions
             val expectedExceptionsSinU = expectedExceptions.replace("u", "")
-            val observedExceptions = ctx.getFptestExceptionsString()
+            val observedExceptions = decEnv.getFptestExceptionsString()
             val observedExceptionsSinU = observedExceptions.replace("u", "")
             assertEquals(expectedExceptionsSinU, observedExceptionsSinU)
             if (observedExceptions.contains("u") && !expectedExceptions.contains("u")) {

@@ -10,16 +10,16 @@ import java.util.*
 
 class TestMutDecAddSub {
 
-    val verbose = false
+    val verbose = true
 
-    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecimalContext) {
+    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val decEnv: DecEnv) {
         constructor(strA: String, strB: String, rd: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv().with(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecimalContext())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecimalContext())
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecEnv())
 
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val rm = decEnv.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -28,8 +28,8 @@ class TestMutDecAddSub {
     }
 
     val cases = arrayOf(
-        TC("-4.949004E-4622", "2.06229042911321265462351537682015E-4592", ROUND_TIES_TO_AWAY),
         TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
+        TC("-4.949004E-4622", "2.06229042911321265462351537682015E-4592", ROUND_TIES_TO_AWAY),
         TC("-3.87184285392449585406072732173794E+5253", "3.4414437429652711952247662511911E+2910"),
         TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
         TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),
@@ -55,7 +55,7 @@ class TestMutDecAddSub {
     @Test
     fun testRandom() {
         for (i in 0..<10000) {
-            val tc = TC(randBd(), randBd(), randDecimal128Context())
+            val tc = TC(randBd(), randBd(), randDecimal128Rounding())
             if (tc.bdAIsFinite && tc.bdBIsFinite)
                 test1(tc)
         }
@@ -72,26 +72,26 @@ class TestMutDecAddSub {
         return if (random.nextBoolean()) bd.negate() else bd
     }
 
-    fun randDecimal128Context(): DecimalContext {
+    fun randDecimal128Rounding(): DecEnv {
         val i = random.nextInt(4)
-        val ctx = DecimalContext(DecRounding.fromValue(i))
-        return ctx
+        val decEnv = DecEnv().with(DecRounding.fromValue(i))
+        return decEnv
     }
 
     fun test1(tc: TC) {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val ctx = tc.ctx
-        val rm = ctx.roundingDirection.mapToRoundingMode()
+        val decEnv = tc.decEnv
+        val rm = decEnv.decRounding.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
-        with (ctx) {
+        decEnv.context {
 
             val decimalA = newDecimal(bdA)
             val decimalB = newDecimal(bdB)
-            val decimalS = decimalA + decimalB
+            val decimalS = newAdd(decimalA, decimalB)
             if (verbose)
                 println("decimalS:$decimalS")
             assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())

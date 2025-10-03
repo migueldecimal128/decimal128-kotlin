@@ -215,20 +215,19 @@ class TestDecTest {
         }
 
         fun eval() {
-            val ctx = buildContext()
             val decEnv = buildDecEnv()
-            if (decEnv == null || ctx == null)
+            if (decEnv == null)
                 return
             if (verbose)
                 println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
                 "abs" -> MutDec.newAbs(op1, decEnv)
-                "add" -> MutDec.newAdd(op1, op2, ctx)
-                "fma" -> MutDec.newFma(op1, op2, op3, ctx)
-                "subtract" -> MutDec.newSub(op1, op2, ctx)
-                "minus" -> MutDec.newNegate(op1, ctx)
-                "multiply" -> MutDec.newMul(op1, op2, ctx)
-                "divide" -> MutDec.newDiv(op1, op2, ctx)
+                "add" -> MutDec.newAdd(op1, op2, decEnv)
+                "fma" -> MutDec.newFma(op1, op2, op3, decEnv)
+                "subtract" -> MutDec.newSub(op1, op2, decEnv)
+                "minus" -> MutDec.newNegate(op1, decEnv)
+                "multiply" -> MutDec.newMul(op1, op2, decEnv)
+                "divide" -> MutDec.newDiv(op1, op2, decEnv)
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 else -> return
             }
@@ -252,17 +251,6 @@ class TestDecTest {
         }
         val d = MutDec(t)
         return d
-    }
-
-    fun buildContext(): DecimalContext? {
-        // relax this requirement
-        // require (minExponent == -(maxExponent - 1))
-        val roundingIndex = validRoundingStrings.indexOf(rounding)
-        if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
-            return null
-        val fmt = DecFormat(precision, maxExponent)
-        val ctx = DecimalContext(fmt, decRoundings[roundingIndex])
-        return ctx
     }
 
     fun buildDecEnv(): DecEnv? {

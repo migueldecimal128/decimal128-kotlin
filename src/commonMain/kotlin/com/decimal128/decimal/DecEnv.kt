@@ -23,6 +23,8 @@ data class DecEnv(
         get() = decFormat.eMax
     val eMin: Int
         get() = decFormat.eMin
+    val overflow: Boolean
+        get() = decFlags.isSet(OVERFLOW)
 
     companion object {
         val DEFAULT_DECIMAL_128 = DecEnv()
@@ -122,5 +124,14 @@ data class DecEnv(
         if (hasTrapHandler(INVALID_OPERATION))
             throw RuntimeException("invalid sNaN seen")
     }
+
+    fun getFptestExceptionsString() = decFlags.getFptestExceptionsString()
+
+    fun <T> context(block: DecEnv.() -> T): T {
+        val result = this.block()
+        return result
+    }
+
+    fun newAdd(x: MutDec, y: MutDec) = MutDec.newAdd(x, y, this)
 
 }
