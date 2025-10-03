@@ -5,31 +5,26 @@ import kotlin.math.max
 
 data class DecFormat(val precision: Int,
                      val eMax: Int,
-                     val eMin: Int,
-                     val decRounding: DecRounding
+                     val eMin: Int
     ) {
     constructor(precision: Int,
-                eMax: Int,
-                decRounding: DecRounding,
-        ) : this(precision, eMax, -(eMax - 1), decRounding)
+                eMax: Int
+        ) : this(precision, eMax, -(eMax - 1))
 
-    constructor(decRounding: DecRounding) : this(34, 6144, decRounding)
+    constructor(decRounding: DecRounding) : this(34, 6144)
 
     companion object {
-        val DECIMAL_64 = DecFormat(16, 384, DecRounding.ROUND_TIES_TO_EVEN)
+        val DECIMAL_64 = DecFormat(16, 384)
         init { check(DECIMAL_64.maxBitLen == 54)}
-        val DECIMAL_128 = DecFormat(34, 6144, DecRounding.ROUND_TIES_TO_EVEN)
+        val DECIMAL_128 = DecFormat(34, 6144)
         init { check(DECIMAL_128.maxBitLen == 113)}
-        val DECIMAL_128_EXTENDED = DecFormat(38, 6144, DecRounding.ROUND_TIES_TO_EVEN)
+        val DECIMAL_128_EXTENDED = DecFormat(38, 6144)
         init { check(DECIMAL_128_EXTENDED.maxBitLen == 127)}
     }
 
     val qMax = eMax - (precision - 1)
     val qTiny = eMin - (precision - 1)
     val maxBitLen = pow10BitLen(precision)
-
-    fun withRoundingDirection(decRounding: DecRounding): DecFormat =
-        DecFormat(this.precision, this.eMax, decRounding)
 
     fun isC128AddSafe(xBitLen: Int, yBitLen: Int): Boolean {
         val sumBitLen = max(xBitLen, yBitLen) + 1

@@ -77,12 +77,16 @@ class MutDec() : U256() {
         fun newFma(x: MutDec, y: MutDec, z: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) =
             MutDec().setFma(x, y, z, decEnv)
 
-        fun newNegate(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) = MutDec(x).mutateNegate()
+        fun newNegate(x: MutDec, ctx: DecimalContext) = MutDec(x).mutateNegate()
+
+        fun newNegate(x: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) = MutDec(x).mutateNegate()
 
         fun newSquare(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             MutDec().setSquare(x, ctx)
 
-        fun newDiv(x: MutDec, y: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) = MutDec().setDiv(x, y, ctx)
+        fun newDiv(x: MutDec, y: MutDec, ctx: DecimalContext) = MutDec().setDiv(x, y, ctx)
+
+        fun newDiv(x: MutDec, y: MutDec, decEnv: DecEnv = DEFAULT_DECIMAL_128) = MutDec().setDiv(x, y, decEnv)
 
         fun newReciprocal(x: MutDec, ctx: DecimalContext = DEFAULT_128_CONTEXT) =
             MutDec().setReciprocal(x, ctx)
@@ -1944,11 +1948,7 @@ class MutDec() : U256() {
                     check(qExp + (digitLen - 1) == eExp + 1)
                     ++eExp
                     if (eExp <= eMax) {
-                        if (decEnv.hasTrapHandler(INEXACT)) {
-                            return this.set(
-                                decEnv.signal(DecExceptionContext(INEXACT, IS_INEXACT,
-                                    "roundAndFinalize", decEnv)))
-                        }
+                        return decEnv.signalInexact(this)
                     }
                     // rounding caused overflow
                     // fall into next conditional and flow over

@@ -1,6 +1,8 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecException.*
+import com.decimal128.decimal.DecExceptionReason.IS_INEXACT
+import com.decimal128.decimal.DecExceptionReason.OTHER
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 
 data class DecEnv(
@@ -77,7 +79,7 @@ data class DecEnv(
             decFlags.set(INVALID_OPERATION)
             return mutDec
         }
-        return signal(INVALID_OPERATION, DecExceptionReason.OTHER, "whatever", mutDec)
+        return signal(INVALID_OPERATION, OTHER, "whatever", mutDec)
     }
 
     fun signalDivByZero(mutDec: MutDec): MutDec {
@@ -85,7 +87,7 @@ data class DecEnv(
             decFlags.set(DIV_BY_ZERO)
             return mutDec
         }
-        return signal(DIV_BY_ZERO, DecExceptionReason.OTHER, "whatever", mutDec)
+        return signal(DIV_BY_ZERO, OTHER, "whatever", mutDec)
     }
 
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
@@ -95,7 +97,7 @@ data class DecEnv(
             return mutDec
         }
         val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
-        return signal(trap, DecExceptionReason.OTHER, "whatever", mutDec)
+        return signal(trap, OTHER, "whatever", mutDec)
     }
 
     fun signalInexactUnderflow(mutDec: MutDec): MutDec {
@@ -105,7 +107,15 @@ data class DecEnv(
             return mutDec
         }
         val trap = if (decTraps.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
-        return signal(trap, DecExceptionReason.OTHER, "whatever", mutDec)
+        return signal(trap, OTHER, "whatever", mutDec)
+    }
+
+    fun signalInexact(mutDec: MutDec): MutDec {
+        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(INEXACT)
+            return mutDec
+        }
+        return signal(INEXACT, IS_INEXACT, "whatever", mutDec)
     }
 
     fun operandIsSignalingNaN(mutDec: MutDec) {

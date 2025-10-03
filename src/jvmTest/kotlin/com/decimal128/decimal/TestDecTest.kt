@@ -48,11 +48,19 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
+        "rounding: half_even",
+        "dqadd6445 add   1   -77e-37      ->  1.000000000000000000000000000000000 Inexact Rounded",
+
+        "rounding:half_up",
+        "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded",
+
+        "rounding:    floor",
+        "dqadd71720 add  0        0E-19  ->  0E-19",
+
         "dqabs526 abs  -NaN22  -> -NaN22",
         "dqabs523 abs  sNaN    ->  NaN   Invalid_operation",
         "dqmul699 multiply -NaN    -sNaN89 -> -NaN89 Invalid_operation",
-        "rounding:    floor",
-        "dqadd71720 add  0        0E-19  ->  0E-19",
+
         "rounding: half_even",
         "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
         "dqmul770 multiply 1e+40 1e+6101 -> 1.000000000000000000000000000000E+6141 Clamped",
@@ -208,12 +216,13 @@ class TestDecTest {
 
         fun eval() {
             val ctx = buildContext()
-            if (ctx == null)
+            val decEnv = buildDecEnv()
+            if (decEnv == null || ctx == null)
                 return
             if (verbose)
                 println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
-                "abs" -> MutDec.newAbs(op1, ctx)
+                "abs" -> MutDec.newAbs(op1, decEnv)
                 "add" -> MutDec.newAdd(op1, op2, ctx)
                 "fma" -> MutDec.newFma(op1, op2, op3, ctx)
                 "subtract" -> MutDec.newSub(op1, op2, ctx)
@@ -251,9 +260,20 @@ class TestDecTest {
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
-        val fmt = DecFormat(precision, maxExponent, decRoundings[roundingIndex])
-        val ctx = DecimalContext(fmt)
+        val fmt = DecFormat(precision, maxExponent)
+        val ctx = DecimalContext(fmt, decRoundings[roundingIndex])
         return ctx
+    }
+
+    fun buildDecEnv(): DecEnv? {
+        // relax this requirement
+        // require (minExponent == -(maxExponent - 1))
+        val roundingIndex = validRoundingStrings.indexOf(rounding)
+        if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
+            return null
+        val fmt = DecFormat(precision, maxExponent)
+        val decEnv = DecEnv().with(fmt).with(decRoundings[roundingIndex])
+        return decEnv
     }
 
     @Test

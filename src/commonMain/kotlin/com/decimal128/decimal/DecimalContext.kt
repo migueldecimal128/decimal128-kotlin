@@ -1,11 +1,13 @@
 package com.decimal128.decimal
 
-class DecimalContext(val decFormat: DecFormat) {
-    constructor() : this(DecFormat.DECIMAL_128)
-    constructor(decFormat: DecFormat, decRounding:DecRounding) :
-            this(decFormat.withRoundingDirection(decRounding))
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+
+class DecimalContext(val decFormat: DecFormat, val roundingDirection: DecRounding) {
+    constructor() : this(DecFormat.DECIMAL_128, ROUND_TIES_TO_EVEN)
+    constructor(decFormat: DecFormat) :
+            this(decFormat, ROUND_TIES_TO_EVEN)
     constructor(decRounding: DecRounding) :
-            this(DecFormat.DECIMAL_128.withRoundingDirection(decRounding))
+            this(DecFormat.DECIMAL_128, decRounding)
 
     companion object {
 
@@ -14,7 +16,6 @@ class DecimalContext(val decFormat: DecFormat) {
         fun newDecimal128ExtendedContext() = DecimalContext(DecFormat.DECIMAL_128_EXTENDED)
     }
     val precision = decFormat.precision
-    val roundingDirection = decFormat.decRounding
     val eMax = decFormat.eMax
     val eMin = decFormat.eMin
     val qMax = decFormat.qMax

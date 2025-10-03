@@ -306,8 +306,8 @@ class TestFptestRead {
         val format = fptest.format
         val operands = fptest.decOperands()
         val ctx = when {
-            format == "d128" -> DecimalContext(DecFormat.DECIMAL_128.withRoundingDirection(fptest.roundingDirection()))
-            format == "d64" -> DecimalContext(DecFormat.DECIMAL_64.withRoundingDirection(fptest.roundingDirection()))
+            format == "d128" -> DecimalContext(DecFormat.DECIMAL_128, fptest.roundingDirection())
+            format == "d64" -> DecimalContext(DecFormat.DECIMAL_64, fptest.roundingDirection())
             else -> throw IllegalStateException()
         }
         val observed = MutDec()
