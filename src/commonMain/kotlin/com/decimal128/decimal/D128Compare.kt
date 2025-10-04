@@ -159,37 +159,16 @@ object D128Compare {
         if (x.bitLen <= 128) {
             val ret = when {
                 y.bitLen <= 64 && pow10BitLen <= 64 ->
-                    _EQ128x64x64(x1, x0, y0, pow10dw0)
+                    EQ128_64x64(x1, x0, y0, pow10dw0)
                 y.bitLen <= 64 && pow10BitLen <= 128 ->
-                    _EQ128x128x64(x1, x0, pow10dw1, pow10dw0, y0)
+                    EQ128_128x64(x1, x0, pow10dw1, pow10dw0, y0)
                 y.bitLen <= 128 && pow10BitLen <= 64 ->
-                    _EQ128x128x64(x1, x0, y1, y0, pow10dw0)
+                    EQ128_128x64(x1, x0, y1, y0, pow10dw0)
                 else -> throw RuntimeException()
             }
             return ret
         }
         throw RuntimeException("?que? EQ should be <= 128 bits")
     }
-
-    private fun _EQ128x64x64(x1: Long, x0: Long, y0: Long, pow10: Long) : Boolean {
-        val p1 = unsignedMulHi(y0, pow10)
-        val p0 = y0 * pow10
-
-        return ((x1 - p1) or (x0 - p0)) == 0L
-    }
-
-    private fun _EQ128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long) : Boolean {
-        val pp00Hi = unsignedMulHi(m0, n0)
-        val pp00Lo = m0 * n0
-        val p0 = pp00Lo
-
-        val pp10Hi = unsignedMulHi(m1, n0)
-        val pp10Lo = m1 * n0
-        val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-
-        val p2 = carry1 + pp10Hi
-        return ((x0 - p0) or (x1 - p1) or p2) == 0L
-    }
-
 
 }
