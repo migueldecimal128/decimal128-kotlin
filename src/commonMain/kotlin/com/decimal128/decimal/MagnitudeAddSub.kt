@@ -89,8 +89,10 @@ object MagnitudeAddSub {
         //    return Residue.EXACT
         //}
         val qDelta = Math.abs(x.qExp - y.qExp)
-        val headroomWithGuardRound = 2 + PRECISION_34 - x.digitLen
-        val shiftLeft = min(qDelta, headroomWithGuardRound)
+        // one guard digit is enough ...
+        // ... residue provides sufficient info for rounding
+        val headroomWithGuard = 1 + PRECISION_34 - x.digitLen
+        val shiftLeft = min(qDelta, headroomWithGuard)
         val qAlign = x.qExp - shiftLeft
         if (x.qExp > y.qExp) {
             when {
