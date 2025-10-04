@@ -121,19 +121,32 @@ object D128Add {
 
     private fun scaledFiniteAdd(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
         check(max(x.qExp, y.qExp) < MIN_SPECIAL_VALUE)
-        return when {
+        when {
             x.isZero() or y.isZero() ->
-                scaledFiniteAddZero(x, ySign, y, decEnv)
+                return scaledFiniteAddZero(x, ySign, y, decEnv)
             x.sign == ySign ->
-                scaledFiniteAddMagnitudes(x, y, decEnv)
-            else ->
-                // FIXME
-                //  add fast-path for exact subtractions
-                fullWidthAdd(x, ySign, y, decEnv)
+                return scaledFiniteAddMagnitudes(x, y, decEnv)
         }
+        // non-zero with different signs ... subtract magnitudes
+
+        return fullWidthAdd(x, ySign, y, decEnv)
     }
 
     private fun scaledFiniteAddMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+        val flip = x.qExp > y.qExp
+        val m = if (flip) x else y
+        val n = if (flip) y else x
+        val qDelta = m.qExp - n.qExp
+        check (qDelta >= 0)
+        val headroom = decEnv.precision - m.digitLen
+        if (qDelta > headroom)
+            return fullWidthAdd(x, y.sign, y, decEnv)
+        // we can resolve in the D128 world
+        val shiftLeft = min(qDelta, headroom)
+        return D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
+    }
+
+    private fun scaledFiniteSubMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
         val flip = x.qExp > y.qExp
         val m = if (flip) x else y
         val n = if (flip) y else x
