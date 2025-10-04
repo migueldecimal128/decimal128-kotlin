@@ -98,8 +98,8 @@ class TestMutDecMagnitudeDiv {
         if (verbose)
             println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")
 
-        val decA = newDecimal(bdA)
-        val decB = newDecimal(bdB)
+        val decA = newMutDec(bdA)
+        val decB = newMutDec(bdB)
         val decQ = MutDec()
         decQ.setDiv(decA, decB, decEnv)
         if (verbose)

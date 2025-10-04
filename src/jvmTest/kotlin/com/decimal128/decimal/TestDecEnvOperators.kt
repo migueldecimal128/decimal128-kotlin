@@ -9,7 +9,7 @@ class TestDecEnvOperators {
     @Test
     fun test1() {
         with(DECIMAL128) {
-            val a = Decimal.from(2)
+            val a = Decimal.from("2")
             val b = Decimal.from(3)
             val c = Decimal.from(4)
             val x = b * c
@@ -18,11 +18,14 @@ class TestDecEnvOperators {
             assertEquals("14", "$d")
         }
 
-        val e = Decimal.from(5)
-        val f = Decimal.from(6)
-        val g = Decimal.from(7)
-        val h = (e + f) * g
-        println("(e:$e + f:$f) * g:$g = h:$h")
-        assertEquals("77", "$h")
+        DECIMAL128.context {
+            val e = Decimal.from(5)
+            val f = Decimal.from(6)
+            val g = Decimal.from(7)
+            val h = (e + f) * g
+            println("(e:$e + f:$f) * g:$g = h:$h")
+            assertEquals("77", "$h")
+        }
     }
+
 }

@@ -62,8 +62,8 @@ class TestMutDecMagCompare {
         val bdA = case.bdA
         val bdB = case.bdB
         val expected = case.expected
-        val decA = newDecimal(bdA)
-        val decB = newDecimal(bdB)
+        val decA = newMutDec(bdA)
+        val decB = newMutDec(bdB)
         if (verbose)
             println("bdA:$bdA compare bdB:$bdB => $expected")
         val observed = decA.magnitudeCompareTo(decB)

@@ -81,7 +81,7 @@ class TestMutDecFromString {
         DecimalParsePrint.decFromString(d, strVal, false, DecEnv())
         val observed = d
 
-        val e = newDecimal(bd)
+        val e = newMutDec(bd)
 
         val dStr = d.toString()
         val eStr = e.toString()

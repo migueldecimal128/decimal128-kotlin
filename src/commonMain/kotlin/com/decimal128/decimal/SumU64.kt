@@ -482,3 +482,57 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
     val rDw0 = ((un1 shl 32) or un0) ushr s
     return Triple(qDw1, qDw0, rDw0)
 }
+
+fun ucmp128(dw1X: Long, dw0X: Long, dw1Y: Long, dw0Y: Long): Int {
+    val cmpDw1 = unsignedCmp(dw1X, dw1Y)
+    if (cmpDw1 != 0)
+        return cmpDw1
+    return unsignedCmp(dw0X, dw0Y)
+}
+
+fun ucmp128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Int {
+    val p1 = unsignedMulHi(y0, z0)
+    val p0 = y0 * z0
+
+    val cmp1 = unsignedCmp(x1, p1)
+    val cmp0 = unsignedCmp(x0, p0)
+    val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+    return cmp10
+}
+
+fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Int {
+    val pp00Hi = unsignedMulHi(y0, z0)
+    val pp00Lo = y0 * z0
+    val p0 = pp00Lo
+    val cmp0 = unsignedCmp(x0, p0)
+
+    val pp10Hi = unsignedMulHi(y1, z0)
+    val pp10Lo = y1 * z0
+    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    val cmp1 = unsignedCmp(x1, p1)
+    val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+    val p2 = carry1 + pp10Hi
+    val cmp210 = if (p2 != 0L) -1 else cmp10
+    return cmp210
+}
+
+fun EQ128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Boolean {
+    val p1 = unsignedMulHi(y0, z0)
+    val p0 = y0 * z0
+
+    return ((x1 - p1) or (x0 - p0)) == 0L
+}
+
+fun EQ128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Boolean {
+    val pp00Hi = unsignedMulHi(y0, z0)
+    val pp00Lo = y0 * z0
+    val p0 = pp00Lo
+
+    val pp10Hi = unsignedMulHi(y1, z0)
+    val pp10Lo = y1 * z0
+    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+
+    val p2 = carry1 + pp10Hi
+    return ((x0 - p0) or (x1 - p1) or p2) == 0L
+}
+

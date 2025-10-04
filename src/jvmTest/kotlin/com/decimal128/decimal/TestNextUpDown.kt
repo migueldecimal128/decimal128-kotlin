@@ -54,7 +54,7 @@ class TestNextUpDown {
     }
 
     fun test1(bd: BigDecimal) {
-        val n = newDecimal(bd)
+        val n = newMutDec(bd)
         val up = MutDec()
         val down = MutDec()
         val decEnv = DecEnv()

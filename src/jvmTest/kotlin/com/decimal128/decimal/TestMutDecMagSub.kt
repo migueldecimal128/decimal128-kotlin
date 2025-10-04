@@ -167,8 +167,8 @@ class TestMutDecMagSub {
         if (verbose)
             println("bdA:$bdA - bdB:$bdB (rm:$rm) => expected:$expected")
 
-        val decA = newDecimal(bdA)
-        val decB = newDecimal(bdB)
+        val decA = newMutDec(bdA)
+        val decB = newMutDec(bdB)
         val decD = MutDec()
         decD.setSub(decA, decB, decEnv)
         val expectedCoeff = expected.unscaledValue()

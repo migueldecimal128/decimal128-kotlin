@@ -2,13 +2,14 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
 
-class TestMutDecAddSub {
+class TestDecimalAddSub {
 
     val verbose = true
 
@@ -28,6 +29,9 @@ class TestMutDecAddSub {
     }
 
     val cases = arrayOf(
+        TC("2.9E-3804", "-1.8251376154629220824597360992E-3779", ROUND_TIES_TO_AWAY),
+        TC("1", "1e1"),
+        TC("0E-114", "1.768449379828632909538225435741516E+3531", ROUND_TOWARD_ZERO),
         TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
         TC("-4.949004E-4622", "2.06229042911321265462351537682015E-4592", ROUND_TIES_TO_AWAY),
         TC("-3.87184285392449585406072732173794E+5253", "3.4414437429652711952247662511911E+2910"),
@@ -44,12 +48,6 @@ class TestMutDecAddSub {
     fun testCases() {
         for (case in cases)
             test1(case)
-    }
-
-    @Test
-    fun testBigDecimalAddZero() {
-        val s0 = BigDecimal("0e-1").add(BigDecimal("0e-10"))
-        println(s0)
     }
 
     @Test
@@ -89,9 +87,9 @@ class TestMutDecAddSub {
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
         decEnv.context {
 
-            val decimalA = newMutDec(bdA)
-            val decimalB = newMutDec(bdB)
-            val decimalS = newAdd(decimalA, decimalB)
+            val decimalA = Decimal.from(bdA.toString())
+            val decimalB = Decimal.from(bdB.toString())
+            val decimalS = decimalA + decimalB
             if (verbose)
                 println("decimalS:$decimalS")
             assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())

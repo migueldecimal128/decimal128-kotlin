@@ -14,7 +14,7 @@ object D128Add {
             (qMax < MIN_SPECIAL_VALUE) and (x.qExp == y.qExp) ->
                 unscaledFiniteAddImpl(x, ySign, y, decEnv)
             qMax < MIN_SPECIAL_VALUE ->
-                scaledFiniteAddImpl(x, ySign, y, decEnv)
+                scaledFiniteAdd(x, ySign, y, decEnv)
             qMax == NON_FINITE_INF ->
                 infiniteAddImpl(x, ySign, y, decEnv)
             qMax == NON_FINITE_SNAN ->
@@ -92,31 +92,68 @@ object D128Add {
         val delta = x.qExp - minExp
         check(delta > 0)
         val headroom = precision - x.digitLen
+        if (headroom == 0)
+            return x
         val shiftLeft = min(headroom, delta)
-        val qAlign = x.qExp - shiftLeft
-        throw RuntimeException("not impl")
+        return D128Pow10.scaleCoeffUpPow10(x, shiftLeft)
     }
 
     private fun unscaledFiniteAddMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
-        if (decEnv.decFormat.isC128AddSafe(x.bitLen, y.bitLen))
-            return C128AddSub.c128UnscaledAdd(x, y)
-        else {
+        val sumBitLen = x.bitLen + y.bitLen + 1
+        val sum = if (sumBitLen < decEnv.decFormat.maxBitLen) {
+            val x0 = x.dw0
+            val y0 = y.dw0
+            val s0 = x0 + y0
+            val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
+            val x1 = x.dw1
+            val y1 = y.dw1
+            val s1 = x1 + y1 + carry0
+            Decimal.from(s1, s0, x.signExp)
+        } else {
             val arg1 = decEnv.decTemps.mutDecArg1.set(x)
             val arg2 = decEnv.decTemps.mutDecArg2.set(y)
-            throw RuntimeException("not impl")
-            //val sum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
-            //val d = Decimal.from(sum)
-            //return d
+            val mdecSum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
+            Decimal.from(mdecSum)
         }
+        return sum
     }
 
 
-    private fun scaledFiniteAddImpl(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
-        val qMax = max(x.qExp, y.qExp)
-        check(qMax < MIN_SPECIAL_VALUE)
-        if (x.isZero() or y.isZero())
-            return scaledFiniteAddZero(x, ySign, y, decEnv)
-        throw RuntimeException("not impl")
+    private fun scaledFiniteAdd(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
+        check(max(x.qExp, y.qExp) < MIN_SPECIAL_VALUE)
+        return when {
+            x.isZero() or y.isZero() ->
+                scaledFiniteAddZero(x, ySign, y, decEnv)
+            x.sign == ySign ->
+                scaledFiniteAddMagnitudes(x, y, decEnv)
+            else ->
+                // FIXME
+                //  add fast-path for exact subtractions
+                fullWidthAdd(x, ySign, y, decEnv)
+        }
+    }
+
+    private fun scaledFiniteAddMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+        val flip = x.qExp > y.qExp
+        val m = if (flip) x else y
+        val n = if (flip) y else x
+        val qDelta = m.qExp - n.qExp
+        check (qDelta >= 0)
+        val headroom = decEnv.precision - m.digitLen
+        if (qDelta > headroom)
+            return fullWidthAdd(x, y.sign, y, decEnv)
+        // we can resolve in the D128 world
+        val shiftLeft = min(qDelta, headroom)
+        return D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
+    }
+
+    private fun fullWidthAdd(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
+        val arg1 = decEnv.decTemps.mutDecArg1.set(x)
+        val arg2 = decEnv.decTemps.mutDecArg2.set(y)
+        arg2.sign = ySign
+        val mdecSum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
+        val sum = Decimal.from(mdecSum)
+        return sum
     }
 
     private fun infiniteAddImpl(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {

@@ -8,7 +8,7 @@ internal inline fun packLengths(digitLen: Int, bitLen: Int) =
     ((digitLen shl 9) or bitLen).toShort()
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun packSignExp(sign: Boolean, qExp: Int): Short = ((if (sign) 0x8000 else 0) or qExp).toShort()
+internal inline fun packSignExp(sign: Boolean, qExp: Int): Short = ((if (sign) 0x8000 else 0) or (qExp and 0x7FFF)).toShort()
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun calcPackedLengths(dw0: Long): Short {

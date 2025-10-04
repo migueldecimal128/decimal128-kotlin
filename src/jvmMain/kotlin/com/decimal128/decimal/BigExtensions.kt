@@ -38,12 +38,25 @@ fun U256.coeffToBigInteger(): BigInteger {
     return bi
 }
 
-fun newDecimal(bd: BigDecimal): MutDec = newDecimal(bd, DecEnv())
+fun Decimal.coeffToBigInteger(): BigInteger {
+    var bi = BigInteger.ZERO
+    val dw0Lo = this.dw0 and 0xFFFFFFFFL
+    val dw0Hi = this.dw0 ushr 32
+    val dw1Lo = this.dw1 and 0xFFFFFFFFL
+    val dw1Hi = this.dw1 ushr 32
+    bi = bi or BigInteger(dw0Lo.toString()).shiftLeft(0)
+    bi = bi or BigInteger(dw0Hi.toString()).shiftLeft(32)
+    bi = bi or BigInteger(dw1Lo.toString()).shiftLeft(64)
+    bi = bi or BigInteger(dw1Hi.toString()).shiftLeft(96)
+    return bi
+}
 
-fun newDecimal(bd: BigDecimal, decEnv: DecEnv): MutDec {
-    val dec = MutDec()
-    dec.set(bd, decEnv)
-    return dec
+fun newMutDec(bd: BigDecimal): MutDec = newMutDec(bd, DecEnv())
+
+fun newMutDec(bd: BigDecimal, decEnv: DecEnv): MutDec {
+    val mutdec = MutDec()
+    mutdec.set(bd, decEnv)
+    return mutdec
 }
 
 fun MutDec.set(bd: BigDecimal) = this.set(bd, DecEnv())

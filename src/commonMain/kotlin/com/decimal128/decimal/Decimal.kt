@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+
 class Decimal private constructor(
     @field: JvmField internal val dw1: Long,
     @field: JvmField internal val dw0: Long,
@@ -57,6 +59,8 @@ class Decimal private constructor(
             }
         }
 
+        fun from(str: String) = Decimal.from(DECIMAL128.decTemps.mutDecResult.set(str))
+
         fun from(mutDec: MutDec): Decimal {
             require(mutDec.digitLen <= 34)
             require(mutDec.qExp <= DecFormat.DECIMAL_128.qMax || mutDec.qExp >= MIN_SPECIAL_VALUE)
@@ -93,11 +97,27 @@ class Decimal private constructor(
         return true
     }
 
+    /* cannot have these because they take precedence over
+     * my DecEnv member extension operators
 
-    operator fun plus(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DecEnv.DECIMAL128)
-    operator fun minus(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DecEnv.DECIMAL128)
-    operator fun times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DecEnv.DECIMAL128)
-    operator fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DecEnv.DECIMAL128)
+    operator fun plus(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DECIMAL128)
+    operator fun minus(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DECIMAL128)
+    operator fun times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
+    operator fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
+
+     */
+
+    fun add(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DECIMAL128)
+    fun sub(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DECIMAL128)
+    fun mul(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
+    fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
+
+    fun coefficientCompareTo(other: Decimal): Int {
+        val cmpBitLen = this.bitLen.compareTo(other.bitLen)
+        if (cmpBitLen != 0)
+            return cmpBitLen
+        return ucmp128(this.dw1, this.dw0, other.dw1, other.dw0)
+    }
 
     override fun toString(): String {
         val mutDec = MutDec()
