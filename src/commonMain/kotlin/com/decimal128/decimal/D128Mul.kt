@@ -28,28 +28,29 @@ object D128Mul {
 
     }
 
+    // fast-path iff ...
+    //  product bitLen strictly less than decFormat.maxBitLen
+    //  (equal bitLen could overflow coefficient decimal limit)
+    //
+    //  exponent on the upper end is easy, must be < qMax
+    //  exponent on the low end must be >= eMin, not qTiny
+    //  anything in the range [qTiny, eMin) is subnormal
+    //  and must be scaled, so not on the fast-path
     private fun finiteMul(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
         val prodBitLen = x.bitLen + y.bitLen
-        if (prodBitLen < decEnv.decFormat.maxBitLen) {
-            val maxOperandBitLen = max(x.bitLen, y.bitLen)
-            val (p1, p0) = when {
-                maxOperandBitLen <= 64 ->
-                    umul64x64to128(x.dw0, y.dw0)
-                (maxOperandBitLen <= 128) and (x.bitLen <= 64) ->
-                    umul128x64to128(y.dw1, y.dw0, x.dw0)
-                (maxOperandBitLen <= 128) ->
-                    umul128x64to128(x.dw1, x.dw0, y.dw0)
-                else -> throw IllegalStateException()
-            }
+        val prodExp = x.qExp + y.qExp
+        if (prodBitLen < decEnv.decFormat.maxBitLen &&
+            prodExp <= decEnv.qMax && prodExp >= decEnv.eMin) {
+            val p0 = x.dw0 * y.dw0
+            val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
             val prodSign = x.sign xor y.sign
-            val prodExp = x.qExp + y.qExp
             val d = Decimal(prodSign, p1, p0, prodExp)
             return d
         }
-        return finiteMul256Impl(x, y, decEnv)
+        return finiteMul256(x, y, decEnv)
     }
 
-    private fun finiteMul256Impl(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+    private fun finiteMul256(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
         val p = decEnv.decTemps.mutDecArg1.set(x)
         val n = decEnv.decTemps.mutDecArg2.set(y)
         p.setMul(p, n, decEnv)

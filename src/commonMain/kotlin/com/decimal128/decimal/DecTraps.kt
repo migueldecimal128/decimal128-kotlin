@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-data class DecTraps internal constructor(
+class DecTraps internal constructor(
     private val trapHandlers: Array<DecTrapHandler?>) {
 
     constructor() : this(Array(DecException.entries.size) {null})

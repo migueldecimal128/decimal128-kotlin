@@ -12,6 +12,7 @@ class TestDecEnvOperators {
             val a = Decimal.from(2)
             val b = Decimal.from(3)
             val c = Decimal.from(4)
+            val x = b * c
             val d = a + b * c
             println("a:$a + b:$b * c:$c = d:$d")
             assertEquals("14", "$d")
