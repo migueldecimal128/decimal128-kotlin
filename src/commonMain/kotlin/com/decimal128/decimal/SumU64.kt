@@ -183,7 +183,13 @@ inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
 }
 
 
-        /*inline*/ fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
+fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
+    val p0 = x0 * y0
+    val p1 = unsignedMulHi(x0, y0)
+    return p1 to p0
+}
+
+/*inline*/ fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0

@@ -11,20 +11,21 @@ object D128Add {
     fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
         val qMax = max(x.qExp, y.qExp)
         return when {
-            qMax < MIN_SPECIAL_VALUE && x.qExp == y.qExp ->
+            (qMax < MIN_SPECIAL_VALUE) and (x.qExp == y.qExp) ->
                 unscaledFiniteAddImpl(x, ySign, y, decEnv)
             qMax < MIN_SPECIAL_VALUE ->
                 scaledFiniteAddImpl(x, ySign, y, decEnv)
             qMax == NON_FINITE_INF ->
                 infiniteAddImpl(x, ySign, y, decEnv)
+            qMax == NON_FINITE_SNAN ->
+                decEnv.signal(
+                    INVALID_OPERATION,
+                    SIGNALING_NAN_OPERAND,
+                    "add/sub",
+                    Decimal.NaN)
             x.qExp == NON_FINITE_QNAN -> x
             y.qExp == NON_FINITE_QNAN -> y
-            decEnv.hasTrapHandler(INVALID_OPERATION) ->
-                decEnv.signal(
-                    DecExceptionContext(
-                        INVALID_OPERATION,
-                        SIGNALING_NAN_OPERAND, "add/sub", decEnv))
-            else -> Decimal.NaN
+            else -> throw IllegalStateException()
         }
     }
 

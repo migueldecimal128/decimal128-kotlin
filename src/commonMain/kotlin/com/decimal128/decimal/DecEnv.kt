@@ -94,6 +94,15 @@ data class DecEnv(
         return signal(DIV_BY_ZERO, OTHER, "whatever", mutDec)
     }
 
+    fun signalDivByZero(sign: Boolean): Decimal {
+        val inf = if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
+        if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
+            decFlags.set(DIV_BY_ZERO)
+            return inf
+        }
+        return signal(DIV_BY_ZERO, OTHER, "whatever", inf)
+    }
+
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)

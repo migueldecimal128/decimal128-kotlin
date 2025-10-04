@@ -10,7 +10,7 @@ import java.util.*
 
 class TestMutDecAddSub {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val decEnv: DecEnv) {
         constructor(strA: String, strB: String, rd: DecRounding) :

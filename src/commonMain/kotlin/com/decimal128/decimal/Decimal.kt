@@ -23,11 +23,16 @@ class Decimal private constructor(
     constructor(sign: Boolean, dw1: Long, dw0: Long, bitLen: Int, digitLen: Int, qExp: Int) :
             this(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
 
+    constructor(sign: Boolean, dw1: Long, dw0: Long, qExp: Int) :
+            this(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, qExp))
+
     companion object {
         val ZERO = Decimal(0L, 0L, 0, 0)
+        val POS_ZERO = ZERO
         val NEG_ZERO = Decimal(0L, 0L, 0, Short.MIN_VALUE)
         val ONE = Decimal(0L, 1L, 1, 0)
-        val POS_INFINITY = Decimal(0L, 0L, 0, NON_FINITE_INF.toShort())
+        val INFINITY = Decimal(0L, 0L, 0, NON_FINITE_INF.toShort())
+        val POS_INFINITY = INFINITY
         val NEG_INFINITY = Decimal(0L, 0L, 0, packSignExp(true, NON_FINITE_INF))
         val NaN = Decimal(0L, 0L, 0, NON_FINITE_QNAN.toShort())
         val sNaN = Decimal(0L, 0L, 0, NON_FINITE_SNAN.toShort())
@@ -89,11 +94,10 @@ class Decimal private constructor(
     }
 
 
-    fun add(y: Decimal, decEnv: DecEnv) = D128Add.addImpl(this, y.sign, y, decEnv)
-
     operator fun plus(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DecEnv.DECIMAL128)
     operator fun minus(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DecEnv.DECIMAL128)
     operator fun times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DecEnv.DECIMAL128)
+    operator fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DecEnv.DECIMAL128)
 
     override fun toString(): String {
         val mutDec = MutDec()
