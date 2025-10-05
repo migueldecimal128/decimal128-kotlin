@@ -14,40 +14,68 @@ object D128Compare {
 
     fun compare(x: Decimal, y: Decimal) : Int {
         val qMax = max(x.qExp, y.qExp)
-        return when {
-            qMax < NON_FINITE_INF -> compareFinite(x, y)
-            qMax == NON_FINITE_INF -> compareInfinite(x, y)
-            else -> compareNaN(x, y)
-        }
-    }
-
-    private fun compareFinite(x: Decimal, y: Decimal) : Int {
-        return when {
-            x.isZero() and y.isZero() -> 0
-            x.sign != y.sign -> if (x.sign) -1 else 1
-            x.packedLengths != y.packedLengths ->
-                if ((x.packedLengths > y.packedLengths) xor x.sign) 1 else -1
-            ((x.dw1 - y.dw1) or (x.dw0 - y.dw0)) == 0L -> 0
-            else -> {
-                val cmpMag = ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
-                check (cmpMag == 1 || cmpMag == -1)
-                return if (x.sign) -cmpMag else cmpMag
+        when {
+            qMax >= NON_FINITE_QNAN -> return when {
+                x.isNaN() && y.isNaN() -> 0
+                x.isNaN() -> 1
+                else -> -1
             }
+            x.isZero() && y.isZero() -> return 0
+            x.sign != y.sign -> return if (x.sign) -1 else 1
+        }
+        val cmp =
+            if (qMax == NON_FINITE_INF)
+                magnitudeCompareInfinite(x, y)
+            else
+                magnitudeCompareFinite(x, y)
+        return if (x.sign) -cmp else cmp
+    }
+
+    fun magnitudeCompare(x: Decimal, y: Decimal) : Int {
+        val qMax = max(x.qExp, y.qExp)
+        return when {
+            qMax < NON_FINITE_INF -> magnitudeCompareFinite(x, y)
+            qMax == NON_FINITE_INF -> magnitudeCompareInfinite(x, y)
+            else -> magnitudeCompareNaN(x, y)
         }
     }
 
-    private fun compareInfinite(x: Decimal, y: Decimal) : Int {
+    private fun magnitudeCompareFinite(x: Decimal, y: Decimal) : Int {
+        if (x.qExp == y.qExp)
+            return ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
+        val cmpSci = x.sciExp.compareTo(y.sciExp)
+        if (cmpSci != 0)
+            return cmpSci
+        val qDelta = x.qExp - y.qExp
+        val qDeltaAbs = kotlin.math.abs(qDelta)
+        val pow10BitLen = U256Pow10.pow10BitLen(qDeltaAbs)
+        val pow10Offset = U256Pow10.pow10Offset(qDeltaAbs)
+        val dw0Pow10 = POW10[pow10Offset]
+        val dw1Pow10 = POW10[pow10Offset + 1]
+        if (qDelta > 0) {
+            // scale up y
+            if (pow10BitLen <= 64)
+                return ucmp128_128x64(x.dw1, x.dw0, y.dw1, y.dw0, dw0Pow10)
+            return ucmp128_128x64(x.dw1, x.dw0, dw1Pow10, dw0Pow10, y.dw0)
+        } else {
+            // scale up x
+            if (pow10BitLen <= 64)
+                return -ucmp128_128x64(y.dw1, y.dw0, x.dw1, x.dw0, dw0Pow10)
+            return -ucmp128_128x64(y.dw1, y.dw0, dw1Pow10, dw0Pow10, x.dw0)
+        }
+    }
+
+    private fun magnitudeCompareInfinite(x: Decimal, y: Decimal) : Int {
         check (max(x.qExp, y.qExp) == NON_FINITE_INF)
         val minExp = min(x.qExp, y.qExp)
         return when {
-            x.sign != y.sign -> if (x.sign) -1 else 1
             minExp == NON_FINITE_INF -> 0
-            x.qExp == NON_FINITE_INF -> if (x.sign) -1 else 1
-            else -> if (x.sign) 1 else -1
+            x.qExp == NON_FINITE_INF -> 1
+            else -> -1
         }
     }
 
-    private fun compareNaN(x: Decimal, y: Decimal) : Int {
+    private fun magnitudeCompareNaN(x: Decimal, y: Decimal) : Int {
         val minExp = min(x.qExp, y.qExp)
         return when {
             minExp >= NON_FINITE_QNAN -> 0
@@ -56,5 +84,4 @@ object D128Compare {
             else -> throw IllegalStateException()
         }
     }
-
 }

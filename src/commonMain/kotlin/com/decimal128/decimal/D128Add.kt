@@ -128,7 +128,20 @@ object D128Add {
                 return scaledFiniteAddMagnitudes(x, y, decEnv)
         }
         // non-zero with different signs ... subtract magnitudes
-
+        val cmpMag = x.magnitudeCompareTo(y)
+        if (cmpMag == 0)
+            return Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp))
+        val m = if (cmpMag > 0) x else y
+        val n = if (cmpMag > 0) y else x
+        val mSign = if (cmpMag > 0) x.sign else ySign
+        if (m.qExp < n.qExp) {
+            // TC("22E1", "-2E2"),
+            // signs opposite, |m| > |n|, but m.qExp < n.qExp
+            // scale n before subtraction
+            val qDelta = n.qExp - m.qExp
+            check (qDelta < PRECISION_34)
+            return D128Pow10.fusedSubtractMulPow10(m, n, qDelta, mSign)
+        }
         return fullWidthAdd(x, ySign, y, decEnv)
     }
 
@@ -139,25 +152,13 @@ object D128Add {
         val qDelta = m.qExp - n.qExp
         check (qDelta >= 0)
         val headroom = decEnv.precision - m.digitLen
-        if (qDelta > headroom)
-            return fullWidthAdd(x, y.sign, y, decEnv)
-        // we can resolve in the D128 world
-        val shiftLeft = min(qDelta, headroom)
-        return D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
-    }
-
-    private fun scaledFiniteSubMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
-        val flip = x.qExp > y.qExp
-        val m = if (flip) x else y
-        val n = if (flip) y else x
-        val qDelta = m.qExp - n.qExp
-        check (qDelta >= 0)
-        val headroom = decEnv.precision - m.digitLen
-        if (qDelta > headroom)
-            return fullWidthAdd(x, y.sign, y, decEnv)
-        // we can resolve in the D128 world
-        val shiftLeft = min(qDelta, headroom)
-        return D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
+        return if (qDelta <= headroom) {
+            // we can resolve in our D128 world
+            val shiftLeft = min(qDelta, headroom)
+            D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
+        } else {
+            fullWidthAdd(x, y.sign, y, decEnv)
+        }
     }
 
     private fun fullWidthAdd(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
@@ -191,4 +192,29 @@ object D128Add {
             else -> Decimal.POS_INFINITY
         }
     }
+
+    private fun scaledFiniteSubMagnitudes(m: Decimal, nSign: Boolean, n: Decimal, decEnv: DecEnv): Decimal {
+        check (m.qExp != n.qExp)
+        check (m.sciExp >= n.sciExp)
+        if (m.qExp < n.qExp) {
+            // TC("22E1", "2E2"),
+            // x > y, but x.qExp < y.qExp
+            // scale n before subtraction
+            val qDeltaY = n.qExp - m.qExp
+            check (qDeltaY < PRECISION_34)
+            return D128Pow10.fusedSubtractMulPow10(m, n, qDeltaY, m.sign)
+        }
+        val qDeltaX = m.qExp - n.qExp
+        val headroom = decEnv.precision - m.digitLen
+        val shiftLeft = min(qDeltaX, headroom)
+        val qAlign = m.qExp - shiftLeft
+        val shiftRight = qAlign - n.qExp
+        if (shiftRight == 0) {
+            check(shiftLeft > 0)
+            return D128Pow10.fusedMulPow10Subtract(m, shiftLeft, n, m.sign)
+        }
+        return fullWidthAdd(m, nSign, n, decEnv)
+    }
+
+
 }

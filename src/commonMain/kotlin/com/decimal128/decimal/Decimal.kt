@@ -21,6 +21,8 @@ class Decimal private constructor(
         get() = signExp.toInt() shr 31
     internal val qExp: Int
         get() = (signExp.toInt() shl 17) shr 17
+    internal val sciExp: Int
+        get() = qExp + (digitLen - (-digitLen ushr 31))
 
     constructor(sign: Boolean, dw1: Long, dw0: Long, bitLen: Int, digitLen: Int, qExp: Int) :
             this(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
@@ -75,8 +77,15 @@ class Decimal private constructor(
         }
      }
 
-    @Suppress("NOTHING_TO_INLINE")
-    internal inline fun isZero() = packedLengths.toInt() == 0
+    fun isZero() = this.packedLengths.toInt() == 0 && this.qExp < MIN_SPECIAL_VALUE
+    fun isPosZero() = isZero() && !sign
+    fun isNegZero() = isZero() && sign
+    fun isOne() = this.packedLengths.toInt() == (1 shl 9) or 1
+    fun isNaN() = this.qExp >= NON_FINITE_QNAN
+    fun isFinite() = this.qExp < NON_FINITE_INF
+
+    // 5.7.3 Decimal operation
+    fun sameQuantum(other: Decimal) = (this.qExp == other.qExp)
 
     fun abs() = if (sign) negate() else this
 
@@ -111,6 +120,9 @@ class Decimal private constructor(
     fun sub(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DECIMAL128)
     fun mul(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
     fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
+
+    fun compareTo(other: Decimal): Int = D128Compare.compare(this, other)
+    fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
 
     fun coefficientCompareTo(other: Decimal): Int {
         val cmpBitLen = this.bitLen.compareTo(other.bitLen)

@@ -29,6 +29,9 @@ class TestDecimalAddSub {
     }
 
     val cases = arrayOf(
+        TC("-2.055E+2463", "4E+4142", ROUND_TIES_TO_AWAY),
+        TC("22E1", "-2E2"),
+        TC("-2E2", "22E1"),
         TC("2.9E-3804", "-1.8251376154629220824597360992E-3779", ROUND_TIES_TO_AWAY),
         TC("1", "1e1"),
         TC("0E-114", "1.768449379828632909538225435741516E+3531", ROUND_TOWARD_ZERO),
