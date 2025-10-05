@@ -124,25 +124,31 @@ object D128Add {
         when {
             x.isZero() or y.isZero() ->
                 return scaledFiniteAddZero(x, ySign, y, decEnv)
+
             x.sign == ySign ->
                 return scaledFiniteAddMagnitudes(x, y, decEnv)
         }
-        // non-zero with different signs ... subtract magnitudes
         val cmpMag = x.magnitudeCompareTo(y)
-        if (cmpMag == 0)
-            return Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp))
-        val m = if (cmpMag > 0) x else y
-        val n = if (cmpMag > 0) y else x
-        val mSign = if (cmpMag > 0) x.sign else ySign
+        return when {
+            cmpMag > 0 -> scaledFiniteSubMagnitudes(x.sign, x, y, decEnv)
+            cmpMag < 0 -> scaledFiniteSubMagnitudes(ySign, y, x, decEnv)
+            else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp))
+        }
+    }
+
+    fun scaledFiniteSubMagnitudes(resultSign: Boolean, m: Decimal, n: Decimal, decEnv: DecEnv): Decimal {
+        // non-zero with different signs ... subtract magnitudes
+        check (m.magnitudeCompareTo(n) > 0)
+        check (n.isNotZero())
         if (m.qExp < n.qExp) {
             // TC("22E1", "-2E2"),
             // signs opposite, |m| > |n|, but m.qExp < n.qExp
             // scale n before subtraction
             val qDelta = n.qExp - m.qExp
             check (qDelta < PRECISION_34)
-            return D128Pow10.fusedSubtractMulPow10(m, n, qDelta, mSign)
+            return D128Pow10.fusedSubtractMulPow10(resultSign, m, n, qDelta)
         }
-        return fullWidthAdd(x, ySign, y, decEnv)
+        return fullWidthAdd(resultSign, m, !resultSign, n, decEnv)
     }
 
     private fun scaledFiniteAddMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
@@ -157,12 +163,13 @@ object D128Add {
             val shiftLeft = min(qDelta, headroom)
             D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
         } else {
-            fullWidthAdd(x, y.sign, y, decEnv)
+            fullWidthAdd(x.sign, x, y.sign, y, decEnv)
         }
     }
 
-    private fun fullWidthAdd(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
+    private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
         val arg1 = decEnv.decTemps.mutDecArg1.set(x)
+        arg1.sign = xSign
         val arg2 = decEnv.decTemps.mutDecArg2.set(y)
         arg2.sign = ySign
         val mdecSum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
@@ -192,29 +199,5 @@ object D128Add {
             else -> Decimal.POS_INFINITY
         }
     }
-
-    private fun scaledFiniteSubMagnitudes(m: Decimal, nSign: Boolean, n: Decimal, decEnv: DecEnv): Decimal {
-        check (m.qExp != n.qExp)
-        check (m.sciExp >= n.sciExp)
-        if (m.qExp < n.qExp) {
-            // TC("22E1", "2E2"),
-            // x > y, but x.qExp < y.qExp
-            // scale n before subtraction
-            val qDeltaY = n.qExp - m.qExp
-            check (qDeltaY < PRECISION_34)
-            return D128Pow10.fusedSubtractMulPow10(m, n, qDeltaY, m.sign)
-        }
-        val qDeltaX = m.qExp - n.qExp
-        val headroom = decEnv.precision - m.digitLen
-        val shiftLeft = min(qDeltaX, headroom)
-        val qAlign = m.qExp - shiftLeft
-        val shiftRight = qAlign - n.qExp
-        if (shiftRight == 0) {
-            check(shiftLeft > 0)
-            return D128Pow10.fusedMulPow10Subtract(m, shiftLeft, n, m.sign)
-        }
-        return fullWidthAdd(m, nSign, n, decEnv)
-    }
-
 
 }

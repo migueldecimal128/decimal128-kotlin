@@ -78,6 +78,7 @@ class Decimal private constructor(
      }
 
     fun isZero() = this.packedLengths.toInt() == 0 && this.qExp < MIN_SPECIAL_VALUE
+    fun isNotZero() = !isZero()
     fun isPosZero() = isZero() && !sign
     fun isNegZero() = isZero() && sign
     fun isOne() = this.packedLengths.toInt() == (1 shl 9) or 1

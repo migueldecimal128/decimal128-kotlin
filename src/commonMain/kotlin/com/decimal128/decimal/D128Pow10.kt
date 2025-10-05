@@ -53,18 +53,18 @@ object D128Pow10 {
      * Guaranteed that the multiply will not exceed 128 bits.
      * Guaranteed that y less than the scaled product.
      */
-    fun fusedSubtractMulPow10(x: Decimal, y: Decimal, pow10: Int, sign: Boolean): Decimal {
+    fun fusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, pow10: Int): Decimal {
         check (pow10 > 0)
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         val pow10Offset = U256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
-        val p0 = y.dw0 * dw0Pow10
-        val p1 = unsignedMulHi(y.dw0, dw0Pow10) + (y.dw0 * dw1Pow10) + (y.dw1 * dw0Pow10)
+        val p0 = n.dw0 * dw0Pow10
+        val p1 = unsignedMulHi(n.dw0, dw0Pow10) + (n.dw0 * dw1Pow10) + (n.dw1 * dw0Pow10)
 
-        val d0 = x.dw0 - p0
-        val borrow0 = if (unsignedLT(x.dw0, d0)) 1L else 0L
-        val d1 = x.dw1 - p1 - borrow0
-        return Decimal(sign, d1, d0, x.qExp)
+        val d0 = m.dw0 - p0
+        val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
+        val d1 = m.dw1 - p1 - borrow0
+        return Decimal(sign, d1, d0, m.qExp)
     }
 }
