@@ -6,7 +6,7 @@ import com.decimal128.decimal.DecExceptionReason.*
 import kotlin.math.max
 import kotlin.math.min
 
-object D128Add {
+object D128AddSub {
 
     fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
         val qMax = max(x.qExp, y.qExp)
@@ -136,10 +136,11 @@ object D128Add {
         }
     }
 
-    fun scaledFiniteSubMagnitudes(resultSign: Boolean, m: Decimal, n: Decimal, decEnv: DecEnv): Decimal {
+    private fun scaledFiniteSubMagnitudes(resultSign: Boolean, m: Decimal, n: Decimal, decEnv: DecEnv): Decimal {
         // non-zero with different signs ... subtract magnitudes
         check (m.magnitudeCompareTo(n) > 0)
         check (n.isNotZero())
+        check (m.qExp != n.qExp)
         if (m.qExp < n.qExp) {
             // TC("22E1", "-2E2"),
             // signs opposite, |m| > |n|, but m.qExp < n.qExp
@@ -147,6 +148,15 @@ object D128Add {
             val qDelta = n.qExp - m.qExp
             check (qDelta < PRECISION_34)
             return D128Pow10.fusedSubtractMulPow10(resultSign, m, n, qDelta)
+        } else {
+            // |m| > |n| && m.qExp > n.qExp
+            val headroom = decEnv.precision - m.digitLen
+            val qDelta = m.qExp - n.qExp
+            if (headroom >= qDelta) {
+                // 12E3, -4
+                // m has enough headroom to scale and align with n.qExp
+                return D128Pow10.fusedMulPow10Subtract(resultSign, m, qDelta, n)
+            }
         }
         return fullWidthAdd(resultSign, m, !resultSign, n, decEnv)
     }

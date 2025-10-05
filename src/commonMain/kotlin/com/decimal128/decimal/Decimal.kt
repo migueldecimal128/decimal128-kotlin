@@ -117,8 +117,8 @@ class Decimal private constructor(
 
      */
 
-    fun add(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DECIMAL128)
-    fun sub(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DECIMAL128)
+    fun add(other: Decimal): Decimal = D128AddSub.addImpl(this, other.sign, other, DECIMAL128)
+    fun sub(other: Decimal): Decimal = D128AddSub.addImpl(this, !other.sign, other, DECIMAL128)
     fun mul(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
     fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
 

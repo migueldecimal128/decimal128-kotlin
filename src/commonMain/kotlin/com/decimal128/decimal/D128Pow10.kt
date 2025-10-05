@@ -33,7 +33,7 @@ object D128Pow10 {
      * Guaranteed that the multiply will not exceed 128 bits.
      * Guaranteed that y less than the scaled product.
      */
-    fun fusedMulPow10Subtract(x: Decimal, pow10: Int, y: Decimal, sign: Boolean): Decimal {
+    fun fusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
         check (pow10 > 0)
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         val pow10Offset = U256Pow10.pow10Offset(pow10)
