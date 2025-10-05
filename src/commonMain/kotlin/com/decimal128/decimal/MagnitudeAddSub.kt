@@ -78,7 +78,7 @@ object MagnitudeAddSub {
         }
     }
 
-    // uses Guard and Round digits
+    // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
     fun magSub(z: MutDec, x: MutDec, y: MutDec): Residue {
         check(x.magnitudeCompareTo(y) >= 0)
@@ -93,7 +93,9 @@ object MagnitudeAddSub {
             // one guard digit is enough ...
             // ... residue provides sufficient info for rounding
             val headroomWithGuard = 1 + PRECISION_34 - x.digitLen
+            // shiftLeft is always >0 because guard digit provides 1 digit of headroom
             val shiftLeft = min(qDelta, headroomWithGuard)
+            check (shiftLeft > 0)
             val qAlign = x.qExp - shiftLeft
             when {
                 (x.bitLen > 0 && y.bitLen > 0) -> {
@@ -124,10 +126,7 @@ object MagnitudeAddSub {
                             // then do a fused scaling, allowing us to
                             // perform this op without allocating of temp variables
                             val residue = u256ScaleDownPow10(z, y, shiftRight)
-                            if (shiftLeft > 0)
-                                u256SubScaled(z, x, shiftLeft, z)
-                            else
-                                u256AddUnscaled(z, x, z)
+                            u256SubScaled(z, x, shiftLeft, z)
                             // if ! EXACT then decrement,
                             // take the inverse of the residue,
                             // and the normal roundAndFinalize() will take care of it

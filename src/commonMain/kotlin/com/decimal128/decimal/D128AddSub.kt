@@ -157,6 +157,16 @@ object D128AddSub {
                 // m has enough headroom to scale and align with n.qExp
                 return D128Pow10.fusedMulPow10Subtract(resultSign, m, qDelta, n)
             }
+            val qAlign = m.qExp - headroom
+            val shiftRight = qAlign - n.qExp
+            if (shiftRight >= n.digitLen) {
+                // n is fully swamped
+                // this becomes a rounding/residue problem
+                // FIXME
+                //  This requires residue and rounding in the D128 world
+                //  I'm not ready to tackle that yet
+            }
+
         }
         return fullWidthAdd(resultSign, m, !resultSign, n, decEnv)
     }
