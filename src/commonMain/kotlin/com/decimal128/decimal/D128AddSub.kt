@@ -110,8 +110,8 @@ object D128AddSub {
             val s1 = x1 + y1 + carry0
             Decimal.from(s1, s0, x.signExp)
         } else {
-            val arg1 = decEnv.decTemps.mutDecArg1.set(x)
-            val arg2 = decEnv.decTemps.mutDecArg2.set(y)
+            val arg1 = decEnv.decTemps.mdecArg1.set(x)
+            val arg2 = decEnv.decTemps.mdecArg2.set(y)
             val mdecSum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
             Decimal.from(mdecSum)
         }
@@ -188,9 +188,9 @@ object D128AddSub {
     }
 
     private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
-        val arg1 = decEnv.decTemps.mutDecArg1.set(x)
+        val arg1 = decEnv.decTemps.mdecArg1.set(x)
         arg1.sign = xSign
-        val arg2 = decEnv.decTemps.mutDecArg2.set(y)
+        val arg2 = decEnv.decTemps.mdecArg2.set(y)
         arg2.sign = ySign
         val mdecSum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
         val sum = Decimal.from(mdecSum)

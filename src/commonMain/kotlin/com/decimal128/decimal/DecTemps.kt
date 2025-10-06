@@ -2,6 +2,6 @@ package com.decimal128.decimal
 
 class DecTemps {
     val mutDecResult = MutDec()
-    val mutDecArg1 = MutDec()
-    val mutDecArg2 = MutDec()
+    val mdecArg1 = MutDec()
+    val mdecArg2 = MutDec()
 }

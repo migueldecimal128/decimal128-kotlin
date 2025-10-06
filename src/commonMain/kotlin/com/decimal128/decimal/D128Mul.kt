@@ -51,8 +51,8 @@ object D128Mul {
     }
 
     private fun finiteMul256(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
-        val p = decEnv.decTemps.mutDecArg1.set(x)
-        val n = decEnv.decTemps.mutDecArg2.set(y)
+        val p = decEnv.decTemps.mdecArg1.set(x)
+        val n = decEnv.decTemps.mdecArg2.set(y)
         p.setMul(p, n, decEnv)
         val d = Decimal.from(p)
         return d

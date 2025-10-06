@@ -32,10 +32,15 @@ object D128Div {
     }
 
     private fun finiteDivImpl(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+        check (x.isFinite() && y.isFinite())
         return when {
-            (y.bitLen > 0) ->
-                finiteDivNonZero(x, y, decEnv)
-            (x.bitLen > 0) -> {
+            y.packedLengths > 0 -> {
+                if (x.packedLengths.toInt() == 0)
+                    Decimal.newZero(false, x.qExp - y.qExp)
+                else
+                    finiteDivNonZero(x, y, decEnv)
+            }
+            x.packedLengths > 0 -> {
                 // finite division by zero
                 val sign = x.sign xor y.sign
                 decEnv.signalDivByZero(sign)
@@ -49,8 +54,8 @@ object D128Div {
     }
 
     private fun finiteDivNonZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
-        val dividend = decEnv.decTemps.mutDecArg1.set(x)
-        val divisor = decEnv.decTemps.mutDecArg2.set(y)
+        val dividend = decEnv.decTemps.mdecArg1.set(x)
+        val divisor = decEnv.decTemps.mdecArg2.set(y)
         val quotient = decEnv.decTemps.mutDecResult.setDiv(dividend, divisor, decEnv)
         return Decimal.from(quotient)
     }

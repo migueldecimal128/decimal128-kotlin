@@ -75,7 +75,11 @@ class Decimal private constructor(
             val dec = Decimal(dw1, dw0, lengths, signExp)
             return dec
         }
-     }
+
+        internal fun bothFnz(x: Decimal, y: Decimal) =
+            ((x.qExp - MIN_SPECIAL_VALUE) or (y.qExp - MIN_SPECIAL_VALUE) or -x.bitLen or -y.bitLen) < 0
+
+    }
 
     fun isZero() = this.packedLengths.toInt() == 0 && this.qExp < MIN_SPECIAL_VALUE
     fun isNotZero() = !isZero()

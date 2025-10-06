@@ -1,0 +1,70 @@
+package com.decimal128.decimal
+
+import com.decimal128.decimal.BinopSignature.*
+import com.decimal128.decimal.Decimal.Companion.bothFnz
+
+class Binop2Mul {
+    companion object {
+
+        fun mulImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+            return if (bothFnz(x, y)) {
+                mulFnzFnz(x, y, env)
+            } else when (BinopSignature.enumOf(x, y)) {
+                ZER_ZER -> mulZero(x, y, env)
+                ZER_FNZ -> mulZero(x, y, env)
+                ZER_INF -> mulInfZero(x, y, env)
+
+                FNZ_ZER -> mulZero(x, y, env)
+                FNZ_FNZ -> mulFnzFnz(x, y, env)
+                FNZ_INF -> mulInfNonzero(x, y, env)
+
+                INF_ZER -> mulInfZero(x, y, env)
+                INF_FNZ -> mulInfNonzero(x, y, env)
+                INF_INF -> mulInfNonzero(x, y, env)
+
+                NAN_FOUND -> TODO()
+            }
+        }
+
+        private fun mulZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
+            Decimal.newZero(false, kotlin.math.min(x.qExp, y.qExp))
+
+        private fun mulInfZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
+            decEnv.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
+
+        private fun mulInfNonzero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
+            if (x.sign xor y.sign) Decimal.POS_INFINITY else Decimal.NEG_INFINITY
+
+        // fast-path iff ...
+        //  product bitLen strictly less than decFormat.maxBitLen
+        //  (equal bitLen could overflow coefficient decimal limit)
+        //
+        //  exponent on the upper end is easy, must be < qMax
+        //  exponent on the low end must be >= eMin, not qTiny
+        //  anything in the range [qTiny, eMin) is subnormal
+        //  and must be scaled, so not on the fast-path
+        private fun mulFnzFnz(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+            val prodBitLen = x.bitLen + y.bitLen
+            val prodExp = x.qExp + y.qExp
+            if (prodBitLen < env.maxBitLen && prodExp >= env.eMin && prodExp <= env.qMax) {
+                val p0 = x.dw0 * y.dw0
+                val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
+                val prodSign = x.sign xor y.sign
+                val d = Decimal(prodSign, p1, p0, prodExp)
+                return d
+            }
+            return mulFnzFnz256(x, y, env)
+        }
+
+        private fun mulFnzFnz256(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+            val p = decEnv.decTemps.mdecArg1.set(x)
+            val n = decEnv.decTemps.mdecArg2.set(y)
+            p.setMul(p, n, decEnv)
+            val d = Decimal.from(p)
+            return d
+        }
+
+
+
+    }
+}

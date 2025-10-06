@@ -15,6 +15,8 @@ data class DecEnv(
 ) {
     val precision: Int
         get() = decFormat.precision
+    val maxBitLen: Int
+        get() = decFormat.maxBitLen
     val qTiny: Int
         get() = decFormat.qTiny
     val qMax: Int
@@ -76,6 +78,11 @@ data class DecEnv(
             return mutDec
         val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
         return mutDec.set(decTraps.signal(trapContext))
+    }
+
+    fun signal(decExceptionReason: DecExceptionReason): Decimal {
+        // TODO
+        return Decimal.NaN
     }
 
     fun signalInvalid(mutDec: MutDec): MutDec {
