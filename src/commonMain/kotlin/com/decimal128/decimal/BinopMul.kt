@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.bothFnz
 
-class Binop2Mul {
+class BinopMul {
     companion object {
 
         fun mulImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
