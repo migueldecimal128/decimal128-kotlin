@@ -2,8 +2,9 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.bothFnz
+import kotlin.math.min
 
-class BinopMul {
+class BinopMul : Binop() {
     companion object {
 
         fun mulImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
@@ -22,12 +23,12 @@ class BinopMul {
                 INF_FNZ -> mulInfNonzero(x, y, env)
                 INF_INF -> mulInfNonzero(x, y, env)
 
-                NAN_FOUND -> TODO()
+                NAN_FOUND -> nanFound(x, y, env)
             }
         }
 
         private fun mulZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
-            Decimal.newZero(false, kotlin.math.min(x.qExp, y.qExp))
+            Decimal.newZero(false, min(x.qExp, y.qExp))
 
         private fun mulInfZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
             decEnv.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
