@@ -16,7 +16,7 @@ object C128AddSub {
         return sum
     }
 
-    fun c128UnscaledSub(x: Decimal, y: Decimal): Decimal {
+    fun c128UnscaledSub(sign: Boolean, x: Decimal, y: Decimal): Decimal {
         check(x.validate())
         check(y.validate())
         check(x.bitLen >= y.bitLen)
@@ -24,7 +24,7 @@ object C128AddSub {
         val d0 = x.dw0 - y.dw0
         val carry0 = if (unsignedCmp(d0, x.dw0) > 0) 1L else 0L
         val d1 = x.dw1 - y.dw1 - carry0
-        val diff = Decimal.from(d1, d0, x.signExp)
+        val diff = Decimal.from(sign, d1, d0, x.qExp)
         return diff
     }
 

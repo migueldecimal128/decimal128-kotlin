@@ -77,8 +77,8 @@ class BinopAddSub : Binop() {
                 return addUnscaledMagnitudes(x, y, env)
             val cmp = c128UnscaledCompare(x, y)
             return when {
-                (cmp > 0) -> C128AddSub.c128UnscaledSub(x, y)
-                (cmp < 0) -> C128AddSub.c128UnscaledSub(y, x)
+                (cmp > 0) -> C128AddSub.c128UnscaledSub(x.sign, x, y)
+                (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
                 else -> Decimal.newZero(env.isRoundTowardNegative(), x.qExp)
             }
         }

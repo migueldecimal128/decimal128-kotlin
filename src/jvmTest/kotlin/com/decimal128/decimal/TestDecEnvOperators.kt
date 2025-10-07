@@ -16,6 +16,9 @@ class TestDecEnvOperators {
             val d = a + b * c
             println("a:$a + b:$b * c:$c = d:$d")
             assertEquals("14", "$d")
+
+            val e = a - b
+            assertEquals("-1", "$e")
         }
 
         DECIMAL128.context {

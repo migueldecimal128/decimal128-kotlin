@@ -51,8 +51,8 @@ object D128AddSub {
 
         val cmp = c128UnscaledCompare(x, y)
         return when {
-            (cmp > 0) -> C128AddSub.c128UnscaledSub(x, y)
-            (cmp < 0) -> C128AddSub.c128UnscaledSub(y, x)
+            (cmp > 0) -> C128AddSub.c128UnscaledSub(x.sign, x, y)
+            (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
             else -> Decimal.newZero(decEnv.isRoundTowardNegative(), x.qExp)
         }
     }
