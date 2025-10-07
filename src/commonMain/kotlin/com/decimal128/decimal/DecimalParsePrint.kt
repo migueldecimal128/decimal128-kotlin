@@ -134,18 +134,18 @@ object DecimalParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
-    fun decFromString(x: MutDec, str: String, zeroNanPayload: Boolean, decEnv: DecEnv) =
-        decFromText(x, StringLatin1Iterator(str), zeroNanPayload, decEnv)
+    fun decFromString(x: MutDec, str: String, decEnv: DecEnv) =
+        decFromText(x, StringLatin1Iterator(str), decEnv)
 
-    private fun decFromText(x: MutDec, src: Latin1Iterator, zeroNanPayload: Boolean, decEnv: DecEnv) {
-        val maxPayloadDigitLen = decEnv.precision - 1
+    private fun decFromText(x: MutDec, src: Latin1Iterator, env: DecEnv) {
+        val maxPayloadDigitLen = env.precision - 1
         when {
-            isFiniteValueText(x, src, decEnv) -> return
+            isFiniteValueText(x, src, env) -> return
             isInfinityText(x, src) -> return
-            isNanText(x, src, maxPayloadDigitLen, zeroNanPayload) -> return
+            isNanText(x, src, maxPayloadDigitLen, env.parseDiscardNanPayload()) -> return
             isValidBidHexText(x, src) -> return
             isValidDpdHexText(x, src) -> return
-            else -> x.setNaN(if (zeroNanPayload) 0 else NAN_INVALID_SYNTAX, decEnv)
+            else -> x.setNaN(if (env.parseDiscardNanPayload()) 0 else NAN_INVALID_SYNTAX, env)
         }
     }
 
@@ -166,6 +166,8 @@ object DecimalParsePrint {
             ch = src.nextChar()
         var fractionalDigitCount = 0
         var coeff19 = 0L
+        // FIXME ... looks like I wired this to 34 digits and it will fail for
+        //  38 digit DECIMAL128_EXTENDED
         var coeff34 = 0L
         var guardDigit = 0
         var stickyBits = 0
@@ -251,6 +253,7 @@ object DecimalParsePrint {
         val discardedIntegerDigitCount = max(0, integerDigitCount - 34)
         val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
         x.qExp = qExp
+        // FIXME ... make sure that this limiting range and properly scaling subnormal values
         if (((guardDigit or stickyBits) == 0) && (qExp >= decEnv.qTiny) && (qExp <= decEnv.qMax))
             return true
         val roundBit = if (guardDigit < 5) 0 else 1
@@ -260,7 +263,7 @@ object DecimalParsePrint {
         return true
     }
 
-    fun isNanText(x: MutDec, src: Latin1Iterator, maxPayloadDigits: Int, zeroNanPayload: Boolean): Boolean {
+    fun isNanText(x: MutDec, src: Latin1Iterator, maxPayloadDigits: Int, discardNanPayload: Boolean): Boolean {
         src.reset()
         x.setZero()
         var ch = src.nextChar()
@@ -290,7 +293,7 @@ object DecimalParsePrint {
         }
         if (ch != '\u0000' || payloadDigitCount > maxPayloadDigits)
             return false
-        if (!zeroNanPayload && payloadDigitCount > 0) {
+        if (!discardNanPayload && payloadDigitCount > 0) {
             x.u256Set64(accumulator19)
             if (payloadDigitCount > 19)
                 x.u256MutateFmaPow10(payloadDigitCount - 19, accumulator38)

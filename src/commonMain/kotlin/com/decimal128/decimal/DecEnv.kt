@@ -32,6 +32,8 @@ data class DecEnv(
         val DECIMAL64 = DecEnv(DecFormat.DECIMAL_64)
         val DECIMAL128 = DecEnv(DecFormat.DECIMAL_128)
         val DECIMAL128_EXTENDED = DecEnv(DecFormat.DECIMAL_128_EXTENDED)
+
+        val DECIMAL128_ZERO_NAN_PAYLOAD = DECIMAL128.with(DECIMAL128.decPrefs.copy(parseDiscardNanPayload = true))
     }
 
     fun with(newDecFormat: DecFormat) =
@@ -156,4 +158,6 @@ data class DecEnv(
     operator fun Decimal.plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other, this@DecEnv)
     operator fun Decimal.minus(other: Decimal): Decimal = BinopAddSub.subImpl(this, other, this@DecEnv)
     operator fun Decimal.times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, this@DecEnv)
+
+    fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 }

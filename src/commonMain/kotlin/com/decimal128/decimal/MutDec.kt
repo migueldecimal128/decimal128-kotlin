@@ -8,6 +8,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+import com.decimal128.decimal.DecEnv.Companion.DECIMAL128_ZERO_NAN_PAYLOAD
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
@@ -31,11 +32,12 @@ class MutDec() : U256() {
     }
 
     constructor(str: String): this() {
-        DecimalParsePrint.decFromString(this, str, false, DECIMAL128)
+        DecimalParsePrint.decFromString(this, str, DECIMAL128)
     }
 
     constructor(str: String, zeroNanPayload: Boolean) : this() {
-        DecimalParsePrint.decFromString(this, str, zeroNanPayload, DECIMAL128)
+        val env = if (zeroNanPayload) DECIMAL128_ZERO_NAN_PAYLOAD else DECIMAL128
+        DecimalParsePrint.decFromString(this, str, env)
     }
 
     constructor(other: MutDec) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
@@ -317,7 +319,7 @@ class MutDec() : U256() {
     }
 
     fun set(str: String): MutDec {
-        DecimalParsePrint.decFromString(this, str, false, DECIMAL128)
+        DecimalParsePrint.decFromString(this, str, DECIMAL128)
         return this
     }
 

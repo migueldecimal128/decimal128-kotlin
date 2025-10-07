@@ -12,7 +12,7 @@ data class DecPrefs(
     val printNaNTextCase: TextCase = TextCase.MIXED_CASE,
     val printCollapseSNaN: Boolean = false,
     val parseCollapseSNaN: Boolean = false,
-    val parsePreserveNaNPayload: Boolean = true,
+    val parseDiscardNanPayload: Boolean = false,
 
     val printInfinityPlusSign: Boolean = false,
     val printInfinityTextCase: TextCase = TextCase.MIXED_CASE,
