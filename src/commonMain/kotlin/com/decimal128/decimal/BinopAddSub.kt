@@ -13,10 +13,10 @@ class BinopAddSub : Binop() {
                 addFnzFnz(x, y.sign, y, env)
             } else when (BinopSignature.enumOf(x, y)) {
                 ZER_ZER -> addZeroZero(x, y.sign, y, env)
-                ZER_FNZ -> y
+                ZER_FNZ -> scaleToMinExp(y, x.qExp, env)
                 ZER_INF -> y
 
-                FNZ_ZER -> x
+                FNZ_ZER -> scaleToMinExp(x, y.qExp, env)
                 FNZ_FNZ -> throw IllegalStateException()
                 FNZ_INF -> y
 
@@ -52,11 +52,11 @@ class BinopAddSub : Binop() {
             // Both operands are zero. This is where the special rules apply.
             return if (x.sign == ySign) {
                 // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
-                return x
+                return if (x.qExp < y.qExp) x else y // return min qExp
             } else {
                 // Rule: (+0) + (-0). The signs are different.
                 // Result is +0 unless rounding is roundTowardNegative.
-                Decimal.newZero(env.isRoundTowardNegative(), x.qExp)
+                Decimal.newZero(env.isRoundTowardNegative(), min(x.qExp, y.qExp))
             }
         }
 

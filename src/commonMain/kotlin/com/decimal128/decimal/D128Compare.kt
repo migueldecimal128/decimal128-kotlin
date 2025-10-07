@@ -53,15 +53,16 @@ object D128Compare {
         val dw0Pow10 = POW10[pow10Offset]
         val dw1Pow10 = POW10[pow10Offset + 1]
         if (qDelta > 0) {
+            // x.qExp is larger
+            // scale up x.coefficient
+            if (pow10BitLen <= 64)
+                return -ucmp128_128x64(y.dw1, y.dw0, x.dw1, x.dw0, dw0Pow10)
+            return -ucmp128_128x64(y.dw1, y.dw0, dw1Pow10, dw0Pow10, x.dw0)
+        } else {
             // scale up y
             if (pow10BitLen <= 64)
                 return ucmp128_128x64(x.dw1, x.dw0, y.dw1, y.dw0, dw0Pow10)
             return ucmp128_128x64(x.dw1, x.dw0, dw1Pow10, dw0Pow10, y.dw0)
-        } else {
-            // scale up x
-            if (pow10BitLen <= 64)
-                return -ucmp128_128x64(y.dw1, y.dw0, x.dw1, x.dw0, dw0Pow10)
-            return -ucmp128_128x64(y.dw1, y.dw0, dw1Pow10, dw0Pow10, x.dw0)
         }
     }
 

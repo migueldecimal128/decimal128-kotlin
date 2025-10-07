@@ -153,7 +153,7 @@ data class DecEnv(
     fun newAdd(x: MutDec, y: MutDec) = MutDec.newAdd(x, y, this)
 
     // Member-extension operator overloads:
-    operator fun Decimal.plus(other: Decimal): Decimal = D128AddSub.addImpl(this, other.sign, other, this@DecEnv)
-    operator fun Decimal.minus(other: Decimal): Decimal = D128AddSub.addImpl(this, !other.sign, other, this@DecEnv)
+    operator fun Decimal.plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other, this@DecEnv)
+    operator fun Decimal.minus(other: Decimal): Decimal = BinopAddSub.subImpl(this, other, this@DecEnv)
     operator fun Decimal.times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, this@DecEnv)
 }
