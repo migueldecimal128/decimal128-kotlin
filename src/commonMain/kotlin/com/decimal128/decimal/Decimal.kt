@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+import kotlin.math.max
 
 class Decimal private constructor(
     @field: JvmField internal val dw1: Long,
@@ -31,15 +32,21 @@ class Decimal private constructor(
             this(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, qExp))
 
     companion object {
-        val ZERO = Decimal(0L, 0L, 0, 0)
-        val POS_ZERO = ZERO
+        val POS_ZERO = Decimal(0L, 0L, 0, 0)
         val NEG_ZERO = Decimal(0L, 0L, 0, Short.MIN_VALUE)
-        val ONE = Decimal(0L, 1L, 1, 0)
-        val INFINITY = Decimal(0L, 0L, 0, NON_FINITE_INF.toShort())
-        val POS_INFINITY = INFINITY
+        val ZERO = POS_ZERO
+        val POS_ONE = Decimal(0L, 1L, 1, 0)
+        val NEG_ONE = Decimal(0L, 1L, 1, 0x8000.toShort())
+        val ONE = POS_ONE
+        val POS_INFINITY = Decimal(0L, 0L, 0, NON_FINITE_INF.toShort())
         val NEG_INFINITY = Decimal(0L, 0L, 0, packSignExp(true, NON_FINITE_INF))
-        val NaN = Decimal(0L, 0L, 0, NON_FINITE_QNAN.toShort())
-        val sNaN = Decimal(0L, 0L, 0, NON_FINITE_SNAN.toShort())
+        val INFINITY = POS_INFINITY
+        val POS_QNAN = Decimal(0L, 0L, 0, NON_FINITE_QNAN.toShort())
+        val NEG_QNAN = Decimal(0L, 0L, 0, (0x8000 or NON_FINITE_QNAN).toShort())
+        val NaN = POS_QNAN
+        val POS_SNAN = Decimal(0L, 0L, 0, NON_FINITE_SNAN.toShort())
+        val NEG_SNAN = Decimal(0L, 0L, 0, (0x8000 or NON_FINITE_SNAN).toShort())
+        val sNaN = POS_SNAN
 
         fun newZero(sign: Boolean, qExp: Int): Decimal {
             if (qExp == 0)
@@ -94,6 +101,10 @@ class Decimal private constructor(
                     -y.bitLen) < 0
         }
 
+        internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
+            max(x.qExp, y.qExp) >= NON_FINITE_QNAN
+
+
     }
 
     fun isZero() = this.packedLengths.toInt() == 0 && this.qExp < MIN_SPECIAL_VALUE
@@ -113,8 +124,11 @@ class Decimal private constructor(
         return when {
             qExp < NON_FINITE_INF -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
             qExp == NON_FINITE_INF -> if (sign) POS_INFINITY else NEG_INFINITY
-            qExp == NON_FINITE_QNAN -> this
-            else -> NaN // sNaN -> qNaN
+            else -> when {
+                packedLengths.toInt() != 0 -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
+                sign -> if (qExp == NON_FINITE_QNAN) POS_QNAN else POS_SNAN
+                else -> if (qExp == NON_FINITE_QNAN) NEG_QNAN else NEG_SNAN
+            }
         }
     }
 
