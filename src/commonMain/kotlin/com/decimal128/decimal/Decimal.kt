@@ -101,6 +101,10 @@ class Decimal private constructor(
                     -y.bitLen) < 0
         }
 
+        fun qNaN(sign: Boolean) = if (sign) NEG_QNAN else POS_QNAN
+        fun sNaN(sign: Boolean) = if (sign) NEG_SNAN else POS_SNAN
+        fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
+
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
             max(x.qExp, y.qExp) >= NON_FINITE_QNAN
 
@@ -123,12 +127,10 @@ class Decimal private constructor(
     fun negate(): Decimal {
         return when {
             qExp < NON_FINITE_INF -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
-            qExp == NON_FINITE_INF -> if (sign) POS_INFINITY else NEG_INFINITY
-            else -> when {
-                packedLengths.toInt() != 0 -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
-                sign -> if (qExp == NON_FINITE_QNAN) POS_QNAN else POS_SNAN
-                else -> if (qExp == NON_FINITE_QNAN) NEG_QNAN else NEG_SNAN
-            }
+            qExp == NON_FINITE_INF -> infinity(sign)
+            packedLengths.toInt() != 0 -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
+            qExp == NON_FINITE_QNAN -> qNaN(! sign)
+            else -> sNaN(! sign)
         }
     }
 

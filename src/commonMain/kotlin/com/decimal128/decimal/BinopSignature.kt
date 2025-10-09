@@ -19,14 +19,25 @@ enum class BinopSignature {
     companion object {
 
         @Suppress("NOTHING_TO_INLINE")
-        internal inline fun indexOf(x: Decimal, y: Decimal): Int {
-            val qX = x.qExp
-            val qY = y.qExp
+        internal inline fun indexOf(x: Decimal, y: Decimal) = indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen)
+
+        @Suppress("NOTHING_TO_INLINE")
+        internal inline fun indexOf(x: MutDec, y: MutDec) = indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen)
+
+        private val signatures = values()
+
+        fun enumOf(x: Decimal, y: Decimal): BinopSignature =
+            signatures[indexOf(x, y)]
+
+        fun enumOf(x: MutDec, y: MutDec): BinopSignature =
+            signatures[indexOf(x, y)]
+
+        private fun indexOf(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
             // these flags are 0/1 Int
             val xIsSpecial = (qX - MIN_SPECIAL_VALUE).inv() ushr 31
             val yIsSpecial = (qY - MIN_SPECIAL_VALUE).inv() ushr 31
-            val xNonZero = -x.packedLengths ushr 31
-            val yNonZero = -y.packedLengths ushr 31
+            val xNonZero = -bitLenX ushr 31
+            val yNonZero = -bitLenY ushr 31
             val xNegativeIfNaN = NON_FINITE_INF - qX
             val yNegativeIfNaN = NON_FINITE_INF - qY
 
@@ -40,9 +51,5 @@ enum class BinopSignature {
             }
         }
 
-        private val signatures = values()
-
-        fun enumOf(x: Decimal, y: Decimal): BinopSignature =
-            signatures[indexOf(x, y)]
     }
 }

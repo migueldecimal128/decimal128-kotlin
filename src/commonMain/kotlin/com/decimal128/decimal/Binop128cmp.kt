@@ -124,11 +124,11 @@ class Binop128cmp : Binop() {
             }
         }
 
-        fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             TODO()
         }
 
-        fun cmpNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun cmpNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             TODO()
         }
 
@@ -139,7 +139,7 @@ class Binop128cmp : Binop() {
             return (cmpTotalOrderMagnitudeImpl(x, y, env) xor negateMask) - negateMask
         }
 
-        fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
+        private fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
             return if (bothFnz(x, y)) {
                 cmpTotalOrderMagnitudeFnzFnz(x, y)
             } else when (BinopSignature.enumOf(x, y)) {
