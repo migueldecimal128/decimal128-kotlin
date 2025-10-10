@@ -122,6 +122,26 @@ data class DecEnv(
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
+    fun signalInexactOverflow(sign: Boolean): Decimal {
+        val decInf = Decimal.infinity(sign)
+        if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(OVERFLOW)
+            decFlags.set(INEXACT)
+            return decInf
+        }
+        val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
+        return signal(trap, OTHER, "whatever", decInf)
+    }
+
+    fun signalRoundedInexact(dec: Decimal): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(INEXACT)
+            return dec
+        }
+        val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
+        return signal(trap, OTHER, "whatever", dec)
+    }
+
     fun signalInexactUnderflow(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(UNDERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(UNDERFLOW)
