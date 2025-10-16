@@ -122,15 +122,14 @@ data class DecEnv(
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
-    fun signalInexactOverflow(sign: Boolean): Decimal {
-        val decInf = Decimal.infinity(sign)
+    fun signalInexactOverflow(decInfinity: Decimal): Decimal {
         if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)
             decFlags.set(INEXACT)
-            return decInf
+            return decInfinity
         }
         val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
-        return signal(trap, OTHER, "whatever", decInf)
+        return signal(trap, OTHER, "whatever", decInfinity)
     }
 
     fun signalRoundedInexact(dec: Decimal): Decimal {
@@ -152,12 +151,30 @@ data class DecEnv(
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
+    fun signalInexactUnderflow(dec: Decimal): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(UNDERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(UNDERFLOW)
+            decFlags.set(INEXACT)
+            return dec
+        }
+        val trap = if (decTraps.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
+        return signal(trap, OTHER, "whatever", dec)
+    }
+
     fun signalInexact(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return mutDec
         }
         return signal(INEXACT, IS_INEXACT, "whatever", mutDec)
+    }
+
+    fun signalInexact(dec: Decimal): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(INEXACT)
+            return dec
+        }
+        return signal(INEXACT, IS_INEXACT, "whatever", dec)
     }
 
     fun operandIsSignalingNaN(mutDec: MutDec) {

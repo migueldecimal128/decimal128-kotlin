@@ -267,6 +267,11 @@ internal object U256Pow10 {
         return ret
     }
 
+    fun calcDigitLen128(dw1: Long, dw0: Long) : Int {
+        val bitLen = calcBitLen128(dw1, dw0)
+        return calcDigitLen128(bitLen, dw1, dw0)
+    }
+
     fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
         return when {
             bitLen > 64 -> {

@@ -1,6 +1,11 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+import com.decimal128.decimal.Residue.Companion.EXACT
+import com.decimal128.decimal.U256Pow10.calcDigitLen128
+import com.decimal128.decimal.U256Pow10.calcDigitLen64
+import com.decimal128.decimal.U256Pow10.pow10BitLen
+import com.decimal128.decimal.U256Pow10.pow10Offset
 import kotlin.math.max
 
 class Decimal private constructor(
@@ -172,5 +177,4 @@ class Decimal private constructor(
         mutDec.set(this)
         return mutDec.toString()
     }
-
 }

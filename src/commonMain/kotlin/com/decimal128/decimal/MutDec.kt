@@ -1126,7 +1126,7 @@ class MutDec() : U256() {
         if (qExp < MIN_SPECIAL_VALUE) {
             if (bitLen != 0) {
                 var eExp = qExp + (digitLen - 1)
-                var qMax = decEnv.qMax
+                val qMax = decEnv.qMax
                 // IEEE754-2008 7.5: detect tininess on the unrounded result
                 val isTiny = (eExp < decEnv.eMin)
 
