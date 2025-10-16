@@ -1,6 +1,10 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.getPow10Dw0
+import com.decimal128.decimal.U256Pow10.getPow10Dw1
 import com.decimal128.decimal.U256Pow10.pow10BitLen
+import com.decimal128.decimal.U256Pow10.pow10Offset
+import com.decimal128.decimal.U256Pow10.pow10PackedLengths
 import kotlin.math.max
 
 data class DecFormat(val precision: Int,
@@ -22,9 +26,14 @@ data class DecFormat(val precision: Int,
         init { check(DECIMAL_128_EXTENDED.maxBitLen == 127)}
     }
 
-    val qMax = eMax - (precision - 1)
-    val qTiny = eMin - (precision - 1)
-    val maxBitLen = pow10BitLen(precision)
+    val qMax: Int = eMax - (precision - 1)
+    val qTiny: Int = eMin - (precision - 1)
+    val maxBitLen: Int = pow10BitLen(precision)
+    val dw0Maxx = getPow10Dw0(precision)
+    val dw1Maxx = getPow10Dw1(precision)
+    val dw0AfterOverflow = getPow10Dw0(precision - 1)
+    val dw1AfterOverflow = getPow10Dw1(precision - 1)
+    val packedLengthsAfterOverflow = pow10PackedLengths(precision - 1)
 
     fun isC128AddSafe(xBitLen: Int, yBitLen: Int): Boolean {
         val sumBitLen = max(xBitLen, yBitLen) + 1

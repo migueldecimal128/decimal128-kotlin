@@ -222,6 +222,13 @@ internal object U256Pow10 {
     }
 
     @Suppress("NOTHING_TO_INLINE")
+    inline fun pow10PackedLengths(pow10: Int): Short {
+        val bitLen = pow10BitLen(pow10)
+        val packed = (pow10 shl 7) or bitLen
+        return packed.toShort()
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
     inline fun pow10Offset(pow10: Int): Int {
         val p = pow10 - 1
         val t = (p * 431) ushr 13
@@ -230,6 +237,12 @@ internal object U256Pow10 {
         val mask = -pow10 shr 31
         return offset and mask
     }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun getPow10Dw0(pow10: Int): Long = POW10[pow10Offset(pow10)]
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun getPow10Dw1(pow10: Int): Long =
+        if (pow10 < MIN_POW10_DIGIT_LEN_128) 0L else POW10[pow10Offset(pow10) + 1]
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun calcMinDigitLenForBitLen(bitLen: Int): Int {

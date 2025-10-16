@@ -7,6 +7,7 @@ import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import com.decimal128.decimal.U256Pow10.pow10BitLen
 import com.decimal128.decimal.U256Pow10.pow10Offset
 import kotlin.math.max
+import kotlin.math.min
 
 class Decimal private constructor(
     @field: JvmField internal val dw1: Long,
@@ -62,6 +63,29 @@ class Decimal private constructor(
             return zero
         }
 
+        fun newZero(sign: Boolean, qExp: Int, env: DecEnv): Decimal {
+            if (qExp == 0)
+                return if (sign) NEG_ZERO else ZERO
+            val finalExp = max(min(qExp, env.qMax), env.qTiny)
+            val signExp = packSignExp(sign, finalExp)
+            val zero = Decimal(0L, 0L, 0, signExp)
+            return zero
+        }
+
+        fun newZero(signExp: Short, env: DecEnv): Decimal {
+            return when {
+                signExp.toInt() == 0 -> POS_ZERO
+                signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZERO
+                else -> {
+                    val finalExp = max(min(unpackExp(signExp), env.qMax), env.qTiny)
+                    val finalSignExp =
+                        (finalExp or (signExp.toInt() and Short.MIN_VALUE.toInt())).toShort()
+                    val zero = Decimal(0L, 0L, 0, finalSignExp)
+                    return zero
+                }
+            }
+        }
+
         fun from(n: Int) = from(n.toLong())
 
         fun from(l: Long): Decimal {
@@ -112,7 +136,6 @@ class Decimal private constructor(
 
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
             max(x.qExp, y.qExp) >= NON_FINITE_QNAN
-
 
     }
 
