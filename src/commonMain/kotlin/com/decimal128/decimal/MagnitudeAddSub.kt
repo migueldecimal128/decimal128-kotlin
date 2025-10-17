@@ -6,11 +6,12 @@ import com.decimal128.decimal.U256ScalePow10.u256ScaleDownPow10
 import com.decimal128.decimal.U256ScalePow10.u256ScaleUpPow10
 import com.decimal128.decimal.U256Sub.u256SubScaled
 import com.decimal128.decimal.Residue.Companion.EXACT
+import kotlin.math.max
 import kotlin.math.min
 
 object MagnitudeAddSub {
 
-    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec): Residue {
+    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
         check(x.qExp != y.qExp) // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
@@ -22,10 +23,8 @@ object MagnitudeAddSub {
         val n = if (flipFlop) y else x
         check(m.qExp > n.qExp)
         val qDelta = m.qExp - n.qExp
-        // FIXME
-        //  PRECISION needs to come from DecEnv
-        val headroom = PRECISION_34 - m.digitLen
-        val shiftLeft = min(qDelta, headroom)
+        val headroom = env.precision - m.digitLen
+        val shiftLeft = min(max(headroom, 0), qDelta)
         val qAlign = m.qExp - shiftLeft
         when {
             (m.bitLen > 0 && n.bitLen > 0) -> {
@@ -80,7 +79,7 @@ object MagnitudeAddSub {
 
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
-    fun magSub(z: MutDec, x: MutDec, y: MutDec): Residue {
+    fun magSub(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
         check(x.magnitudeCompareTo(y) >= 0)
         check(x.qExp != y.qExp) // should be caught earlier
         //if (x.qExp == y.qExp) {
@@ -92,7 +91,7 @@ object MagnitudeAddSub {
             val qDelta = x.qExp - y.qExp
             // one guard digit is enough ...
             // ... residue provides sufficient info for rounding
-            val headroomWithGuard = 1 + PRECISION_34 - x.digitLen
+            val headroomWithGuard = 1 + env.precision - x.digitLen
             // shiftLeft is always >0 because guard digit provides 1 digit of headroom
             val shiftLeft = min(qDelta, headroomWithGuard)
             check (shiftLeft > 0)
