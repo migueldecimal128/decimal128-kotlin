@@ -98,6 +98,11 @@ class Decimal private constructor(
             return dec
         }
 
+        fun from(dw1: Long, dw0: Long, packedLengths: Short, signExp: Short): Decimal {
+            val dec = Decimal(dw1, dw0, packedLengths, signExp)
+            return dec
+        }
+
         fun from(sign: Boolean, dw1: Long, dw0: Long, qExp: Int): Decimal {
             val packedLengths = calcPackedLengths(dw1, dw0)
             val signExp = packSignExp(sign, qExp)
@@ -117,7 +122,26 @@ class Decimal private constructor(
         }
 
         fun qNaN(sign: Boolean) = if (sign) NEG_QNAN else POS_QNAN
+
+        fun qNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
+            val payloadIsZero = (dw1 or dw0) == 0L
+            return when {
+                payloadIsZero && sign -> NEG_QNAN
+                payloadIsZero         -> POS_QNAN
+                else -> Decimal(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_QNAN))
+            }
+        }
+
         fun sNaN(sign: Boolean) = if (sign) NEG_SNAN else POS_SNAN
+
+        fun sNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
+            val payloadIsZero = (dw1 or dw0) == 0L
+            return when {
+                payloadIsZero && sign -> NEG_SNAN
+                payloadIsZero         -> POS_SNAN
+                else -> Decimal(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_SNAN))
+            }
+        }
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
@@ -186,4 +210,6 @@ class Decimal private constructor(
         mutDec.set(this)
         return mutDec.toString()
     }
+
+
 }
