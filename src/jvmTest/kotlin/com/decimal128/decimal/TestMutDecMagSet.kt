@@ -12,13 +12,13 @@ class TestMutDecMagSet {
 
     val verbose = false
 
-    class TC(val bdA: BigDecimal, val decEnv: DecEnv) {
-        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), DecEnv().with(rd))
-        constructor(str: String) : this(BigDecimal(str), DecEnv())
-        constructor(bdA: BigDecimal) : this(bdA, DecEnv())
+    class TC(val bdA: BigDecimal, val env: env) {
+        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), env().with(rd))
+        constructor(str: String) : this(BigDecimal(str), env())
+        constructor(bdA: BigDecimal) : this(bdA, env())
         val biA = bdA.unscaledValue()
         val expA = -bdA.scale()
-        val bdRounded = bdToIeeeDecimal128(bdA, decEnv.decRounding.mapToRoundingMode())
+        val bdRounded = bdToIeeeDecimal128(bdA, env.decRounding.mapToRoundingMode())
         val biRounded = bdRounded.unscaledValue()
         val expRounded = -bdRounded.scale()
     }
@@ -113,10 +113,10 @@ class TestMutDecMagSet {
         return bd
     }
 
-    fun randDecimal128Context(): DecEnv {
+    fun randDecimal128Context(): env {
         val i = random.nextInt(4)
-        val decEnv = DecEnv().with(DecRounding.fromValue(i))
-        return decEnv
+        val env = env().with(DecRounding.fromValue(i))
+        return env
     }
 
     fun test1(case: TC) {
@@ -124,12 +124,12 @@ class TestMutDecMagSet {
         val bdRounded = case.bdRounded
         val biRounded = case.biRounded
         val expRounded = case.expRounded
-        val decEnv = case.decEnv
-        val roundingMode = decEnv.decRounding.mapToRoundingMode()
+        val env = case.env
+        val roundingMode = env.decRounding.mapToRoundingMode()
         val dec = MutDec()
         if (verbose)
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
-        dec.set(bdA, decEnv)
+        dec.set(bdA, env)
         val biCoeff = dec.coeffToBigInteger()
         if (verbose)
             println("coeff:$biCoeff + expQ:${dec.qExp}")

@@ -134,10 +134,10 @@ object DecimalParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
-    fun decFromString(x: MutDec, str: String, decEnv: DecEnv) =
-        decFromText(x, StringLatin1Iterator(str), decEnv)
+    fun decFromString(x: MutDec, str: String, env: env) =
+        decFromText(x, StringLatin1Iterator(str), env)
 
-    private fun decFromText(x: MutDec, src: Latin1Iterator, env: DecEnv) {
+    private fun decFromText(x: MutDec, src: Latin1Iterator, env: env) {
         val maxPayloadDigitLen = env.precision - 1
         when {
             isFiniteValueText(x, src, env) -> return
@@ -149,7 +149,7 @@ object DecimalParsePrint {
         }
     }
 
-    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, decEnv: DecEnv): Boolean {
+    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: env): Boolean {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
@@ -254,12 +254,12 @@ object DecimalParsePrint {
         val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
         x.qExp = qExp
         // FIXME ... make sure that this limiting range and properly scaling subnormal values
-        if (((guardDigit or stickyBits) == 0) && (qExp >= decEnv.qTiny) && (qExp <= decEnv.qMax))
+        if (((guardDigit or stickyBits) == 0) && (qExp >= env.qTiny) && (qExp <= env.qMax))
             return true
         val roundBit = if (guardDigit < 5) 0 else 1
         val stickyBit = (-stickyBits) ushr 31
         val residue = Residue.residueFrom(roundBit, stickyBit)
-        x.roundAndFinalize(residue, decEnv)
+        x.roundAndFinalize(residue, env)
         return true
     }
 

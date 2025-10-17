@@ -103,7 +103,7 @@ class TestU256ScaleUp {
         val coeffA = newCoeff(case.biA)
         val coeffObserved = U256()
         val pow10 = case.pow10
-        val decEnv = DecEnv()
+        val env = env()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = expected:$expected")
         coeffObserved.u256SetScaleUpPow10(coeffA, pow10)

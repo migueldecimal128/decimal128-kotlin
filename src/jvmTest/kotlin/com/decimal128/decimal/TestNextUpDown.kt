@@ -57,21 +57,21 @@ class TestNextUpDown {
         val n = newMutDec(bd)
         val up = MutDec()
         val down = MutDec()
-        val decEnv = DecEnv()
-        up.setNextUp(n, decEnv)
-        down.setNextDown(n, decEnv)
+        val env = env()
+        up.setNextUp(n, env)
+        down.setNextDown(n, env)
 
         println("n:$n up:$up down:$down")
 
         val t = MutDec()
 
-        t.setNextUp(down, decEnv)
+        t.setNextUp(down, env)
         assertEquals(n, t)
 
-        t.setNextDown(up, decEnv)
+        t.setNextDown(up, env)
         assertEquals(n, t)
 
-        assert(n.compareTo(up, decEnv) < 0)
-        assert(n.compareTo(down, decEnv) > 0)
+        assert(n.compareTo(up, env) < 0)
+        assert(n.compareTo(down, env) > 0)
     }
 }

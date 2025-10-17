@@ -7,7 +7,7 @@ import kotlin.math.min
 class BinopMul : Binop() {
     companion object {
 
-        fun mulImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun mulImpl(x: Decimal, y: Decimal, env: env): Decimal {
             return if (bothFnz(x, y)) {
                 mulFnzFnz(x, y, env)
             } else when (BinopSignature.enumOf(x, y)) {
@@ -27,13 +27,13 @@ class BinopMul : Binop() {
             }
         }
 
-        private fun mulZero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+        private fun mulZero(x: Decimal, y: Decimal, env: env): Decimal =
             Decimal.newZero(false, min(x.qExp, y.qExp), env)
 
-        private fun mulInfZero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+        private fun mulInfZero(x: Decimal, y: Decimal, env: env): Decimal =
             env.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
 
-        private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+        private fun mulInfNonzero(x: Decimal, y: Decimal, env: env): Decimal =
             if (x.sign xor y.sign) Decimal.POS_INFINITY else Decimal.NEG_INFINITY
 
         // fast-path iff ...
@@ -44,7 +44,7 @@ class BinopMul : Binop() {
         //  exponent on the low end must be >= eMin, not qTiny
         //  anything in the range [qTiny, eMin) is subnormal
         //  and must be scaled, so not on the fast-path
-        private fun mulFnzFnz(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun mulFnzFnz(x: Decimal, y: Decimal, env: env): Decimal {
             val prodBitLen = x.bitLen + y.bitLen
             val prodExp = x.qExp + y.qExp
             if (prodBitLen < env.maxBitLen && prodExp >= env.eMin && prodExp <= env.qMax) {
@@ -57,7 +57,7 @@ class BinopMul : Binop() {
             return mulFnzFnz256(x, y, env)
         }
 
-        private fun mulFnzFnz256(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun mulFnzFnz256(x: Decimal, y: Decimal, env: env): Decimal {
             val p = env.decTemps.mdecArg1.set(x)
             val n = env.decTemps.mdecArg2.set(y)
             p.setMul(p, n, env)

@@ -8,7 +8,7 @@ import kotlin.math.min
 class BinopAddSub : Binop() {
     companion object {
 
-        fun addImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun addImpl(x: Decimal, y: Decimal, env: env): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, y.sign, y, env)
             } else when (BinopSignature.enumOf(x, y)) {
@@ -28,7 +28,7 @@ class BinopAddSub : Binop() {
             }
         }
 
-        fun subImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun subImpl(x: Decimal, y: Decimal, env: env): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, !y.sign, y, env)
             } else when (BinopSignature.enumOf(x, y)) {
@@ -48,7 +48,7 @@ class BinopAddSub : Binop() {
             }
         }
 
-        private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+        private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, env: env): Decimal {
             // Both operands are zero. This is where the special rules apply.
             return if (x.sign == ySign) {
                 // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
@@ -60,19 +60,19 @@ class BinopAddSub : Binop() {
             }
         }
 
-        private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal =
+        private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, env: env): Decimal =
             if (x.sign == ySign)
                 x
             else
                 env.signal(DecExceptionReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 
-        private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv) =
+        private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, env: env) =
             if (x.qExp == y.qExp)
                 addFnzFnzUnscaled(x, ySign, y, env)
             else
                 addFnzFnzScaled(x, ySign, y, env)
 
-        private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+        private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, env: env): Decimal {
             if (x.sign == ySign)
                 return addUnscaledMagnitudes(x, y, env)
             val cmp = c128UnscaledCompare(x, y)
@@ -83,7 +83,7 @@ class BinopAddSub : Binop() {
             }
         }
 
-        private fun addUnscaledMagnitudes(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun addUnscaledMagnitudes(x: Decimal, y: Decimal, env: env): Decimal {
             val sumBitLen = x.bitLen + y.bitLen + 1
             val sum = if (sumBitLen < env.decFormat.maxBitLen) {
                 val x0 = x.dw0
@@ -103,7 +103,7 @@ class BinopAddSub : Binop() {
             return sum
         }
 
-        private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+        private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, env: env): Decimal {
             if (x.sign == y.sign)
                 return addScaledMagnitudes(x, y, env)
             // signs differ ... subtract scaled magnitudes
@@ -115,33 +115,33 @@ class BinopAddSub : Binop() {
             }
         }
 
-        private fun addScaledMagnitudes(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+        private fun addScaledMagnitudes(x: Decimal, y: Decimal, env: env): Decimal {
             val flip = x.qExp > y.qExp
             val m = if (flip) x else y
             val n = if (flip) y else x
             val qDelta = m.qExp - n.qExp
             check (qDelta >= 0)
-            val headroom = decEnv.precision - m.digitLen
+            val headroom = env.precision - m.digitLen
             return if (qDelta <= headroom) {
                 // we can resolve this in our D128 world
                 val shiftLeft = min(qDelta, headroom)
                 D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
             } else {
-                fullWidthAdd(x.sign, x, y.sign, y, decEnv)
+                fullWidthAdd(x.sign, x, y.sign, y, env)
             }
         }
 
-        private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, decEnv: DecEnv): Decimal {
-            val arg1 = decEnv.decTemps.mdecArg1.set(x)
+        private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, env: env): Decimal {
+            val arg1 = env.decTemps.mdecArg1.set(x)
             arg1.sign = xSign
-            val arg2 = decEnv.decTemps.mdecArg2.set(y)
+            val arg2 = env.decTemps.mdecArg2.set(y)
             arg2.sign = ySign
-            val mdecSum = decEnv.decTemps.mutDecResult.setAdd(arg1, arg2, decEnv)
+            val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
             val sum = Decimal.from(mdecSum)
             return sum
         }
 
-        private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, decEnv: DecEnv): Decimal {
+        private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, env: env): Decimal {
             // non-zero with different signs ... subtract magnitudes
             check (m.magnitudeCompareTo(s) > 0)
             check (s.isNotZero())
@@ -155,7 +155,7 @@ class BinopAddSub : Binop() {
                 return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
             } else {
                 // |m| > |s| && m.qExp > s.qExp
-                val headroom = decEnv.precision - m.digitLen
+                val headroom = env.precision - m.digitLen
                 val qDelta = m.qExp - s.qExp
                 if (headroom >= qDelta) {
                     // 12E3, -4
@@ -173,7 +173,7 @@ class BinopAddSub : Binop() {
                 }
 
             }
-            return fullWidthAdd(sign, m, !sign, s, decEnv)
+            return fullWidthAdd(sign, m, !sign, s, env)
         }
 
     }

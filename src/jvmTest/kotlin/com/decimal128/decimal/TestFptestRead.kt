@@ -127,14 +127,14 @@ class TestFptestRead {
         "d128+ =0 xu +0e-4290 +6e-6176 -> +6e3040 u",
     )
 
-    fun isBadCase(fptest: Fptest, decEnv: DecEnv): Boolean {
+    fun isBadCase(fptest: Fptest, env: env): Boolean {
         if (badCases.contains(fptest.fptestStr))
             return true
         val result = fptest.result()
 
         if (result != null && result.qExp in -3104..-3000)
             return true
-        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && decEnv.overflow)
+        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && env.overflow)
             return true
 
         val hasTrapU = fptest.hasTrap("u")
@@ -256,7 +256,7 @@ class TestFptestRead {
                 return null
             val dec = MutDec()
             //val ctx = DecimalContext()
-            val env = DecEnv()
+            val env = env()
             when (result) {
                 "Q" -> dec.setNaN(env)
                 "S" -> dec.setSNaN(env)
@@ -268,7 +268,7 @@ class TestFptestRead {
         fun decOperands(): ArrayList<MutDec> {
             val ret = ArrayList<MutDec>(operands.size)
             //val ctx = DecimalContext()
-            val env = DecEnv()
+            val env = env()
             for (t in operands) {
                 val d = MutDec()
                 when (t) {
@@ -309,9 +309,9 @@ class TestFptestRead {
     fun test1(fptest: Fptest) {
         val format = fptest.format
         val operands = fptest.decOperands()
-        val decEnv = when {
-            format == "d128" -> DecEnv(DecFormat.DECIMAL_128, fptest.roundingDirection())
-            format == "d64" -> DecEnv(DecFormat.DECIMAL_64, fptest.roundingDirection())
+        val env = when {
+            format == "d128" -> env(DecFormat.DECIMAL_128, fptest.roundingDirection())
+            format == "d64" -> env(DecFormat.DECIMAL_64, fptest.roundingDirection())
             else -> throw IllegalStateException()
         }
         val observed = MutDec()
@@ -319,16 +319,16 @@ class TestFptestRead {
             println(fptest.fptestStr)
         when (fptest.op) {
             "+" -> {
-                observed.setAdd(operands[0], operands[1], decEnv)
+                observed.setAdd(operands[0], operands[1], env)
             }
             "-" -> {
-                observed.setSub(operands[0], operands[1], decEnv)
+                observed.setSub(operands[0], operands[1], env)
             }
             "*" -> {
-                observed.setMul(operands[0], operands[1], decEnv)
+                observed.setMul(operands[0], operands[1], env)
             }
             "/" -> {
-                observed.setDiv(operands[0], operands[1], decEnv)
+                observed.setDiv(operands[0], operands[1], env)
             }
             else -> {
                 throw RuntimeException("not impl" + fptest.op)
@@ -337,12 +337,12 @@ class TestFptestRead {
         }
         val expected = fptest.result()
         if (expected != null) {
-            val cmp754 = expected.compareQuiet754(observed, decEnv)
+            val cmp754 = expected.compareQuiet754(observed, env)
             if (expected.isNaN()) {
                 assertTrue(observed.isNaN())
                 assertEquals(IEEE754_UNORDERED, cmp754)
             } else if (cmp754 != IEEE754_EQ) {
-                if (isBadCase(fptest, decEnv)) {
+                if (isBadCase(fptest, env)) {
                     if (verbose)
                         println("bad case:${fptest.fptestStr}")
                     return
@@ -353,7 +353,7 @@ class TestFptestRead {
             }
             val expectedExceptions = fptest.exceptions
             val expectedExceptionsSinU = expectedExceptions.replace("u", "")
-            val observedExceptions = decEnv.getFptestExceptionsString()
+            val observedExceptions = env.getFptestExceptionsString()
             val observedExceptionsSinU = observedExceptions.replace("u", "")
             assertEquals(expectedExceptionsSinU, observedExceptionsSinU)
             if (observedExceptions.contains("u") && !expectedExceptions.contains("u")) {

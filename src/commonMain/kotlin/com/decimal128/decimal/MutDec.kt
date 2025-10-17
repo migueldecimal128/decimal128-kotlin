@@ -9,8 +9,8 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
-import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
-import com.decimal128.decimal.DecEnv.Companion.DECIMAL128_ZERO_NAN_PAYLOAD
+import com.decimal128.decimal.env.Companion.DECIMAL128
+import com.decimal128.decimal.env.Companion.DECIMAL128_ZERO_NAN_PAYLOAD
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
@@ -49,25 +49,25 @@ class MutDec() : U256() {
 
         fun newInfinity(sign: Boolean = false) = MutDec().setInfinite(sign)
 
-        fun newAbs(x: MutDec, env: DecEnv = DECIMAL128) = MutDec(x).mutateAbs()
+        fun newAbs(x: MutDec, env: env = DECIMAL128) = MutDec(x).mutateAbs()
 
-        fun newAdd(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
+        fun newAdd(x: MutDec, y: MutDec, env: env = DECIMAL128) =
             addImpl(MutDec(), x, y.sign, y, env)
 
-        fun newSub(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
+        fun newSub(x: MutDec, y: MutDec, env: env = DECIMAL128) =
             addImpl(MutDec(), x, !y.sign, y, env)
 
-        fun newMul(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
+        fun newMul(x: MutDec, y: MutDec, env: env = DECIMAL128) =
             MutDec().setMul(x, y, env)
 
-        fun newFma(x: MutDec, y: MutDec, z: MutDec, env: DecEnv = DECIMAL128) =
+        fun newFma(x: MutDec, y: MutDec, z: MutDec, env: env = DECIMAL128) =
             MutDec().setFma(x, y, z, env)
 
-        fun newNegate(x: MutDec, env: DecEnv = DECIMAL128) = MutDec(x).mutateNegate()
+        fun newNegate(x: MutDec, env: env = DECIMAL128) = MutDec(x).mutateNegate()
 
-        fun newDiv(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) = MutDec().setDiv(x, y, env)
+        fun newDiv(x: MutDec, y: MutDec, env: env = DECIMAL128) = MutDec().setDiv(x, y, env)
 
-        private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+        private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: env): MutDec {
             val qMax = max(x.qExp, y.qExp)
             return when {
                 qMax < MIN_SPECIAL_VALUE && x.qExp == y.qExp ->
@@ -83,7 +83,7 @@ class MutDec() : U256() {
             }
         }
 
-        private fun unscaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+        private fun unscaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: env): MutDec {
             val xSign = x.sign
             if (x.bitLen == 0 && y.bitLen == 0 && xSign == ySign) {
                 // IEEE754-2019 6.3 The sign bit
@@ -128,7 +128,7 @@ class MutDec() : U256() {
             return z.roundAndFinalize(EXACT, env)
         }
 
-        private fun scaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+        private fun scaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: env): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             val xSign = x.sign
@@ -180,7 +180,7 @@ class MutDec() : U256() {
             return z
         }
 
-        private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+        private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: env): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             check (qX == NON_FINITE_INF || qY == NON_FINITE_INF)
@@ -223,7 +223,7 @@ class MutDec() : U256() {
         this.sign = sign
     }
 
-    private fun setNaN(x: MutDec, y: MutDec, env: DecEnv) {
+    private fun setNaN(x: MutDec, y: MutDec, env: env) {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
@@ -243,7 +243,7 @@ class MutDec() : U256() {
         throw RuntimeException("sNaN operand")
     }
 
-    private fun setNaN(x: MutDec, env: DecEnv) {
+    private fun setNaN(x: MutDec, env: env) {
         val q = x.qExp
         check(q >= NON_FINITE_QNAN)
         setZero()
@@ -251,14 +251,14 @@ class MutDec() : U256() {
         //FIXME - see IEEE754r 6.2
     }
 
-    internal fun setNaN(env: DecEnv) {
+    internal fun setNaN(env: env) {
         setZero()
         sign = false
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
 
-    internal fun setNaN(payload: Int, env: DecEnv) {
+    internal fun setNaN(payload: Int, env: env) {
         sign = false
         u256Set64(payload.toLong())
         qExp = NON_FINITE_QNAN
@@ -274,7 +274,7 @@ class MutDec() : U256() {
         this.dw0 = payloadLo
     }
 
-    fun setSNaN(env: DecEnv) {
+    fun setSNaN(env: env) {
         setZero()
         qExp = NON_FINITE_SNAN
     }
@@ -329,7 +329,7 @@ class MutDec() : U256() {
 
     fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = SerDeDpd128.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
 
-    fun setMaxFiniteMagnitude(env: DecEnv): MutDec {
+    fun setMaxFiniteMagnitude(env: env): MutDec {
         qExp = env.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
@@ -343,7 +343,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun setMinFiniteMagnitude(env: DecEnv): MutDec {
+    fun setMinFiniteMagnitude(env: env): MutDec {
         qExp = env.qTiny
         super.u256SetOne()
         return this
@@ -373,7 +373,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun mutateToIntegral(env: DecEnv): MutDec {
+    fun mutateToIntegral(env: env): MutDec {
         // FIXME ... not tested and not correct
         when {
             qExp < MIN_SPECIAL_VALUE -> {
@@ -437,13 +437,13 @@ class MutDec() : U256() {
     fun divide(y: MutDec) = newDiv(this, y)
 
     // IEEE754-2008 5.4.1
-    fun setAdd(x: MutDec, y: MutDec, env: DecEnv) = addImpl(this, x, y.sign, y, env)
+    fun setAdd(x: MutDec, y: MutDec, env: env) = addImpl(this, x, y.sign, y, env)
 
     // IEEE754-2008 5.4.1
-    fun setSub(x: MutDec, y: MutDec, env: DecEnv) = addImpl(this, x, !y.sign, y, env)
+    fun setSub(x: MutDec, y: MutDec, env: env) = addImpl(this, x, !y.sign, y, env)
 
     // IEEE754-2008 5.4.1
-    fun setMul(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+    fun setMul(x: MutDec, y: MutDec, env: env): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val productSign = x.sign xor y.sign
@@ -468,7 +468,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun setSquare(x: MutDec, env: DecEnv): MutDec {
+    fun setSquare(x: MutDec, env: env): MutDec {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
@@ -485,7 +485,7 @@ class MutDec() : U256() {
     }
 
     // IEEE754-2008 5.4.1
-    fun setFma(x: MutDec, y: MutDec, a: MutDec, env: DecEnv): MutDec {
+    fun setFma(x: MutDec, y: MutDec, a: MutDec, env: env): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val qA = a.qExp
@@ -520,7 +520,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun setDiv(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+    fun setDiv(x: MutDec, y: MutDec, env: env): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val quotientSign = x.sign xor y.sign
@@ -567,7 +567,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun setReciprocal(x: MutDec, env: DecEnv): MutDec {
+    fun setReciprocal(x: MutDec, env: env): MutDec {
         val qX = x.qExp
         val quotientSign = x.sign
         when {
@@ -584,7 +584,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun setSqrt(x: MutDec, env: DecEnv): MutDec {
+    fun setSqrt(x: MutDec, env: env): MutDec {
         val qX = x.qExp
         when {
             x.sign -> {
@@ -613,7 +613,7 @@ class MutDec() : U256() {
         return this
     }
 
-    fun compareTo(other: MutDec, env: DecEnv) : Int {
+    fun compareTo(other: MutDec, env: env) : Int {
         val qMax = max(qExp, other.qExp)
         when {
             (qMax < MIN_SPECIAL_VALUE) -> {
@@ -694,7 +694,7 @@ class MutDec() : U256() {
     }
 
 
-    fun mutateRoundToIntegral(x: MutDec, rd: DecRounding, env: DecEnv): MutDec {
+    fun mutateRoundToIntegral(x: MutDec, rd: DecRounding, env: env): MutDec {
         //FIXME - deal with special values
         if (qExp < 0) {
             val residue = this.u256SetScaleDownPow10(x, -qExp)
@@ -706,22 +706,22 @@ class MutDec() : U256() {
         }
     }
 
-    fun setRoundToIntegralTiesToEven(x: MutDec, env: DecEnv) =
+    fun setRoundToIntegralTiesToEven(x: MutDec, env: env) =
         mutateRoundToIntegral(x, ROUND_TIES_TO_EVEN, env)
 
-    fun setRoundToIntegralTiesToAway(x: MutDec, env: DecEnv) =
+    fun setRoundToIntegralTiesToAway(x: MutDec, env: env) =
         mutateRoundToIntegral(x, ROUND_TIES_TO_AWAY, env)
 
-    fun setRoundToIntegralTowardZero(x: MutDec, env: DecEnv) =
+    fun setRoundToIntegralTowardZero(x: MutDec, env: env) =
         mutateRoundToIntegral(x, ROUND_TOWARD_ZERO, env)
 
-    fun setRoundToIntegralTowardPositive(x: MutDec, env: DecEnv) =
+    fun setRoundToIntegralTowardPositive(x: MutDec, env: env) =
         mutateRoundToIntegral(x, ROUND_TOWARD_POSITIVE, env)
 
-    fun setRoundToIntegralTowardNegative(x: MutDec, env: DecEnv) =
+    fun setRoundToIntegralTowardNegative(x: MutDec, env: env) =
         mutateRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, env)
 
-    fun setNextUp(x: MutDec, env: DecEnv) {
+    fun setNextUp(x: MutDec, env: env) {
         set(x)
         when {
             qExp > NON_FINITE_INF -> { return }
@@ -741,7 +741,7 @@ class MutDec() : U256() {
         roundAndFinalize(EXACT, ROUND_TOWARD_POSITIVE, env)
     }
 
-    fun setNextDown(x: MutDec, env: DecEnv) {
+    fun setNextDown(x: MutDec, env: env) {
         set(x)
         when {
             qExp > NON_FINITE_INF -> { return }
@@ -763,7 +763,7 @@ class MutDec() : U256() {
         roundAndFinalize(EXACT, ROUND_TOWARD_NEGATIVE, env)
     }
 
-    private fun mutateNextAwayFromZero(env: DecEnv) {
+    private fun mutateNextAwayFromZero(env: env) {
         val headroom = min(env.precision - digitLen, qExp - env.qTiny)
         if (headroom > 1 || headroom == 1 && !u256IsAllNines(env.precision-1)) {
             this.u256SetScaleUpPow10(this, headroom)
@@ -772,7 +772,7 @@ class MutDec() : U256() {
         u256MutateIncrement()
     }
 
-    private fun mutateNextTowardZero(env: DecEnv) {
+    private fun mutateNextTowardZero(env: env) {
         val headroom =
             min(env.precision - digitLen + if (u256IsPowerOf10()) 1 else 0, qExp - env.qTiny)
         if (headroom > 0) {
@@ -782,10 +782,10 @@ class MutDec() : U256() {
         u256MutateDecrement()
     }
 
-    fun minNum(x: MutDec, y: MutDec, env: DecEnv) = minNum_helper(x, y, 0, env)
-    fun maxNum(x: MutDec, y: MutDec, env: DecEnv) = minNum_helper(x, y, -1, env)
+    fun minNum(x: MutDec, y: MutDec, env: env) = minNum_helper(x, y, 0, env)
+    fun maxNum(x: MutDec, y: MutDec, env: env) = minNum_helper(x, y, -1, env)
 
-    private fun minNum_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, env: DecEnv) {
+    private fun minNum_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, env: env) {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax <= NON_FINITE_INF -> {
@@ -799,10 +799,10 @@ class MutDec() : U256() {
         }
     }
 
-    fun minNumMag(x: MutDec, y: MutDec, env: DecEnv) = minNumMag_helper(x, y, 0, env)
-    fun maxNumMag(x: MutDec, y: MutDec, env: DecEnv) = minNumMag_helper(x, y, -1, env)
+    fun minNumMag(x: MutDec, y: MutDec, env: env) = minNumMag_helper(x, y, 0, env)
+    fun maxNumMag(x: MutDec, y: MutDec, env: env) = minNumMag_helper(x, y, -1, env)
 
-    private fun minNumMag_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, env: DecEnv) {
+    private fun minNumMag_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, env: env) {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax < NON_FINITE_INF -> {
@@ -817,7 +817,7 @@ class MutDec() : U256() {
         return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
 
-    fun setScale(x: MutDec, pow10: Int, env: DecEnv) {
+    fun setScale(x: MutDec, pow10: Int, env: env) {
         set(x)
         val p10 = capExponentRange(pow10)
         if (qExp < NON_FINITE_INF) {
@@ -840,13 +840,13 @@ class MutDec() : U256() {
     }
 
     // IEEE754-2008 5.3.2
-    fun quantize(x: MutDec, y: MutDec, env: DecEnv) {
+    fun quantize(x: MutDec, y: MutDec, env: env) {
         val targetQ = y.qExp
         setScale(x, -targetQ, env)
     }
 
     // IEEE754-2008 5.3.3
-    fun scaleB(x: MutDec, pow10: Int, env: DecEnv) {
+    fun scaleB(x: MutDec, pow10: Int, env: env) {
         set(x)
         when {
             qExp <= NON_FINITE_INF -> {
@@ -865,13 +865,13 @@ class MutDec() : U256() {
         return qExp
     }
 
-    fun compareQuiet754(other: MutDec, env: DecEnv): Compare754Result =
+    fun compareQuiet754(other: MutDec, env: env): Compare754Result =
         compare754(other, false, env)
 
-    fun compareSignaling754(other: MutDec, env: DecEnv): Compare754Result =
+    fun compareSignaling754(other: MutDec, env: env): Compare754Result =
         compare754(other, true, env)
 
-    fun compare754(other: MutDec, isSignaling: Boolean, env: DecEnv): Compare754Result {
+    fun compare754(other: MutDec, isSignaling: Boolean, env: env): Compare754Result {
         val qMax = max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {
@@ -1117,10 +1117,10 @@ class MutDec() : U256() {
     fun encodeBigEndianBytesDpd128() = encodeBigEndianDpd128(ByteArray(16))
     fun encodeBigEndianDpd128(bigEndianBytes: ByteArray) = SerDeDpd128.encodeBigEndianDpd128(bigEndianBytes, this)
 
-    internal fun roundAndFinalize(inboundResidue: Residue, env: DecEnv) =
+    internal fun roundAndFinalize(inboundResidue: Residue, env: env) =
         roundAndFinalize(inboundResidue, env.decRounding, env)
 
-    private fun roundAndFinalize(inboundResidue: Residue, decRounding: DecRounding, env: DecEnv): MutDec {
+    private fun roundAndFinalize(inboundResidue: Residue, decRounding: DecRounding, env: env): MutDec {
         return when {
             (qExp < MIN_SPECIAL_VALUE) and (bitLen != 0) ->
                 roundAndFinalizeFnz(inboundResidue, decRounding, env)
@@ -1133,7 +1133,7 @@ class MutDec() : U256() {
         }
     }
 
-    private fun roundAndFinalizeFnz(inboundResidue: Residue, decRounding: DecRounding, env: DecEnv): MutDec {
+    private fun roundAndFinalizeFnz(inboundResidue: Residue, decRounding: DecRounding, env: env): MutDec {
         val eMax = env.eMax
         val precision = env.precision
         var eExp = qExp + (digitLen - 1)
@@ -1237,13 +1237,13 @@ class MutDec() : U256() {
         return env.signalInexactUnderflow(this)
     }
 
-    private fun roundAndFinalizeZero(inboundResidue: Residue, decRounding: DecRounding, env: DecEnv): MutDec {
+    private fun roundAndFinalizeZero(inboundResidue: Residue, decRounding: DecRounding, env: env): MutDec {
         // FIXME ... seems that we need to do something if inboundResidue != EXACT
         qExp = max(min(qExp, env.qMax), env.qTiny)
         return this
     }
 
-    private fun finalizeFnzClampExp(inboundResidue: Residue, env: DecEnv): MutDec {
+    private fun finalizeFnzClampExp(inboundResidue: Residue, env: env): MutDec {
         // clamp/fold-over
         val qExcess = qExp - env.qMax
         U256ScalePow10.u256ScaleUpPow10(this, this, qExcess)

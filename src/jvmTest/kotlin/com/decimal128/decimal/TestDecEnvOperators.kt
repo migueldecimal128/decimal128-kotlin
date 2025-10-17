@@ -1,10 +1,10 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+import com.decimal128.decimal.env.Companion.DECIMAL128
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class TestDecEnvOperators {
+class TestenvOperators {
 
     @Test
     fun test1() {

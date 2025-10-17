@@ -8,15 +8,15 @@ import kotlin.math.max
 
 object D128Mul {
 
-    fun mulImpl(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+    fun mulImpl(x: Decimal, y: Decimal, env: env): Decimal {
         val qMax = max(x.qExp, y.qExp)
         return when {
             qMax < MIN_SPECIAL_VALUE ->
-                finiteMul(x, y, decEnv)
+                finiteMul(x, y, env)
             qMax == NON_FINITE_INF ->
                 infiniteMul(x, y)
             qMax == NON_FINITE_SNAN ->
-                decEnv.signal(
+                env.signal(
                     INVALID_OPERATION,
                     SIGNALING_NAN_OPERAND,
                     "mul",
@@ -36,24 +36,24 @@ object D128Mul {
     //  exponent on the low end must be >= eMin, not qTiny
     //  anything in the range [qTiny, eMin) is subnormal
     //  and must be scaled, so not on the fast-path
-    private fun finiteMul(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
+    private fun finiteMul(x: Decimal, y: Decimal, env: env): Decimal {
         val prodBitLen = x.bitLen + y.bitLen
         val prodExp = x.qExp + y.qExp
-        if (prodBitLen < decEnv.decFormat.maxBitLen &&
-            prodExp <= decEnv.qMax && prodExp >= decEnv.eMin) {
+        if (prodBitLen < env.decFormat.maxBitLen &&
+            prodExp <= env.qMax && prodExp >= env.eMin) {
             val p0 = x.dw0 * y.dw0
             val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
             val prodSign = x.sign xor y.sign
             val d = Decimal(prodSign, p1, p0, prodExp)
             return d
         }
-        return finiteMul256(x, y, decEnv)
+        return finiteMul256(x, y, env)
     }
 
-    private fun finiteMul256(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
-        val p = decEnv.decTemps.mdecArg1.set(x)
-        val n = decEnv.decTemps.mdecArg2.set(y)
-        p.setMul(p, n, decEnv)
+    private fun finiteMul256(x: Decimal, y: Decimal, env: env): Decimal {
+        val p = env.decTemps.mdecArg1.set(x)
+        val n = env.decTemps.mdecArg2.set(y)
+        p.setMul(p, n, env)
         val d = Decimal.from(p)
         return d
     }

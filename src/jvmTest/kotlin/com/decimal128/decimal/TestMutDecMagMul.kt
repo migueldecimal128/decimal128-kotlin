@@ -11,14 +11,14 @@ class TestMutDecMagMul {
 
     val verbose = false
 
-    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val decEnv: DecEnv) {
+    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val env: env) {
         constructor(strA: String, strB: String, decRounding: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecEnv().with(decRounding))
+                this(BigDecimal(strA), BigDecimal(strB), env().with(decRounding))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecEnv())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecEnv())
+                this(BigDecimal(strA), BigDecimal(strB), env())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, env())
 
-        val rm = decEnv.decRounding.mapToRoundingMode()
+        val rm = env.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -74,18 +74,18 @@ class TestMutDecMagMul {
         return bd
     }
 
-    fun randDecimal128Context(): DecEnv {
+    fun randDecimal128Context(): env {
         val i = random.nextInt(5)
-        val decEnv = DecEnv().with(DecRounding.fromValue(i))
-        return decEnv
+        val env = env().with(DecRounding.fromValue(i))
+        return env
     }
 
     fun test1(tc: TC) {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val decEnv = tc.decEnv
-        val rm = decEnv.decRounding.mapToRoundingMode()
+        val env = tc.env
+        val rm = env.decRounding.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA * bdB:$bdB (rm:$rm) => expected:$expected")
@@ -93,7 +93,7 @@ class TestMutDecMagMul {
         val decA = newMutDec(bdA)
         val decB = newMutDec(bdB)
         val decP = MutDec()
-        decP.setMul(decA, decB, decEnv)
+        decP.setMul(decA, decB, env)
         if (decP.qExp != NON_FINITE_INF)
             assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
         assertEquals(-expected.scale(), decP.qExp)

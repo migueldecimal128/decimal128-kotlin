@@ -11,7 +11,7 @@ import kotlin.math.min
 
 object MagnitudeAddSub {
 
-    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
+    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, env: env): Residue {
         check(x.qExp != y.qExp) // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
@@ -79,7 +79,7 @@ object MagnitudeAddSub {
 
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
-    fun magSub(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
+    fun magSub(z: MutDec, x: MutDec, y: MutDec, env: env): Residue {
         check(x.magnitudeCompareTo(y) >= 0)
         check(x.qExp != y.qExp) // should be caught earlier
         //if (x.qExp == y.qExp) {
@@ -164,7 +164,7 @@ object MagnitudeAddSub {
             }
             val qDeltaY = y.qExp - x.qExp
             // FIXME
-            //  PRECISION needs to come from DecEnv
+            //  PRECISION needs to come from env
             check(qDeltaY < PRECISION_34)
             U256Sub.u256SubScaled(z, x, y, qDeltaY)
             z.qExp = x.qExp
