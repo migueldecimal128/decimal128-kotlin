@@ -12,15 +12,15 @@ class BinopDiv : Binop() {
                 divFnzFnz(x, y, env)
             } else when (BinopSignature.enumOf(x, y)) {
                 ZER_ZER -> divZeroZero(x, y, env)
-                ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp)
-                ZER_INF -> newZero(x.sign xor y.sign, env.eMin)
+                ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp, env)
+                ZER_INF -> newZero(x.sign xor y.sign, env.eMin, env)
 
                 FNZ_ZER -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
                 FNZ_FNZ -> throw IllegalStateException()
-                FNZ_INF -> newZero(x.sign xor y.sign, env.eMin)
+                FNZ_INF -> newZero(x.sign xor y.sign, env.eMin, env)
 
-                INF_ZER -> newZero(x.sign xor y.sign, env.eMax)
-                INF_FNZ -> newZero(x.sign xor y.sign, env.eMax)
+                INF_ZER -> newZero(x.sign xor y.sign, env.eMax, env)
+                INF_FNZ -> newZero(x.sign xor y.sign, env.eMax, env)
                 INF_INF -> divInfInf(x, y, env)
 
                 NAN_FOUND -> nanFound(x, y, env)

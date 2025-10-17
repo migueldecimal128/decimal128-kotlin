@@ -54,15 +54,6 @@ class Decimal private constructor(
         val NEG_SNAN = Decimal(0L, 0L, 0, (0x8000 or NON_FINITE_SNAN).toShort())
         val sNaN = POS_SNAN
 
-        fun newZero(sign: Boolean, qExp: Int): Decimal {
-            if (qExp == 0)
-                return if (sign) NEG_ZERO else ZERO
-            val cappedExp = capExponentRange(qExp)
-            val signExp = packSignExp(sign, cappedExp)
-            val zero = Decimal(0L, 0L, 0, signExp)
-            return zero
-        }
-
         fun newZero(sign: Boolean, qExp: Int, env: DecEnv): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZERO else ZERO

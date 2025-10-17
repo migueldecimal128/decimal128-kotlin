@@ -56,7 +56,7 @@ class BinopAddSub : Binop() {
             } else {
                 // Rule: (+0) + (-0). The signs are different.
                 // Result is +0 unless rounding is roundTowardNegative.
-                Decimal.newZero(env.isRoundTowardNegative(), min(x.qExp, y.qExp))
+                Decimal.newZero(env.isRoundTowardNegative(), min(x.qExp, y.qExp), env)
             }
         }
 
@@ -79,7 +79,7 @@ class BinopAddSub : Binop() {
             return when {
                 (cmp > 0) -> C128AddSub.c128UnscaledSub(x.sign, x, y)
                 (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
-                else -> Decimal.newZero(env.isRoundTowardNegative(), x.qExp)
+                else -> Decimal.newZero(env.isRoundTowardNegative(), x.qExp, env)
             }
         }
 
@@ -111,7 +111,7 @@ class BinopAddSub : Binop() {
             return when {
                 cmpMag > 0 -> subScaledMagnitudes(x.sign, x, y, env)
                 cmpMag < 0 -> subScaledMagnitudes(ySign, y, x, env)
-                else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp))
+                else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp), env)
             }
         }
 

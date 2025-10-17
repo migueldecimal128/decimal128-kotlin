@@ -36,7 +36,7 @@ object D128Div {
         return when {
             y.packedLengths > 0 -> {
                 if (x.packedLengths.toInt() == 0)
-                    Decimal.newZero(false, x.qExp - y.qExp)
+                    Decimal.newZero(false, x.qExp - y.qExp, decEnv)
                 else
                     finiteDivNonZero(x, y, decEnv)
             }

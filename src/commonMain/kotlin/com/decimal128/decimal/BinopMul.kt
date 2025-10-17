@@ -27,13 +27,13 @@ class BinopMul : Binop() {
             }
         }
 
-        private fun mulZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
-            Decimal.newZero(false, min(x.qExp, y.qExp))
+        private fun mulZero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+            Decimal.newZero(false, min(x.qExp, y.qExp), env)
 
-        private fun mulInfZero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
-            decEnv.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
+        private fun mulInfZero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+            env.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
 
-        private fun mulInfNonzero(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal =
+        private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
             if (x.sign xor y.sign) Decimal.POS_INFINITY else Decimal.NEG_INFINITY
 
         // fast-path iff ...
@@ -57,10 +57,10 @@ class BinopMul : Binop() {
             return mulFnzFnz256(x, y, env)
         }
 
-        private fun mulFnzFnz256(x: Decimal, y: Decimal, decEnv: DecEnv): Decimal {
-            val p = decEnv.decTemps.mdecArg1.set(x)
-            val n = decEnv.decTemps.mdecArg2.set(y)
-            p.setMul(p, n, decEnv)
+        private fun mulFnzFnz256(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+            val p = env.decTemps.mdecArg1.set(x)
+            val n = env.decTemps.mdecArg2.set(y)
+            p.setMul(p, n, env)
             val d = Decimal.from(p)
             return d
         }
