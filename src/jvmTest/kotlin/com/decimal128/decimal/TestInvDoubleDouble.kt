@@ -87,7 +87,7 @@ class TestInvDoubleDouble{
         val dec = MutDec()
         val decInv = MutDec()
         dec.set(tc.bd)
-        val env = env()
+        val env = DecEnv()
         setInv(decInv, dec, env)
         val expected = tc.inv
         //assertEquals(expected.unscaledValue(), decInv.coeffToBigInteger())
@@ -96,7 +96,7 @@ class TestInvDoubleDouble{
         //TODO get setInv() to work using Newton-Raphson
     }
 
-    fun setInv(inv: MutDec, divisor: MutDec, env: env) {
+    fun setInv(inv: MutDec, divisor: MutDec, env: DecEnv) {
         if (divisor.bitLen <= 1) {
             if (divisor.bitLen == 0) {
                 inv.setInfinite(divisor.sign)

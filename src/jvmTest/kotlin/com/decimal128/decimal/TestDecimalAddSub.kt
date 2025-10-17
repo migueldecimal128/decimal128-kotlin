@@ -13,12 +13,12 @@ class TestDecimalAddSub {
 
     val verbose = true
 
-    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val env: env) {
+    class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val env: DecEnv) {
         constructor(strA: String, strB: String, rd: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), env().with(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv().with(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), env())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, env())
+                this(BigDecimal(strA), BigDecimal(strB), DecEnv())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecEnv())
 
         val rm = env.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
@@ -76,9 +76,9 @@ class TestDecimalAddSub {
         return if (random.nextBoolean()) bd.negate() else bd
     }
 
-    fun randDecimal128Rounding(): env {
+    fun randDecimal128Rounding(): DecEnv {
         val i = random.nextInt(4)
-        val env = env().with(DecRounding.fromValue(i))
+        val env = DecEnv().with(DecRounding.fromValue(i))
         return env
     }
 

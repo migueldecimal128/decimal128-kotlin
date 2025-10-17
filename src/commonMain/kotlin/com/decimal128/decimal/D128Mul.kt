@@ -8,7 +8,7 @@ import kotlin.math.max
 
 object D128Mul {
 
-    fun mulImpl(x: Decimal, y: Decimal, env: env): Decimal {
+    fun mulImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
         val qMax = max(x.qExp, y.qExp)
         return when {
             qMax < MIN_SPECIAL_VALUE ->
@@ -36,7 +36,7 @@ object D128Mul {
     //  exponent on the low end must be >= eMin, not qTiny
     //  anything in the range [qTiny, eMin) is subnormal
     //  and must be scaled, so not on the fast-path
-    private fun finiteMul(x: Decimal, y: Decimal, env: env): Decimal {
+    private fun finiteMul(x: Decimal, y: Decimal, env: DecEnv): Decimal {
         val prodBitLen = x.bitLen + y.bitLen
         val prodExp = x.qExp + y.qExp
         if (prodBitLen < env.decFormat.maxBitLen &&
@@ -50,7 +50,7 @@ object D128Mul {
         return finiteMul256(x, y, env)
     }
 
-    private fun finiteMul256(x: Decimal, y: Decimal, env: env): Decimal {
+    private fun finiteMul256(x: Decimal, y: Decimal, env: DecEnv): Decimal {
         val p = env.decTemps.mdecArg1.set(x)
         val n = env.decTemps.mdecArg2.set(y)
         p.setMul(p, n, env)

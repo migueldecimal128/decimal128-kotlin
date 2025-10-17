@@ -256,7 +256,7 @@ class TestSqrtDoubleDouble{
             }
         }
         sqrt.qExp = qZ
-        sqrt.roundAndFinalize(residue2, env())
+        sqrt.roundAndFinalize(residue2, DecEnv())
 
         if (verbose)
             println(" --> sqrt:$sqrt")

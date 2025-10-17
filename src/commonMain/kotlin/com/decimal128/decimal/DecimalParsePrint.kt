@@ -134,10 +134,10 @@ object DecimalParsePrint {
         throw RuntimeException("insufficient buffer space")
     }
 
-    fun decFromString(x: MutDec, str: String, env: env) =
+    fun decFromString(x: MutDec, str: String, env: DecEnv) =
         decFromText(x, StringLatin1Iterator(str), env)
 
-    private fun decFromText(x: MutDec, src: Latin1Iterator, env: env) {
+    private fun decFromText(x: MutDec, src: Latin1Iterator, env: DecEnv) {
         val maxPayloadDigitLen = env.precision - 1
         when {
             isFiniteValueText(x, src, env) -> return
@@ -149,7 +149,7 @@ object DecimalParsePrint {
         }
     }
 
-    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: env): Boolean {
+    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: DecEnv): Boolean {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false

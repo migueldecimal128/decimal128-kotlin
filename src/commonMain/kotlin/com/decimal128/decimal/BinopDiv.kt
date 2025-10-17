@@ -7,7 +7,7 @@ import com.decimal128.decimal.Decimal.Companion.newZero
 class BinopDiv : Binop() {
     companion object {
 
-        fun divImpl(x: Decimal, y: Decimal, env: env): Decimal {
+        fun divImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 divFnzFnz(x, y, env)
             } else when (BinopSignature.enumOf(x, y)) {
@@ -27,13 +27,13 @@ class BinopDiv : Binop() {
             }
         }
 
-        private fun divZeroZero(x: Decimal, y: Decimal, env: env): Decimal =
+        private fun divZeroZero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
             env.signal(DecExceptionReason.DIVISION_OF_ZERO_BY_ZERO)
 
-        private fun divInfInf(x: Decimal, y: Decimal, env: env): Decimal =
+        private fun divInfInf(x: Decimal, y: Decimal, env: DecEnv): Decimal =
             env.signal(DecExceptionReason.DIVISION_OF_INFINITY_BY_INFINITY)
 
-        private fun divFnzFnz(x: Decimal, y: Decimal, env: env): Decimal {
+        private fun divFnzFnz(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             val dividend = env.decTemps.mdecArg1.set(x)
             val divisor = env.decTemps.mdecArg2.set(y)
             val quotient = env.decTemps.mutDecResult.setDiv(dividend, divisor, env)

@@ -7,8 +7,8 @@ import java.math.BigDecimal.ONE
 
 class TestMutDecScaleB {
 
-    class TC(val bd: BigDecimal, val pow10: Int, val env: env) {
-        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, env())
+    class TC(val bd: BigDecimal, val pow10: Int, val env: DecEnv) {
+        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecEnv())
         val expected =
             bdToIeeeDecimal128(bd.scaleByPowerOfTen(pow10),
                         env.decRounding.mapToRoundingMode())

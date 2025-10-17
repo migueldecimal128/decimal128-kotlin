@@ -57,7 +57,7 @@ class TestNextUpDown {
         val n = newMutDec(bd)
         val up = MutDec()
         val down = MutDec()
-        val env = env()
+        val env = DecEnv()
         up.setNextUp(n, env)
         down.setNextDown(n, env)
 

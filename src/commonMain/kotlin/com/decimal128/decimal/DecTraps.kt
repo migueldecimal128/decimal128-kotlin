@@ -29,7 +29,7 @@ class DecTraps internal constructor(
         return "DecTrapHandlers(enabled=[$activeHandlers])"
     }
 
-    fun delayedTrap(env: env) {
+    fun delayedTrap(env: DecEnv) {
         // TODO
         throw RuntimeException("not impl")
     }

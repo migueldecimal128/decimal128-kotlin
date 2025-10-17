@@ -253,14 +253,14 @@ class TestDecTest {
         return d
     }
 
-    fun buildenv(): env? {
+    fun buildenv(): DecEnv? {
         // relax this requirement
         // require (minExponent == -(maxExponent - 1))
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
         val fmt = DecFormat(precision, maxExponent)
-        val env = env().with(fmt).with(decRoundings[roundingIndex])
+        val env = DecEnv().with(fmt).with(decRoundings[roundingIndex])
         return env
     }
 

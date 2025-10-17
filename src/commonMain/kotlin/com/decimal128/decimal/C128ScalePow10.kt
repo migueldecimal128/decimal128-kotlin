@@ -22,7 +22,7 @@ internal object C128ScalePow10 {
         return Decimal.from(p1, p0, signExp)
     }
 
-    fun c128ScaleUpPow10(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, pow10: Int, env: env): Decimal {
+    fun c128ScaleUpPow10(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, pow10: Int, env: DecEnv): Decimal {
         check(pow10 > 0)
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)

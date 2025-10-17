@@ -85,7 +85,7 @@ class TestMutDecReciprocal{
         val dec = MutDec()
         val decInv = MutDec()
         dec.set(tc.bd)
-        val env = env()
+        val env = DecEnv()
         setInv(decInv, dec, env)
         val expected = tc.inv
         //assertEquals(expected.unscaledValue(), decInv.coeffToBigInteger())
@@ -94,7 +94,7 @@ class TestMutDecReciprocal{
         //TODO get setInv() to work using Newton-Raphson
     }
 
-    fun setInv(inv: MutDec, divisor: MutDec, env: env) {
+    fun setInv(inv: MutDec, divisor: MutDec, env: DecEnv) {
         val scalePow10 = 36
         val scaleDouble = 1e36
 

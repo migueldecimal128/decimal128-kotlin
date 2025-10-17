@@ -1,11 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.env.Companion.DECIMAL128
-import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.U256Pow10.calcDigitLen128
-import com.decimal128.decimal.U256Pow10.calcDigitLen64
-import com.decimal128.decimal.U256Pow10.pow10BitLen
-import com.decimal128.decimal.U256Pow10.pow10Offset
+import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import kotlin.math.max
 import kotlin.math.min
 
@@ -54,7 +49,7 @@ class Decimal private constructor(
         val NEG_SNAN = Decimal(0L, 0L, 0, (0x8000 or NON_FINITE_SNAN).toShort())
         val sNaN = POS_SNAN
 
-        fun newZero(sign: Boolean, qExp: Int, env: env): Decimal {
+        fun newZero(sign: Boolean, qExp: Int, env: DecEnv): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZERO else ZERO
             val finalExp = max(min(qExp, env.qMax), env.qTiny)
@@ -63,7 +58,7 @@ class Decimal private constructor(
             return zero
         }
 
-        fun newZero(signExp: Short, env: env): Decimal {
+        fun newZero(signExp: Short, env: DecEnv): Decimal {
             return when {
                 signExp.toInt() == 0 -> POS_ZERO
                 signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZERO
