@@ -17,6 +17,11 @@ import kotlin.math.min
 
 internal const val MIN_SPECIAL_VALUE = 16381
 internal const val NON_FINITE_INF = 16381
+// Total order has sNaN < qNaN
+// But, implementation needs to leave sNaN > qNaN
+// because that makes it easier to distinguish the sNaN
+// when converting from sNaN => qNaN
+// See setNaN(x, y, env)
 internal const val NON_FINITE_QNAN = 16382
 internal const val NON_FINITE_SNAN = 16383
 
