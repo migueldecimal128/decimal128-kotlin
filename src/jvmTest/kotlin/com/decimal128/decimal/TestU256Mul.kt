@@ -16,21 +16,21 @@ class TestU256Mul {
 
     val cases = arrayOf(
         TC("18446744073709551616", "0"),
-        TC("143005781744313106762286640808689760291381", "680117584506250987821428704491240734"),
+        TC("14300578174431310676228664080868976029", "680117584506250987821428704491240734"),
         TC("18446744073709551616", "0"),
         TC("9999999999999999919", "9999999999999999919"),
         TC("9999999999999999918", "99999999999999999920"),
-        TC("6075018513315086291545187086261960270921991288466", "16192"),
+        TC("60750185133150862915451870862619602709", "16192"),
         TC(BigInteger.ONE.shiftLeft(64), BigInteger.ZERO),
-        TC("10000000000000000000000000000000000000000000000000000000000000000000000000000", "1"),
+        TC("10000000000000000000000000000000000000", "1"),
 
         TC("1", "10000000000000000000"),
         TC("0", "10000000000000000000"),
         TC("0", "1000000000000000000"),
         TC("1", "1000000000000000000"),
 
-        TC("1000000000000000001", "99999999999999999999999999999999999999999999999"),
-        TC(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE), BigInteger.ONE),
+        TC("1000000000000000001", "9999999999999999999999999999999999"),
+        TC(BigInteger.ONE.shiftLeft(127).subtract(BigInteger.ONE), BigInteger.ONE),
         TC("9999999999999999918", "99999999999999999920"),
 
         TC("0", "1"),
@@ -43,9 +43,9 @@ class TestU256Mul {
         TC("9999999999999999919", "999999999999999918"),
         TC("9999999999999999919", "9999999999999999919"),
         TC("9999999999999999918", "99999999999999999920"),
-        TC(BigInteger.ONE.shiftLeft(250).subtract(BigInteger.ONE),BigInteger.ONE.shiftLeft(250).subtract(BigInteger.ONE)),
-        TC(BigInteger.ONE.shiftLeft(200).subtract(BigInteger.ONE), BigInteger.ONE.shiftLeft(2)),
-        TC(BigInteger.ONE.shiftLeft(250), BigInteger.ONE.shiftLeft(250)),
+        TC(BigInteger.ONE.shiftLeft(127).subtract(BigInteger.ONE),BigInteger.ONE.shiftLeft(123).subtract(BigInteger.ONE)),
+        TC(BigInteger.ONE.shiftLeft(127).subtract(BigInteger.ONE), BigInteger.ONE.shiftLeft(2)),
+        TC(BigInteger.ONE.shiftLeft(126), BigInteger.ONE.shiftLeft(126)),
         TC(BigInteger.ONE.shiftLeft(64), BigInteger.ZERO),
         )
 
@@ -59,9 +59,9 @@ class TestU256Mul {
 
     @Test
     fun testBoundaries() {
-        for (i in 0..<77) {
+        for (i in 0..38) {
             val biX = BigInteger.TEN.pow(i)
-            for (j in 0..<(44-i)) {
+            for (j in 0..38) {
                 val biY = BigInteger.TEN.pow(j)
                 for (deltaX in deltas) {
                     val biA = biX.add(deltaX)
@@ -88,7 +88,7 @@ class TestU256Mul {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
+        val bitLength = random.nextInt(0, 128)
         val bi = BigInteger(bitLength, random)
         return bi
     }

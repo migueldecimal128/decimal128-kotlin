@@ -4,80 +4,26 @@ package com.decimal128.decimal
 internal object U256Mul {
 
     fun u256Mul(z: U256, x: U256, y: U256) {
-        val xBitLen = x.bitLen
-        val yBitLen = y.bitLen
-        val maxBitLen = xBitLen + yBitLen
-        if (maxBitLen <= 128) {
-            val (p1, p0) = umul128x128to128(x.dw1, x.dw0, y.dw1, y.dw0)
-            z.u256Set128(p1, p0)
-            return
+        if ((x.bitLen < 128) and (y.bitLen < 128)) {
+            val maxProdBitLen = x.bitLen + y.bitLen
+            _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0)
         }
-        if ((xBitLen or yBitLen) <= 128 && maxBitLen <= 192) {
-            val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, y.dw1, y.dw0)
-            z.u256Set192(p2, p1, p0)
-            return
-        }
-
-        val flipFlop = xBitLen >= yBitLen
-        val m = if (flipFlop) x else y
-        val n = if (flipFlop) y else x
-        val mBitLen = m.bitLen
-        val nBitLen = n.bitLen
-        val maxProdBitLen = mBitLen + nBitLen
-        // mBitLen >= nBitLen
-        check(m.bitLen >= n.bitLen)
-        val m0 = m.dw0
-        val n0 = n.dw0
-        when {
-            (nBitLen <= 64) -> {
-                when {
-                    (maxProdBitLen <= 192) -> {
-                        val (p2, p1, p0) = umul192x64to192(m.dw2, m.dw1, m0, n0)
-                        z.u256Set192(p2, p1, p0)
-                        return
-                    }
-                    (nBitLen == 0) -> z.u256SetZero()
-                    (n0 and (n0 - 1) == 0L) -> {
-                        // also handles n0 == 1
-                        // even power of 2 ... just shift
-                        val ntz = n0.countTrailingZeroBits()
-                        z.u256SetShiftLeft(m, ntz)
-                    }
-
-                    (m.bitLen <= 128) -> _mulCoeff2x1(z, maxProdBitLen, m.dw1, m.dw0, n0)
-                    (m.bitLen <= 192) -> _mulCoeff3x1(z, maxProdBitLen, m.dw2, m.dw1, m.dw0, n0)
-                    else -> _mulCoeff4x1(z, maxProdBitLen, m.dw3, m.dw2, m.dw1, m.dw0, n0)
-                }
-                return
-            }
-
-            (nBitLen <= 128 && m.bitLen <= 192) -> {
-                _mulCoeff3x2(z, maxProdBitLen, m.dw2, m.dw1, m.dw0, n.dw1, n0)
-                return
-            }
-        }
-        throw RuntimeException("coeff mul overflow")
+        else
+            throw IllegalArgumentException("mul arg >=128 bits ... overflow")
     }
 
     fun u256Mul(z: U256, x: U256, yBitLen: Int, y0: Long) {
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
-        if (maxBitLen <= 192) {
-            val (p2, p1, p0) = umul192x64to192(x.dw2, x.dw1, x.dw0, y0)
-            z.u256Set192(p2, p1, p0)
-            return
-        }
         when {
             (xBitLen <= 64) -> {
                 val x0 = x.dw0
                 val pHi = unsignedMulHi(x0, y0)
                 val pLo = x0 * y0
                 z.u256Set128(pHi, pLo)
-                return
             }
             (xBitLen <= 128) -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0)
-            (xBitLen <= 192) -> _mulCoeff3x1(z, maxBitLen, x.dw2, x.dw1, x.dw0, y0)
-            else -> _mulCoeff4x1(z, maxBitLen, x.dw3, x.dw2, x.dw1, x.dw0, y0)
+            else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
         }
     }
 
@@ -86,19 +32,13 @@ internal object U256Mul {
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
-            (maxBitLen <= 192) -> {
-                val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, y1, y0)
-                z.u256Set192(p2, p1, p0)
-                return
+            (xBitLen <= 64) -> when {
+                (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
+                (xBitLen == 1) -> z.u256Set128(y1, y0)
+                else -> z.u256SetZero()
             }
-            //(xBitLen <= 64) -> when {
-            //    (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
-            //    (xBitLen == 1) -> z.coeffSet128(y1, y0)
-            //    else -> z.coeffSetZero()
-            //}
             (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0)
-            (xBitLen <= 192) -> _mulCoeff3x2(z, maxBitLen, x.dw2, x.dw1, x.dw0, y1, y0)
-            else -> throw RuntimeException("coeff overflow")
+            else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
         }
     }
 

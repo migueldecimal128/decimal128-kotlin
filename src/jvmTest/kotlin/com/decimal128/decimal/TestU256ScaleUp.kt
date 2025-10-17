@@ -15,8 +15,8 @@ class TestU256ScaleUp {
     }
 
     val cases = arrayOf(
-        TC("17158008246618608233531190970817760693366", 17),
-        TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE), 1),
+        TC("17158008246618608233531190970817760693", 17),
+        TC(BigInteger.TEN.pow(38).subtract(BigInteger.ONE), 1),
         TC("2", 59),
         TC("2", 58),
         TC("0", 60),
@@ -32,7 +32,7 @@ class TestU256ScaleUp {
         TC("99999999999999999999", 1),
         TC("99999999999999999999", 2),
         TC("99999999999999999999", 3),
-        TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE), 1),
+        TC(BigInteger.TEN.pow(38).subtract(BigInteger.ONE), 1),
     )
 
     @Test
@@ -52,7 +52,7 @@ class TestU256ScaleUp {
 
     @Test
     fun testBoundaries() {
-        for (i in 0..<77) {
+        for (i in 0..38) {
             val biX = BigInteger.TEN.pow(i)
             for (pow10 in 0..<77-i) {
                 for (deltaX in deltas) {
@@ -86,7 +86,7 @@ class TestU256ScaleUp {
     }
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 255)
+        val bitLength = random.nextInt(0, 128)
         val bi = BigInteger(bitLength, random)
         return bi
     }
