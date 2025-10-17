@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Residue.Companion.EXACT
@@ -811,7 +813,6 @@ class MutDec() : U256() {
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun capExponentRange(e: Int): Int {
         return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
@@ -1000,7 +1001,6 @@ class MutDec() : U256() {
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     private /*inline*/ fun toDecimalPointString() : String {
         val digitsRightOfDecimal = -qExp
         val leadingZeroCount = Math.max(1 + digitsRightOfDecimal - digitLen, 0)

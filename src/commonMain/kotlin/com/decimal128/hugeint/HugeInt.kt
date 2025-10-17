@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.hugeint
 
 import kotlin.math.absoluteValue
@@ -37,7 +39,6 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         @JvmStatic val TEN = HugeInt(false, Magia.TEN)
         @JvmStatic val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
 
-        @Suppress("NOTHING_TO_INLINE")
         private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
         /**

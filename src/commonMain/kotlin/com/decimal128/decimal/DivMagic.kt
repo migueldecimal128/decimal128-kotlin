@@ -8,7 +8,7 @@ object DivMagic {
 
     /**
      * Compute magic number and shift for unsigned division by d (1 ≤ d < 2^64),
-     * using your HugeInt arbitrary-precision type instead of BigInteger.
+     * using HugeInt instead of BigInteger.
      */
     fun magicu64(d: Long): Magic {
         require(d != 0L) { "divisor must be nonzero" }
@@ -136,41 +136,6 @@ object DivMagic {
             else ->
                 throw RuntimeException()
         }
-    }
-
-    private fun magicDivModPow10_64(
-        q: U256,
-        x0: Long,
-        pow10: Int,
-        m: Long,
-        flagAndShift: Long
-    ): Long {
-        //val biX0 = BigInteger.valueOf(x0 ushr 32).shiftLeft(32).or(BigInteger.valueOf(x0 and 0xFFFFFFFFL))
-        val denom = POW10[pow10]
-        val s = flagAndShift.toInt() and 0x3F
-        val qPotentialCarry = 1L shl -s
-        val addMask = flagAndShift shr 63
-        val pHiUncorrected = unsignedMulHi(x0, m)
-        val pLo = x0 * m
-        val pHiCorrected = pHiUncorrected + (x0 and addMask)
-        val qCarryAdd = if (unsignedLT(pHiCorrected, pHiUncorrected)) qPotentialCarry else 0L
-        val qHat = pHiCorrected ushr s
-        val q0 = qCarryAdd + qHat
-
-        // NOTE ...
-        // this multiply will overflow only when Q0 is very large and denom is very small
-        // for denom = 10**1 the magic correction flag is not set, the multiply cannot overflow
-        // for denom = 10**2 the magic correction flag is set.
-        // with x0==2**64-1 and denom==100 the multiply stays in 64 bits
-        // therefore correction is not ever needed ...
-        // ... AS LONG AS THIS IS NEVER USED FOR ANYTHING SMALLER THAN 10**2 == 100
-        //val reconstructedHi = umulHigh(q0, denom)
-        val reconstructedLo = q0 * denom
-        val rHat = x0 - reconstructedLo
-        val r = rHat // + (-reconstructedHi and x0)
-
-        q.u256Set64(q0)
-        return r
     }
 
 }

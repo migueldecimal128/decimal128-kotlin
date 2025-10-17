@@ -1,10 +1,11 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
-@Suppress("NOTHING_TO_INLINE")
 open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     //constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)

@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.hugeint.HugeInt
@@ -166,40 +168,37 @@ internal object U256Pow10 {
             POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
         // initialize Barrett division
-        val twoPow64 = HugeInt.ONE.shl(64)
+        val hiTwoPow64 = HugeInt.ONE.shl(64)
         hiPow10 = HugeInt.ONE
 
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAXX) {
             hiPow10 *= 10
-            val mu10 = twoPow64 / hiPow10
+            val mu10 = hiTwoPow64 / hiPow10
             POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.magnitudeRawLong()
 
             val pow5 = hiPow10 ushr i
-            val mu5 = twoPow64 / pow5
+            val mu5 = hiTwoPow64 / pow5
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.magnitudeRawLong()
         }
         for (i in 1..<BARRETT_POW5_MAX) {
             val t = HugeInt.fromLongUnsigned(POW10[POW5_64_OFFSET + i])
-            val mu = twoPow64 / t
+            val mu = hiTwoPow64 / t
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu.magnitudeRawLong()
         }
         // initialization of Magic multipliers M is in DivMagic
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun pow10BitLen(pow10: Int): Int {
         return (POW10_BIT_LEN_MINUS_1[pow10].toInt() and 0xFF) + 1
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun pow10PackedLengths(pow10: Int): Short {
         val bitLen = pow10BitLen(pow10)
         val packed = (pow10 shl 7) or bitLen
         return packed.toShort()
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun pow10Offset(pow10: Int): Int {
         val p = pow10 - 1
         val t = (p * 431) ushr 13
@@ -209,18 +208,14 @@ internal object U256Pow10 {
         return offset and mask
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun getPow10Dw0(pow10: Int): Long = POW10[pow10Offset(pow10)]
-    @Suppress("NOTHING_TO_INLINE")
     inline fun getPow10Dw1(pow10: Int): Long =
         if (pow10 < MIN_POW10_DIGIT_LEN_128) 0L else POW10[pow10Offset(pow10) + 1]
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun calcMinDigitLenForBitLen(bitLen: Int): Int {
         return (((bitLen - 1) * 1233) ushr 12) + 1
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun calcMaxDigitLenForBitLen(bitLen: Int): Int {
         return ((bitLen * 19729) ushr 16) + 1
     }
