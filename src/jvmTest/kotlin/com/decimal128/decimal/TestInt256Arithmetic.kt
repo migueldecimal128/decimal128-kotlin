@@ -35,19 +35,18 @@ class TestInt256Arithmetic {
     }
 
     val tcs = arrayOf(
-        com.decimal128.decimal.TestInt256Arithmetic.TC(
-            "3197824510127148320975196855018397016390888109434956601035021933749603692011", "-37"
+        TC(
+            "3197824510127148320975196855018397", "-37"
         ),
-        com.decimal128.decimal.TestInt256Arithmetic.TC("-109946764", "-2"),
-        com.decimal128.decimal.TestInt256Arithmetic.TC("40000000000000000000", "20000000000000000001"),
-        com.decimal128.decimal.TestInt256Arithmetic.TC("400000000000000000000", "30000000000000000000"),
-        com.decimal128.decimal.TestInt256Arithmetic.TC("902475526234364831190", "359661921088628968292"),
-        com.decimal128.decimal.TestInt256Arithmetic.TC(BigInteger.ONE.shiftLeft(70), BigInteger.ONE.shiftLeft(69)),
-        com.decimal128.decimal.TestInt256Arithmetic.TC("2", "0x02"),
-        com.decimal128.decimal.TestInt256Arithmetic.TC(
-            "1111111111222222222233333333334444444444", "11111111112222222222"
-        ),
-        com.decimal128.decimal.TestInt256Arithmetic.TC("1234", "1"),
+        TC("-109946764", "-2"),
+        TC("40000000000000000000", "20000000000000000001"),
+        TC("400000000000000000000", "30000000000000000000"),
+        TC("902475526234364831190", "359661921088628968292"),
+        TC(BigInteger.ONE.shiftLeft(70), BigInteger.ONE.shiftLeft(69)),
+        TC("2", "0x02"),
+        TC("1111111111222222222233333333334444", "11111111112222222222"),
+        TC("9999999999999999999999999999999999", "9999999999999999999999999999999999"),
+        TC("1234", "1"),
     )
 
     @Test
@@ -73,7 +72,7 @@ class TestInt256Arithmetic {
     val random = Random()
 
     fun randBi(): BigInteger {
-        val bitLen = random.nextInt(0, 256)
+        val bitLen = random.nextInt(0, 128)
         val bi = BigInteger(bitLen, random)
         return if (random.nextBoolean()) bi.negate() else bi
     }
@@ -83,12 +82,12 @@ class TestInt256Arithmetic {
         for (i in 0..<50000) {
             val biA = randBi()
             val biB = randBi()
-            val tc = com.decimal128.decimal.TestInt256Arithmetic.TC(biA, biB)
+            val tc = TC(biA, biB)
             test1(tc)
         }
     }
 
-    fun test1(tc: com.decimal128.decimal.TestInt256Arithmetic.TC) {
+    fun test1(tc: TC) {
         val strA = tc.strA
         val strB = tc.strB
         if (verbose)

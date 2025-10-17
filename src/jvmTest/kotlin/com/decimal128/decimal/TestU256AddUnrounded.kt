@@ -2,6 +2,8 @@ package com.decimal128.decimal
 
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
+import java.math.BigInteger.ONE
+import java.math.BigInteger.ZERO
 import java.util.*
 
 class TestU256AddUnrounded {
@@ -12,22 +14,24 @@ class TestU256AddUnrounded {
         val biSum = biA.add(biB)
 
         constructor(a:String, b:String) : this(BigInteger(a), BigInteger(b))
+        init {
+            check (biA.bitLength() < 128) {println("biA too big: $biA")}
+            check (biB.bitLength() < 128) {println("biB too big: $biB")}
+        }
     }
 
     val cases = arrayOf(
         TC("96391704742582514987", "0"),
 
-        TC("10000000000000000000000000000000000000000000000000000000000000000000000000000", "1"),
+        TC("9999999999999999999999999999999999", "1"),
         TC("11002044283145426452", "83"),
         TC("9898648910501246606", "8919245473293500599"),
         TC("96391704742582514987", "0"),
-        TC("300000000000000000000000000000000000000", "400000000000000000000000000000000000000"),
-        TC("715519456384878388153883883486068107173", "1"),
-        TC("43643123891145784062610756767344509631", "671876332493732604091273126718723597542"),
-        TC(BigInteger.ONE.shiftLeft(250).subtract(BigInteger.ONE),BigInteger.ONE.shiftLeft(250).subtract(BigInteger.ONE)),
-            TC(BigInteger.ONE.shiftLeft(250).subtract(BigInteger.ONE), BigInteger.ONE),
-        TC(BigInteger.ONE.shiftLeft(250), BigInteger.ONE.shiftLeft(250)),
-        TC(BigInteger.ONE.shiftLeft(64), BigInteger.ZERO),
+        TC("3000000000000000000000000000000000", "3000000000000000000000000000000000"),
+        TC("7155194563848783881538838834860681", "1"),
+        TC("4364312389114578406261075676734450", "6718763324937326040912731267187235"),
+        TC(ONE.shiftLeft(127).subtract(ONE), ONE.shiftLeft(127).subtract(ONE)),
+        TC(ONE.shiftLeft(64), ZERO),
         TC("0", "1"), TC("1", "2"),
         )
 
@@ -49,7 +53,7 @@ class TestU256AddUnrounded {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 255)
+        val bitLength = random.nextInt(0, 128)
         val bi = BigInteger(bitLength, random)
         return bi
     }

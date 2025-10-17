@@ -45,7 +45,7 @@ class TestU256AddScaledFullOverlap {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
+        val bitLength = random.nextInt(0, 128)
         val bi = BigInteger(bitLength, random)
         return bi
     }

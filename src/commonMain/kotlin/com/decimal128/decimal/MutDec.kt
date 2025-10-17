@@ -1146,9 +1146,9 @@ class MutDec() : U256() {
 
         // 2) Normalized result: round only if bd has >precision digits
         if (eExp <= eMax && qExp >= myQTiny) {
-            var totalResidue = inboundResidue
             if (qExp > qMax)
                 return finalizeFnzClampExp(inboundResidue, decEnv)
+            var totalResidue = inboundResidue
             if (excess != 0) {
                 val roundingResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excess)
                 qExp += excess
