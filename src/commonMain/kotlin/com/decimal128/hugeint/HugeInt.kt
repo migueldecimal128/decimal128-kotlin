@@ -34,6 +34,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         // all zero values *must* point to this instance of ZERO
         @JvmStatic val ZERO = HugeInt(false, Magia.ZERO)
         @JvmStatic val ONE = HugeInt(false, Magia.ONE)
+        @JvmStatic val TEN = HugeInt(false, Magia.TEN)
         @JvmStatic val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
 
         @Suppress("NOTHING_TO_INLINE")

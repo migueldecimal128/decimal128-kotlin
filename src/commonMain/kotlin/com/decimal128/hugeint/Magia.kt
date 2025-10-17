@@ -18,6 +18,7 @@ object Magia {
 
     val ZERO = IntArray(0)
     val ONE = intArrayOf(1)
+    val TEN = intArrayOf(10)
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL

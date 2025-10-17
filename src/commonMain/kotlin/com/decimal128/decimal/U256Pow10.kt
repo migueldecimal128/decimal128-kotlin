@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.hugeint.HugeInt
 import kotlin.math.max
 
 private const val POW10_DWORD_COUNT =
@@ -150,41 +151,13 @@ internal object U256Pow10 {
     */
 
     init {
-        // initialize POW10
-        var pow10_64 = 0L
-        for (i in 0..<MIN_POW10_DIGIT_LEN_128) {
-            pow10_64 = if (i == 0) 1L else pow10_64 * 10L
-            val bitLen = 64 - pow10_64.countLeadingZeroBits()
-            POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
-            POW10[i] = pow10_64
-        }
-        val pow10 = U256(pow10_64)
-        val ten = U256(10L)
-        for (i in POW10_64_COUNT..<MAX_DIGIT_LEN) {
-            pow10.u256SetMul(pow10, ten)
-            val bitLen = pow10.bitLen
-            POW10_BIT_LEN_MINUS_1[i] = (bitLen - 1).toByte()
-            val pow10Offset = pow10Offset(i)
-            when {
-                bitLen <= 128 -> {
-                    check(i in MIN_POW10_DIGIT_LEN_128..<MIN_POW10_DIGIT_LEN_192)
-                    POW10[pow10Offset + 0] = pow10.dw0
-                    POW10[pow10Offset + 1] = pow10.dw1
-                }
-                bitLen <= 192 -> {
-                    check(i in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
-                    POW10[pow10Offset + 0] = pow10.dw0
-                    POW10[pow10Offset + 1] = pow10.dw1
-                    POW10[pow10Offset + 2] = pow10.dw2
-                }
-                bitLen <= 256 -> {
-                    check(i in MIN_POW10_DIGIT_LEN_256..<MAX_DIGIT_LEN)
-                    POW10[pow10Offset + 0] = pow10.dw0
-                    POW10[pow10Offset + 1] = pow10.dw1
-                    POW10[pow10Offset + 2] = pow10.dw2
-                    POW10[pow10Offset + 3] = pow10.dw3
-                }
-            }
+        var hiPow10 = HugeInt.ONE
+        var j = 0
+        for (i in 0..<MAX_DIGIT_LEN) {
+            POW10_BIT_LEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
+            for (dw in hiPow10.toLittleEndianLongArray())
+                POW10[j++] = dw
+            hiPow10 *= 10
         }
 
         // initialize powers of 5 that fit in 64 bits
@@ -193,25 +166,23 @@ internal object U256Pow10 {
             POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
         // initialize Barrett division
-        val twoPow64 = U256()
-        val mu = U256()
-        val pow5 = U256()
+        val twoPow64 = HugeInt.ONE.shl(64)
+        hiPow10 = HugeInt.ONE
 
-        twoPow64.u256Set128(1L, 0L)
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAXX) {
-            if (i == 1) pow10.u256Set64(10L) else pow10.u256SetMul(pow10, ten)
-            mu.u256SetDiv(twoPow64, pow10)
-            POW10[BARRETT_POW10_MU_OFFSET + i] = mu.dw0
+            hiPow10 *= 10
+            val mu10 = twoPow64 / hiPow10
+            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.magnitudeRawLong()
 
-            pow5.u256SetShiftRight(pow10, i)
-            mu.u256SetDiv(twoPow64, pow5)
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
+            val pow5 = hiPow10 ushr i
+            val mu5 = twoPow64 / pow5
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.magnitudeRawLong()
         }
         for (i in 1..<BARRETT_POW5_MAX) {
-            pow5.u256Set64(POW10[POW5_64_OFFSET + i])
-            mu.u256SetDiv(twoPow64, pow5)
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.dw0
+            val t = HugeInt.fromLongUnsigned(POW10[POW5_64_OFFSET + i])
+            val mu = twoPow64 / t
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.magnitudeRawLong()
         }
         // initialization of Magic multipliers M is in DivMagic
     }
