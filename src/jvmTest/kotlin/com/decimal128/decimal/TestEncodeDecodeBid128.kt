@@ -60,7 +60,7 @@ class TestEncodeDecodeBid128 {
     fun test1(str: String) {
         if (verbose)
             println(str)
-        val d = MutDec(str, zeroNanPayload = true)
+        val d = MutDec().set(str, zeroNanPayload = true)
         val bidLeBytes = d.encodeLittleEndianBytesBid128()
         val bidLeLongs = d.encodeLittleEndianLongsBid128()
         val bidBeBytes = d.encodeBigEndianBytesBid128()

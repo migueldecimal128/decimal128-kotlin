@@ -32,29 +32,12 @@ class MutDec() : U256() {
     var sign = false
     var qExp = 0
 
-    constructor(sign: Boolean, qExp: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long) : this() {
-        this.u256Set256(dw3, dw2, dw1, dw0)
-        this.qExp = qExp
-        this.sign = sign
-    }
-
-    constructor(str: String): this() {
-        DecimalParsePrint.decFromString(this, str, DECIMAL128)
-    }
-
-    constructor(str: String, zeroNanPayload: Boolean) : this() {
-        val env = if (zeroNanPayload) DECIMAL128_ZERO_NAN_PAYLOAD else DECIMAL128
-        DecimalParsePrint.decFromString(this, str, env)
-    }
-
-    constructor(other: MutDec) : this(other.sign, other.qExp, other.dw3, other.dw2, other.dw1, other.dw0)
-
     companion object {
         fun newInstance(): MutDec = MutDec()
 
         fun newInfinity(sign: Boolean = false) = MutDec().setInfinite(sign)
 
-        fun newAbs(x: MutDec, env: DecEnv = DECIMAL128) = MutDec(x).mutateAbs()
+        fun newAbs(x: MutDec, env: DecEnv = DECIMAL128) = MutDec().set(x).mutateAbs()
 
         fun newAdd(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
             addImpl(MutDec(), x, y.sign, y, env)
@@ -68,7 +51,7 @@ class MutDec() : U256() {
         fun newFma(x: MutDec, y: MutDec, z: MutDec, env: DecEnv = DECIMAL128) =
             MutDec().setFma(x, y, z, env)
 
-        fun newNegate(x: MutDec, env: DecEnv = DECIMAL128) = MutDec(x).mutateNegate()
+        fun newNegate(x: MutDec, env: DecEnv = DECIMAL128) = MutDec().set(x).mutateNegate()
 
         fun newDiv(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) = MutDec().setDiv(x, y, env)
 
@@ -313,8 +296,8 @@ class MutDec() : U256() {
         return this
     }
 
-    fun set(l: Long, qExp: Int): MutDec {
-        this.qExp = capExponentRange(qExp)
+    fun set(l: Long, qExp: Int, env: DecEnv): MutDec {
+        this.qExp = env.capExponentRange(qExp)
         this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
@@ -338,6 +321,11 @@ class MutDec() : U256() {
 
     fun set(str: String): MutDec {
         DecimalParsePrint.decFromString(this, str, DECIMAL128)
+        return this
+    }
+
+    fun set(str: String, zeroNanPayload: Boolean): MutDec {
+        DecimalParsePrint.decFromString(this, str, if (zeroNanPayload) DECIMAL128_ZERO_NAN_PAYLOAD else DECIMAL128)
         return this
     }
 
@@ -405,24 +393,25 @@ class MutDec() : U256() {
                             if (eExp <= -2) {
                                 return MutDec()
                             }
-                            val half = MutDec(false, -1, 0L, 0L, 0L, 5L)
+                            val half = MutDec().set(5L, -1, env)
                             val cmp = this.compareTo(half, env)
                             if (cmp < 0 || cmp == 0 && env.decRounding == ROUND_TIES_TO_EVEN) {
+                                // FIXME this is a mutate ... what am I doing creating new instances?
                                 return MutDec()
                             } else {
-                                return MutDec(false, 0, 0L, 0L, 0L, 1L)
+                                return this.set(1)
                             }
                         }
                         ROUND_TOWARD_ZERO -> return MutDec()
                         ROUND_TOWARD_NEGATIVE -> {
                             if (sign)
-                                return MutDec(false, 0, 0L, 0L, 0L, 1L)
+                                return this.set(1)
                             else
                                 return MutDec()
                         }
                         ROUND_TOWARD_POSITIVE -> {
                             if (!sign)
-                                return MutDec(false, 0, 0L, 0L, 0L, 1L)
+                                return this.set(1)
                             else
                                 return MutDec()
                         }
@@ -510,7 +499,7 @@ class MutDec() : U256() {
         val productSign = x.sign xor y.sign
         when {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
-                val aT = if (this === a) MutDec(a) else a
+                val aT = if (this === a) MutDec().set(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp

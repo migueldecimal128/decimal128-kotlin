@@ -192,7 +192,7 @@ class TestDecTest {
         return true
     }
 
-    private val MY_NAN = MutDec("sNaN")
+    private val MY_NAN = MutDec().set("sNaN")
 
     inner class DecTest(val id: String, val op: String, val operand1: String, val operand2: String, val operand3: String,
                   val result: String, val conditions: Array<String>) {
@@ -249,7 +249,7 @@ class TestDecTest {
             println("octothorpe not fully implemented")
             return MY_NAN
         }
-        val d = MutDec(t)
+        val d = MutDec().set(t)
         return d
     }
 

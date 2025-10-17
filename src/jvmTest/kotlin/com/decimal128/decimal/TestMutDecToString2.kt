@@ -35,7 +35,7 @@ class TestMutDecToString2 {
     fun test1(tc: String) {
         if (verbose)
             println("tc:$tc")
-        val dec = MutDec(tc)
+        val dec = MutDec().set(tc)
         val str = dec.toString()
         if (verbose)
             println(" -> dec:$str")

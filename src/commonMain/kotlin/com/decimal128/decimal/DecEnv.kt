@@ -4,6 +4,8 @@ import com.decimal128.decimal.DecException.*
 import com.decimal128.decimal.DecExceptionReason.IS_INEXACT
 import com.decimal128.decimal.DecExceptionReason.OTHER
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
+import kotlin.math.max
+import kotlin.math.min
 
 data class DecEnv(
     val decFormat: DecFormat = DecFormat.DECIMAL_128,
@@ -197,4 +199,6 @@ data class DecEnv(
     operator fun Decimal.times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, this@DecEnv)
 
     fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
+
+    fun capExponentRange(qExp: Int) = max(min(qExp, qMax), qTiny)
 }
