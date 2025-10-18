@@ -51,11 +51,12 @@ internal fun roundAndFinalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, in
     }
 }
 
-private fun roundAndFinalizeZero(sign: Boolean, qExp: Int, inboundResidue: Residue,
+private fun roundAndFinalizeZero(sign: Boolean, qExp: Int, residue: Residue,
                                  decRounding: DecRounding, env: DecEnv): Decimal {
-    if (inboundResidue == EXACT)
-        return Decimal.newZero(sign, qExp, env)
-    TODO()
+    // if the coefficient is zero, then it must be the case that
+    // residue == EXACT
+    require (residue == EXACT) { "cannot have zero coefficient with inEXACT residue" }
+    return Decimal.newZero(sign, qExp, env)
 }
 
 private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, inboundResidue: Residue,
@@ -64,7 +65,7 @@ private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, 
     val precision = env.precision
     val bitLen = calcBitLen128(dw1, dw0)
     val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-    var eExp = qExp + (digitLen - 1)
+    val eExp = qExp + (digitLen - 1)
     val qMax = env.qMax
     // IEEE754-2008 7.5: detect tininess on the unrounded result
     val isTiny = (eExp < env.eMin)
@@ -204,3 +205,77 @@ private fun finalizeFnzSubnormalExcessTail(sign: Boolean, dw1: Long, dw0: Long, 
 }
 
 
+internal fun finalizeExact(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
+                           decRounding: DecRounding, env: DecEnv): Decimal {
+    // decRounding is needed because we might overflow/underflow
+    // to infinity or min/max value, depending upon decRounding
+    return when {
+        qExp < MIN_SPECIAL_VALUE && (dw1 or dw0) != 0L ->
+            finalizeExactFnz(sign, dw1, dw0, qExp, decRounding, env)
+        qExp < MIN_SPECIAL_VALUE ->
+            Decimal.newZero(sign, qExp, env)
+        qExp == NON_FINITE_INF && sign -> Decimal.NEG_INFINITY
+        qExp == NON_FINITE_INF         -> Decimal.POS_INFINITY
+        qExp == NON_FINITE_QNAN        -> Decimal.qNaN(sign, dw1, dw0)
+        else                           -> Decimal.sNaN(sign, dw1, dw0)
+    }
+}
+
+private fun finalizeExactFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
+                             decRounding: DecRounding, env: DecEnv): Decimal {
+    val bitLen = calcBitLen128(dw1, dw0)
+    val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+    val eExp = qExp + (digitLen - 1)
+    // IEEE754-2008 7.5: detect tininess on the unrounded result
+    val isTiny = (eExp < env.eMin)
+
+    val excess = max(0, digitLen - env.precision)
+    val myQTiny = env.qTiny - excess      // threshold for normalized
+
+    // 2) Normal result: round only if bd has >precision digits
+    if (eExp <= env.eMax && qExp >= myQTiny) {
+        return when {
+            qExp > env.qMax ->
+                finalizeExactFnzClampExp(sign, dw1, dw0, qExp, env)
+
+            excess == 0 ->
+                Decimal.from(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
+
+            else ->
+                finalizeFnzWithExcess(sign, dw1, dw0, qExp,
+                    EXACT, decRounding, isTiny, excess, env)
+        }
+    }
+
+    // 1) Overflow => +/- Infinity
+    if (eExp > env.eMax) {
+        check (!isTiny)
+        // overflow IEEE754-2008 7.4 Overflow page 37
+        return finalizeOverflow(sign, decRounding, env)
+    }
+
+    // 7.5.1: subnormal rounding (tiny result stays nonzero)
+    check(isTiny)
+    val myQMin = env.qTiny - digitLen           // threshold for subnormal cohort
+    val overlap = qExp - myQMin
+    if (overlap >= 0) {
+        val excessTail = digitLen - overlap
+        return finalizeFnzSubnormalExcessTail(sign, dw1, dw0, qExp,
+            EXACT, decRounding, excessTail, env)
+    }
+    return finalizeUnderflow(sign, decRounding, env)
+}
+
+private fun finalizeExactFnzClampExp(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, env: DecEnv): Decimal {
+    // clamp/fold-over
+    val qExcess = qExp - env.qMax
+    val (dw1Scaled, dw0Scaled) = C128ScalePow10.c128ScaleUpPow10(dw1, dw0, qExcess)
+    val bitLen = calcBitLen128(dw1Scaled, dw0Scaled)
+    val digitLen = calcDigitLen128(bitLen, dw1Scaled, dw0Scaled)
+    check (digitLen <= env.precision)
+    val qExpScaled = qExp - qExcess
+    val ret = Decimal.from(dw1Scaled, dw0Scaled, packLengths(digitLen, bitLen), packSignExp(sign, qExpScaled))
+    check (ret.digitLen <= env.precision)
+    check (ret.qExp == env.qMax)
+    return ret
+}
