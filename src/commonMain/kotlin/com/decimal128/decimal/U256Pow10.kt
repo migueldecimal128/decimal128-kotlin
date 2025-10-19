@@ -195,8 +195,8 @@ internal object U256Pow10 {
 
     inline fun pow10PackedLengths(pow10: Int): Short {
         val bitLen = pow10BitLen(pow10)
-        val packed = (pow10 shl 7) or bitLen
-        return packed.toShort()
+        val packedLengths = packLengths(pow10 + 1, bitLen)
+        return packedLengths
     }
 
     inline fun pow10Offset(pow10: Int): Int {

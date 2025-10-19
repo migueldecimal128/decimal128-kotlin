@@ -60,9 +60,10 @@ class TestMutDecMagFinalize {
 
     fun test1(case: TC) {
         val bdA = case.bdA
+        println("bdA:$bdA => ")
         val dec = MutDec()
         dec.set(bdA)
-        println("bdA:$bdA => dec:$dec")
+        println("===> dec:$dec")
     }
 
 }

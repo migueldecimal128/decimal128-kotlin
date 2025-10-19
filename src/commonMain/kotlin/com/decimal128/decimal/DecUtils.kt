@@ -77,7 +77,7 @@ private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, 
     if (eExp <= eMax && qExp >= myQTiny) {
         return when {
             qExp > qMax ->
-                finalizeFnzClampExp(sign, dw1, dw0, qExp, inboundResidue, env)
+                finalizeFnzClampHighExp(sign, dw1, dw0, qExp, inboundResidue, env)
 
             excess == 0 && inboundResidue == EXACT ->
                 Decimal.from(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
@@ -109,8 +109,8 @@ private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, 
     return finalizeUnderflow(sign, decRounding, env)
 }
 
-private fun finalizeFnzClampExp(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
-                                residue: Residue, env: DecEnv): Decimal {
+private fun finalizeFnzClampHighExp(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
+                                    residue: Residue, env: DecEnv): Decimal {
     // clamp/fold-over
     val qExcess = qExp - env.qMax
     val (dw1Scaled, dw0Scaled) = C128ScalePow10.c128ScaleUpPow10(dw1, dw0, qExcess)

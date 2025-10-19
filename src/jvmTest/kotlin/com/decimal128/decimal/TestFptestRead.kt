@@ -17,12 +17,17 @@ private var operandPrintWriter: PrintWriter? = null
 
 class TestFptestRead {
 
-    val verbose = false
+    val verbose = true
 
     val tcs = arrayOf (
+        // I created this case from a bad case ... so I don't know if u flag is correct or not
+        "d64+ 0 xu +6e-398 +0 -> +6e-398 u",
+
+        // this case is decimal64 subnormal, so there are only 15 digits in coefficient
+        "d64* =0 +354384610389529e-97 -74e-303 -> -262244611688251e-398 xu",
+
         "d128/ =0 -49642331588100000000000e1339 -34761812775252754060000000000e-3295 -> +1428070852031077636864738734302306e4595 x",
 
-        "d64+ 0 xu +6e-398 +0e105 -> +6e178 u",
         "d64* =0 i -160000e-271 -625000000e-141 -> +1e-398",
         "d64+ =0 i +1e-398 +0e-398 -> +1e-398 ",
         "d128+ =0 xu -5414267123623525953667080660113040e-6176 +5414267123623525953667080660113039e-6176 -> -1e3040 u",
