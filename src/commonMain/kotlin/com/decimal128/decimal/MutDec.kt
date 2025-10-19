@@ -1210,11 +1210,21 @@ class MutDec() : U256() {
         check (truncationNeeded > 0)
         if (truncationNeeded > digitLen)
             return finalizeUnderflow(rounding, env)
-        // subnormal ... but perhap zero
+        if (truncationNeeded == digitLen) {
+            val scaleResidue = Residue.residueFrom(this)
+            val totalResidue = scaleResidue.merge(inboundResidue)
+            val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
+            if (! roundUp)
+                return finalizeUnderflow(rounding, env)
+            setMinFiniteMagnitude(env)
+            return env.signalInexactUnderflow(this)
+        }
+        // non-zero subnormal
         val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, truncationNeeded)
         qExp += truncationNeeded
-        check(digitLen <= precision)
-        check(eExp == qExp + (digitLen - 1))
+        check (digitLen > 0)
+        check(digitLen < precision)
+        check(qExp == env.qTiny)
 
         val totalResidue = scaleResidue.merge(inboundResidue)
         if (totalResidue == EXACT) {
@@ -1224,8 +1234,6 @@ class MutDec() : U256() {
             return this
         }
         val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), super.dw0)
-        if (!roundUp && digitLen == 0)
-            return finalizeUnderflow(rounding, env)
         if (roundUp) {
             super.u256MutateIncrement()
             if (digitLen > precision) {

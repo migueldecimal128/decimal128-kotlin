@@ -5,8 +5,8 @@ import java.io.File
 
 class TestDecTest {
 
-    private val veryVerbose = false
-    private val verbose = false
+    private val veryVerbose = true
+    private val verbose = true
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -48,6 +48,9 @@ class TestDecTest {
     )
 
     val tcs = arrayOf(
+        "rounding: half_even",
+        "dqmul767 multiply 1e-6069 1e-108 -> 0E-6176 Underflow Subnormal Inexact Rounded Clamped",
+
         "rounding: half_even",
         "dqadd6445 add   1   -77e-37      ->  1.000000000000000000000000000000000 Inexact Rounded",
 
