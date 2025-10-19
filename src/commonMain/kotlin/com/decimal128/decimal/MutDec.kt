@@ -1208,22 +1208,32 @@ class MutDec() : U256() {
         check(isTiny)
         val truncationNeeded = env.qTiny - qExp
         check (truncationNeeded > 0)
-        if (truncationNeeded > digitLen)
-            return finalizeUnderflow(rounding, env)
-        if (truncationNeeded == digitLen) {
-            val scaleResidue = Residue.residueFrom(this)
-            val totalResidue = scaleResidue.merge(inboundResidue)
-            val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
-            if (! roundUp)
-                return finalizeUnderflow(rounding, env)
-            setMinFiniteMagnitude(env)
-            return env.signalInexactUnderflow(this)
+        return when {
+            truncationNeeded > digitLen -> finalizeUnderflow(rounding, env)
+            truncationNeeded == digitLen -> roundAndFinalizeSubnormalUnderflowBoundary(inboundResidue, rounding, env)
+            else -> roundAndFinalizeSubnormal(inboundResidue, rounding, env)
         }
+    }
+
+    private fun roundAndFinalizeSubnormalUnderflowBoundary(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
+        val scaleResidue = Residue.residueFrom(this)
+        val totalResidue = scaleResidue.merge(inboundResidue)
+        val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
+        if (! roundUp)
+            return finalizeUnderflow(rounding, env)
+        setMinFiniteMagnitude(env)
+        return env.signalInexactUnderflow(this)
+    }
+
+    private fun roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
         // non-zero subnormal
+        val truncationNeeded = env.qTiny - qExp
+        check (truncationNeeded > 0)
+        check (truncationNeeded < digitLen)
         val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, truncationNeeded)
         qExp += truncationNeeded
-        check (digitLen > 0)
-        check(digitLen < precision)
+        check(digitLen > 0)
+        check(digitLen < env.precision)
         check(qExp == env.qTiny)
 
         val totalResidue = scaleResidue.merge(inboundResidue)
@@ -1236,8 +1246,8 @@ class MutDec() : U256() {
         val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), super.dw0)
         if (roundUp) {
             super.u256MutateIncrement()
-            if (digitLen > precision) {
-                check(digitLen == precision + 1)
+            if (digitLen > env.precision) {
+                check(digitLen == env.precision + 1)
                 // if we rolled into another digit because of roundup
                 // then the result is definitely divisible by 10
                 val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
@@ -1314,25 +1324,35 @@ class MutDec() : U256() {
         check (truncationNeeded > 0)
         if (truncationNeeded > digitLen)
             return finalizeUnderflow(rounding, env)
-        val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, truncationNeeded)
-        qExp += truncationNeeded
-        check(digitLen <  env.precision)
-        check(qExp == env.qTiny)
+        if (truncationNeeded == digitLen) {
+            val scaleResidue = Residue.residueFrom(this)
+            val totalResidue = scaleResidue.merge(inboundResidue)
+            val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
+            if (! roundUp)
+                return finalizeUnderflow(rounding, env)
+            setMinFiniteMagnitude(env)
+        } else {
+            val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, truncationNeeded)
+            qExp += truncationNeeded
+            check(digitLen < env.precision)
+            check(qExp == env.qTiny)
 
-        val totalResidue = scaleResidue.merge(inboundResidue)
-        if (totalResidue == EXACT) {
-            // 7.5 Underflow
-            // If the rounded result is exact, no flag is raised
-            // and no inexact exception is signaled.
-            return this
+            val totalResidue = scaleResidue.merge(inboundResidue)
+            if (totalResidue == EXACT) {
+                // 7.5 Underflow
+                // If the rounded result is exact, no flag is raised
+                // and no inexact exception is signaled.
+                return this
+            }
+            val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), dw0)
+            if (roundUp) {
+                // this roundUp cannot overflow because we just scaled down
+                check(digitLen < env.precision)
+                dw1 += if (++dw0 == 0L) 1 else 0
+                packedLengths = calcPackedLengths(dw1, dw0)
+            }
         }
-        val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), dw0)
-        if (roundUp) {
-            // this roundUp cannot overflow because we just scaled down
-            check (digitLen < env.precision)
-            dw1 += if (++dw0 == 0L) 1 else 0
-            packedLengths = calcPackedLengths(dw1, dw0)
-        }
+        check (digitLen > 0)
         check (digitLen <= env.precision)
         check (qExp == env.qTiny)
         return env.signalInexactUnderflow(this)
