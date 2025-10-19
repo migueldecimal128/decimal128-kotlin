@@ -17,7 +17,7 @@ private var operandPrintWriter: PrintWriter? = null
 
 class TestFptestRead {
 
-    val verbose = true
+    val verbose = false
 
     val tcs = arrayOf (
         // I created this case from a bad case ... so I don't know if u flag is correct or not

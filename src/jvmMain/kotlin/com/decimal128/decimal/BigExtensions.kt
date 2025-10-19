@@ -65,7 +65,7 @@ fun MutDec.set(bd: BigDecimal, env: DecEnv) {
     this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
-    this.roundAndFinalize(Residue.EXACT, env)
+    this.finalizeExact(env)
 }
 
 fun MutDec.set(bi: BigInteger, env: DecEnv) {
