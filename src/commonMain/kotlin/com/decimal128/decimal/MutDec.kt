@@ -115,7 +115,7 @@ class MutDec() : U256() {
             // roundTowardNegative; under that attribute, the sign of an
             // exact zero sum (or difference) shall be −0.
             z.sign = z.sign or ((z.bitLen == 0) and env.isRoundTowardNegative())
-            return z.finalizeExact(env)
+            return z.finalize(env)
         }
 
         private fun scaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
@@ -466,7 +466,7 @@ class MutDec() : U256() {
                 this.u256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
-                return finalizeExact(env)
+                return finalize(env)
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.isZero() || y.isZero()) {
@@ -488,7 +488,7 @@ class MutDec() : U256() {
                 this.u256SetSqr(x)
                 this.qExp = this.qExp shl 1
                 this.sign = false
-                return finalizeExact(env)            }
+                return finalize(env)            }
             qX == NON_FINITE_INF -> {
                 setInfinite(false)
             }
@@ -751,7 +751,7 @@ class MutDec() : U256() {
             sign == false -> mutateNextAwayFromZero(env)
             else -> mutateNextTowardZero(env)
         }
-        finalizeExact(ROUND_TOWARD_POSITIVE, env)
+        finalize(ROUND_TOWARD_POSITIVE, env)
     }
 
     fun setNextDown(x: MutDec, env: DecEnv) {
@@ -773,7 +773,7 @@ class MutDec() : U256() {
 
             else -> mutateNextTowardZero(env)
         }
-        finalizeExact(ROUND_TOWARD_NEGATIVE, env)
+        finalize(ROUND_TOWARD_NEGATIVE, env)
     }
 
     private fun mutateNextAwayFromZero(env: DecEnv) {
@@ -866,7 +866,7 @@ class MutDec() : U256() {
                 val p10 = capExponentRange(pow10)
                 qExp += p10
                 if (qExp > env.qMax || qExp < env.qTiny)
-                    finalizeExact(env)
+                    finalize(env)
             }
             x.qExp <= NON_FINITE_QNAN -> {}
             else -> sNaNOperand()
@@ -1136,14 +1136,14 @@ class MutDec() : U256() {
     private fun roundAndFinalize(inboundResidue: Residue, rounding: DecRounding, env: DecEnv) =
         roundAndFinalize2(inboundResidue, rounding, env)
 
-    private fun roundAndFinalize1(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
+    private fun roundAndFinalize_deprecated(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
         return when {
             qExp >= MIN_SPECIAL_VALUE -> {
                 check (inboundResidue == EXACT)
                 return this
             }
             (bitLen != 0) ->
-                roundAndFinalizeFnz1(inboundResidue, rounding, env)
+                roundAndFinalizeFnz_deprecated(inboundResidue, rounding, env)
 
             else ->
                 roundAndFinalizeZero(inboundResidue, rounding, env)
@@ -1151,7 +1151,7 @@ class MutDec() : U256() {
         }
     }
 
-    private fun roundAndFinalizeFnz1(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
+    private fun roundAndFinalizeFnz_deprecated(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
         val eMax = env.eMax
         val precision = env.precision
         var eExp = qExp + (digitLen - 1)
@@ -1277,26 +1277,26 @@ class MutDec() : U256() {
 
     // a new beginning ... searching for a different/better way to finalize
 
-    internal fun finalizeExact(env: DecEnv) = finalizeExact(env.decRounding, env)
+    internal fun finalize(env: DecEnv) = finalize(env.decRounding, env)
 
-    internal fun finalizeExact(rounding: DecRounding, env: DecEnv): MutDec {
+    internal fun finalize(rounding: DecRounding, env: DecEnv): MutDec {
         return when {
             qExp >= MIN_SPECIAL_VALUE -> this
-            digitLen == 0 -> finalizeExactZero(env)
-            digitLen > env.precision -> finalizeExactFnzLongCoeff(rounding, env)
+            digitLen == 0 -> finalizeZero(env)
+            digitLen > env.precision -> finalizeFnzLongCoeff(rounding, env)
             eExp > env.eMax -> finalizeOverflow(rounding, env)
             eExp < env.eMin -> roundAndFinalizeTiny(EXACT, rounding, env)
             qExp > env.qMax -> finalizeFnzClampHighExp(env)
-            else -> finalizeExactFnzNormal(env)
+            else -> finalizeFnzNormal(env)
         }
     }
 
-    private fun finalizeExactZero(env: DecEnv): MutDec {
+    private fun finalizeZero(env: DecEnv): MutDec {
         qExp = max(min(qExp, env.qMax), env.qTiny)
         return this
     }
 
-    private fun finalizeExactFnzLongCoeff(rounding: DecRounding, env: DecEnv): MutDec {
+    private fun finalizeFnzLongCoeff(rounding: DecRounding, env: DecEnv): MutDec {
         val excessDigitCount = digitLen - env.precision
         check (excessDigitCount > 0)
         val residue = U256ScalePow10.u256ScaleDownPow10(this, this, excessDigitCount)
@@ -1320,7 +1320,7 @@ class MutDec() : U256() {
         check(digitLen <= env.precision)
         val truncationNeeded = env.qTiny - qExp
         return when {
-            truncationNeeded < 0 && inboundResidue == EXACT -> finalizeExactFnzSubnormal(env)
+            truncationNeeded < 0 && inboundResidue == EXACT -> finalizeFnzSubnormal(env)
             truncationNeeded < 0 -> throw IllegalStateException()
             truncationNeeded > digitLen -> finalizeUnderflow(rounding, env)
             truncationNeeded == digitLen -> roundAndFinalizeSubnormalUnderflowBoundary(inboundResidue, rounding, env)
@@ -1339,9 +1339,9 @@ class MutDec() : U256() {
         return this
     }
 
-    private fun finalizeExactFnzNormal(env: DecEnv) = this
+    private fun finalizeFnzNormal(env: DecEnv) = this
 
-    private fun finalizeExactFnzSubnormal(env: DecEnv) = this
+    private fun finalizeFnzSubnormal(env: DecEnv) = this
 
     private fun finalizeUnderflow(rounding: DecRounding, env: DecEnv): MutDec {
         // underflow ... swamped non-zero value
@@ -1355,7 +1355,7 @@ class MutDec() : U256() {
 
     internal fun roundAndFinalize2(residue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
         return when {
-            residue == EXACT -> finalizeExact(rounding, env)
+            residue == EXACT -> finalize(rounding, env)
             digitLen > env.precision -> roundAndFinalizeFnzLongCoeff(residue, rounding, env)
             eExp < env.eMin -> roundAndFinalizeTiny(residue, rounding, env)
             digitLen == env.precision -> roundAndFinalizeFnzValidCoeff(residue, rounding, env)

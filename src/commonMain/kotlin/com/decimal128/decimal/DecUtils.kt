@@ -205,8 +205,8 @@ private fun finalizeFnzSubnormalExcessTail(sign: Boolean, dw1: Long, dw0: Long, 
 }
 
 
-internal fun finalizeExact(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
-                           decRounding: DecRounding, env: DecEnv): Decimal {
+internal fun finalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
+                      decRounding: DecRounding, env: DecEnv): Decimal {
     // decRounding is needed because we might overflow/underflow
     // to infinity or min/max value, depending upon decRounding
     return when {
