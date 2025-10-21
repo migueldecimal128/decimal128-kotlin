@@ -171,9 +171,7 @@ private fun MutDec.roundAndFinalizeFnzValidCoeff(residue: Residue, rounding: Dec
         dw1 += if (++dw0 == 0L) 1L else 0L
         if (dw0 == env.decFormat.dw0Maxx && dw1 == env.decFormat.dw1Maxx) {
             // we rolled over to a new decimal digit 10000...0000
-            dw1 = env.decFormat.dw1AfterRollover
-            dw0 = env.decFormat.dw0AfterRollover
-            packedLengths = env.decFormat.packedLengthsAfterOverflow
+            u256Set128(env.decFormat.dw1AfterRollover, env.decFormat.dw0AfterRollover)
             ++qExp
         }
     }
