@@ -6,50 +6,41 @@ const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
-open class U256() {
+open class U256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
-    @JvmField
-    internal val reg = LongArray(4)
-
-    internal var bitLen = 0
-        private set
-    internal var digitLen = 0
-        private set
-
-    constructor(dw0P: Long) : this() {
-        reg[0] = dw0P
-        bitLen = calcBitLen64(dw0P)
-        digitLen = U256Pow10.calcDigitLen64(bitLen, dw0P)
-    }
-    constructor(dw3P: Long, dw2P: Long, dw1P: Long, dw0P: Long) : this() {
-        reg[3] = dw3P
-        reg[2] = dw2P
-        reg[1] = dw1P
-        reg[0] = dw0P
-        bitLen = calcBitLen256(dw3P, dw2P, dw1P, dw0P)
-        digitLen = U256Pow10.calcDigitLen256(bitLen, dw3P, dw2P, dw1P, dw0P)
-    }
+    //constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
+    //constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
+    constructor(dw0: Long) : this(0L, 0L, 0L, dw0)
+    //constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
+    constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
         Int256ParsePrint.u256FromString(this, false, str)
     }
-    constructor(c: U256) : this() {
-        c.reg.copyInto(reg)
-        bitLen = c.bitLen
-        digitLen = c.digitLen
-    }
+    constructor(c: U256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
+    @JvmField
     internal var dw3: Long
-        get() = reg[3]
-        set(v) { reg[3] = v }
+    @JvmField
     internal var dw2: Long
-        get() = reg[2]
-        set(v) { reg[2] = v }
+    @JvmField
     internal var dw1: Long
-        get() = reg[1]
-        set(v) { reg[1] = v }
+    @JvmField
     internal var dw0: Long
-        get() = reg[0]
-        set(v) { reg[0] = v }
+    @JvmField
+    internal var packedLengths: Short
+    internal val bitLen: Int
+        get() = packedLengths.toInt() and 0x1FF
+    internal val digitLen: Int
+        get() = (packedLengths.toInt() shr 9) and 0x07F
+    init {
+        this.dw3 = dw3
+        this.dw2 = dw2
+        this.dw1 = dw1
+        this.dw0 = dw0
+        val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
+        val digitLen = U256Pow10.calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+        this.packedLengths = packLengths(digitLen, bitLen)
+    }
 
     fun u256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L;
@@ -100,8 +91,7 @@ open class U256() {
     }
 
     fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
-        this.digitLen = digitLen
-        this.bitLen = bitLen
+        this.packedLengths = packLengths(digitLen, bitLen)
     }
 
     //FIXME this case can probably be accelerated because
@@ -164,10 +154,18 @@ open class U256() {
 
     internal inline fun u256SetScaleDownPow10(x: U256, pow10: Int) = U256ScalePow10.u256ScaleDownPow10(this, x, pow10)
 
-    internal operator fun get(index: Int): Long = reg[index]
+    internal operator fun get(index: Int): Long {
+        return when (index) {
+            0 -> dw0
+            1 -> dw1
+            2 -> dw2
+            3 -> dw3
+            else -> throw RuntimeException("indexOutOfBounds")
+        }
+    }
 
     internal operator fun set(index: Int, value: Long) {
-        check(bitLen == -1)
+        check(packedLengths.toInt() == -1)
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -178,12 +176,12 @@ open class U256() {
     }
 
     internal inline fun u256EnableIndexSetAndZeroOut() {
-        bitLen = -1
+        packedLengths = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
     internal inline fun u256DisableIndexSetAndUpdateLengths() {
-        check(bitLen == -1)
+        check(packedLengths.toInt() == -1)
         updateDigitLenBitLen()
     }
 
@@ -197,8 +195,7 @@ open class U256() {
 
     fun u256Set(x: U256) {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
-        bitLen = x.bitLen
-        digitLen = x.digitLen
+        packedLengths = x.packedLengths
     }
 
 
