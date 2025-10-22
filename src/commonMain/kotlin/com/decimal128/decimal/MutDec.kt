@@ -36,9 +36,6 @@ class MutDec() : C256() {
 
     companion object {
 
-        fun newAdd(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
-            addImpl(MutDec(), x, y.sign, y, env)
-
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
             val qMax = max(x.qExp, y.qExp)
             return when {

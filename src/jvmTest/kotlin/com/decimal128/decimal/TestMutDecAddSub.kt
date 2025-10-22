@@ -10,7 +10,7 @@ import java.util.*
 
 class TestMutDecAddSub {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val env: DecEnv) {
         constructor(strA: String, strB: String, rd: DecRounding) :
@@ -89,17 +89,14 @@ class TestMutDecAddSub {
 
         if (verbose)
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
-        env.context {
-
-            val decimalA = newMutDec(bdA)
-            val decimalB = newMutDec(bdB)
-            val decimalS = newAdd(decimalA, decimalB)
-            if (verbose)
-                println("decimalS:$decimalS")
-            assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())
-            assertEquals(expected.signum() < 0, decimalS.sign)
-            assertEquals(-expected.scale(), decimalS.qExp)
-        }
+        val decimalA = newMutDec(bdA)
+        val decimalB = newMutDec(bdB)
+        val decimalS = MutDec().setAdd(decimalA, decimalB, env)
+        if (verbose)
+            println("decimalS:$decimalS")
+        assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())
+        assertEquals(expected.signum() < 0, decimalS.sign)
+        assertEquals(-expected.scale(), decimalS.qExp)
     }
 
 }
