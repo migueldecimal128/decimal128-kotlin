@@ -213,6 +213,14 @@ internal object U256Pow10 {
     inline fun getPow10Dw1(pow10: Int): Long =
         if (pow10 < MIN_POW10_DIGIT_LEN_128) 0L else POW10[pow10Offset(pow10) + 1]
 
+    inline fun getPow10Info128(pow10: Int): Triple<Int, Long, Long> {
+        val pow10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
+        val pow10dw0 = POW10[pow10Offset + 0]
+        val pow10dw1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
+        return Triple(pow10BitLen, pow10dw1, pow10dw0)
+    }
+
     inline fun calcMinDigitLenForBitLen(bitLen: Int): Int {
         return (((bitLen - 1) * 1233) ushr 12) + 1
     }

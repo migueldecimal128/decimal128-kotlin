@@ -4,6 +4,7 @@ import com.decimal128.decimal.U256Mul.u256Mul
 import com.decimal128.decimal.U256Pow10.pow10BitLen
 import com.decimal128.decimal.U256Pow10.pow10Offset
 import com.decimal128.decimal.Residue.Companion.EXACT
+import com.decimal128.decimal.U256Pow10.getPow10Info128
 
 
 internal object U256ScalePow10 {

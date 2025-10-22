@@ -34,13 +34,10 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     internal var dw1: Long
     @JvmField
     internal var dw0: Long
-    //@JvmField
     internal var bitLen: Int
-        private set
-
-    //@JvmField
+    @JvmField
     internal var digitLen: Int
-        private set
+
     //internal var packedLengths: Short
     //internal val bitLen: Int
     //    get() = packedLengths.toInt() and 0x1FF

@@ -60,10 +60,6 @@ class MutDec() : C256() {
                 // when x is zero, x + x and x − (−x) have the sign of x.
                 return z.set(x)
             }
-            // FIXME
-            //  removing this use of s256AddImpl would probably automagically
-            //  solve the signed integer problem above
-//            z.s256AddImpl(x.sign, x, ySign, y)
             z.qExp = x.qExp
             if (xSign == ySign) {
                 z.c256SetAdd(x, y)
@@ -294,8 +290,11 @@ class MutDec() : C256() {
     }
 
     fun set(x: Decimal): MutDec {
-        c256Set128(x.dw1, x.dw0)
-        this.qExp = x.qExp.toInt()
+        this.dw1 = x.dw1
+        this.dw0 = x.dw0
+        this.bitLen = x.bitLen
+        this.digitLen = x.digitLen
+        this.qExp = x.qExp
         this.sign = x.sign
         return this
     }
