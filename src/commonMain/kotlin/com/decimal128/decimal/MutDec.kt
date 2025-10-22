@@ -39,16 +39,6 @@ class MutDec() : C256() {
         fun newAdd(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
             addImpl(MutDec(), x, y.sign, y, env)
 
-        fun newSub(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
-            addImpl(MutDec(), x, !y.sign, y, env)
-
-        fun newMul(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
-            MutDec().setMul(x, y, env)
-
-        fun newNegate(x: MutDec, env: DecEnv = DECIMAL128) = MutDec().set(x).mutateNegate()
-
-        fun newDiv(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) = MutDec().setDiv(x, y, env)
-
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
             val qMax = max(x.qExp, y.qExp)
             return when {
@@ -437,11 +427,6 @@ class MutDec() : C256() {
     fun isNumber() : Boolean {
         return qExp <= NON_FINITE_INF
     }
-
-    fun add(y: MutDec) = newAdd(this, y)
-    fun subtract(y: MutDec) = newSub(this, y)
-    fun multiply(y: MutDec) = newMul(this, y)
-    fun divide(y: MutDec) = newDiv(this, y)
 
     // IEEE754-2008 5.4.1
     fun setAdd(x: MutDec, y: MutDec, env: DecEnv) = addImpl(this, x, y.sign, y, env)
