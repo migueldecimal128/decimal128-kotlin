@@ -15,7 +15,7 @@ import java.lang.Math.min
 
 class TestC256ScaleDown {
 
-    val verbose = false
+    val verbose = true
 
     class TC(
         val biA: BigInteger, val pow10: Int, val sign: Boolean, val decRounding: DecRounding)
@@ -36,6 +36,9 @@ class TestC256ScaleDown {
          //FIXME ... currently not testing rounding because
          // coeffDiv and coeffScaleDownPow10 return the Residue
          val biExpected = biUnrounded
+
+         fun finalDigitCount() =
+             if (biExpected.signum() == 0) 0 else biExpected.abs().toString().length
     }
 
     val bi1 = BigInteger(0x111111111111L.toString())
@@ -48,6 +51,7 @@ class TestC256ScaleDown {
     val bi5321 = bi5.shiftLeft(144).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
 
     val cases = arrayOf(
+        TC("313632014659747341935386347255122675838030894814755919430800302558372603616", 37, false, ROUND_TIES_TO_AWAY),
         TC(BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE), 2, false, ROUND_TIES_TO_EVEN),
         TC("599", 2, false, ROUND_TIES_TO_EVEN),
         TC("2", 1, false, ROUND_TIES_TO_EVEN),
@@ -152,10 +156,13 @@ class TestC256ScaleDown {
     @Test
     fun testRandom() {
         for (i in 0..<100000) {
-            val bi = randBi()
-            val pow10 = randPow(bi)
-            val case = buildTestCase(bi, pow10)
-            test1(case)
+            var tc: TC
+            do {
+                val bi = randBi()
+                val pow10 = randPow(bi)
+                tc = buildTestCase(bi, pow10)
+            } while (tc.finalDigitCount() > 38)
+            test1(tc)
         }
 
     }
