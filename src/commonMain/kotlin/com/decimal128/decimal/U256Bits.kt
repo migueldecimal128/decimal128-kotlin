@@ -2,53 +2,53 @@
 
 package com.decimal128.decimal
 
-inline fun calcBitLen64(dw0: Long): Int {
-    val nlz0 = dw0.countLeadingZeroBits()
-    val bitLen = 64 - nlz0
-    return bitLen
-}
-
-inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
-    val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
-    val nlz1 = dw1.countLeadingZeroBits()
-    val nlz0 = dw0.countLeadingZeroBits()
-    val bitLen = 128 - nlz1 - (nlz0 and dw1IsZeroMask)
-    return bitLen
-}
-
-inline fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
-    val dw2IsZeroMask = ((dw2 or -dw2) shr 63).inv().toInt()
-    val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
-    val nlz2 = dw2.countLeadingZeroBits()
-    val nlz1 = dw1.countLeadingZeroBits()
-    val nlz0 = dw0.countLeadingZeroBits()
-    val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
-    val bitLen = 192 - nlz2 - (nlz10 and dw2IsZeroMask)
-    return bitLen
-}
-
-inline fun calcBitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
-    val dw3IsZeroMask = ((dw3 or -dw3) shr 63).inv().toInt()
-    val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
-    val dw23 = dw2 or dw3
-    val dw23IsZeroMask = ((dw23 or -dw23) shr 63).inv().toInt()
-
-    val nlz3 = dw3.countLeadingZeroBits()
-    val nlz2 = dw2.countLeadingZeroBits()
-    val nlz1 = dw1.countLeadingZeroBits()
-    val nlz0 = dw0.countLeadingZeroBits()
-    val nlz23 = nlz3 + (nlz2 and dw3IsZeroMask)
-    val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
-    val bitLen = 256 - nlz23 - (nlz10 and dw23IsZeroMask)
-    return bitLen
-}
-
-private const val MASK_BITS_0_MOD_4 = 0x1111111111111111L
-private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
-private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
-private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
-
 object U256Bits {
+
+    inline fun calcBitLen64(dw0: Long): Int {
+        val nlz0 = dw0.countLeadingZeroBits()
+        val bitLen = 64 - nlz0
+        return bitLen
+    }
+
+    inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
+        val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
+        val nlz1 = dw1.countLeadingZeroBits()
+        val nlz0 = dw0.countLeadingZeroBits()
+        val bitLen = 128 - nlz1 - (nlz0 and dw1IsZeroMask)
+        return bitLen
+    }
+
+    inline fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
+        val dw2IsZeroMask = ((dw2 or -dw2) shr 63).inv().toInt()
+        val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
+        val nlz2 = dw2.countLeadingZeroBits()
+        val nlz1 = dw1.countLeadingZeroBits()
+        val nlz0 = dw0.countLeadingZeroBits()
+        val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
+        val bitLen = 192 - nlz2 - (nlz10 and dw2IsZeroMask)
+        return bitLen
+    }
+
+    inline fun calcBitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+        val dw3IsZeroMask = ((dw3 or -dw3) shr 63).inv().toInt()
+        val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
+        val dw23 = dw2 or dw3
+        val dw23IsZeroMask = ((dw23 or -dw23) shr 63).inv().toInt()
+
+        val nlz3 = dw3.countLeadingZeroBits()
+        val nlz2 = dw2.countLeadingZeroBits()
+        val nlz1 = dw1.countLeadingZeroBits()
+        val nlz0 = dw0.countLeadingZeroBits()
+        val nlz23 = nlz3 + (nlz2 and dw3IsZeroMask)
+        val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
+        val bitLen = 256 - nlz23 - (nlz10 and dw23IsZeroMask)
+        return bitLen
+    }
+
+    private const val MASK_BITS_0_MOD_4 = 0x1111111111111111L
+    private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
+    private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
+    private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
     fun ntz(x: C256): Int {
         val ntz0 = x.dw0.countTrailingZeroBits()
