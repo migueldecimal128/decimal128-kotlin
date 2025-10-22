@@ -188,13 +188,32 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         updateDigitLenBitLen()
     }
 
-    internal inline fun c256Set64(d0: Long) = U256Set.u256Set64(this, d0)
+    internal inline fun c256Set64(d0: Long) {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L
+        dw0 = d0
+        bitLen = calcBitLen64(d0)
+        digitLen = U256Pow10.calcDigitLen64(bitLen, d0)
+    }
 
-    internal inline fun c256Set128(d1: Long, d0: Long) = U256Set.u256Set128(this, d1, d0)
+    internal inline fun c256Set128(d1: Long, d0: Long) {
+        dw3 = 0L; dw2 = 0L
+        dw1 = d1; dw0 = d0
+        bitLen = calcBitLen128(d1, d0)
+        digitLen = U256Pow10.calcDigitLen128(bitLen, d1, d0)
+    }
 
-    internal inline fun c256Set192(d2: Long, d1: Long, d0: Long) = U256Set.u256Set192(this, d2, d1, d0)
+    internal inline fun c256Set192(d2: Long, d1: Long, d0: Long) {
+        dw3 = 0L
+        dw2 = d2; dw1 = d1; dw0 = d0
+        bitLen = calcBitLen192(d2, d1, d0)
+        digitLen = U256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
+    }
 
-    internal inline fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long)  = U256Set.u256Set256(this, d3, d2, d1, d0)
+    internal inline fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long) {
+        dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
+        bitLen = calcBitLen256(d3, d2, d1, d0)
+        digitLen = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
+    }
 
     fun c256Set(x: C256) {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
