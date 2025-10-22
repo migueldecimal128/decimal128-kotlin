@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 
@@ -58,9 +59,12 @@ class TestEncodeDecodeBid128 {
     }
 
     fun test1(str: String) {
+
+        val DECIMAL128_ZERO_NAN_PAYLOAD = DECIMAL128.with(DECIMAL128.decPrefs.copy(parseDiscardNanPayload = true))
+
         if (verbose)
             println(str)
-        val d = MutDec().set(str, zeroNanPayload = true)
+        val d = MutDec().set(str, DECIMAL128_ZERO_NAN_PAYLOAD)
         val bidLeBytes = d.encodeLittleEndianBytesBid128()
         val bidLeLongs = d.encodeLittleEndianLongsBid128()
         val bidBeBytes = d.encodeBigEndianBytesBid128()

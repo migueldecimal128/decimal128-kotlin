@@ -37,6 +37,8 @@ class MutDec() : C256() {
     companion object {
 
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+            check (x.digitLen <= 38)
+            check (y.digitLen <= 38)
             val qMax = max(x.qExp, y.qExp)
             return when {
                 qMax < MIN_SPECIAL_VALUE && x.qExp == y.qExp ->
@@ -299,13 +301,10 @@ class MutDec() : C256() {
         return this
     }
 
-    fun set(str: String): MutDec {
-        DecimalParsePrint.decFromString(this, str, DECIMAL128)
-        return this
-    }
+    fun set(str: String) = set(str, DECIMAL128)
 
-    fun set(str: String, zeroNanPayload: Boolean): MutDec {
-        DecimalParsePrint.decFromString(this, str, if (zeroNanPayload) DECIMAL128_ZERO_NAN_PAYLOAD else DECIMAL128)
+    fun set(str: String, env: DecEnv): MutDec {
+        DecimalParsePrint.decFromString(this, str, env)
         return this
     }
 
