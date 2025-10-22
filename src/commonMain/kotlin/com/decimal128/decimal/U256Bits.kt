@@ -1,13 +1,13 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
-@Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen64(dw0: Long): Int {
     val nlz0 = dw0.countLeadingZeroBits()
     val bitLen = 64 - nlz0
     return bitLen
 }
 
-@Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
     val nlz1 = dw1.countLeadingZeroBits()
@@ -16,7 +16,6 @@ inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
     return bitLen
 }
 
-@Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
     val dw2IsZeroMask = ((dw2 or -dw2) shr 63).inv().toInt()
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
@@ -28,7 +27,6 @@ inline fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
     return bitLen
 }
 
-@Suppress("NOTHING_TO_INLINE")
 inline fun calcBitLen256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
     val dw3IsZeroMask = ((dw3 or -dw3) shr 63).inv().toInt()
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
@@ -50,7 +48,6 @@ private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
 private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
 private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
-@Suppress("NOTHING_TO_INLINE")
 object U256Bits {
 
     fun ntz(x: C256): Int {
@@ -77,7 +74,7 @@ object U256Bits {
         }
     }
 
-    fun isMultipleOfFive_64(dw0: Long): Boolean {
+    fun isMultipleOfFive64(dw0: Long): Boolean {
         val m0 = MASK_BITS_0_MOD_4
         val m1 = MASK_BITS_1_MOD_4
         val m2 = MASK_BITS_2_MOD_4
@@ -93,7 +90,7 @@ object U256Bits {
         return ret
     }
 
-    fun isMultipleOfFive_128(dw1:Long, dw0: Long): Boolean {
+    fun isMultipleOfFive128(dw1:Long, dw0: Long): Boolean {
         val m0 = MASK_BITS_0_MOD_4
         val m1 = MASK_BITS_1_MOD_4
         val m2 = MASK_BITS_2_MOD_4
@@ -109,7 +106,7 @@ object U256Bits {
         return ret
     }
 
-    fun isMultipleOfFive_192(dw2: Long, dw1:Long, dw0: Long): Boolean {
+    fun isMultipleOfFive192(dw2: Long, dw1:Long, dw0: Long): Boolean {
         val m0 = MASK_BITS_0_MOD_4
         val m1 = MASK_BITS_1_MOD_4
         val m2 = MASK_BITS_2_MOD_4
@@ -125,7 +122,7 @@ object U256Bits {
         return ret
     }
 
-    fun isMultipleOfFive_256(dw3:Long, dw2: Long, dw1:Long, dw0: Long): Boolean {
+    fun isMultipleOfFive256(dw3:Long, dw2: Long, dw1:Long, dw0: Long): Boolean {
         val m0 = MASK_BITS_0_MOD_4
         val m1 = MASK_BITS_1_MOD_4
         val m2 = MASK_BITS_2_MOD_4
@@ -148,10 +145,10 @@ object U256Bits {
     fun u256IsMultipleOf5(x: C256): Boolean {
         val bitLen = x.bitLen
         return when {
-            bitLen <=  64 -> isMultipleOfFive_64(x.dw0)
-            bitLen <= 128 -> isMultipleOfFive_128(x.dw1, x.dw0)
-            bitLen <= 192 -> isMultipleOfFive_192(x.dw2, x.dw1, x.dw0)
-            else -> isMultipleOfFive_256(x.dw3, x.dw2, x.dw1, x.dw0)
+            bitLen <=  64 -> isMultipleOfFive64(x.dw0)
+            bitLen <= 128 -> isMultipleOfFive128(x.dw1, x.dw0)
+            bitLen <= 192 -> isMultipleOfFive192(x.dw2, x.dw1, x.dw0)
+            else -> isMultipleOfFive256(x.dw3, x.dw2, x.dw1, x.dw0)
         }
     }
 
