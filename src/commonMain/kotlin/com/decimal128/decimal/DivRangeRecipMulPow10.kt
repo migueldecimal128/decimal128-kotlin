@@ -3,10 +3,10 @@
 package com.decimal128.decimal
 
 import com.decimal128.hugeint.HugeInt
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul4
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul3
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul2
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul1
+import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul256
+import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul192
+import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul128
+import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul64
 import kotlin.math.min
 
 const val Q_MIN = POW10_64_COUNT
@@ -290,24 +290,29 @@ object DivRangeRecipMulPow10 {
     }
 
     private fun _divPow10(
-        z: C256, q: Int, x3: Long, x2: Long, x1: Long, x0: Long, k: Int): Residue {
-        require(q in Q_MIN..<Q_MAXX)
-        require(k in K_MIN..<K_MAXX)
+        z: C256, qDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, kPow10: Int): Residue {
+        require(qDigitCount in Q_MIN..<Q_MAXX)
+        require(kPow10 in K_MIN..<K_MAXX)
         // clear coeff without worrying about aliasing
+        // since we have passed in x3 x2 x1 x0
         z.c256EnableIndexSetAndZeroOut()
 
-        val paramsIndex = OFFSETS[offsetIndex(q, k)].toInt()
+        val paramsIndex = OFFSETS[offsetIndex(qDigitCount, kPow10)].toInt()
         val descriptor = RANGE_RECIP_PARAMS[paramsIndex]
-        check(q in unpackQMin(descriptor)..unpackQMax(descriptor))
-        check(k == unpackK(descriptor))
+        check(qDigitCount in unpackQMin(descriptor)..unpackQMax(descriptor))
+        check(kPow10 == unpackK(descriptor))
         val prodDwordLen = unpackProdDwordLen(descriptor)
         val mDwordCount = unpackMDwordLen(descriptor)
         val shift = unpackS(descriptor)
         val fractionBitLen = shift + 1
 
-        val dividendShiftRight = k - 1
+        val dividendShiftRight = kPow10 - 1
         check(dividendShiftRight in 1..<64)
-        val stickyBitsAlfa = x0 and ((1L shl dividendShiftRight) - 1)
+        // We divide by 2**(kPow10-1) by shifting right.
+        // This reduces the size of the dividend.
+        // The lo bits that get shifted out are part of
+        // the sticky bit residue calculation.
+        val stickyBitsPow2 = x0 and ((1L shl dividendShiftRight) - 1)
 
         val dividendShiftLeft = 64 - dividendShiftRight
         val d0 = (x1 shl dividendShiftLeft) or (x0 ushr dividendShiftRight)
@@ -317,27 +322,27 @@ object DivRangeRecipMulPow10 {
 
         val residue = when {
             (d3 != 0L) ->
-                u256RecipMul4(
+                u256RecipMul256(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
-                    d3, d2, d1, d0, fractionBitLen, stickyBitsAlfa
+                    d3, d2, d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d2 != 0L) ->
-                u256RecipMul3(
+                u256RecipMul192(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
-                    d2, d1, d0, fractionBitLen, stickyBitsAlfa
+                    d2, d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d1 != 0L) ->
-                u256RecipMul2(
+                u256RecipMul128(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
-                    d1, d0, fractionBitLen, stickyBitsAlfa
+                    d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d0 != 0L) ->
-                u256RecipMul1(
+                u256RecipMul64(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
-                    d0, fractionBitLen, stickyBitsAlfa
+                    d0, fractionBitLen, stickyBitsPow2
                 )
 
             else -> throw RuntimeException("why am I here?")

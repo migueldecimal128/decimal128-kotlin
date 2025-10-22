@@ -3,7 +3,7 @@ package com.decimal128.decimal
 
 object U256RecipMulPow5 {
 
-    fun u256RecipMul4(
+    internal fun u256RecipMul256(
         quotient: C256,
         m: LongArray, mOff: Int, mLen: Int,
         n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
@@ -192,7 +192,7 @@ object U256RecipMulPow5 {
         return residue
     }
 
-    fun u256RecipMul3(
+    internal fun u256RecipMul192(
         quotient: C256,
         m: LongArray, mOff: Int, mLen: Int,
         n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
@@ -340,7 +340,7 @@ object U256RecipMulPow5 {
         return residue
     }
 
-    fun u256RecipMul2(
+    internal fun u256RecipMul128(
         quotient: C256,
         m: LongArray, mOff: Int, mLen: Int,
         n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
@@ -454,7 +454,7 @@ object U256RecipMulPow5 {
         return residue
     }
 
-    fun u256RecipMul1(
+    internal fun u256RecipMul64(
         quotient: C256,
         m: LongArray, mOff: Int, mLen: Int,
         n0: Long, fractionBitLen: Int, stickyBitsPow2: Long

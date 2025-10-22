@@ -159,7 +159,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetScaleDownPow10(x: C256, pow10: Int) = U256ScalePow10.u256ScaleDownPow10(this, x, pow10)
 
-    internal operator fun get(index: Int): Long {
+    internal inline operator fun get(index: Int): Long {
         return when (index) {
             0 -> dw0
             1 -> dw1
@@ -169,7 +169,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         }
     }
 
-    internal operator fun set(index: Int, value: Long) {
+    internal inline operator fun set(index: Int, value: Long) {
         //check(packedLengths.toInt() == -1)
         check (bitLen == -1)
         when (index) {
