@@ -182,14 +182,14 @@ object U256Bits {
         val dRaw = d.toRawBits()
         val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
         if (exp <= 63) {
-            U256Set.u256Set64(z, Math.abs(d).toLong())
+            z.c256Set64(Math.abs(d).toLong())
             return
         }
         if (exp > 255) {
             throw RuntimeException("coefficient overflow")
         }
         val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
-        U256Set.u256Set64(z, significand)
+        z.c256Set64(significand)
         U256Set.u256SetShiftLeft(z, z, exp - 52)
     }
 

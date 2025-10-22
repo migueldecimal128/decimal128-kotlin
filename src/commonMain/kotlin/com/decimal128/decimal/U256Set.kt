@@ -5,38 +5,6 @@ import com.decimal128.hugeint.Magia
 @Suppress("NOTHING_TO_INLINE")
 object U256Set {
 
-    fun u256Set64(u: C256, d0: Long) {
-        u.dw3 = 0L; u.dw2 = 0L; u.dw1 = 0L
-        u.dw0 = d0
-        val bitLen = calcBitLen64(d0)
-        val digitLen = U256Pow10.calcDigitLen64(bitLen, d0)
-        u.updateDigitLenBitLen(digitLen, bitLen)
-    }
-
-    fun u256Set128(u: C256, d1: Long, d0: Long) {
-        u.dw3 = 0L; u.dw2 = 0L
-        u.dw1 = d1; u.dw0 = d0
-        val bitLen = calcBitLen128(d1, d0)
-        val digitLen = U256Pow10.calcDigitLen128(bitLen, d1, d0)
-        u.updateDigitLenBitLen(digitLen, bitLen)
-    }
-
-    fun u256Set192(u: C256, d2: Long, d1: Long, d0: Long) {
-        u.dw3 = 0L
-        u.dw2 = d2; u.dw1 = d1; u.dw0 = d0
-        val bitLen = calcBitLen192(d2, d1, d0)
-        val digitLen = U256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
-        u.updateDigitLenBitLen(digitLen, bitLen)
-    }
-
-
-    fun u256Set256(u: C256, d3: Long, d2: Long, d1: Long, d0: Long) {
-        u.dw3 = d3; u.dw2 = d2; u.dw1 = d1; u.dw0 = d0
-        val bitLen = calcBitLen256(d3, d2, d1, d0)
-        val digitLen = U256Pow10.calcDigitLen256(bitLen, d3, d2, d1, d0)
-        u.updateDigitLenBitLen(digitLen, bitLen)
-    }
-
     fun u256Set(u: C256, car: IntArray)  = u256Set(u, car, Magia.nonZeroLimbLen(car))
 
     fun u256Set(u: C256, car: IntArray, carLen: Int) {
