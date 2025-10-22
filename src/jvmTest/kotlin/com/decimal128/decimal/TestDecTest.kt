@@ -224,13 +224,13 @@ class TestDecTest {
             if (verbose)
                 println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
-                "abs" -> MutDec.newAbs(op1, env)
-                "add" -> MutDec.newAdd(op1, op2, env)
-                "fma" -> MutDec.newFma(op1, op2, op3, env)
-                "subtract" -> MutDec.newSub(op1, op2, env)
-                "minus" -> MutDec.newNegate(op1, env)
-                "multiply" -> MutDec.newMul(op1, op2, env)
-                "divide" -> MutDec.newDiv(op1, op2, env)
+                "abs" -> MutDec().setAbs(op1, env)
+                "add" -> MutDec().setAdd(op1, op2, env)
+                "fma" -> MutDec().setFma(op1, op2, op3, env)
+                "subtract" -> MutDec().setSub(op1, op2, env)
+                "minus" -> MutDec().setNegate(op1, env)
+                "multiply" -> MutDec().setMul(op1, op2, env)
+                "divide" -> MutDec().setDiv(op1, op2, env)
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 else -> return
             }

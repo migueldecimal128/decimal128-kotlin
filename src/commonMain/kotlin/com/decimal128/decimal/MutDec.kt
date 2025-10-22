@@ -35,11 +35,6 @@ class MutDec() : C256() {
         get() = qExp + digitLen - 1
 
     companion object {
-        fun newInstance(): MutDec = MutDec()
-
-        fun newInfinity(sign: Boolean = false) = MutDec().setInfinite(sign)
-
-        fun newAbs(x: MutDec, env: DecEnv = DECIMAL128) = MutDec().set(x).mutateAbs()
 
         fun newAdd(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
             addImpl(MutDec(), x, y.sign, y, env)
@@ -49,9 +44,6 @@ class MutDec() : C256() {
 
         fun newMul(x: MutDec, y: MutDec, env: DecEnv = DECIMAL128) =
             MutDec().setMul(x, y, env)
-
-        fun newFma(x: MutDec, y: MutDec, z: MutDec, env: DecEnv = DECIMAL128) =
-            MutDec().setFma(x, y, z, env)
 
         fun newNegate(x: MutDec, env: DecEnv = DECIMAL128) = MutDec().set(x).mutateNegate()
 
@@ -361,12 +353,12 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setNegate(x: MutDec): MutDec {
-        set(x)
-        this.sign = !this.sign
-        return this
-    }
+    fun setNegate(x: MutDec, env: DecEnv) = set(x).mutateNegate()
 
+    // NOTE
+    //  that Colishaw's DecTest requires more complex handling of
+    //  negate that what seems to be dictated by IEEE754-2019 ...
+    //  which would simply be a sign change
     fun mutateNegate(): MutDec {
         when (this.qExp) {
             NON_FINITE_QNAN -> {}
@@ -376,6 +368,8 @@ class MutDec() : C256() {
         }
         return this
     }
+
+    fun setAbs(x: MutDec, env: DecEnv) = set(x).mutateAbs()
 
     fun mutateAbs(): MutDec {
         if (this.qExp >= NON_FINITE_QNAN)
