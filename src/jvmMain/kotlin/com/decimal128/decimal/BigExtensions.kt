@@ -5,19 +5,19 @@ import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 
-fun U256.u256Set(bi: BigInteger) {
+fun C256.u256Set(bi: BigInteger) {
     require(bi.signum() >= 0)
     require(bi.bitLength() <= 256)
-    this.u256Set256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
+    this.c256Set256(bi.shiftRight(192).toLong(), bi.shiftRight(128).toLong(), bi.shiftRight(64).toLong(), bi.toLong())
 }
 
-fun newCoeff(bi: BigInteger): U256 {
-    val c = U256()
+fun newCoeff(bi: BigInteger): C256 {
+    val c = C256()
     c.u256Set(bi)
     return c
 }
 
-fun U256.coeffToBigInteger(): BigInteger {
+fun C256.coeffToBigInteger(): BigInteger {
     var bi = BigInteger.ZERO
     val dw0Lo = this.dw0 and 0xFFFFFFFFL
     val dw0Hi = this.dw0 ushr 32
@@ -78,7 +78,7 @@ fun MutDec.set(bi: BigInteger, env: DecEnv) {
         val d1 = biT.shiftRight( 64).toLong()
         val d2 = biT.shiftRight(128).toLong()
         val d3 = biT.shiftRight(192).toLong()
-        u256Set256(d3, d2, d1, d0)
+        c256Set256(d3, d2, d1, d0)
     }
     val bd = BigDecimal(bi, MathContext(70, RoundingMode.HALF_EVEN))
     set(bd, DecEnv())

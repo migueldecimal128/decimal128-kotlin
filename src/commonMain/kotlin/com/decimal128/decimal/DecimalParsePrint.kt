@@ -75,7 +75,7 @@ object DecimalParsePrint {
                 bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
                 bytes[off + 3] = (chars ushr 16).toByte()
                 ib = 4 + isSNaN
-                if (q == NON_FINITE_INF || x.u256IsZero())
+                if (q == NON_FINITE_INF || x.c256IsZero())
                     return ib - off
                 // drop thru to add NaN payload
                 exp = 0
@@ -242,7 +242,7 @@ object DecimalParsePrint {
             return false
         // we have at least one digit
         val coeffDigitCount = min(34, significantDigitCount)
-        x.u256Set64(coeff19)
+        x.c256Set64(coeff19)
         if (coeffDigitCount > 19) {
             val pow10 = coeffDigitCount - 19
             x.u256MutateFmaPow10(pow10, coeff34)
@@ -294,7 +294,7 @@ object DecimalParsePrint {
         if (ch != '\u0000' || payloadDigitCount > maxPayloadDigits)
             return false
         if (!discardNanPayload && payloadDigitCount > 0) {
-            x.u256Set64(accumulator19)
+            x.c256Set64(accumulator19)
             if (payloadDigitCount > 19)
                 x.u256MutateFmaPow10(payloadDigitCount - 19, accumulator38)
         }
@@ -355,7 +355,7 @@ object DecimalParsePrint {
                 else -> return false
             }
         }
-        x.u256Set64(dw)
+        x.c256Set64(dw)
         return true
     }
 

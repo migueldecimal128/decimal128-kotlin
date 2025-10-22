@@ -4,19 +4,20 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 
-class TestU256ToFromDouble {
+class TestC256ToFromDoubleDouble {
 
     val verbose = false
 
     class TC(val str: String) {
-        val d = str.toDouble()
-        val coeff = run { val coeff = U256(); coeff.u256Set(str); coeff}
+        val coeff = run { val coeff = C256(); coeff.c256Set(str); coeff}
     }
 
     val tcs = arrayOf(
         TC("1"),
         TC("1000"),
         TC(BigInteger.ONE.shiftLeft(255).toString()),
+        TC("123456789012345678901234567890"),
+        TC("12345678901234567890123456789012"),
     )
 
     @Test
@@ -27,13 +28,15 @@ class TestU256ToFromDouble {
 
     fun test1(tc: TC) {
         if (verbose)
-            println("tc.d:${tc.d}, tc.coeff:${tc.coeff}")
-        val coeff = U256()
-        coeff.u256Set(tc.d)
+            println("tc.str:${tc.str} tc.coeff:${tc.coeff}")
+        val dd = tc.coeff.c256ToNewDoubleDouble()
         if (verbose)
-            println(" ==> coeff:$coeff tc.coeff:${tc.coeff}")
-        assertEquals(coeff, tc.coeff)
-        assertEquals(tc.d, coeff.u256ToFloorDouble())
+            println(" ==> dd:$dd tc.coeff:${tc.coeff}")
+
+        val coeff2 = C256()
+        coeff2.c256Set(dd)
+
+        assertEquals(tc.coeff, coeff2)
     }
 
 }

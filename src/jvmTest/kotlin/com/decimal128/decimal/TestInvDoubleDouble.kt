@@ -108,8 +108,8 @@ class TestInvDoubleDouble{
             return
         }
 
-        val dDivisor = divisor.u256ToFloorDouble()
-        val ddDivisor = divisor.u256ToNewDoubleDouble()
+        val dDivisor = divisor.c256ToFloorDouble()
+        val ddDivisor = divisor.c256ToNewDoubleDouble()
 
         val dGuess0 = 1.0 / dDivisor
         val r = Math.fma(-dDivisor, dGuess0, 1.0)

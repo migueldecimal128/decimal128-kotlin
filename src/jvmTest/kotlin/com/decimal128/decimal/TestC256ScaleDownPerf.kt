@@ -7,7 +7,7 @@ import java.util.*
 import kotlin.math.min
 import kotlin.math.max
 
-class TestU256ScaleDownPerf {
+class TestC256ScaleDownPerf {
 
     val verbose = true
 

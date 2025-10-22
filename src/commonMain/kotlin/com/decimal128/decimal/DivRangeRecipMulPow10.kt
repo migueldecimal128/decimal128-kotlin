@@ -279,22 +279,22 @@ object DivRangeRecipMulPow10 {
         throw RuntimeException("not impl")
     }
 
-    fun divModPow10(q: U256, r: U256, d: U256, pow10: Int) {
+    fun divModPow10(q: C256, r: C256, d: C256, pow10: Int) {
         throw RuntimeException("not impl")
     }
 
-    fun rangeDivPow10(z: U256, x: U256, pow10: Int): Residue {
+    fun rangeDivPow10(z: C256, x: C256, pow10: Int): Residue {
         check(pow10 >= K_MIN)
         initialize()
         return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
     }
 
     private fun _divPow10(
-        z: U256, q: Int, x3: Long, x2: Long, x1: Long, x0: Long, k: Int): Residue {
+        z: C256, q: Int, x3: Long, x2: Long, x1: Long, x0: Long, k: Int): Residue {
         require(q in Q_MIN..<Q_MAXX)
         require(k in K_MIN..<K_MAXX)
         // clear coeff without worrying about aliasing
-        z.u256EnableIndexSetAndZeroOut()
+        z.c256EnableIndexSetAndZeroOut()
 
         val paramsIndex = OFFSETS[offsetIndex(q, k)].toInt()
         val descriptor = RANGE_RECIP_PARAMS[paramsIndex]
@@ -343,7 +343,7 @@ object DivRangeRecipMulPow10 {
             else -> throw RuntimeException("why am I here?")
         }
 
-        z.u256DisableIndexSetAndUpdateLengths()
+        z.c256DisableIndexSetAndUpdateLengths()
         return residue
     }
 

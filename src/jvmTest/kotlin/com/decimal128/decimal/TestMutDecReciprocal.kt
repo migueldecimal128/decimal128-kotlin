@@ -109,32 +109,32 @@ class TestMutDecReciprocal{
             return
         }
 
-        val dDivisor = divisor.u256ToFloorDouble()
+        val dDivisor = divisor.c256ToFloorDouble()
 
         val dGuess0 = 1.0 / dDivisor * scaleDouble
-        val cGuess = U256().apply { u256Set(dGuess0) }
+        val cGuess = C256().apply { c256Set(dGuess0) }
 
         if (verbose) {
             println("divisor:$divisor dDivisor:$dDivisor")
             println("dGuess0:$dGuess0 cGuess:$cGuess")
         }
 
-        val coeff2xS = U256().apply { u256SetPow10(scalePow10); u256MutateShiftLeft(1) }
-        val t = U256()
+        val coeff2xS = C256().apply { c256SetPow10(scalePow10); c256MutateShiftLeft(1) }
+        val t = C256()
 
-        t.u256SetMul(divisor, cGuess)
-        t.u256SetSub(coeff2xS, t)
-        t.u256SetMul(t, cGuess)
-        cGuess.u256SetScaleDownPow10(t, scalePow10)
+        t.c256SetMul(divisor, cGuess)
+        t.c256SetSub(coeff2xS, t)
+        t.c256SetMul(t, cGuess)
+        cGuess.c256SetScaleDownPow10(t, scalePow10)
 
         if (verbose) {
             println("cGuess:$cGuess")
         }
 
-        t.u256SetMul(divisor, cGuess)
-        t.u256SetSub(coeff2xS, t)
-        t.u256SetMul(t, cGuess)
-        cGuess.u256SetScaleDownPow10(t, scalePow10)
+        t.c256SetMul(divisor, cGuess)
+        t.c256SetSub(coeff2xS, t)
+        t.c256SetMul(t, cGuess)
+        cGuess.c256SetScaleDownPow10(t, scalePow10)
 
         if (verbose) {
             println("cGuess:$cGuess")

@@ -83,16 +83,16 @@ class TestReduce {
         return k
     }
 
-    val coeffReduceDivTmp = U256()
+    val coeffReduceDivTmp = C256()
 
-    fun calcReductionPow10(x: U256): Int {
-        val ntz = x.u256Ntz()
+    fun calcReductionPow10(x: C256): Int {
+        val ntz = x.c256NumberTrailingZeros()
         if ((x.bitLen - ntz) <= 64) {
-            val dw = x.u256DwordAtBitIndex(ntz)
+            val dw = x.c256DwordAtBitIndex(ntz)
             return calcReductionPow5_64(dw, ntz)
         }
         var ntzRemaining = ntz
-        coeffReduceDivTmp.u256SetShiftRight(x, ntz)
+        coeffReduceDivTmp.c256SetShiftRight(x, ntz)
         var r = 0L // remainder
         do {
             val powStep = min(ntzRemaining, BARRETT_POW5_MAX - 1)
@@ -108,16 +108,16 @@ class TestReduce {
         return k
     }
 
-    fun reduce(z: U256, x: U256): Int {
+    fun reduce(z: C256, x: C256): Int {
         if (x.bitLen > 0 && isMultipleOfFive_256(x.dw3, x.dw2, x.dw1, x.dw0)) {
             val k = calcReductionPow10(x)
             if (k > 0) {
-                val residue = z.u256SetScaleDownPow10(x, k)
+                val residue = z.c256SetScaleDownPow10(x, k)
                 assert(residue == Residue.EXACT)
                 return k
             }
         }
-        z.u256Set(x)
+        z.c256Set(x)
         return 0
     }
 
@@ -198,7 +198,7 @@ class TestReduce {
         if (verbose)
             println("$bi ($bitLen) reductionPow10:$expected")
         val c = newCoeff(bi)
-        val z = U256()
+        val z = C256()
         val observed = reduce(z, c)
         assertEquals(expected, observed)
     }

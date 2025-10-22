@@ -120,12 +120,12 @@ object SerDeBid128 {
                 val biasedExponent = combination ushr 3
                 val qExp = biasedExponent + decimal128.qTiny
                 val mostSignificant3 = (combination and 0x07).toLong() shl (110 - 64)
-                d.u256Set128(mostSignificant3 or significand110Hi, bid128Lo)
+                d.c256Set128(mostSignificant3 or significand110Hi, bid128Lo)
                 // IEEE754-2019 3.5.2 p21
                 //  If the value exceeds the maximum, the significand c is
                 //  non-canonical and the value used for c is zero.
                 if (d.digitLen > 34)
-                    d.u256SetZero()
+                    d.c256SetZero()
                 d.qExp = qExp
                 d.sign = sign
             }
@@ -137,7 +137,7 @@ object SerDeBid128 {
                 // large-form finite pattern => non-canonical for decimal128:
                 // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
                 val E = (combination ushr 1) and 0x3FFF   // 14 bits
-                d.u256SetZero()
+                d.c256SetZero()
                 d.qExp = E + decimal128.qTiny             // preserve exponent
                 d.sign = sign                             // preserve sign (±0)
             }

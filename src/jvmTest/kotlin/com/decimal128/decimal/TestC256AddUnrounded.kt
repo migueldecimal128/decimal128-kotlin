@@ -6,7 +6,7 @@ import java.math.BigInteger.ONE
 import java.math.BigInteger.ZERO
 import java.util.*
 
-class TestU256AddUnrounded {
+class TestC256AddUnrounded {
 
     val verbose = false
 
@@ -64,12 +64,12 @@ class TestU256AddUnrounded {
             return
         val coeffA = newCoeff(case.biA)
         val coeffB = newCoeff(case.biB)
-        val coeffC = U256()
-        coeffC.u256SetAdd(coeffA, coeffB)
+        val coeffC = C256()
+        coeffC.c256SetAdd(coeffA, coeffB)
         if (verbose)
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         val oldDigitCount = coeffC.digitLen
-        if (! coeffC.u256HasValidLengths()) {
+        if (! coeffC.c256HasValidLengths()) {
             val digitCount = coeffC.digitLen
             println("bad digit count $coeffA + $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()
@@ -79,7 +79,7 @@ class TestU256AddUnrounded {
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         assert (biC.equals(expected))
 
-        coeffA.u256SetAdd(coeffA, coeffB)
+        coeffA.c256SetAdd(coeffA, coeffB)
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 

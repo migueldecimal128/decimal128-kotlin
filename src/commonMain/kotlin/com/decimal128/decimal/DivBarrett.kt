@@ -5,13 +5,13 @@ package com.decimal128.decimal
 
 object DivBarrett {
 
-    fun barrettDivPow10(z: U256, x: U256, pow10: Int): Residue {
+    fun barrettDivPow10(z: C256, x: C256, pow10: Int): Residue {
         val remainder = barrettDivModPow10(z, x, pow10)
         val residue = Residue.residueFromRemainderPow10(remainder, pow10)
         return residue
     }
 
-    fun barrettDivModPow10(z: U256, x: U256, pow10: Int): Long {
+    fun barrettDivModPow10(z: C256, x: C256, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < BARRETT_POW10_MAXX -> {
                 val denom = POW10[pow10]
@@ -47,7 +47,7 @@ object DivBarrett {
                 return remainder
             }
             pow10 == 0 -> {
-                z.u256Set(x)
+                z.c256Set(x)
                 return 0L
             }
             else ->
@@ -55,7 +55,7 @@ object DivBarrett {
         }
     }
 
-    fun barrettDivModPow5(z: U256, x: U256, pow5: Int): Long {
+    fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
         when {
             pow5 > 0 && pow5 < BARRETT_POW5_MAX -> {
                 val denom = POW10[POW5_64_OFFSET + pow5]
@@ -93,7 +93,7 @@ object DivBarrett {
             }
 
             pow5 == 0 -> {
-                z.u256Set(x)
+                z.c256Set(x)
                 return 0L
             }
 
@@ -101,7 +101,7 @@ object DivBarrett {
         }
     }
 
-    private fun barrettDivMod_64(q: U256, dw0: Long, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_64(q: C256, dw0: Long, denom: Long, mu: Long): Long {
         val dwG = dw0
 
         val qGhat = unsignedMulHi(dwG, mu)
@@ -113,11 +113,11 @@ object DivBarrett {
         val remainder = rG
 
         val q0 = qG
-        q.u256Set64(q0)
+        q.c256Set64(q0)
         return remainder
     }
 
-    fun barrettDivMod_32_256(q: U256, x: U256, denom: Long, mu: Long): Long {
+    fun barrettDivMod_32_256(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
@@ -183,11 +183,11 @@ object DivBarrett {
         val q2 = (qF shl 32) or qE
         val q1 = (qD shl 32) or qC
         val q0 = (qB shl 32) or qA
-        q.u256Set256(q3, q2, q1, q0)
+        q.c256Set256(q3, q2, q1, q0)
         return rA
     }
 
-    fun barrettDivMod_32_192(q: U256, x: U256, denom: Long, mu: Long): Long {
+    fun barrettDivMod_32_192(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
@@ -236,11 +236,11 @@ object DivBarrett {
         val q2 = qG
         val q1 = (qD shl 32) or qC
         val q0 = (qB shl 32) or qA
-        q.u256Set192(q2, q1, q0)
+        q.c256Set192(q2, q1, q0)
         return remainder
     }
 
-    fun barrettDivMod_32_128(q: U256, x: U256, denom: Long, mu: Long): Long {
+    fun barrettDivMod_32_128(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1
 
@@ -272,11 +272,11 @@ object DivBarrett {
 
         val q1 = qG
         val q0 = (qB shl 32) or qA
-        q.u256Set128(q1, q0)
+        q.c256Set128(q1, q0)
         return remainder
     }
 
-    private fun barrettDivMod_54_256(q: U256, x: U256, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_256(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
@@ -326,11 +326,11 @@ object DivBarrett {
         val q2 = (qD shl 34) or (qC ushr 20)
         val q1 = (qC shl 44) or (qB ushr 10)
         val q0 = (qB shl 54) or (qA ushr  0)
-        q.u256Set256(q3, q2, q1, q0)
+        q.c256Set256(q3, q2, q1, q0)
         return remainder
     }
 
-    private fun barrettDivMod_54_226(q: U256, x: U256, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_226(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
 
@@ -372,11 +372,11 @@ object DivBarrett {
         val q2 = (qG shl 34) or (qC ushr 20)
         val q1 = (qC shl 44) or (qB ushr 10)
         val q0 = (qB shl 54) or (qA ushr  0)
-        q.u256Set256(q3, q2, q1, q0)
+        q.c256Set256(q3, q2, q1, q0)
         return remainder
     }
 
-    private fun barrettDivMod_54_172(q: U256, x: U256, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_172(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2
 
@@ -409,11 +409,11 @@ object DivBarrett {
         val q2 =                (qG ushr 20)
         val q1 = (qG shl 44) or (qB ushr 10)
         val q0 = (qB shl 54) or (qA ushr  0)
-        q.u256Set192(q2, q1, q0)
+        q.c256Set192(q2, q1, q0)
         return remainder
     }
 
-    private fun barrettDivMod_54_118(q: U256, x: U256, denom: Long, mu: Long): Long {
+    private fun barrettDivMod_54_118(q: C256, x: C256, denom: Long, mu: Long): Long {
 
         val dw0 = x.dw0; val dw1 = x.dw1
 
@@ -437,7 +437,7 @@ object DivBarrett {
 
         val q1 =                (qG ushr 10)
         val q0 = (qG shl 54) or (qA ushr  0)
-        q.u256Set128(q1, q0)
+        q.c256Set128(q1, q0)
         return remainder
     }
 

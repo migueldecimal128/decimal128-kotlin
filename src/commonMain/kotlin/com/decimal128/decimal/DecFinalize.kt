@@ -41,7 +41,7 @@ private fun MutDec.roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: 
     }
     val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), dw0)
     if (roundUp) {
-        u256MutateIncrement()
+        c256MutateIncrement()
         if (digitLen > env.precision) {
             check(digitLen == env.precision + 1)
             // if we rolled into another digit because of roundup
@@ -173,7 +173,9 @@ private fun MutDec.roundAndFinalizeFnzValidCoeff(residue: Residue, rounding: Dec
             // we rolled over to a new decimal digit 10000...0000
             dw1 = env.decFormat.dw1AfterRollover
             dw0 = env.decFormat.dw0AfterRollover
-            packedLengths = env.decFormat.packedLengthsAfterOverflow
+            // FIXME
+            //   packedLengths = env.decFormat.packedLengthsAfterOverflow
+            updateDigitLenBitLen()
             ++qExp
         }
     }

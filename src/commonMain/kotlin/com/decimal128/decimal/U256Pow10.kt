@@ -381,7 +381,7 @@ internal object U256Pow10 {
         }
     }
 
-    fun coeffIsPow10(x: U256) : Boolean {
+    fun coeffIsPow10(x: C256) : Boolean {
         val xBitLen = x.bitLen
         val xDigitLen = x.digitLen
         if (xDigitLen > 0) {
@@ -395,7 +395,7 @@ internal object U256Pow10 {
         return false
     }
 
-    fun coeffSetPow10(z: U256, pow10: Int) {
+    fun coeffSetPow10(z: C256, pow10: Int) {
         if (pow10 >= 0) {
             val pow10BitLen = pow10BitLen(pow10)
             val pow10Offset = pow10Offset(pow10)
@@ -403,9 +403,9 @@ internal object U256Pow10 {
             val p1 = POW10[pow10Offset + 1] and (( 64 - pow10BitLen) shr 31).toLong()
             val p2 = POW10[pow10Offset + 2] and ((128 - pow10BitLen) shr 31).toLong()
             val p3 = POW10[pow10Offset + 3] and ((192 - pow10BitLen) shr 31).toLong()
-            z.u256Set256(p3, p2, p1, p0)
+            z.c256Set256(p3, p2, p1, p0)
         } else {
-            z.u256SetZero()
+            z.c256SetZero()
         }
     }
 

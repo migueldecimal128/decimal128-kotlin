@@ -15,9 +15,9 @@ object DivKnuth {
     private val vn = IntArray(9)
     private val un = IntArray(9)
 
-    fun knuthDivideWrapper(quot: U256?, rem: U256?, x: U256, y: U256): Residue {
+    fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
         check(u256GTOne(y))
-        check(x.u256UnscaledCompareTo(y) > 0)
+        check(x.c256UnscaledCompareTo(y) > 0)
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()
@@ -56,7 +56,7 @@ object DivKnuth {
 
         if (rem != null) {
             Magia.mutateShiftRight(un, n, s)
-            rem.u256Set(un, n)
+            rem.c256Set(un, n)
         }
 
         // shifting right by s will denormalize to normal remainder
@@ -108,11 +108,11 @@ object DivKnuth {
                         HALF
                 }
             }
-        quot?.u256Set(q, m)
+        quot?.c256Set(q, m)
         return residue
     }
 
-    fun knuthDivModX64(quot: U256?, x: U256, y0: Long): Long {
+    fun knuthDivModX64(quot: C256?, x: C256, y0: Long): Long {
         check((y0 ushr 32) != 0L)
         check(x.bitLen > 64)
 
@@ -145,7 +145,7 @@ object DivKnuth {
 
         val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
         val remainder = remainderNormalized ushr s
-        quot?.u256Set(q, m)
+        quot?.c256Set(q, m)
         return remainder
     }
 

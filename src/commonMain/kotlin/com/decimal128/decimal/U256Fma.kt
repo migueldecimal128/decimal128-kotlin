@@ -6,11 +6,11 @@ import kotlin.math.max
 
 object U256Fma {
 
-    fun u256Fma(z: U256, x: U256, y: U256, a: U256) {
-        check(z.u256HasValidLengths())
-        check(x.u256HasValidLengths())
-        check(y.u256HasValidLengths())
-        check(a.u256HasValidLengths())
+    fun u256Fma(z: C256, x: C256, y: C256, a: C256) {
+        check(z.c256HasValidLengths())
+        check(x.c256HasValidLengths())
+        check(y.c256HasValidLengths())
+        check(a.c256HasValidLengths())
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
@@ -85,11 +85,11 @@ object U256Fma {
         throw RuntimeException("coeff overflow")
     }
 
-    fun u256FmaPow10(z: U256, x: U256, pow10: Int, a: U256) {
+    fun u256FmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
         check(pow10 >= 0)
-        check(z.u256HasValidLengths())
-        check(x.u256HasValidLengths())
-        check(a.u256HasValidLengths())
+        check(z.c256HasValidLengths())
+        check(x.c256HasValidLengths())
+        check(a.c256HasValidLengths())
         val xBitLen = x.bitLen
         val aBitLen = a.bitLen
         val p10BitLen = pow10BitLen(pow10)
@@ -104,7 +104,7 @@ object U256Fma {
         if (maxFusedBitLen <= 128) {
             val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
             val (s1, s0) = sumU128(f1, f0, a1, a0)
-            z.u256Set128(s1, s0)
+            z.c256Set128(s1, s0)
             return
         }
         if (p10BitLen <= 64) {
@@ -197,10 +197,10 @@ object U256Fma {
         }
     }
 
-    fun u256FmaPow10(z: U256, x: U256, pow10: Int, a1: Long, a0: Long) {
+    fun u256FmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
         check(pow10 >= 0)
-        check(z.u256HasValidLengths())
-        check(x.u256HasValidLengths())
+        check(z.c256HasValidLengths())
+        check(x.c256HasValidLengths())
         val xBitLen = x.bitLen
         val aBitLen = (
                 if (a1 == 0L)
@@ -218,7 +218,7 @@ object U256Fma {
         if (maxFusedBitLen <= 128) {
             val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
             val (s1, s0) = sumU128(f1, f0, a1, a0)
-            z.u256Set128(s1, s0)
+            z.c256Set128(s1, s0)
             return
         }
         if (p10BitLen <= 64) {
@@ -311,13 +311,13 @@ object U256Fma {
         }
     }
 
-    fun u256FmaPow10(z: U256, x: U256, pow10: Int, a0: Long) {
+    fun u256FmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
         check(pow10 >= 0)
-        check(z.u256HasValidLengths())
-        check(x.u256HasValidLengths())
+        check(z.c256HasValidLengths())
+        check(x.c256HasValidLengths())
         val xBitLen = x.bitLen
         if (xBitLen == 0) {
-            z.u256Set64(a0)
+            z.c256Set64(a0)
             return
         }
         val aBitLen = 64 - a0.countLeadingZeroBits()
@@ -331,7 +331,7 @@ object U256Fma {
         if (maxFusedBitLen <= 128) {
             val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
             val (s1, s0) = sumU128U64(f1, f0, a0)
-            z.u256Set128(s1, s0)
+            z.c256Set128(s1, s0)
             return
         }
         if (p10BitLen <= 64) {
@@ -426,7 +426,7 @@ object U256Fma {
 
     @Suppress("UNUSED")
     private fun _fma4x4x4(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
         y3: Long, y2: Long, y1: Long, y0: Long,
@@ -436,7 +436,7 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
@@ -446,7 +446,7 @@ object U256Fma {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -458,7 +458,7 @@ object U256Fma {
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp02Lo + pp20Lo + a2
-            f.u256Set192(f2, f1, f0)
+            f.c256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp02Lo, pp20Lo, a2)
@@ -473,7 +473,7 @@ object U256Fma {
 
         if (maxFusedBitLen <= 256) {
             val f3 = carry2 + pp11Hi + pp02Hi + pp20Hi + pp12Lo + pp21Lo + pp03Lo + pp30Lo + a3
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         val (carry3, f3) = sumU64(carry2, pp11Hi, pp02Hi, pp20Hi, pp12Lo, pp21Lo, pp03Lo, pp30Lo, a3)
@@ -481,14 +481,14 @@ object U256Fma {
         val (carry4, f4) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         if ((carry4 or f4) == 0L) {
             check(maxFusedBitLen in 257..258)
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         throw RuntimeException("coeff multiply overflow")
     }
 
     private fun _fma4x1x4(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x3: Long, x2: Long, x1: Long, x0: Long,
         y0: Long,
@@ -498,7 +498,7 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
@@ -506,7 +506,7 @@ object U256Fma {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp10Lo + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
@@ -514,7 +514,7 @@ object U256Fma {
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp10Hi + pp20Lo + a2
-            f.u256Set192(f2, f1, f0)
+            f.c256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2) = sumU64(carry1, pp10Hi, pp20Lo, a2)
@@ -523,21 +523,21 @@ object U256Fma {
 
         if (maxFusedBitLen <= 256) {
             val f3 = carry2 + pp20Hi + pp30Lo + a3
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         val (carry3, f3) = sumU64(carry2, pp20Hi, pp30Lo, a3)
         val (carry4, f4) = sumU64(carry3, pp30Hi)
         if ((carry4 or f4) == 0L) {
             check(maxFusedBitLen in 257..258)
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         throw RuntimeException("coeff multiply overflow")
     }
 
     private fun _fma3x2x4(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x2: Long, x1: Long, x0: Long,
         y1: Long, y0: Long,
@@ -547,7 +547,7 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
@@ -557,7 +557,7 @@ object U256Fma {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -567,7 +567,7 @@ object U256Fma {
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + pp20Lo + a2
-            f.u256Set192(f2, f1, f0)
+            f.c256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo, a2)
@@ -576,21 +576,21 @@ object U256Fma {
 
         if (maxFusedBitLen <= 256) {
             val f3 = carry2 + pp11Hi + pp20Hi + pp21Lo + a3
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         val (carry3, f3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo, a3)
         val (carry4, f4) = sumU64(carry3, pp21Hi)
         if ((carry4 or f4) == 0L) {
             check(maxFusedBitLen in 257..258)
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         throw RuntimeException("coeff multiply overflow")
     }
 
     private fun _fma3x1x4(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x2: Long, x1: Long, x0: Long,
         y0: Long,
@@ -600,7 +600,7 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
@@ -608,7 +608,7 @@ object U256Fma {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp10Lo + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
@@ -616,27 +616,27 @@ object U256Fma {
         val pp20Lo = x2 * y0
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp10Hi + pp20Lo + a2
-            f.u256Set192(f2, f1, f0)
+            f.c256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2) = sumU64(carry1, pp10Hi, pp20Lo, a2)
 
         if (maxFusedBitLen <= 256) {
             val f3 = carry2 + pp20Hi + a3
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         val (carry3, f3) = sumU64(carry2, pp20Hi, a3)
         if (carry3 == 0L) {
             check(maxFusedBitLen in 257..258)
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         throw RuntimeException("coeff multiply overflow")
     }
 
     private fun _fma2x2x4(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x1: Long, x0: Long,
         y1: Long, y0: Long,
@@ -646,7 +646,7 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
@@ -656,7 +656,7 @@ object U256Fma {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp01Lo + pp10Lo + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
@@ -664,27 +664,27 @@ object U256Fma {
         val pp11Lo = x1 * y1
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp01Hi + pp10Hi + pp11Lo + a2
-            f.u256Set192(f2, f1, f0)
+            f.c256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, a2)
 
         if (maxFusedBitLen <= 256) {
             val f3 = carry2 + pp11Hi + a3
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         val (carry3, f3) = sumU64(carry2, pp11Hi, a3)
         if (carry3 == 0L) {
             check(maxFusedBitLen in 257..258)
-            f.u256Set256(f3, f2, f1, f0)
+            f.c256Set256(f3, f2, f1, f0)
             return
         }
         throw RuntimeException("coeff multiply overflow")
     }
 
     private fun _fma2x1x3(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x1: Long, x0: Long,
         y0: Long,
@@ -694,7 +694,7 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
@@ -702,23 +702,23 @@ object U256Fma {
         val pp10Lo = x1 * y0
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + pp10Lo + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
         if (maxFusedBitLen <= 192) {
             val f2 = carry1 + pp10Hi + a2
-            f.u256Set192(f2, f1, f0)
+            f.c256Set192(f2, f1, f0)
             return
         }
         val (carry2, f2) = sumU64(carry1, pp10Hi, a2)
         val f3 = carry2
-        f.u256Set256(f3, f2, f1, f0)
+        f.c256Set256(f3, f2, f1, f0)
     }
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun _fma1x1x2(
-        f: U256,
+        f: C256,
         maxFusedBitLen: Int,
         x0: Long,
         y0: Long,
@@ -728,18 +728,18 @@ object U256Fma {
         val pp00Lo = x0 * y0
         if (maxFusedBitLen <= 64) {
             val f0 = pp00Lo + a0
-            f.u256Set64(f0)
+            f.c256Set64(f0)
             return
         }
         val (carry0, f0) = sumU64(pp00Lo, a0)
         if (maxFusedBitLen <= 128) {
             val f1 = carry0 + pp00Hi + a1
-            f.u256Set128(f1, f0)
+            f.c256Set128(f1, f0)
             return
         }
         val (carry1, f1) = sumU64(carry0, pp00Hi, a1)
         val f2 = carry1
-        f.u256Set192(f2, f1, f0)
+        f.c256Set192(f2, f1, f0)
         return
     }
 

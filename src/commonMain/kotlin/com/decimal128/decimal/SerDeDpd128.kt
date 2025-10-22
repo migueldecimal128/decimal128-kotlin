@@ -100,10 +100,10 @@ object SerDeDpd128 {
                 val binHi = binFromDeclets7(decletsHi6)
                 val binLo = binFromDeclets7(decletsLo6)
                 if (binHi != 0L) {
-                    d.u256Set64(binHi)
-                    d.u256SetFmaPow10(d, 18, binLo)
+                    d.c256Set64(binHi)
+                    d.c256SetFmaPow10(d, 18, binLo)
                 } else {
-                    d.u256Set64(binLo)
+                    d.c256Set64(binLo)
                 }
                 d.qExp = qExp
                 d.sign = sign
@@ -122,8 +122,8 @@ object SerDeDpd128 {
                         val decletsLo6 = dpd128Lo and ((1L shl 60) - 1L)
                         val binHi = binFromDeclets7(decletsHi5)
                         val binLo = binFromDeclets7(decletsLo6)
-                        d.u256Set64(binHi)
-                        d.u256SetFmaPow10(d, 18, binLo)
+                        d.c256Set64(binHi)
+                        d.c256SetFmaPow10(d, 18, binLo)
                         payloadHi = d.dw1
                         payloadLo = d.dw0
                     }
@@ -134,7 +134,7 @@ object SerDeDpd128 {
                 // large-form finite pattern => non-canonical for decimal128:
                 // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
                 val E = (combination ushr 1) and 0x3FFF   // 14 bits
-                d.u256SetZero()
+                d.c256SetZero()
                 d.qExp = E + decimal128.qTiny             // preserve exponent
                 d.sign = sign                             // preserve sign (±0)
             }
@@ -148,8 +148,8 @@ object SerDeDpd128 {
         var declets5Hi = 0L
         var binLo = d.dw0
         if (d.digitLen > 18) {
-            val q = U256()
-            val r = q.u256SetDivModX64(d, TEN_POW_18)
+            val q = C256()
+            val r = q.c256SetDivModX64(d, TEN_POW_18)
             binLo = r
             var binHi = q.dw0
             if (q.digitLen > 15) {

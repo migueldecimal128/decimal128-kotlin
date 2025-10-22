@@ -27,7 +27,7 @@ value class Residue private constructor(val value:Int) {
 
         // FIXME - this method is fine, but it needs a better name
         //  ... and perhaps a better implementation
-        fun residueFrom(c:U256) :Residue {
+        fun residueFrom(c:C256) :Residue {
             val digitLen = c.digitLen
             if (digitLen == 0)
                 return EXACT
@@ -75,7 +75,7 @@ value class Residue private constructor(val value:Int) {
             return residueX
         }
 
-        fun residueFromRemainderDivisor(r: U256, d: U256): Residue {
+        fun residueFromRemainderDivisor(r: C256, d: C256): Residue {
             if (r.dw3 < 0L) {
                 // high bit of residue is set
                 // doubling is certainly larger

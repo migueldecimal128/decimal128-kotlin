@@ -13,7 +13,7 @@ private val SINGLE_DIGIT_NUMBERS =
 
 internal object Int256ParsePrint {
 
-    fun int256ToString(sign: Boolean, u: U256): String {
+    fun int256ToString(sign: Boolean, u: C256): String {
         val s = if (sign) 1 else 0
         if (u.digitLen > 1) {
             val utf8 = ByteArray(u.digitLen + s)
@@ -25,19 +25,19 @@ internal object Int256ParsePrint {
         }
     }
 
-    fun int256ToUtf8(sign: Boolean, u: U256, utf8: ByteArray, off: Int): Int {
+    fun int256ToUtf8(sign: Boolean, u: C256, utf8: ByteArray, off: Int): Int {
         val s = if (sign) 1 else 0
         utf8[off] = '-'.code.toByte() // if positive then this will be overwritten
         u256ToUtf8(u, utf8, off + s)
         return off + s + Math.max(1, u.digitLen)
     }
 
-    fun u256ToUtf8(u: U256, utf8: ByteArray, off: Int) {
+    fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int) {
         if (u.bitLen <= 64) {
             u64ToUtf8(u.digitLen, u.dw0, utf8, off)
             return
         }
-        val t = U256(u)
+        val t = C256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
@@ -99,7 +99,7 @@ internal object Int256ParsePrint {
         } while (i >= 0)
     }
 
-    fun int256ToHexString(sign: Boolean, u: U256): String {
+    fun int256ToHexString(sign: Boolean, u: C256): String {
         val s = if (sign) 1 else 0
         if (u.bitLen == 0)
             return "0x0"
@@ -112,7 +112,7 @@ internal object Int256ParsePrint {
         return String(bytes)
     }
 
-    fun u256ToHexUtf8(u: U256, hexitCount: Int, utf8: ByteArray, off: Int) {
+    fun u256ToHexUtf8(u: C256, hexitCount: Int, utf8: ByteArray, off: Int) {
         var hexitsRemaining = hexitCount
         var ich = off
         for (i in (u.bitLen - 1) ushr 6 downTo 0) {
@@ -137,11 +137,11 @@ internal object Int256ParsePrint {
         }
     }
 
-    fun u256FromString(u: U256, allowSign: Boolean, str: String) =
+    fun u256FromString(u: C256, allowSign: Boolean, str: String) =
         u256FromLatin1Iterator(u, allowSign, StringLatin1Iterator(str))
 
-    fun u256FromLatin1Iterator(u: U256, allowSign: Boolean, src: Latin1Iterator): Boolean {
-        u.u256SetZero()
+    fun u256FromLatin1Iterator(u: C256, allowSign: Boolean, src: Latin1Iterator): Boolean {
+        u.c256SetZero()
         invalid_syntax@
         do {
             var leadingZeroSeen = false
@@ -196,8 +196,8 @@ internal object Int256ParsePrint {
         throw IllegalArgumentException("invalid integer syntax:$src")
     }
 
-    private fun u256FromHexLatin1Iterator(u: U256, allowSign: Boolean, src: Latin1Iterator): Boolean {
-        u.u256SetZero()
+    private fun u256FromHexLatin1Iterator(u: C256, allowSign: Boolean, src: Latin1Iterator): Boolean {
+        u.c256SetZero()
         invalid_syntax@
         do {
             var leadingZeroSeen = false
@@ -237,12 +237,12 @@ internal object Int256ParsePrint {
                 ++accumulatorHexitCount
                 if (accumulatorHexitCount < 16)
                     continue
-                u.u256MutateShiftLeftOr(64, accumulator)
+                u.c256MutateShiftLeftOr(64, accumulator)
                 accumulator = 0
                 accumulatorHexitCount = 0
             }
             if (accumulatorHexitCount > 0)
-                u.u256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
+                u.c256MutateShiftLeftOr(4 * accumulatorHexitCount, accumulator)
             return sign
         } while (false)
         throw NumberFormatException("invalid hex integer syntax:$src")

@@ -3,24 +3,24 @@ package com.decimal128.decimal
 
 object U256Sub {
 
-    fun u256SubUnscaled(z: U256, x: U256, y: U256) { // minuend - subtrahend
-        check(z.u256HasValidLengths())
-        check(x.u256HasValidLengths())
-        check(y.u256HasValidLengths())
-        check(x.u256UnscaledCompareTo(y) >= 0)
+    fun u256SubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtrahend
+        check(z.c256HasValidLengths())
+        check(x.c256HasValidLengths())
+        check(y.c256HasValidLengths())
+        check(x.c256UnscaledCompareTo(y) >= 0)
         val xBitLen = x.bitLen
         check(xBitLen >= y.bitLen)
 
         val d0 = x.dw0 - y.dw0
         if (xBitLen <= 64) {
-            z.u256Set64(d0)
+            z.c256Set64(d0)
             return
         }
         val carry0 = if (unsignedCmp(d0, x.dw0) > 0) 1L else 0L
 
         if (xBitLen <= 128) {
             val d1 = x.dw1 - y.dw1 - carry0
-            z.u256Set128(d1, d0)
+            z.c256Set128(d1, d0)
             return
         }
         val d1a = x.dw1 - y.dw1
@@ -30,7 +30,7 @@ object U256Sub {
 
         if (xBitLen <= 192) {
             val d2 = x.dw2 - y.dw2 - carry1
-            z.u256Set192(d2, d1, d0)
+            z.c256Set192(d2, d1, d0)
             return
         }
         val d2a = x.dw2 - y.dw2
@@ -44,36 +44,36 @@ object U256Sub {
         val carry3 = if (unsignedCmp(d3, d3a) > 0) 1L else carry3a
         check(carry3 == 0L)
 
-        z.u256Set256(d3, d2, d1, d0)
+        z.c256Set256(d3, d2, d1, d0)
     }
 
-    fun u256SubScaled(z: U256, x: U256, scaleDelta: Int, y: U256) {
+    fun u256SubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
         check(scaleDelta > 0)
         check(scaleDelta <= 40)
         check(x.digitLen + scaleDelta < 79)
 
         check((x.dw3 or x.dw2) == 0L)
         check((y.dw3 or y.dw2) == 0L)
-        check(x.u256HasValidLengths())
-        check(y.u256HasValidLengths())
-        check(z.u256HasValidLengths())
+        check(x.c256HasValidLengths())
+        check(y.c256HasValidLengths())
+        check(z.c256HasValidLengths())
 
-        check(y.u256ScaledCompareTo(x, scaleDelta) <= 0)
+        check(y.c256ScaledCompareTo(x, scaleDelta) <= 0)
 
         U256Fms.u256FmsPow10(z, x, scaleDelta, y)
     }
 
-    fun u256SubScaled(z: U256, x: U256, y: U256, scaleDelta: Int) {
+    fun u256SubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
         check(scaleDelta > 0)
         check(scaleDelta < 34)
 
         check((x.dw3 or x.dw2) == 0L)
         check((y.dw3 or y.dw2) == 0L)
-        check(x.u256HasValidLengths())
-        check(y.u256HasValidLengths())
-        check(z.u256HasValidLengths())
+        check(x.c256HasValidLengths())
+        check(y.c256HasValidLengths())
+        check(z.c256HasValidLengths())
 
-        check(x.u256ScaledCompareTo(y, scaleDelta) >= 0)
+        check(x.c256ScaledCompareTo(y, scaleDelta) >= 0)
 
         U256Fms.u256FmsPow10(z, x, y, scaleDelta)
     }

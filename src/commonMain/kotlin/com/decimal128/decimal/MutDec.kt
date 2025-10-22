@@ -28,7 +28,7 @@ internal const val NON_FINITE_SNAN = 16383
 const val CAPPED_EXP_MIN = -16000
 const val CAPPED_EXP_MAX = 16000
 
-class MutDec() : U256() {
+class MutDec() : C256() {
     var sign = false
     var qExp = 0
     val eExp: Int
@@ -87,22 +87,22 @@ class MutDec() : U256() {
 //            z.s256AddImpl(x.sign, x, ySign, y)
             z.qExp = x.qExp
             if (xSign == ySign) {
-                z.u256SetAdd(x, y)
+                z.c256SetAdd(x, y)
                 z.sign = xSign
             } else {
                 val cmp = u256UnscaledCompare(x, y)
                 when {
                     (cmp > 0) -> {
-                        z.u256SetSub(x, y)
+                        z.c256SetSub(x, y)
                         z.sign = xSign and (z.bitLen > 0)
                     }
                     (cmp < 0) -> {
-                        z.u256SetSub(y, x)
+                        z.c256SetSub(y, x)
                         z.sign = ySign and (z.bitLen > 0)
                     }
                     else -> {
                         z.sign = false
-                        z.u256SetZero()
+                        z.c256SetZero()
                     }
                 }
             }
@@ -208,7 +208,7 @@ class MutDec() : U256() {
     fun setZero()  = setZero(false)
 
     fun setZero(sign: Boolean) {
-        u256SetZero()
+        c256SetZero()
         this.qExp = 0
         this.sign = sign
     }
@@ -250,7 +250,7 @@ class MutDec() : U256() {
 
     internal fun setNaN(payload: Int, env: DecEnv) {
         sign = false
-        u256Set64(payload.toLong())
+        c256Set64(payload.toLong())
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -275,7 +275,7 @@ class MutDec() : U256() {
         //  what is required for BID and DPD encoding.
         //  Changing the coefficient to one would make negation slightly
         //  easier, but isn't worth doing
-        this.u256SetZero()
+        this.c256SetZero()
         this.qExp = NON_FINITE_INF
         this.sign = sign
     }
@@ -287,14 +287,14 @@ class MutDec() : U256() {
         this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
-        u256Set64(abs)
+        c256Set64(abs)
         return this
     }
 
     fun setUnsigned(ul: Long): MutDec {
         this.qExp = 0
         this.sign = false
-        u256Set64(ul)
+        c256Set64(ul)
         return this
     }
 
@@ -303,19 +303,19 @@ class MutDec() : U256() {
         this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
-        u256Set64(abs)
+        c256Set64(abs)
         return this
     }
 
     fun set(x: MutDec): MutDec {
-        u256Set(x)
+        c256Set(x)
         this.qExp = x.qExp
         this.sign = x.sign
         return this
     }
 
     fun set(x: Decimal): MutDec {
-        u256Set128(x.dw1, x.dw0)
+        c256Set128(x.dw1, x.dw0)
         this.qExp = x.qExp.toInt()
         this.sign = x.sign
         return this
@@ -341,9 +341,9 @@ class MutDec() : U256() {
         // 10000000000000000000000000000000000 (10**34)
         val offset = U256Pow10.pow10Offset(env.precision)
         if (env.precision < MIN_POW10_DIGIT_LEN_128) {
-            super.u256Set64(POW10[offset] - 1)
+            super.c256Set64(POW10[offset] - 1)
         } else if (env.precision < MIN_POW10_DIGIT_LEN_192) {
-            super.u256Set128(POW10[offset + 1], POW10[offset] - 1)
+            super.c256Set128(POW10[offset + 1], POW10[offset] - 1)
         } else
             throw IllegalArgumentException()
         return this
@@ -351,13 +351,13 @@ class MutDec() : U256() {
 
     fun setMinFiniteMagnitude(env: DecEnv): MutDec {
         qExp = env.qTiny
-        super.u256SetOne()
+        super.c256SetOne()
         return this
     }
 
     fun setMinZeroMagnitude(env: DecEnv): MutDec {
         qExp = env.qTiny
-        super.u256SetZero()
+        super.c256SetZero()
         return this
     }
 
@@ -463,7 +463,7 @@ class MutDec() : U256() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
-                this.u256SetMul(x, y)
+                this.c256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 return finalize(env)
@@ -485,7 +485,7 @@ class MutDec() : U256() {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                this.u256SetSqr(x)
+                this.c256SetSqr(x)
                 this.qExp = this.qExp shl 1
                 this.sign = false
                 return finalize(env)            }
@@ -509,7 +509,7 @@ class MutDec() : U256() {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
                 val aT = if (this === a) MutDec().set(a) else a
                 // multiply without roundAndFinalize .. remains exact
-                this.u256SetMul(x, y)
+                this.c256SetMul(x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
@@ -630,13 +630,13 @@ class MutDec() : U256() {
         val qMax = max(qExp, other.qExp)
         when {
             (qMax < MIN_SPECIAL_VALUE) -> {
-                if (u256IsZero()) {
-                    if (other.u256IsZero())
+                if (c256IsZero()) {
+                    if (other.c256IsZero())
                         return 0
                     else
                         return if (other.sign) 1 else -1
                 }
-                if (other.u256IsZero() || sign != other.sign) {
+                if (other.c256IsZero() || sign != other.sign) {
                     return if (sign) -1 else 1
                 }
                 val cmp = magnitudeCompareTo(other)
@@ -663,8 +663,8 @@ class MutDec() : U256() {
     }
 
     fun magnitudeCompareTo(other: MutDec) : Int {
-        val thisIsZero = u256IsZero()
-        val otherIsZero = other.u256IsZero()
+        val thisIsZero = c256IsZero()
+        val otherIsZero = other.c256IsZero()
         val eitherIsZero = thisIsZero or otherIsZero
         when {
             !eitherIsZero -> {
@@ -673,9 +673,9 @@ class MutDec() : U256() {
                     return cmpExpSci
                 val expDelta = this.qExp - other.qExp
                 val ret = when {
-                    expDelta == 0 -> u256UnscaledCompareTo(other)
-                    expDelta > 0 -> -other.u256ScaledCompareTo(this, expDelta)
-                    else -> u256ScaledCompareTo(other, -expDelta)
+                    expDelta == 0 -> c256UnscaledCompareTo(other)
+                    expDelta > 0 -> -other.c256ScaledCompareTo(this, expDelta)
+                    else -> c256ScaledCompareTo(other, -expDelta)
                 }
                 return ret
             }
@@ -689,8 +689,8 @@ class MutDec() : U256() {
     }
 
     fun magnitudeEQ(other: MutDec) : Boolean {
-        val thisIsZero = this.u256IsZero()
-        val otherIsZero = other.u256IsZero()
+        val thisIsZero = this.c256IsZero()
+        val otherIsZero = other.c256IsZero()
         val bothAreZero = thisIsZero and otherIsZero
         val eitherIsZero = thisIsZero or otherIsZero
         if (this.sciExp() != other.sciExp())
@@ -698,9 +698,9 @@ class MutDec() : U256() {
         if (! eitherIsZero) {
             val expDelta = this.qExp - other.qExp
             return when {
-                expDelta == 0 -> this.u256UnscaledEQ(other)
-                expDelta > 0 -> other.u256ScaledEQ(this, expDelta)
-                else -> this.u256ScaledEQ(other, -expDelta)
+                expDelta == 0 -> this.c256UnscaledEQ(other)
+                expDelta > 0 -> other.c256ScaledEQ(this, expDelta)
+                else -> this.c256ScaledEQ(other, -expDelta)
             }
         }
         return bothAreZero
@@ -710,7 +710,7 @@ class MutDec() : U256() {
     fun mutateRoundToIntegral(x: MutDec, rd: DecRounding, env: DecEnv): MutDec {
         //FIXME - deal with special values
         if (qExp < 0) {
-            val residue = this.u256SetScaleDownPow10(x, -qExp)
+            val residue = this.c256SetScaleDownPow10(x, -qExp)
             qExp = 0
             sign = x.sign
             return roundAndFinalize(residue, rd, env)
@@ -743,7 +743,7 @@ class MutDec() : U256() {
                     setMaxFiniteMagnitude(env)
                 return
             }
-            u256IsZero() -> {
+            c256IsZero() -> {
                 setMinFiniteMagnitude(env)
                 sign = false
                 return
@@ -763,7 +763,7 @@ class MutDec() : U256() {
                     setMaxFiniteMagnitude(env)
                 return
             }
-            u256IsZero() -> {
+            c256IsZero() -> {
                 setMinFiniteMagnitude(env)
                 sign = true
                 return
@@ -778,21 +778,21 @@ class MutDec() : U256() {
 
     private fun mutateNextAwayFromZero(env: DecEnv) {
         val headroom = min(env.precision - digitLen, qExp - env.qTiny)
-        if (headroom > 1 || headroom == 1 && !u256IsAllNines(env.precision-1)) {
-            this.u256SetScaleUpPow10(this, headroom)
+        if (headroom > 1 || headroom == 1 && !c256IsAllNines(env.precision-1)) {
+            this.c256SetScaleUpPow10(this, headroom)
             this.qExp -= headroom
         }
-        u256MutateIncrement()
+        c256MutateIncrement()
     }
 
     private fun mutateNextTowardZero(env: DecEnv) {
         val headroom =
-            min(env.precision - digitLen + if (u256IsPowerOf10()) 1 else 0, qExp - env.qTiny)
+            min(env.precision - digitLen + if (c256IsPowerOf10()) 1 else 0, qExp - env.qTiny)
         if (headroom > 0) {
-            this.u256SetScaleUpPow10(this, headroom)
+            this.c256SetScaleUpPow10(this, headroom)
             this.qExp -= headroom
         }
-        u256MutateDecrement()
+        c256MutateDecrement()
     }
 
     fun minNum(x: MutDec, y: MutDec, env: DecEnv) = minNum_helper(x, y, 0, env)
@@ -836,15 +836,15 @@ class MutDec() : U256() {
         if (qExp < NON_FINITE_INF) {
             qExp += p10
             val residue = when {
-                u256IsZero() -> EXACT
+                c256IsZero() -> EXACT
                 (p10 > 0) -> {
                     val headroom = env.precision - digitLen
                     val scaleUp = min(headroom, p10)
-                    this.u256SetScaleUpPow10(this, scaleUp)
+                    this.c256SetScaleUpPow10(this, scaleUp)
                     qExp -= scaleUp
                     EXACT
                 }
-                (p10 < 0) -> this.u256SetScaleDownPow10(this, -p10)
+                (p10 < 0) -> this.c256SetScaleDownPow10(this, -p10)
                 else -> return // p10 == 0 .. no scaling
             }
             roundAndFinalize(residue, env)
@@ -888,13 +888,13 @@ class MutDec() : U256() {
         val qMax = max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {
-                u256IsZero() -> when {
-                    other.u256IsZero() -> IEEE754_EQ
+                c256IsZero() -> when {
+                    other.c256IsZero() -> IEEE754_EQ
                     other.sign -> IEEE754_LT
                     else -> IEEE754_GT
                 }
 
-                other.u256IsZero() -> when {
+                other.c256IsZero() -> when {
                     sign -> IEEE754_GT
                     else -> IEEE754_LT
                 }
@@ -940,8 +940,8 @@ class MutDec() : U256() {
             val qMax = max(qExp, other.qExp)
             return when {
                 qMax < NON_FINITE_INF -> when {
-                    u256IsZero() -> other.u256IsZero()
-                    other.u256IsZero() -> false
+                    c256IsZero() -> other.c256IsZero()
+                    other.c256IsZero() -> false
                     else -> sign == other.sign && magnitudeEQ(other)
                 }
 
@@ -975,7 +975,7 @@ class MutDec() : U256() {
             qExp == NON_FINITE_QNAN -> quiteNaN
             qExp == NON_FINITE_INF ->
                 return if (sign == false) positiveInfinity else negativeInfinity
-            u256IsZero() ->
+            c256IsZero() ->
                 return if (sign == false) positiveZero else negativeZero
             sciExp() < -6143 ->
                 return if (sign == false) positiveSubnormal else negativeSubnormal
@@ -989,8 +989,8 @@ class MutDec() : U256() {
     fun isSignMinus() = sign
     fun isNormal() = qExp < NON_FINITE_INF && sciExp() >= -6143
     fun isFinite() = qExp < NON_FINITE_INF
-    fun isZero() = qExp < NON_FINITE_INF && u256IsZero()
-    fun isFiniteNonZero() = qExp < NON_FINITE_INF && !u256IsZero()
+    fun isZero() = qExp < NON_FINITE_INF && c256IsZero()
+    fun isFiniteNonZero() = qExp < NON_FINITE_INF && !c256IsZero()
     fun isSubnormal() = qExp < NON_FINITE_INF && sciExp() < -6143
     fun isInfinite() = qExp == NON_FINITE_INF
     fun isNaN() = qExp in NON_FINITE_QNAN..NON_FINITE_SNAN
@@ -1078,7 +1078,7 @@ class MutDec() : U256() {
 
             else -> throw RuntimeException("?que? $qExp")
         }
-        if (u256IsZero())
+        if (c256IsZero())
             return nanStr
         val utf8 = ByteArray(nanStr.length + digitLen)
         for (i in nanStr.indices)

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.util.*
 
-class TestU256Mul {
+class TestC256Mul {
 
     val verbose = false
 
@@ -99,23 +99,23 @@ class TestU256Mul {
             return
         val coeffA = newCoeff(case.biA)
         val coeffB = newCoeff(case.biB)
-        val coeffC = U256()
+        val coeffC = C256()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = expected:$expected")
-        coeffC.u256SetMul(coeffA, coeffB)
+        coeffC.c256SetMul(coeffA, coeffB)
         val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
         assert (biC.equals(expected))
 
         val oldDigitCount = coeffC.digitLen
-        if (! coeffC.u256HasValidLengths()) {
+        if (! coeffC.c256HasValidLengths()) {
             val digitCount = coeffC.digitLen
             println("bad digit count $coeffA * $coeffB = $coeffC was $oldDigitCount should be $digitCount")
             throw RuntimeException()
         }
 
-        coeffA.u256SetMul(coeffA, coeffB)
+        coeffA.c256SetMul(coeffA, coeffB)
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 

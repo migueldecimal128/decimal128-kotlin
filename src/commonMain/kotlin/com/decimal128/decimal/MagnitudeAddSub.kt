@@ -70,7 +70,7 @@ object MagnitudeAddSub {
 
             else -> {
                 // if m == 0 then return n ... n != 0 and n == 0
-                z.u256Set(n)
+                z.c256Set(n)
                 z.qExp = n.qExp
                 return Residue.EXACT
             }
@@ -112,7 +112,7 @@ object MagnitudeAddSub {
                             // we always decrement in this case because y is never zero
                             // so Residue.EXACT cannot occur because ZERO would have taken
                             // another path
-                            z.u256MutateDecrement()
+                            z.c256MutateDecrement()
                             if (shiftRight > y.digitLen)
                                 Residue.GT_HALF
                             else
@@ -130,7 +130,7 @@ object MagnitudeAddSub {
                             // take the inverse of the residue,
                             // and the normal roundAndFinalize() will take care of it
                             if (residue != EXACT)
-                                z.u256MutateDecrement()
+                                z.c256MutateDecrement()
                             residue.subtractionInverse()
                         }
                     }
@@ -147,7 +147,7 @@ object MagnitudeAddSub {
 
                 else -> {
                     // if x == 0 then return y ... y != 0 and y == 0
-                    z.u256Set(y)
+                    z.c256Set(y)
                     z.qExp = y.qExp
                     return Residue.EXACT
                 }
@@ -155,10 +155,10 @@ object MagnitudeAddSub {
         } else {
             // TC("22E1", "2E2"),
             // x has a smaller q, but y needs to be scaled
-            if (y.u256IsZero()) {
+            if (y.c256IsZero()) {
                 // subtracting zero with a larger exponent from x
                 // simply return x
-                z.u256Set(x)
+                z.c256Set(x)
                 z.qExp = x.qExp
                 return EXACT
             }

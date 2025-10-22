@@ -4,7 +4,7 @@ import kotlin.math.max
 
 object U256DivPow10 {
 
-    fun divPow10(z: U256, x: U256, pow10: Int): Residue {
+    fun divPow10(z: C256, x: C256, pow10: Int): Residue {
         check(pow10 >= 0)
         val xBitLen = x.bitLen
         if (pow10 < MAGIC_POW10_MAXX) {
@@ -15,7 +15,7 @@ object U256DivPow10 {
         }
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         if (xBitLen < pow10BitLen) {
-            z.u256SetZero()
+            z.c256SetZero()
             val halfPow10BitLen = pow10BitLen - 1
             return (
                     if (xBitLen < halfPow10BitLen) {
