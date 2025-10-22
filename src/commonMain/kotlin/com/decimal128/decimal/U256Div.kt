@@ -90,7 +90,7 @@ object U256Div {
                 val t = when {
                     rem != null && rem !== y -> rem
                     quot != null && quot !== y -> quot
-                    else -> Int256()
+                    else -> U256()
                 }
                 t.u256SetSub(x, y)
                 val residue = Residue.residueFromRemainderDivisor(t, y)
