@@ -3,6 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.StringLatin1Iterator
 import kotlin.math.max
+import kotlin.math.min
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
@@ -34,13 +35,14 @@ internal object Int256ParsePrint {
 
     fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int) {
         if (u.bitLen <= 64) {
-            if (u.bitLen == 0) {
-                utf8[off] = '0'.code.toByte()
+            if (u.bitLen <= 32) {
+                u32ToUtf8(max(1, u.digitLen), u.dw0.toInt(), utf8, off)
                 return
             }
             u64ToUtf8(u.digitLen, u.dw0, utf8, off)
             return
         }
+        // FIXME ... this should come from the current DecEnv
         val t = C256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
@@ -57,6 +59,7 @@ internal object Int256ParsePrint {
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
             u64ToUtf8(9, r, utf8, off + ich)
         }
+        check (t.bitLen > 0)
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
     }
 
@@ -76,6 +79,35 @@ internal object Int256ParsePrint {
         val digitLen = U256Pow10.calcDigitLen64(nAbs.toLong())
         u64ToUtf8(digitLen, nAbs.toLong(), utf8, offT)
         return offT + digitLen
+    }
+
+    internal fun u32ToUtf8(digitPrintCount: Int, w: Int, utf8: ByteArray, off: Int): Int {
+        if (digitPrintCount in 1..10) {
+            val m = 0xCCCCCCCDuL.toLong()
+            val s = 35
+            var d = w.toLong() and 0xFFFFFFFFL
+            var i = digitPrintCount - 1
+            do {
+                val qA = (d * m) ushr s
+                val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
+                val qB = (qA * m) ushr s
+                val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
+                val qC = (qB * m) ushr s
+                val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
+
+                val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
+                val tB = i - 1; val maskB = -tB shr 31; val iB = tB and maskB
+
+                utf8[off + iC] = digitC
+                utf8[off + iB] = digitB
+                utf8[off + i] = digitA
+
+                d = qC
+                i -= 3
+            } while (i >= 0)
+           return off + digitPrintCount
+        }
+        throw IllegalArgumentException()
     }
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
