@@ -9,8 +9,15 @@ import kotlin.math.max
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
 
-private const val M_32_BIT_DIV_10 = 0xCCCCCCCDL
-private const val S_32_BIT_DIV_10 = 35
+private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
+private const val S_U32_DIV_1E1 = 35
+
+private const val M_U32_DIV_1E2 = 0x51EB851FL
+private const val S_U32_DIV_1E2 = 37
+
+private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
+private const val S_U64_DIV_1E4 = 11
+
 
 private val SINGLE_DIGIT_NUMBERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -90,27 +97,67 @@ internal object Int256ParsePrint {
         return offT + digitLen
     }
 
-    private fun nineDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int): Int {
-        var d = dw and 0xFFFF_FFFFL
-        var i = 8
-        do {
-            val qA = (d * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
-            val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-            val qB = (qA * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
-            val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-            val qC = (qB * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
-            val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
+    private fun nineDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int) =
+        nineDigitsToUtf8_tree(dw, utf8, off)
 
-            val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
-            val tB = i - 1; val maskB = -tB shr 31; val iB = tB and maskB
+    private fun nineDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
+        val abcde = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val fghi  = dw - (abcde * 10000L)
 
-            utf8[off + iC] = digitC
-            utf8[off + iB] = digitB
-            utf8[off + i] = digitA
+        val abc = (abcde * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val de = abcde - (abc * 100L)
 
-            d = qC
-            i -= 3
-        } while (i >= 0)
+        val fg = (fghi * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val hi = fghi - (fg * 100L)
+
+        val a = (abc * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val bc = abc - (a * 100L)
+
+        val b = (bc * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = bc - (b * 10L)
+
+        val d = (de * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val e = de - (d * 10L)
+
+        val f = (fg * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val g = fg - (f * 10L)
+
+        val h = (hi * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val i = hi - (h * 10L)
+
+        utf8[off + 0] = (a.toInt() + '0'.code).toByte()
+        utf8[off + 1] = (b.toInt() + '0'.code).toByte()
+        utf8[off + 2] = (c.toInt() + '0'.code).toByte()
+        utf8[off + 3] = (d.toInt() + '0'.code).toByte()
+        utf8[off + 4] = (e.toInt() + '0'.code).toByte()
+        utf8[off + 5] = (f.toInt() + '0'.code).toByte()
+        utf8[off + 6] = (g.toInt() + '0'.code).toByte()
+        utf8[off + 7] = (h.toInt() + '0'.code).toByte()
+        utf8[off + 8] = (i.toInt() + '0'.code).toByte()
+
+    }
+
+    private fun nineDigitsToUtf8_sequential(dw: Long, utf8: ByteArray, off: Int): Int {
+        val qA = (dw * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qB = (qA * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qC = (qB * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qD = (qC * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qE = (qD * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qF = (qE * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qG = (qF * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qH = (qG * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val qI = (qH * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+
+        utf8[off + 8] = ((dw - (qA * 10L)) + '0'.code).toByte()
+        utf8[off + 7] = ((qA - (qB * 10L)) + '0'.code).toByte()
+        utf8[off + 6] = ((qB - (qC * 10L)) + '0'.code).toByte()
+        utf8[off + 5] = ((qC - (qD * 10L)) + '0'.code).toByte()
+        utf8[off + 4] = ((qD - (qE * 10L)) + '0'.code).toByte()
+        utf8[off + 3] = ((qE - (qF * 10L)) + '0'.code).toByte()
+        utf8[off + 2] = ((qF - (qG * 10L)) + '0'.code).toByte()
+        utf8[off + 1] = ((qG - (qH * 10L)) + '0'.code).toByte()
+        utf8[off + 0] = ((qH - (qI * 10L)) + '0'.code).toByte()
+
         return off + 9
     }
 
@@ -119,11 +166,11 @@ internal object Int256ParsePrint {
             var d = U32(w)
             var i = digitPrintCount - 1
             do {
-                val qA = (d * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
+                val qA = (d * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
                 val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-                val qB = (qA * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
+                val qB = (qA * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
                 val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-                val qC = (qB * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
+                val qC = (qB * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
                 val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
 
                 val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
