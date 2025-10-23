@@ -74,8 +74,8 @@ internal object Int256ParsePrint {
         return offT + digitLen
     }
 
-    private fun u64ToUtf8(digitLen: Int, dw0: Long, utf8: ByteArray, off: Int) {
-        val last = off + digitLen + (-digitLen shr 31)
+    internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
+        val last = off + digitPrintCount + (-digitPrintCount shr 31)
         val count = last + 1 - off
         var d = dw0
         var i = count - 1
@@ -97,6 +97,7 @@ internal object Int256ParsePrint {
             d = qC
             i -= 3
         } while (i >= 0)
+        return off + digitPrintCount
     }
 
     fun int256ToHexString(sign: Boolean, u: C256): String {
