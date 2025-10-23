@@ -5,10 +5,12 @@ package com.decimal128.decimal
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.StringLatin1Iterator
 import kotlin.math.max
-import kotlin.math.min
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
+
+private const val M_32_BIT_DIV_10 = 0xCCCCCCCDL
+private const val S_32_BIT_DIV_10 = 35
 
 private val SINGLE_DIGIT_NUMBERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -67,7 +69,7 @@ internal object Int256ParsePrint {
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
     }
 
-    fun intToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
+    fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
         var nAbs = n
         var offT = off
         if (n < 0) {
@@ -86,16 +88,14 @@ internal object Int256ParsePrint {
 
     internal fun u32ToUtf8(digitPrintCount: Int, w: Int, utf8: ByteArray, off: Int): Int {
         if (digitPrintCount in 1..10) {
-            val m = 0xCCCCCCCDuL.toLong()
-            val s = 35
             var d = U32(w)
             var i = digitPrintCount - 1
             do {
-                val qA = (d * m) ushr s
+                val qA = (d * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
                 val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-                val qB = (qA * m) ushr s
+                val qB = (qA * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
                 val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-                val qC = (qB * m) ushr s
+                val qC = (qB * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
                 val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
 
                 val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
@@ -108,7 +108,7 @@ internal object Int256ParsePrint {
                 d = qC
                 i -= 3
             } while (i >= 0)
-           return off + digitPrintCount
+            return off + digitPrintCount
         }
         throw IllegalArgumentException()
     }

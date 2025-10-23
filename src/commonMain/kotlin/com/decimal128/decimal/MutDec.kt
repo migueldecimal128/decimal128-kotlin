@@ -10,7 +10,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Class754.*
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
-import com.decimal128.decimal.DecEnv.Companion.DECIMAL128_ZERO_NAN_PAYLOAD
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
@@ -1031,7 +1030,7 @@ class MutDec() : C256() {
             ++i
         }
         utf8[i] = 'E'.code.toByte()
-        val j = Int256ParsePrint.intToUtf8(eExp, utf8, i+1)
+        val j = Int256ParsePrint.int32ToUtf8(eExp, utf8, i+1)
         check (j == utf8.size)
         return String(utf8)
     }
@@ -1066,7 +1065,7 @@ class MutDec() : C256() {
             }
         }
         utf8[i] = 'E'.code.toByte()
-        val j = Int256ParsePrint.intToUtf8(adjustedExp, utf8, i+1)
+        val j = Int256ParsePrint.int32ToUtf8(adjustedExp, utf8, i+1)
         check (j == utf8.size)
         return String(utf8)
     }
@@ -1104,7 +1103,7 @@ class MutDec() : C256() {
             val utf8 = ByteArray(printLen)
             val i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
             utf8[i] = 'E'.code.toByte()
-            val j = Int256ParsePrint.intToUtf8(qExp, utf8, i + 1)
+            val j = Int256ParsePrint.int32ToUtf8(qExp, utf8, i + 1)
             check(j == utf8.size)
             return String(utf8)
         } else {
