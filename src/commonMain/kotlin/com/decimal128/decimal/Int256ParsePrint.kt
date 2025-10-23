@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.hugeint.Latin1Iterator
@@ -13,6 +15,8 @@ private val SINGLE_DIGIT_NUMBERS =
         "-0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9")
 
 internal object Int256ParsePrint {
+
+    private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
     fun int256ToString(sign: Boolean, u: C256): String {
         val s = if (sign) 1 else 0
@@ -46,18 +50,18 @@ internal object Int256ParsePrint {
         val t = C256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
-            val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToUtf8(9, r, utf8, off + ich)
+            val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9).toInt()
+            u32ToUtf8(9, r, utf8, off + ich)
         }
         while (t.bitLen > 128) {
             val ich = t.digitLen - 9
-            val r = DivBarrett.barrettDivMod_32_192(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToUtf8(9, r, utf8, off + ich)
+            val r = DivBarrett.barrettDivMod_32_192(t, t, DIVISOR_1E9, MU_1E9).toInt()
+            u32ToUtf8(9, r, utf8, off + ich)
         }
         while (t.bitLen > 64) {
             val ich = t.digitLen - 9
-            val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
-            u64ToUtf8(9, r, utf8, off + ich)
+            val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9).toInt()
+            u32ToUtf8(9, r, utf8, off + ich)
         }
         check (t.bitLen > 0)
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
@@ -75,9 +79,8 @@ internal object Int256ParsePrint {
             utf8[offT] = ('0' + nAbs).code.toByte()
             return offT + 1
         }
-
-        val digitLen = U256Pow10.calcDigitLen64(nAbs.toLong())
-        u64ToUtf8(digitLen, nAbs.toLong(), utf8, offT)
+        val digitLen = U256Pow10.calcDigitLen64(U32(nAbs))
+        u32ToUtf8(digitLen, nAbs, utf8, offT)
         return offT + digitLen
     }
 
@@ -85,7 +88,7 @@ internal object Int256ParsePrint {
         if (digitPrintCount in 1..10) {
             val m = 0xCCCCCCCDuL.toLong()
             val s = 35
-            var d = w.toLong() and 0xFFFFFFFFL
+            var d = U32(w)
             var i = digitPrintCount - 1
             do {
                 val qA = (d * m) ushr s
