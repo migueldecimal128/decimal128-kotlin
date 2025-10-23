@@ -15,7 +15,7 @@ import java.lang.Math.min
 
 class TestC256ScaleDown {
 
-    val verbose = true
+    val verbose = false
 
     class TC(
         val biA: BigInteger, val pow10: Int, val sign: Boolean, val decRounding: DecRounding)

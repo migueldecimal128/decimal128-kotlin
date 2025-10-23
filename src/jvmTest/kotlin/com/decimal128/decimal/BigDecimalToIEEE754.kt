@@ -130,13 +130,14 @@ fun bdIsFinite(bd: BigDecimal) : Boolean {
     return eExp < MIN_SPECIAL_VALUE
 }
 
-fun bdToDecimal128String(bd: BigDecimal): String {
+fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): String {
     val decimal128 = bdToIeeeDecimal128(bd, RoundingMode.HALF_EVEN)
     val q = -decimal128.scale()
     val magnitude = decimal128.unscaledValue().abs()
     val signChar = if (decimal128.signum() < 0) '-' else '+'
     return when {
-        q < NON_FINITE_INF -> decimal128.toString()
+        q < NON_FINITE_INF && !toEngineeringExp -> decimal128.toString()
+        q < NON_FINITE_INF -> decimal128.toEngineeringString()
         q == NON_FINITE_INF -> signChar + "Inf"
         q == NON_FINITE_QNAN -> signChar + "NaN" + if (magnitude.bitLength() == 0) "" else magnitude
         q == NON_FINITE_SNAN -> signChar + "sNaN" + if (magnitude.bitLength() == 0) "" else magnitude

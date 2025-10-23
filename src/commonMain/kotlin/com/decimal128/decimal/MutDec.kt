@@ -979,12 +979,14 @@ class MutDec() : C256() {
     fun sameQuantum(x: MutDec) = (this.qExp == x.qExp)
 
     // FIXME ... implement this so that there are fewer memory allocations
-    override fun toString(): String {
+    override fun toString(): String = toString(toEngineeringExp = false)
+
+    fun toString(toEngineeringExp: Boolean): String {
         return when {
             qExp == 0 -> Int256ParsePrint.int256ToString(sign, this)
             qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString()
             qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
-            else -> toNormalizedScientificString()
+            else -> toScientificString(toEngineeringExp)
         }
     }
 
@@ -1030,6 +1032,41 @@ class MutDec() : C256() {
         }
         utf8[i] = 'E'.code.toByte()
         val j = Int256ParsePrint.intToUtf8(eExp, utf8, i+1)
+        check (j == utf8.size)
+        return String(utf8)
+    }
+
+    private /*inline*/ fun toScientificString(toEngineeringExp: Boolean): String {
+        val eExp = sciExp()
+        val expAdjustment = if (toEngineeringExp) (if (eExp >= 0) eExp else ((eExp % 3) + 3)) % 3 else 0
+        val leftOfRadixPointCount = 1 + expAdjustment
+        val adjustedExp = eExp - expAdjustment
+        val signLen = if (sign) 1 else 0
+        val decimalPointLen = if (digitLen > 1) 1 else 0
+        val printedDigitLen = Math.max(digitLen, 1)
+        val additionalLeftOfPointZeroCount = max(0, 1 + expAdjustment - digitLen)
+        val expELen = 1
+        val expSignLen = if (eExp < 0) 1 else 0
+        val expDigitLen = Math.max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
+                printedDigitLen + expELen + expSignLen + expDigitLen
+        val utf8 = ByteArray(totalLen)
+        var i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+        when {
+            additionalLeftOfPointZeroCount > 0 ->  {
+                utf8[i++] = '0'.code.toByte()
+                if (additionalLeftOfPointZeroCount == 2)
+                    utf8[i++] = '0'.code.toByte()
+            }
+            digitLen > leftOfRadixPointCount -> {
+                val insertionPoint = signLen + 1
+                moveBytesUp1(utf8, insertionPoint, digitLen - 1)
+                utf8[insertionPoint] = '.'.code.toByte()
+                ++i
+            }
+        }
+        utf8[i] = 'E'.code.toByte()
+        val j = Int256ParsePrint.intToUtf8(adjustedExp, utf8, i+1)
         check (j == utf8.size)
         return String(utf8)
     }
