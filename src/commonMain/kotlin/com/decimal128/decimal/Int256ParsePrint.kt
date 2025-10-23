@@ -34,6 +34,10 @@ internal object Int256ParsePrint {
 
     fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int) {
         if (u.bitLen <= 64) {
+            if (u.bitLen == 0) {
+                utf8[off] = '0'.code.toByte()
+                return
+            }
             u64ToUtf8(u.digitLen, u.dw0, utf8, off)
             return
         }
@@ -75,12 +79,28 @@ internal object Int256ParsePrint {
     }
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
-        if (digitPrintCount in 1..19) {
-            val last = off + digitPrintCount + (-digitPrintCount shr 31)
-            val count = last + 1 - off
+        if (digitPrintCount in 1..20) {
             var d = dw0
-            var i = count - 1
-            do {
+            var i = digitPrintCount - 1
+            while (i >= 3) {
+                val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+                val digitA = ((d - (qA * 10L)) + '0'.code).toByte()
+                val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+                val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
+                val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+                val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
+                val qD = unsignedMulHi(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
+                val digitD = ((qC - (qD * 10L)) + '0'.code).toByte()
+
+                utf8[off + i - 3] = digitD
+                utf8[off + i - 2] = digitC
+                utf8[off + i - 1] = digitB
+                utf8[off + i    ] = digitA
+
+                d = qD
+                i -= 4
+            }
+            if (i >= 0) {
                 val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
                 val digitA = ((d - (qA * 10L)) + '0'.code).toByte()
                 val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
@@ -88,20 +108,15 @@ internal object Int256ParsePrint {
                 val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
                 val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
 
-                val tC = i - 2;
-                val maskC = -tC shr 31;
-                val iC = tC and maskC
                 val tB = i - 1;
                 val maskB = -tB shr 31;
                 val iB = tB and maskB
 
-                utf8[off + iC] = digitC
+                utf8[off     ] = digitC
                 utf8[off + iB] = digitB
-                utf8[off + i] = digitA
+                utf8[off + i ] = digitA
 
-                d = qC
-                i -= 3
-            } while (i >= 0)
+            }
             return off + digitPrintCount
         }
         throw IllegalArgumentException()

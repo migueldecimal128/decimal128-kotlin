@@ -14,4 +14,13 @@ class TestU64ToUtf8 {
             println("digitCount:$digitCount str:$str str2:$str2")
         }
     }
+
+    @Test
+    fun testProblemChild() {
+        val utf8 = ByteArray(21) { 'x'.code.toByte() }
+        val ret = Int256ParsePrint.u64ToUtf8(2, 45L, utf8, 1)
+        val str = String(utf8)
+        val str2 = String(utf8, 1, ret-1)
+        println("str:$str str2:$str2")
+    }
 }
