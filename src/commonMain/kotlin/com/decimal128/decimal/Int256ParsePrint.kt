@@ -42,7 +42,11 @@ internal object Int256ParsePrint {
     fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int) {
         if (u.bitLen <= 64) {
             if (u.bitLen <= 32) {
-                u32ToUtf8(max(1, u.digitLen), u.dw0.toInt(), utf8, off)
+                if (u.bitLen > 0) {
+                    u32ToUtf8(u.digitLen, u.dw0.toInt(), utf8, off)
+                    return
+                }
+                utf8[off] = '0'.code.toByte()
                 return
             }
             u64ToUtf8(u.digitLen, u.dw0, utf8, off)
@@ -52,18 +56,18 @@ internal object Int256ParsePrint {
         val t = C256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
-            val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9).toInt()
-            u32ToUtf8(9, r, utf8, off + ich)
+            val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
+            nineDigitsToUtf8(r, utf8, off + ich)
         }
         while (t.bitLen > 128) {
             val ich = t.digitLen - 9
-            val r = DivBarrett.barrettDivMod_32_192(t, t, DIVISOR_1E9, MU_1E9).toInt()
-            u32ToUtf8(9, r, utf8, off + ich)
+            val r = DivBarrett.barrettDivMod_32_192(t, t, DIVISOR_1E9, MU_1E9)
+            nineDigitsToUtf8(r, utf8, off + ich)
         }
         while (t.bitLen > 64) {
             val ich = t.digitLen - 9
-            val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9).toInt()
-            u32ToUtf8(9, r, utf8, off + ich)
+            val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
+            nineDigitsToUtf8(r, utf8, off + ich)
         }
         check (t.bitLen > 0)
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
@@ -84,6 +88,30 @@ internal object Int256ParsePrint {
         val digitLen = U256Pow10.calcDigitLen64(U32(nAbs))
         u32ToUtf8(digitLen, nAbs, utf8, offT)
         return offT + digitLen
+    }
+
+    private fun nineDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int): Int {
+        var d = dw and 0xFFFF_FFFFL
+        var i = 8
+        do {
+            val qA = (d * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
+            val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
+            val qB = (qA * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
+            val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
+            val qC = (qB * M_32_BIT_DIV_10) ushr S_32_BIT_DIV_10
+            val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
+
+            val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
+            val tB = i - 1; val maskB = -tB shr 31; val iB = tB and maskB
+
+            utf8[off + iC] = digitC
+            utf8[off + iB] = digitB
+            utf8[off + i] = digitA
+
+            d = qC
+            i -= 3
+        } while (i >= 0)
+        return off + 9
     }
 
     internal fun u32ToUtf8(digitPrintCount: Int, w: Int, utf8: ByteArray, off: Int): Int {
