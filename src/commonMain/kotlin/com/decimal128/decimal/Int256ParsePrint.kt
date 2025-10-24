@@ -191,6 +191,31 @@ internal object Int256ParsePrint {
         utf8[off + 3] = (d.toInt() + '0'.code).toByte()
     }
 
+    private fun zeroTo4DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
+        val abcd = dw
+
+        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100L)
+
+        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val b = ab - (a * 10L)
+
+        val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val d = cd - (c * 10L)
+
+        val firstByte = utf8[off]
+
+        val tA = digitPrintCount - 4; val maskA = -tA shr 31; val iA = tA and maskA
+        utf8[off + iA] = (a.toInt() + '0'.code).toByte()
+        val tB = digitPrintCount - 3; val maskB = -tB shr 31; val iB = tB and maskB
+        utf8[off + iB] = (b.toInt() + '0'.code).toByte()
+        val tC = digitPrintCount - 2; val maskC = -tC shr 31; val iC = tC and maskC
+        utf8[off + iC] = (c.toInt() + '0'.code).toByte()
+        val tD = digitPrintCount - 1; val maskD = -tD shr 31; val iD = tD and maskD
+        val bD = (d.toInt() + '0'.code).toByte()
+        utf8[off + iD] = if (digitPrintCount == 0) firstByte else bD
+    }
+
     private inline fun twoDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
         val ab = dw
 
@@ -245,8 +270,7 @@ internal object Int256ParsePrint {
                 offT -= 8
                 eightDigitsToUtf8_tree(low8, utf8, offT)
             }
-
-            if (remainingCount >= 4) {
+            if (remainingCount > 4) {
                 val dwT = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
                 val low4 = dw - (dwT * 10000L)
                 dw = dwT
@@ -254,19 +278,7 @@ internal object Int256ParsePrint {
                 offT -= 4
                 fourDigitsToUtf8_tree(low4, utf8, offT)
             }
-
-            if (remainingCount >= 2) {
-                val dwT = (dw * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-                val low2 = dw - (dwT * 100L)
-                dw = dwT
-                remainingCount -= 2
-                offT -= 2
-                twoDigitsToUtf8_tree(low2, utf8, offT)
-            }
-
-            if (remainingCount == 1) {
-                utf8[off] = (dw.toInt() + '0'.code).toByte()
-            }
+            zeroTo4DigitsToUtf8(remainingCount, dw, utf8, off)
             return digitPrintCount
         }
         throw IllegalArgumentException()
