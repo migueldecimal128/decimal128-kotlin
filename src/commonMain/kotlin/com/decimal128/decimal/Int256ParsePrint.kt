@@ -16,8 +16,10 @@ private const val M_U32_DIV_1E2 = 0x51EB851FL
 private const val S_U32_DIV_1E2 = 37
 
 private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
-private const val S_U64_DIV_1E4 = 11
+private const val S_U64_DIV_1E4 = 11 // + 64 high
 
+private const val M_U64_DIV_1E8 = -6067343680855748867 // (0xABCC77118461CEFD)
+private const val S_U64_DIV_1E8 = 26 // + 64 high
 
 private val SINGLE_DIGIT_NUMBERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -137,29 +139,68 @@ internal object Int256ParsePrint {
 
     }
 
-    private fun nineDigitsToUtf8_sequential(dw: Long, utf8: ByteArray, off: Int): Int {
-        val qA = (dw * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qB = (qA * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qC = (qB * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qD = (qC * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qE = (qD * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qF = (qE * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qG = (qF * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qH = (qG * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val qI = (qH * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+    private fun eightDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
+        val abcdefgh = dw
 
-        utf8[off + 8] = ((dw - (qA * 10L)) + '0'.code).toByte()
-        utf8[off + 7] = ((qA - (qB * 10L)) + '0'.code).toByte()
-        utf8[off + 6] = ((qB - (qC * 10L)) + '0'.code).toByte()
-        utf8[off + 5] = ((qC - (qD * 10L)) + '0'.code).toByte()
-        utf8[off + 4] = ((qD - (qE * 10L)) + '0'.code).toByte()
-        utf8[off + 3] = ((qE - (qF * 10L)) + '0'.code).toByte()
-        utf8[off + 2] = ((qF - (qG * 10L)) + '0'.code).toByte()
-        utf8[off + 1] = ((qG - (qH * 10L)) + '0'.code).toByte()
-        utf8[off + 0] = ((qH - (qI * 10L)) + '0'.code).toByte()
+        val abcd = unsignedMulHi(abcdefgh, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val efgh  = abcdefgh - (abcd * 10000L)
 
-        return off + 9
+        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100L)
+
+        val ef = (efgh * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val gh = efgh - (ef * 100L)
+
+        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val b = ab - (a * 10L)
+
+        val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val d = cd - (c * 10L)
+
+        val e = (ef * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val f = ef - (e * 10L)
+
+        val g = (gh * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val h = gh - (g * 10L)
+
+        utf8[off + 0] = (a.toInt() + '0'.code).toByte()
+        utf8[off + 1] = (b.toInt() + '0'.code).toByte()
+        utf8[off + 2] = (c.toInt() + '0'.code).toByte()
+        utf8[off + 3] = (d.toInt() + '0'.code).toByte()
+        utf8[off + 4] = (e.toInt() + '0'.code).toByte()
+        utf8[off + 5] = (f.toInt() + '0'.code).toByte()
+        utf8[off + 6] = (g.toInt() + '0'.code).toByte()
+        utf8[off + 7] = (h.toInt() + '0'.code).toByte()
     }
+
+    private fun fourDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
+        val abcd = dw
+
+        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100L)
+
+        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val b = ab - (a * 10L)
+
+        val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val d = cd - (c * 10L)
+
+        utf8[off + 0] = (a.toInt() + '0'.code).toByte()
+        utf8[off + 1] = (b.toInt() + '0'.code).toByte()
+        utf8[off + 2] = (c.toInt() + '0'.code).toByte()
+        utf8[off + 3] = (d.toInt() + '0'.code).toByte()
+    }
+
+    private inline fun twoDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
+        val ab = dw
+
+        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val b = ab - (a * 10L)
+
+        utf8[off + 0] = (a.toInt() + '0'.code).toByte()
+        utf8[off + 1] = (b.toInt() + '0'.code).toByte()
+    }
+
 
     internal fun u32ToUtf8(digitPrintCount: Int, w: Int, utf8: ByteArray, off: Int): Int {
         if (digitPrintCount in 1..10) {
@@ -188,7 +229,52 @@ internal object Int256ParsePrint {
         throw IllegalArgumentException()
     }
 
-    internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
+    internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int =
+        u64ToUtf8_tree(digitPrintCount, dw0, utf8, off)
+
+    internal fun u64ToUtf8_tree(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
+        if (digitPrintCount in 1..20) {
+            var dw = dw0
+            var remainingCount = digitPrintCount
+            var offT = off + digitPrintCount
+            while (remainingCount >= 8) {
+                val dwT = unsignedMulHi(dw, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
+                val low8 = dw - (dwT * 100000000L)
+                dw = dwT
+                remainingCount -= 8
+                offT -= 8
+                eightDigitsToUtf8_tree(low8, utf8, offT)
+            }
+
+            if (remainingCount >= 4) {
+                val dwT = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+                val low4 = dw - (dwT * 10000L)
+                dw = dwT
+                remainingCount -= 4
+                offT -= 4
+                fourDigitsToUtf8_tree(low4, utf8, offT)
+            }
+
+            if (remainingCount >= 2) {
+                val dwT = (dw * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+                val low2 = dw - (dwT * 100L)
+                dw = dwT
+                remainingCount -= 2
+                offT -= 2
+                twoDigitsToUtf8_tree(low2, utf8, offT)
+            }
+
+            if (remainingCount == 1) {
+                utf8[off] = (dw.toInt() + '0'.code).toByte()
+            }
+            return digitPrintCount
+        }
+        throw IllegalArgumentException()
+    }
+
+    internal fun u64ToUtf8_sequential(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
+        val z = C256()
+        DivMagic.magicDivPow10_64(z, dw0, 8)
         if (digitPrintCount in 1..20) {
             var d = dw0
             var i = digitPrintCount - 1
