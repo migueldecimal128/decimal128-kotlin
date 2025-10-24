@@ -21,6 +21,9 @@ private const val S_U64_DIV_1E4 = 11 // + 64 high
 private const val M_U64_DIV_1E8 = -6067343680855748867 // (0xABCC77118461CEFD)
 private const val S_U64_DIV_1E8 = 26 // + 64 high
 
+private const val M_U64_DIV_1E10 = -2601111570856684097 // (0xDBE6FECEBDEDD5BF)
+private const val S_U64_DIV_1E10 = 33
+
 private val SINGLE_DIGIT_NUMBERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
         "-0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9")
@@ -39,6 +42,16 @@ internal object Int256ParsePrint {
         } else {
             return SINGLE_DIGIT_NUMBERS[(10 and -s) + u.dw0.toInt()]
         }
+    }
+
+    fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
+        val dwAbs = U32((n xor (n shr 31)) - (n shr 31))
+        val offT = off + (n ushr 31)
+        utf8[off] = '-'.code.toByte()
+        val digitLen = U256Pow10.calcDigitLen64(dwAbs)
+        val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
+        zeroTo10DigitsToUtf8(digitPrintCount, dwAbs, utf8, offT)
+        return offT + digitPrintCount
     }
 
     fun int256ToUtf8(sign: Boolean, u: C256, utf8: ByteArray, off: Int): Int {
@@ -82,23 +95,6 @@ internal object Int256ParsePrint {
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
     }
 
-    fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
-        var nAbs = n
-        var offT = off
-        if (n < 0) {
-            nAbs = -n
-            offT = off + 1
-            utf8[off] = '-'.code.toByte()
-        }
-        if (nAbs < 10) {
-            utf8[offT] = ('0' + nAbs).code.toByte()
-            return offT + 1
-        }
-        val digitLen = U256Pow10.calcDigitLen64(U32(nAbs))
-        u32ToUtf8(digitLen, nAbs, utf8, offT)
-        return offT + digitLen
-    }
-
     private fun nineDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int) =
         nineDigitsToUtf8_tree(dw, utf8, off)
 
@@ -139,7 +135,7 @@ internal object Int256ParsePrint {
 
     }
 
-    private fun eightDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
+    private fun eightDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int) {
         val abcdefgh = dw
 
         val abcd = unsignedMulHi(abcdefgh, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
@@ -191,29 +187,145 @@ internal object Int256ParsePrint {
         utf8[off + 3] = (d.toInt() + '0'.code).toByte()
     }
 
-    private fun zeroTo4DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
+    private inline fun zeroTo4DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
         val abcd = dw
 
         val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
         val cd = abcd - (ab * 100L)
 
-        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val b = ab - (a * 10L)
+        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val a = aDw.toInt()
+        val b = (ab - (aDw * 10L)).toInt()
 
-        val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val d = cd - (c * 10L)
-
-        val firstByte = utf8[off]
+        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = cDw.toInt()
+        val d = (cd - (cDw * 10L)).toInt()
 
         val tA = digitPrintCount - 4; val maskA = -tA shr 31; val iA = tA and maskA
-        utf8[off + iA] = (a.toInt() + '0'.code).toByte()
         val tB = digitPrintCount - 3; val maskB = -tB shr 31; val iB = tB and maskB
-        utf8[off + iB] = (b.toInt() + '0'.code).toByte()
         val tC = digitPrintCount - 2; val maskC = -tC shr 31; val iC = tC and maskC
-        utf8[off + iC] = (c.toInt() + '0'.code).toByte()
         val tD = digitPrintCount - 1; val maskD = -tD shr 31; val iD = tD and maskD
-        val bD = (d.toInt() + '0'.code).toByte()
-        utf8[off + iD] = if (digitPrintCount == 0) firstByte else bD
+
+        val firstByte = utf8[off].toInt()
+
+        utf8[off + iA] = (a + '0'.code).toByte()
+        utf8[off + iB] = (b + '0'.code).toByte()
+        utf8[off + iC] = (c + '0'.code).toByte()
+        val digitCountNonZeroMask = -digitPrintCount shr 31
+        val bD = d + '0'.code
+        utf8[off + iD] = ((bD and digitCountNonZeroMask) or (firstByte and digitCountNonZeroMask.inv())).toByte()
+     }
+
+    private inline fun zeroTo8DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
+        val abcdefgh = dw
+
+        val abcd = unsignedMulHi(abcdefgh, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val efgh  = abcdefgh - (abcd * 10000L)
+
+        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100L)
+
+        val ef = (efgh * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val gh = efgh - (ef * 100L)
+
+        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val a = aDw.toInt()
+        val b = (ab - (aDw * 10L)).toInt()
+
+        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = cDw.toInt()
+        val d = (cd - (cDw * 10L)).toInt()
+
+        val eDw = (ef * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val e = eDw.toInt()
+        val f = (ef - (eDw * 10L)).toInt()
+
+        val gDw = (gh * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val g = gDw.toInt()
+        val h = (gh - (gDw * 10L)).toInt()
+
+        val tA = digitPrintCount - 8; val maskA = -tA shr 31; val iA = tA and maskA
+        val tB = digitPrintCount - 7; val maskB = -tB shr 31; val iB = tB and maskB
+        val tC = digitPrintCount - 6; val maskC = -tC shr 31; val iC = tC and maskC
+        val tD = digitPrintCount - 5; val maskD = -tD shr 31; val iD = tD and maskD
+        val tE = digitPrintCount - 4; val maskE = -tE shr 31; val iE = tE and maskE
+        val tF = digitPrintCount - 3; val maskF = -tF shr 31; val iF = tF and maskF
+        val tG = digitPrintCount - 2; val maskG = -tG shr 31; val iG = tG and maskG
+        val tH = digitPrintCount - 1; val maskH = -tH shr 31; val iH = tH and maskH
+
+        val firstByte = utf8[off].toInt()
+
+        utf8[off + iA] = (a + '0'.code).toByte()
+        utf8[off + iB] = (b + '0'.code).toByte()
+        utf8[off + iC] = (c + '0'.code).toByte()
+        utf8[off + iD] = (d + '0'.code).toByte()
+        utf8[off + iE] = (e + '0'.code).toByte()
+        utf8[off + iF] = (f + '0'.code).toByte()
+        utf8[off + iG] = (g + '0'.code).toByte()
+        val digitCountNonZeroMask = -digitPrintCount shr 31
+        val bH = h + '0'.code
+        utf8[off + iH] = ((bH and digitCountNonZeroMask) or (firstByte and digitCountNonZeroMask.inv())).toByte()
+    }
+
+    private fun zeroTo10DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
+        val abcdefghij = dw
+
+        val abcdef = unsignedMulHi(abcdefghij, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val ab     = unsignedMulHi(abcdef,     M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val cdef   = abcdef     - (ab     * 10000L)
+        val ghij   = abcdefghij - (abcdef * 10000L)
+
+        val cd = (cdef * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val ef = cdef - (cd * 100L)
+
+        val gh = (ghij * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val ij = ghij - (gh * 100L)
+
+        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val a = aDw.toInt()
+        val b = (ab - (aDw * 10L)).toInt()
+
+        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = cDw.toInt()
+        val d = (cd - (cDw * 10L)).toInt()
+
+        val eDw = (ef * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val e = eDw.toInt()
+        val f = (ef - (eDw * 10L)).toInt()
+
+        val gDw = (gh * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val g = gDw.toInt()
+        val h = (gh - (gDw * 10L)).toInt()
+
+        val iDw = (ij * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val i = iDw.toInt()
+        val j = (ij - (iDw * 10L)).toInt()
+
+        val tA = digitPrintCount - 10; val maskA = -tA shr 31; val iA = tA and maskA
+        val tB = digitPrintCount -  9; val maskB = -tB shr 31; val iB = tB and maskB
+        val tC = digitPrintCount -  8; val maskC = -tC shr 31; val iC = tC and maskC
+        val tD = digitPrintCount -  7; val maskD = -tD shr 31; val iD = tD and maskD
+        val tE = digitPrintCount -  6; val maskE = -tE shr 31; val iE = tE and maskE
+        val tF = digitPrintCount -  5; val maskF = -tF shr 31; val iF = tF and maskF
+        val tG = digitPrintCount -  4; val maskG = -tG shr 31; val iG = tG and maskG
+        val tH = digitPrintCount -  3; val maskH = -tH shr 31; val iH = tH and maskH
+        val tI = digitPrintCount -  2; val maskI = -tI shr 31; val iI = tI and maskI
+        val tJ = digitPrintCount -  1; val maskJ = -tJ shr 31; val iJ = tJ and maskJ
+
+        val firstByte = utf8[off].toInt()
+
+        utf8[off + iA] = (a + '0'.code).toByte()
+        utf8[off + iB] = (b + '0'.code).toByte()
+        utf8[off + iC] = (c + '0'.code).toByte()
+        utf8[off + iD] = (d + '0'.code).toByte()
+        utf8[off + iE] = (e + '0'.code).toByte()
+        utf8[off + iF] = (f + '0'.code).toByte()
+        utf8[off + iG] = (g + '0'.code).toByte()
+        utf8[off + iH] = (h + '0'.code).toByte()
+        utf8[off + iI] = (i + '0'.code).toByte()
+        val digitCountNonZeroMask = -digitPrintCount shr 31
+        val bJ = j + '0'.code
+        utf8[off + iJ] = ((bJ and digitCountNonZeroMask) or (firstByte and digitCountNonZeroMask.inv())).toByte()
     }
 
     private inline fun twoDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
@@ -255,7 +367,7 @@ internal object Int256ParsePrint {
     }
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int =
-        u64ToUtf8_tree(digitPrintCount, dw0, utf8, off)
+        u64ToUtf8_sequential(digitPrintCount, dw0, utf8, off)
 
     internal fun u64ToUtf8_tree(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
         if (digitPrintCount in 1..20) {
@@ -268,7 +380,7 @@ internal object Int256ParsePrint {
                 dw = dwT
                 remainingCount -= 8
                 offT -= 8
-                eightDigitsToUtf8_tree(low8, utf8, offT)
+                eightDigitsToUtf8(low8, utf8, offT)
             }
             if (remainingCount > 4) {
                 val dwT = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
@@ -282,6 +394,20 @@ internal object Int256ParsePrint {
             return digitPrintCount
         }
         throw IllegalArgumentException()
+    }
+
+    internal fun u64ToUtf8_wot(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
+        check (digitPrintCount in 1..20)
+        if (digitPrintCount <= 10) {
+            zeroTo10DigitsToUtf8(digitPrintCount, dw0, utf8, off)
+            return digitPrintCount
+        }
+        val hi10 = unsignedMulHi(dw0, M_U64_DIV_1E10) ushr S_U64_DIV_1E10
+        val lo10 = dw0 - (hi10 * 10000000000L)
+        check (hi10 == unsignedDiv(dw0, 10000000000L))
+        zeroTo10DigitsToUtf8(digitPrintCount - 10, hi10, utf8, off)
+        zeroTo10DigitsToUtf8(10, lo10, utf8, off + digitPrintCount - 10)
+        return digitPrintCount
     }
 
     internal fun u64ToUtf8_sequential(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
