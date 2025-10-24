@@ -220,11 +220,12 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
     }
 
-    fun c256Set(x: C256) {
+    fun c256Set(x: C256): C256 {
         dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
         //packedLengths = x.packedLengths
         bitLen = x.bitLen
         digitLen = x.digitLen
+        return this
     }
 
 

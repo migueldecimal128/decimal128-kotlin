@@ -11,6 +11,17 @@ private const val SPECIAL_NAMES =
     ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16) or
             ('s'.code.toLong() shl 24) or ('N'.code.toLong() shl 32) or ('a'.code.toLong() shl 40) or ('N'.code.toLong() shl 48)
 
+private const val UPPER_CASE_MASK = ('a'.code - 'A'.code).inv()
+
+private const val INFINITY_CHARS_BACKWARDS = (('y'.code.toLong() shl 56) or ('t'.code.toLong() shl 48) or
+        ('i'.code.toLong() shl 40) or ('n'.code.toLong() shl 32) or
+        ('i'.code.toLong() shl 24) or ('f'.code.toLong() shl 16) or
+        ('n'.code.toLong() shl 16) or ('I'.code.toLong()))
+
+private const val QNAN_CHARS_BACKWARDS = (
+        ('N'.code.toLong() shl 24) or ('a'.code.toLong() shl 16) or
+        ('N'.code.toLong() shl 16) or ('q'.code.toLong()))
+
 private fun u64ToUtf8(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
     val last = off + digitLen + (-digitLen shr 31)
     val count = last + 1 - off
@@ -56,83 +67,105 @@ object DecimalParsePrint {
         return String(bytes, 0, cb)
     }
 
-    fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int) : Int {
+    fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int) =
+        decToUtf8(x, bytes, off, len, DecPrefs.DEFAULT)
+
+    fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int, prefs: DecPrefs, tmp: C256? = null) : Int {
         if (off < 0 || len < 0)
             throw IllegalArgumentException()
         val q = x.qExp
-        insufficient_buffer@
-        do {
-            val limit = off + len
-            val dw0 = x.dw0
-            val signByte = if (x.sign) BYTE_MINUS else BYTE_PLUS
-            bytes[off] = signByte
-            var exp = q
-            var ib = off + if (x.sign) 1 else 0
-            if (q >= NON_FINITE_INF) {
-                val isSNaN = if (q == NON_FINITE_SNAN) 1 else 0
-                val shift = ((NON_FINITE_INF - q) shr 31) and (32 - (isSNaN shl 3))
-                val chars = SPECIAL_NAMES ushr shift
-                bytes[off + 1] = chars.toByte()
-                bytes[off + 2] = (chars ushr  8).toByte()
-                bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
-                bytes[off + 3] = (chars ushr 16).toByte()
-                ib = 4 + isSNaN
-                if (q == NON_FINITE_INF || x.c256IsZero())
-                    return ib - off
-                // drop thru to add NaN payload
-                exp = 0
-            }
-            val xDigitLen = x.digitLen
-            val scale = -q
-            val e = q + xDigitLen  + (-xDigitLen shr 31)
-            val isInteger = scale == 0
-            // one more case here ... isSciInteger == is single digit significand with exponent
-            val isSciDecimal = !isInteger && (scale < 0 || e < -6) && xDigitLen > 1
-            val isNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > q && e >= -6
-            val isNonSciDecimalLT1 = isNonSciDecimal && scale >= xDigitLen
-            val isNonSciDecimalGE1 = isNonSciDecimal && scale < xDigitLen
-            if (isNonSciDecimalLT1) {
-                val zeroCount = 2 + -e - 1
-                bytes.fill(BYTE_ZERO, ib, ib + zeroCount)
-                bytes[ib + 1] = BYTE_DOT
-                ib += zeroCount
-            } else if (isSciDecimal) {
-                ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
-            }
-            // render integer coeff, including a single 0
-            if (len - ib < x.digitLen)
-                break@insufficient_buffer
-            Int256ParsePrint.u256ToUtf8(x, bytes, ib)
-            ib += max(x.digitLen, 1) // if x.digitLen == 0 then 1
-            if (isNonSciDecimal) {
-                if (isNonSciDecimalGE1) {
-                    val decimalIndex = ib - scale
-                    System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
-                    bytes[decimalIndex] = BYTE_DOT
-                    ++ib
-                }
+        val limit = off + len
+        val dw0 = x.dw0
+        val signByte = if (x.sign) BYTE_MINUS else BYTE_PLUS
+        bytes[off] = signByte
+        var exp = q
+        var ib = off + if (x.sign) 1 else 0
+        if (q >= NON_FINITE_INF) {
+            val isSNaN = if (q == NON_FINITE_SNAN) 1 else 0
+            val shift = ((NON_FINITE_INF - q) shr 31) and (32 - (isSNaN shl 3))
+            val chars = SPECIAL_NAMES ushr shift
+            bytes[off + 1] = chars.toByte()
+            bytes[off + 2] = (chars ushr  8).toByte()
+            bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
+            bytes[off + 3] = (chars ushr 16).toByte()
+            ib = 4 + isSNaN
+            if (q == NON_FINITE_INF || x.c256IsZero())
                 return ib - off
-            }
-            if (isSciDecimal) {
-                val coeffStart = off + if (x.sign) 1 else 0
-                bytes[coeffStart] = bytes[coeffStart + 1]
-                bytes[coeffStart + 1] = BYTE_DOT
-                exp = e
-            }
-            if (exp != 0) {
-                if (limit - ib < 3)
-                    break@insufficient_buffer
-                bytes[ib++] = 'E'.code.toByte()
-                val expSignChar = if (exp < 0) BYTE_MINUS else BYTE_PLUS
-                // FIXME - figure out what to do about the sign char
-                bytes[ib] = expSignChar
-                ib += if (exp < 0) 0 else 1
-                val wtf =  int32ToUtf8(exp, bytes, ib)
-                ib += wtf
+            // drop thru to add NaN payload
+            exp = 0
+        }
+        val xDigitLen = x.digitLen
+        val scale = -q
+        val e = q + xDigitLen  + (-xDigitLen shr 31)
+        val isInteger = scale == 0
+        // one more case here ... isSciInteger == is single digit significand with exponent
+        val isSciDecimal = !isInteger && (scale < 0 || e < -6) && xDigitLen > 1
+        val isNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > q && e >= -6
+        val isNonSciDecimalLT1 = isNonSciDecimal && scale >= xDigitLen
+        val isNonSciDecimalGE1 = isNonSciDecimal && scale < xDigitLen
+        if (isNonSciDecimalLT1) {
+            val zeroCount = 2 + -e - 1
+            bytes.fill(BYTE_ZERO, ib, ib + zeroCount)
+            bytes[ib + 1] = BYTE_DOT
+            ib += zeroCount
+        } else if (isSciDecimal) {
+            ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
+        }
+        // render integer coeff, including a single 0
+        ib += Int256ParsePrint.u256ToUtf8(x, bytes, ib, tmp)
+        if (isNonSciDecimal) {
+            if (isNonSciDecimalGE1) {
+                val decimalIndex = ib - scale
+                System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
+                bytes[decimalIndex] = BYTE_DOT
+                ++ib
             }
             return ib - off
-        } while (false)
-        throw RuntimeException("insufficient buffer space")
+        }
+        if (isSciDecimal) {
+            val coeffStart = off + if (x.sign) 1 else 0
+            bytes[coeffStart] = bytes[coeffStart + 1]
+            bytes[coeffStart + 1] = BYTE_DOT
+            exp = e
+        }
+        if (exp != 0) {
+            bytes[ib++] = 'E'.code.toByte()
+            val expSignChar = if (exp < 0) BYTE_MINUS else BYTE_PLUS
+            // FIXME - figure out what to do about the sign char
+            bytes[ib] = expSignChar
+            ib += if (exp < 0) 0 else 1
+            val wtf =  int32ToUtf8(exp, bytes, ib)
+            ib += wtf
+        }
+        return ib - off
+    }
+
+    private fun nonFiniteToUtf8(z: MutDec, utf8: ByteArray, off: Int, prefs: DecPrefs): Int {
+        var ib = off
+        // write the sign ... but it might be overwritten
+        utf8[off] = (if (z.sign) '-' else '+').code.toByte()
+        if (z.qExp == NON_FINITE_INF) {
+            ib += if (z.sign or prefs.printInfinityPlusSign) 1 else 0
+            var charLen = if (prefs.printInfinity8Chars) 8 else 3
+            var shifter = INFINITY_CHARS_BACKWARDS
+            val upperCaseMask = if (prefs.printInfinityAllCaps) UPPER_CASE_MASK else 0x7F
+            do {
+                utf8[ib++] = (shifter.toInt() and upperCaseMask).toByte()
+                shifter = shifter ushr 8
+                --charLen
+            } while (charLen > 0)
+            return ib - off
+        }
+        ib += if (prefs.printNaNSign and (z.sign or prefs.printNaNPlusSign)) 1 else 0
+        val upperCaseMask = if (prefs.printNaNAllCaps) UPPER_CASE_MASK else 0x7F
+        utf8[ib  ] = ('s'.code or upperCaseMask).toByte()
+        ib += if ((z.qExp == NON_FINITE_SNAN) && !prefs.printCollapseSNaN) 1 else 0
+        utf8[ib++] =  'N'.code.toByte()
+        utf8[ib++] = ('a'.code or upperCaseMask).toByte()
+        utf8[ib++] =  'N'.code.toByte()
+        if (z.bitLen > 0)
+            ib += Int256ParsePrint.u256ToUtf8(z, utf8, ib)
+        return ib - off
     }
 
     fun decFromString(x: MutDec, str: String, env: DecEnv) =

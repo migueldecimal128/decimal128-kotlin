@@ -61,21 +61,21 @@ internal object Int256ParsePrint {
         return off + s + Math.max(1, u.digitLen)
     }
 
-    fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int) {
+    fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int, tmp: C256? = null): Int {
+        val digitLen = u.digitLen
         if (u.bitLen <= 64) {
             if (u.bitLen <= 32) {
                 if (u.bitLen > 0) {
                     u32ToUtf8(u.digitLen, u.dw0.toInt(), utf8, off)
-                    return
+                    return digitLen
                 }
                 utf8[off] = '0'.code.toByte()
-                return
+                return 1
             }
             u64ToUtf8(u.digitLen, u.dw0, utf8, off)
-            return
+            return digitLen
         }
-        // FIXME ... this should come from the current DecEnv
-        val t = C256(u)
+        val t: C256 = tmp?.c256Set(u) ?: C256(u)
         while (t.bitLen > 192) {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
@@ -93,6 +93,7 @@ internal object Int256ParsePrint {
         }
         check (t.bitLen > 0)
         u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
+        return digitLen
     }
 
     private fun nineDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int) =

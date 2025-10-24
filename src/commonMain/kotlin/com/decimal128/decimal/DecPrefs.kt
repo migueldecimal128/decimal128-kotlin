@@ -6,17 +6,17 @@ data class DecPrefs(
     val printExponentPlus: Boolean = false,
     val printUppercaseE: Boolean = true,
 
-    val printNanSign: Boolean = true,
+    val printInfinityPlusSign: Boolean = false,
+    val printInfinityAllCaps: Boolean = false,
+    val printInfinity8Chars: Boolean = false,
+
+    val printNaNSign: Boolean = true,
     val printNaNPayload: Boolean = true,
     val printNaNPlusSign: Boolean = false,
-    val printNaNTextCase: TextCase = TextCase.MIXED_CASE,
+    val printNaNAllCaps: Boolean = false,
     val printCollapseSNaN: Boolean = false,
     val parseCollapseSNaN: Boolean = false,
     val parseDiscardNanPayload: Boolean = false,
-
-    val printInfinityPlusSign: Boolean = false,
-    val printInfinityTextCase: TextCase = TextCase.MIXED_CASE,
-    val print3LetterInf: Boolean = true,
 
     val printAutoMinNoExponent: Int = -6,
     val printStyle: PrintStyle = PrintStyle.AUTO
