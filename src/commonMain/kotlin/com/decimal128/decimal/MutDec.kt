@@ -1031,7 +1031,7 @@ class MutDec() : C256() {
         }
         utf8[i] = 'E'.code.toByte()
         val j = Int256ParsePrint.int32ToUtf8(eExp, utf8, i+1)
-        check (j == utf8.size)
+        check (i + 1 + j == utf8.size)
         return String(utf8)
     }
 
@@ -1066,7 +1066,7 @@ class MutDec() : C256() {
         }
         utf8[i] = 'E'.code.toByte()
         val j = Int256ParsePrint.int32ToUtf8(adjustedExp, utf8, i+1)
-        check (j == utf8.size)
+        check (i + 1 + j == utf8.size)
         return String(utf8)
     }
 
@@ -1104,7 +1104,7 @@ class MutDec() : C256() {
             val i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
             utf8[i] = 'E'.code.toByte()
             val j = Int256ParsePrint.int32ToUtf8(qExp, utf8, i + 1)
-            check(j == utf8.size)
+            check(i + 1 + j == utf8.size)
             return String(utf8)
         } else {
             return toSpecialValueString()

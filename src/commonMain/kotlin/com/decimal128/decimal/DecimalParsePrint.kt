@@ -1,7 +1,9 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Int256ParsePrint.int32ToUtf8
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.StringLatin1Iterator
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -121,13 +123,12 @@ object DecimalParsePrint {
                 if (limit - ib < 3)
                     break@insufficient_buffer
                 bytes[ib++] = 'E'.code.toByte()
-                val expAbs = Math.abs(exp.toLong())
-                val expByte = if (exp < 0) BYTE_MINUS else BYTE_PLUS
-                bytes[ib++] = expByte
-                val expDigitLen = U256Pow10.calcDigitLen64(expAbs)
-                if (limit - ib < expDigitLen)
-                    break@insufficient_buffer
-                ib += u64ToUtf8(expDigitLen, expAbs, bytes, ib, limit - ib)
+                val expSignChar = if (exp < 0) BYTE_MINUS else BYTE_PLUS
+                // FIXME - figure out what to do about the sign char
+                bytes[ib] = expSignChar
+                ib += if (exp < 0) 0 else 1
+                val wtf =  int32ToUtf8(exp, bytes, ib)
+                ib += wtf
             }
             return ib - off
         } while (false)

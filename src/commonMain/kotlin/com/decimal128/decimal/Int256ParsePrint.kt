@@ -51,7 +51,7 @@ internal object Int256ParsePrint {
         val digitLen = U256Pow10.calcDigitLen64(dwAbs)
         val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
         zeroTo10DigitsToUtf8(digitPrintCount, dwAbs, utf8, offT)
-        return offT + digitPrintCount
+        return digitPrintCount + (n ushr 31) // add 1 if it is negative
     }
 
     fun int256ToUtf8(sign: Boolean, u: C256, utf8: ByteArray, off: Int): Int {
