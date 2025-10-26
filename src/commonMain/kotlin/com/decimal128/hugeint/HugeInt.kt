@@ -360,7 +360,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */
         @JvmStatic
-        fun fromHex(bytes: ByteArray) =
+        fun fromHexAscii(bytes: ByteArray) =
             fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
 
         /**
@@ -376,7 +376,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * @throws [IllegalArgumentException] Empty range, invalid range, or
          * invalid chars
          */       @JvmStatic
-        fun fromHex(bytes: ByteArray, offset: Int, length: Int) =
+        fun fromHexAscii(bytes: ByteArray, offset: Int, length: Int) =
             fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, offset, length))
 
         /**
@@ -391,30 +391,26 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
 
 
         /**
-         * Converts an array of bytes in big-endian order to a HugeInt.
+         * Converts an array of bytes in twos-complement big-endian order to a
+         * HugeInt.
+         *
+         * This is equivalent to the [java.math.BigInteger] constructor
+         * `BigInteger(byte[] val)`.
          *
          * Zero length array returns HugeInt.ZERO
          */
-        // FIXME
-        //  perhaps I should just pass in a flag for little-endian vs big-endian
-        //  perhaps I should pass in a flag saying whether or not the contents
-        //  are twos-complment
-        //  perhaps I should pass in a sign flag
         @JvmStatic
-        fun fromBigEndianTwosComplementBytes(bytes: ByteArray) =
-            fromBigEndianTwosComplementBytes(bytes, 0, bytes.size)
+        fun fromTwosComplementBigEndianBytes(bytes: ByteArray) =
+            fromTwosComplementBigEndianBytes(bytes, 0, bytes.size)
 
         /**
-         * Converts specified byte sub-array in big-endian order to a HugeInt.
-         *
-         * Supplied bytes are interpreted as twos-complement signed.
-         *
-         * Zero length array returns HugeInt.ZERO
+         * Converts the specified range of bytes in twos-complement big-endian
+         * order to a HugeInt.
          *
          * @throws kotlin.IllegalArgumentException for invalid offset and/or length
-         */
+        */
         @JvmStatic
-        fun fromBigEndianTwosComplementBytes(bytes: ByteArray, offset: Int,
+        fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int,
                                              length: Int): HugeInt {
             val limit = offset + length
             if (offset < 0 || limit > bytes.size)

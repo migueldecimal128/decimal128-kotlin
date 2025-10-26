@@ -294,7 +294,7 @@ class TestHugeInt {
             println("biHex:$biHex hiHex:$hiHex")
         assertArrayEquals(biBytes, hiBytes)
 
-        val hi2 = HugeInt.fromBigEndianTwosComplementBytes(hiBytes)
+        val hi2 = HugeInt.fromTwosComplementBigEndianBytes(hiBytes)
         if (verbose)
             println("hi:$hi hi2:$hi2")
         assertEquals(hi, hi2)
