@@ -680,13 +680,13 @@ class MutDec() : C256() {
     }
 
 
-    fun mutateRoundToIntegral(x: MutDec, rd: DecRounding, env: DecEnv): MutDec {
+    fun mutateRoundToIntegral(x: MutDec, rounding: DecRounding, env: DecEnv): MutDec {
         //FIXME - deal with special values
         if (qExp < 0) {
             val residue = this.c256SetScaleDownPow10(x, -qExp)
             qExp = 0
             sign = x.sign
-            return roundAndFinalize(residue, rd, env)
+            return roundAndFinalize(residue, rounding, env)
         } else {
             return set(x)
         }

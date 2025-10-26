@@ -5,6 +5,7 @@ data class DecPrefs(
     val printNegativeZero: Boolean = true,
     val printExponentPlus: Boolean = false,
     val printUppercaseE: Boolean = true,
+    val printEngineeringString: Boolean = false,
 
     val printInfinityPlusSign: Boolean = false,
     val printInfinityAllCaps: Boolean = false,

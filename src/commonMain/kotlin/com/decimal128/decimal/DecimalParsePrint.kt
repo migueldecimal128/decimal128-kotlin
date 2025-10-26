@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Int256ParsePrint.int32ToUtf8
+import com.decimal128.decimal.U256Bits.calcBitLen64
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.StringLatin1Iterator
 import kotlin.math.abs
@@ -17,10 +18,6 @@ private const val INFINITY_CHARS_BACKWARDS = (('y'.code.toLong() shl 56) or ('t'
         ('i'.code.toLong() shl 40) or ('n'.code.toLong() shl 32) or
         ('i'.code.toLong() shl 24) or ('f'.code.toLong() shl 16) or
         ('n'.code.toLong() shl 16) or ('I'.code.toLong()))
-
-private const val QNAN_CHARS_BACKWARDS = (
-        ('N'.code.toLong() shl 24) or ('a'.code.toLong() shl 16) or
-        ('N'.code.toLong() shl 16) or ('q'.code.toLong()))
 
 private fun u64ToUtf8(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
     val last = off + digitLen + (-digitLen shr 31)
@@ -61,46 +58,82 @@ private const val BYTE_MINUS = '-'.code.toByte()
 
 object DecimalParsePrint {
 
-    fun decToString(x: MutDec) : String {
-        val bytes = ByteArray(MAX_DEC34_CHAR_LEN)
-        val cb = decToUtf8(x, bytes, 0, MAX_DEC34_CHAR_LEN)
+    fun decToString(x: MutDec, env: DecEnv? = null) : String {
+        val prefs = env?.decPrefs ?: DecPrefs.DEFAULT
+        val printLen = calcPrintLen(x, prefs)
+        val bytes = env?.decTemps?.bytesPrint ?: ByteArray(MAX_DEC38_CHAR_LEN)
+        val cb = decToUtf8(x, bytes, 0, MAX_DEC38_CHAR_LEN, prefs, env?.decTemps?.c256Print)
+        // FIXME ... ok ... so this fails when we pass in a
+        //  value that is too long ... exceeds 34 digits
+        //  At a minimum it should work for 38 digits DECIMAL_128_EXTENDED
+        //  Separately, pull the ByteArray from env.decTemps
+        if (printLen < cb)
+            println("calculated printLen too low printLen:$printLen cb:$cb x:$x")
         return String(bytes, 0, cb)
     }
 
-    fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int) =
-        decToUtf8(x, bytes, off, len, DecPrefs.DEFAULT)
+    private fun calcPrintLen(md: MutDec, prefs: DecPrefs): Int {
+        return when {
+            md.qExp < NON_FINITE_INF -> calcPrintLenFinite(md, prefs)
+            md.qExp == NON_FINITE_INF -> calcPrintLenInfinite(md, prefs)
+            else -> calcPrintLenNaN(md, prefs)
+        }
+    }
+
+    private fun calcPrintLenFinite(md: MutDec, prefs: DecPrefs): Int {
+        val signLen = if (md.sign or prefs.printCoefficientPlus) 1 else 0
+        val expSignLen = if (md.qExp < 0 || md.qExp > 0 && prefs.printExponentPlus) 1 else 0
+        val expLen = calcBitLen64(abs(md.qExp).toLong())
+        val engineeringStringPadding = if (prefs.printEngineeringString) 3 else 0
+        val dotLen = if (md.qExp == 0) 0 else 1
+        val expELen = dotLen
+        val coeffLen = when {
+            md.qExp == 0 -> max(1, md.bitLen) // integer
+            // FIXME ... zero might/will fail in this next case
+            md.qExp < 0 && md.sciExp() >= -6 -> { // decimal point string
+                val digitsRightOfDecimal = -md.qExp
+                // FIXME ... why is there a max(foo, 0) here ... why can it go negative
+                val leadingZeroCount = Math.max(1 + digitsRightOfDecimal - md.digitLen, 0)
+                val decimalPointLen = 1
+                leadingZeroCount + decimalPointLen + md.digitLen
+            }
+            md.bitLen == 0 -> 1 + max(38, -min(0, md.qExp))
+            else -> 38
+        }
+        return signLen + dotLen + coeffLen + expELen + expSignLen + expLen
+    }
 
     fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int, prefs: DecPrefs, tmp: C256? = null) : Int {
         if (off < 0 || len < 0)
             throw IllegalArgumentException()
-        val q = x.qExp
+        val qExp = x.qExp
         val limit = off + len
         val dw0 = x.dw0
         val signByte = if (x.sign) BYTE_MINUS else BYTE_PLUS
         bytes[off] = signByte
-        var exp = q
+        var exp = qExp
         var ib = off + if (x.sign) 1 else 0
-        if (q >= NON_FINITE_INF) {
-            val isSNaN = if (q == NON_FINITE_SNAN) 1 else 0
-            val shift = ((NON_FINITE_INF - q) shr 31) and (32 - (isSNaN shl 3))
+        if (qExp >= NON_FINITE_INF) {
+            val isSNaN = if (qExp == NON_FINITE_SNAN) 1 else 0
+            val shift = ((NON_FINITE_INF - qExp) shr 31) and (32 - (isSNaN shl 3))
             val chars = SPECIAL_NAMES ushr shift
             bytes[off + 1] = chars.toByte()
             bytes[off + 2] = (chars ushr  8).toByte()
             bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
             bytes[off + 3] = (chars ushr 16).toByte()
             ib = 4 + isSNaN
-            if (q == NON_FINITE_INF || x.c256IsZero())
+            if (qExp == NON_FINITE_INF || x.c256IsZero())
                 return ib - off
             // drop thru to add NaN payload
             exp = 0
         }
         val xDigitLen = x.digitLen
-        val scale = -q
-        val e = q + xDigitLen  + (-xDigitLen shr 31)
+        val scale = -qExp
+        val e = qExp + xDigitLen  + (-xDigitLen shr 31)
         val isInteger = scale == 0
         // one more case here ... isSciInteger == is single digit significand with exponent
         val isSciDecimal = !isInteger && (scale < 0 || e < -6) && xDigitLen > 1
-        val isNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > q && e >= -6
+        val isNonSciDecimal = !isInteger && !isSciDecimal && xDigitLen > qExp && e >= -6
         val isNonSciDecimalLT1 = isNonSciDecimal && scale >= xDigitLen
         val isNonSciDecimalGE1 = isNonSciDecimal && scale < xDigitLen
         if (isNonSciDecimalLT1) {
@@ -138,6 +171,19 @@ object DecimalParsePrint {
             ib += wtf
         }
         return ib - off
+    }
+
+    private fun calcPrintLenInfinite(md: MutDec, prefs: DecPrefs): Int {
+        val sign = if (md.sign or prefs.printInfinityPlusSign) 1 else 0
+        val text = if (prefs.printInfinity8Chars) 8 else 3
+        return sign + text
+    }
+
+    private fun calcPrintLenNaN(md: MutDec, prefs: DecPrefs): Int {
+        val sign = if (prefs.printNaNSign and (md.sign or prefs.printNaNPlusSign)) 1 else 0
+        val text = 3 + if (md.qExp == NON_FINITE_SNAN && !prefs.printCollapseSNaN) 1 else 0
+        val payload = md.digitLen
+        return sign + text + payload
     }
 
     private fun nonFiniteToUtf8(z: MutDec, utf8: ByteArray, off: Int, prefs: DecPrefs): Int {

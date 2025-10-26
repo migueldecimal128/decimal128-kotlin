@@ -183,7 +183,7 @@ internal object U256Pow10 {
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.magnitudeRawLong()
         }
         for (i in 1..<BARRETT_POW5_MAX) {
-            val t = HugeInt.fromLongUnsigned(POW10[POW5_64_OFFSET + i])
+            val t = HugeInt.fromUnsigned(POW10[POW5_64_OFFSET + i])
             val mu = hiTwoPow64 / t
             POW10[BARRETT_POW5_MU_OFFSET + i] = mu.magnitudeRawLong()
         }

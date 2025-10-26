@@ -73,7 +73,7 @@ class TestHugeInt {
     fun testRoundTripStr(str: String) {
         if (verbose)
             println("testRoundTripStr($str)")
-        val hi = HugeInt.fromString(str)
+        val hi = HugeInt.from(str)
         val str2 = hi.toString()
         assertEquals(str, str2)
     }
@@ -88,16 +88,16 @@ class TestHugeInt {
         val hiHexStr = hi.toHexString()
         assertEquals(biHexStr, hiHexStr)
 
-        val roundTrip1 = HugeInt.fromHexString(hiHexStr)
+        val roundTrip1 = HugeInt.fromHex(hiHexStr)
         assertEquals(hi, roundTrip1)
 
-        val roundTrip2 = HugeInt.fromString(hiHexStr)
+        val roundTrip2 = HugeInt.from(hiHexStr)
         assertEquals(hi, roundTrip2)
 
-        val roundTrip3 = HugeInt.fromString(hiHexStr.uppercase())
+        val roundTrip3 = HugeInt.from(hiHexStr.uppercase())
         assertEquals(hi, roundTrip3)
 
-        val roundTrip4 = HugeInt.fromString(hiHexStr.lowercase())
+        val roundTrip4 = HugeInt.from(hiHexStr.lowercase())
         assertEquals(hi, roundTrip4)
 
         var with_ = hiHexStr
@@ -108,7 +108,7 @@ class TestHugeInt {
         }
         if (verbose)
             println("with_:$with_")
-        val roundTrip5 = HugeInt.fromString(with_)
+        val roundTrip5 = HugeInt.from(with_)
         assertEquals(hi, roundTrip5)
 
     }

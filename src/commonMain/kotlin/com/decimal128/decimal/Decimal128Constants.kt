@@ -2,7 +2,9 @@ package com.decimal128.decimal
 
 const val MASK32 = 0xFFFF_FFFFL
 
-const val MAX_DEC34_CHAR_LEN = 1 /*sign*/ + 34 + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
+const val MAX_DEC34_CHAR_LEN = 1 /*sign*/ + 34 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
+
+const val MAX_DEC38_CHAR_LEN = 1 /*sign*/ + 38 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
 
 // Automatically generated
 

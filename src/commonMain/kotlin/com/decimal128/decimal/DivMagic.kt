@@ -15,7 +15,7 @@ object DivMagic {
         val N = 64
 
         // 1) build HugeInt version of 2^N and of the unsigned divisor
-        val hiD        = HugeInt.fromLongUnsigned(d)
+        val hiD        = HugeInt.fromUnsigned(d)
 
         // 2) anc = (2^N − 1) − ((2^N − 1) mod d)
         val nBitMask   = HugeInt.withBitMask(N)

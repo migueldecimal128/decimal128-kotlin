@@ -38,7 +38,7 @@ class TestHugeIntParse {
         if (verbose)
             println("str:$str isValid:$isValid")
         try {
-            val hi = HugeInt.fromString(str)
+            val hi = HugeInt.from(str)
             assertTrue(isValid)
             val bi = getBigInteger(str)
 
@@ -47,30 +47,30 @@ class TestHugeIntParse {
             assertEquals(biStr, hiStr)
 
             val sb = StringBuilder().append(str)
-            val hiCsq0 = HugeInt.fromCharSequence(sb)
+            val hiCsq0 = HugeInt.from(sb)
             assertEquals(hi, hiCsq0)
 
             sb.setLength(0)
             sb.append("<<").append(str).append('>')
-            val hiCsq1 = HugeInt.fromCharSequence(sb, 2, str.length)
+            val hiCsq1 = HugeInt.from(sb, 2, str.length)
             assertEquals(hi, hiCsq1)
 
             val chars = str.toCharArray()
-            val hiChars0 = HugeInt.fromCharArray(chars)
+            val hiChars0 = HugeInt.from(chars)
             assertEquals(hi, hiChars0)
 
             val chars2 = CharArray(chars.size + 4)
             System.arraycopy(chars, 0, chars2, 2, chars.size)
-            val hiChars2 = HugeInt.fromCharArray(chars2, 2, chars.size)
+            val hiChars2 = HugeInt.from(chars2, 2, chars.size)
             assertEquals(hi, hiChars2)
 
             val bytes = str.toByteArray()
-            val hiBytes0 = HugeInt.fromByteArray(bytes)
+            val hiBytes0 = HugeInt.fromAscii(bytes)
             assertEquals(hi, hiBytes0)
 
             val bytes2 = ByteArray(bytes.size + 4)
             System.arraycopy(bytes, 0, bytes2, 2, bytes.size)
-            val hiBytes2 = HugeInt.fromByteArray(bytes2, 2, bytes.size)
+            val hiBytes2 = HugeInt.fromAscii(bytes2, 2, bytes.size)
             assertEquals(hi, hiBytes2)
 
 
@@ -83,12 +83,12 @@ class TestHugeIntParse {
     }
 
     fun testHex(hexStr: String) {
-        val hi0 = HugeInt.fromHexString(hexStr)
+        val hi0 = HugeInt.fromHex(hexStr)
         val without0x = hexStr.replace("0x", "").replace("0X", "")
-        val hi1 = HugeInt.fromHexString(without0x)
+        val hi1 = HugeInt.fromHex(without0x)
         assertEquals(hi0, hi1)
         val withoutUnderscores = without0x.replace("_", "")
-        val hi2 = HugeInt.fromHexString(withoutUnderscores)
+        val hi2 = HugeInt.fromHex(withoutUnderscores)
 
         assertEquals(hi0, hi1)
         assertEquals(hi0, hi2)
@@ -100,30 +100,30 @@ class TestHugeIntParse {
 
         val sb = StringBuilder()
         sb.append(hexStr)
-        val hi3 = HugeInt.fromCharSequence(sb)
+        val hi3 = HugeInt.from(sb)
         assertEquals(hi0, hi3)
 
         sb.setLength(0)
         sb.append('[').append(hexStr).append(']')
-        val hi4 = HugeInt.fromCharSequence(sb, 1, sb.length - 2)
+        val hi4 = HugeInt.from(sb, 1, sb.length - 2)
         assertEquals(hi0, hi4)
 
         val chars0 = hexStr.toCharArray()
-        val hi5 = HugeInt.fromCharArray(chars0)
+        val hi5 = HugeInt.from(chars0)
         assertEquals(hi0, hi5)
 
         val chars1 = CharArray(chars0.size + 20)
         System.arraycopy(chars0, 0, chars1, 10, chars0.size)
-        val hi6 = HugeInt.fromCharArray(chars1, 10, chars1.size - 20)
+        val hi6 = HugeInt.from(chars1, 10, chars1.size - 20)
         assertEquals(hi0, hi6)
 
         val bytes0 = hexStr.toByteArray()
-        val hi7 = HugeInt.fromByteArray(bytes0)
+        val hi7 = HugeInt.fromAscii(bytes0)
         assertEquals(hi0, hi7)
 
         val bytes1 = ByteArray(bytes0.size + 200)
         System.arraycopy(bytes0, 0, bytes1, 100, bytes0.size)
-        val hi8 = HugeInt.fromByteArray(bytes1, 100, bytes1.size - 200)
+        val hi8 = HugeInt.fromAscii(bytes1, 100, bytes1.size - 200)
         assertEquals(hi0, hi8)
 
     }

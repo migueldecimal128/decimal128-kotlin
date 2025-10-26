@@ -6,128 +6,389 @@ import kotlin.math.absoluteValue
 
 
 /**
- * Immutable multi-precision signed integers for cross-platform kotlin.
+ * Arbitrary-precision signed integers for Kotlin multi-platform, providing
+ * a replacement for [java.math.BigInteger].
  *
  * Provides basic arithmetic operations `+ - * / %` thru kotlin operator
  * overloading. Also provides overloaded operators functions where the
- * other operand is a primitive integer type, allowing expressions with
- * a mixture of HugeInt and Int/UInt/Long/ULong values.
+ * other operand is a primitive integer type, allowing standard expression
+ * syntax for arithmetic expressions involving a mixture of HugeInt and
+ * Int/UInt/Long/ULong values.
  *
- * HugeInt is a smaller, simpler implementation than java.math.BigInteger.
- * It is generally intended for hundreds of digits, not tens-of-thousands.
- * All multiplication is performed using the schoolbook method, and Knuth
- * Algorithm-D is used for all divisions. HugeInt does not offer prime
- * number generation and testing functions found in BigInteger.
- *
- * Implementation is sign-magnitude, with the zero value always being
+ * Implementation is sign-magnitude, with the zero value always
  * non-negative.
  *
- * Generally, HugeInt binary boolean and bit manipulation functions work only on the
- * magnitude, ignore the sign, and return non-negative results.
- * Note that this differs from java.math.BigInteger which claims: _All
- * operations behave as if BigIntegers were represented in twos-complement
- * notation
- * (like Java's primitive integer types)._
+ * Comparison with java.math.BigInteger:
  *
+ * HugeInt is a smaller, simpler implementation than []java.math.BigInteger].
+ * It is generally intended for hundreds of digits, not tens-of-thousands.
+ * All multiplication is performed using the schoolbook method, and Knuth
+ * Algorithm-D is used for all divisions. HugeInt does not offer the prime
+ * number generation and testing functions found in java.math.BigInteger.
+ *
+ * HugeInt differs from java.math.BigInteger in the handling of binary and bit
+ * manipulation functions. HugeInt binary boolean and bit manipulation
+ * functions work only on the magnitude, ignore the sign, and return
+ * non-negative results. This differs from java.math.BigInteger which claims:
+ * _All operations behave as if BigIntegers were represented in twos-complement
+ * notation (like Java's primitive integer types)._
+ *
+ * HugeInt arithmetic operator functions allow primitive types
+ * `Int/UInt/Long/ULong` as operands. Contrast this with BigInteger
+ * where arguments must be boxed as BigInteger before being passed to
+ * BigInteger methods. This reduces heap allocation pressure.
  */
 class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
 
     companion object {
         // all zero values *must* point to this instance of ZERO
-        @JvmStatic val ZERO = HugeInt(false, Magia.ZERO)
-        @JvmStatic val ONE = HugeInt(false, Magia.ONE)
-        @JvmStatic val TEN = HugeInt(false, Magia.TEN)
-        @JvmStatic val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
+        @JvmStatic
+        val ZERO = HugeInt(false, Magia.ZERO)
+
+        @JvmStatic
+        val ONE = HugeInt(false, Magia.ONE)
+
+        @JvmStatic
+        val TEN = HugeInt(false, Magia.TEN)
+
+        @JvmStatic
+        val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
 
         private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
         /**
          * Converts a 32-bit signed Int into a signed HugeInt.
          */
-        @JvmStatic fun fromInt(n: Int): HugeInt = when {
+        @JvmStatic
+        fun from(n: Int): HugeInt = when {
             n > 0 -> HugeInt(false, intArrayOf(n))
             n < 0 -> HugeInt(true, intArrayOf(-n))
             else -> ZERO
         }
 
         /**
-         * Converts a 32-bit unsigned value into a non-negative HugeInt.
+         * Converts a 32-bit unsigned value stored in an Int primitive into a
+         * non-negative HugeInt.
          */
-        @JvmStatic fun fromIntUnsigned(n: Int) = fromUInt(n.toUInt())
+        @JvmStatic
+        fun fromUnsigned(n: Int) = from(n.toUInt())
 
         /**
          * Converts a 32-bits unsigned UInt into a non-negative HugeInt.
          */
-        @JvmStatic fun fromUInt(un: UInt) = if (un != 0u) HugeInt(false, intArrayOf(un.toInt())) else ZERO
+        @JvmStatic
+        fun from(un: UInt) = if (un != 0u) HugeInt(false, intArrayOf(un.toInt())) else ZERO
 
         /**
          * Converts a 64-bit signed Long into a signed HugeInt.
          */
-        @JvmStatic fun fromLong(l: Long) = when {
+        @JvmStatic
+        fun from(l: Long) = when {
             l > 0L -> HugeInt(false, intArrayOf(l.toInt(), (l ushr 32).toInt()))
             l < 0L -> HugeInt(true, intArrayOf(-l.toInt(), (-l ushr 32).toInt()))
             else -> ZERO
         }
 
         /**
-         * Converts a 64-bit unsigned value into a non-negative HugeInt.
+         * Converts a 64-bit unsigned value stored in an Int primitive into a
+         * non-negative HugeInt.
          */
-        @JvmStatic fun fromLongUnsigned(l: Long) = fromULong(l.toULong())
+        @JvmStatic
+        fun fromUnsigned(l: Long) = from(l.toULong())
 
         /**
          * Converts a 64-bit unsigned ULong into a non-negative HugeInt.
          */
-        @JvmStatic fun fromULong(ul: ULong) = if (ul != 0uL) HugeInt(false, intArrayOf(ul.toInt(), (ul shr 32).toInt())) else ZERO
+        @JvmStatic
+        fun from(ul: ULong) =
+            if (ul != 0uL) HugeInt(false, intArrayOf(ul.toInt(), (ul shr 32).toInt())) else ZERO
 
         /**
-         * Converts text representation of a signed integer to a HugeInt.
+         * Converts [String] representation of an integer to a
+         * HugeInt.
          *
-         * Standard decimal integer notation with optional leading sign.
+         * Standard decimal integer notation with optional leading `+
+         * -`sign.
          * Embedded underscores allowed as separators.
          * Trailing decimal point dot `123.` is not allowed.
          * Scientific notation `6.02E23` is not allowed.
          * Also supports standard hex notation of leading `0x` after
          * the optional sign character. `-0xDEAD_BEEF`
          *
-         * @throws kotlin.IllegalArgumentException empty string or invalid chars
+         * @param str The [String] to be parsed
+         * @throws [IllegalArgumentException] empty [String] or invalid chars
          */
-        @JvmStatic fun fromString(str: String) =
+        @JvmStatic
+        fun from(str: String) =
             fromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
-        @JvmStatic fun fromString(str: String, off: Int, len: Int) =
-            fromLatin1Iterator(StringLatin1Iterator(str, off, len))
-        @JvmStatic fun fromCharSequence(csq: CharSequence) =
+
+        /**
+         * Converts range of chars within a [String] to a [HugeInt].
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param str The [String] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */
+        @JvmStatic
+        fun from(str: String, offset: Int, length: Int) =
+            fromLatin1Iterator(StringLatin1Iterator(str, offset, length))
+
+        /**
+         * Converts [CharSequence] representation of an integer to a
+         * HugeInt.
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param csq The [CharSequence] to be parsed
+         * @throws [IllegalArgumentException] empty [CharSequence] or
+         * invalid chars
+         */
+        @JvmStatic
+        fun from(csq: CharSequence) =
             fromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
-        @JvmStatic fun fromCharSequence(csq: CharSequence, off: Int, len: Int) =
-            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
-        @JvmStatic fun fromCharArray(chars: CharArray) =
+
+        /**
+         * Converts range of chars within a [CharSequence] to a [HugeInt].
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param csq The [CharSequence] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */        @JvmStatic
+        fun from(csq: CharSequence, offset: Int, length: Int) =
+            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, offset, length))
+
+        /**
+         * Converts [CharArray] representation of an integer to a
+         * HugeInt.
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param chars The [CharArray] to be parsed
+         * @throws [IllegalArgumentException] empty [CharArray] or
+         * invalid chars
+         */
+        @JvmStatic
+        fun from(chars: CharArray) =
             fromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
-        @JvmStatic fun fromCharArray(chars: CharArray, off: Int, len: Int) =
-            fromLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
-        @JvmStatic fun fromByteArray(bytes: ByteArray) =
+
+        /**
+         * Converts range of chars within a [CharArray] to a [HugeInt].
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param chars The [CharArray] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */        @JvmStatic
+        fun from(chars: CharArray, offset: Int, length: Int) =
+            fromLatin1Iterator(CharArrayLatin1Iterator(chars, offset, length))
+
+        /**
+         * Converts UTF-8/ASCII [ByteArray] representation of an integer to a
+         * HugeInt.
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param bytes The [ByteArray] to be parsed
+         * @throws [IllegalArgumentException] empty [ByteArray] or
+         * invalid chars
+         */
+        @JvmStatic
+        fun fromAscii(bytes: ByteArray) =
             fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
-        @JvmStatic fun fromByteArray(bytes: ByteArray, off: Int, len: Int) =
-            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
 
+        /**
+         * Converts range of chars within a UTF-8/ASCII [ByteArray] to a
+         * [HugeInt].
+         *
+         * Standard decimal integer notation with optional leading `+ -`sign.
+         * Embedded underscores `978_654_321` allowed as separators.
+         * Supports standard hexadecimal indicator of leading `0x/0X`
+         * after the optional sign character. `-0xDEAD_BEEF`
+         * Trailing decimal point dot `123.` is not allowed.
+         * Scientific notation `6.02E23` is not allowed.
+         *
+         * @param bytes The UTF-8/ASCII [ByteArray] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */       @JvmStatic
+        fun fromAscii(bytes: ByteArray, offset: Int, length: Int) =
+            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, offset, length))
 
+        /**
+         * Converts hexadecimal [String] to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param str The [String] to be parsed
+         * @throws [IllegalArgumentException] empty [String] or invalid chars
+         */
+        @JvmStatic
+        fun fromHex(str: String) =
+            fromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
 
-        fun fromLatin1Iterator(src: Latin1Iterator): HugeInt {
+        /**
+         * Converts hexadecimal range of chars within a UTF-8/ASCII [String]
+         * to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param str The [String] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */
+        @JvmStatic
+        fun fromHex(str: String, offset: Int, length: Int) =
+            fromLatin1Iterator(StringLatin1Iterator(str, offset, length))
+
+        /**
+         * Converts hexadecimal [CharSequence] to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param csq The [CharSequence] to be parsed
+         * @throws [IllegalArgumentException] empty [CharSequence] or
+         * invalid chars
+         */
+        @JvmStatic
+        fun fromHex(csq: CharSequence) =
+            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+
+        /**
+         * Converts hexadecimal range of chars within a [CharSequence]
+         * to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param csq The [CharSequence] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */        @JvmStatic
+        fun fromHex(csq: CharSequence, offset: Int, length: Int) =
+            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, offset, length))
+
+        /**
+         * Converts hexadecimal [CharArray] representation of an integer to a
+         * HugeInt.
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param chars The [CharArray] to be parsed
+         * @throws [IllegalArgumentException] empty [CharArray] or
+         * invalid chars
+         */
+        @JvmStatic
+        fun fromHex(chars: CharArray) =
+            fromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+
+        /**
+         * Converts hexadecimal range of chars within a [CharArray]
+         * to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param chars The [CharArray] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */        @JvmStatic
+        fun fromHex(chars: CharArray, offset: Int, length: Int) =
+            fromLatin1Iterator(CharArrayLatin1Iterator(chars, offset, length))
+
+        /**
+         * Converts hexadecimal chars within a UTF-8/ASCII [ByteArray]
+         * to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param bytes The [ByteArray] to be parsed
+         * @throws [IllegalArgumentException] empty [ByteArray] or
+         * invalid chars
+         */
+        @JvmStatic
+        fun fromHex(bytes: ByteArray) =
+            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+
+        /**
+         * Converts hexadecimal range of chars within a UTF-8/ASCII [ByteArray]
+         * to a [HugeInt].
+         *
+         * Hexadecimal `[0-9A-Fa-f]` representation, optional leading `0x/0X`
+         * after optional `+ -` sign character ... `DEADBEEF` or `+0xDEAD_BEEF`
+         *
+         * @param bytes The UTF-8/ASCII [ByteArray] to be parsed
+         * @param offset Starting index of the range
+         * @param length Number of chars in the range
+         * @throws [IllegalArgumentException] Empty range, invalid range, or
+         * invalid chars
+         */       @JvmStatic
+        fun fromHex(bytes: ByteArray, offset: Int, length: Int) =
+            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, offset, length))
+
+        /**
+         * Parse a HugeInt thru a standard iterator for different text
+         * representations.
+         */
+        private fun fromLatin1Iterator(src: Latin1Iterator): HugeInt {
             val isNegative = src.peek() == '-'
             val magia = Magia.newFromLatin1Iterator(src)
             return if (magia.isNotEmpty()) HugeInt(isNegative, magia) else ZERO
         }
 
-        /**
-         * Converts text representation to a HugeInt.
-         *
-         * Optional leading sign char followed by optional `0x`
-         *
-         * @throws kotlin.IllegalArgumentException
-         */
-        @JvmStatic fun fromHexString(str:String): HugeInt {
-            val sign = str.isNotEmpty() && str[0] == '-'
-            val magia = Magia.newFromHexString(str)
-            return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
-        }
 
         /**
          * Converts an array of bytes in big-endian order to a HugeInt.
@@ -139,8 +400,10 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         //  perhaps I should pass in a flag saying whether or not the contents
         //  are twos-complment
         //  perhaps I should pass in a sign flag
-        @JvmStatic fun fromBigEndianTwosComplementBytes(bytes: ByteArray) =
+        @JvmStatic
+        fun fromBigEndianTwosComplementBytes(bytes: ByteArray) =
             fromBigEndianTwosComplementBytes(bytes, 0, bytes.size)
+
         /**
          * Converts specified byte sub-array in big-endian order to a HugeInt.
          *
@@ -150,19 +413,24 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          *
          * @throws kotlin.IllegalArgumentException for invalid offset and/or length
          */
-        @JvmStatic fun fromBigEndianTwosComplementBytes(bytes: ByteArray, off: Int, len: Int): HugeInt {
-            val limit = off + len
-            if (off < 0 || limit > bytes.size)
-                throw IllegalArgumentException("invalid off:$off or len:$len for bytes.size:${bytes.size}")
-            if (len == 0)
+        @JvmStatic
+        fun fromBigEndianTwosComplementBytes(bytes: ByteArray, offset: Int,
+                                             length: Int): HugeInt {
+            val limit = offset + length
+            if (offset < 0 || limit > bytes.size)
+                throw IllegalArgumentException(
+                    "invalid offset:$offset or length:$length for bytes" +
+                            ".size:${bytes.size}"
+                )
+            if (length == 0)
                 return ZERO
-            val signMask = bytes[off].toInt() shr 7 // 0 or 0xFFFF_FFFF
-            var ib = off
-            while (ib < len && bytes[ib].toInt() == signMask) // flush leading 0's or FF's
+            val signMask = bytes[offset].toInt() shr 7 // 0 or 0xFFFF_FFFF
+            var ib = offset
+            while (ib < length && bytes[ib].toInt() == signMask) // flush leading 0's or FF's
                 ++ib
             if (ib == limit)
                 return if (signMask == 0) ZERO else NEG_ONE
-            val magia: IntArray = Magia.newFromBigEndianBytes(signMask, bytes, ib, len-ib)
+            val magia: IntArray = Magia.newFromBigEndianBytes(signMask, bytes, ib, length - ib)
             if (signMask != 0) {
                 var carry = 1L
                 for (i in magia.indices) {
@@ -226,7 +494,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         @JvmStatic
         fun withIndexedBitMask(bitIndex: Int, bitWidth: Int): HugeInt {
             if (bitIndex < 0 || bitWidth < 0)
-                throw IllegalArgumentException("illegal negative arg bitIndex:$bitIndex bitCount:$bitWidth")
+                throw IllegalArgumentException(
+                    "illegal negative arg bitIndex:$bitIndex bitCount:$bitWidth"
+                )
             if (bitWidth <= 1)
                 return if (bitWidth == 0) ZERO else withSetBit(bitIndex)
             if (bitIndex == 0)
@@ -312,6 +582,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         val bitLen = Magia.bitLen(magia)
         return bitLen <= 63 || sign && bitLen == 64 && magia[0] == 0 && magia[1] == Int.MIN_VALUE
     }
+
     /**
      * Predicate to test if HugeInt in 0..ULong.MAX_VALUE
      */
@@ -321,10 +592,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
      * Returns lowest 32 bits of the magnitude of this HugeInt.
      */
     fun magnitudeRawInt() = if (magia.size != 0) magia[0] else 0
+
     /**
      * Returns lowest 32 bits of the magnitude of this HugeInt.
      */
     fun magnitudeRawUInt() = magnitudeRawInt().toUInt()
+
     /**
      * Returns lowest 64 bits of the magnitude of this HugeInt.
      */
@@ -333,6 +606,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         magia.size == 1 -> U32(magia[0])
         else -> (U32(magia[1]) shl 32) or (U32(magia[0]))
     }
+
     /**
      * Returns lowest 64 bits of the magnitude of this HugeInt.
      */
@@ -453,24 +727,28 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         else
             ZERO
     }
+
     operator fun times(n: Int): HugeInt {
         return if (isNotZero() && n != 0)
             HugeInt(this.sign xor (n < 0), Magia.newMul(this.magia, n.absoluteValue))
         else
             ZERO
     }
+
     operator fun times(un: UInt): HugeInt {
         return if (isNotZero() && un != 0u)
             ZERO
         else
             HugeInt(this.sign, Magia.newMul(this.magia, un.toInt()))
     }
+
     operator fun times(l: Long): HugeInt {
         return if (isNotZero() && l != 0L)
             HugeInt(this.sign xor (l < 0), Magia.newMul(this.magia, l.absoluteValue))
         else
             ZERO
     }
+
     operator fun times(ul: ULong): HugeInt {
         return if (isNotZero() && ul != 0uL)
             HugeInt(this.sign, Magia.newMul(this.magia, ul.toLong()))
@@ -493,6 +771,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun div(n: Int): HugeInt {
         if (n == 0)
             throw ArithmeticException("div by zero")
@@ -503,6 +782,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun div(un: UInt): HugeInt {
         if (un == 0u)
             throw ArithmeticException("div by zero")
@@ -513,6 +793,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun div(l: Long): HugeInt {
         if (l == 0L)
             throw ArithmeticException("div by zero")
@@ -523,6 +804,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun div(ul: ULong): HugeInt {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
@@ -544,6 +826,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun rem(n: Int): HugeInt {
         if (n == 0)
             throw ArithmeticException("div by zero")
@@ -554,6 +837,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun rem(un: UInt): HugeInt {
         if (un == 0u)
             throw ArithmeticException("div by zero")
@@ -564,6 +848,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun rem(l: Long): HugeInt {
         if (l == 0L)
             throw ArithmeticException("div by zero")
@@ -574,6 +859,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         }
         return ZERO
     }
+
     operator fun rem(ul: ULong): HugeInt {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
@@ -595,6 +881,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             else -> ZERO to other
         }
     }
+
     fun divMod(n: Int): Pair<HugeInt, HugeInt> = divModIntHelper(n < 0, n.absoluteValue)
     fun divMod(un: UInt): Pair<HugeInt, HugeInt> = divModIntHelper(false, un.toInt())
     fun divMod(l: Long): Pair<HugeInt, HugeInt> = divModLongHelper(l < 0, l.absoluteValue)
@@ -774,6 +1061,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         val cmp = Magia.compare(this.magia, other.magia)
         return if (this.sign) -cmp else cmp
     }
+
     operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
     operator fun compareTo(un: UInt) = compareToHelper(false, un.toULong())
     operator fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
@@ -789,12 +1077,15 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     fun magnitudeCompareTo(un: UInt) = Magia.compare(this.magia, un.toInt())
     fun magnitudeCompareTo(l: Long) = Magia.compare(this.magia, l)
     fun magnitudeCompareTo(ul: ULong) = Magia.compare(this.magia, ul.toLong())
-    fun magnitudeCompareTo(littleEndianIntArray: IntArray) = Magia.compare(this.magia, littleEndianIntArray)
+    fun magnitudeCompareTo(littleEndianIntArray: IntArray) =
+        Magia.compare(this.magia, littleEndianIntArray)
 
     /**
      * Comparison predicate for numerical equality.
      */
-    infix fun EQ(other: HugeInt): Boolean = (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
+    infix fun EQ(other: HugeInt): Boolean =
+        (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
+
     infix fun EQ(n: Int): Boolean = compareTo(n) == 0
     infix fun EQ(un: UInt): Boolean = compareTo(un) == 0
     infix fun EQ(l: Long): Boolean = compareTo(l) == 0
@@ -803,7 +1094,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
     /**
      * Comparison predicate for numerical inequality.
      */
-    infix fun NE(other: HugeInt): Boolean = (this.sign != other.sign) || !Magia.EQ(this.magia, other.magia)
+    infix fun NE(other: HugeInt): Boolean =
+        (this.sign != other.sign) || !Magia.EQ(this.magia, other.magia)
+
     infix fun NE(n: Int): Boolean = compareTo(n) != 0
     infix fun NE(un: UInt): Boolean = compareTo(un) != 0
     infix fun NE(l: Long): Boolean = compareTo(l) != 0
@@ -927,12 +1220,13 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 val diff = ul - thisMag
                 HugeInt(otherSign, Magia.newFromLong(diff.toLong()))
             }
+
             else -> ZERO
         }
         return ret
     }
 
-    private fun canonicalizeZero(sign: Boolean, magia: IntArray ): HugeInt {
+    private fun canonicalizeZero(sign: Boolean, magia: IntArray): HugeInt {
         if (magia === Magia.ZERO)
             return ZERO
         check(Magia.nonZeroLimbLen(magia) > 0)
@@ -942,7 +1236,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
 
     private fun divModHelper(otherSign: Boolean, otherMagia: IntArray): Pair<HugeInt, HugeInt> {
         val (magiaQuot, magiaRem) = Magia.newDivMod(this.magia, otherMagia)
-        val hiQuot = if (magiaQuot.isNotEmpty()) HugeInt(this.sign xor otherSign, magiaQuot) else ZERO
+        val hiQuot =
+            if (magiaQuot.isNotEmpty()) HugeInt(this.sign xor otherSign, magiaQuot) else ZERO
         val hiRem = if (magiaRem.isNotEmpty()) HugeInt(this.sign, magiaRem) else ZERO
         return hiQuot to hiRem
     }
@@ -953,10 +1248,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             this.isNotZero() -> {
                 val quot = Magia.newMinimumCopy(this.magia)
                 val remN = Magia.mutateDivideRemainder(quot, nMag).toInt()
-                val hiQuot = if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
+                val hiQuot =
+                    if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
                 val hiRem = if (remN != 0) HugeInt(this.sign, intArrayOf(remN)) else ZERO
                 return hiQuot to hiRem
             }
+
             else -> ZERO to HugeInt(nSign, intArrayOf(nMag))
         }
     }
@@ -975,7 +1272,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
         if (this.sign != ulSign)
             return if (this.sign) -1 else 1
         val cmp = Magia.compare(this.magia, ulMag.toLong())
-        return if (! ulSign) cmp else -cmp
+        return if (!ulSign) cmp else -cmp
     }
 
     private fun writeBigEndianTwosComplementBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
@@ -1006,6 +1303,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 --k
             }
         }
+    }
+
+    override fun hashCode(): Int {
+        var result = sign.hashCode()
+        result = 31 * result + magia.contentHashCode()
+        return result
     }
 
 
