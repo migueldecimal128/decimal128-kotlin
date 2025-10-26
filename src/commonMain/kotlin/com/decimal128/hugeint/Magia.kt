@@ -977,7 +977,7 @@ object Magia {
     /**
      * Creates a [Magia] from an array
      */
-    internal fun fromBytes(isTwosComplement: Boolean, isBigEndian: Boolean,
+    internal fun fromBytes(isBigEndian: Boolean,
                            bytes: ByteArray, off: Int, len: Int): IntArray {
         if (off < 0 || len < 0 || len > bytes.size - off)
             throw IllegalArgumentException()
@@ -989,11 +989,8 @@ object Magia {
         val ibLsb = if (isBigEndian) offLast else off
         val step = if (isBigEndian) 1 else -1
 
-        val signPrefix = if (isTwosComplement && bytes[ibMsb] < 0) -1 else 0
-
         var remaining = len
-        // flush most significant byte that match the sign prefix ... 0 or -1
-        while (bytes[ibMsb].toInt() == signPrefix) {
+        while (bytes[ibMsb].toInt() == 0) {
             ibMsb += step
             --remaining
             if (remaining == 0)
@@ -1007,16 +1004,69 @@ object Magia {
         var ib = ibLsb
         var iw = 0
 
-        var carry = (-signPrefix).toLong()
+        while (remaining >= 4) {
+            val b3 = bytes[ib - 3].toInt() and 0xFF
+            val b2 = bytes[ib - 2].toInt() and 0xFF
+            val b1 = bytes[ib - 1].toInt() and 0xFF
+            val b0 = bytes[ib - 0].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = w
+            ib -= step4
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            // b3 is always 0
+            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else 0) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else 0) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = w
+        }
+        check(iw == magia.size)
+        return magia
+    }
 
-        while (remaining > 4) {
+    /**
+     * Creates a [Magia] from an array
+     */
+    internal fun fromNegativeTwosComplementBytes(isBigEndian: Boolean,
+                           bytes: ByteArray, off: Int, len: Int): IntArray {
+        if (off < 0 || len < 0 || len > bytes.size - off)
+            throw IllegalArgumentException()
+        if (len <= 0)
+            return ZERO
+
+        val offLast = off + len - 1
+        var ibMsb = if (isBigEndian) off else offLast
+        val ibLsb = if (isBigEndian) offLast else off
+        val step = if (isBigEndian) 1 else -1
+
+        var remaining = len
+        // flush most significant byte that match the sign prefix ... 0 or -1
+        while (bytes[ibMsb].toInt() == -1) {
+            ibMsb += step
+            --remaining
+            if (remaining == 0)
+                return ONE
+        }
+
+        val magia = IntArray((remaining + 3) shr 2)
+
+        val step4 = step shl 2
+
+        var ib = ibLsb
+        var iw = 0
+
+        var carry = 1L
+
+        while (remaining >= 4) {
             val b3 = bytes[ib - 3].toInt() and 0xFF
             val b2 = bytes[ib - 2].toInt() and 0xFF
             val b1 = bytes[ib - 1].toInt() and 0xFF
             val b0 = bytes[ib - 0].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
 
-            val wT = U32(w xor signPrefix) + carry
+            val wT = U32(w.inv()) + carry
             magia[iw++] = wT.toInt()
             carry = wT shr 32
 
@@ -1024,16 +1074,14 @@ object Magia {
             remaining -= 4
         }
         if (remaining > 0) {
-            val b3 = signPrefix // and 0xFF // no need to mask ... will be << 24
-            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else signPrefix) and 0xFF
-            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else signPrefix) and 0xFF
+            val b3 = 0xFF
+            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else 0xFF) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else 0xFF) and 0xFF
             val b0 = bytes[ib].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
 
-            val wT = U32(w xor signPrefix) + carry
+            val wT = w.inv()  + carry
             magia[iw++] = wT.toInt()
-
-            magia[iw++] = w
         }
         check(iw == magia.size)
         return magia

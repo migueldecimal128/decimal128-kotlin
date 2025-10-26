@@ -24,6 +24,13 @@ class TestHugeInt {
 
     @Test
     fun testProblemChild() {
+        testBigEndianByteArray(BigInteger("-11593"))
+        testBigEndianByteArray(BigInteger("851028216441256846883624947"))
+        testBigEndianByteArray(BigInteger("80", 16))
+        testBigEndianByteArray(BigInteger("AA", 16))
+        testBigEndianByteArray(BigInteger("-851028216441256846883624947"))
+        testBigEndianByteArray(BigInteger("-1"))
+        testBigEndianByteArray(BigInteger("-1000000000000000"))
         testHexStr(BigInteger("123"))
         testHexStr(BigInteger("12345678901234567890123456789012345678901234567890"))
         testWithIndexedBitMask(3, 0)
@@ -298,6 +305,12 @@ class TestHugeInt {
         if (verbose)
             println("hi:$hi hi2:$hi2")
         assertEquals(hi, hi2)
+
+        val bytesPadded = ByteArray(biBytes.size + 4)
+        System.arraycopy(biBytes, 0, bytesPadded, 2, biBytes.size)
+
+        //val hi3 = HugeInt.fromTwosComplementBigEndianBytes(bytesPadded, 2, biBytes.size)
+        //assertEquals(hi, hi3)
     }
 
     fun testAnd(biA: BigInteger, biB: BigInteger) {

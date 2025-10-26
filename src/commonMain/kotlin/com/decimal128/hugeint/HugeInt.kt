@@ -413,11 +413,27 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * Converts the specified range of bytes in twos-complement big-endian
          * order to a HugeInt.
          *
+         * Sign is determined by the highest bit of most significant byte.
+         *
+         * This is a direct replacement for the constructor `BigInteger(byte[] val)`
+         *
          * @throws kotlin.IllegalArgumentException for invalid offset and/or length
-        */
+         */
         @JvmStatic
-        fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int,
-                                             length: Int): HugeInt {
+        fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int, length: Int): HugeInt {
+            if (offset < 0 || length < 0 || length > bytes.size - offset)
+                throw IllegalArgumentException()
+            return when {
+                length == 0 -> ZERO
+                bytes[0] >= 0 ->
+                    HugeInt(false, Magia.fromBytes(isBigEndian = true, bytes, offset, length))
+                else ->
+                    HugeInt(true, Magia.fromNegativeTwosComplementBytes(isBigEndian = true,
+                                                                        bytes, offset, length))
+            }
+        }
+
+        fun fromTwosComplementBigEndianBytesX(bytes: ByteArray, offset: Int, length: Int): HugeInt {
             val limit = offset + length
             if (offset < 0 || limit > bytes.size)
                 throw IllegalArgumentException(

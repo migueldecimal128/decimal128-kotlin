@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1da13907-1f09-4cf3-9596-c1f903b51f06" name="Changes" comment="cleanup of HugeInt" />
+    <list default="true" id="1da13907-1f09-4cf3-9596-c1f903b51f06" name="Changes" comment="cleanup of HugeInt">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/Magia.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/Magia.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -184,7 +189,7 @@
     "Gradle.TestHugeInt.testBuildMask.executor": "Run",
     "Gradle.TestHugeInt.testProblemChild (1).executor": "Run",
     "Gradle.TestHugeInt.testProblemChild.executor": "Run",
-    "Gradle.TestHugeInt.testRoundTrip (1).executor": "Debug",
+    "Gradle.TestHugeInt.testRoundTrip (1).executor": "Run",
     "Gradle.TestHugeInt.testRoundTrip.executor": "Run",
     "Gradle.TestHugeInt.testWithBitMask.executor": "Run",
     "Gradle.TestHugeIntAddSub (1).executor": "Run",
@@ -314,8 +319,8 @@
       <recent name="com.decimal128.hugeint" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.Tests in 'com.decimal128.hugeint'">
-    <configuration name="TestHugeInt" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+  <component name="RunManager" selected="Gradle.Tests in 'kdecimal128.jvmTest'">
+    <configuration name="TestHugeInt.testProblemChild" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -328,7 +333,7 @@
           <list>
             <option value=":cleanJvmTest" />
             <option value=":jvmTest" />
-            <option value="--tests &quot;com.decimal128.hugeint.TestHugeInt&quot;" />
+            <option value="--tests &quot;com.decimal128.hugeint.TestHugeInt.testProblemChild&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -339,7 +344,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="TestHugeIntParse" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="TestHugeInt.testRoundTrip" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -352,55 +357,7 @@
           <list>
             <option value=":cleanJvmTest" />
             <option value=":jvmTest" />
-            <option value="--tests &quot;com.decimal128.hugeint.TestHugeIntParse&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
-    <configuration name="TestHugeIntParse.testCases" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":cleanJvmTest" />
-            <option value=":jvmTest" />
-            <option value="--tests &quot;com.decimal128.hugeint.TestHugeIntParse.testCases&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
-    <configuration name="TestMagia" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":cleanJvmTest" />
-            <option value=":jvmTest" />
-            <option value="--tests &quot;com.decimal128.hugeint.TestMagia&quot;" />
+            <option value="--tests &quot;com.decimal128.hugeint.TestHugeInt.testRoundTrip&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -436,6 +393,29 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
+    <configuration name="Tests in 'kdecimal128.jvmTest'" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":cleanJvmTest" />
+            <option value=":jvmTest" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
     <configuration default="true" type="JetRunConfigurationType">
       <module name="kdecimal128" />
       <method v="2">
@@ -444,11 +424,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.Tests in 'kdecimal128.jvmTest'" />
         <item itemvalue="Gradle.Tests in 'com.decimal128.hugeint'" />
-        <item itemvalue="Gradle.TestHugeIntParse.testCases" />
-        <item itemvalue="Gradle.TestHugeIntParse" />
-        <item itemvalue="Gradle.TestHugeInt" />
-        <item itemvalue="Gradle.TestMagia" />
+        <item itemvalue="Gradle.TestHugeInt.testProblemChild (1)" />
+        <item itemvalue="Gradle.TestHugeInt.testProblemChild (1)" />
+        <item itemvalue="Gradle.TestHugeInt.testRoundTrip (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -516,14 +496,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1754310887132</updated>
-    </task>
-    <task id="LOCAL-00144" summary="restore class name env =&gt; DecEnv ... oops">
-      <option name="closed" value="true" />
-      <created>1760702257584</created>
-      <option name="number" value="00144" />
-      <option name="presentableId" value="LOCAL-00144" />
-      <option name="project" value="LOCAL" />
-      <updated>1760702257584</updated>
     </task>
     <task id="LOCAL-00145" summary="eliminate MutDec constructors">
       <option name="closed" value="true" />
@@ -909,7 +881,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761500758456</updated>
     </task>
-    <option name="localTasksCounter" value="193" />
+    <task id="LOCAL-00193" summary="cleanup of HugeInt">
+      <option name="closed" value="true" />
+      <created>1761501034687</created>
+      <option name="number" value="00193" />
+      <option name="presentableId" value="LOCAL-00193" />
+      <option name="project" value="LOCAL" />
+      <updated>1761501034687</updated>
+    </task>
+    <option name="localTasksCounter" value="194" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -956,12 +936,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt</url>
-          <line>60</line>
+          <line>67</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt</url>
-          <line>90</line>
+          <line>97</line>
           <option name="timeStamp" value="26" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
@@ -1003,11 +983,6 @@
           <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/decimal/SerDeDpd128.kt</url>
           <line>100</line>
           <option name="timeStamp" value="66" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt</url>
-          <line>132</line>
-          <option name="timeStamp" value="90" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeIntParse.kt</url>
@@ -1118,6 +1093,26 @@
           <url>file://$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeIntParse.kt</url>
           <line>85</line>
           <option name="timeStamp" value="229" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt</url>
+          <line>436</line>
+          <option name="timeStamp" value="230" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt</url>
+          <line>303</line>
+          <option name="timeStamp" value="231" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/Magia.kt</url>
+          <line>1038</line>
+          <option name="timeStamp" value="232" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt</url>
+          <line>425</line>
+          <option name="timeStamp" value="233" />
         </line-breakpoint>
         <breakpoint enabled="true" type="java-exception">
           <properties class="java.lang.IllegalArgumentException" package="java.lang" />
