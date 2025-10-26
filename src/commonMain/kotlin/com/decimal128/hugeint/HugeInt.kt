@@ -120,7 +120,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic
         fun from(str: String) =
-            fromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
+            from(StringLatin1Iterator(str, 0, str.length))
 
         /**
          * Converts range of chars within a [String] to a [HugeInt].
@@ -140,7 +140,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic
         fun from(str: String, offset: Int, length: Int) =
-            fromLatin1Iterator(StringLatin1Iterator(str, offset, length))
+            from(StringLatin1Iterator(str, offset, length))
 
         /**
          * Converts [CharSequence] representation of an integer to a
@@ -159,7 +159,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic
         fun from(csq: CharSequence) =
-            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+            from(CharSequenceLatin1Iterator(csq, 0, csq.length))
 
         /**
          * Converts range of chars within a [CharSequence] to a [HugeInt].
@@ -178,7 +178,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */        @JvmStatic
         fun from(csq: CharSequence, offset: Int, length: Int) =
-            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, offset, length))
+            from(CharSequenceLatin1Iterator(csq, offset, length))
 
         /**
          * Converts [CharArray] representation of an integer to a
@@ -197,7 +197,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic
         fun from(chars: CharArray) =
-            fromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+            from(CharArrayLatin1Iterator(chars, 0, chars.size))
 
         /**
          * Converts range of chars within a [CharArray] to a [HugeInt].
@@ -216,7 +216,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */        @JvmStatic
         fun from(chars: CharArray, offset: Int, length: Int) =
-            fromLatin1Iterator(CharArrayLatin1Iterator(chars, offset, length))
+            from(CharArrayLatin1Iterator(chars, offset, length))
 
         /**
          * Converts UTF-8/ASCII [ByteArray] representation of an integer to a
@@ -235,7 +235,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic
         fun fromAscii(bytes: ByteArray) =
-            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+            from(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
 
         /**
          * Converts range of chars within a UTF-8/ASCII [ByteArray] to a
@@ -255,7 +255,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */       @JvmStatic
         fun fromAscii(bytes: ByteArray, offset: Int, length: Int) =
-            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, offset, length))
+            from(ByteArrayLatin1Iterator(bytes, offset, length))
 
         /**
          * Converts hexadecimal [String] to a [HugeInt].
@@ -267,8 +267,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * @throws [IllegalArgumentException] empty [String] or invalid chars
          */
         @JvmStatic
-        fun fromHex(str: String) =
-            fromLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
+        fun fromHex(str: String) = fromHex(str, 0, str.length)
 
         /**
          * Converts hexadecimal range of chars within a UTF-8/ASCII [String]
@@ -285,7 +284,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          */
         @JvmStatic
         fun fromHex(str: String, offset: Int, length: Int) =
-            fromLatin1Iterator(StringLatin1Iterator(str, offset, length))
+            fromHex(StringLatin1Iterator(str, offset, length))
 
         /**
          * Converts hexadecimal [CharSequence] to a [HugeInt].
@@ -298,8 +297,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */
         @JvmStatic
-        fun fromHex(csq: CharSequence) =
-            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
+        fun fromHex(csq: CharSequence) = fromHex(csq, 0, csq.length)
 
         /**
          * Converts hexadecimal range of chars within a [CharSequence]
@@ -315,7 +313,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */        @JvmStatic
         fun fromHex(csq: CharSequence, offset: Int, length: Int) =
-            fromLatin1Iterator(CharSequenceLatin1Iterator(csq, offset, length))
+            fromHex(CharSequenceLatin1Iterator(csq, offset, length))
 
         /**
          * Converts hexadecimal [CharArray] representation of an integer to a
@@ -329,8 +327,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */
         @JvmStatic
-        fun fromHex(chars: CharArray) =
-            fromLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
+        fun fromHex(chars: CharArray) = fromHex(chars, 0, chars.size)
 
         /**
          * Converts hexadecimal range of chars within a [CharArray]
@@ -346,7 +343,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */        @JvmStatic
         fun fromHex(chars: CharArray, offset: Int, length: Int) =
-            fromLatin1Iterator(CharArrayLatin1Iterator(chars, offset, length))
+            fromHex(CharArrayLatin1Iterator(chars, offset, length))
 
         /**
          * Converts hexadecimal chars within a UTF-8/ASCII [ByteArray]
@@ -360,8 +357,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */
         @JvmStatic
-        fun fromHexAscii(bytes: ByteArray) =
-            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+        fun fromHexAscii(bytes: ByteArray) = fromHexAscii(bytes, 0, bytes.size)
 
         /**
          * Converts hexadecimal range of chars within a UTF-8/ASCII [ByteArray]
@@ -377,15 +373,25 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
          * invalid chars
          */       @JvmStatic
         fun fromHexAscii(bytes: ByteArray, offset: Int, length: Int) =
-            fromLatin1Iterator(ByteArrayLatin1Iterator(bytes, offset, length))
+            fromHex(ByteArrayLatin1Iterator(bytes, offset, length))
 
         /**
          * Parse a HugeInt thru a standard iterator for different text
          * representations.
          */
-        private fun fromLatin1Iterator(src: Latin1Iterator): HugeInt {
+        private fun from(src: Latin1Iterator): HugeInt {
             val isNegative = src.peek() == '-'
-            val magia = Magia.newFromLatin1Iterator(src)
+            val magia = Magia.from(src)
+            return if (magia.isNotEmpty()) HugeInt(isNegative, magia) else ZERO
+        }
+
+        /**
+         * Parse a HugeInt thru a standard iterator for different text
+         * representations.
+         */
+        private fun fromHex(src: Latin1Iterator): HugeInt {
+            val isNegative = src.peek() == '-'
+            val magia = Magia.fromHex(src)
             return if (magia.isNotEmpty()) HugeInt(isNegative, magia) else ZERO
         }
 
@@ -426,7 +432,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 ++ib
             if (ib == limit)
                 return if (signMask == 0) ZERO else NEG_ONE
-            val magia: IntArray = Magia.newFromBigEndianBytes(signMask, bytes, ib, length - ib)
+            val magia: IntArray = Magia.fromBigEndianBytes(signMask, bytes, ib, length - ib)
             if (signMask != 0) {
                 var carry = 1L
                 for (i in magia.indices) {

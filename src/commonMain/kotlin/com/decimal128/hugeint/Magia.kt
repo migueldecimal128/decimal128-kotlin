@@ -903,24 +903,29 @@ object Magia {
         return String(bytes)
     }
 
-    fun newFromString(str: String) = newFromLatin1Iterator(StringLatin1Iterator(str))
-    fun newFromString(str: String, off: Int, len: Int) = newFromLatin1Iterator(StringLatin1Iterator(str, off, len))
-    fun newFromCharSequence(csq: CharSequence) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq))
-    fun newFromCharSequence(csq: CharSequence, off: Int, len: Int) = newFromLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
-    fun newFromCharArray(chars: CharArray) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars))
-    fun newFromCharArray(chars: CharArray, off: Int, len: Int) = newFromLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
-    fun newFromByteArray(bytes: ByteArray) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes))
-    fun newFromByteArray(bytes: ByteArray, off: Int, len: Int) = newFromLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
+    fun from(str: String) = from(StringLatin1Iterator(str))
+    fun from(str: String, off: Int, len: Int) = from(StringLatin1Iterator(str, off, len))
+    fun from(csq: CharSequence) = from(CharSequenceLatin1Iterator(csq))
+    fun from(csq: CharSequence, off: Int, len: Int) =
+        from(CharSequenceLatin1Iterator(csq, off, len))
+    fun from(chars: CharArray) = from(CharArrayLatin1Iterator(chars))
+    fun from(chars: CharArray, off: Int, len: Int) =
+        from(CharArrayLatin1Iterator(chars, off, len))
+    fun fromAscii(bytes: ByteArray) = from(ByteArrayLatin1Iterator(bytes))
+    fun fromAscii(bytes: ByteArray, off: Int, len: Int) =
+        from (ByteArrayLatin1Iterator(bytes, off, len))
 
 
-    fun newFromHexString(str: String) = newFromHexLatin1Iterator(StringLatin1Iterator(str, 0, str.length))
-    fun newFromHexString(str: String, off: Int, len: Int) = newFromHexLatin1Iterator(StringLatin1Iterator(str, off, len))
-    fun newFromHexCharSequence(csq: CharSequence) = newFromHexLatin1Iterator(CharSequenceLatin1Iterator(csq, 0, csq.length))
-    fun newFromHexCharSequence(csq: CharSequence, off: Int, len: Int) = newFromHexLatin1Iterator(CharSequenceLatin1Iterator(csq, off, len))
-    fun newFromHexCharArray(chars: CharArray) = newFromHexLatin1Iterator(CharArrayLatin1Iterator(chars, 0, chars.size))
-    fun newFromHexCharArray(chars: CharArray, off: Int, len: Int) = newFromHexLatin1Iterator(CharArrayLatin1Iterator(chars, off, len))
-    fun newFromHexByteArray(bytes: ByteArray) = newFromHexLatin1Iterator(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
-    fun newFromHexByteArray(bytes: ByteArray, off: Int, len: Int) = newFromHexLatin1Iterator(ByteArrayLatin1Iterator(bytes, off, len))
+    fun newFromHex(str: String) = fromHex(StringLatin1Iterator(str, 0, str.length))
+    fun newFromHex(str: String, off: Int, len: Int) = fromHex(StringLatin1Iterator(str, off, len))
+    fun newFromHex(csq: CharSequence) = fromHex(CharSequenceLatin1Iterator(csq, 0, csq.length))
+    fun newFromHex(csq: CharSequence, off: Int, len: Int) = fromHex(CharSequenceLatin1Iterator(csq, off, len))
+    fun newFromHex(chars: CharArray) = fromHex(CharArrayLatin1Iterator(chars, 0, chars.size))
+    fun newFromHex(chars: CharArray, off: Int, len: Int) = fromHex(CharArrayLatin1Iterator(chars, off, len))
+    fun newFromAsciiHex(bytes: ByteArray) =
+        fromHex(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+    fun newFromAsciiHex(bytes: ByteArray, off: Int, len: Int) =
+        fromHex(ByteArrayLatin1Iterator(bytes, off, len))
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun isHexAsciiCharOrUnderscore(c: Char): Boolean {
@@ -930,8 +935,17 @@ object Magia {
         return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
     }
 
-    // FIXME - what is going on here with prefix
-    fun newFromBigEndianBytes(prefix: Int, bytes: ByteArray, off: Int, len: Int): IntArray {
+    internal fun fromBigEndianBytes(signExtendedPrefix: Int, bytes: ByteArray,
+                                     off: Int, len:
+                                     Int): IntArray =
+        fromBigEndianBytesX(signExtendedPrefix, bytes, off, len)
+
+    /**
+     * Creates a [Magia] from an array
+     */
+    internal fun fromBigEndianBytesX(signExtendedPrefix: Int, bytes: ByteArray,
+                                     off: Int, len:
+                                     Int): IntArray {
         if (len <= 0)
             return ZERO
         val magia = IntArray((len + 3) ushr 2)
@@ -949,21 +963,86 @@ object Magia {
             remaining -= 4
         }
         if (remaining > 0) {
-            val b3 = prefix and 0xFF
-            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else prefix) and 0xFF
-            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else prefix) and 0xFF
+            val b3 = signExtendedPrefix and 0xFF
+            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else signExtendedPrefix) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else signExtendedPrefix) and 0xFF
             val b0 = bytes[ib].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
             magia[iw++] = w
             check(iw == magia.size)
         }
         return magia
-   }
+    }
+
+    /**
+     * Creates a [Magia] from an array
+     */
+    internal fun fromBytes(isTwosComplement: Boolean, isBigEndian: Boolean,
+                           bytes: ByteArray, off: Int, len: Int): IntArray {
+        if (off < 0 || len < 0 || len > bytes.size - off)
+            throw IllegalArgumentException()
+        if (len <= 0)
+            return ZERO
+
+        val offLast = off + len - 1
+        var ibMsb = if (isBigEndian) off else offLast
+        val ibLsb = if (isBigEndian) offLast else off
+        val step = if (isBigEndian) 1 else -1
+
+        val signPrefix = if (isTwosComplement && bytes[ibMsb] < 0) -1 else 0
+
+        var remaining = len
+        // flush most significant byte that match the sign prefix ... 0 or -1
+        while (bytes[ibMsb].toInt() == signPrefix) {
+            ibMsb += step
+            --remaining
+            if (remaining == 0)
+                return ZERO
+        }
+
+        val magia = IntArray((remaining + 3) shr 2)
+
+        val step4 = step shl 2
+
+        var ib = ibLsb
+        var iw = 0
+
+        var carry = (-signPrefix).toLong()
+
+        while (remaining > 4) {
+            val b3 = bytes[ib - 3].toInt() and 0xFF
+            val b2 = bytes[ib - 2].toInt() and 0xFF
+            val b1 = bytes[ib - 1].toInt() and 0xFF
+            val b0 = bytes[ib - 0].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+
+            val wT = U32(w xor signPrefix) + carry
+            magia[iw++] = wT.toInt()
+            carry = wT shr 32
+
+            ib -= step4
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            val b3 = signPrefix // and 0xFF // no need to mask ... will be << 24
+            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else signPrefix) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else signPrefix) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+
+            val wT = U32(w xor signPrefix) + carry
+            magia[iw++] = wT.toInt()
+
+            magia[iw++] = w
+        }
+        check(iw == magia.size)
+        return magia
+    }
 
     /**
      * This layer works with magnitudes, so any optional leading sign char is ignored.
      */
-    fun newFromLatin1Iterator(src: Latin1Iterator): IntArray {
+    fun from(src: Latin1Iterator): IntArray {
         invalid_syntax@
         do {
             var leadingZeroSeen = false
@@ -973,7 +1052,7 @@ object Magia {
             if (ch == '0') { // discard leading zero
                 ch = src.nextChar()
                 if (ch == 'x' || ch == 'X')
-                    return newFromHexLatin1Iterator(src.reset())
+                    return fromHex(src.reset())
                 leadingZeroSeen = true
             }
             while (ch == '0' || ch == '_') {
@@ -1024,7 +1103,7 @@ object Magia {
         throw IllegalArgumentException("integer parse error:$src")
     }
 
-    private fun newFromHexLatin1Iterator(src: Latin1Iterator): IntArray {
+    internal fun fromHex(src: Latin1Iterator): IntArray {
         invalid_syntax@
         do {
             var leadingZeroSeen = false
