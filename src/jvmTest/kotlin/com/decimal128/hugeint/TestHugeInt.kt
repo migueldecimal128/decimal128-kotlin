@@ -26,6 +26,7 @@ class TestHugeInt {
     fun testProblemChild() {
         testBigEndianByteArray(BigInteger("-11593"))
         testBigEndianByteArray(BigInteger("851028216441256846883624947"))
+        testBigEndianByteArray(BigInteger("851028216441256846883624947"))
         testBigEndianByteArray(BigInteger("80", 16))
         testBigEndianByteArray(BigInteger("AA", 16))
         testBigEndianByteArray(BigInteger("-851028216441256846883624947"))
@@ -308,9 +309,33 @@ class TestHugeInt {
 
         val bytesPadded = ByteArray(biBytes.size + 4)
         System.arraycopy(biBytes, 0, bytesPadded, 2, biBytes.size)
+        val signPrefix = (biBytes[0].toInt() shr 7).toByte()
+        bytesPadded[1] = signPrefix
 
-        //val hi3 = HugeInt.fromTwosComplementBigEndianBytes(bytesPadded, 2, biBytes.size)
-        //assertEquals(hi, hi3)
+        val hi3 = HugeInt.fromTwosComplementBigEndianBytes(bytesPadded, 1, 1 + biBytes.size)
+        assertEquals(hi, hi3)
+
+        val bytesReversed = reverseBytes(biBytes)
+        val hi4 = HugeInt.fromTwosComplementLittleEndianBytes(bytesReversed)
+        assertEquals(hi, hi4)
+
+
+        val bytesPaddedReversed = reverseBytes(bytesPadded)
+        val hi5 = HugeInt.fromTwosComplementLittleEndianBytes(bytesPaddedReversed, 2, biBytes.size)
+        assertEquals(hi, hi5)
+
+        val hi6 = HugeInt.fromTwosComplementLittleEndianBytes(bytesPaddedReversed,
+                                                              2, biBytes.size + 1)
+        assertEquals(hi, hi6)
+
+
+    }
+
+    fun reverseBytes(bytes: ByteArray): ByteArray {
+        val reverse = ByteArray(bytes.size)
+        for (i in bytes.indices)
+            reverse[reverse.size - i - 1] = bytes[i]
+        return reverse
     }
 
     fun testAnd(biA: BigInteger, biB: BigInteger) {

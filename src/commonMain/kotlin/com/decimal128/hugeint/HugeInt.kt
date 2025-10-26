@@ -395,10 +395,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
             return if (magia.isNotEmpty()) HugeInt(isNegative, magia) else ZERO
         }
 
-
         /**
-         * Converts an array of bytes in twos-complement big-endian order to a
-         * HugeInt.
+         * Converts the ByteArray in the twos-complement big-endian order
+         * to a HugeInt.
          *
          * This is equivalent to the [java.math.BigInteger] constructor
          * `BigInteger(byte[] val)`.
@@ -425,11 +424,42 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray) {
                 throw IllegalArgumentException()
             return when {
                 length == 0 -> ZERO
-                bytes[0] >= 0 ->
-                    HugeInt(false, Magia.fromBytes(isBigEndian = true, bytes, offset, length))
+                bytes[offset] >= 0 ->
+                    HugeInt(false, Magia.fromNonNegativeBigEndianBytes(bytes, offset, length))
                 else ->
-                    HugeInt(true, Magia.fromNegativeTwosComplementBytes(isBigEndian = true,
-                                                                        bytes, offset, length))
+                    HugeInt(true,
+                            Magia.fromNegativeTwosComplementBigEndianBytes(bytes, offset, length))
+            }
+        }
+
+        /**
+         * Converts the ByteArray in twos-complement little-endian order to a
+         * HugeInt.
+         */
+        @JvmStatic
+        fun fromTwosComplementLittleEndianBytes(bytes: ByteArray) =
+            fromTwosComplementLittleEndianBytes(bytes, 0, bytes.size)
+
+        /**
+         * Converts the binary integer in the specified range of bytes in twos-complement
+         * little-endian order to a HugeInt.
+         *
+         * Sign is determined by the highest bit of most significant byte.
+         *
+         * @throws kotlin.IllegalArgumentException for invalid offset and/or length
+         */
+        @JvmStatic
+        fun fromTwosComplementLittleEndianBytes(bytes: ByteArray, offset: Int, length: Int):
+                HugeInt {
+            if (offset < 0 || length < 0 || length > bytes.size - offset)
+                throw IllegalArgumentException()
+            return when {
+                length == 0 -> ZERO
+                bytes[offset + length - 1] >= 0 ->
+                    HugeInt(false, Magia.fromNonNegativeLittleEndianBytes(bytes, offset, length))
+                else ->
+                    HugeInt(true,
+                            Magia.fromNegativeTwosComplementLittleEndianBytes(bytes, offset, length))
             }
         }
 

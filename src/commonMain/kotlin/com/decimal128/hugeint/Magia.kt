@@ -70,7 +70,8 @@ object Magia {
         return if (x.isEmpty()) 0 else x[0]
     }
 
-    fun newFromLong(l: Long): IntArray = if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else ZERO
+    fun newFromLong(l: Long): IntArray =
+        if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else ZERO
 
     fun nonZeroLimbLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
@@ -80,7 +81,8 @@ object Magia {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun newWithBitLen(bitLen: Int) = if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
+    inline fun newWithBitLen(bitLen: Int) =
+        if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
 
     fun newAdd(x: IntArray, n: Int): IntArray {
         val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
@@ -303,10 +305,10 @@ object Magia {
 
         var t = U32(x[0]) * lo
         z[0] = t.toInt()
-        var carry        = t ushr 32
+        var carry = t ushr 32
 
         t = U32(x[0]) * hi
-        var prevHighLow   = t and 0xFFFF_FFFFL
+        var prevHighLow = t and 0xFFFF_FFFFL
         var prevHighCarry = t ushr 32
 
         // i = 1…n-1: do both halves in one pass
@@ -320,7 +322,7 @@ object Magia {
 
             // 2) compute this limb’s high-half product for next iteration
             t = xi * hi + prevHighCarry
-            prevHighLow   = t and 0xFFFF_FFFFL
+            prevHighLow = t and 0xFFFF_FFFFL
             prevHighCarry = t ushr 32
         }
 
@@ -460,7 +462,8 @@ object Magia {
         return z
     }
 
-    fun mutateShiftRight(x: IntArray, bitCount: Int) = mutateShiftRight(x, nonZeroLimbLen(x), bitCount)
+    fun mutateShiftRight(x: IntArray, bitCount: Int) =
+        mutateShiftRight(x, nonZeroLimbLen(x), bitCount)
 
     fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
         require(bitCount >= 0)
@@ -648,6 +651,7 @@ object Magia {
                 val xT = (x[1].toLong() shl 32) or U32(x[0])
                 unsignedCmp(xT, y)
             }
+
             (limbLen == 1) -> if ((y ushr 32) == 0L) unsignedCmp(x[0], y.toInt()) else -1
             else -> if (y == 0L) 0 else -1
         }
@@ -735,7 +739,9 @@ object Magia {
         val r = IntArray(m + 1)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
-        return arrayOf(if (nonZeroLimbLen(q) > 0) q else ZERO, if (nonZeroLimbLen(r) > 0) r else ZERO)
+        return arrayOf(
+            if (nonZeroLimbLen(q) > 0) q else ZERO, if (nonZeroLimbLen(r) > 0) r else ZERO
+        )
     }
 
     /**
@@ -892,7 +898,7 @@ object Magia {
         while (nybbleCount > 0) {
             var w = magia[i++]
             val stepCount = Math.min(8, nybbleCount)
-            repeat (stepCount) {
+            repeat(stepCount) {
                 val nybble = w and 0x0F
                 val ch = nybble + if (nybble < 10) '0'.code else 'A'.code - 10
                 bytes[--j] = ch.toByte()
@@ -908,22 +914,29 @@ object Magia {
     fun from(csq: CharSequence) = from(CharSequenceLatin1Iterator(csq))
     fun from(csq: CharSequence, off: Int, len: Int) =
         from(CharSequenceLatin1Iterator(csq, off, len))
+
     fun from(chars: CharArray) = from(CharArrayLatin1Iterator(chars))
     fun from(chars: CharArray, off: Int, len: Int) =
         from(CharArrayLatin1Iterator(chars, off, len))
+
     fun fromAscii(bytes: ByteArray) = from(ByteArrayLatin1Iterator(bytes))
     fun fromAscii(bytes: ByteArray, off: Int, len: Int) =
-        from (ByteArrayLatin1Iterator(bytes, off, len))
+        from(ByteArrayLatin1Iterator(bytes, off, len))
 
 
     fun newFromHex(str: String) = fromHex(StringLatin1Iterator(str, 0, str.length))
     fun newFromHex(str: String, off: Int, len: Int) = fromHex(StringLatin1Iterator(str, off, len))
     fun newFromHex(csq: CharSequence) = fromHex(CharSequenceLatin1Iterator(csq, 0, csq.length))
-    fun newFromHex(csq: CharSequence, off: Int, len: Int) = fromHex(CharSequenceLatin1Iterator(csq, off, len))
+    fun newFromHex(csq: CharSequence, off: Int, len: Int) =
+        fromHex(CharSequenceLatin1Iterator(csq, off, len))
+
     fun newFromHex(chars: CharArray) = fromHex(CharArrayLatin1Iterator(chars, 0, chars.size))
-    fun newFromHex(chars: CharArray, off: Int, len: Int) = fromHex(CharArrayLatin1Iterator(chars, off, len))
+    fun newFromHex(chars: CharArray, off: Int, len: Int) =
+        fromHex(CharArrayLatin1Iterator(chars, off, len))
+
     fun newFromAsciiHex(bytes: ByteArray) =
         fromHex(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
+
     fun newFromAsciiHex(bytes: ByteArray, off: Int, len: Int) =
         fromHex(ByteArrayLatin1Iterator(bytes, off, len))
 
@@ -935,17 +948,21 @@ object Magia {
         return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
     }
 
-    internal fun fromBigEndianBytes(signExtendedPrefix: Int, bytes: ByteArray,
-                                     off: Int, len:
-                                     Int): IntArray =
+    internal fun fromBigEndianBytes(
+        signExtendedPrefix: Int, bytes: ByteArray,
+        off: Int, len:
+        Int
+    ): IntArray =
         fromBigEndianBytesX(signExtendedPrefix, bytes, off, len)
 
     /**
      * Creates a [Magia] from an array
      */
-    internal fun fromBigEndianBytesX(signExtendedPrefix: Int, bytes: ByteArray,
-                                     off: Int, len:
-                                     Int): IntArray {
+    internal fun fromBigEndianBytesX(
+        signExtendedPrefix: Int, bytes: ByteArray,
+        off: Int, len:
+        Int
+    ): IntArray {
         if (len <= 0)
             return ZERO
         val magia = IntArray((len + 3) ushr 2)
@@ -977,21 +994,17 @@ object Magia {
     /**
      * Creates a [Magia] from an array
      */
-    internal fun fromBytes(isBigEndian: Boolean,
-                           bytes: ByteArray, off: Int, len: Int): IntArray {
+    internal fun fromNonNegativeBigEndianBytes(bytes: ByteArray, off: Int, len: Int): IntArray {
         if (off < 0 || len < 0 || len > bytes.size - off)
             throw IllegalArgumentException()
         if (len <= 0)
             return ZERO
 
-        val offLast = off + len - 1
-        var ibMsb = if (isBigEndian) off else offLast
-        val ibLsb = if (isBigEndian) offLast else off
-        val step = if (isBigEndian) 1 else -1
+        var ibMsb = off
 
         var remaining = len
         while (bytes[ibMsb].toInt() == 0) {
-            ibMsb += step
+            ++ibMsb
             --remaining
             if (remaining == 0)
                 return ZERO
@@ -999,9 +1012,7 @@ object Magia {
 
         val magia = IntArray((remaining + 3) shr 2)
 
-        val step4 = step shl 2
-
-        var ib = ibLsb
+        var ib = ibMsb + remaining - 1
         var iw = 0
 
         while (remaining >= 4) {
@@ -1011,7 +1022,7 @@ object Magia {
             val b0 = bytes[ib - 0].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
             magia[iw++] = w
-            ib -= step4
+            ib -= 4
             remaining -= 4
         }
         if (remaining > 0) {
@@ -1029,22 +1040,22 @@ object Magia {
     /**
      * Creates a [Magia] from an array
      */
-    internal fun fromNegativeTwosComplementBytes(isBigEndian: Boolean,
-                           bytes: ByteArray, off: Int, len: Int): IntArray {
+    internal fun fromNegativeTwosComplementBigEndianBytes(
+        bytes: ByteArray,
+        off: Int,
+        len: Int
+    ): IntArray {
         if (off < 0 || len < 0 || len > bytes.size - off)
             throw IllegalArgumentException()
         if (len <= 0)
             return ZERO
 
-        val offLast = off + len - 1
-        var ibMsb = if (isBigEndian) off else offLast
-        val ibLsb = if (isBigEndian) offLast else off
-        val step = if (isBigEndian) 1 else -1
+        var ibMsb = off
 
         var remaining = len
         // flush most significant byte that match the sign prefix ... 0 or -1
         while (bytes[ibMsb].toInt() == -1) {
-            ibMsb += step
+            ++ibMsb
             --remaining
             if (remaining == 0)
                 return ONE
@@ -1052,13 +1063,10 @@ object Magia {
 
         val magia = IntArray((remaining + 3) shr 2)
 
-        val step4 = step shl 2
-
-        var ib = ibLsb
+        var ib = ibMsb + remaining - 1
         var iw = 0
 
         var carry = 1L
-
         while (remaining >= 4) {
             val b3 = bytes[ib - 3].toInt() and 0xFF
             val b2 = bytes[ib - 2].toInt() and 0xFF
@@ -1070,7 +1078,7 @@ object Magia {
             magia[iw++] = wT.toInt()
             carry = wT shr 32
 
-            ib -= step4
+            ib -= 4
             remaining -= 4
         }
         if (remaining > 0) {
@@ -1080,7 +1088,111 @@ object Magia {
             val b0 = bytes[ib].toInt() and 0xFF
             val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
 
-            val wT = w.inv()  + carry
+            val wT = w.inv() + carry
+            magia[iw++] = wT.toInt()
+        }
+        check(iw == magia.size)
+        return magia
+    }
+
+    /**
+     * Creates a [Magia] from an array
+     */
+    internal fun fromNonNegativeLittleEndianBytes(bytes: ByteArray, off: Int, len: Int): IntArray {
+        if (off < 0 || len < 0 || len > bytes.size - off)
+            throw IllegalArgumentException()
+        if (len <= 0)
+            return ZERO
+
+        var ibMsb = off + len - 1
+
+        var remaining = len
+        while (bytes[ibMsb].toInt() == 0) {
+            --ibMsb
+            --remaining
+            if (remaining == 0)
+                return ZERO
+        }
+
+        val magia = IntArray((remaining + 3) shr 2)
+
+        var ib = off
+        var iw = 0
+
+        while (remaining >= 4) {
+            val b3 = bytes[ib + 3].toInt() and 0xFF
+            val b2 = bytes[ib + 2].toInt() and 0xFF
+            val b1 = bytes[ib + 1].toInt() and 0xFF
+            val b0 = bytes[ib + 0].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = w
+            ib += 4
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            // b3 is always 0
+            val b2 = (if (remaining == 3) (bytes[ib + 2].toInt()) else 0) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib + 1].toInt()) else 0) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = w
+        }
+        check(iw == magia.size)
+        return magia
+    }
+
+    /**
+     * Creates a [Magia] from an array
+     */
+    internal fun fromNegativeTwosComplementLittleEndianBytes(
+        bytes: ByteArray,
+        off: Int,
+        len: Int
+    ): IntArray {
+        if (off < 0 || len < 0 || len > bytes.size - off)
+            throw IllegalArgumentException()
+        if (len <= 0)
+            return ZERO
+
+        var ibMsb = off + len - 1
+
+        var remaining = len
+        // flush most significant byte that match the sign prefix ... 0 or -1
+        while (bytes[ibMsb].toInt() == -1) {
+            --ibMsb
+            --remaining
+            if (remaining == 0)
+                return ONE
+        }
+
+        val magia = IntArray((remaining + 3) shr 2)
+
+        var ib = off
+        var iw = 0
+
+        var carry = 1L
+        while (remaining >= 4) {
+            val b3 = bytes[ib + 3].toInt() and 0xFF
+            val b2 = bytes[ib + 2].toInt() and 0xFF
+            val b1 = bytes[ib + 1].toInt() and 0xFF
+            val b0 = bytes[ib + 0].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+
+            val wT = U32(w.inv()) + carry
+            magia[iw++] = wT.toInt()
+            carry = wT shr 32
+
+            ib += 4
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            val b3 = 0xFF
+            val b2 = (if (remaining == 3) (bytes[ib + 2].toInt()) else 0xFF) and 0xFF
+            val b1 = (if (remaining >= 2) (bytes[ib + 1].toInt()) else 0xFF) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+
+            val wT = w.inv() + carry
             magia[iw++] = wT.toInt()
         }
         check(iw == magia.size)
