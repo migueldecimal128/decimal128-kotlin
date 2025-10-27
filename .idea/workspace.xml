@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1da13907-1f09-4cf3-9596-c1f903b51f06" name="Changes" comment="initial rework of HugeInt.fromTwosComplementBigEndianBytes">
+    <list default="true" id="1da13907-1f09-4cf3-9596-c1f903b51f06" name="Changes" comment="more HugeInt kdoc and implementation tweaks">
+      <change afterPath="$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestRandom.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/Magia.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/Magia.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/jvmTest/kotlin/com/decimal128/hugeint/TestHugeInt.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -243,6 +243,7 @@
     "Gradle.TestMutDecToString.testCases (1).executor": "Run",
     "Gradle.TestMutDecToString.testCases.executor": "Debug",
     "Gradle.TestNextUpDown.executor": "Run",
+    "Gradle.TestRandom.test1.executor": "Run",
     "Gradle.TestSqrt.executor": "Run",
     "Gradle.TestSqrtDoubleDouble (1).executor": "Run",
     "Gradle.TestSqrtDoubleDouble.executor": "Run",
@@ -319,7 +320,7 @@
       <recent name="com.decimal128.hugeint" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.Tests in 'kdecimal128.jvmTest' (1)">
+  <component name="RunManager" selected="Gradle.TestRandom.test1">
     <configuration name="TestHugeInt" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -358,6 +359,30 @@
             <option value=":cleanJvmTest" />
             <option value=":jvmTest" />
             <option value="--tests &quot;com.decimal128.hugeint.TestHugeInt.testProblemChild&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="TestRandom.test1" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":cleanJvmTest" />
+            <option value=":jvmTest" />
+            <option value="--tests &quot;com.decimal128.hugeint.TestRandom.test1&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -422,10 +447,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.TestRandom.test1" />
         <item itemvalue="Gradle.Tests in 'kdecimal128.jvmTest' (1)" />
-        <item itemvalue="Gradle.TestHugeInt (1)" />
-        <item itemvalue="Gradle.TestHugeInt.testProblemChild (1)" />
-        <item itemvalue="Gradle.TestHugeInt.testProblemChild (1)" />
         <item itemvalue="Gradle.TestHugeInt" />
       </list>
     </recent_temporary>
@@ -494,22 +517,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1754310887132</updated>
-    </task>
-    <task id="LOCAL-00146" summary="work on DecUtils.finalize">
-      <option name="closed" value="true" />
-      <created>1760743054369</created>
-      <option name="number" value="00146" />
-      <option name="presentableId" value="LOCAL-00146" />
-      <option name="project" value="LOCAL" />
-      <updated>1760743054369</updated>
-    </task>
-    <task id="LOCAL-00147" summary="thinking about splitting roundAndFinalize into EXACT and rounded cases at the highest level">
-      <option name="closed" value="true" />
-      <created>1760792713311</created>
-      <option name="number" value="00147" />
-      <option name="presentableId" value="LOCAL-00147" />
-      <option name="project" value="LOCAL" />
-      <updated>1760792713311</updated>
     </task>
     <task id="LOCAL-00148" summary="still trying to clean up structure of roundAndFinalize()">
       <option name="closed" value="true" />
@@ -887,7 +894,23 @@
       <option name="project" value="LOCAL" />
       <updated>1761515514991</updated>
     </task>
-    <option name="localTasksCounter" value="195" />
+    <task id="LOCAL-00195" summary="rework HugeInt from big/little-endian twos complement">
+      <option name="closed" value="true" />
+      <created>1761520582533</created>
+      <option name="number" value="00195" />
+      <option name="presentableId" value="LOCAL-00195" />
+      <option name="project" value="LOCAL" />
+      <updated>1761520582533</updated>
+    </task>
+    <task id="LOCAL-00196" summary="more HugeInt kdoc and implementation tweaks">
+      <option name="closed" value="true" />
+      <created>1761527110843</created>
+      <option name="number" value="00196" />
+      <option name="presentableId" value="LOCAL-00196" />
+      <option name="project" value="LOCAL" />
+      <updated>1761527110843</updated>
+    </task>
+    <option name="localTasksCounter" value="197" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -902,8 +925,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="restructuring of roundAndFinalize() ... about to make the switch" />
-    <MESSAGE value="a lot of work ... some payoff ... finalizing is still quite complex" />
     <MESSAGE value="introduce direct calls to finalizeExact" />
     <MESSAGE value="name change finalizeExact -&gt; finalize. &#10;We now have finalize() and roundAndFinalize()" />
     <MESSAGE value="use extension functions to move MutDec finalization code to a DecFinalize" />
@@ -927,7 +948,9 @@
     <MESSAGE value="HugeInt kdoc" />
     <MESSAGE value="cleanup of HugeInt" />
     <MESSAGE value="initial rework of HugeInt.fromTwosComplementBigEndianBytes" />
-    <option name="LAST_COMMIT_MESSAGE" value="initial rework of HugeInt.fromTwosComplementBigEndianBytes" />
+    <MESSAGE value="rework HugeInt from big/little-endian twos complement" />
+    <MESSAGE value="more HugeInt kdoc and implementation tweaks" />
+    <option name="LAST_COMMIT_MESSAGE" value="more HugeInt kdoc and implementation tweaks" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1094,12 +1117,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt</url>
-          <line>466</line>
-          <option name="timeStamp" value="230" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/HugeInt.kt</url>
-          <line>455</line>
+          <line>481</line>
           <option name="timeStamp" value="235" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
@@ -1111,6 +1129,15 @@
           <properties class="java.lang.IllegalArgumentException" package="java.lang" />
           <option name="timeStamp" value="125" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-function">
+          <url>file://$PROJECT_DIR$/src/commonMain/kotlin/com/decimal128/hugeint/Magia.kt</url>
+          <line>1340</line>
+          <properties class="com.decimal128.hugeint.Magia" method="bitPopulationCount">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="240" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

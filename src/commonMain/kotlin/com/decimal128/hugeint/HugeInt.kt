@@ -3,6 +3,7 @@
 package com.decimal128.hugeint
 
 import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 
 /**
@@ -394,6 +395,30 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             val isNegative = src.peek() == '-'
             val magia = Magia.fromHex(src)
             return if (magia.isNotEmpty()) HugeInt(isNegative, magia) else ZERO
+        }
+
+        /**
+         * Constructs a randomly generated non-negative HugeInt, uniformly
+         * distributed over the range 0 thru (2**bitLen - 1) inclusive.
+         *
+         * Recognize that each bit has a 50% chance of being set, so there is
+         * a 50% chance that the actual returned length will be less than the
+         * requested bitLen.
+         */
+        fun fromRandom(bitLen: Int, random: Random): HugeInt {
+            if (bitLen >= 0) {
+                var zeroTest = 0
+                val magia = Magia.newWithBitLen(bitLen)
+                var mask = (if ((bitLen and 0x1F) == 0) 0 else 1 shl (bitLen and 0x1F)) - 1
+                for (i in magia.lastIndex downTo 0) {
+                    val rand = random.nextInt() and mask
+                    magia[i] = rand
+                    zeroTest = zeroTest or rand
+                    mask = -1
+                }
+                return if (zeroTest == 0) ZERO else HugeInt(false, magia)
+            }
+            throw IllegalArgumentException()
         }
 
         /**
@@ -1010,6 +1035,26 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * Predicate to test whether the bit at the specified bitIndex is set.
      */
     fun testBit(bitIndex: Int): Boolean = Magia.testBit(this.magia, bitIndex)
+
+
+    /**
+     * Returns the bit index of the rightmost set bit in this HugeInt.
+     * This is the same as ntz numberOfTrailingZeros.
+     *
+     * If the value is ZERO (no bits are set) then -1 is returned.
+     *
+     * This name is chosen for compatibility with BigIntege.
+     *
+     * @return bitIndex of lowest set bit or -1 when ZERO
+     */
+    fun getLowestSetBit(): Int = Magia.ntz(this.magia)
+
+    /**
+     * Returns the number of bits set in the unsigned magnitude,
+     * ignoring the sign bit.
+     */
+
+    fun magnitudeBitCount(): Int = Magia.bitPopulationCount(this.magia)
 
     /**
      * Perform a boolean AND of the two magnitudes, while ignoring the signs.

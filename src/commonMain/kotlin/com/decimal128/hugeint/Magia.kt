@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.hugeint
 
 import com.decimal128.decimal.unsignedCmp
@@ -20,13 +22,10 @@ object Magia {
     val ONE = intArrayOf(1)
     val TEN = intArrayOf(10)
 
-    @Suppress("NOTHING_TO_INLINE")
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setZero(x: IntArray) = x.fill(0)
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun isZero(x: IntArray): Boolean {
         for (w in x)
             if (w != 0)
@@ -80,7 +79,6 @@ object Magia {
         return 0
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
 
@@ -1324,6 +1322,27 @@ object Magia {
             return z
         } while (false)
         throw IllegalArgumentException("integer parse error:$src")
+    }
+
+    /**
+     * number of trailing zeros ... or -1
+     */
+    internal fun ntz(magia: IntArray): Int {
+        for (i in magia.indices) {
+            if (magia[i] != 0)
+                return (i shl 6) + magia[i].countTrailingZeroBits()
+        }
+        return -1
+    }
+
+    /**
+     * number of bits that are set in the provided magia
+     */
+    fun bitPopulationCount(magia: IntArray): Int {
+        var popCount = 0
+        for (limb in magia)
+            popCount += limb.countOneBits()
+        return popCount
     }
 
 }
