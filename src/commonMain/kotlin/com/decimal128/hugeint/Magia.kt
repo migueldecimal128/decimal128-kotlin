@@ -19,8 +19,6 @@ private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
 object Magia {
 
     val ZERO = IntArray(0)
-    val ONE = intArrayOf(1)
-    val TEN = intArrayOf(10)
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
@@ -81,6 +79,16 @@ object Magia {
 
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
+
+    inline fun newWithSetBit(bitIndex: Int): IntArray {
+        if (bitIndex >= 0) {
+            val magia = Magia.newWithBitLen(bitIndex + 1)
+            magia[magia.lastIndex] = 1 shl (bitIndex and 0x1F)
+            return magia
+        }
+        throw IllegalArgumentException()
+    }
+
 
     fun newAdd(x: IntArray, n: Int): IntArray {
         val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
@@ -612,6 +620,18 @@ object Magia {
         return if (nonZeroLimbLen(z) > 0) z else ZERO
     }
 
+    fun EQ(x: IntArray, y: Int): Boolean {
+        if (x.isNotEmpty()) {
+            if (x[0] == y) {
+                for (i in 1..x.lastIndex)
+                    if (x[i] != 0)
+                        return false
+                return true
+            }
+        }
+        return false
+    }
+
     fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
 
     fun LT(x: IntArray, y: IntArray): Boolean = compare(x, y) < 0
@@ -1056,7 +1076,7 @@ object Magia {
             ++ibMsb
             --remaining
             if (remaining == 0)
-                return ONE
+                return intArrayOf(1)
         }
 
         val magia = IntArray((remaining + 3) shr 2)
@@ -1160,7 +1180,7 @@ object Magia {
             --ibMsb
             --remaining
             if (remaining == 0)
-                return ONE
+                return intArrayOf(1)
         }
 
         val magia = IntArray((remaining + 3) shr 2)

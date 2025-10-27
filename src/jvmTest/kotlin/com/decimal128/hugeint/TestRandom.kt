@@ -1,5 +1,6 @@
 package com.decimal128.hugeint
 
+import com.decimal128.hugeint.HugeIntExtensions.toBigInteger
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.math.BigInteger
 import kotlin.random.Random
@@ -11,7 +12,7 @@ class TestRandom {
     fun test1() {
         for (i in 0..<1000000) {
             val hi = randomHi(1024)
-            val bi = BigInteger(hi.toBigEndianTwosComplementByteArray())
+            val bi = hi.toBigInteger()
 
             val hiBitLen = hi.magnitudeBitLen()
             val biBitLen = bi.bitLength()
@@ -21,7 +22,7 @@ class TestRandom {
             val biBitCount = bi.bitCount()
             assertEquals(biBitCount, hiBitCount)
 
-            val hiNtz = hi.getLowestSetBit()
+            val hiNtz = hi.trailingZeroCount()
             val biNtz = bi.getLowestSetBit()
             assertEquals(biNtz, hiNtz)
         }

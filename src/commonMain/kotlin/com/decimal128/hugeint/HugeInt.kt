@@ -3,6 +3,7 @@
 package com.decimal128.hugeint
 
 import kotlin.math.absoluteValue
+import kotlin.math.min
 import kotlin.random.Random
 
 
@@ -47,14 +48,15 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         @JvmStatic
         val ZERO = HugeInt(false, Magia.ZERO)
 
+        private val MAGIA_ONE = intArrayOf(1)
         @JvmStatic
-        val ONE = HugeInt(false, Magia.ONE)
+        val ONE = HugeInt(false, MAGIA_ONE)
 
         @JvmStatic
-        val TEN = HugeInt(false, Magia.TEN)
+        val TEN = HugeInt(false, intArrayOf(10))
 
         @JvmStatic
-        val NEG_ONE = HugeInt(true, Magia.ONE) // share magia .. but no mutation allowed
+        val NEG_ONE = HugeInt(true, MAGIA_ONE) // share magia .. but no mutation allowed
 
         private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
@@ -965,24 +967,24 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * @throws kotlin.IllegalArgumentException when n < 0
      */
     fun pow(n: Int): HugeInt {
+        val resultSign = this.sign && ((n and 1) != 0)
         return when {
-            n < 0 -> throw ArithmeticException("cannot raise HugeInt to negative power:$n")
+            n < 0 -> throw IllegalArgumentException("cannot raise HugeInt to negative power:$n")
             n == 0 -> ONE
-            this.isZero() -> ZERO
             n == 1 -> this
+            this.isZero() -> ZERO
+            Magia.EQ(this.magia, 1) -> if (resultSign) NEG_ONE else ONE
+            Magia.EQ(this.magia, 2) -> HugeInt(resultSign, Magia.newWithSetBit(n))
             n == 2 -> sqr()
             else -> {
-                val resultSign = this.sign && ((n and 1) != 0)
                 var baseMag = this.magia
-                var resultMag = Magia.ONE
+                var resultMag = MAGIA_ONE
                 var exp = n
-                while (true) {
+                while (exp != 0) {
                     if ((exp and 1) != 0)
                         resultMag = Magia.newMul(resultMag, baseMag)
-                    exp = exp ushr 1
-                    if (exp == 0)
-                        break
                     baseMag = Magia.newSqr(baseMag)
+                    exp = exp ushr 1
                 }
                 HugeInt(resultSign, resultMag)
             }
@@ -1043,11 +1045,11 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      *
      * If the value is ZERO (no bits are set) then -1 is returned.
      *
-     * This name is chosen for compatibility with BigIntege.
+     * This is the same as java.math.BigInteger.getLowestSetBit()
      *
      * @return bitIndex of lowest set bit or -1 when ZERO
      */
-    fun getLowestSetBit(): Int = Magia.ntz(this.magia)
+    fun trailingZeroCount(): Int = Magia.ntz(this.magia)
 
     /**
      * Returns the number of bits set in the unsigned magnitude,
@@ -1417,6 +1419,5 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         result = 31 * result + magia.contentHashCode()
         return result
     }
-
 
 }
