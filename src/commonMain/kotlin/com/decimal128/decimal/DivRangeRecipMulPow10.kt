@@ -233,7 +233,7 @@ object DivRangeRecipMulPow10 {
     private fun serialize(te: TableEntry): Int {
         val offset = iRRP
         appendLong(packDescriptor(te))
-        val mLimbs = te.M.toLittleEndianLongArray()
+        val mLimbs = te.M.magnitudeToLittleEndianLongArray()
         for (mLimb in mLimbs)
             appendLong(mLimb)
         /*

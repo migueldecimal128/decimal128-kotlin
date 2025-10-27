@@ -9,7 +9,7 @@ import java.util.*
 
 class TestMutDecToString {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val strVal: String) {
         constructor(bd: BigDecimal) : this(bdToDecimal128String(bd))

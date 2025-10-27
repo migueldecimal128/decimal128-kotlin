@@ -158,7 +158,7 @@ internal object U256Pow10 {
         var j = 0
         for (i in 0..<MAX_DIGIT_LEN) {
             POW10_BIT_LEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
-            for (dw in hiPow10.toLittleEndianLongArray())
+            for (dw in hiPow10.magnitudeToLittleEndianLongArray())
                 POW10[j++] = dw
             hiPow10 *= 10
         }
