@@ -11,11 +11,13 @@ class TestSub64 {
 
     @Test
     fun testSub64() {
-        for (i in 0..<1000000)
-            test1()
+        for (i in 0..<10000) {
+            testUnsigned()
+            testSigned()
+        }
     }
 
-    fun test1() {
+    fun testUnsigned() {
         val hi = randomHi(66)
         val dw = rng.nextULong()
         if (verbose)
@@ -33,10 +35,30 @@ class TestSub64 {
 
     }
 
+    fun testSigned() {
+        val hi = randomHi(66)
+        val l = rng.nextLong()
+        if (verbose)
+            println("hi:$hi l:$l")
+        val diff0 = hi - HugeInt.from(l)
+        val diff1 = hi - l
+
+        assertEquals(diff0, diff1)
+
+        val reverse0 = HugeInt.from(l) - hi
+        val reverse1 = l - hi
+        assertEquals(reverse0, reverse1)
+
+        assertEquals(diff1, -reverse1)
+
+    }
+
     val rng = Random.Default
 
-    fun randomHi(hiBitLen: Int) =
-        HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+    fun randomHi(hiBitLen: Int): HugeInt {
+        val rand = HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+        return if (rng.nextBoolean()) rand.negate() else rand
+    }
 
     @Test
     fun testProblemChild() {

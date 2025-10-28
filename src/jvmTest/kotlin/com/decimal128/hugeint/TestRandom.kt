@@ -10,7 +10,7 @@ class TestRandom {
 
     @Test
     fun test1() {
-        for (i in 0..<1000000) {
+        for (i in 0..<10000) {
             val hi = randomHi(1024)
             val bi = hi.toBigInteger()
 

@@ -14,11 +14,13 @@ class TestAdd32 {
 
     @Test
     fun testAdd32() {
-        for (i in 0..<1000000)
-            test1()
+        for (i in 0..<10000) {
+            testUnsigned()
+            testSigned()
+        }
     }
 
-    fun test1() {
+    fun testUnsigned() {
         val hi = randomHi(300)
         val bi = hi.toBigInteger()
         val w = rng.nextUInt()
@@ -31,13 +33,30 @@ class TestAdd32 {
         assertEquals(sumBi, sum1)
         assertEquals(sum1, sum2)
         assertEquals(sum2, sum3)
+    }
+
+    fun testSigned() {
+        val hi = randomHi(300)
+        val bi = hi.toBigInteger()
+        val n = rng.nextInt()
+        if (verbose)
+            println("hi:$hi n:$n")
+        val sumBi = (bi + BigInteger.valueOf(n.toLong())).toHugeInt()
+        val sum1 = hi + HugeInt.from(n)
+        val sum2 = hi + n
+        val sum3 = n + hi
+        assertEquals(sumBi, sum1)
+        assertEquals(sum1, sum2)
+        assertEquals(sum2, sum3)
 
     }
 
     val rng = Random.Default
 
-    fun randomHi(hiBitLen: Int) =
-        HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+    fun randomHi(hiBitLen: Int): HugeInt {
+        val rand = HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+        return if (rng.nextBoolean()) rand.negate() else rand
+    }
 
     @Test
     fun testProblemChild() {

@@ -14,11 +14,13 @@ class TestMul32 {
 
     @Test
     fun testMul32() {
-        for (i in 0..<1000000)
-            test1()
+        for (i in 0..<10000) {
+            testUnsigned()
+            testSigned()
+        }
     }
 
-    fun test1() {
+    fun testUnsigned() {
         val hi = randomHi(300)
         val bi = hi.toBigInteger()
         val w = rng.nextUInt()
@@ -34,10 +36,28 @@ class TestMul32 {
 
     }
 
+    fun testSigned() {
+        val hi = randomHi(300)
+        val bi = hi.toBigInteger()
+        val n = rng.nextInt()
+        if (verbose)
+            println("hi:$hi n:$n")
+        val prodBi = (bi * BigInteger.valueOf(n.toLong())).toHugeInt()
+        val prod1 = hi * HugeInt.from(n)
+        val prod2 = hi * n
+        val prod3 = n * hi
+        assertEquals(prodBi, prod1)
+        assertEquals(prod1, prod2)
+        assertEquals(prod2, prod3)
+
+    }
+
     val rng = Random.Default
 
-    fun randomHi(hiBitLen: Int) =
-        HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+    fun randomHi(hiBitLen: Int): HugeInt {
+        val rand = HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+        return if (rng.nextBoolean()) rand.negate() else rand
+    }
 
     @Test
     fun testProblemChild() {

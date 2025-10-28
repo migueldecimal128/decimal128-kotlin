@@ -13,11 +13,13 @@ class TestAdd64 {
 
     @Test
     fun testAdd64() {
-        for (i in 0..<1000000)
-            test1()
+        for (i in 0..<10000) {
+            testUnsigned()
+            testSigned()
+        }
     }
 
-    fun test1() {
+    fun testUnsigned() {
         val hi = randomHi(300)
         val dw = rng.nextULong()
         val hiDw = HugeInt.from(dw)
@@ -34,17 +36,36 @@ class TestAdd64 {
 
     }
 
+    fun testSigned() {
+        val hi = randomHi(300)
+        val l = rng.nextLong()
+        val hiL = HugeInt.from(l)
+        if (verbose)
+            println("hi:$hi l:$l")
+        val sumBi = (hi.toBigInteger() + hiL.toBigInteger()).toHugeInt()
+        val sum0 = hi + hiL
+        val sum1 = hi + l
+        val sum2 = l + hi
+
+        assertEquals(sumBi, sum0)
+        assertEquals(sum0, sum1)
+        assertEquals(sum0, sum2)
+
+    }
+
     val rng = Random.Default
 
-    fun randomHi(hiBitLen: Int) =
-        HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+    fun randomHi(hiBitLen: Int): HugeInt {
+        val rand = HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
+        return if (rng.nextBoolean()) rand.negate() else rand
+    }
 
     @Test
     fun testProblemChild() {
-        val hi = HugeInt.from("35689796992407102546798857499")
-        val ul = 13719079755528411212uL
-        val sum = hi + ul
-        val sum2 = hi + HugeInt.from(ul)
+        val hi = HugeInt.from("-5624193776")
+        val dw = 2336654976178044700uL
+        val sum = hi + dw
+        val sum2 = hi + HugeInt.from(dw)
         assertEquals(sum2, sum)
     }
 

@@ -21,6 +21,16 @@ operator fun UInt.times(other: HugeInt) = other.times(this)
 operator fun Long.times(other: HugeInt) = other.times(this)
 operator fun ULong.times(other: HugeInt) = other.times(this)
 
+operator fun Int.div(other: HugeInt) = other.divInverse(this)
+operator fun UInt.div(other: HugeInt) = other.divInverse(this)
+operator fun Long.div(other: HugeInt) = other.divInverse(this)
+operator fun ULong.div(other: HugeInt) = other.divInverse(false, this)
+
+operator fun Int.rem(other: HugeInt) = other.modInverse(this)
+operator fun UInt.rem(other: HugeInt) = other.modInverse(this)
+operator fun Long.rem(other: HugeInt) = other.modInverse(this)
+operator fun ULong.rem(other: HugeInt) = other.modInverse(false, this)
+
 operator fun Int.compareTo(hi: HugeInt) =
     -hi.compareToHelper(this < 0, this.absoluteValue.toUInt().toULong())
 operator fun UInt.compareTo(hi: HugeInt) =
@@ -874,7 +884,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     operator fun div(ul: ULong): HugeInt {
         if (ul == 0uL)
             throw ArithmeticException("div by zero")
-        if (isZero()) {
+        if (isNotZero()) {
             val quot = Magia.newDiv(this.magia, ul.toLong())
             if (quot.isNotEmpty())
                 return HugeInt(this.sign, quot)
@@ -954,6 +964,38 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     fun divMod(un: UInt): Pair<HugeInt, HugeInt> = divModIntHelper(false, un.toInt())
     fun divMod(l: Long): Pair<HugeInt, HugeInt> = divModLongHelper(l < 0, l.absoluteValue)
     fun divMod(ul: ULong): Pair<HugeInt, HugeInt> = divModLongHelper(false, ul.toLong())
+
+    fun divInverse(numerator: Int) = divInverse(numerator.toLong())
+    fun divInverse(numerator: UInt) = divInverse(false, numerator.toULong())
+    fun divInverse(numerator: Long) = divInverse(numerator < 0, numerator.absoluteValue.toULong())
+    fun divInverse(signNumerator: Boolean, numerator: ULong): HugeInt {
+        if (this.isZero())
+            throw ArithmeticException("div by zero")
+        if (this.magnitudeCompareTo(numerator) > 0)
+            return ZERO
+        val quotient = numerator / this.magnitudeRawULong()
+        if (quotient == 0uL)
+            return ZERO
+        else
+            return HugeInt(this.sign xor signNumerator,
+                           Magia.newFromLong(quotient.toLong()))
+    }
+
+    fun modInverse(numerator: Int) = modInverse(numerator.toLong())
+    fun modInverse(numerator: UInt) = modInverse(false, numerator.toULong())
+    fun modInverse(numerator: Long) = modInverse(numerator < 0, numerator.absoluteValue.toULong())
+    fun modInverse(signNumerator: Boolean, numerator: ULong): HugeInt {
+        if (this.isZero())
+            throw ArithmeticException("div by zero")
+        if (this.magnitudeCompareTo(numerator) > 0)
+            return HugeInt(signNumerator, Magia.newFromLong(numerator.toLong()))
+        val remainder = numerator % this.magnitudeRawULong()
+        if (remainder == 0uL)
+            return ZERO
+        else
+            return HugeInt(signNumerator,
+                           Magia.newFromLong(remainder.toLong()))
+    }
 
     /**
      * Compute the square of this HugeInt.
@@ -1322,7 +1364,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         val ret = when {
             cmp > 0 -> HugeInt(thisSign, Magia.newSub(this.magia, ul.toLong()))
             cmp < 0 -> {
-                val thisMag = this.toULong()
+                val thisMag = this.magnitudeRawULong()
                 val diff = ul - thisMag
                 HugeInt(otherSign, Magia.newFromLong(diff.toLong()))
             }
