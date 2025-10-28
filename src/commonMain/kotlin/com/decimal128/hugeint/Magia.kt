@@ -134,33 +134,28 @@ object Magia {
 
     fun newAdd(x: IntArray, y: IntArray): IntArray {
         val newBitLen = max(bitLen(x), bitLen(y)) + 1
-        val z = newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, y)
-    }
+        val z = newWithBitLen(newBitLen)
 
-    fun newOrMutateAdd(x: IntArray, y: IntArray): IntArray {
-        val newBitLen = max(bitLen(x), bitLen(y)) + 1
-        val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, y)
-    }
-
-    fun mutateAdd(x: IntArray, y: IntArray): IntArray {
+        val min = min(z.size, min(x.size, y.size))
         var carry = 0L
-        val min = min(x.size, y.size)
         var i = 0
         while (i < min) {
             val t = U32(x[i]) + U32(y[i]) + carry
-            x[i] = t.toInt()
+            z[i] = t.toInt()
             carry = t ushr 32
             check(carry in 0L..1L)
             ++i
         }
-        while (carry == 1L && i < x.size) {
-            val t = U32(x[i]) + carry
-            x[i] = t.toInt()
+        val longer = if (x.size > y.size) x else y
+        while (i < longer.size && i < z.size) {
+            val t = U32(longer[i]) + carry
+            z[i] = t.toInt()
             carry = t ushr 32
+            ++i
         }
-        return x
+        if (carry != 0L && i < z.size)
+            z[i] = 1
+        return z
     }
 
     fun newSub(x: IntArray, w: Int): IntArray {
