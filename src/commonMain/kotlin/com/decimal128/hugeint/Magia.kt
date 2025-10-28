@@ -90,7 +90,21 @@ object Magia {
     }
 
 
-    fun newAdd(x: IntArray, n: Int): IntArray {
+    fun newAdd(x: IntArray, w: Int): IntArray {
+        val newBitLen = max(bitLen(x), (32 - w.countLeadingZeroBits())) + 1
+        val z = newWithBitLen(newBitLen)
+        var carry = U32(w)
+        for (i in x.indices) {
+            val t = U32(x[i]) + carry
+            z[i] = t.toInt()
+            carry = t ushr 32
+        }
+        if (carry != 0L)
+            z[z.lastIndex] = 1
+        return z
+    }
+
+    fun newAdd_deprecated(x: IntArray, n: Int): IntArray {
         val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
         val z = newCopyWithBitLen(x, newBitLen)
         return mutateAdd(z, n)
@@ -115,7 +129,23 @@ object Magia {
         return x
     }
 
-    fun newAdd(x: IntArray, l: Long): IntArray {
+    fun newAdd(x: IntArray, dw: Long): IntArray {
+        val newBitLen = max(bitLen(x), (64 - dw.countLeadingZeroBits())) + 1
+        val z = newWithBitLen(newBitLen)
+        var carry = dw
+        for (i in x.indices) {
+            val t = U32(x[i]) + (carry and 0xFFFF_FFFFL)
+            z[i] = t.toInt()
+            carry = (t ushr 32) + (carry ushr 32)
+        }
+        if (carry != 0L)
+            z[x.size] = carry.toInt()
+        if (carry ushr 32 != 0L)
+            z[x.size + 1] = (carry ushr 32).toInt()
+        return z
+    }
+
+    fun newAdd_deprecated(x: IntArray, l: Long): IntArray {
         val newBitLen = max(bitLen(x), (64 - l.countLeadingZeroBits())) + 1
         val z = newCopyWithBitLen(x, newBitLen)
         return mutateAdd(z, l)
