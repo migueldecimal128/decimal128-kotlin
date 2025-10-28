@@ -122,11 +122,11 @@ class TestMagia {
         }
         val carX = MagiaTransducer.magiaFromBi(biX)
         val carY = MagiaTransducer.magiaFromBi(biY)
-        Magia.mutateSub(carX, carY) // MUTATE
+        val magiaDiff = Magia.newSub(carX, carY)
 
         val biDiff = biX.subtract(biY)
 
-        assert(MagiaTransducer.EQ(carX, biDiff))
+        assert(MagiaTransducer.EQ(magiaDiff, biDiff))
     }
 
     fun testMul(biA: BigInteger, biB: BigInteger) {

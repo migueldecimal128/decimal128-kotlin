@@ -202,36 +202,35 @@ object Magia {
         return if (orAccumulator == 0 || borrow != 0L) ZERO else z
     }
 
-    fun newSub(x: IntArray, y: IntArray) = mutateSub(newMinimumCopy(x), y)
+    //fun newSub(x: IntArray, y: IntArray) = mutateSub(newMinimumCopy(x), y)
 
-    fun mutateSub(x: IntArray, y: IntArray): IntArray {
+    fun newSub(x: IntArray, y: IntArray): IntArray {
+        check (compare(x, y) >= 0)
+        val z = IntArray(wordLen(x))
         var orAccumulator = 0
         var borrow = 0L
-        if (y.isEmpty())
-            return x
-        val min = min(x.size, y.size)
+        val min = min(z.size, min(x.size, y.size))
         var i = 0
         while (i < min) {
             val t = U32(x[i]) - U32(y[i]) - borrow
-            val xi = t.toInt()
-            x[i] = xi
-            orAccumulator = orAccumulator or xi
+            val zi = t.toInt()
+            z[i] = zi
+            orAccumulator = orAccumulator or zi
             borrow = t ushr 63
             check(borrow in 0L..1L)
             ++i
         }
-        while (borrow == 1L && i < x.size) {
+        while (i < x.size && i < z.size) {
             val t = U32(x[i]) - borrow
-            val xi = t.toInt()
-            x[i] = xi
-            orAccumulator = orAccumulator or xi
+            val zi = t.toInt()
+            z[i] = zi
+            orAccumulator = orAccumulator or zi
             borrow = t ushr 63
             ++i
         }
-        while (borrow == 0L && i < y.size)
-            borrow = y[i++].toLong()
-        return if (orAccumulator != 0 && borrow == 0L)
-            x
+        check (borrow == 0L)
+        return if (orAccumulator != 0)
+            z
         else
             ZERO
     }
