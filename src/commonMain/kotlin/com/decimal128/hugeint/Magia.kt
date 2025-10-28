@@ -852,7 +852,7 @@ object Magia {
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return arrayOf(IntArray(1), newMinimumCopy(x))
+            return arrayOf(ZERO, newMinimumCopy(x))
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
