@@ -22,15 +22,6 @@ object Magia {
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
-    inline fun setZero(x: IntArray) = x.fill(0)
-
-    inline fun isZero(x: IntArray): Boolean {
-        for (w in x)
-            if (w != 0)
-                return false
-        return true
-    }
-
     fun testBit(x: IntArray, bitIndex: Int): Boolean {
         val wordIndex = bitIndex ushr 5
         if (wordIndex >= x.size)
@@ -67,8 +58,8 @@ object Magia {
         return if (x.isEmpty()) 0 else x[0]
     }
 
-    fun newFromLong(l: Long): IntArray =
-        if (l != 0L) intArrayOf(l.toInt(), (l ushr 32).toInt()) else ZERO
+    fun newFromLong(dw: Long): IntArray =
+        if (dw != 0L) intArrayOf(dw.toInt(), (dw ushr 32).toInt()) else ZERO
 
     fun nonZeroLimbLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
@@ -105,20 +96,14 @@ object Magia {
         return z
     }
 
-    fun newAdd_deprecated(x: IntArray, n: Int): IntArray {
-        val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
-        val z = newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, n)
-    }
-
-    fun newOrMutateAdd(x: IntArray, n: Int): IntArray {
-        val newBitLen = max(bitLen(x), (32 - n.countLeadingZeroBits())) + 1
+    fun newOrMutateAdd(x: IntArray, w: Int): IntArray {
+        val newBitLen = max(bitLen(x), (32 - w.countLeadingZeroBits())) + 1
         val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, n)
+        return mutateAdd(z, w)
     }
 
-    fun mutateAdd(x: IntArray, n: Int): IntArray {
-        var carry = U32(n)
+    fun mutateAdd(x: IntArray, w: Int): IntArray {
+        var carry = U32(w)
         for (i in x.indices) {
             val t = U32(x[i]) + carry
             x[i] = t.toInt()
@@ -145,39 +130,6 @@ object Magia {
         if (carry ushr 32 != 0L)
             z[indexLimit + 1] = (carry ushr 32).toInt()
         return z
-    }
-
-    fun newAdd_deprecated(x: IntArray, l: Long): IntArray {
-        val newBitLen = max(bitLen(x), (64 - l.countLeadingZeroBits())) + 1
-        val z = newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, l)
-    }
-
-    fun newOrMutateAdd(x: IntArray, l: Long): IntArray {
-        val newBitLen = max(bitLen(x), (64 - l.countLeadingZeroBits())) + 1
-        val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, l)
-    }
-
-    fun mutateAdd(x: IntArray, l: Long): IntArray {
-        if (x.size > 0) {
-            val t0 = U32(x[0]) + (l and 0xFFFF_FFFFL)
-            x[0] = t0.toInt()
-            if (x.size > 1) {
-                var carry = t0 ushr 32
-                val t1 = U32(x[1]) + (l ushr 32) + carry
-                x[1] = t1.toInt()
-                carry = t1 ushr 32
-                var i = 2
-                while (carry > 0L && i < x.size) {
-                    val t = U32(x[i]) + carry
-                    x[i++] = t.toInt()
-                    carry = t ushr 32
-                    check(carry <= 1L)
-                }
-            }
-        }
-        return x
     }
 
     fun newAdd(x: IntArray, y: IntArray): IntArray {
@@ -225,26 +177,6 @@ object Magia {
         return if (orAccumulator == 0 || borrow != 0L) ZERO else z
     }
 
-    fun newSub_deprecated(x: IntArray, n: Int) = mutateSub(newMinimumCopy(x), n)
-
-    fun mutateSub(x: IntArray, n: Int): IntArray {
-        var orAccumulator = 0
-        var borrow = U32(n)
-        for (i in x.indices) {
-            val t = U32(x[i]) - borrow
-            val xi = t.toInt()
-            x[i] = xi
-            orAccumulator = orAccumulator or xi
-            borrow = t ushr 63
-            if (borrow == 0L)
-                break
-        }
-        return if (orAccumulator != 0 && borrow == 0L)
-            x
-        else
-            ZERO
-    }
-
     fun newSub(x: IntArray, dw: Long): IntArray {
         val z = IntArray(wordLen(x))
         var orAccumulator = 0
@@ -273,39 +205,6 @@ object Magia {
             }
         }
         return if (orAccumulator == 0 || borrow != 0L) ZERO else z
-    }
-
-    fun newSub_deprecated(x: IntArray, l: Long) = mutateSub(newMinimumCopy(x), l)
-
-    fun mutateSub(x: IntArray, l: Long): IntArray {
-        var orAccumulator = 0
-        var borrow = 0L
-        if (x.isNotEmpty()) {
-            val t0 = U32(x[0]) - (l and 0xFFFF_FFFFL)
-            val x0 = t0.toInt()
-            x[0] = x0
-            orAccumulator = orAccumulator or x0
-            if (x.size > 1) {
-                borrow = t0 ushr 63
-                val t1 = U32(x[1]) - (l ushr 32) - borrow
-                val x1 = t1.toInt()
-                x[1] = x1
-                orAccumulator = orAccumulator or x1
-                borrow = t1 ushr 63
-                var i = 2
-                while (borrow > 0L && i < x.size) {
-                    val t = U32(x[i]) - borrow
-                    val xi = t.toInt()
-                    x[i++] = xi
-                    orAccumulator = orAccumulator or xi
-                    borrow = t ushr 63
-                }
-            }
-        }
-        return if (orAccumulator != 0 && borrow == 0L)
-            x
-        else
-            ZERO
     }
 
     fun newSub(x: IntArray, y: IntArray) = mutateSub(newMinimumCopy(x), y)
@@ -361,29 +260,8 @@ object Magia {
         return prod
     }
 
-    fun newMul_deprecated(x: IntArray, n: Int): IntArray {
-        val bitLenX = bitLen(x)
-        val bitLenN = 32 - n.countLeadingZeroBits()
-        if (bitLenX == 0 || bitLenN == 0)
-            return ZERO
-        val newBitLen = bitLenX + bitLenN
-        val prod = newCopyWithBitLen(x, newBitLen)
-        mutateMul(prod, n)
-        return prod
-    }
-
-    fun newOrMutateMul(x: IntArray, n: Int): IntArray {
-        val bitLenX = bitLen(x)
-        val bitLenN = 32 - n.countLeadingZeroBits()
-        if (bitLenX == 0 || bitLenN == 0)
-            return ZERO
-        val newBitLen = bitLenX + bitLenN
-        val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, n)
-    }
-
-    fun mutateMul(x: IntArray, n: Int): IntArray {
-        val n64 = U32(n)
+    fun mutateMul(x: IntArray, w: Int): IntArray {
+        val n64 = U32(w)
         var carry = 0L
         for (i in x.indices) {
             val t = U32(x[i]) * n64 + carry
@@ -393,15 +271,15 @@ object Magia {
         return x
     }
 
-    fun newMul(x: IntArray, l: Long): IntArray {
-        val lo = l and 0xFFFF_FFFFL
-        val hi = l ushr 32
+    fun newMul(x: IntArray, dw: Long): IntArray {
+        val lo = dw and 0xFFFF_FFFFL
+        val hi = dw ushr 32
         if (hi == 0L)
             return newMul(x, lo.toInt())
         val xBitLen = bitLen(x)
-        if (xBitLen == 0 || l == 0L)
+        if (xBitLen == 0 || dw == 0L)
             return ZERO
-        val newBitLen = bitLen(x) + (64 - l.countLeadingZeroBits())
+        val newBitLen = bitLen(x) + (64 - dw.countLeadingZeroBits())
         val z = newWithBitLen(newBitLen)
 
         var t = U32(x[0]) * lo
@@ -596,12 +474,6 @@ object Magia {
         return mutateShiftLeft(z, bitCount)
     }
 
-    fun newOrMutateShiftLeft(x: IntArray, bitCount: Int): IntArray {
-        val newBitLen = bitLen(x) + bitCount
-        val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
-        return mutateShiftLeft(z, bitCount)
-    }
-
     fun mutateShiftLeft(x: IntArray, bitCount: Int): IntArray {
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
@@ -663,15 +535,6 @@ object Magia {
         for (i in z.indices)
             z[i] = x[i] and y[i]
         return if (nonZeroLimbLen(z) > 0) z else ZERO
-    }
-
-    fun mutateAnd(x: IntArray, y: IntArray): IntArray {
-        val m = min(x.size, y.size)
-        for (i in 0..<m)
-            x[i] = x[i] and y[i]
-        for (i in m..<x.size)
-            x[i] = 0
-        return x
     }
 
     fun newOr(x: IntArray, y: IntArray): IntArray {
@@ -736,8 +599,6 @@ object Magia {
 
     fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
 
-    fun LT(x: IntArray, y: IntArray): Boolean = compare(x, y) < 0
-
     fun compare(x: IntArray, y: IntArray): Int {
         val minSize = min(x.size, y.size)
         for (i in x.size - 1 downTo minSize)
@@ -754,26 +615,26 @@ object Magia {
         return 0
     }
 
-    fun compare(x: IntArray, y: Int): Int {
+    fun compare(x: IntArray, w: Int): Int {
         val limbLen = nonZeroLimbLen(x)
         return when {
             (limbLen > 1) -> 1
-            (limbLen == 0) -> if (y == 0) 0 else -1
-            else -> unsignedCmp(x[0], y)
+            (limbLen == 0) -> if (w == 0) 0 else -1
+            else -> unsignedCmp(x[0], w)
         }
     }
 
-    fun compare(x: IntArray, y: Long): Int {
+    fun compare(x: IntArray, dw: Long): Int {
         val limbLen = nonZeroLimbLen(x)
         return when {
             (limbLen > 2) -> 1
             (limbLen == 2) -> {
                 val xT = (x[1].toLong() shl 32) or U32(x[0])
-                unsignedCmp(xT, y)
+                unsignedCmp(xT, dw)
             }
 
-            (limbLen == 1) -> if ((y ushr 32) == 0L) unsignedCmp(x[0], y.toInt()) else -1
-            else -> if (y == 0L) 0 else -1
+            (limbLen == 1) -> if ((dw ushr 32) == 0L) unsignedCmp(x[0], dw.toInt()) else -1
+            else -> if (dw == 0L) 0 else -1
         }
     }
 
