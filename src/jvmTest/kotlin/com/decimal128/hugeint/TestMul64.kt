@@ -7,12 +7,12 @@ import kotlin.random.nextULong
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TestAdd64 {
+class TestMul64 {
 
     val verbose = false
 
     @Test
-    fun testAdd64() {
+    fun testMul64() {
         for (i in 0..<1000000)
             test1()
     }
@@ -23,14 +23,14 @@ class TestAdd64 {
         val hiDw = HugeInt.from(dw)
         if (verbose)
             println("hi:$hi dw:$dw")
-        val sumBi = (hi.toBigInteger() + hiDw.toBigInteger()).toHugeInt()
-        val sum0 = hi + hiDw
-        val sum1 = hi + dw
-        val sum2 = dw + hi
+        val prodBi = (hi.toBigInteger() * hiDw.toBigInteger()).toHugeInt()
+        val prod0 = hi * hiDw
+        val prod1 = hi * dw
+        val prod2 = dw * hi
 
-        assertEquals(sumBi, sum0)
-        assertEquals(sum0, sum1)
-        assertEquals(sum0, sum2)
+        assertEquals(prodBi, prod0)
+        assertEquals(prod0, prod1)
+        assertEquals(prod0, prod2)
 
     }
 
@@ -42,10 +42,10 @@ class TestAdd64 {
     @Test
     fun testProblemChild() {
         val hi = HugeInt.from("35689796992407102546798857499")
-        val ul = 13719079755528411212uL
-        val sum = hi + ul
-        val sum2 = hi + HugeInt.from(ul)
-        assertEquals(sum2, sum)
+        val dw = 13719079755528411212uL
+        val prod = hi + dw
+        val prod2 = hi + HugeInt.from(dw)
+        assertEquals(prod2, prod)
     }
 
 }

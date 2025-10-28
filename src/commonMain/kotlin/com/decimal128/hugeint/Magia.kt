@@ -348,6 +348,25 @@ object Magia {
         if (bitLenX == 0 || bitLenN == 0)
             return ZERO
         val newBitLen = bitLenX + bitLenN
+        val prod = newWithBitLen(newBitLen)
+        val n64 = U32(n)
+        var carry = 0L
+        for (i in x.indices) {
+            val t = U32(x[i]) * n64 + carry
+            prod[i] = t.toInt()
+            carry = t ushr 32
+        }
+        if (carry != 0L)
+            prod[prod.lastIndex] = carry.toInt()
+        return prod
+    }
+
+    fun newMul_deprecated(x: IntArray, n: Int): IntArray {
+        val bitLenX = bitLen(x)
+        val bitLenN = 32 - n.countLeadingZeroBits()
+        if (bitLenX == 0 || bitLenN == 0)
+            return ZERO
+        val newBitLen = bitLenX + bitLenN
         val prod = newCopyWithBitLen(x, newBitLen)
         mutateMul(prod, n)
         return prod

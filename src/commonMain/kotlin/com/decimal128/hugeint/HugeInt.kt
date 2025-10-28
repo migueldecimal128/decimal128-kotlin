@@ -810,9 +810,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     }
     operator fun times(un: UInt): HugeInt {
         return if (isNotZero() && un != 0u)
-            ZERO
-        else
             HugeInt(this.sign, Magia.newMul(this.magia, un.toInt()))
+        else
+            ZERO
     }
     operator fun times(l: Long): HugeInt {
         return if (isNotZero() && l != 0L)
