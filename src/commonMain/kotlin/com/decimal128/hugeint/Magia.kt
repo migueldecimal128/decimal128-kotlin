@@ -102,7 +102,7 @@ object Magia {
         return mutateAdd(z, w)
     }
 
-    fun mutateAdd(x: IntArray, w: Int): IntArray {
+    private fun mutateAdd(x: IntArray, w: Int): IntArray {
         var carry = U32(w)
         for (i in x.indices) {
             val t = U32(x[i]) + carry
@@ -159,7 +159,7 @@ object Magia {
     }
 
     fun newSub(x: IntArray, w: Int): IntArray {
-        val z = IntArray(wordLen(x))
+        val z = IntArray(populatedWordLen(x))
         var orAccumulator = 0
         var borrow = U32(w)
         for (i in z.indices) {
@@ -173,7 +173,7 @@ object Magia {
     }
 
     fun newSub(x: IntArray, dw: Long): IntArray {
-        val z = IntArray(wordLen(x))
+        val z = IntArray(populatedWordLen(x))
         var orAccumulator = 0
         var borrow = 0L
         if (z.isNotEmpty()) {
@@ -206,7 +206,7 @@ object Magia {
 
     fun newSub(x: IntArray, y: IntArray): IntArray {
         check (compare(x, y) >= 0)
-        val z = IntArray(wordLen(x))
+        val z = IntArray(populatedWordLen(x))
         var orAccumulator = 0
         var borrow = 0L
         val min = min(z.size, min(x.size, y.size))
@@ -254,15 +254,19 @@ object Magia {
         return prod
     }
 
-    fun mutateMul(x: IntArray, w: Int): IntArray {
-        val n64 = U32(w)
-        var carry = 0L
+    /**
+     * Mutates x: IntArray in-place.
+     *
+     * Used during parsing of base-10 text string.
+     */
+    private fun mutateFma(x: IntArray, m: Int, a: Int) {
+        val m64 = U32(m)
+        var carry = U32(a)
         for (i in x.indices) {
-            val t = U32(x[i]) * n64 + carry
+            val t = U32(x[i]) * m64 + carry
             x[i] = t.toInt()
             carry = t ushr 32
         }
-        return x
     }
 
     fun newMul(x: IntArray, dw: Long): IntArray {
@@ -516,7 +520,7 @@ object Magia {
         return 0
     }
 
-    fun wordLen(x: IntArray): Int {
+    fun populatedWordLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
                 return i + 1
@@ -1221,7 +1225,7 @@ object Magia {
                 ++accumulatorDigitCount
                 if (accumulatorDigitCount < 9)
                     continue
-                mutateAdd(mutateMul(z, 1000000000), accumulator)
+                mutateFma(z, 1000000000, accumulator)
                 accumulator = 0
                 accumulatorDigitCount = 0
             }
@@ -1230,7 +1234,7 @@ object Magia {
                     var pow10 = 1
                     for (j in 0..<accumulatorDigitCount)
                         pow10 *= 10
-                    mutateAdd(mutateMul(z, pow10), accumulator)
+                    mutateFma(z, pow10, accumulator)
                 }
                 return z
             }
