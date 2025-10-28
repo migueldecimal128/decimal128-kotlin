@@ -94,7 +94,8 @@ object Magia {
         val newBitLen = max(bitLen(x), (32 - w.countLeadingZeroBits())) + 1
         val z = newWithBitLen(newBitLen)
         var carry = U32(w)
-        for (i in x.indices) {
+        val indexLimit = min(x.size, z.size)
+        for (i in 0..<indexLimit) {
             val t = U32(x[i]) + carry
             z[i] = t.toInt()
             carry = t ushr 32
@@ -133,15 +134,16 @@ object Magia {
         val newBitLen = max(bitLen(x), (64 - dw.countLeadingZeroBits())) + 1
         val z = newWithBitLen(newBitLen)
         var carry = dw
-        for (i in x.indices) {
+        val indexLimit = min(x.size, z.size)
+        for (i in 0..<indexLimit) {
             val t = U32(x[i]) + (carry and 0xFFFF_FFFFL)
             z[i] = t.toInt()
             carry = (t ushr 32) + (carry ushr 32)
         }
         if (carry != 0L)
-            z[x.size] = carry.toInt()
+            z[indexLimit] = carry.toInt()
         if (carry ushr 32 != 0L)
-            z[x.size + 1] = (carry ushr 32).toInt()
+            z[indexLimit + 1] = (carry ushr 32).toInt()
         return z
     }
 
@@ -209,7 +211,21 @@ object Magia {
         return x
     }
 
-    fun newSub(x: IntArray, n: Int) = mutateSub(newMinimumCopy(x), n)
+    fun newSub(x: IntArray, w: Int): IntArray {
+        val z = IntArray(wordLen(x))
+        var orAccumulator = 0
+        var borrow = U32(w)
+        for (i in z.indices) {
+            val t = U32(x[i]) - borrow
+            val zi = t.toInt()
+            z[i] = zi
+            orAccumulator = orAccumulator or zi
+            borrow = t ushr 63
+        }
+        return if (orAccumulator == 0 || borrow != 0L) ZERO else z
+    }
+
+    fun newSub_deprecated(x: IntArray, n: Int) = mutateSub(newMinimumCopy(x), n)
 
     fun mutateSub(x: IntArray, n: Int): IntArray {
         var orAccumulator = 0
@@ -229,7 +245,37 @@ object Magia {
             ZERO
     }
 
-    fun newSub(x: IntArray, l: Long) = mutateSub(newMinimumCopy(x), l)
+    fun newSub(x: IntArray, dw: Long): IntArray {
+        val z = IntArray(wordLen(x))
+        var orAccumulator = 0
+        var borrow = 0L
+        if (z.isNotEmpty()) {
+            val t0 = U32(x[0]) - (dw and 0xFFFF_FFFFL)
+            val z0 = t0.toInt()
+            z[0] = z0
+            orAccumulator = z0
+            if (z.size > 1) {
+                borrow = t0 ushr 63
+                val t1 = U32(x[1]) - (dw ushr 32) - borrow
+                val z1 = t1.toInt()
+                z[1] = z1
+                orAccumulator = orAccumulator or z1
+                borrow = t1 ushr 63
+                var i = 2
+                while (i < z.size) {
+                    val t = U32(x[i]) - borrow
+                    val zi = t.toInt()
+                    z[i] = zi
+                    orAccumulator = orAccumulator or zi
+                    borrow = t ushr 63
+                    ++i
+                }
+            }
+        }
+        return if (orAccumulator == 0 || borrow != 0L) ZERO else z
+    }
+
+    fun newSub_deprecated(x: IntArray, l: Long) = mutateSub(newMinimumCopy(x), l)
 
     fun mutateSub(x: IntArray, l: Long): IntArray {
         var orAccumulator = 0
@@ -582,6 +628,13 @@ object Magia {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
                 return 32 - x[i].countLeadingZeroBits() + (i * 32)
+        return 0
+    }
+
+    fun wordLen(x: IntArray): Int {
+        for (i in x.size - 1 downTo 0)
+            if (x[i] != 0)
+                return i + 1
         return 0
     }
 

@@ -6,6 +6,30 @@ import kotlin.math.absoluteValue
 import kotlin.math.min
 import kotlin.random.Random
 
+operator fun Int.plus(other: HugeInt) = other.addSubImpl(false, false, this)
+operator fun UInt.plus(other: HugeInt) = other.addSubImpl(false, false, this)
+operator fun Long.plus(other: HugeInt) = other.addSubImpl(false, false, this)
+operator fun ULong.plus(other: HugeInt) = other.addSubImpl(false, false, this)
+
+operator fun Int.minus(other: HugeInt) = other.addSubImpl(true, false, this)
+operator fun UInt.minus(other: HugeInt) = other.addSubImpl(true, false, this)
+operator fun Long.minus(other: HugeInt) = other.addSubImpl(true, false, this)
+operator fun ULong.minus(other: HugeInt) = other.addSubImpl(true, false, this)
+
+operator fun Int.times(other: HugeInt) = other.times(this)
+operator fun UInt.times(other: HugeInt) = other.times(this)
+operator fun Long.times(other: HugeInt) = other.times(this)
+operator fun ULong.times(other: HugeInt) = other.times(this)
+
+operator fun Int.compareTo(hi: HugeInt) =
+    -hi.compareToHelper(this < 0, this.absoluteValue.toUInt().toULong())
+operator fun UInt.compareTo(hi: HugeInt) =
+    -hi.compareToHelper(false, this.toULong())
+operator fun Long.compareTo(hi: HugeInt) =
+    -hi.compareToHelper(this < 0, this.absoluteValue.toULong())
+operator fun ULong.compareTo(hi: HugeInt) =
+    -hi.compareToHelper(false, this)
+
 
 /**
  * Arbitrary-precision signed integers for Kotlin multi-platform, providing
@@ -753,6 +777,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * Returns a HugeInt with complementary sign and equivalent magnitude
      */
     fun negate() = if (isNotZero()) HugeInt(!sign, magia) else ZERO
+    operator fun unaryMinus() = negate()
 
     /**
      * Returns the absolute value of this HugeInt.
@@ -760,24 +785,16 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     fun abs() = if (sign) HugeInt(false, magia) else this
 
     operator fun plus(other: HugeInt): HugeInt = this.addSubImpl(false, other)
-    operator fun plus(n: Int): HugeInt = this.addSubImpl(false, n)
-    operator fun plus(un: UInt): HugeInt = this.addSubImpl(false, un)
-    operator fun plus(l: Long): HugeInt = this.addSubImpl(false, l)
-    operator fun plus(ul: ULong): HugeInt = this.addSubImpl(false, ul)
-    operator fun Int.plus(other: HugeInt) = other.addSubImpl(false, this)
-    operator fun UInt.plus(other: HugeInt) = other.addSubImpl(false, this)
-    operator fun Long.plus(other: HugeInt) = other.addSubImpl(false, this)
-    operator fun ULong.plus(other: HugeInt) = other.addSubImpl(false, this)
+    operator fun plus(n: Int): HugeInt = this.addSubImpl(false, false, n)
+    operator fun plus(un: UInt): HugeInt = this.addSubImpl(false, false, un)
+    operator fun plus(l: Long): HugeInt = this.addSubImpl(false, false, l)
+    operator fun plus(ul: ULong): HugeInt = this.addSubImpl(false, false, ul)
 
     operator fun minus(other: HugeInt): HugeInt = this.addSubImpl(true, other)
-    operator fun minus(n: Int): HugeInt = this.addSubImpl(true, n)
-    operator fun minus(un: UInt): HugeInt = this.addSubImpl(true, un)
-    operator fun minus(l: Long): HugeInt = this.addSubImpl(true, l)
-    operator fun minus(ul: ULong): HugeInt = this.addSubImpl(true, ul)
-    operator fun Int.minus(other: HugeInt) = other.addSubImpl(true, this)
-    operator fun UInt.minus(other: HugeInt) = other.addSubImpl(true, this)
-    operator fun Long.minus(other: HugeInt) = other.addSubImpl(true, this)
-    operator fun ULong.minus(other: HugeInt) = other.addSubImpl(true, this)
+    operator fun minus(n: Int): HugeInt = this.addSubImpl(false, true, n)
+    operator fun minus(un: UInt): HugeInt = this.addSubImpl(false, true, un)
+    operator fun minus(l: Long): HugeInt = this.addSubImpl(false, true, l)
+    operator fun minus(ul: ULong): HugeInt = this.addSubImpl(false, true, ul)
 
     operator fun times(other: HugeInt): HugeInt {
         return if (isNotZero() && other.isNotZero())
@@ -785,39 +802,30 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         else
             ZERO
     }
-
     operator fun times(n: Int): HugeInt {
         return if (isNotZero() && n != 0)
             HugeInt(this.sign xor (n < 0), Magia.newMul(this.magia, n.absoluteValue))
         else
             ZERO
     }
-
     operator fun times(un: UInt): HugeInt {
         return if (isNotZero() && un != 0u)
             ZERO
         else
             HugeInt(this.sign, Magia.newMul(this.magia, un.toInt()))
     }
-
     operator fun times(l: Long): HugeInt {
         return if (isNotZero() && l != 0L)
             HugeInt(this.sign xor (l < 0), Magia.newMul(this.magia, l.absoluteValue))
         else
             ZERO
     }
-
     operator fun times(ul: ULong): HugeInt {
         return if (isNotZero() && ul != 0uL)
             HugeInt(this.sign, Magia.newMul(this.magia, ul.toLong()))
         else
             ZERO
     }
-
-    operator fun Int.times(other: HugeInt) = other.times(this)
-    operator fun UInt.times(other: HugeInt) = other.times(this)
-    operator fun Long.times(other: HugeInt) = other.times(this)
-    operator fun ULong.times(other: HugeInt) = other.times(this)
 
     operator fun div(other: HugeInt): HugeInt {
         if (other.isZero())
@@ -1153,20 +1161,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     }
 
     operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
-    operator fun Int.compareTo(hi: HugeInt) =
-        -hi.compareToHelper(this < 0, this.absoluteValue.toUInt().toULong())
-
     operator fun compareTo(un: UInt) = compareToHelper(false, un.toULong())
-    operator fun UInt.compareTo(hi: HugeInt) =
-        -hi.compareToHelper(false, this.toULong())
-
     operator fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
-    operator fun Long.compareTo(hi: HugeInt) =
-        -hi.compareToHelper(this < 0, this.absoluteValue.toULong())
-
     operator fun compareTo(ul: ULong) = compareToHelper(false, ul)
-    operator fun ULong.compareTo(hi: HugeInt) =
-        -hi.compareToHelper(false, this)
 
     /**
      * Compares magnitudes, disregarding sign flags.
@@ -1263,7 +1260,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         return z
     }
 
-    private fun addSubImpl(isSub: Boolean, other: HugeInt): HugeInt {
+    fun addSubImpl(isSub: Boolean, other: HugeInt): HugeInt {
         if (other === ZERO)
             return this
         if (this === ZERO)
@@ -1280,47 +1277,50 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         return ret
     }
 
-    private fun addSubImpl(isSub: Boolean, n: Int): HugeInt {
+    fun addSubImpl(signFlipThis: Boolean, signFlipOther: Boolean, n: Int): HugeInt {
         val otherSign = n < 0
         val otherMag = n.absoluteValue
-        return addSubImpl(isSub xor otherSign, otherMag.toUInt())
+        return addSubImpl(signFlipThis, otherSign xor signFlipOther, otherMag.toUInt())
     }
 
-    private fun addSubImpl(isSub: Boolean, un: UInt): HugeInt {
+    fun addSubImpl(signFlipThis: Boolean, otherSign: Boolean, un: UInt): HugeInt {
         if (un == 0u)
-            return this
+            return if (signFlipThis) this.negate() else this
         if (isZero()) {
             val magia = intArrayOf(un.toInt())
-            return HugeInt(isSub, magia)
+            return HugeInt(otherSign, magia)
         }
-        val otherSign = isSub
-        if (this.sign == otherSign)
-            return HugeInt(this.sign, Magia.newAdd(this.magia, un.toInt()))
+        val thisSign = this.sign xor signFlipThis
+        if (thisSign == otherSign)
+            return HugeInt(thisSign, Magia.newAdd(this.magia, un.toInt()))
         val cmp = this.magnitudeCompareTo(un)
         val ret = when {
-            cmp > 0 -> HugeInt(sign, Magia.newSub(this.magia, un.toInt()))
+            cmp > 0 -> HugeInt(thisSign, Magia.newSub(this.magia, un.toInt()))
             cmp < 0 -> HugeInt(otherSign, intArrayOf(un.toInt() - this.magia[0]))
             else -> ZERO
         }
         return ret
     }
 
-    private fun addSubImpl(isSub: Boolean, l: Long): HugeInt {
+    fun addSubImpl(signFlipThis: Boolean, signFlipOther: Boolean, l: Long): HugeInt {
         val otherSign = l < 0L
         val otherMag = l.absoluteValue
-        return addSubImpl(isSub xor otherSign, otherMag.toULong())
+        return addSubImpl(signFlipThis, otherSign xor signFlipOther, otherMag.toULong())
     }
 
-    private fun addSubImpl(isSub: Boolean, ul: ULong): HugeInt {
-        val hi = ul shr 32
-        if (hi == 0uL)
-            return addSubImpl(isSub, hi.toUInt())
-        val otherSign = isSub
-        if (this.sign == otherSign)
-            return HugeInt(this.sign, Magia.newAdd(this.magia, ul.toLong()))
+    fun addSubImpl(signFlipThis: Boolean, otherSign: Boolean, ul: ULong): HugeInt {
+        if ((ul shr 32) == 0uL)
+            return addSubImpl(signFlipThis, otherSign, ul.toUInt())
+        if (isZero()) {
+            val magia = intArrayOf(ul.toInt(), (ul shr 32).toInt())
+            return HugeInt(otherSign, magia)
+        }
+        val thisSign = this.sign xor signFlipThis
+        if (thisSign == otherSign)
+            return HugeInt(thisSign, Magia.newAdd(this.magia, ul.toLong()))
         val cmp = this.magnitudeCompareTo(ul)
         val ret = when {
-            cmp > 0 -> HugeInt(sign, Magia.newSub(this.magia, ul.toLong()))
+            cmp > 0 -> HugeInt(thisSign, Magia.newSub(this.magia, ul.toLong()))
             cmp < 0 -> {
                 val thisMag = this.toULong()
                 val diff = ul - thisMag
@@ -1374,7 +1374,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         }
     }
 
-    private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
+    fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
         if (this.sign != ulSign)
             return if (this.sign) -1 else 1
         val cmp = Magia.compare(this.magia, ulMag.toLong())

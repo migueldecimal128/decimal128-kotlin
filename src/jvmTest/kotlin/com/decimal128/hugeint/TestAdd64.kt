@@ -1,5 +1,7 @@
 package com.decimal128.hugeint
 
+import com.decimal128.hugeint.HugeIntExtensions.toBigInteger
+import com.decimal128.hugeint.HugeIntExtensions.toHugeInt
 import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.test.Test
@@ -7,26 +9,25 @@ import kotlin.test.assertEquals
 
 class TestAdd64 {
 
+    val verbose = false
+
     @Test
     fun testAdd64() {
-        for (i in 0..<10000)
+        for (i in 0..<1000000)
             test1()
     }
 
     fun test1() {
-        val hi = randomHi(5)
+        val hi = randomHi(300)
         val ul = rng.nextULong()
         val hiL = HugeInt.from(ul)
-        println("hi:$hi ul:$hiL")
+        if (verbose)
+            println("hi:$hi ul:$hiL")
+        val sumBi = (hi.toBigInteger() + hiL.toBigInteger()).toHugeInt()
         val sum0 = hi + hiL
         val sum1 = hi + ul
 
-        if (sum0 NE sum1)
-            println("sum0:$sum0 sum1:$sum1")
-
-        val sum2 = hi + ul
-        println("sum2:$sum2")
-
+        assertEquals(sumBi, sum0)
         assertEquals(sum0, sum1)
 
     }
@@ -38,8 +39,8 @@ class TestAdd64 {
 
     @Test
     fun testProblemChild() {
-        val hi = HugeInt.from(2)
-        val ul = 9280946495979987673uL
+        val hi = HugeInt.from("35689796992407102546798857499")
+        val ul = 13719079755528411212uL
         val sum = hi + ul
         val sum2 = hi + HugeInt.from(ul)
         assertEquals(sum2, sum)
