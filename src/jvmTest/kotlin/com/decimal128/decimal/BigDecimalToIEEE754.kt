@@ -12,8 +12,8 @@ private const val EMAX  =  6144
 private const val QTINY = EMIN - (P34 - 1) // -6176
 private const val QMAX  = EMAX - (P34 - 1) // 6111
 
-private const val INFINITY_SCALE = 16381
-private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
+const val INFINITY_SCALE = 16381
+private val POS_INFINITY_SURROGATE = BigDecimal.ZERO.scaleByPowerOfTen(INFINITY_SCALE)
 private val NEG_INFINITY_SURROGATE = POS_INFINITY_SURROGATE.negate()
 private const val QNAN_SCALE = 16382
 private const val SNAN_SCALE = 16383
