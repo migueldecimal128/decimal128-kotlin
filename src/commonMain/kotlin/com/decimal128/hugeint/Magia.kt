@@ -9,12 +9,9 @@ import kotlin.math.min
 import kotlin.math.max
 
 
-// magia == MAGnitude IntArray
-
-private const val LOWERCASE_DELTA = 'x'.code - 'X'.code
+// magia == MAGnitude IntArray ... it's magic
 
 private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
-
 
 object Magia {
 
@@ -201,8 +198,6 @@ object Magia {
         }
         return if (orAccumulator == 0 || borrow != 0L) ZERO else z
     }
-
-    //fun newSub(x: IntArray, y: IntArray) = mutateSub(newMinimumCopy(x), y)
 
     fun newSub(x: IntArray, y: IntArray): IntArray {
         check (compare(x, y) >= 0)
@@ -396,13 +391,13 @@ object Magia {
         return ZERO
     }
 
-    fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
+    private fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
         val dst = newWithBitLen(newBitLen)
         copy(dst, src)
         return dst
     }
 
-    fun copy(dst: IntArray, src: IntArray) {
+    private fun copy(dst: IntArray, src: IntArray) {
         var i = 0
         val m = min(dst.size, src.size)
         while (i < m) {
@@ -472,7 +467,7 @@ object Magia {
         return mutateShiftLeft(z, bitCount)
     }
 
-    fun mutateShiftLeft(x: IntArray, bitCount: Int): IntArray {
+    private fun mutateShiftLeft(x: IntArray, bitCount: Int): IntArray {
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
         if (wordShift >= x.size) {
@@ -520,7 +515,7 @@ object Magia {
         return 0
     }
 
-    fun populatedWordLen(x: IntArray): Int {
+    private fun populatedWordLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
                 return i + 1
@@ -925,49 +920,6 @@ object Magia {
         if (idx < 0 || idx > 'f'.code - '0'.code)
             return false
         return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
-    }
-
-    internal fun fromBigEndianBytes(
-        signExtendedPrefix: Int, bytes: ByteArray,
-        off: Int, len:
-        Int
-    ): IntArray =
-        fromBigEndianBytesX(signExtendedPrefix, bytes, off, len)
-
-    /**
-     * Creates a [Magia] from an array
-     */
-    internal fun fromBigEndianBytesX(
-        signExtendedPrefix: Int, bytes: ByteArray,
-        off: Int, len:
-        Int
-    ): IntArray {
-        if (len <= 0)
-            return ZERO
-        val magia = IntArray((len + 3) ushr 2)
-        var ib = off + len - 1
-        var iw = 0
-        var remaining = len
-        while (remaining >= 4) {
-            val b3 = bytes[ib - 3].toInt() and 0xFF
-            val b2 = bytes[ib - 2].toInt() and 0xFF
-            val b1 = bytes[ib - 1].toInt() and 0xFF
-            val b0 = bytes[ib - 0].toInt() and 0xFF
-            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
-            magia[iw++] = w
-            ib -= 4
-            remaining -= 4
-        }
-        if (remaining > 0) {
-            val b3 = signExtendedPrefix and 0xFF
-            val b2 = (if (remaining == 3) (bytes[ib - 2].toInt()) else signExtendedPrefix) and 0xFF
-            val b1 = (if (remaining >= 2) (bytes[ib - 1].toInt()) else signExtendedPrefix) and 0xFF
-            val b0 = bytes[ib].toInt() and 0xFF
-            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
-            magia[iw++] = w
-            check(iw == magia.size)
-        }
-        return magia
     }
 
     /**
