@@ -476,7 +476,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             return when {
                 length == 0 -> ZERO
                 bytes[offset] >= 0 ->
-                    HugeInt(false, Magia.fromNonNegativeBigEndianBytes(bytes, offset, length))
+                    HugeInt(false, Magia.fromNonNegativeBytes(isBigEndian = true,
+                                                              bytes, offset, length))
                 else ->
                     HugeInt(true,
                             Magia.fromNegativeTwosComplementBigEndianBytes(bytes, offset, length))
@@ -506,7 +507,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             return when {
                 length == 0 -> ZERO
                 bytes[offset + length - 1] >= 0 ->
-                    HugeInt(false, Magia.fromNonNegativeLittleEndianBytes(bytes, offset, length))
+                    HugeInt(false, Magia.fromNonNegativeBytes(isBigEndian = false,
+                                                              bytes, offset, length))
                 else ->
                     HugeInt(true,
                             Magia.fromNegativeTwosComplementLittleEndianBytes(bytes, offset, length))
