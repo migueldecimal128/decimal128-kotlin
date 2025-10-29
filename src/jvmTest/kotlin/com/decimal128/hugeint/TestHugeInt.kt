@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
 import java.util.*
+import kotlin.test.assertFailsWith
 
 class TestHugeInt {
     val verbose = false
@@ -279,7 +280,7 @@ class TestHugeInt {
         assert(hiSqr.EQ(biSqr))
         if (hiSqr != hiSqrMul)
             println("hi:$hi hiSqr:$hiSqr hiSqr2:$hiSqrMul")
-        assert(hiSqr.EQ(hiSqrMul))
+        assertEquals(hiSqr, hiSqrMul)
     }
 
     fun testPow(bi: BigInteger) {
@@ -287,7 +288,7 @@ class TestHugeInt {
         val n = random.nextInt(10)
         val biPow = bi.pow(n)
         val hiPow = hi.pow(n)
-        assert(hiPow.EQ(biPow))
+        assertEquals(hiPow.toString(), biPow.toString())
     }
 
     fun testBigEndianByteArray(bi: BigInteger) {

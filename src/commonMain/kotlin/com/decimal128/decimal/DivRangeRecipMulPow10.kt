@@ -160,7 +160,7 @@ object DivRangeRecipMulPow10 {
         val quot = quotPlusRound ushr 1
         val round = quotPlusRound.testBit(0)
 
-        if (expectedQuot NE quot)
+        if (expectedQuot != quot)
             return false
 
         val fracBeta = prod - (quotPlusRound shl S)

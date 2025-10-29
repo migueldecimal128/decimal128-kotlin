@@ -24,7 +24,7 @@ class TestSub32 {
         val diff0 = hi - HugeInt.from(w)
         val diff1 = hi - w
 
-        if (diff0 NE diff1)
+        if (diff0 != diff1)
             println("diff0:$diff0 diff1:$diff1")
         assertEquals(diff0, diff1)
 
@@ -44,7 +44,7 @@ class TestSub32 {
         val diff0 = hi - HugeInt.from(n)
         val diff1 = hi - n
 
-        if (diff0 NE diff1)
+        if (diff0 != diff1)
             println("diff0:$diff0 diff1:$diff1")
         assertEquals(diff0, diff1)
 
