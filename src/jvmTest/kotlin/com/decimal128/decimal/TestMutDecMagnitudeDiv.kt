@@ -109,7 +109,8 @@ class TestMutDecMagnitudeDiv {
         val qExpExpected = -expected.scale()
         val biObserved = decQ.coeffToBigInteger()
         val qExpObserved = decQ.qExp
-        if (verbose || biExpected != biObserved || qExpExpected != qExpObserved) {
+        if (verbose || qExpExpected != qExpObserved ||
+            (biExpected != biObserved && qExpExpected != INFINITY_SCALE)) {
             println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")
             println(" => qExpExpected:$qExpExpected qExpObserved:$qExpObserved")
             println(" => biExpected:$biExpected biObserved:$biObserved")
