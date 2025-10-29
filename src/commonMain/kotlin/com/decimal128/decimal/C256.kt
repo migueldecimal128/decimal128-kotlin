@@ -271,7 +271,11 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     open fun toHexString() = Int256ParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
-    override fun toString() = Int256ParsePrint.int256ToString(false, this)
+    override fun toString() =
+        if (bitLen == -1)
+            "MutDec \uD83D\uDEA7 under construction \uD83D\uDEA7"
+        else
+            Int256ParsePrint.int256ToString(false, this)
     fun u256ToUtf8(bytes: ByteArray, off: Int) = Int256ParsePrint.int256ToUtf8(false, this, bytes, off)
 
     override fun equals(other: Any?) = other is C256 && U256Compare.u256UnscaledEQ(this, other)
