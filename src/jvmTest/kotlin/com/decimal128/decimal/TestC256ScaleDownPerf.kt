@@ -9,7 +9,7 @@ import kotlin.math.max
 
 class TestC256ScaleDownPerf {
 
-    val verbose = true
+    val verbose = false
 
     val testSize = 1000000
     val iterCount = 20

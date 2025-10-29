@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 class TestHugeIntParse {
-    val verbose = true
+    val verbose = false
 
     class TC(val str: String, val isValid: Boolean = true) {
     }

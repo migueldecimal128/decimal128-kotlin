@@ -1328,18 +1328,105 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         Magia.compare(this.magia, littleEndianIntArray)
 
     /**
-     * Compares this HugeInt with another object for numerical equality.
+     * Comparison predicate for numerical equality with another [HugeInt].
      *
-     * Two HugeInts are considered equal if they have the same sign
+     * @param other the [HugeInt] to compare with
+     * @return `true` if both have the same sign and identical magnitude, `false` otherwise
+     */
+    infix fun EQ(other: HugeInt): Boolean =
+        (this.sign == other.sign) && Magia.EQ(this.magia, other.magia)
+
+    /**
+     * Comparison predicate for numerical equality with a signed 32-bit integer.
+     *
+     * @param n the [Int] value to compare with
+     * @return `true` if this value equals [n], `false` otherwise
+     */
+    infix fun EQ(n: Int): Boolean = compareTo(n) == 0
+
+    /**
+     * Comparison predicate for numerical equality with an unsigned 32-bit integer.
+     *
+     * @param w the [UInt] value to compare with
+     * @return `true` if this value equals [w], `false` otherwise
+     */
+    infix fun EQ(w: UInt): Boolean = compareTo(w) == 0
+
+    /**
+     * Comparison predicate for numerical equality with a signed 64-bit integer.
+     *
+     * @param l the [Long] value to compare with
+     * @return `true` if this value equals [l], `false` otherwise
+     */
+    infix fun EQ(l: Long): Boolean = compareTo(l) == 0
+
+    /**
+     * Comparison predicate for numerical equality with an unsigned 64-bit integer.
+     *
+     * @param dw the [ULong] value to compare with
+     * @return `true` if this value equals [dw], `false` otherwise
+     */
+    infix fun EQ(dw: ULong): Boolean = compareTo(dw) == 0
+
+    /**
+     * Comparison predicate for numerical inequality with another [HugeInt].
+     *
+     * @param other the [HugeInt] to compare with
+     * @return `true` if signs differ or magnitudes are unequal, `false` otherwise
+     */
+    infix fun NE(other: HugeInt): Boolean =
+        (this.sign != other.sign) || !Magia.EQ(this.magia, other.magia)
+
+    /**
+     * Comparison predicate for numerical inequality with a signed 32-bit integer.
+     *
+     * @param n the [Int] value to compare with
+     * @return `true` if this value does not equal [n], `false` otherwise
+     */
+    infix fun NE(n: Int): Boolean = compareTo(n) != 0
+
+    /**
+     * Comparison predicate for numerical inequality with an unsigned 32-bit integer.
+     *
+     * @param w the [UInt] value to compare with
+     * @return `true` if this value does not equal [w], `false` otherwise
+     */
+    infix fun NE(w: UInt): Boolean = compareTo(w) != 0
+
+    /**
+     * Comparison predicate for numerical inequality with a signed 64-bit integer.
+     *
+     * @param l the [Long] value to compare with
+     * @return `true` if this value does not equal [l], `false` otherwise
+     */
+    infix fun NE(l: Long): Boolean = compareTo(l) != 0
+
+    /**
+     * Comparison predicate for numerical inequality with an unsigned 64-bit integer.
+     *
+     * @param dw the [ULong] value to compare with
+     * @return `true` if this value does not equal [dw], `false` otherwise
+     */
+    infix fun NE(dw: ULong): Boolean = compareTo(dw) != 0
+
+    /**
+     * Compares this [HugeInt] with another object for numerical equality.
+     *
+     * Two [HugeInt] instances are considered equal if they have the same sign
      * and identical magnitude arrays.
      *
+     * Prefer using the infix predicates [EQ] and [NE] instead of `==` and `!=`,
+     * since the `equals(Any?)` signature permits unintended comparisons with
+     * unrelated types that will compile quietly but will always evaluate to
+     * `false` at runtime.
+     *
      * @param other the object to compare against
-     * @return true if [other] is a HugeInt with the same value, false otherwise
+     * @return `true` if [other] is a [HugeInt] with the same value; `false` otherwise
      */
     override fun equals(other: Any?): Boolean {
-        return ((other is HugeInt) &&
+        return (other is HugeInt) &&
                 (this.sign == other.sign) &&
-                Magia.EQ(this.magia, other.magia))
+                Magia.EQ(this.magia, other.magia)
     }
 
     /**
@@ -1731,4 +1818,93 @@ operator fun Long.compareTo(hi: HugeInt) =
     -hi.compareToHelper(this < 0, this.absoluteValue.toULong())
 operator fun ULong.compareTo(hi: HugeInt) =
     -hi.compareToHelper(false, this)
+
+/**
+ * Compares this [Int] value with a [HugeInt] for numerical equality
+ * with compile-time type safety.
+ *
+ * `EQ` represents *EQuals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if both values are numerically equal; `false` otherwise.
+ */
+infix fun Int.EQ(other: HugeInt): Boolean = other.compareTo(this) == 0
+
+/**
+ * Compares this [UInt] value with a [HugeInt] for numerical equality
+ * with compile-time type safety.
+ *
+ * `EQ` represents *EQuals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if both values are numerically equal; `false` otherwise.
+ */
+infix fun UInt.EQ(other: HugeInt): Boolean = other.compareTo(this) == 0
+
+/**
+ * Compares this [Long] value with a [HugeInt] for numerical equality
+ * with compile-time type safety.
+ *
+ * `EQ` represents *EQuals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if both values are numerically equal; `false` otherwise.
+ */
+infix fun Long.EQ(other: HugeInt): Boolean = other.compareTo(this) == 0
+
+/**
+ * Compares this [ULong] value with a [HugeInt] for numerical equality
+ * with compile-time type safety.
+ *
+ * `EQ` represents *EQuals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if both values are numerically equal; `false` otherwise.
+ */
+infix fun ULong.EQ(other: HugeInt): Boolean = other.compareTo(this) == 0
+
+
+/**
+ * Compares this [Int] value with a [HugeInt] for numerical inequality
+ * with compile-time type safety.
+ *
+ * `NE` represents *Not Equals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if the values are not numerically equal; `false` otherwise.
+ */
+infix fun Int.NE(other: HugeInt): Boolean = other.compareTo(this) != 0
+
+/**
+ * Compares this [UInt] value with a [HugeInt] for numerical inequality
+ * with compile-time type safety.
+ *
+ * `NE` represents *Not Equals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if the values are not numerically equal; `false` otherwise.
+ */
+infix fun UInt.NE(other: HugeInt): Boolean = other.compareTo(this) != 0
+
+/**
+ * Compares this [Long] value with a [HugeInt] for numerical inequality
+ * with compile-time type safety.
+ *
+ * `NE` represents *Not Equals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if the values are not numerically equal; `false` otherwise.
+ */
+infix fun Long.NE(other: HugeInt): Boolean = other.compareTo(this) != 0
+
+/**
+ * Compares this [ULong] value with a [HugeInt] for numerical inequality
+ * with compile-time type safety.
+ *
+ * `NE` represents *Not Equals*, descended from a proud lineage of Fortran
+ * and assembly condition mnemonics.
+ *
+ * @return `true` if the values are not numerically equal; `false` otherwise.
+ */
+infix fun ULong.NE(other: HugeInt): Boolean = other.compareTo(this) != 0
 

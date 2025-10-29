@@ -275,9 +275,9 @@ class TestHugeInt {
         val biSqr = bi * bi
         val hiSqr = hi.sqr()
         val hiSqrMul = hi * hi
-        if (hiSqr != biSqr)
+        if (hiSqr NE biSqr)
             println("hi:$hi hiSqr:$hiSqr biSqr:$biSqr")
-        assert(hiSqr.EQ(biSqr))
+        assert(hiSqr EQ biSqr)
         if (hiSqr != hiSqrMul)
             println("hi:$hi hiSqr:$hiSqr hiSqr2:$hiSqrMul")
         assertEquals(hiSqr, hiSqrMul)
