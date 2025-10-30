@@ -452,67 +452,97 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         }
 
         /**
-         * Converts a Big-Endian byte array in two's complement format to a HugeInt.
+         * Constructs a [HugeInt] from a Big-Endian two’s-complement byte array.
          *
-         * Equivalent to the `java.math.BigInteger(byte[])` constructor.
-         * An empty array returns HugeInt.ZERO.
+         * This behaves like the `java.math.BigInteger(byte[])` constructor and is the
+         * conventional external representation for signed binary integers.
+         *
+         * The sign is determined by the most significant bit of the first byte.
+         * An empty array returns [ZERO].
+         *
+         * For Little-Endian or unsigned data, use [fromBinaryBytes] directly.
+         *
+         * @param bytes  The source byte array.
+         * @return The corresponding [HugeInt] value.
          */
         @JvmStatic
-        fun fromTwosComplementBigEndianBytes(bytes: ByteArray) =
+        fun fromTwosComplementBigEndianBytes(bytes: ByteArray): HugeInt =
             fromTwosComplementBigEndianBytes(bytes, 0, bytes.size)
 
         /**
-         * Converts a subrange of a Big-Endian byte array in two's complement format
-         * to a HugeInt.
+         * Constructs a [HugeInt] from a subrange of a Big-Endian two’s-complement byte array.
          *
+         * This behaves like the `java.math.BigInteger(byte[], offset, length)` pattern.
          * The sign is determined by the most significant bit of the first byte in the range.
+         * An empty range returns [ZERO].
          *
-         * @throws IllegalArgumentException if offset or length are invalid.
+         * For Little-Endian or unsigned data, use [fromBinaryBytes] directly.
+         *
+         * @param bytes   The source byte array.
+         * @param offset  The starting index within [bytes].
+         * @param length  The number of bytes to read.
+         * @return The corresponding [HugeInt] value.
+         * @throws IllegalArgumentException if [offset] or [length] specify an invalid range.
          */
         @JvmStatic
-        fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int, length: Int): HugeInt {
-            if (offset < 0 || length < 0 || length > bytes.size - offset)
-                throw IllegalArgumentException()
-            return when {
-                length == 0 -> ZERO
-                bytes[offset] >= 0 ->
-                    HugeInt(false, Magia.fromNonNegativeBytes(isBigEndian = true,
-                                                              bytes, offset, length))
-                else ->
-                    HugeInt(true,
-                            Magia.fromNegativeTwosComplementBigEndianBytes(bytes, offset, length))
-            }
-        }
+        fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int, length: Int): HugeInt =
+            fromBinaryBytes(isTwosComplement = true, isBigEndian = true, bytes, offset, length)
 
         /**
-         * Converts a Little-Endian byte array in two's complement format to a HugeInt.
+         * Creates a [HugeInt] from an array of raw binary bytes.
+         *
+         * The input bytes represent either an unsigned integer or a two’s-complement
+         * signed integer, depending on [isTwosComplement]. If [isTwosComplement] is `true`,
+         * the most significant bit of the first byte determines the sign, and the bytes are
+         * interpreted according to two’s-complement encoding. If [isTwosComplement] is `false`,
+         * the bytes are treated as a non-negative unsigned value.
+         *
+         * The byte order is determined by [isBigEndian].
+         *
+         * @param isTwosComplement `true` if bytes use two’s-complement encoding, `false` if unsigned.
+         * @param isBigEndian `true` if bytes are in big-endian order, `false` for little-endian.
+         * @param bytes Source byte array containing the integer representation.
+         * @return A [HugeInt] representing the value of the specified byte range.
+         * @throws IllegalArgumentException if the range `[offset, offset + length)` is invalid.
          */
-        @JvmStatic
-        fun fromTwosComplementLittleEndianBytes(bytes: ByteArray) =
-            fromTwosComplementLittleEndianBytes(bytes, 0, bytes.size)
+        fun fromBinaryBytes(isTwosComplement: Boolean, isBigEndian: Boolean,
+                            bytes: ByteArray): HugeInt  =
+            fromBinaryBytes(isTwosComplement, isBigEndian, bytes, 0, bytes.size)
 
-        /**
-         * Converts a subrange of a Little-Endian byte array in two's complement format
-         * to a HugeInt.
+            /**
+         * Creates a [HugeInt] from a sequence of raw binary bytes.
          *
-         * The sign is determined by the most significant bit of the last byte in the range.
+         * The input bytes represent either an unsigned integer or a two’s-complement
+         * signed integer, depending on [isTwosComplement]. If [isTwosComplement] is `true`,
+         * the most significant bit of the first byte determines the sign, and the bytes are
+         * interpreted according to two’s-complement encoding. If [isTwosComplement] is `false`,
+         * the bytes are treated as a non-negative unsigned value.
          *
-         * @throws IllegalArgumentException if offset or length are invalid.
+         * The byte order is determined by [isBigEndian].
+         *
+         * @param isTwosComplement `true` if bytes use two’s-complement encoding, `false` if unsigned.
+         * @param isBigEndian `true` if bytes are in big-endian order, `false` for little-endian.
+         * @param bytes Source byte array containing the integer representation.
+         * @param offset Starting offset within [bytes].
+         * @param length Number of bytes to read.
+         * @return A [HugeInt] representing the value of the specified byte range.
+         * @throws IllegalArgumentException if the range `[offset, offset + length)` is invalid.
          */
-        @JvmStatic
-        fun fromTwosComplementLittleEndianBytes(bytes: ByteArray, offset: Int, length: Int):
-                HugeInt {
+        fun fromBinaryBytes(isTwosComplement: Boolean, isBigEndian: Boolean,
+                            bytes: ByteArray, offset: Int, length: Int): HugeInt {
             if (offset < 0 || length < 0 || length > bytes.size - offset)
                 throw IllegalArgumentException()
-            return when {
-                length == 0 -> ZERO
-                bytes[offset + length - 1] >= 0 ->
-                    HugeInt(false, Magia.fromNonNegativeBytes(isBigEndian = false,
-                                                              bytes, offset, length))
-                else ->
-                    HugeInt(true,
-                            Magia.fromNegativeTwosComplementLittleEndianBytes(bytes, offset, length))
+            if (length > 0) {
+                val ibSign = offset - 1 + (if (isBigEndian) 1 else length)
+                val isNegative = isTwosComplement && bytes[ibSign] < 0
+                val magia = Magia.fromBinaryBytes(
+                    isNegative, isBigEndian, bytes, offset,
+                    length
+                )
+                if (magia !== Magia.ZERO)
+                    return HugeInt(isNegative, magia)
             }
+            return ZERO
         }
 
         /**

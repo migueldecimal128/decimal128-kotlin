@@ -317,16 +317,17 @@ class TestHugeInt {
         assertEquals(hi, hi3)
 
         val bytesReversed = reverseBytes(biBytes)
-        val hi4 = HugeInt.fromTwosComplementLittleEndianBytes(bytesReversed)
+        val hi4 = HugeInt.fromBinaryBytes(isTwosComplement = true, isBigEndian = false, bytesReversed)
         assertEquals(hi, hi4)
 
 
         val bytesPaddedReversed = reverseBytes(bytesPadded)
-        val hi5 = HugeInt.fromTwosComplementLittleEndianBytes(bytesPaddedReversed, 2, biBytes.size)
+        val hi5 = HugeInt.fromBinaryBytes(isTwosComplement = true, isBigEndian = false,
+                                          bytesPaddedReversed, 2, biBytes.size)
         assertEquals(hi, hi5)
 
-        val hi6 = HugeInt.fromTwosComplementLittleEndianBytes(bytesPaddedReversed,
-                                                              2, biBytes.size + 1)
+        val hi6 = HugeInt.fromBinaryBytes(isTwosComplement = true, isBigEndian = false,
+                                          bytesPaddedReversed, 2, biBytes.size + 1)
         assertEquals(hi, hi6)
 
 

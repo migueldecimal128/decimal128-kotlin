@@ -16,6 +16,8 @@ private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
 object Magia {
 
     val ZERO = IntArray(0)
+    // be careful if you ever start mutating not to inadvertently modify this
+    val ONE = intArrayOf(1)
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
@@ -943,7 +945,7 @@ object Magia {
             ++ibMsb
             --remaining
             if (remaining == 0)
-                return intArrayOf(1)
+                return ONE
         }
 
         val magia = IntArray((remaining + 3) shr 2)
@@ -1109,6 +1111,87 @@ object Magia {
             val b0 = bytes[ib].toInt() and 0xFF
             val w = (b2 shl 16) or (b1 shl 8) or b0
             magia[iw++] = w
+        }
+        check(iw == magia.size)
+        return magia
+    }
+
+    /**
+     * Constructs a [Magia] magnitude from a sequence of raw binary bytes.
+     *
+     * The input bytes represent a non-negative magnitude if [isNegative] is `false`,
+     * or a two’s-complement negative number if [isNegative] is `true`. In the latter case,
+     * the bytes are complemented and incremented during decoding to produce the corresponding
+     * positive magnitude. The sign itself is handled by the caller.
+     *
+     * The bytes may be in either big-endian or little-endian order, as indicated by [isBigEndian].
+     *
+     * @param isNegative  `true` if bytes encode a negative value in two’s-complement form.
+     * @param isBigEndian `true` if bytes are in big-endian order, `false` for little-endian.
+     * @param bytes       Source byte array.
+     * @param off         Starting offset in [bytes].
+     * @param len         Number of bytes to read.
+     * @return A [Magia] magnitude as an [IntArray].
+     * @throws IllegalArgumentException if the range `[off, off + len)` is invalid.
+     */
+    internal fun fromBinaryBytes(isNegative: Boolean, isBigEndian: Boolean,
+                                 bytes: ByteArray, off: Int, len: Int): IntArray {
+        if (off < 0 || len < 0 || len > bytes.size - off)
+            throw IllegalArgumentException()
+        if (len == 0)
+            return ZERO
+
+        // calculate offsets and stepping direction for BE BigEndian vs LE LittleEndian
+        val offB1 = if (isBigEndian) -1 else 1 // BE == -1, LE ==  1
+        val offB2 = offB1 shl 1                // BE == -2, LE ==  2
+        val offB3 = offB1 + offB2              // BE == -3, LE ==  3
+        val step1HiToLo = - offB1              // BE ==  1, LE == -1
+        val step4LoToHi = offB1 shl 2          // BE == -4, LE ==  4
+
+        val ibLast = off + len - 1
+        val ibLsb = if (isBigEndian) ibLast else off // index Least significant byte
+        var ibMsb = if (isBigEndian) off else ibLast // index Most significant byte
+
+        val negativeMask = if (isNegative) -1 else 0
+
+        // Leading sign-extension bytes (0x00 for non-negative, 0xFF for negative) are flushed
+        // If all bytes are flush bytes, the result is [ZERO] or [ONE], depending on [isNegative].
+        val leadingFlushByte = negativeMask
+        var remaining = len
+        while (bytes[ibMsb].toInt() == leadingFlushByte) {
+            ibMsb += step1HiToLo
+            --remaining
+            if (remaining == 0)
+                return if (isNegative) ONE else ZERO
+        }
+
+        val magia = IntArray((remaining + 3) shr 2)
+
+        var ib = ibLsb
+        var iw = 0
+
+        var carry = -negativeMask.toLong() // if (isNegative) then carry = 1 else 0
+
+        while (remaining >= 4) {
+            val b3 = bytes[ib + offB3].toInt() and 0xFF
+            val b2 = bytes[ib + offB2].toInt() and 0xFF
+            val b1 = bytes[ib + offB1].toInt() and 0xFF
+            val b0 = bytes[ib        ].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            carry += (w xor negativeMask).toLong() and 0xFFFF_FFFFL
+            magia[iw++] = carry.toInt()
+            carry = carry shr 32
+            check ((carry shr 1) == 0L)
+            ib += step4LoToHi
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            val b3 = negativeMask and 0xFF
+            val b2 = (if (remaining == 3) bytes[ib + offB2].toInt() else negativeMask) and 0xFF
+            val b1 = (if (remaining >= 2) bytes[ib + offB1].toInt() else negativeMask) and 0xFF
+            val b0 = bytes[ib].toInt() and 0xFF
+            val w = (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+            magia[iw++] = (w xor negativeMask) + carry.toInt()
         }
         check(iw == magia.size)
         return magia
