@@ -5,6 +5,7 @@ package com.decimal128.hugeint
 import com.decimal128.decimal.unsignedCmp
 import com.decimal128.decimal.unsignedDiv
 import com.decimal128.decimal.unsignedMod
+import com.decimal128.decimal.unsignedMulHi
 import kotlin.math.min
 import kotlin.math.max
 
@@ -12,6 +13,15 @@ import kotlin.math.max
 // magia == MAGnitude IntArray ... it's magic
 
 private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
+
+private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
+private const val S_U32_DIV_1E1 = 35
+
+private const val M_U32_DIV_1E2 = 0x51EB851FL
+private const val S_U32_DIV_1E2 = 37
+
+private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
+private const val S_U64_DIV_1E4 = 11 // + 64 high
 
 object Magia {
 
@@ -812,8 +822,35 @@ object Magia {
         return 0
     }
 
+    /**
+     * Converts the given unsigned integer magnitude [magia] to its decimal string form.
+     *
+     * This is equivalent to calling [toString] with `isNegative = false`.
+     *
+     * @param magia the unsigned integer magnitude, least-significant word first.
+     * @return the decimal string representation of [magia].
+     */
     fun toString(magia: IntArray) = toString(isNegative = false, magia)
 
+    /**
+     * Converts a signed magnitude [magia] value into its decimal string representation.
+     *
+     * This method performs a full base-10 conversion without using heap allocation
+     * other than the temporary output buffer. Division and remainder operations
+     * are done in chunks of one billion (1 000 000 000) to minimize costly
+     * multi-precision divisions.
+     *
+     * The algorithm:
+     *  - Estimates the required digit length from [bitLen].
+     *  - Copies [magia] into a temporary mutable array.
+     *  - Repeatedly divides the number by 1e9 to extract 9-digit chunks.
+     *  - Converts each chunk into ASCII digits using [renderChunk9] and [renderChunkTail].
+     *  - Prepends a leading ‘-’ if [isNegative] is true.
+     *
+     * @param isNegative whether to prefix the result with a minus sign.
+     * @param magia the magnitude, least-significant word first.
+     * @return the decimal string representation of the signed value.
+     */
     fun toString(isNegative: Boolean, magia: IntArray): String {
         val bitLen = bitLen(magia)
         if (bitLen < 2) {
@@ -824,38 +861,99 @@ object Magia {
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
         val t = newMinimumCopy(magia)
-        val bytes = ByteArray(maxSignedLen)
-        bytes[0] = '-'.code.toByte()
-        var j = if (isNegative) 1 else 0
-        var ib = j
+        val utf8 = ByteArray(maxSignedLen)
+        var ib = utf8.size
         while (compare(t, 1_000_000_000) >= 0) {
-            val chunk = mutateDivideRemainder(t, 1_000_000_000).toInt()
-            ib = renderChunkReversed(chunk, 9, bytes, ib)
+            val chunk = mutateDivideRemainder(t, 1_000_000_000)
+            renderChunk9(chunk, utf8, ib)
+            ib -= 9
         }
-        ib = renderChunkReversed(t[0], 1, bytes, ib)
-        var k = ib - 1
-        while (j < k) {
-            val t0 = bytes[j]
-            bytes[j] = bytes[k]
-            bytes[k] = t0
-            ++j
-            --k
-        }
-        return String(bytes, 0, ib)
+        ib -= renderChunkTail(t[0], utf8, ib)
+        if (isNegative)
+            utf8[--ib] = '-'.code.toByte()
+        val len = utf8.size - ib
+        return String(utf8, ib, len)
     }
 
-    private fun renderChunkReversed(n: Int, minDigitCount: Int, bytes: ByteArray, off: Int): Int {
+    /**
+     * Renders a single integer chunk [n] (less than 1e9) into its decimal digits
+     * at the end of [utf8], starting from [offMaxx] and moving backward.
+     *
+     * Uses fast division by 10 via multiplication by `0xCCCCCCCD` to extract digits.
+     *
+     * @param n the non-negative integer to render.
+     * @param utf8 the UTF-8 byte buffer to write digits into.
+     * @param offMaxx the maximum exclusive offset within [utf8];
+     * digits are written backward from `offMaxx - 1`.
+     * @return the number of bytes written.
+     */
+    private fun renderChunkTail(n: Int, utf8: ByteArray, offMaxx: Int): Int {
         var t: Long = U32(n)
-        var ib = off
-        val minIb = ib + minDigitCount
-        while (t != 0L || ib < minIb) {
+        var ib = offMaxx
+        do {
             val divTen = (t * 0xCCCCCCCDL) ushr 35
             val digit = (t - (divTen * 10L)).toInt()
-            bytes[ib++] = ('0'.code + digit).toByte()
+            utf8[--ib] = ('0'.code + digit).toByte()
             t = divTen
-        }
-        return ib
+        } while (t != 0L)
+
+        return offMaxx - ib
     }
+
+    /**
+     * Renders a 9-digit chunk [dw] (0 ≤ [dw] < 1e9) into ASCII digits in [utf8],
+     * ending at [offMaxx].
+     *
+     * The digits are extracted using reciprocal-multiply division by powers
+     * of 10 to avoid slow division instructions.
+     *
+     * The layout written is:
+     * ```
+     * utf8[offMaxx - 9] .. utf8[offMaxx - 1] = '0'..'9'
+     * ```
+     *
+     * @param dw the 9-digit unsigned value to render.
+     * @param utf8 the output byte buffer for ASCII digits.
+     * @param offMaxx the maximum exclusive offset within [utf8];
+     * digits occupy the range `offMaxx - 9 .. offMaxx - 1`.
+     */
+    private fun renderChunk9(dw: Long, utf8: ByteArray, offMaxx: Int) {
+        val abcde = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val fghi  = dw - (abcde * 10000L)
+
+        val abc = (abcde * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val de = abcde - (abc * 100L)
+
+        val fg = (fghi * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val hi = fghi - (fg * 100L)
+
+        val a = (abc * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val bc = abc - (a * 100L)
+
+        val b = (bc * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = bc - (b * 10L)
+
+        val d = (de * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val e = de - (d * 10L)
+
+        val f = (fg * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val g = fg - (f * 10L)
+
+        val h = (hi * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val i = hi - (h * 10L)
+
+        utf8[offMaxx - 9] = (a.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 8] = (b.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 7] = (c.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 6] = (d.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 5] = (e.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 4] = (f.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 3] = (g.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 2] = (h.toInt() + '0'.code).toByte()
+        utf8[offMaxx - 1] = (i.toInt() + '0'.code).toByte()
+
+    }
+
 
     fun toHexString(magia: IntArray) = toHexString(false, magia)
 

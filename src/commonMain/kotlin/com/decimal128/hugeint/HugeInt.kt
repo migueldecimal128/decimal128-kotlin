@@ -30,8 +30,9 @@ import kotlin.random.Random
  *
  * HugeInt differs from java.math.BigInteger in the handling of binary and bit
  * manipulation functions. HugeInt binary boolean and bit manipulation
- * functions work only on the magnitude, ignore the sign, and return
- * non-negative results. This differs from java.math.BigInteger which claims:
+ * functions generally work only on the magnitude, ignore the sign, and return
+ * non-negative results.
+ * This differs from java.math.BigInteger which claims:
  * _All operations behave as if BigIntegers were represented in twos-complement
  * notation (like Java's primitive integer types)._
  *

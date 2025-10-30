@@ -5,12 +5,14 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 class TestHugeIntParse {
-    val verbose = false
+    val verbose = true
 
     class TC(val str: String, val isValid: Boolean = true) {
     }
 
     val tcs = arrayOf(
+        TC("1_000_000_000"),
+        TC("999_999_999"),
         TC("0xCAFE_BABE_DEAD_BEEF"),
         TC("1_", false),
         TC("0x0"),
@@ -44,6 +46,8 @@ class TestHugeIntParse {
 
             val hiStr = hi.toString()
             val biStr = bi.toString()
+            if (verbose)
+                println("hiStr:$hiStr biStr:$biStr")
             assertEquals(biStr, hiStr)
 
             val sb = StringBuilder().append(str)
