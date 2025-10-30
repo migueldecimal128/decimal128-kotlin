@@ -829,7 +829,7 @@ object Magia {
     /**
      * Converts the given unsigned integer magnitude [magia] to its decimal string form.
      *
-     * This is equivalent to calling [toString] with `isNegative = false`.
+     * Equivalent to calling [toString] with `isNegative = false`.
      *
      * @param magia the unsigned integer magnitude, least-significant word first.
      * @return the decimal string representation of [magia].
@@ -839,13 +839,13 @@ object Magia {
     /**
      * Converts a signed magnitude [magia] value into its decimal string representation.
      *
-     * This method performs a full base-10 conversion without using heap allocation
-     * other than the temporary output buffer. Division and remainder operations
+     * Performs a full base-10 conversion. Division and remainder operations
      * are done in chunks of one billion (1 000 000 000) to minimize costly
-     * multi-precision divisions.
+     * multi-precision divisions. Temporary heap allocation is used for an intermediate
+     * quotient array, a temporary UTF-8 buffer, and the final [String] result.
      *
      * The algorithm:
-     *  - Estimates the required digit length from [bitLen].
+     *  - Estimates the required digit count from [bitLen].
      *  - Copies [magia] into a temporary mutable array.
      *  - Repeatedly divides the number by 1e9 to extract 9-digit chunks.
      *  - Converts each chunk into ASCII digits using [renderChunk9] and [renderChunkTail].
@@ -884,19 +884,21 @@ object Magia {
     }
 
     /**
-     * Renders a single integer chunk [n] (less than 1e9) into its decimal digits
+     * Renders a single 32-bit unsigned integer [n] into its decimal digits
      * at the end of [utf8], starting from [offMaxx] and moving backward.
      *
-     * Uses fast division by 10 via multiplication by `0xCCCCCCCD` to extract digits.
+     * Digits are emitted least-significant first and written backward into [utf8].
+     * Uses reciprocal multiplication by `0xCCCCCCCD` (fixed-point reciprocal of 10)
+     * to perform fast division and extract digits.
      *
-     * @param n the non-negative integer to render.
+     * @param n the integer to render (interpreted as unsigned 32-bit).
      * @param utf8 the UTF-8 byte buffer to write digits into.
      * @param offMaxx the maximum exclusive offset within [utf8];
-     * digits are written backward from `offMaxx - 1`.
+     *                digits are written backward from `offMaxx - 1`.
      * @return the number of bytes written.
      */
     private fun renderChunkTail(n: Int, utf8: ByteArray, offMaxx: Int): Int {
-        var t: Long = U32(n)
+        var t: Long = n.toLong() and 0xFFFF_FFFFL  // treat as unsigned 32-bit
         var ib = offMaxx
         do {
             val divTen = (t * 0xCCCCCCCDL) ushr 35
@@ -910,10 +912,10 @@ object Magia {
 
     /**
      * Renders a 9-digit chunk [dw] (0 ≤ [dw] < 1e9) into ASCII digits in [utf8],
-     * ending at [offMaxx].
+     * ending just before [offMaxx].
      *
-     * The digits are extracted using reciprocal-multiply division by powers
-     * of 10 to avoid slow division instructions.
+     * Digits are extracted using reciprocal-multiply division by powers
+     * of 10 to avoid slow hardware division instructions.
      *
      * The layout written is:
      * ```
@@ -959,41 +961,40 @@ object Magia {
         utf8[offMaxx - 3] = (g.toInt() + '0'.code).toByte()
         utf8[offMaxx - 2] = (h.toInt() + '0'.code).toByte()
         utf8[offMaxx - 1] = (i.toInt() + '0'.code).toByte()
-
     }
 
     /**
      * Performs an in-place Barrett division of a multi-limb integer (`magia`) by 1e9.
      *
-     * Each limb of `magia` is a 32-bit unsigned value (stored in `Int`), with the most significant limb
-     * at the highest index (`magia[len - 1]`). The function replaces each limb with the corresponding
-     * quotient limb and returns the remainder.
+     * Each limb of [magia] is a 32-bit unsigned value (stored in [Int]),
+     * with the most significant limb at index `len - 1`.
+     * The function replaces each limb with its quotient and returns both
+     * the new effective length and the remainder.
      *
-     * This version uses the **qHat + rHat staged method**:
-     * 1. Computes an approximate quotient `qHat` using the precomputed Barrett reciprocal `BARRETT_MU_1E9`.
-     * 2. Computes the remainder `rHat = combined - qHat * 1e9`.
-     * 3. Conditionally increments `qHat` by 1 (and subtracts ONE_E_9 from `rHat`) if `rHat >= ONE_E_9`.
-     *    Otherwise, both remain unchanged. There is no ±1 adjustment.
+     * This version uses the **qHat + rHat staged Barrett method**:
+     * 1. Compute an approximate quotient `qHat` using the precomputed Barrett reciprocal [BARRETT_MU_1E9].
+     * 2. Compute the remainder `rHat = combined − qHat × 1e9`.
+     * 3. Conditionally increment `qHat` (and subtract 1e9 from `rHat`) if `rHat ≥ 1e9`.
+     *    This is a 0-or-1 correction; `qHat` never decreases.
      *
      * The remainder from each limb is propagated to the next iteration.
      *
-     * After processing all limbs, the function computes the new effective length of `magia`
-     * (trimming the most significant zero limb, if present) without a loop.
+     * After all limbs are processed, the function computes the new effective length
+     * of [magia] (trimming the most significant zero limb, if present) without looping.
      *
-     * @param magia The multi-limb integer to divide. Must have `magia[len - 1] != 0`.
+     * @param magia the multi-limb integer to divide. Must have `magia[len - 1] != 0`.
      *              Each element represents 32 bits of the number.
-     * @param len The number of limbs in `magia` to process.
-     * @return A `Long` packing the results:
-     *   - Upper 32 bits: new effective length of `magia` after trimming leading zeros
-     *   - Lower 32 bits: remainder of the division by 1e9
+     * @param len the number of limbs in [magia] to process.
+     * @return a packed [Long]:
+     *   - upper 32 bits: new effective limb count after trimming
+     *   - lower 32 bits: remainder of the division by 1e9
      *
      * **Note:** The correction is a 0-or-1 adjustment; `qHat` never decreases.
-     *
-     * **Correctness:** Guarantees that after each limb, `0 <= rHat < 1e9`.
+     * **Correctness:** Guarantees that after each limb, `0 ≤ rHat < 1e9`.
      */
     internal fun mutateBarrettDivBy1e9(magia: IntArray, len: Int): Long {
         var rem = 0L
-        check (magia[len - 1] != 0)
+        check(magia[len - 1] != 0)
         for (i in len - 1 downTo 0) {
             val limb = magia[i].toLong() and 0xFFFF_FFFFL
             val combined = (rem shl 32) or limb
@@ -1004,15 +1005,9 @@ object Magia {
             // compute remainder
             var rHat = combined - qHat * ONE_E_9
 
-            // adjust qHat and rHat if remainder too large
-            //if (rHat >= ONE_E_9) {
-            //    qHat++
-            //    rHat -= ONE_E_9
-            //}
-            // adjustMask is -1 (0xFFFF_FFFF_FFFF_FFFFL) if adjustment is needed
-            // otherwise 0
+            // 0-or-1 adjustment: increment qHat if remainder >= 1e9
             val adjustMask = ((rHat - ONE_E_9) shr 63).inv()
-            qHat -= adjustMask // subtract -1 ... i.e. increment iff rHat >= ONE_E_9
+            qHat -= adjustMask
             rHat -= ONE_E_9 and adjustMask
 
             magia[i] = qHat.toInt()
@@ -1022,7 +1017,7 @@ object Magia {
         val mostSignificantLimbNonZero = (-magia[len - 1]) ushr 31 // 0 or 1
         val newLen = len - 1 + mostSignificantLimbNonZero
 
-        // pack new length and remainder into a single Long for convenience
+        // pack new length and remainder into a single Long
         return (newLen.toLong() shl 32) or (rem and 0xFFFF_FFFFL)
     }
 
