@@ -5,7 +5,7 @@ import java.math.BigInteger
 
 object HugeIntExtensions {
 
-    fun HugeInt.toBigInteger(): BigInteger = BigInteger(this.toBigEndianTwosComplementByteArray())
+    fun HugeInt.toBigInteger(): BigInteger = BigInteger(this.toTwosComplementBigEndianByteArray())
 
     fun BigInteger.toHugeInt(): HugeInt = HugeInt.from(this.toString())
 

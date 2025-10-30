@@ -3,6 +3,7 @@
 package com.decimal128.hugeint
 
 import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.random.Random
 
 /**
@@ -1497,39 +1498,73 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     fun toHexString() = Magia.toHexString(this.sign, this.magia)
 
     /**
-     * Converts this HugeInt to a big-endian two's-complement byte array.
+     * Converts this [HugeInt] to a **big-endian two's-complement** byte array.
      *
-     * - Negative values are represented in standard two's-complement form.
-     * - The array length is the minimum required to represent the value.
+     * - Negative values use standard two's-complement representation.
+     * - The returned array has the minimal length needed to represent the value,
+     *   **but always at least 1 byte**.
+     * - For other binary formats, see [toBinaryByteArray] or [toBinaryBytes].
      *
-     * @return a new ByteArray containing the two's-complement representation
+     * @return a new [ByteArray] containing the two's-complement representation
      */
-    fun toBigEndianTwosComplementByteArray(): ByteArray {
-        val byteLen = calcTwosComplementByteLength()
+    fun toTwosComplementBigEndianByteArray(): ByteArray =
+        toBinaryByteArray(isTwosComplement = true, isBigEndian = true)
+
+    /**
+     * Converts this [HugeInt] to a [ByteArray] in the requested binary format.
+     *
+     * - The format is determined by [isTwosComplement] and [isBigEndian].
+     * - Negative values are represented in two's-complement form if [isTwosComplement] is true.
+     * - The returned array has the minimal length needed, **but always at least 1 byte**.
+     *
+     * @param isTwosComplement whether to use two's-complement representation for negative numbers
+     * @param isBigEndian whether the bytes are written in big-endian or little-endian order
+     * @return a new [ByteArray] containing the binary representation
+     */
+    fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray {
+        val bitLen = if (isTwosComplement) bitLengthBigIntegerStyle() + 1 else max(magnitudeBitLen(), 1)
+        val byteLen = (bitLen + 7) ushr 3
         val bytes = ByteArray(byteLen)
-        val magBitLen = magnitudeBitLen()
-        val magByteLen = (magBitLen + 7) ushr 3
-        writeBigEndianTwosComplementBytes(bytes, byteLen - magByteLen, magByteLen)
+        Magia.toBinaryBytes(this.magia, isTwosComplement && this.sign, isBigEndian, bytes)
         return bytes
     }
 
     /**
-     * Writes this HugeInt into the provided ByteArray in big-endian two's-complement form.
+     * Writes this [HugeInt] into the provided [bytes] array in the requested binary format.
      *
-     * - Negative values are represented in standard two's-complement form.
-     * - Throws [IllegalArgumentException] if the provided array is too small.
+     * - No heap allocation takes place.
+     * - If [isTwosComplement] is true, values use two's-complement representation
+     *   with the most significant bit indicating the sign.
+     * - If [isTwosComplement] is false, the unsigned magnitude is written,
+     *   possibly with the most significant bit set.
+     * - Bytes are written in big-endian order if [isBigEndian] is true,
+     *   otherwise little-endian order.
+     * - If [requestedLength] is 0, the minimal number of bytes needed is calculated
+     *   and written, **but always at least 1 byte**.
+     * - If [requestedLength] > 0, exactly that many bytes will be written:
+     *   - If the requested length is greater than the minimum required, the sign will
+     *     be extended into the extra bytes.
+     *   - If the requested length is insufficient… you will have a bad day.
+     * - In all cases, the actual number of bytes written is returned.
+     * - May throw [IndexOutOfBoundsException] if the supplied [bytes] array is too small.
      *
-     * @param bytes target array to write into
-     * @return the number of bytes written
-     * @throws IllegalArgumentException if [bytes] is too small
+     * For a standard **two's-complement big-endian** version, see [toTwosComplementBigEndianByteArray].
+     * For a version that allocates a new array automatically, see [toBinaryByteArray].
+     *
+     * @param isTwosComplement whether to use two's-complement representation for negative numbers
+     * @param isBigEndian whether bytes are written in big-endian (true) or little-endian (false) order
+     * @param bytes the target array to write into
+     * @param offset the start index in [bytes] to begin writing
+     * @param requestedLength number of bytes to write (0 = minimal required, but always at least 1)
+     * @return the number of bytes actually written
+     * @throws IndexOutOfBoundsException if [bytes] is too small
      */
-    fun toBigEndianTwosComplementByteArray(bytes: ByteArray): Int {
-        val byteLen = calcTwosComplementByteLength()
-        if (bytes.size < byteLen)
-            throw IllegalArgumentException("target ByteArray too small")
-        val magBitLen = magnitudeBitLen()
-        val magByteLen = (magBitLen + 7) ushr 3
-        writeBigEndianTwosComplementBytes(bytes, byteLen - magByteLen, magByteLen)
+    fun toBinaryBytes(isTwosComplement: Boolean, isBigEndian: Boolean,
+                      bytes: ByteArray, offset: Int = 0, requestedLength: Int = 0): Int {
+        val bitLen = if (isTwosComplement) bitLengthBigIntegerStyle() + 1 else max(magnitudeBitLen(), 1)
+        val byteLen = if (requestedLength > 0) requestedLength else (bitLen + 7) ushr 3
+        Magia.toBinaryBytes(this.magia, isTwosComplement && this.sign, isBigEndian,
+                                               bytes, offset, byteLen)
         return byteLen
     }
 
@@ -1758,7 +1793,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * Writes the magnitude of this HugeInt into the specified [bytes] array
      * in **big-endian two's-complement** format.
      *
-     * This is an internal helper used by [toBigEndianTwosComplementByteArray].
+     * This is an internal helper used by [toTwosComplementBigEndianByteArray].
      *
      * @param bytes target byte array
      * @param offset starting index in [bytes] to write
@@ -1770,6 +1805,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * - Assumes [bytes] has enough space to hold the output.
      * - Does not return a value; writes directly into [bytes].
      */
+    private fun writeBigEndianTwosComplementBytesZ(bytes: ByteArray, offset: Int, magByteLen: Int) =
+        Magia.toBinaryBytes(this.magia, this.sign, isBigEndian = true, bytes, offset, magByteLen)
+
     private fun writeBigEndianTwosComplementBytes(bytes: ByteArray, offset: Int, magByteLen: Int) {
         val last = offset + magByteLen - 1
         var dest = last

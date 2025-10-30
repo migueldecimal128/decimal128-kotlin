@@ -78,4 +78,24 @@ class TestAdd32 {
         assertEquals(sum0, sum2)
     }
 
+    @Test
+    fun testProblemChild3() {
+        val hi = HugeInt.from("-1044467618609941889539867")
+        val bi = hi.toBigInteger()
+        val n = -818208931
+        val sum0 = hi + HugeInt.from(n)
+        val sum1 = hi + n
+        val sum2 = n + hi
+        assertEquals(sum0, sum1)
+        assertEquals(sum0, sum2)
+    }
+
+    @Test
+    fun testProblem3() {
+        val hi = HugeInt.from("35689796992407102546798857499")
+        val bi = hi.toBigInteger()
+        val hi2 = bi.toHugeInt()
+        assert(hi EQ hi2)
+    }
+
 }

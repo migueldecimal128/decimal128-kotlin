@@ -1005,6 +1005,69 @@ object Magia {
         return magia
     }
 
+    internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
+                               bytes: ByteArray) =
+        toBinaryBytes(x, isNegative, isBigEndian, bytes, 0, bytes.size)
+
+    internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
+                                 bytes: ByteArray, off: Int, len: Int) {
+        if (off < 0 || len < 0 || len > bytes.size - off)
+            throw IllegalArgumentException()
+        if (len == 0)
+            return
+
+        // calculate offsets and stepping direction for BE BigEndian vs LE LittleEndian
+        val offB1 = if (isBigEndian) -1 else 1 // BE == -1, LE ==  1
+        val offB2 = offB1 shl 1                // BE == -2, LE ==  2
+        val offB3 = offB1 + offB2              // BE == -3, LE ==  3
+        val step1LoToHi = offB1                // BE == -1, LE ==  1
+        val step4LoToHi = offB1 shl 2          // BE == -4, LE ==  4
+
+        val ibLast = off + len - 1
+        val ibLsb = if (isBigEndian) ibLast else off // index Least significant byte
+        val ibMsb = if (isBigEndian) off else ibLast // index Most significant byte
+
+        val negativeMask = if (isNegative) -1 else 0
+
+        var remaining = len
+
+        var ib = ibLsb
+        var iw = 0
+
+        var carry = -negativeMask.toLong() // if (isNegative) then carry = 1 else 0
+
+        while (remaining >= 4 && iw < x.size) {
+            val v = x[iw++]
+            carry += (v xor negativeMask).toLong() and 0xFFFF_FFFFL
+            val w = carry.toInt()
+            carry = carry shr 32
+
+            val b3 = (w shr 24).toByte()
+            val b2 = (w shr 16).toByte()
+            val b1 = (w shr  8).toByte()
+            val b0 = (w       ).toByte()
+
+            bytes[ib + offB3] = b3
+            bytes[ib + offB2] = b2
+            bytes[ib + offB1] = b1
+            bytes[ib        ] = b0
+
+            ib += step4LoToHi
+            remaining -= 4
+        }
+        if (remaining > 0) {
+            val v = if (iw < x.size) x[iw++] else 0
+            var w = (v xor negativeMask).toLong() + carry.toInt()
+            do {
+                bytes[ib] = w.toByte()
+                ib += step1LoToHi
+                w = w shr 8
+            } while (--remaining > 0)
+        }
+        check (iw == x.size || x[iw] == 0)
+        check(ib - step1LoToHi == ibMsb)
+    }
+
 
     /**
      * This layer works with magnitudes, so any optional leading sign char is ignored.

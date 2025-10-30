@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.*
 import java.util.*
-import kotlin.test.assertFailsWith
 
 class TestHugeInt {
     val verbose = false
@@ -294,7 +293,7 @@ class TestHugeInt {
     fun testBigEndianByteArray(bi: BigInteger) {
         val hi = bi.toHugeInt()
         val biBytes = bi.toByteArray()
-        val hiBytes = hi.toBigEndianTwosComplementByteArray()
+        val hiBytes = hi.toTwosComplementBigEndianByteArray()
 
         val biHex = java.util.HexFormat.ofDelimiter(" ").withUpperCase().formatHex(biBytes)
         val hiHex = java.util.HexFormat.ofDelimiter(" ").withUpperCase().formatHex(hiBytes)
