@@ -5,12 +5,13 @@ import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 class TestHugeIntParse {
-    val verbose = true
+    val verbose = false
 
     class TC(val str: String, val isValid: Boolean = true) {
     }
 
     val tcs = arrayOf(
+        TC("111111111_222222222_333333333_444444444_555555555_666666666_777777777"),
         TC("1_000_000_000"),
         TC("999_999_999"),
         TC("0xCAFE_BABE_DEAD_BEEF"),

@@ -8,11 +8,15 @@ import com.decimal128.decimal.unsignedMod
 import com.decimal128.decimal.unsignedMulHi
 import kotlin.math.min
 import kotlin.math.max
+import java.math.BigInteger
 
 
 // magia == MAGnitude IntArray ... it's magic
 
 private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
+
+private const val BARRETT_MU_1E9: Long = 0x44B82FA09L       // floor(2^64 / 1e9)
+private const val ONE_E_9: Long = 1_000_000_000L
 
 private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
 private const val S_U32_DIV_1E1 = 35
@@ -860,12 +864,16 @@ object Magia {
         }
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
-        val t = newMinimumCopy(magia)
+        var wordLen = populatedWordLen(magia)
+        var t = newCopy(magia, wordLen)
         val utf8 = ByteArray(maxSignedLen)
         var ib = utf8.size
-        while (compare(t, 1_000_000_000) >= 0) {
-            val chunk = mutateDivideRemainder(t, 1_000_000_000)
+        while (wordLen > 1) {
+            val newLenAndRemainder = mutateBarrettDivBy1e9(t, wordLen)
+            val chunk = newLenAndRemainder and 0xFFFF_FFFFL
             renderChunk9(chunk, utf8, ib)
+            wordLen = (newLenAndRemainder ushr 32).toInt()
+            t = newCopy(t, wordLen)
             ib -= 9
         }
         ib -= renderChunkTail(t[0], utf8, ib)
@@ -954,6 +962,69 @@ object Magia {
 
     }
 
+    /**
+     * Performs an in-place Barrett division of a multi-limb integer (`magia`) by 1e9.
+     *
+     * Each limb of `magia` is a 32-bit unsigned value (stored in `Int`), with the most significant limb
+     * at the highest index (`magia[len - 1]`). The function replaces each limb with the corresponding
+     * quotient limb and returns the remainder.
+     *
+     * This version uses the **qHat + rHat staged method**:
+     * 1. Computes an approximate quotient `qHat` using the precomputed Barrett reciprocal `BARRETT_MU_1E9`.
+     * 2. Computes the remainder `rHat = combined - qHat * 1e9`.
+     * 3. Conditionally increments `qHat` by 1 (and subtracts ONE_E_9 from `rHat`) if `rHat >= ONE_E_9`.
+     *    Otherwise, both remain unchanged. There is no ±1 adjustment.
+     *
+     * The remainder from each limb is propagated to the next iteration.
+     *
+     * After processing all limbs, the function computes the new effective length of `magia`
+     * (trimming the most significant zero limb, if present) without a loop.
+     *
+     * @param magia The multi-limb integer to divide. Must have `magia[len - 1] != 0`.
+     *              Each element represents 32 bits of the number.
+     * @param len The number of limbs in `magia` to process.
+     * @return A `Long` packing the results:
+     *   - Upper 32 bits: new effective length of `magia` after trimming leading zeros
+     *   - Lower 32 bits: remainder of the division by 1e9
+     *
+     * **Note:** The correction is a 0-or-1 adjustment; `qHat` never decreases.
+     *
+     * **Correctness:** Guarantees that after each limb, `0 <= rHat < 1e9`.
+     */
+    internal fun mutateBarrettDivBy1e9(magia: IntArray, len: Int): Long {
+        var rem = 0L
+        check (magia[len - 1] != 0)
+        for (i in len - 1 downTo 0) {
+            val limb = magia[i].toLong() and 0xFFFF_FFFFL
+            val combined = (rem shl 32) or limb
+
+            // approximate quotient using Barrett reciprocal
+            var qHat = unsignedMulHi(combined, BARRETT_MU_1E9)
+
+            // compute remainder
+            var rHat = combined - qHat * ONE_E_9
+
+            // adjust qHat and rHat if remainder too large
+            //if (rHat >= ONE_E_9) {
+            //    qHat++
+            //    rHat -= ONE_E_9
+            //}
+            // adjustMask is -1 (0xFFFF_FFFF_FFFF_FFFFL) if adjustment is needed
+            // otherwise 0
+            val adjustMask = ((rHat - ONE_E_9) shr 63).inv()
+            qHat -= adjustMask // subtract -1 ... i.e. increment iff rHat >= ONE_E_9
+            rHat -= ONE_E_9 and adjustMask
+
+            magia[i] = qHat.toInt()
+            rem = rHat
+        }
+
+        val mostSignificantLimbNonZero = (-magia[len - 1]) ushr 31 // 0 or 1
+        val newLen = len - 1 + mostSignificantLimbNonZero
+
+        // pack new length and remainder into a single Long for convenience
+        return (newLen.toLong() shl 32) or (rem and 0xFFFF_FFFFL)
+    }
 
     fun toHexString(magia: IntArray) = toHexString(false, magia)
 
