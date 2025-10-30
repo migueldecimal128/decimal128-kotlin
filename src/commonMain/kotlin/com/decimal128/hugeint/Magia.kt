@@ -812,7 +812,7 @@ object Magia {
         return 0
     }
 
-    fun toString(magia: IntArray) = toString(false, magia)
+    fun toString(magia: IntArray) = toString(isNegative = false, magia)
 
     fun toString(isNegative: Boolean, magia: IntArray): String {
         val bitLen = bitLen(magia)
@@ -845,12 +845,12 @@ object Magia {
     }
 
     private fun renderChunkReversed(n: Int, minDigitCount: Int, bytes: ByteArray, off: Int): Int {
-        var t = U32(n)
+        var t: Long = U32(n)
         var ib = off
         val minIb = ib + minDigitCount
         while (t != 0L || ib < minIb) {
-            val divTen = (t * 0xCCCCCCCD) ushr 35
-            val digit = (t - (divTen * 10)).toInt()
+            val divTen = (t * 0xCCCCCCCDL) ushr 35
+            val digit = (t - (divTen * 10L)).toInt()
             bytes[ib++] = ('0'.code + digit).toByte()
             t = divTen
         }
