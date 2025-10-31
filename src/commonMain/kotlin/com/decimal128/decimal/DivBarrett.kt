@@ -106,9 +106,9 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv() // adjust == -1 if adjustment needed else 0
+        val qG = qHatG - adjustG // subtract -1 or zero ... subtract -1 == add 1
+        val rG = rHatG - (adjustG and denom) // subtract denom or 0
 
         val remainder = rG
 
@@ -131,51 +131,51 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppF = (rG shl 32) or dwF
         val qHatF = unsignedMulHi(ppF, mu)
         val rHatF = ppF - (qHatF * denom)
-        val adjustF = rHatF >= denom
-        val qF = qHatF + if (adjustF) 1L else 0L
-        val rF = rHatF - if (adjustF) denom else 0L
+        val adjustF = ((rHatF - denom) shr 63).inv()
+        val qF = qHatF - adjustF
+        val rF = rHatF - (adjustF and denom)
 
         val ppE = (rF shl 32) or dwE
         val qHatE = unsignedMulHi(ppE, mu)
         val rHatE = ppE - (qHatE * denom)
-        val adjustE = rHatE >= denom
-        val qE = qHatE + if (adjustE) 1L else 0L
-        val rE = rHatE - if (adjustE) denom else 0L
+        val adjustE = ((rHatE - denom) shr 63).inv()
+        val qE = qHatE - adjustE
+        val rE = rHatE - (adjustE and denom)
 
         val ppD = (rE shl 32) or dwD
         val qHatD = unsignedMulHi(ppD, mu)
         val rHatD = ppD - (qHatD * denom)
-        val adjustD = rHatD >= denom
-        val qD = qHatD + if (adjustD) 1L else 0L
-        val rD = rHatD - if (adjustD) denom else 0L
+        val adjustD = ((rHatD - denom) shr 63).inv()
+        val qD = qHatD - adjustD
+        val rD = rHatD - (adjustD and denom)
 
         val ppC = (rD shl 32) or dwC
         val qHatC = unsignedMulHi(ppC, mu)
         val rHatC = ppC - (qHatC * denom)
-        val adjustC = rHatC >= denom
-        val qC = qHatC + if (adjustC) 1L else 0L
-        val rC = rHatC - if (adjustC) denom else 0L
+        val adjustC = ((rHatC - denom) shr 63).inv()
+        val qC = qHatC - adjustC
+        val rC = rHatC - (adjustC and denom)
 
         val ppB = (rC shl 32) or dwB
         val qHatB = unsignedMulHi(ppB, mu)
         val rHatB = ppB - (qHatB * denom)
-        val adjustB = rHatB >= denom
-        val qB = qHatB + if (adjustB) 1L else 0L
-        val rB = rHatB - if (adjustB) denom else 0L
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
 
         val ppA = (rB shl 32) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
@@ -184,7 +184,7 @@ object DivBarrett {
         val q1 = (qD shl 32) or qC
         val q0 = (qB shl 32) or qA
         q.c256Set256(q3, q2, q1, q0)
-        return rA
+        return remainder
     }
 
     fun barrettDivMod_32_192(q: C256, x: C256, denom: Long, mu: Long): Long {
@@ -199,37 +199,37 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppD = (rG shl 32) or dwD
         val qHatD = unsignedMulHi(ppD, mu)
         val rHatD = ppD - (qHatD * denom)
-        val adjustD = rHatD >= denom
-        val qD = qHatD + if (adjustD) 1L else 0L
-        val rD = rHatD - if (adjustD) denom else 0L
+        val adjustD = ((rHatD - denom) shr 63).inv()
+        val qD = qHatD - adjustD
+        val rD = rHatD - (adjustD and denom)
 
         val ppC = (rD shl 32) or dwC
         val qHatC = unsignedMulHi(ppC, mu)
         val rHatC = ppC - (qHatC * denom)
-        val adjustC = rHatC >= denom
-        val qC = qHatC + if (adjustC) 1L else 0L
-        val rC = rHatC - if (adjustC) denom else 0L
+        val adjustC = ((rHatC - denom) shr 63).inv()
+        val qC = qHatC - adjustC
+        val rC = rHatC - (adjustC and denom)
 
         val ppB = (rC shl 32) or dwB
         val qHatB = unsignedMulHi(ppB, mu)
         val rHatB = ppB - (qHatB * denom)
-        val adjustB = rHatB >= denom
-        val qB = qHatB + if (adjustB) 1L else 0L
-        val rB = rHatB - if (adjustB) denom else 0L
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
 
         val ppA = (rB shl 32) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
@@ -250,23 +250,23 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppB = (rG shl 32) or dwB
         val qHatB = unsignedMulHi(ppB, mu)
         val rHatB = ppB - (qHatB * denom)
-        val adjustB = rHatB >= denom
-        val qB = qHatB + if (adjustB) 1L else 0L
-        val rB = rHatB - if (adjustB) denom else 0L
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
 
         val ppA = (rB shl 32) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
@@ -288,37 +288,37 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppD = (rG shl 54) or dwD
         val qHatD = unsignedMulHi(ppD, mu)
         val rHatD = ppD - (qHatD * denom)
-        val adjustD = rHatD >= denom
-        val qD = qHatD + if (adjustD) 1L else 0L
-        val rD = rHatD - if (adjustD) denom else 0L
+        val adjustD = ((rHatD - denom) shr 63).inv()
+        val qD = qHatD - adjustD
+        val rD = rHatD - (adjustD and denom)
 
         val ppC = (rD shl 54) or dwC
         val qHatC = unsignedMulHi(ppC, mu)
         val rHatC = ppC - (qHatC * denom)
-        val adjustC = rHatC >= denom
-        val qC = qHatC + if (adjustC) 1L else 0L
-        val rC = rHatC - if (adjustC) denom else 0L
+        val adjustC = ((rHatC - denom) shr 63).inv()
+        val qC = qHatC - adjustC
+        val rC = rHatC - (adjustC and denom)
 
         val ppB = (rC shl 54) or dwB
         val qHatB = unsignedMulHi(ppB, mu)
         val rHatB = ppB - (qHatB * denom)
-        val adjustB = rHatB >= denom
-        val qB = qHatB + if (adjustB) 1L else 0L
-        val rB = rHatB - if (adjustB) denom else 0L
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
 
         val ppA = (rB shl 54) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
@@ -341,30 +341,30 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppC = (rG shl 54) or dwC
         val qHatC = unsignedMulHi(ppC, mu)
         val rHatC = ppC - (qHatC * denom)
-        val adjustC = rHatC >= denom
-        val qC = qHatC + if (adjustC) 1L else 0L
-        val rC = rHatC - if (adjustC) denom else 0L
+        val adjustC = ((rHatC - denom) shr 63).inv()
+        val qC = qHatC - adjustC
+        val rC = rHatC - (adjustC and denom)
 
         val ppB = (rC shl 54) or dwB
         val qHatB = unsignedMulHi(ppB, mu)
         val rHatB = ppB - (qHatB * denom)
-        val adjustB = rHatB >= denom
-        val qB = qHatB + if (adjustB) 1L else 0L
-        val rB = rHatB - if (adjustB) denom else 0L
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
 
         val ppA = (rB shl 54) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
@@ -386,23 +386,23 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppB = (rG shl 54) or dwB
         val qHatB = unsignedMulHi(ppB, mu)
         val rHatB = ppB - (qHatB * denom)
-        val adjustB = rHatB >= denom
-        val qB = qHatB + if (adjustB) 1L else 0L
-        val rB = rHatB - if (adjustB) denom else 0L
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
 
         val ppA = (rB shl 54) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
@@ -422,16 +422,16 @@ object DivBarrett {
 
         val qHatG = unsignedMulHi(dwG, mu)
         val rHatG = dwG - (qHatG * denom)
-        val adjustG = rHatG >= denom
-        val qG = qHatG + if (adjustG) 1L else 0L
-        val rG = rHatG - if (adjustG) denom else 0L
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
 
         val ppA = (rG shl 54) or dwA
         val qHatA = unsignedMulHi(ppA, mu)
         val rHatA = ppA - (qHatA * denom)
-        val adjustA = rHatA >= denom
-        val qA = qHatA + if (adjustA) 1L else 0L
-        val rA = rHatA - if (adjustA) denom else 0L
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
 
         val remainder = rA
 
