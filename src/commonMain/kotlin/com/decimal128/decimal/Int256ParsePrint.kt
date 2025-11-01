@@ -268,6 +268,52 @@ internal object Int256ParsePrint {
         utf8[off + iH] = ((bH and digitCountNonZeroMask) or (firstByte and digitCountNonZeroMask.inv())).toByte()
     }
 
+    private fun tenDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int) {
+        val abcdefghij = dw
+
+        val abcdef = unsignedMulHi(abcdefghij, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val ab     = unsignedMulHi(abcdef,     M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val cdef   = abcdef     - (ab     * 10000L)
+        val ghij   = abcdefghij - (abcdef * 10000L)
+
+        val cd = (cdef * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val ef = cdef - (cd * 100L)
+
+        val gh = (ghij * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val ij = ghij - (gh * 100L)
+
+        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val a = aDw.toInt()
+        val b = (ab - (aDw * 10L)).toInt()
+
+        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = cDw.toInt()
+        val d = (cd - (cDw * 10L)).toInt()
+
+        val eDw = (ef * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val e = eDw.toInt()
+        val f = (ef - (eDw * 10L)).toInt()
+
+        val gDw = (gh * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val g = gDw.toInt()
+        val h = (gh - (gDw * 10L)).toInt()
+
+        val iDw = (ij * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val i = iDw.toInt()
+        val j = (ij - (iDw * 10L)).toInt()
+
+        utf8[off + 0] = (a + '0'.code).toByte()
+        utf8[off + 1] = (b + '0'.code).toByte()
+        utf8[off + 2] = (c + '0'.code).toByte()
+        utf8[off + 3] = (d + '0'.code).toByte()
+        utf8[off + 4] = (e + '0'.code).toByte()
+        utf8[off + 5] = (f + '0'.code).toByte()
+        utf8[off + 6] = (g + '0'.code).toByte()
+        utf8[off + 7] = (h + '0'.code).toByte()
+        utf8[off + 8] = (i + '0'.code).toByte()
+        utf8[off + 9] = (j + '0'.code).toByte()
+    }
+
     private fun zeroTo10DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
         val abcdefghij = dw
 
