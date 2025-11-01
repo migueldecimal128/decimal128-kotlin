@@ -24,7 +24,10 @@ private const val S_U64_DIV_1E8 = 26 // + 64 high
 private const val M_U64_DIV_1E10 = -2601111570856684097 // (0xDBE6FECEBDEDD5BF)
 private const val S_U64_DIV_1E10 = 33
 
-private val SINGLE_DIGIT_NUMBERS =
+private const val M_U64_DIV_1E12 = 2535301200456458803L // (0x232F33025BD42233)
+private const val S_U64_DIV_1E12 = 37
+
+private val SINGLE_DIGIT_INTEGERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
         "-0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9")
 
@@ -40,7 +43,7 @@ internal object Int256ParsePrint {
             u256ToUtf8(u, utf8, s)
             return String(utf8)
         } else {
-            return SINGLE_DIGIT_NUMBERS[(10 and -s) + u.dw0.toInt()]
+            return SINGLE_DIGIT_INTEGERS[(10 and -s) + u.dw0.toInt()]
         }
     }
 
@@ -375,16 +378,116 @@ internal object Int256ParsePrint {
         utf8[off + iJ] = ((bJ and digitCountNonZeroMask) or (firstByte and digitCountNonZeroMask.inv())).toByte()
     }
 
-    private inline fun twoDigitsToUtf8_tree(dw: Long, utf8: ByteArray, off: Int) {
-        val ab = dw
+    private fun oneTo20DigitsToUtf8(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
+        val abcdefghijklmnopqrst = dw
+        val abcdefgh = unsignedMulHi(abcdefghijklmnopqrst, M_U64_DIV_1E12) ushr S_U64_DIV_1E12
+        val abcd = unsignedMulHi(abcdefgh, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val efgh  = abcdefgh - (abcd * 10000L)
+        val ijklmnopqrst = abcdefghijklmnopqrst - (abcdefgh * 1_000_000_000_000L)
+        val ijklmnop = unsignedMulHi(ijklmnopqrst, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val ijkl = unsignedMulHi(ijklmnop, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val mnop = ijklmnop - (ijkl * 1000L)
+        val qrst = ijklmnopqrst - (ijklmnop * 10000L)
 
-        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val b = ab - (a * 10L)
+        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100L)
 
-        utf8[off + 0] = (a.toInt() + '0'.code).toByte()
-        utf8[off + 1] = (b.toInt() + '0'.code).toByte()
+        val ef = (efgh * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val gh = efgh - (ef * 100L)
+
+        val ij = (ijkl * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val kl = ijkl - (ij * 100L)
+
+        val mn = (mnop * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val op = mnop - (mn * 100L)
+
+        val qr = (qrst * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val st = qrst - (qr * 100L)
+
+        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val a = aDw.toInt()
+        val b = (ab - (aDw * 10L)).toInt()
+
+        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val c = cDw.toInt()
+        val d = (cd - (cDw * 10L)).toInt()
+
+        val eDw = (ef * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val e = eDw.toInt()
+        val f = (ef - (eDw * 10L)).toInt()
+
+        val gDw = (gh * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val g = gDw.toInt()
+        val h = (gh - (gDw * 10L)).toInt()
+
+        val iDw = (ij * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val i = iDw.toInt()
+        val j = (ij - (iDw * 10L)).toInt()
+
+        val kDw = (kl * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val k = kDw.toInt()
+        val l = (kl - (kDw * 10L)).toInt()
+
+        val mDw = (mn * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val m = mDw.toInt()
+        val n = (mn - (mDw * 10L)).toInt()
+
+        val oDw = (op * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val o = oDw.toInt()
+        val p = (op - (oDw * 10L)).toInt()
+
+        val qDw = (qr * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val q = qDw.toInt()
+        val r = (qr - (qDw * 10L)).toInt()
+
+        val sDw = (st * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        val s = sDw.toInt()
+        val t = (st - (sDw * 10L)).toInt()
+
+        val tA = digitPrintCount - 20; val maskA = -tA shr 31; val iA = tA and maskA
+        val tB = digitPrintCount - 19; val maskB = -tB shr 31; val iB = tB and maskB
+        val tC = digitPrintCount - 18; val maskC = -tC shr 31; val iC = tC and maskC
+        val tD = digitPrintCount - 17; val maskD = -tD shr 31; val iD = tD and maskD
+        val tE = digitPrintCount - 16; val maskE = -tE shr 31; val iE = tE and maskE
+        val tF = digitPrintCount - 15; val maskF = -tF shr 31; val iF = tF and maskF
+        val tG = digitPrintCount - 14; val maskG = -tG shr 31; val iG = tG and maskG
+        val tH = digitPrintCount - 13; val maskH = -tH shr 31; val iH = tH and maskH
+        val tI = digitPrintCount - 12; val maskI = -tI shr 31; val iI = tI and maskI
+        val tJ = digitPrintCount - 11; val maskJ = -tJ shr 31; val iJ = tJ and maskJ
+        val tK = digitPrintCount - 10; val maskK = -tA shr 31; val iK = tK and maskK
+        val tL = digitPrintCount -  9; val maskL = -tB shr 31; val iL = tL and maskL
+        val tM = digitPrintCount -  8; val maskM = -tC shr 31; val iM = tM and maskM
+        val tN = digitPrintCount -  7; val maskN = -tD shr 31; val iN = tN and maskN
+        val tO = digitPrintCount -  6; val maskO = -tE shr 31; val iO = tO and maskO
+        val tP = digitPrintCount -  5; val maskP = -tF shr 31; val iP = tP and maskP
+        val tQ = digitPrintCount -  4; val maskQ = -tG shr 31; val iQ = tQ and maskQ
+        val tR = digitPrintCount -  3; val maskR = -tH shr 31; val iR = tR and maskR
+        val tS = digitPrintCount -  2; val maskS = -tI shr 31; val iS = tS and maskS
+        val iT = digitPrintCount -  1
+
+        val firstByte = utf8[off].toInt()
+
+        utf8[off + iA] = (a + '0'.code).toByte()
+        utf8[off + iB] = (b + '0'.code).toByte()
+        utf8[off + iC] = (c + '0'.code).toByte()
+        utf8[off + iD] = (d + '0'.code).toByte()
+        utf8[off + iE] = (e + '0'.code).toByte()
+        utf8[off + iF] = (f + '0'.code).toByte()
+        utf8[off + iG] = (g + '0'.code).toByte()
+        utf8[off + iH] = (h + '0'.code).toByte()
+        utf8[off + iI] = (i + '0'.code).toByte()
+        utf8[off + iJ] = (j + '0'.code).toByte()
+        utf8[off + iK] = (k + '0'.code).toByte()
+        utf8[off + iL] = (l + '0'.code).toByte()
+        utf8[off + iM] = (m + '0'.code).toByte()
+        utf8[off + iN] = (n + '0'.code).toByte()
+        utf8[off + iO] = (o + '0'.code).toByte()
+        utf8[off + iP] = (p + '0'.code).toByte()
+        utf8[off + iQ] = (q + '0'.code).toByte()
+        utf8[off + iR] = (r + '0'.code).toByte()
+        utf8[off + iS] = (s + '0'.code).toByte()
+        utf8[off + iT] = (t + '0'.code).toByte()
     }
-
 
     internal fun u32ToUtf8(digitPrintCount: Int, w: Int, utf8: ByteArray, off: Int): Int {
         if (digitPrintCount in 1..10) {
