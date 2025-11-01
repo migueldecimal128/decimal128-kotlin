@@ -65,18 +65,12 @@ internal object Int256ParsePrint {
     }
 
     fun u256ToUtf8(u: C256, utf8: ByteArray, off: Int, tmp: C256? = null): Int {
-        val digitLen = u.digitLen
+        // minimum printDigitLen is 1
+        // add 1, then add -1 if the inbound digitLen was non-zero
+        val printDigitLen = u.digitLen + 1 + (-u.digitLen shr 31)
         if (u.bitLen <= 64) {
-            if (u.bitLen <= 32) {
-                if (u.bitLen > 0) {
-                    u32ToUtf8(u.digitLen, u.dw0.toInt(), utf8, off)
-                    return digitLen
-                }
-                utf8[off] = '0'.code.toByte()
-                return 1
-            }
-            u64ToUtf8(u.digitLen, u.dw0, utf8, off)
-            return digitLen
+            oneTo20DigitsToUtf8(printDigitLen, u.dw0, utf8, off)
+            return printDigitLen
         }
         val t: C256 = tmp?.c256Set(u) ?: C256(u)
         while (t.bitLen > 192) {
@@ -94,9 +88,8 @@ internal object Int256ParsePrint {
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
             nineDigitsToUtf8(r, utf8, off + ich)
         }
-        check (t.bitLen > 0)
-        u64ToUtf8(max(1, t.digitLen), t.dw0, utf8, off)
-        return digitLen
+        oneTo20DigitsToUtf8(t.digitLen, t.dw0, utf8, off)
+        return printDigitLen
     }
 
     private fun nineDigitsToUtf8(dw: Long, utf8: ByteArray, off: Int) =
@@ -386,7 +379,7 @@ internal object Int256ParsePrint {
         val ijklmnopqrst = abcdefghijklmnopqrst - (abcdefgh * 1_000_000_000_000L)
         val ijklmnop = unsignedMulHi(ijklmnopqrst, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val ijkl = unsignedMulHi(ijklmnop, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
-        val mnop = ijklmnop - (ijkl * 1000L)
+        val mnop = ijklmnop - (ijkl * 10000L)
         val qrst = ijklmnopqrst - (ijklmnop * 10000L)
 
         val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
@@ -454,16 +447,16 @@ internal object Int256ParsePrint {
         val tH = digitPrintCount - 13; val maskH = -tH shr 31; val iH = tH and maskH
         val tI = digitPrintCount - 12; val maskI = -tI shr 31; val iI = tI and maskI
         val tJ = digitPrintCount - 11; val maskJ = -tJ shr 31; val iJ = tJ and maskJ
-        val tK = digitPrintCount - 10; val maskK = -tA shr 31; val iK = tK and maskK
-        val tL = digitPrintCount -  9; val maskL = -tB shr 31; val iL = tL and maskL
-        val tM = digitPrintCount -  8; val maskM = -tC shr 31; val iM = tM and maskM
-        val tN = digitPrintCount -  7; val maskN = -tD shr 31; val iN = tN and maskN
-        val tO = digitPrintCount -  6; val maskO = -tE shr 31; val iO = tO and maskO
-        val tP = digitPrintCount -  5; val maskP = -tF shr 31; val iP = tP and maskP
-        val tQ = digitPrintCount -  4; val maskQ = -tG shr 31; val iQ = tQ and maskQ
-        val tR = digitPrintCount -  3; val maskR = -tH shr 31; val iR = tR and maskR
-        val tS = digitPrintCount -  2; val maskS = -tI shr 31; val iS = tS and maskS
-        val iT = digitPrintCount -  1
+        val tK = digitPrintCount - 10; val maskK = -tK shr 31; val iK = tK and maskK
+        val tL = digitPrintCount -  9; val maskL = -tL shr 31; val iL = tL and maskL
+        val tM = digitPrintCount -  8; val maskM = -tM shr 31; val iM = tM and maskM
+        val tN = digitPrintCount -  7; val maskN = -tN shr 31; val iN = tN and maskN
+        val tO = digitPrintCount -  6; val maskO = -tO shr 31; val iO = tO and maskO
+        val tP = digitPrintCount -  5; val maskP = -tP shr 31; val iP = tP and maskP
+        val tQ = digitPrintCount -  4; val maskQ = -tQ shr 31; val iQ = tQ and maskQ
+        val tR = digitPrintCount -  3; val maskR = -tR shr 31; val iR = tR and maskR
+        val tS = digitPrintCount -  2; val maskS = -tS shr 31; val iS = tS and maskS
+        val tT = digitPrintCount -  1; val maskT = -tT shr 31; val iT = tT and maskT
 
         val firstByte = utf8[off].toInt()
 

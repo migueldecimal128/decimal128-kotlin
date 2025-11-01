@@ -16,6 +16,8 @@ class TestMutDecMagFinalize {
     }
 
     val cases = arrayOf(
+        TC("1e-6177"),
+
         TC("1e-6176"),
         TC("9e-6177"),
         TC("1e-6177"),
@@ -60,10 +62,13 @@ class TestMutDecMagFinalize {
 
     fun test1(case: TC) {
         val bdA = case.bdA
-        println("bdA:$bdA => ")
+        if (verbose)
+            println("bdA:$bdA => ")
         val dec = MutDec()
         dec.set(bdA)
-        println("===> dec:$dec")
+        val str = dec.toString()
+        if (verbose)
+            println("===> dec:$dec")
     }
 
 }
