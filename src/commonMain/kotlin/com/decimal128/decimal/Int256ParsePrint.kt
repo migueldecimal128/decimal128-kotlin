@@ -4,7 +4,6 @@ package com.decimal128.decimal
 
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.StringLatin1Iterator
-import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
@@ -26,6 +25,9 @@ private const val S_U64_DIV_1E10 = 33
 
 private const val M_U64_DIV_1E12 = 2535301200456458803L // (0x232F33025BD42233)
 private const val S_U64_DIV_1E12 = 37
+
+private const val M_U64_DIV_1E16 = 4153837486827862103L // (0x39A5652FB1137857)
+private const val S_U64_DIV_1E16 = 51
 
 private val SINGLE_DIGIT_INTEGERS =
     arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -269,43 +271,41 @@ internal object Int256ParsePrint {
 
         val abcdef = unsignedMulHi(abcdefghij, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val ab     = unsignedMulHi(abcdef,     M_U64_DIV_1E4) ushr S_U64_DIV_1E4
-        val cdef   = abcdef     - (ab     * 10000L)
-        val ghij   = abcdefghij - (abcdef * 10000L)
-
-        val cd = (cdef * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-        val ef = cdef - (cd * 100L)
-
-        val gh = (ghij * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-        val ij = ghij - (gh * 100L)
-
         val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
         val a = aDw.toInt()
         val b = (ab - (aDw * 10L)).toInt()
+        utf8[off + 0] = (a + '0'.code).toByte()
+        utf8[off + 1] = (b + '0'.code).toByte()
 
+        val cdef   = abcdef     - (ab     * 10000L)
+
+        val cd = (cdef * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
         val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
         val c = cDw.toInt()
         val d = (cd - (cDw * 10L)).toInt()
+        utf8[off + 2] = (c + '0'.code).toByte()
+        utf8[off + 3] = (d + '0'.code).toByte()
 
+        val ef = cdef - (cd * 100L)
         val eDw = (ef * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
         val e = eDw.toInt()
         val f = (ef - (eDw * 10L)).toInt()
+        utf8[off + 4] = (e + '0'.code).toByte()
+        utf8[off + 5] = (f + '0'.code).toByte()
 
+        val ghij   = abcdefghij - (abcdef * 10000L)
+
+        val gh = (ghij * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
         val gDw = (gh * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
         val g = gDw.toInt()
         val h = (gh - (gDw * 10L)).toInt()
+        utf8[off + 6] = (g + '0'.code).toByte()
+        utf8[off + 7] = (h + '0'.code).toByte()
 
+        val ij = ghij - (gh * 100L)
         val iDw = (ij * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
         val i = iDw.toInt()
         val j = (ij - (iDw * 10L)).toInt()
-
-        utf8[off + 0] = (a + '0'.code).toByte()
-        utf8[off + 1] = (b + '0'.code).toByte()
-        utf8[off + 2] = (c + '0'.code).toByte()
-        utf8[off + 3] = (d + '0'.code).toByte()
-        utf8[off + 4] = (e + '0'.code).toByte()
-        utf8[off + 5] = (f + '0'.code).toByte()
-        utf8[off + 6] = (g + '0'.code).toByte()
-        utf8[off + 7] = (h + '0'.code).toByte()
         utf8[off + 8] = (i + '0'.code).toByte()
         utf8[off + 9] = (j + '0'.code).toByte()
     }
@@ -480,6 +480,43 @@ internal object Int256ParsePrint {
         utf8[off + iR] = (r + '0'.code).toByte()
         utf8[off + iS] = (s + '0'.code).toByte()
         utf8[off + iT] = (t + '0'.code).toByte()
+    }
+
+    fun zeroTo20DigitsToUtf8Offset20(digitPrintCount: Int, dw: Long, utf8: ByteArray) {
+        if (utf8.size == 128) {
+            val iMaxx = 20 + digitPrintCount
+            val abcd = unsignedMulHi(dw, M_U64_DIV_1E16) ushr S_U64_DIV_1E16
+            write4(abcd, utf8, iMaxx - 20)
+            val efghijklmnopqrst = dw - (abcd * 1_0000_0000_0000_0000L)
+            write16(efghijklmnopqrst, utf8, iMaxx - 16)
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    private inline fun write16(abcdefghijklmnop: Long, utf8: ByteArray, offFirst: Int) {
+        val abcdefgh = unsignedMulHi(abcdefghijklmnop, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
+        val ijklmnop  = abcdefghijklmnop - (abcdefgh * 1_0000_0000L)
+        write8(abcdefgh, utf8, offFirst)
+        write8(ijklmnop, utf8, offFirst + 8)
+    }
+
+    private inline fun write8(abcdefgh: Long, utf8: ByteArray, offFirst: Int) {
+        val abcd = unsignedMulHi(abcdefgh, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+        val efgh  = abcdefgh - (abcd * 10000L)
+        write4(abcd, utf8, offFirst)
+        write4(efgh, utf8, offFirst + 4)
+    }
+
+    private inline fun write4(abcd: Long, utf8: ByteArray, offFirst: Int) {
+        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100L)
+        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        utf8[(offFirst + 0) and 0x7F] = ('0'.code + aDw.toInt()).toByte()
+        utf8[(offFirst + 1) and 0x7F] = ('0'.code + (ab - (aDw * 10L)).toInt()).toByte()
+        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        utf8[(offFirst + 2) and 0x7F] = ('0'.code + cDw.toInt()).toByte()
+        utf8[(offFirst + 3) and 0x7F] = ('0'.code + (cd - (cDw * 10L)).toInt()).toByte()
     }
 
     internal fun u32ToUtf8(digitPrintCount: Int, w: Int, utf8: ByteArray, off: Int): Int {
