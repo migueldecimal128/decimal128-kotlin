@@ -145,7 +145,7 @@ object DecimalParsePrint {
             ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
         }
         // render integer coeff, including a single 0
-        ib += Int256ParsePrint.u256ToUtf8(x, bytes, ib, tmp)
+        ib += Int256ParsePrint.c256ToUtf8(x, bytes, ib, tmp)
         if (isNonSciDecimal) {
             if (isNonSciDecimalGE1) {
                 val decimalIndex = ib - scale
@@ -210,7 +210,7 @@ object DecimalParsePrint {
         utf8[ib++] = ('a'.code or upperCaseMask).toByte()
         utf8[ib++] =  'N'.code.toByte()
         if (z.bitLen > 0)
-            ib += Int256ParsePrint.u256ToUtf8(z, utf8, ib)
+            ib += Int256ParsePrint.c256ToUtf8(z, utf8, ib)
         return ib - off
     }
 
