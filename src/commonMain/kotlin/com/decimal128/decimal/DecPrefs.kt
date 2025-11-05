@@ -1,13 +1,12 @@
 package com.decimal128.decimal
 
 data class DecPrefs(
-    val printCoefficientPlus: Boolean = false,
+    val printValuePlusSign: Boolean = false,
     val printNegativeZero: Boolean = true,
-    val printExponentPlus: Boolean = false,
-    val printUppercaseE: Boolean = true,
+    val printExponentPlusSign: Boolean = true,
+    val printExponentUppercaseE: Boolean = true,
     val printEngineeringString: Boolean = false,
 
-    val printInfinityPlusSign: Boolean = false,
     val printInfinityAllCaps: Boolean = false,
     val printInfinity8Chars: Boolean = false,
 

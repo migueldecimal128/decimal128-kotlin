@@ -9,7 +9,7 @@ import java.util.*
 
 class TestMutDecToString {
 
-    val verbose = true
+    val verbose = false
 
     class TC(val strVal: String) {
         constructor(bd: BigDecimal) : this(bdToDecimal128String(bd))
@@ -20,8 +20,16 @@ class TestMutDecToString {
     }
 
     val tcs = arrayOf(
-        TC("9999999999_9999999999_9999999999_9999"),
+        TC("-12.3456"),
+        TC("-55085933246962642245618.348883"),
+        TC("1e-6"),
+        TC("0e-6"),
+        TC("0.000001"),
+        TC("0.000000"),
+        TC("1e1000002"),
+        TC("-0.022956538990461214532"),
         TC("9999999999_9999999999_9999999999_99999"),
+        TC("9999999999_9999999999_9999999999_9999"),
         TC("0e1000002"),
         TC("1e35"),
         TC("0e1"),

@@ -179,6 +179,8 @@ class MutDec() : C256() {
 
     }
 
+    // if the digitLen is non-zero then subtract 1
+    // if digitLen == 0 then sciExp stays 0 ... 0e0
     fun sciExp() = qExp + (digitLen - (-digitLen ushr 31))
 
     fun setZero()  = setZero(false)
