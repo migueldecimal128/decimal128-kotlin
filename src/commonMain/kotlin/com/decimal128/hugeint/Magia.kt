@@ -84,6 +84,12 @@ object Magia {
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
 
+    inline fun newWithLimbLenRoundedUp(limbLen: Int) : IntArray {
+        val t = limbLen + 1 - (-limbLen)
+        return IntArray((t + 3) ushr 2)
+    }
+
+
     inline fun newWithSetBit(bitIndex: Int): IntArray {
         if (bitIndex >= 0) {
             val magia = Magia.newWithBitLen(bitIndex + 1)
@@ -172,7 +178,7 @@ object Magia {
     }
 
     fun newSub(x: IntArray, w: Int): IntArray {
-        val z = IntArray(populatedWordLen(x))
+        val z = IntArray(nonZeroLimbLen(x))
         var orAccumulator = 0
         var borrow = U32(w)
         for (i in z.indices) {
@@ -186,7 +192,7 @@ object Magia {
     }
 
     fun newSub(x: IntArray, dw: Long): IntArray {
-        val z = IntArray(populatedWordLen(x))
+        val z = IntArray(nonZeroLimbLen(x))
         var orAccumulator = 0
         var borrow = 0L
         if (z.isNotEmpty()) {
@@ -217,7 +223,7 @@ object Magia {
 
     fun newSub(x: IntArray, y: IntArray): IntArray {
         check (compare(x, y) >= 0)
-        val z = IntArray(populatedWordLen(x))
+        val z = IntArray(nonZeroLimbLen(x))
         var orAccumulator = 0
         var borrow = 0L
         val min = min(z.size, min(x.size, y.size))
@@ -528,13 +534,6 @@ object Magia {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
                 return 32 - x[i].countLeadingZeroBits() + (i * 32)
-        return 0
-    }
-
-    private fun populatedWordLen(x: IntArray): Int {
-        for (i in x.size - 1 downTo 0)
-            if (x[i] != 0)
-                return i + 1
         return 0
     }
 
@@ -864,7 +863,7 @@ object Magia {
         }
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
-        var wordLen = populatedWordLen(magia)
+        var wordLen = nonZeroLimbLen(magia)
         var t = newCopy(magia, wordLen)
         val utf8 = ByteArray(maxSignedLen)
         var ib = utf8.size
