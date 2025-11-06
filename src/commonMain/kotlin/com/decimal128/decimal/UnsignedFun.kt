@@ -4,6 +4,8 @@ package com.decimal128.decimal
 
 expect inline fun unsignedMulHi(x: Long, y: Long): Long
 
+inline fun unsignedMulHi(x: ULong, y: ULong): ULong = unsignedMulHi(x.toLong(), y.toLong()).toULong()
+
 expect inline fun unsignedDiv(x: Long, y: Long): Long
 
 expect inline fun unsignedMod(x: Long, y: Long): Long
