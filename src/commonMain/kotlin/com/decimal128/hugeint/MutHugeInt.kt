@@ -120,12 +120,12 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     operator fun divAssign(hi: HugeInt) = mutateDivImpl(hi.sign, hi.magia, hi.magia.size)
     operator fun divAssign(mhi: MutHugeInt) = mutateDivImpl(mhi.sign, mhi.magia1, mhi.magia1.size)
 
-    operator fun remAssign(n: Int) = mutateRemImpl(n < 0, n.absoluteValue.toUInt())
-    operator fun remAssign(w: UInt) = mutateRemImpl(false, w)
-    operator fun remAssign(l: Long) = mutateRemImpl(l < 0, l.absoluteValue.toULong())
-    operator fun remAssign(dw: ULong) = mutateRemImpl(false, dw)
-    operator fun remAssign(hi: HugeInt) = mutateRemImpl(hi.sign, hi.magia, hi.magia.size)
-    operator fun remAssign(mhi: MutHugeInt) = mutateRemImpl(mhi.sign, mhi.magia1, mhi.magia1.size)
+    operator fun remAssign(n: Int) = mutateRemImpl(n.absoluteValue.toUInt())
+    operator fun remAssign(w: UInt) = mutateRemImpl(w)
+    operator fun remAssign(l: Long) = mutateRemImpl(l.absoluteValue.toULong())
+    operator fun remAssign(dw: ULong) = mutateRemImpl(dw)
+    operator fun remAssign(hi: HugeInt) = mutateRemImpl(hi.magia, hi.magia.size)
+    operator fun remAssign(mhi: MutHugeInt) = mutateRemImpl(mhi.magia1, mhi.magia1.size)
 
     private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
         when {
@@ -316,26 +316,53 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun mutateDivImpl(wSign: Boolean, w: UInt) {
-        TODO()
+        if (w == 0u)
+            throw ArithmeticException("div by zero")
+        if (len1 > 0) {
+            Magia.mutateDivideRemainder(this.magia1, len1, w)
+            if (magia1[len1 - 1] == 0)
+                --len1
+            sign = (sign xor wSign) && (len1 > 0)
+        }
     }
 
     private fun mutateDivImpl(wSign: Boolean, dw: ULong) {
-        TODO()
+        if ((dw shr 32) == 0uL) {
+            mutateDivImpl(wSign, dw.toUInt())
+            return
+        }
+        if (len1 == 0)
+            return
+        // FIXME
+        mutateDivImpl(wSign, intArrayOf(dw.toInt(), (dw shr 32).toInt()), 2)
     }
 
     private fun mutateDivImpl(ySign: Boolean, y: IntArray, yLen: Int) {
         TODO()
     }
 
-    private fun mutateRemImpl(wSign: Boolean, w: UInt) {
+    private fun mutateRemImpl(w: UInt) {
+        if (w == 0u)
+            throw ArithmeticException("div by zero")
+        val rem =
+            if (len1 > 0)
+                Magia.mutateDivideRemainder(this.magia1, len1, w)
+            else
+                w
+        set(sign, rem)
+    }
+
+    private fun mutateRemImpl(dw: ULong) {
+        if ((dw shr 32) == 0uL) {
+            mutateRemImpl(dw.toUInt())
+            return
+        }
+        if (len1 == 0)
+            return
         TODO()
     }
 
-    private fun mutateRemImpl(wSign: Boolean, dw: ULong) {
-        TODO()
-    }
-
-    private fun mutateRemImpl(ySign: Boolean, y: IntArray, yLen: Int) {
+    private fun mutateRemImpl(y: IntArray, yLen: Int) {
         TODO()
     }
 }
