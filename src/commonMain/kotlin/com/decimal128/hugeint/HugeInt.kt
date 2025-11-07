@@ -3,7 +3,6 @@
 package com.decimal128.hugeint
 
 import kotlin.math.absoluteValue
-import kotlin.math.max
 import kotlin.random.Random
 
 /**
@@ -552,7 +551,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          */
         @JvmStatic
         fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray): HugeInt {
-            val magia = Magia.newMinimumCopy(littleEndianIntArray)
+            val magia = Magia.newCopyMinimum(littleEndianIntArray)
             return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
 
@@ -1323,10 +1322,10 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * @return -1,0,1
      */
     fun magnitudeCompareTo(other: HugeInt) = Magia.compare(this.magia, other.magia)
-    fun magnitudeCompareTo(n: Int) = Magia.compare(this.magia, n)
-    fun magnitudeCompareTo(un: UInt) = Magia.compare(this.magia, un.toInt())
-    fun magnitudeCompareTo(l: Long) = Magia.compare(this.magia, l)
-    fun magnitudeCompareTo(ul: ULong) = Magia.compare(this.magia, ul.toLong())
+    fun magnitudeCompareTo(n: Int) = Magia.compare(this.magia, n.toUInt())
+    fun magnitudeCompareTo(un: UInt) = Magia.compare(this.magia, un)
+    fun magnitudeCompareTo(l: Long) = Magia.compare(this.magia, l.toULong())
+    fun magnitudeCompareTo(ul: ULong) = Magia.compare(this.magia, ul)
     fun magnitudeCompareTo(littleEndianIntArray: IntArray) =
         Magia.compare(this.magia, littleEndianIntArray)
 
@@ -1520,18 +1519,14 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * @param isBigEndian whether bytes are written in big-endian (true) or little-endian (false) order
      * @param bytes the target array to write into
      * @param offset the start index in [bytes] to begin writing
-     * @param requestedLength number of bytes to write (0 = minimal required, but always at least 1)
+     * @param requestedLength number of bytes to write (<= 0 means minimal required, but always at least 1)
      * @return the number of bytes actually written
      * @throws IndexOutOfBoundsException if [bytes] is too small
      */
     fun toBinaryBytes(isTwosComplement: Boolean, isBigEndian: Boolean,
-                      bytes: ByteArray, offset: Int = 0, requestedLength: Int = 0): Int {
-        val bitLen = if (isTwosComplement) bitLengthBigIntegerStyle() + 1 else max(magnitudeBitLen(), 1)
-        val byteLen = if (requestedLength > 0) requestedLength else (bitLen + 7) ushr 3
-        Magia.toBinaryBytes(this.magia, isTwosComplement && this.sign, isBigEndian,
-                                               bytes, offset, byteLen)
-        return byteLen
-    }
+                      bytes: ByteArray, offset: Int = 0, requestedLength: Int = -1): Int =
+            Magia.toBinaryBytes(this.magia, isTwosComplement && this.sign, isBigEndian,
+                                               bytes, offset, requestedLength)
 
     /**
      * Returns a copy of the magnitude as a little-endian IntArray.
@@ -1541,7 +1536,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      *
      * @return a new IntArray containing the magnitude in little-endian order
      */
-    fun magnitudeToLittleEndianIntArray(): IntArray = Magia.newMinimumCopy(magia)
+    fun magnitudeToLittleEndianIntArray(): IntArray = Magia.newCopyMinimum(magia)
 
     /**
      * Returns a copy of the magnitude as a little-endian LongArray.
@@ -1708,7 +1703,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         return when {
             wMag == 0u -> throw ArithmeticException("div by zero")
             this.isNotZero() -> {
-                val quot = Magia.newMinimumCopy(this.magia)
+                val quot = Magia.newCopyMinimum(this.magia)
                 val remN = Magia.mutateDivMod(quot, wMag)
                 val hiQuot =
                     if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor wSign, quot) else ZERO
@@ -1750,7 +1745,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
         if (this.sign != ulSign)
             return if (this.sign) -1 else 1
-        val cmp = Magia.compare(this.magia, ulMag.toLong())
+        val cmp = Magia.compare(this.magia, ulMag)
         return if (!ulSign) cmp else -cmp
     }
 

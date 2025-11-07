@@ -91,7 +91,7 @@ object Magia {
 
     fun nonZeroLimbLen(x: IntArray, xLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size) {
-            for (i in x.size - 1 downTo 0)
+            for (i in xLen - 1 downTo 0)
                 if (x[i] != 0)
                     return i + 1
             return 0
@@ -102,13 +102,24 @@ object Magia {
 
     inline fun newWithMinLen(minLimbLen: Int) : IntArray {
         val t = if (minLimbLen <= 0) 1 else minLimbLen
-        return IntArray((t + 3) ushr 2)
+        val allocSize = (t + 3) and 3.inv()
+        return IntArray(allocSize)
     }
 
     fun newLongerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
         if (newMinLimbLen > x.size) {
             val z = newWithMinLen(newMinLimbLen)
             System.arraycopy(x, 0, z, 0, x.size)
+            return z
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun newCopyWithMinLen(x: IntArray, xLen: Int, newMinLimbLen: Int) : IntArray {
+        if (xLen >= 0 && xLen <= x.size && newMinLimbLen >= xLen) {
+            val z = newWithMinLen(newMinLimbLen)
+            System.arraycopy(x, 0, z, 0, xLen)
             return z
         } else {
             throw IllegalArgumentException()
@@ -578,9 +589,22 @@ object Magia {
         }
     }
 
-    fun newMinimumCopy(src: IntArray) = newCopyWithLimbLen(src, nonZeroLimbLen(src))
+    fun newCopyMinimum(src: IntArray) = newCopyWithLimbLen(src, nonZeroLimbLen(src))
+
+    fun newCopyMinimum4(src: IntArray, srcLen: Int) = newCopyWithLimbLen(src, max(nonZeroLimbLen(src, srcLen), 4))
 
     fun newCopyWithLimbLen(src: IntArray, newWordLen: Int): IntArray {
+        if (newWordLen > 0) {
+            val dst = IntArray(newWordLen)
+            copy(dst, src)
+            return dst
+        }
+        return ZERO
+    }
+
+    fun newCopyRoundUp(src: IntArray, srcLen: Int) = newCopyWithLimbLen(src, max(nonZeroLimbLen(src, srcLen), 4))
+
+    fun newCopyWithLimbLenRoundUp(src: IntArray, srcLen: Int, newWordLen: Int): IntArray {
         if (newWordLen > 0) {
             val dst = IntArray(newWordLen)
             copy(dst, src)
@@ -797,42 +821,54 @@ object Magia {
 
     fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
 
-    fun compare(x: IntArray, y: IntArray): Int {
-        val minSize = min(x.size, y.size)
-        for (i in x.size - 1 downTo minSize)
-            if (x[i] != 0)
-                return 1
-        for (i in y.size - 1 downTo minSize)
-            if (y[i] != 0)
-                return -1
-        for (i in minSize - 1 downTo 0) {
-            val cmp = unsignedCmp(x[i], y[i])
-            if (cmp != 0)
-                return cmp
+    fun compare(x: IntArray, y: IntArray): Int =
+        compare(x, nonZeroLimbLen(x), y, nonZeroLimbLen(y))
+
+    fun compare(x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
+        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
+            val minSize = min(x.size, y.size)
+            for (i in xLen - 1 downTo minSize)
+                if (x[i] != 0)
+                    return 1
+            for (i in yLen - 1 downTo minSize)
+                if (y[i] != 0)
+                    return -1
+            for (i in minSize - 1 downTo 0) {
+                val cmp = unsignedCmp(x[i], y[i])
+                if (cmp != 0)
+                    return cmp
+            }
+            return 0
+        } else {
+            throw IllegalArgumentException()
         }
-        return 0
     }
 
-    fun compare(x: IntArray, w: Int): Int {
+    fun compare(x: IntArray, w: UInt): Int {
         val limbLen = nonZeroLimbLen(x)
         return when {
             (limbLen > 1) -> 1
-            (limbLen == 0) -> if (w == 0) 0 else -1
-            else -> unsignedCmp(x[0], w)
+            (limbLen == 0) -> if (w == 0u) 0 else -1
+            else -> x[0].toUInt().compareTo(w)
         }
     }
 
-    fun compare(x: IntArray, dw: Long): Int {
-        val limbLen = nonZeroLimbLen(x)
-        return when {
-            (limbLen > 2) -> 1
-            (limbLen == 2) -> {
-                val xT = (x[1].toLong() shl 32) or U32(x[0])
-                unsignedCmp(xT, dw)
-            }
+    fun compare(x: IntArray, dw: ULong): Int = compare(x, nonZeroLimbLen(x), dw)
 
-            (limbLen == 1) -> if ((dw ushr 32) == 0L) unsignedCmp(x[0], dw.toInt()) else -1
-            else -> if (dw == 0L) 0 else -1
+    fun compare(x: IntArray, xLen: Int, dw: ULong): Int {
+        if (xLen >= 0 && xLen <= x.size) {
+            check (xLen == 0 || x[xLen - 1] != 0)
+            return when {
+                (xLen > 2) -> 1
+                (xLen == 2) -> {
+                    val xT = (dw32(x[1]) shl 32) or dw32(x[0])
+                    xT.compareTo(dw)
+                }
+                (xLen == 1) -> if ((dw shr 32) == 0uL) x[0].toUInt().compareTo(dw.toUInt()) else -1
+                else -> if (dw == 0uL) 0 else -1
+            }
+        } else {
+            throw IllegalArgumentException()
         }
     }
 
@@ -881,7 +917,7 @@ object Magia {
     }
 
     fun newDiv(x: IntArray, w: UInt): IntArray {
-        val q = newMinimumCopy(x)
+        val q = newCopyMinimum(x)
         mutateDivMod(q, w)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
@@ -909,7 +945,7 @@ object Magia {
     }
 
     fun newMod(x: IntArray, w: UInt): IntArray {
-        val q = newMinimumCopy(x)
+        val q = newCopyMinimum(x)
         val rem = mutateDivMod(q, w)
         return if (rem == 0u) ZERO else intArrayOf(rem.toInt())
     }
@@ -931,7 +967,7 @@ object Magia {
         if (m == 0)
             return ZERO
         if (m < n)
-            return newMinimumCopy(x)
+            return newCopyMinimum(x)
         val u = x
         val v = y
         val q = null
@@ -947,7 +983,7 @@ object Magia {
         if (n <= 1) {
             if (n == 0)
                 throw ArithmeticException("div by zero")
-            var div = newMinimumCopy(x)
+            var div = newCopyMinimum(x)
             val rem = mutateDivMod(div, y[0].toUInt())
             if (nonZeroLimbLen(div) == 0)
                 div = ZERO
@@ -955,7 +991,7 @@ object Magia {
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return arrayOf(ZERO, newMinimumCopy(x))
+            return arrayOf(ZERO, newCopyMinimum(x))
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
@@ -1117,32 +1153,39 @@ object Magia {
      * @param magia the magnitude, least-significant word first.
      * @return the decimal string representation of the signed value.
      */
-    fun toString(isNegative: Boolean, magia: IntArray): String {
-        val bitLen = bitLen(magia)
-        if (bitLen < 2) {
-            if (bitLen == 0)
-                return "0"
-            return if (isNegative) "-1" else "1"
+    fun toString(isNegative: Boolean, magia: IntArray): String =
+        toString(isNegative, magia, nonZeroLimbLen(magia))
+
+    fun toString(isNegative: Boolean, x: IntArray, xLen: Int): String {
+        if (xLen >= 0 && xLen <= x.size) {
+            val bitLen = bitLen(x, xLen)
+            if (bitLen < 2) {
+                if (bitLen == 0)
+                    return "0"
+                return if (isNegative) "-1" else "1"
+            }
+            val maxDigitLen = ((bitLen * 1234) shr 12) + 1
+            val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
+            var wordLen = nonZeroLimbLen(x, xLen)
+            var t = newCopyWithLimbLen(x, wordLen)
+            val utf8 = ByteArray(maxSignedLen)
+            var ib = utf8.size
+            while (wordLen > 1) {
+                val newLenAndRemainder = mutateBarrettDivBy1e9(t, wordLen)
+                val chunk = newLenAndRemainder and 0xFFFF_FFFFL
+                renderChunk9(chunk, utf8, ib)
+                wordLen = (newLenAndRemainder ushr 32).toInt()
+                t = newCopyWithLimbLen(t, wordLen)
+                ib -= 9
+            }
+            ib -= renderChunkTail(t[0], utf8, ib)
+            if (isNegative)
+                utf8[--ib] = '-'.code.toByte()
+            val len = utf8.size - ib
+            return String(utf8, ib, len)
+        } else {
+            throw IllegalArgumentException()
         }
-        val maxDigitLen = ((bitLen * 1234) shr 12) + 1
-        val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
-        var wordLen = nonZeroLimbLen(magia)
-        var t = newCopyWithLimbLen(magia, wordLen)
-        val utf8 = ByteArray(maxSignedLen)
-        var ib = utf8.size
-        while (wordLen > 1) {
-            val newLenAndRemainder = mutateBarrettDivBy1e9(t, wordLen)
-            val chunk = newLenAndRemainder and 0xFFFF_FFFFL
-            renderChunk9(chunk, utf8, ib)
-            wordLen = (newLenAndRemainder ushr 32).toInt()
-            t = newCopyWithLimbLen(t, wordLen)
-            ib -= 9
-        }
-        ib -= renderChunkTail(t[0], utf8, ib)
-        if (isNegative)
-            utf8[--ib] = '-'.code.toByte()
-        val len = utf8.size - ib
-        return String(utf8, ib, len)
     }
 
     /**
@@ -1445,20 +1488,21 @@ object Magia {
     }
 
     internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
-                               bytes: ByteArray) =
-        toBinaryBytes(x, nonZeroLimbLen(x), isNegative, isBigEndian, bytes, 0, bytes.size)
-
-    internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
-                               bytes: ByteArray, off: Int, len: Int) =
-        toBinaryBytes(x, nonZeroLimbLen(x), isNegative, isBigEndian, bytes, off, len)
+                               bytes: ByteArray, off: Int, requestedLen: Int): Int =
+        toBinaryBytes(x, nonZeroLimbLen(x), isNegative, isBigEndian, bytes, off, requestedLen)
 
     internal fun toBinaryBytes(x: IntArray, xLen: Int, isNegative: Boolean, isBigEndian: Boolean,
-                               bytes: ByteArray, off: Int, len: Int) {
+                               bytes: ByteArray, off: Int, requestedLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size &&
-            off >= 0 && len >= 0 && len <= bytes.size - off) {
+            off >= 0 && (requestedLen <= 0 || requestedLen <= bytes.size - off)) {
 
-            if (len == 0)
-                return
+            val actualLen = if (requestedLen > 0) requestedLen else {
+                val bitLen = if (isNegative)
+                    bitLengthBigIntegerStyle(isNegative, x, xLen) + 1
+                else
+                    max(bitLen(x, xLen), 1)
+                (bitLen + 7) ushr 3
+            }
 
             // calculate offsets and stepping direction for BE BigEndian vs LE LittleEndian
             val offB1 = if (isBigEndian) -1 else 1 // BE == -1, LE ==  1
@@ -1467,13 +1511,13 @@ object Magia {
             val step1LoToHi = offB1                // BE == -1, LE ==  1
             val step4LoToHi = offB1 shl 2          // BE == -4, LE ==  4
 
-            val ibLast = off + len - 1
+            val ibLast = off + actualLen - 1
             val ibLsb = if (isBigEndian) ibLast else off // index Least significant byte
             val ibMsb = if (isBigEndian) off else ibLast // index Most significant byte
 
             val negativeMask = if (isNegative) -1 else 0
 
-            var remaining = len
+            var remaining = actualLen
 
             var ib = ibLsb
             var iw = 0
@@ -1510,6 +1554,7 @@ object Magia {
             }
             check(iw == xLen || x[iw] == 0)
             check(ib - step1LoToHi == ibMsb)
+            return actualLen
         } else {
             throw IllegalArgumentException()
         }

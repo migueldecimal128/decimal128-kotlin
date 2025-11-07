@@ -2,7 +2,6 @@
 package com.decimal128.hugeint
 
 import com.decimal128.decimal.unsignedMulHi
-import com.decimal128.hugeint.HugeInt.Companion.ZERO
 import com.decimal128.hugeint.Magia.knuthDivideNormalizedCore
 import kotlin.math.absoluteValue
 import kotlin.math.max
@@ -13,8 +12,35 @@ private inline fun dw32(n: Int) = n.toULong() and 0xFFFF_FFFFuL
 
 private inline fun limbLenFromBitLen(n: Int) = (n + 31) ushr 5
 
-class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var tmp1: IntArray, var tmp2: IntArray) {
-    constructor() : this(false, IntArray(4), 0, Magia.ZERO, Magia.ZERO)
+class MutHugeInt private constructor (
+    var sign: Boolean,
+    var magia: IntArray,
+    var limbLen: Int,
+    var tmp1: IntArray,
+    var tmp2: IntArray) : Comparable<MutHugeInt> {
+    constructor() : this(false, Magia.ZERO, 0, Magia.ZERO, Magia.ZERO)
+
+    fun isValid(): Boolean {
+        if (limbLen < 0 || limbLen > magia.size)
+            return false
+        if (limbLen != 0 && magia[limbLen - 1] == 0)
+            return false
+        return true
+    }
+
+    fun validate() {
+        if (!isValid())
+            check (false)
+    }
+
+    fun copy(): MutHugeInt {
+        validate()
+        val newMagia = Magia.newCopyWithMinLen(magia, limbLen, limbLen)
+        val duplicate =
+            MutHugeInt(sign, newMagia, limbLen, Magia.ZERO, Magia.ZERO)
+        duplicate.validate()
+        return duplicate
+    }
 
     fun setZero(): MutHugeInt {
         sign = false
@@ -29,6 +55,8 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
     fun set(sign: Boolean, w: UInt): MutHugeInt {
         this.sign = sign
         limbLen = if (w == 0u) 0 else 1
+        if (magia.size == 0)
+            magia = IntArray(4)
         magia[0] = w.toInt()
         return this
     }
@@ -42,6 +70,8 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
             return set(sign, dw.toUInt())
         this.sign = sign
         limbLen = 2
+        if (magia.size < 2)
+            magia = IntArray(4)
         magia[0] = dw.toInt()
         magia[1] = (dw shr 32).toInt()
         return this
@@ -50,6 +80,13 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
     fun set(hi: HugeInt): MutHugeInt = set(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
 
     fun set(mhi: MutHugeInt): MutHugeInt = set(mhi.sign, mhi.magia, mhi.limbLen)
+
+    fun set(str: String): MutHugeInt {
+        this.magia = Magia.from(str)
+        this.limbLen = Magia.nonZeroLimbLen(magia)
+        this.sign = str[0] == '-'
+        return this
+    }
 
     private fun set(ySign: Boolean, y: IntArray, yLen: Int): MutHugeInt {
         if (magia.size < yLen)
@@ -97,22 +134,25 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
         return this
     }
 
-    fun setRandom(bitLen: Int, random: Random = Random.Default): HugeInt {
+    fun setRandom(bitLen: Int, random: Random = Random.Default): MutHugeInt {
         if (bitLen >= 0) {
-            val limbLen = limbLenFromBitLen(bitLen)
+            val bitLimbLen = limbLenFromBitLen(bitLen)
             var zeroTest = 0
-            if (magia.size < limbLen)
-                magia = Magia.newWithMinLen(limbLen)
+            if (magia.size < bitLimbLen)
+                magia = Magia.newWithMinLen(bitLimbLen)
             var mask = (if ((bitLen and 0x1F) == 0) 0 else 1 shl (bitLen and 0x1F)) - 1
-            for (i in magia.lastIndex downTo 0) {
+            for (i in bitLimbLen - 1 downTo 0) {
                 val rand = random.nextInt() and mask
                 magia[i] = rand
                 zeroTest = zeroTest or rand
                 mask = -1
             }
-            this.limbLen = limbLen
+            this.limbLen = Magia.nonZeroLimbLen(magia, bitLimbLen)
+            validate()
+            return this
+        } else {
+            throw IllegalArgumentException()
         }
-        throw IllegalArgumentException()
     }
 
 
@@ -152,6 +192,7 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
     operator fun remAssign(mhi: MutHugeInt) = mutateModImpl(mhi.magia, mhi.magia.size)
 
     private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
+        validate()
         when {
             w == 0u -> {}
             this.sign == otherSign -> mutateAddMagImpl(w)
@@ -184,6 +225,7 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
     }
 
     private fun mutateAddSubImpl(ySign: Boolean, y: IntArray, yLen: Int) {
+        validate()
         when {
             yLen <= 2 -> {
                 when {
@@ -475,5 +517,53 @@ class MutHugeInt(var sign: Boolean, var magia: IntArray, var limbLen: Int, var t
 
     //fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray =
     //    Magia.toBinaryByteArray(isTwosComplement, isBigEndian)
+
+    fun toTwosComplementBigEndianByteArray(): ByteArray =
+        toBinaryByteArray(isTwosComplement = true, isBigEndian = true)
+
+    fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray =
+        Magia.toBinaryByteArray(sign, magia, limbLen, isTwosComplement, isBigEndian)
+
+    override operator fun compareTo(other: MutHugeInt) =
+        compareToHelper(other.sign, other.magia, other.limbLen)
+
+    operator fun compareTo(hi: HugeInt) = compareToHelper(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
+
+    operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
+    operator fun compareTo(w: UInt) = compareToHelper(false, w.toULong())
+    operator fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
+    operator fun compareTo(dw: ULong) = compareToHelper(false, dw)
+
+    private fun compareToHelper(otherSign: Boolean, otherMagia: IntArray, otherLimbLen: Int): Int {
+        if (this.sign != otherSign)
+            return if (this.sign) -1 else 1
+        val cmp = Magia.compare(this.magia, this.limbLen, otherMagia, otherLimbLen)
+        return if (this.sign) -cmp else cmp
+    }
+
+    private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
+        if (this.sign != ulSign)
+            return if (this.sign) -1 else 1
+        val cmp = Magia.compare(this.magia, ulMag)
+        return if (!ulSign) cmp else -cmp
+    }
+
+    fun magnitudeCompareTo(other: MutHugeInt) = Magia.compare(this.magia, other.magia)
+    fun magnitudeCompareTo(hi: HugeInt) = Magia.compare(this.magia, hi.magia)
+    fun magnitudeCompareTo(n: Int) = Magia.compare(this.magia, n.toUInt())
+    fun magnitudeCompareTo(w: UInt) = Magia.compare(this.magia, w)
+    fun magnitudeCompareTo(l: Long) = Magia.compare(this.magia, l.toULong())
+    fun magnitudeCompareTo(dw: ULong) = Magia.compare(this.magia, dw)
+    fun magnitudeCompareTo(littleEndianIntArray: IntArray) =
+        Magia.compare(this.magia, littleEndianIntArray)
+
+    infix fun EQ(other: MutHugeInt): Boolean = compareTo(other) == 0
+    infix fun EQ(hi: HugeInt): Boolean = compareTo(hi) == 0
+    infix fun EQ(n: Int): Boolean = compareTo(n) == 0
+    infix fun EQ(w: UInt): Boolean = compareTo(w) == 0
+    infix fun EQ(l: Long): Boolean = compareTo(l) == 0
+    infix fun EQ(dw: ULong): Boolean = compareTo(dw) == 0
+
+    override fun toString(): String = Magia.toString(this.sign, this.magia, this.limbLen)
 
 }
