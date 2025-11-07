@@ -911,9 +911,24 @@ object Magia {
     }
 
     fun newMod(x: IntArray, y: IntArray): IntArray {
-        val divMod = newDivMod(x, y)
-        val rem = divMod[1]
-        return if (nonZeroLimbLen(rem) > 0) rem else ZERO
+        val n = nonZeroLimbLen(y)
+        if (n <= 1) {
+            if (n == 0)
+                throw ArithmeticException("div by zero")
+            return newMod(x, y[0].toUInt())
+        }
+        val m = nonZeroLimbLen(x)
+        if (m == 0)
+            return ZERO
+        if (m < n)
+            return newMinimumCopy(x)
+        val u = x
+        val v = y
+        val q = null
+        val r = IntArray(y.size)
+        val status = knuthDivide(q, r, u, v, m, n)
+        require(status == 0)
+        return if (nonZeroLimbLen(r) > 0) r else ZERO
     }
 
     fun newDivMod(x: IntArray, y: IntArray): Array<IntArray> {
@@ -933,7 +948,7 @@ object Magia {
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
-        val r = IntArray(m + 1)
+        val r = IntArray(n)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
         return arrayOf(
@@ -944,8 +959,8 @@ object Magia {
     /**
      * Multi‐word division (Knuth’s Algorithm D) in base 2^32.
      *
-     * q: quotient array (length ≥ m – n + 1)
-     * r: remainder array (length ≥ n), or null if you don’t need it
+     * q: quotient array (length ≥ m – n + 1), or null if not needed
+     * r: remainder array (length ≥ n), or null if not needed
      * u: dividend array (length = m), little‐endian (u[0] = low word)
      * v: divisor array (length = n ≥ 2), little‐endian, v[n − 1] ≠ 0
      * m: number of words in u (≥ n)
@@ -954,7 +969,7 @@ object Magia {
      * Returns 0 on success, 1 if (m < n || n < 2 || v[n − 1] == 0).
      */
     fun knuthDivide(
-        q: IntArray,
+        q: IntArray?,
         r: IntArray?,
         u: IntArray,
         v: IntArray,
@@ -972,6 +987,39 @@ object Magia {
             mutateShiftLeft(vn, shift)
             mutateShiftLeft(un, shift)
         }
+
+        knuthDivideNormalizedCore(q, un, vn, m, n)
+
+        if (r != null) {
+            mutateShiftRight(un, shift)
+            copy(r, un)
+        }
+        return 0
+    }
+
+    /**
+     * Core of Knuth division in base 2^32 that takes un and vn,
+     * the normalized copies of u an v.
+     *
+     * un is side-effected and contains the remainder.
+     *
+     * q: quotient array (length ≥ m – n + 1)
+     * un: normalized dividend array (length = m + 1) with an extra zero limb
+     * vn: normalized divisor array (length = n ≥ 2), little‐endian, v[n − 1] ≠ 0
+     * m: the original m ... one less than the length of un
+     * n: number of words in vn (≥ 1)
+     *
+     * throws IllegalArgumentException if (m < n || n < 2 || v[n − 1] == 0).
+     */
+    fun knuthDivideNormalizedCore(
+        q: IntArray?,
+        un: IntArray,
+        vn: IntArray,
+        m: Int,
+        n: Int
+    ) {
+        if (m < n || n < 2 || vn[n - 1] == 0)
+            throw IllegalArgumentException()
 
         val vn_1 = U32(vn[n - 1])
         val vn_2 = U32(vn[n - 2])
@@ -1014,7 +1062,8 @@ object Magia {
             }
             val t = U32(un[j + n]) - carry
             un[j + n] = t.toInt()
-            q[j] = (qhat - (t ushr 63)).toInt()
+            if (q != null)
+                q[j] = (qhat - (t ushr 63)).toInt()
             if (t < 0) {
                 var c2 = 0L
                 for (i in 0 until n) {
@@ -1025,12 +1074,6 @@ object Magia {
                 un[j + n] += c2.toInt()
             }
         }
-
-        if (r != null) {
-            mutateShiftRight(un, shift)
-            copy(r, un)
-        }
-        return 0
     }
 
     /**
