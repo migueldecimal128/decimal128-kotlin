@@ -119,7 +119,6 @@ object Magia {
         }
     }
 
-
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
 
@@ -845,32 +844,46 @@ object Magia {
     }
 
 
-    // returns a 32 bit value as a Long
-    fun mutateDivideRemainder(x: IntArray, n: Int): Long {
-        if (n == 0)
-            throw RuntimeException("DivByZero")
-        val n64 = U32(n)
-        var carry = 0L
-        for (i in x.size - 1 downTo 0) {
-            val t = (carry shl 32) + U32(x[i])
-            val q = unsignedDiv(t, n64)
-            val r = unsignedMod(t, n64)
-            x[i] = q.toInt()
-            carry = r
+//    // returns a 32 bit value as a Long
+//    fun mutateDivideRemainder(x: IntArray, n: Int): Long =
+//        mutateDivideRemainder(x, x.size, n.toUInt()).toLong()
+
+    fun mutateDivideRemainder(x: IntArray, w: UInt): UInt =
+        mutateDivideRemainder(x, x.size, w)
+
+    fun mutateDivideRemainder(x: IntArray, xLen: Int, w: UInt): UInt {
+        if (xLen >= 0 && xLen <= x.size) {
+            if (w == 0u)
+                throw RuntimeException("DivByZero")
+            val dw = w.toULong()
+            var carry = 0uL
+            for (i in xLen - 1 downTo 0) {
+                val t = (carry shl 32) + dw32(x[i])
+                val q = t / dw
+                val r = t % dw
+                x[i] = q.toInt()
+                carry = r
+            }
+            return carry.toUInt()
+        } else {
+            throw IllegalArgumentException()
         }
-        return carry
     }
 
-    fun newDiv(x: IntArray, n: Int): IntArray {
+    fun newDiv(x: IntArray, n: Int): IntArray = newDiv(x, n.toUInt())
+
+    fun newDiv(x: IntArray, w: UInt): IntArray {
         val q = newMinimumCopy(x)
-        mutateDivideRemainder(q, n)
+        mutateDivideRemainder(q, w)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
-    fun newDiv(x: IntArray, l: Long): IntArray {
-        val lo = l.toInt()
-        val hi = (l ushr 32).toInt()
-        return if (hi == 0) newDiv(x, lo) else newDiv(x, intArrayOf(lo, hi))
+    fun newDiv(x: IntArray, l: Long): IntArray = newDiv(x, l.toULong())
+
+    fun newDiv(x: IntArray, dw: ULong): IntArray {
+        val lo = dw.toUInt()
+        val hi = (dw shr 32).toUInt()
+        return if (hi == 0u) newDiv(x, lo) else newDiv(x, intArrayOf(lo.toInt(), hi.toInt()))
     }
 
     fun newDiv(x: IntArray, y: IntArray): IntArray {
@@ -889,10 +902,12 @@ object Magia {
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
-    fun newMod(x: IntArray, n: Int): IntArray {
+    fun newMod(x: IntArray, n: Int): IntArray = newMod(x, n.toUInt())
+
+    fun newMod(x: IntArray, w: UInt): IntArray {
         val q = newMinimumCopy(x)
-        val rem = mutateDivideRemainder(q, n)
-        return if (rem == 0L) ZERO else intArrayOf(rem.toInt())
+        val rem = mutateDivideRemainder(q, w)
+        return if (rem == 0u) ZERO else intArrayOf(rem.toInt())
     }
 
     fun newMod(x: IntArray, l: Long): IntArray {
@@ -913,10 +928,10 @@ object Magia {
             if (n == 0)
                 throw ArithmeticException("div by zero")
             var div = newMinimumCopy(x)
-            val rem = mutateDivideRemainder(div, y[0])
+            val rem = mutateDivideRemainder(div, y[0].toUInt())
             if (nonZeroLimbLen(div) == 0)
                 div = ZERO
-            return arrayOf(div, if (rem != 0L) intArrayOf(rem.toInt()) else ZERO)
+            return arrayOf(div, if (rem != 0u) intArrayOf(rem.toInt()) else ZERO)
         }
         val m = nonZeroLimbLen(x)
         if (m < n)

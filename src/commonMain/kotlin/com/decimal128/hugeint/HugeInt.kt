@@ -995,10 +995,10 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     }
 
     /** @see divMod(HugeInt) */
-    fun divMod(n: Int): Pair<HugeInt, HugeInt> = divModIntHelper(n < 0, n.absoluteValue)
-    fun divMod(w: UInt): Pair<HugeInt, HugeInt> = divModIntHelper(false, w.toInt())
-    fun divMod(l: Long): Pair<HugeInt, HugeInt> = divModLongHelper(l < 0, l.absoluteValue)
-    fun divMod(dw: ULong): Pair<HugeInt, HugeInt> = divModLongHelper(false, dw.toLong())
+    fun divMod(n: Int): Pair<HugeInt, HugeInt> = divModUIntHelper(n < 0, n.absoluteValue.toUInt())
+    fun divMod(w: UInt): Pair<HugeInt, HugeInt> = divModUIntHelper(false, w)
+    fun divMod(l: Long): Pair<HugeInt, HugeInt> = divModULongHelper(l < 0, l.absoluteValue.toULong())
+    fun divMod(dw: ULong): Pair<HugeInt, HugeInt> = divModULongHelper(false, dw)
 
     /**
      * Divides the given [numerator] (primitive type) by this HugeInt and returns the quotient.
@@ -1732,46 +1732,46 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     }
 
     /**
-     * Performs division and modulo with a 32-bit integer.
+     * Performs division and modulo with a 32-bit unsigned integer.
      *
-     * @param nSign sign of the divisor
-     * @param nMag absolute value of the divisor
+     * @param wSign sign of the divisor
+     * @param wMag absolute value of the divisor
      * @return a Pair of HugeInts: quotient first, remainder second
      * @throws ArithmeticException if divisor is zero
      */
-    private fun divModIntHelper(nSign: Boolean, nMag: Int): Pair<HugeInt, HugeInt> {
+    private fun divModUIntHelper(wSign: Boolean, wMag: UInt): Pair<HugeInt, HugeInt> {
         return when {
-            nMag == 0 -> throw ArithmeticException("div by zero")
+            wMag == 0u -> throw ArithmeticException("div by zero")
             this.isNotZero() -> {
                 val quot = Magia.newMinimumCopy(this.magia)
-                val remN = Magia.mutateDivideRemainder(quot, nMag).toInt()
+                val remN = Magia.mutateDivideRemainder(quot, wMag)
                 val hiQuot =
-                    if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor nSign, quot) else ZERO
-                val hiRem = if (remN != 0) HugeInt(this.sign, intArrayOf(remN)) else ZERO
+                    if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor wSign, quot) else ZERO
+                val hiRem = if (remN != 0u) HugeInt(this.sign, intArrayOf(remN.toInt())) else ZERO
                 hiQuot to hiRem
             }
-            else -> ZERO to HugeInt(nSign, intArrayOf(nMag))
+            else -> ZERO to HugeInt(wSign, intArrayOf(wMag.toInt()))
         }
     }
 
     /**
-     * Performs division and modulo with a 64-bit long integer.
+     * Performs division and modulo with a 64-bit unsigned long integer.
      *
-     * Delegates to [divModIntHelper] if the high 32 bits are zero; otherwise
+     * Delegates to [divModUIntHelper] if the high 32 bits are zero; otherwise
      * constructs a temporary IntArray to perform the operation via [divModHelper].
      *
-     * @param lSign sign of the divisor
-     * @param lMag absolute value of the divisor
+     * @param dwSign sign of the divisor
+     * @param dwMag absolute value of the divisor
      * @return a Pair of HugeInts: quotient first, remainder second
      * @throws ArithmeticException if divisor is zero
      */
-    private fun divModLongHelper(lSign: Boolean, lMag: Long): Pair<HugeInt, HugeInt> {
-        val lo = lMag.toInt()
-        val hi = (lMag ushr 32).toInt()
+    private fun divModULongHelper(dwSign: Boolean, dwMag: ULong): Pair<HugeInt, HugeInt> {
+        val lo = dwMag.toUInt()
+        val hi = (dwMag shr 32).toUInt()
         return when {
-            lMag == 0L -> throw ArithmeticException("div by zero")
-            hi == 0 -> divModIntHelper(lSign, lo)
-            else -> divModHelper(lSign, intArrayOf(lo, hi))
+            dwMag == 0uL -> throw ArithmeticException("div by zero")
+            hi == 0u -> divModUIntHelper(dwSign, lo)
+            else -> divModHelper(dwSign, intArrayOf(lo.toInt(), hi.toInt()))
         }
     }
 
