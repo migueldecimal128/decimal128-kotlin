@@ -48,7 +48,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
 
     private fun set(ySign: Boolean, y: IntArray, yLen: Int): MutHugeInt {
         if (magia1.size < yLen)
-            magia1 = MutMagia.newWithMinLen(yLen)
+            magia1 = Magia.newWithMinLen(yLen)
         sign = ySign
         len1 = yLen
         System.arraycopy(y, 0, magia1, 0, yLen)
@@ -86,7 +86,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
             realloc1(pLen)
         else
             magia1.fill(0, 0, pLen)
-        MutMagia.sqr(magia1, x, xLen)
+        Magia.sqr(magia1, x, xLen)
         normalizeLen1(pLen)
         sign = false
         return this
@@ -133,7 +133,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
             this.sign == otherSign -> mutateAddMagImpl(w)
             len1 == 0 -> set(!otherSign, w)
             len1 > 1 || magia1[0].toUInt() > w -> {
-                MutMagia.mutateSub(magia1, len1, w)
+                Magia.mutateSub(magia1, len1, w)
                 normalizeLen1(len1)
                 sign = sign and (len1 > 0)
             }
@@ -150,7 +150,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
             this.sign == otherSign -> mutateAddMagImpl(dw)
             len1 == 0 -> set(!otherSign, dw)
             len1 > 2 || rawULong > dw -> {
-                MutMagia.mutateSub(magia1, len1, dw)
+                Magia.mutateSub(magia1, len1, dw)
                 normalizeLen1(len1)
                 sign = sign and (len1 > 0)
             }
@@ -172,13 +172,13 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
             len1 == 0 -> { set(ySign, y, yLen); return }
             this.sign == ySign -> { mutateAddMagImpl(y, yLen); return }
         }
-        val cmp = MutMagia.cmp(magia1, len1, y, yLen)
+        val cmp = Magia.cmp(magia1, len1, y, yLen)
         when {
-            cmp > 0 -> MutMagia.mutateSub(magia1, len1, y, yLen)
+            cmp > 0 -> Magia.mutateSub(magia1, len1, y, yLen)
             cmp < 0 -> {
                 if (magia1.size < yLen)
                     resize1(yLen)
-                MutMagia.mutateReverseSub(magia1, len1, y, yLen)
+                Magia.mutateReverseSub(magia1, len1, y, yLen)
                 len1 = yLen
                 sign = ySign
             }
@@ -189,7 +189,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun mutateAddMagImpl(w: UInt) {
-        val carry = MutMagia.mutateAdd(magia1, len1, w)
+        val carry = Magia.mutateAdd(magia1, len1, w)
         if (carry == 0u)
             return
         val newLen = len1 + 1
@@ -200,15 +200,15 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun resize1(newLimbCount: Int) {
-        magia1 = MutMagia.newLargerCopyWithMinLen(magia1, newLimbCount)
+        magia1 = Magia.newLargerCopyWithMinLen(magia1, newLimbCount)
     }
 
     private fun realloc1(newLimbCount: Int) {
-        magia1 = MutMagia.newWithMinLen(newLimbCount)
+        magia1 = Magia.newWithMinLen(newLimbCount)
     }
 
     private fun realloc2(newLimbCount: Int) {
-        magia2 = MutMagia.newWithMinLen(newLimbCount)
+        magia2 = Magia.newWithMinLen(newLimbCount)
     }
 
     private fun normalizeLen1(maxLimbCount: Int) {
@@ -219,7 +219,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun mutateAddMagImpl(dw: ULong) {
-        val carry = MutMagia.mutateAdd(magia1, len1, dw)
+        val carry = Magia.mutateAdd(magia1, len1, dw)
         if (carry == 0uL)
             return
         val newLen = len1 + 1 + (-(carry shr 32).toInt() shr 31)
@@ -233,7 +233,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     private fun mutateAddMagImpl(y: IntArray, yLen: Int) {
         if (yLen > magia1.size)
             resize1(yLen + 1)
-        val carry: UInt = MutMagia.mutateAdd(magia1, len1, y, yLen)
+        val carry: UInt = Magia.mutateAdd(magia1, len1, y, yLen)
         val maxOperandLen = max(len1, yLen)
         if (carry == 0u) {
             len1 = maxOperandLen
@@ -244,7 +244,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun mutateSubMagImpl(w: UInt) {
-        MutMagia.mutateSub(magia1, len1, w)
+        Magia.mutateSub(magia1, len1, w)
         var last = len1 - 1
         while (last >= 0 && magia1[last] == 0)
             --last
@@ -253,7 +253,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun mutateSubMagImpl(dw: ULong) {
-        MutMagia.mutateSub(magia1, len1, dw)
+        Magia.mutateSub(magia1, len1, dw)
         var last = len1 - 1
         while (last >= 0 && magia1[last] == 0)
             --last
@@ -262,7 +262,7 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
     }
 
     private fun mutateSubMagImpl(y: IntArray, yLen: Int) {
-        MutMagia.mutateSub(magia1, len1, y, yLen)
+        Magia.mutateSub(magia1, len1, y, yLen)
         normalizeLen1(len1)
         sign = sign and (len1 > 0)
     }
@@ -305,10 +305,10 @@ class MutHugeInt(var sign: Boolean, var magia1: IntArray, var len1: Int, var mag
         val nLen = min(len1, yLen)
         val pLen = mLen + nLen
         if (magia2.size < pLen)
-            magia2 = MutMagia.newWithMinLen(pLen)
+            magia2 = Magia.newWithMinLen(pLen)
         else
             magia2.fill(0, 0, pLen)
-        MutMagia.mul(magia2, magia1, len1, y, yLen)
+        Magia.mul(magia2, magia1, len1, y, yLen)
         val t = magia1
         magia1 = magia2
         magia2 = t

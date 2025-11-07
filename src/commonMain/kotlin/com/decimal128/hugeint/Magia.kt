@@ -8,7 +8,6 @@ import com.decimal128.decimal.unsignedMod
 import com.decimal128.decimal.unsignedMulHi
 import kotlin.math.min
 import kotlin.math.max
-import java.math.BigInteger
 
 
 // magia == MAGnitude IntArray ... it's magic
@@ -34,52 +33,92 @@ object Magia {
     val ONE = intArrayOf(1)
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
+    private inline fun dw32(n: Int) = n.toUInt().toULong()
 
-    fun testBit(x: IntArray, bitIndex: Int): Boolean {
-        val wordIndex = bitIndex ushr 5
-        if (wordIndex >= x.size)
-            return false
-        val word = x[wordIndex]
-        val bitMask = 1 shl (bitIndex and 0x1F)
-        return (word and bitMask) != 0
-    }
+    fun testBit(x: IntArray, bitIndex: Int): Boolean = testBit(x, x.size, bitIndex)
 
-    fun testAnyBitInLowerN(x: IntArray, bitCount: Int): Boolean {
-        val lastBitIndex = bitCount - 1
-        val lastWordIndex = lastBitIndex ushr 5
-        for (i in 0..<lastWordIndex) {
-            if (i == x.size)
+    fun testBit(x: IntArray, xLen: Int, bitIndex: Int): Boolean {
+        if (xLen >= 0 && xLen <= x.size) {
+            val wordIndex = bitIndex ushr 5
+            if (wordIndex >= xLen)
                 return false
-            if (x[i] != 0)
-                return true
-        }
-        if (lastWordIndex == x.size)
-            return false
-        val bitMask = -1 ushr (0x1F - (lastBitIndex and 0x1F))
-        return (x[lastWordIndex] and bitMask) != 0
-    }
-
-    fun toRawULong(x: IntArray): Long {
-        return when (x.size) {
-            0 -> 0
-            1 -> U32(x[0])
-            else -> (x[1].toLong() shl 32) or U32(x[0])
+            val word = x[wordIndex]
+            val bitMask = 1 shl (bitIndex and 0x1F)
+            return (word and bitMask) != 0
+        } else {
+            throw IllegalArgumentException()
         }
     }
 
-    fun toRawInt(x: IntArray): Int {
-        return if (x.isEmpty()) 0 else x[0]
+    fun testAnyBitInLowerN(x: IntArray, bitCount: Int): Boolean =
+        testAnyBitInLowerN(x, x.size, bitCount)
+
+    fun testAnyBitInLowerN(x: IntArray, xLen: Int, bitCount: Int): Boolean {
+        if (xLen >= 0 && xLen <= x.size) {
+            val lastBitIndex = bitCount - 1
+            val lastWordIndex = lastBitIndex ushr 5
+            for (i in 0..<lastWordIndex) {
+                if (i == xLen)
+                    return false
+                if (x[i] != 0)
+                    return true
+            }
+            if (lastWordIndex == xLen)
+                return false
+            val bitMask = -1 ushr (0x1F - (lastBitIndex and 0x1F))
+            return (x[lastWordIndex] and bitMask) != 0
+        } else {
+            throw IllegalArgumentException()
+        }
     }
 
-    fun newFromLong(dw: Long): IntArray =
-        if (dw != 0L) intArrayOf(dw.toInt(), (dw ushr 32).toInt()) else ZERO
+    fun toRawULong(x: IntArray): ULong = toRawULong(x, x.size)
 
-    fun nonZeroLimbLen(x: IntArray): Int {
-        for (i in x.size - 1 downTo 0)
-            if (x[i] != 0)
-                return i + 1
-        return 0
+    fun toRawULong(x: IntArray, xLen: Int): ULong {
+        return when (xLen) {
+            0 -> 0uL
+            1 -> dw32(x[0])
+            else -> (dw32(x[1]) shl 32) or dw32(x[0])
+        }
     }
+
+    fun toRawInt(x: IntArray): UInt  = toRawInt(x, x.size)
+
+    fun toRawInt(x: IntArray, xLen: Int): UInt {
+        return if (xLen == 0) 0u else x[0].toUInt()
+    }
+
+    fun newFromULong(dw: ULong): IntArray =
+        if (dw != 0uL) intArrayOf(dw.toInt(), (dw shr 32).toInt()) else ZERO
+
+    fun nonZeroLimbLen(x: IntArray): Int = nonZeroLimbLen(x, x.size)
+
+    fun nonZeroLimbLen(x: IntArray, xLen: Int): Int {
+        if (xLen >= 0 && xLen <= x.size) {
+            for (i in x.size - 1 downTo 0)
+                if (x[i] != 0)
+                    return i + 1
+            return 0
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    inline fun newWithMinLen(minLimbLen: Int) : IntArray {
+        val t = if (minLimbLen <= 0) 1 else minLimbLen
+        return IntArray((t + 3) ushr 2)
+    }
+
+    fun newLargerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
+        if (newMinLimbLen > x.size) {
+            val z = newWithMinLen(newMinLimbLen)
+            System.arraycopy(x, 0, z, 0, x.size)
+            return z
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
 
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
@@ -93,39 +132,19 @@ object Magia {
         throw IllegalArgumentException()
     }
 
-
-    fun newAdd(x: IntArray, w: Int): IntArray {
+    fun newAdd(x: IntArray, w: UInt): IntArray {
         val newBitLen = max(bitLen(x), (32 - w.countLeadingZeroBits())) + 1
         val z = newWithBitLen(newBitLen)
-        var carry = U32(w)
+        var carry = w.toULong()
         val indexLimit = min(x.size, z.size)
         for (i in 0..<indexLimit) {
-            val t = U32(x[i]) + carry
+            val t = dw32(x[i]) + carry
             z[i] = t.toInt()
-            carry = t ushr 32
+            carry = t shr 32
         }
-        if (carry != 0L)
+        if (carry != 0uL)
             z[z.lastIndex] = 1
         return z
-    }
-
-    fun newOrMutateAdd(x: IntArray, w: Int): IntArray {
-        val newBitLen = max(bitLen(x), (32 - w.countLeadingZeroBits())) + 1
-        val z = if (newBitLen <= x.size shl 5) x else newCopyWithBitLen(x, newBitLen)
-        return mutateAdd(z, w)
-    }
-
-    private fun mutateAdd(x: IntArray, w: Int): IntArray {
-        var carry = U32(w)
-        for (i in x.indices) {
-            val t = U32(x[i]) + carry
-            x[i] = t.toInt()
-            carry = t ushr 32
-            if (carry == 0L)
-                break
-            check(carry == 1L)
-        }
-        return x
     }
 
     fun newAdd(x: IntArray, dw: Long): IntArray {
@@ -169,6 +188,79 @@ object Magia {
         if (carry != 0L && i < z.size)
             z[i] = 1
         return z
+    }
+
+    fun newOrMutateAdd(x: IntArray, w: UInt): IntArray {
+        val carry = mutateAdd(x, x.size, w)
+        if (carry == 0u)
+            return x
+        val z = newCopyWithLimbLen(x, x.size + 1)
+        z[x.size] = carry.toInt()
+        return z
+    }
+
+    fun mutateAdd(x: IntArray, xLen: Int, w: UInt): UInt {
+        if (xLen >= 0 && xLen <= x.size) {
+            var carry = w.toULong()
+            var i = 0
+            while (carry != 0uL && i < xLen) {
+                val t = dw32(x[i]) + carry
+                x[i] = t.toInt()
+                carry = t shr 32
+                ++i
+            }
+            return carry.toUInt()
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun mutateAdd(x: IntArray, xLen: Int, dw: ULong): ULong {
+        if (xLen >= 0 && xLen <= x.size) {
+            var carry = dw
+            var i = 0
+            while (carry != 0uL && i < xLen) {
+                val s = dw32(x[i]) + (carry and 0xFFFF_FFFFuL)
+                x[i] = s.toInt()
+                carry = (carry shr 32) + (s shr 32)
+                ++i
+            }
+            return carry
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun mutateAdd(x: IntArray, xLen: Int, y: IntArray, yLen: Int): UInt {
+        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
+            check(xLen == 0 || x[xLen - 1] != 0)
+            check(yLen == 0 || y[yLen - 1] != 0)
+            val minLen = min(xLen, yLen)
+            var carry = 0uL
+            for (i in 0..<minLen) {
+                val s = dw32(x[i]) + dw32(y[i]) + carry
+                x[i] = carry.toInt()
+                carry = carry shr 32
+            }
+            if (xLen >= yLen) {
+                var i = 0
+                while (carry != 0uL && i < xLen) {
+                    val s = dw32(x[i]) + carry
+                    x[i] = s.toInt()
+                    carry = s shr 32
+                    ++i
+                }
+            } else {
+                for (i in minLen..<yLen) {
+                    val s = dw32(y[i]) + carry
+                    x[i] = s.toInt()
+                    carry = s shr 32
+                }
+            }
+            return carry.toUInt()
+        } else {
+            throw IllegalArgumentException()
+        }
     }
 
     fun newSub(x: IntArray, w: Int): IntArray {
@@ -245,6 +337,87 @@ object Magia {
         else
             ZERO
     }
+
+    fun mutateSub(x: IntArray, xLen: Int, w: UInt) {
+        if (xLen >= 0 && xLen <= x.size) {
+            var borrow = w.toULong()
+            var i = 0
+            while (borrow != 0uL && i < xLen) {
+                borrow = dw32(x[i]) - borrow
+                x[i] = borrow.toInt()
+                borrow = borrow shr 63
+                ++i
+            }
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun mutateSub(x: IntArray, xLen: Int, dw: ULong) {
+        if (xLen >= 2 && xLen <= x.size) {
+            check(xLen >= 2)
+            val t0 = dw32(x[0]) - (dw and 0xFFFF_FFFFuL)
+            x[0] = t0.toInt()
+            val t1 = dw32(x[1]) - (dw shr 32) - (t0 shr 63)
+            x[1] = t1.toInt()
+            var borrow = t1 shr 63
+            var i = 2
+            while (borrow != 0uL && i < xLen) {
+                borrow = dw32(x[i]) - borrow
+                x[i] = borrow.toInt()
+                borrow = borrow shr 63
+                ++i
+            }
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun mutateSub(x: IntArray, xLen: Int, y: IntArray, yLen: Int) {
+        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
+            check(xLen == 0 || x[xLen - 1] != 0)
+            check(yLen == 0 || y[yLen - 1] != 0)
+            check(xLen >= yLen)
+            var borrow = 0uL // 0 or 1
+            var i = 0
+            while (i < yLen) {
+                borrow = dw32(x[i]) - dw32(y[i]) - borrow
+                x[i] = borrow.toInt()
+                borrow = borrow shr 63
+                ++i
+            }
+            while (borrow != 0uL && i < xLen) {
+                borrow = dw32(x[i]) - borrow
+                x[i] = borrow.toInt()
+                borrow = borrow shr 63
+                ++i
+            }
+            check(borrow == 0uL)
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun mutateReverseSub(x: IntArray, xLen: Int, y: IntArray, yLen: Int) {
+        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
+            check(xLen == 0 || x[xLen - 1] != 0)
+            check(yLen == 0 || y[yLen - 1] != 0)
+            check(xLen == yLen)
+            var borrow = 0uL // 0 or 1
+            var i = 0
+            while (i < yLen) {
+                borrow = dw32(y[i]) - dw32(x[i]) - borrow
+                x[i] = borrow.toInt()
+                borrow = borrow shr 63
+                ++i
+            }
+            check(borrow == 0uL)
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+
 
     fun newMul(x: IntArray, n: Int): IntArray {
         val bitLenX = bitLen(x)
@@ -410,9 +583,9 @@ object Magia {
         }
     }
 
-    fun newMinimumCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
+    fun newMinimumCopy(src: IntArray) = newCopyWithLimbLen(src, nonZeroLimbLen(src))
 
-    fun newCopy(src: IntArray, newWordLen: Int): IntArray {
+    fun newCopyWithLimbLen(src: IntArray, newWordLen: Int): IntArray {
         if (newWordLen > 0) {
             val dst = IntArray(newWordLen)
             copy(dst, src)
@@ -654,6 +827,24 @@ object Magia {
         }
     }
 
+    fun cmp(x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
+        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
+            check(xLen == 0 || x[xLen - 1] != 0)
+            check(yLen == 0 || y[yLen - 1] != 0)
+            if (xLen != yLen)
+                return if (xLen > yLen) 1 else -1
+            for (i in xLen - 1 downTo 0) {
+                val cmp = x[i].toUInt().compareTo(y[i].toUInt())
+                if (cmp != 0)
+                    return cmp
+            }
+            return 0
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+
     // returns a 32 bit value as a Long
     fun mutateDivideRemainder(x: IntArray, n: Int): Long {
         if (n == 0)
@@ -765,8 +956,8 @@ object Magia {
             return 1
 
         // Step D1: Normalize
-        val vn = newCopy(v, n)
-        val un = newCopy(u, m + 1)
+        val vn = newCopyWithLimbLen(v, n)
+        val un = newCopyWithLimbLen(u, m + 1)
         val shift = vn[n - 1].countLeadingZeroBits()
         if (shift > 0) {
             mutateShiftLeft(vn, shift)
@@ -872,7 +1063,7 @@ object Magia {
         val maxDigitLen = ((bitLen * 1234) shr 12) + 1
         val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
         var wordLen = nonZeroLimbLen(magia)
-        var t = newCopy(magia, wordLen)
+        var t = newCopyWithLimbLen(magia, wordLen)
         val utf8 = ByteArray(maxSignedLen)
         var ib = utf8.size
         while (wordLen > 1) {
@@ -880,7 +1071,7 @@ object Magia {
             val chunk = newLenAndRemainder and 0xFFFF_FFFFL
             renderChunk9(chunk, utf8, ib)
             wordLen = (newLenAndRemainder ushr 32).toInt()
-            t = newCopy(t, wordLen)
+            t = newCopyWithLimbLen(t, wordLen)
             ib -= 9
         }
         ib -= renderChunkTail(t[0], utf8, ib)
