@@ -437,7 +437,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * Each bit has a 50% chance of being set, so the actual returned bit length
          * may be less than the requested bitLen.
          */
-        fun fromRandom(bitLen: Int, random: Random): HugeInt {
+        fun fromRandom(bitLen: Int, random: Random = Random.Default): HugeInt {
             if (bitLen >= 0) {
                 var zeroTest = 0
                 val magia = Magia.newWithBitLen(bitLen)
@@ -664,16 +664,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * Returns `true` if the magnitude of this HugeInt is a power of two
      * (exactly one bit set).
      */
-    fun isMagnitudePowerOfTwo(): Boolean {
-        var bitSeen = false
-        for (w in this.magia) {
-            if (w == 0) continue
-            if ((w and (w - 1)) != 0) return false
-            if (bitSeen) return false
-            bitSeen = true
-        }
-        return bitSeen
-    }
+    fun isMagnitudePowerOfTwo(): Boolean = Magia.isPowerOfTwo(this.magia, this.magia.size)
 
     /**
      * Returns `true` if this HugeInt fits in a signed 32-bit integer
@@ -1106,12 +1097,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      *
      * Example: `BigInteger("-1").bitLength() == 0` ... think about ie :)
      */
-    fun bitLengthBigIntegerStyle(): Int {
-        val magBitLen = magnitudeBitLen()
-        val isNegPowerOfTwo = sign && isMagnitudePowerOfTwo()
-        val bitLengthBigIntegerStyle = magBitLen - if (isNegPowerOfTwo) 1 else 0
-        return bitLengthBigIntegerStyle
-    }
+    fun bitLengthBigIntegerStyle(): Int = Magia.bitLengthBigIntegerStyle(sign, magia)
 
     /**
      * Returns the number of 32-bit integers required to store the binary magnitude.
@@ -1505,13 +1491,8 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      * @param isBigEndian whether the bytes are written in big-endian or little-endian order
      * @return a new [ByteArray] containing the binary representation
      */
-    fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray {
-        val bitLen = if (isTwosComplement) bitLengthBigIntegerStyle() + 1 else max(magnitudeBitLen(), 1)
-        val byteLen = (bitLen + 7) ushr 3
-        val bytes = ByteArray(byteLen)
-        Magia.toBinaryBytes(this.magia, isTwosComplement && this.sign, isBigEndian, bytes)
-        return bytes
-    }
+    fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray =
+        Magia.toBinaryByteArray(sign, magia, Magia.nonZeroLimbLen(magia), isTwosComplement, isBigEndian)
 
     /**
      * Writes this [HugeInt] into the provided [bytes] array in the requested binary format.
@@ -1728,7 +1709,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             wMag == 0u -> throw ArithmeticException("div by zero")
             this.isNotZero() -> {
                 val quot = Magia.newMinimumCopy(this.magia)
-                val remN = Magia.mutateDivideRemainder(quot, wMag)
+                val remN = Magia.mutateDivMod(quot, wMag)
                 val hiQuot =
                     if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor wSign, quot) else ZERO
                 val hiRem = if (remN != 0u) HugeInt(this.sign, intArrayOf(remN.toInt())) else ZERO

@@ -65,11 +65,11 @@ class TestMagia {
         val carLeft = Magia.newShiftLeft(car, shift)
         assert(MagiaTransducer.EQ(carLeft, biLeft))
 
-        Magia.mutateShiftRight(carLeft, shift)
+        Magia.mutateShiftRight(carLeft, carLeft.size, shift)
         assert(MagiaTransducer.EQ(carLeft, bi))
 
         val biRight = bi.shiftRight(shift)
-        Magia.mutateShiftRight(car, shift)
+        Magia.mutateShiftRight(car, car.size, shift)
         assert(MagiaTransducer.EQ(car, biRight))
     }
 

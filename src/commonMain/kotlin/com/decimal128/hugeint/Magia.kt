@@ -10,7 +10,7 @@ import kotlin.math.min
 import kotlin.math.max
 
 
-// magia == MAGnitude IntArray ... it's magic
+// magia == MAGnitude IntArray ... it's magic!
 
 private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
 
@@ -72,8 +72,6 @@ object Magia {
         }
     }
 
-    fun toRawULong(x: IntArray): ULong = toRawULong(x, x.size)
-
     fun toRawULong(x: IntArray, xLen: Int): ULong {
         return when (xLen) {
             0 -> 0uL
@@ -81,8 +79,6 @@ object Magia {
             else -> (dw32(x[1]) shl 32) or dw32(x[0])
         }
     }
-
-    fun toRawInt(x: IntArray): UInt  = toRawInt(x, x.size)
 
     fun toRawInt(x: IntArray, xLen: Int): UInt {
         return if (xLen == 0) 0u else x[0].toUInt()
@@ -109,7 +105,7 @@ object Magia {
         return IntArray((t + 3) ushr 2)
     }
 
-    fun newLargerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
+    fun newLongerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
         if (newMinLimbLen > x.size) {
             val z = newWithMinLen(newMinLimbLen)
             System.arraycopy(x, 0, z, 0, x.size)
@@ -636,9 +632,6 @@ object Magia {
         return z
     }
 
-    fun mutateShiftRight(x: IntArray, bitCount: Int) =
-        mutateShiftRight(x, nonZeroLimbLen(x), bitCount)
-
     fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
         require(bitCount >= 0)
         check(xLen <= x.size)
@@ -666,28 +659,8 @@ object Magia {
     fun newShiftLeft(x: IntArray, bitCount: Int): IntArray {
         val newBitLen = bitLen(x) + bitCount
         val z = newCopyWithBitLen(x, newBitLen)
-        return mutateShiftLeft(z, bitCount)
-    }
-
-    private fun mutateShiftLeft(x: IntArray, bitCount: Int): IntArray {
-        val wordShift = bitCount ushr 5
-        val innerShift = bitCount and ((1 shl 5) - 1)
-        if (wordShift >= x.size) {
-            x.fill(0)
-            return x
-        }
-        val newLen = x.size - wordShift
-        if (wordShift > 0) {
-            System.arraycopy(x, 0, x, wordShift, newLen)
-            for (i in wordShift - 1 downTo 0)
-                x[i] = 0
-        }
-        if (innerShift > 0) {
-            for (i in x.size - 1 downTo 1)
-                x[i] = (x[i] shl innerShift) or (x[i - 1] ushr -innerShift)
-            x[0] = x[0] shl innerShift
-        }
-        return x
+        mutateShiftLeft(z, z.size, bitCount)
+        return z
     }
 
     fun mutateShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
@@ -710,12 +683,49 @@ object Magia {
         }
     }
 
-    fun bitLen(x: IntArray): Int {
-        for (i in x.size - 1 downTo 0)
-            if (x[i] != 0)
-                return 32 - x[i].countLeadingZeroBits() + (i * 32)
-        return 0
+    fun isPowerOfTwo(x: IntArray, xLen: Int): Boolean {
+        if (xLen >= 0 && xLen <= x.size) {
+            var bitSeen = false
+            for (i in 0..<xLen) {
+                val w = x[i]
+                if (w == 0) continue
+                if ((w and (w - 1)) != 0) return false
+                if (bitSeen) return false
+                bitSeen = true
+            }
+            return bitSeen
+        } else {
+            throw IllegalArgumentException()
+        }
     }
+
+
+    fun bitLen(x: IntArray): Int = bitLen(x, x.size)
+
+    fun bitLen(x: IntArray, xLen: Int): Int {
+        if (xLen >= 0 && xLen <= x.size) {
+            for (i in xLen - 1 downTo 0)
+                if (x[i] != 0)
+                    return 32 - x[i].countLeadingZeroBits() + (i * 32)
+            return 0
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun bitLengthBigIntegerStyle(sign: Boolean, x: IntArray): Int = bitLengthBigIntegerStyle(sign, x, x.size)
+
+    fun bitLengthBigIntegerStyle(sign: Boolean, x: IntArray, xLen: Int): Int {
+        if (xLen >= 0 && xLen <= x.size) {
+            val bitLen = bitLen(x, xLen)
+            val isNegPowerOfTwo = sign && isPowerOfTwo(x, xLen)
+            val bitLengthBigIntegerStyle = bitLen - if (isNegPowerOfTwo) 1 else 0
+            return bitLengthBigIntegerStyle
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
 
     fun newAnd(x: IntArray, y: IntArray): IntArray {
         val minLen = min(nonZeroLimbLen(x), nonZeroLimbLen(y))
@@ -848,10 +858,10 @@ object Magia {
 //    fun mutateDivideRemainder(x: IntArray, n: Int): Long =
 //        mutateDivideRemainder(x, x.size, n.toUInt()).toLong()
 
-    fun mutateDivideRemainder(x: IntArray, w: UInt): UInt =
-        mutateDivideRemainder(x, x.size, w)
+    fun mutateDivMod(x: IntArray, w: UInt): UInt =
+        mutateDivMod(x, x.size, w)
 
-    fun mutateDivideRemainder(x: IntArray, xLen: Int, w: UInt): UInt {
+    fun mutateDivMod(x: IntArray, xLen: Int, w: UInt): UInt {
         if (xLen >= 0 && xLen <= x.size) {
             if (w == 0u)
                 throw RuntimeException("DivByZero")
@@ -872,7 +882,7 @@ object Magia {
 
     fun newDiv(x: IntArray, w: UInt): IntArray {
         val q = newMinimumCopy(x)
-        mutateDivideRemainder(q, w)
+        mutateDivMod(q, w)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
@@ -900,7 +910,7 @@ object Magia {
 
     fun newMod(x: IntArray, w: UInt): IntArray {
         val q = newMinimumCopy(x)
-        val rem = mutateDivideRemainder(q, w)
+        val rem = mutateDivMod(q, w)
         return if (rem == 0u) ZERO else intArrayOf(rem.toInt())
     }
 
@@ -928,6 +938,7 @@ object Magia {
         val r = IntArray(y.size)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
+        check (nonZeroLimbLen(r) <= n)
         return if (nonZeroLimbLen(r) > 0) r else ZERO
     }
 
@@ -937,7 +948,7 @@ object Magia {
             if (n == 0)
                 throw ArithmeticException("div by zero")
             var div = newMinimumCopy(x)
-            val rem = mutateDivideRemainder(div, y[0].toUInt())
+            val rem = mutateDivMod(div, y[0].toUInt())
             if (nonZeroLimbLen(div) == 0)
                 div = ZERO
             return arrayOf(div, if (rem != 0u) intArrayOf(rem.toInt()) else ZERO)
@@ -951,6 +962,7 @@ object Magia {
         val r = IntArray(n)
         val status = knuthDivide(q, r, u, v, m, n)
         require(status == 0)
+        check (nonZeroLimbLen(r) <= n)
         return arrayOf(
             if (nonZeroLimbLen(q) > 0) q else ZERO, if (nonZeroLimbLen(r) > 0) r else ZERO
         )
@@ -980,18 +992,18 @@ object Magia {
             return 1
 
         // Step D1: Normalize
-        val vn = newCopyWithLimbLen(v, n)
         val un = newCopyWithLimbLen(u, m + 1)
+        val vn = newCopyWithLimbLen(v, n)
         val shift = vn[n - 1].countLeadingZeroBits()
         if (shift > 0) {
-            mutateShiftLeft(vn, shift)
-            mutateShiftLeft(un, shift)
+            mutateShiftLeft(vn, vn.size, shift)
+            mutateShiftLeft(un, un.size, shift)
         }
 
         knuthDivideNormalizedCore(q, un, vn, m, n)
 
         if (r != null) {
-            mutateShiftRight(un, shift)
+            mutateShiftRight(un, un.size, shift)
             copy(r, un)
         }
         return 0
@@ -1419,67 +1431,88 @@ object Magia {
         return magia
     }
 
+    fun toBinaryByteArray(sign: Boolean, x: IntArray, xLen: Int, isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray {
+        if (xLen >= 0 && xLen <= x.size) {
+            val bitLen =
+                if (isTwosComplement) bitLengthBigIntegerStyle(sign, x, xLen) + 1 else max(bitLen(x, xLen), 1)
+            val byteLen = (bitLen + 7) ushr 3
+            val bytes = ByteArray(byteLen)
+            toBinaryBytes(x, xLen, sign and isTwosComplement, isBigEndian, bytes, 0, byteLen)
+            return bytes
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
     internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
                                bytes: ByteArray) =
-        toBinaryBytes(x, isNegative, isBigEndian, bytes, 0, bytes.size)
+        toBinaryBytes(x, nonZeroLimbLen(x), isNegative, isBigEndian, bytes, 0, bytes.size)
 
     internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
-                                 bytes: ByteArray, off: Int, len: Int) {
-        if (off < 0 || len < 0 || len > bytes.size - off)
+                               bytes: ByteArray, off: Int, len: Int) =
+        toBinaryBytes(x, nonZeroLimbLen(x), isNegative, isBigEndian, bytes, off, len)
+
+    internal fun toBinaryBytes(x: IntArray, xLen: Int, isNegative: Boolean, isBigEndian: Boolean,
+                               bytes: ByteArray, off: Int, len: Int) {
+        if (xLen >= 0 && xLen <= x.size &&
+            off >= 0 && len >= 0 && len <= bytes.size - off) {
+
+            if (len == 0)
+                return
+
+            // calculate offsets and stepping direction for BE BigEndian vs LE LittleEndian
+            val offB1 = if (isBigEndian) -1 else 1 // BE == -1, LE ==  1
+            val offB2 = offB1 shl 1                // BE == -2, LE ==  2
+            val offB3 = offB1 + offB2              // BE == -3, LE ==  3
+            val step1LoToHi = offB1                // BE == -1, LE ==  1
+            val step4LoToHi = offB1 shl 2          // BE == -4, LE ==  4
+
+            val ibLast = off + len - 1
+            val ibLsb = if (isBigEndian) ibLast else off // index Least significant byte
+            val ibMsb = if (isBigEndian) off else ibLast // index Most significant byte
+
+            val negativeMask = if (isNegative) -1 else 0
+
+            var remaining = len
+
+            var ib = ibLsb
+            var iw = 0
+
+            var carry = -negativeMask.toLong() // if (isNegative) then carry = 1 else 0
+
+            while (remaining >= 4 && iw < xLen) {
+                val v = x[iw++]
+                carry += (v xor negativeMask).toLong() and 0xFFFF_FFFFL
+                val w = carry.toInt()
+                carry = carry shr 32
+
+                val b3 = (w shr 24).toByte()
+                val b2 = (w shr 16).toByte()
+                val b1 = (w shr 8).toByte()
+                val b0 = (w).toByte()
+
+                bytes[ib + offB3] = b3
+                bytes[ib + offB2] = b2
+                bytes[ib + offB1] = b1
+                bytes[ib] = b0
+
+                ib += step4LoToHi
+                remaining -= 4
+            }
+            if (remaining > 0) {
+                val v = if (iw < xLen) x[iw++] else 0
+                var w = (v xor negativeMask).toLong() + carry.toInt()
+                do {
+                    bytes[ib] = w.toByte()
+                    ib += step1LoToHi
+                    w = w shr 8
+                } while (--remaining > 0)
+            }
+            check(iw == xLen || x[iw] == 0)
+            check(ib - step1LoToHi == ibMsb)
+        } else {
             throw IllegalArgumentException()
-        if (len == 0)
-            return
-
-        // calculate offsets and stepping direction for BE BigEndian vs LE LittleEndian
-        val offB1 = if (isBigEndian) -1 else 1 // BE == -1, LE ==  1
-        val offB2 = offB1 shl 1                // BE == -2, LE ==  2
-        val offB3 = offB1 + offB2              // BE == -3, LE ==  3
-        val step1LoToHi = offB1                // BE == -1, LE ==  1
-        val step4LoToHi = offB1 shl 2          // BE == -4, LE ==  4
-
-        val ibLast = off + len - 1
-        val ibLsb = if (isBigEndian) ibLast else off // index Least significant byte
-        val ibMsb = if (isBigEndian) off else ibLast // index Most significant byte
-
-        val negativeMask = if (isNegative) -1 else 0
-
-        var remaining = len
-
-        var ib = ibLsb
-        var iw = 0
-
-        var carry = -negativeMask.toLong() // if (isNegative) then carry = 1 else 0
-
-        while (remaining >= 4 && iw < x.size) {
-            val v = x[iw++]
-            carry += (v xor negativeMask).toLong() and 0xFFFF_FFFFL
-            val w = carry.toInt()
-            carry = carry shr 32
-
-            val b3 = (w shr 24).toByte()
-            val b2 = (w shr 16).toByte()
-            val b1 = (w shr  8).toByte()
-            val b0 = (w       ).toByte()
-
-            bytes[ib + offB3] = b3
-            bytes[ib + offB2] = b2
-            bytes[ib + offB1] = b1
-            bytes[ib        ] = b0
-
-            ib += step4LoToHi
-            remaining -= 4
         }
-        if (remaining > 0) {
-            val v = if (iw < x.size) x[iw++] else 0
-            var w = (v xor negativeMask).toLong() + carry.toInt()
-            do {
-                bytes[ib] = w.toByte()
-                ib += step1LoToHi
-                w = w shr 8
-            } while (--remaining > 0)
-        }
-        check (iw == x.size || x[iw] == 0)
-        check(ib - step1LoToHi == ibMsb)
     }
 
 
