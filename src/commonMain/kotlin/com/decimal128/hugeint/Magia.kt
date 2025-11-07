@@ -59,7 +59,7 @@ object Magia {
         return (x[lastWordIndex] and bitMask) != 0
     }
 
-    fun toLong(x: IntArray): Long {
+    fun toRawULong(x: IntArray): Long {
         return when (x.size) {
             0 -> 0
             1 -> U32(x[0])
@@ -67,7 +67,7 @@ object Magia {
         }
     }
 
-    fun toInt(x: IntArray): Int {
+    fun toRawInt(x: IntArray): Int {
         return if (x.isEmpty()) 0 else x[0]
     }
 
@@ -83,12 +83,6 @@ object Magia {
 
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
-
-    inline fun newWithLimbLenRoundedUp(limbLen: Int) : IntArray {
-        val t = limbLen + 1 - (-limbLen)
-        return IntArray((t + 3) ushr 2)
-    }
-
 
     inline fun newWithSetBit(bitIndex: Int): IntArray {
         if (bitIndex >= 0) {
@@ -329,77 +323,91 @@ object Magia {
         if (xLen == 0 || yLen == 0)
             return ZERO
         val p = IntArray(xLen + yLen)
-        for (i in 0..<xLen) {
-            val xLimb = U32(x[i])
-            var carry = 0L
-            for (j in 0..<yLen) {
-                val yLimb = U32(y[j])
-                val t = xLimb * yLimb + U32(p[i + j]) + carry
-                p[i + j] = t.toInt()
-                carry = t ushr 32
-            }
-            if (i + yLen < p.size)
-                p[i + yLen] = carry.toInt()
-        }
+        mul(p, x, xLen, y, yLen)
         return p
+    }
+
+    fun mul(p: IntArray, x: IntArray, xLen: Int, y: IntArray, yLen: Int): IntArray {
+        if (xLen > 0 && yLen > 0 && xLen <= x.size && yLen <= y.size && (xLen + yLen) <= p.size) {
+            for (i in 0..<xLen) {
+                val xLimb = U32(x[i])
+                var carry = 0L
+                for (j in 0..<yLen) {
+                    val yLimb = U32(y[j])
+                    val t = xLimb * yLimb + U32(p[i + j]) + carry
+                    p[i + j] = t.toInt()
+                    carry = t ushr 32
+                }
+                if (i + yLen < p.size)
+                    p[i + yLen] = carry.toInt()
+            }
+            return p
+        } else {
+            throw IllegalArgumentException()
+        }
     }
 
     fun newSqr(x: IntArray): IntArray {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0)
             return ZERO
-
         val p = IntArray(2 * xLen)
+        sqr(p, x, xLen)
+        return p
+    }
 
-        // 1) Cross terms: for i<j, add (a[i]*a[j]) twice into p[i+j]
-        // these terms are doubled
-        for (i in 0..<xLen) {
-            val xi = U32(x[i])
-            var carry = 0L
-            for (j in (i + 1)..<xLen) {
-                val prod = xi * U32(x[j])        // 32x32 -> 64
-                // add once
-                val t1 = prod + U32(p[i + j]) + carry
-                val p1 = t1 and 0xFFFF_FFFFL
-                carry = t1 ushr 32
-                // add second time (doubling) — avoids (prod << 1) overflow
-                val t2 = prod + p1
-                p[i + j] = t2.toInt()
-                carry += t2 ushr 32
-            }
-            // flush carry to the next limb(s)
-            var k = i + xLen
-            while (carry != 0L) {
+    fun sqr(p: IntArray, x: IntArray, xLen: Int) {
+        // test to encourage bounds check elimination
+        if (xLen > 0 && xLen <= x.size && xLen * 2 <= p.size) {
+            // 1) Cross terms: for i<j, add (x[i]*x[j]) twice into p[i+j]
+            // these terms are doubled
+            for (i in 0..<xLen) {
+                val xi = U32(x[i])
+                var carry = 0L
+                for (j in (i + 1)..<xLen) {
+                    val prod = xi * U32(x[j])        // 32x32 -> 64
+                    // add once
+                    val t1 = prod + U32(p[i + j]) + carry
+                    val p1 = t1 and 0xFFFF_FFFFL
+                    carry = t1 ushr 32
+                    // add second time (doubling) — avoids (prod << 1) overflow
+                    val t2 = prod + p1
+                    p[i + j] = t2.toInt()
+                    carry += t2 ushr 32
+                }
+                // flush carry to the next limb(s)
+                val k = i + xLen
                 val t = U32(p[k]) + carry
                 p[k] = t.toInt()
                 carry = t ushr 32
-                k++
+                if (carry != 0L)
+                    ++p[k + 1]
             }
-        }
 
-        // 2) Diagonals: add a[i]^2 into columns 2*i and 2*i+1
-        // terms on the diagonal are not doubled
-        for (i in 0 until xLen) {
-            val sq = U32(x[i]) * U32(x[i])      // 64-bit
-            // add low 32 to p[2*i]
-            var t = U32(p[2 * i]) + (sq and 0xFFFF_FFFFL)
-            p[2 * i] = t.toInt()
-            var carry = t ushr 32
-            // add high 32 (and carry) to p[2*i+1]
-            t = U32(p[2 * i + 1]) + (sq ushr 32) + carry
-            p[2 * i + 1] = t.toInt()
-            carry = t ushr 32
-            // propagate any remaining carry
-            var k = 2 * i + 2
-            while (carry != 0L) {
-                t = U32(p[k]) + carry
-                p[k] = t.toInt()
+            // 2) Diagonals: add x[i]**2 into columns 2*i and 2*i+1
+            // terms on the diagonal are not doubled
+            for (i in 0..<xLen) {
+                val sq = U32(x[i]) * U32(x[i])      // 64-bit
+                // add low 32 to p[2*i]
+                var t = U32(p[2 * i]) + (sq and 0xFFFF_FFFFL)
+                p[2 * i] = t.toInt()
+                var carry = t ushr 32
+                // add high 32 (and carry) to p[2*i+1]
+                t = U32(p[2 * i + 1]) + (sq ushr 32) + carry
+                p[2 * i + 1] = t.toInt()
                 carry = t ushr 32
-                k++
+                // propagate any remaining carry
+                var k = 2 * i + 2
+                while (carry != 0L) {
+                    t = U32(p[k]) + carry
+                    p[k] = t.toInt()
+                    carry = t ushr 32
+                    k++
+                }
             }
+        } else {
+            throw IllegalArgumentException()
         }
-
-        return p
     }
 
     fun newMinimumCopy(src: IntArray) = newCopy(src, nonZeroLimbLen(src))
