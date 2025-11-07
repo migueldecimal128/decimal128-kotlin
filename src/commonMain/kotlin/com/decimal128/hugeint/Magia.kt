@@ -870,15 +870,11 @@ object Magia {
         }
     }
 
-    fun newDiv(x: IntArray, n: Int): IntArray = newDiv(x, n.toUInt())
-
     fun newDiv(x: IntArray, w: UInt): IntArray {
         val q = newMinimumCopy(x)
         mutateDivideRemainder(q, w)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
-
-    fun newDiv(x: IntArray, l: Long): IntArray = newDiv(x, l.toULong())
 
     fun newDiv(x: IntArray, dw: ULong): IntArray {
         val lo = dw.toUInt()
@@ -889,7 +885,7 @@ object Magia {
     fun newDiv(x: IntArray, y: IntArray): IntArray {
         val n = nonZeroLimbLen(y)
         if (n < 2)
-            return newDiv(x, y[0])
+            return newDiv(x, y[0].toUInt())
         val m = nonZeroLimbLen(x)
         if (m < n)
             return ZERO
@@ -902,18 +898,16 @@ object Magia {
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
-    fun newMod(x: IntArray, n: Int): IntArray = newMod(x, n.toUInt())
-
     fun newMod(x: IntArray, w: UInt): IntArray {
         val q = newMinimumCopy(x)
         val rem = mutateDivideRemainder(q, w)
         return if (rem == 0u) ZERO else intArrayOf(rem.toInt())
     }
 
-    fun newMod(x: IntArray, l: Long): IntArray {
-        val lo = l.toInt()
-        val hi = (l ushr 32).toInt()
-        return if (hi == 0) newMod(x, lo) else newMod(x, intArrayOf(lo, hi))
+    fun newMod(x: IntArray, dw: ULong): IntArray {
+        val lo = dw.toUInt()
+        val hi = (dw shr 32).toUInt()
+        return if (hi == 0u) newMod(x, lo) else newMod(x, intArrayOf(lo.toInt(), hi.toInt()))
     }
 
     fun newMod(x: IntArray, y: IntArray): IntArray {

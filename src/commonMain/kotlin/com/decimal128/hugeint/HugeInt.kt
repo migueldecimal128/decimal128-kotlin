@@ -886,7 +886,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         if (n == 0)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Magia.newDiv(this.magia, n.absoluteValue)
+            val quot = Magia.newDiv(this.magia, n.absoluteValue.toUInt())
             if (quot.isNotEmpty())
                 return HugeInt(this.sign xor (n < 0), quot)
         }
@@ -897,7 +897,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         if (w == 0u)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Magia.newDiv(this.magia, w.toInt())
+            val quot = Magia.newDiv(this.magia, w)
             if (quot.isNotEmpty())
                 return HugeInt(this.sign, quot)
         }
@@ -908,7 +908,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         if (l == 0L)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Magia.newDiv(this.magia, l.absoluteValue)
+            val quot = Magia.newDiv(this.magia, l.absoluteValue.toULong())
             if (quot.isNotEmpty())
                 return HugeInt(this.sign xor (l < 0), quot)
         }
@@ -919,7 +919,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         if (dw == 0uL)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val quot = Magia.newDiv(this.magia, dw.toLong())
+            val quot = Magia.newDiv(this.magia, dw)
             if (quot.isNotEmpty())
                 return HugeInt(this.sign, quot)
         }
@@ -937,44 +937,28 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         return ZERO
     }
 
-    operator fun rem(n: Int): HugeInt {
-        if (n == 0)
-            throw ArithmeticException("div by zero")
-        if (isNotZero()) {
-            val rem = Magia.newMod(this.magia, n.absoluteValue)
-            if (rem.isNotEmpty())
-                return HugeInt(this.sign, rem)
-        }
-        return ZERO
-    }
+    // note that in java/kotlin, the sign of remainder only depends upon
+    // the dividend, so we just take the abs value of the divisor
+    operator fun rem(n: Int): HugeInt = rem(n.absoluteValue.toUInt())
 
     operator fun rem(w: UInt): HugeInt {
         if (w == 0u)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Magia.newMod(this.magia, w.toInt())
+            val rem = Magia.newMod(this.magia, w)
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
         return ZERO
     }
 
-    operator fun rem(l: Long): HugeInt {
-        if (l == 0L)
-            throw ArithmeticException("div by zero")
-        if (isNotZero()) {
-            val rem = Magia.newMod(this.magia, l.absoluteValue)
-            if (rem.isNotEmpty())
-                return HugeInt(this.sign, rem)
-        }
-        return ZERO
-    }
+    operator fun rem(l: Long): HugeInt = rem(l.absoluteValue.toULong())
 
     operator fun rem(dw: ULong): HugeInt {
         if (dw == 0uL)
             throw ArithmeticException("div by zero")
         if (isNotZero()) {
-            val rem = Magia.newMod(this.magia, dw.toLong())
+            val rem = Magia.newMod(this.magia, dw)
             if (rem.isNotEmpty())
                 return HugeInt(this.sign, rem)
         }
