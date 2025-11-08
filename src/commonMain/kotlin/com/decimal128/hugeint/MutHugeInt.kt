@@ -304,6 +304,7 @@ class MutHugeInt private constructor (
         if (maxOperandLen + 1 > magia.size)
             magia = Magia.newLongerCopyWithMinLen(magia, maxOperandLen + 1)
         magia[maxOperandLen] = 1
+        limbLen = maxOperandLen + 1
     }
 
     private fun mutateSubMagImpl(w: UInt) {

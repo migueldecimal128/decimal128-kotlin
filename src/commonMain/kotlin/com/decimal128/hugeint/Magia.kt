@@ -826,7 +826,7 @@ object Magia {
 
     fun compare(x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
-            val minSize = min(x.size, y.size)
+            val minSize = min(xLen, yLen)
             for (i in xLen - 1 downTo minSize)
                 if (x[i] != 0)
                     return 1
