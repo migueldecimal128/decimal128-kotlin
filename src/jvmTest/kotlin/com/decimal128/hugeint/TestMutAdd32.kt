@@ -23,34 +23,62 @@ class TestMutAdd32 {
     }
 
     fun testUnsigned(mhi: MutHugeInt) {
-        mhi.setRandom(129)
+        mhi.setRandom(200)
         val bi = mhi.toBigInteger()
         val w = rng.nextUInt()
         if (verbose)
             println("mhi:$mhi w:$w")
-        val sumBi = (bi + BigInteger.valueOf(w.toLong())).toHugeInt()
+        var sumBi = bi + BigInteger.valueOf(w.toLong())
         val sum1 = mhi.copy()
         sum1 += HugeInt.from(w)
         val sum2 = mhi.copy()
         sum2 += w
-        assertTrue(sum1 EQ sumBi)
+        assertTrue(sum1 EQ sumBi.toHugeInt())
         assertTrue(sum1 EQ sum2)
+
+        for (i in 0..<25) {
+            val w2 = rng.nextUInt()
+            sum1 += HugeInt.from(w2)
+            sum2 += w2
+            sumBi += BigInteger.valueOf(w2.toLong())
+        }
+
+        assertTrue(sum1 EQ sumBi.toHugeInt())
+        assertTrue(sum1 EQ sum2)
+
+        val sum1Save = MutHugeInt().set(sum1)
+        sum1 += sum2
+        sum2 += sum2
+
+        val sumBi1 = sumBi + sumBi
+        assertTrue(sum1 EQ sumBi1.toHugeInt())
+        assertTrue(sum1 EQ sum2)
+
     }
 
     fun testSigned(mhi: MutHugeInt) {
-        val hi = randomHi(300)
-        val bi = hi.toBigInteger()
+        mhi.setRandom(200)
+        val bi = mhi.toBigInteger()
         val n = rng.nextInt()
         if (verbose)
-            println("hi:$hi n:$n")
-        val sumBi = (bi + BigInteger.valueOf(n.toLong())).toHugeInt()
-        val sum1 = hi + HugeInt.from(n)
-        val sum2 = hi + n
-        val sum3 = n + hi
-        assertEquals(sumBi, sum1)
-        assertEquals(sum1, sum2)
-        assertEquals(sum2, sum3)
+            println("mhi:$mhi n:$n")
+        var sumBi = bi + BigInteger.valueOf(n.toLong())
+        val sum1 = mhi.copy()
+        sum1 += HugeInt.from(n)
+        val sum2 = mhi.copy()
+        sum2 += n
+        assertTrue(sum1 EQ sumBi.toHugeInt())
+        assertTrue(sum1 EQ sum2)
 
+        for (i in 0..<rng.nextInt(1000)) {
+            val n2 = rng.nextUInt()
+            sum1 += HugeInt.from(n2)
+            sum2 += n2
+            sumBi += BigInteger.valueOf(n2.toLong())
+        }
+
+        assertTrue(sum1 EQ sumBi.toHugeInt())
+        assertTrue(sum1 EQ sum2)
     }
 
     val rng = Random.Default

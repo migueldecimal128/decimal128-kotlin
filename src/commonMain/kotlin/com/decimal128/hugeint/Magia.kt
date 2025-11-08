@@ -244,23 +244,23 @@ object Magia {
             val minLen = min(xLen, yLen)
             var carry = 0uL
             for (i in 0..<minLen) {
-                val s = dw32(x[i]) + dw32(y[i]) + carry
+                carry = dw32(x[i]) + dw32(y[i]) + carry
                 x[i] = carry.toInt()
                 carry = carry shr 32
             }
             if (xLen >= yLen) {
-                var i = 0
+                var i = yLen
                 while (carry != 0uL && i < xLen) {
-                    val s = dw32(x[i]) + carry
-                    x[i] = s.toInt()
-                    carry = s shr 32
+                    carry = dw32(x[i]) + carry
+                    x[i] = carry.toInt()
+                    carry = carry shr 32
                     ++i
                 }
             } else {
                 for (i in minLen..<yLen) {
-                    val s = dw32(y[i]) + carry
-                    x[i] = s.toInt()
-                    carry = s shr 32
+                    carry = dw32(y[i]) + carry
+                    x[i] = carry.toInt()
+                    carry = carry shr 32
                 }
             }
             return carry.toUInt()

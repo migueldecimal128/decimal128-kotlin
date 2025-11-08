@@ -564,6 +564,13 @@ class MutHugeInt private constructor (
     infix fun EQ(l: Long): Boolean = compareTo(l) == 0
     infix fun EQ(dw: ULong): Boolean = compareTo(dw) == 0
 
+    infix fun NE(other: MutHugeInt): Boolean = compareTo(other) != 0
+    infix fun NE(hi: HugeInt): Boolean = compareTo(hi) != 0
+    infix fun NE(n: Int): Boolean = compareTo(n) != 0
+    infix fun NE(w: UInt): Boolean = compareTo(w) != 0
+    infix fun NE(l: Long): Boolean = compareTo(l) != 0
+    infix fun NE(dw: ULong): Boolean = compareTo(dw) != 0
+
     override fun toString(): String = Magia.toString(this.sign, this.magia, this.limbLen)
 
 }
