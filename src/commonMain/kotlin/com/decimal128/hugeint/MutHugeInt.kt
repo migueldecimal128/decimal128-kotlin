@@ -364,6 +364,7 @@ class MutHugeInt private constructor (
     }
 
     private fun mutateMulImpl(wSign: Boolean, dw: ULong) {
+        validate()
         if ((dw shr 32) == 0uL) {
             mutateMulImpl(wSign, dw.toUInt())
             return
@@ -374,12 +375,10 @@ class MutHugeInt private constructor (
             magia = Magia.newLongerCopyWithMinLen(magia, limbLen + 2)
         magia[limbLen] = 0
         magia[limbLen + 1] = 0
-        limbLen += 2
-        Magia.mul(magia, limbLen, magia, limbLen, dw)
-        if (magia[limbLen - 1] == 0) {
-            --limbLen
-            check(magia[limbLen - 1] != 0)
-        }
+        Magia.mul(magia, limbLen + 2, magia, limbLen, dw)
+        limbLen += if (magia[limbLen + 1] == 0) 1 else 2
+        sign = sign xor wSign
+        validate()
     }
 
     private fun mutateMulImpl(ySign: Boolean, y: IntArray, yLen: Int) {

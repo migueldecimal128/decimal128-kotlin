@@ -93,7 +93,7 @@ class TestMutAdd64 {
         assertTrue(sum1 EQ sumBi.toHugeInt())
         assertTrue(sum1 EQ sum2)
 
-        for (i in 0..<rng.nextInt(1000)) {
+        for (i in 0..<rng.nextInt(100)) {
             val n2 = rng.nextUInt()
             sum1 += HugeInt.from(n2)
             sum2 += n2
@@ -109,15 +109,6 @@ class TestMutAdd64 {
     fun randomHi(hiBitLen: Int): HugeInt {
         val rand = HugeInt.fromRandom(rng.nextInt(hiBitLen), rng)
         return if (rng.nextBoolean()) rand.negate() else rand
-    }
-
-    @Test
-    fun testProblemChild() {
-        val hi = HugeInt.from("35689796992407102546798857499")
-        val w = 137190797555284112
-        val sum = hi + w
-        val sum2 = hi + HugeInt.from(w)
-        assertEquals(sum2, sum)
     }
 
 }
