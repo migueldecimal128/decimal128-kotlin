@@ -145,6 +145,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             if (dw != 0uL) HugeInt(false, intArrayOf(dw.toInt(), (dw shr 32).toInt())) else ZERO
 
         /**
+         * Simply returns the HugeInt argument.
+         *
+         * Provided for convenience in some contexts.
+         */
+        inline fun from(hi: HugeInt) = hi
+        /**
          * Parses a [String] representation of an integer into a [HugeInt].
          *
          * Supported syntax:

@@ -240,6 +240,8 @@ object Magia {
     fun mutateAdd(x: IntArray, xLen: Int, y: IntArray, yLen: Int): UInt {
         if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
             check(xLen == 0 || x[xLen - 1] != 0)
+            if (y[yLen - 1] == 0)
+                println("foo!")
             check(yLen == 0 || y[yLen - 1] != 0)
             val minLen = min(xLen, yLen)
             var carry = 0uL

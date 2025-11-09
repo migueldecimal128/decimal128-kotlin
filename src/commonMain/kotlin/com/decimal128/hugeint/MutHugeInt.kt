@@ -160,35 +160,40 @@ class MutHugeInt private constructor (
     operator fun plusAssign(w: UInt) = mutateAddSubImpl(false, w)
     operator fun plusAssign(l: Long) = mutateAddSubImpl(l < 0, l.absoluteValue.toULong())
     operator fun plusAssign(dw: ULong) = mutateAddSubImpl(false, dw)
-    operator fun plusAssign(hi: HugeInt) = mutateAddSubImpl(hi.sign, hi.magia, hi.magia.size)
+    operator fun plusAssign(hi: HugeInt) =
+        mutateAddSubImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
     operator fun plusAssign(mhi: MutHugeInt) = mutateAddSubImpl(mhi.sign, mhi.magia, mhi.limbLen)
 
     operator fun minusAssign(n: Int) = mutateAddSubImpl(n > 0, n.absoluteValue.toUInt())
     operator fun minusAssign(w: UInt) = mutateAddSubImpl(w > 0u, w)
     operator fun minusAssign(l: Long) = mutateAddSubImpl(l > 0L, l.absoluteValue.toULong())
     operator fun minusAssign(dw: ULong) = mutateAddSubImpl(dw > 0uL, dw)
-    operator fun minusAssign(hi: HugeInt) = mutateAddSubImpl(!hi.sign, hi.magia, hi.magia.size)
+    operator fun minusAssign(hi: HugeInt) =
+        mutateAddSubImpl(!hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
     operator fun minusAssign(mhi: MutHugeInt) = mutateAddSubImpl(!mhi.sign, mhi.magia, mhi.limbLen)
 
     operator fun timesAssign(n: Int) = mutateMulImpl(n < 0, n.absoluteValue.toUInt())
     operator fun timesAssign(w: UInt) = mutateMulImpl(false, w)
     operator fun timesAssign(l: Long) = mutateMulImpl(l < 0, l.absoluteValue.toULong())
     operator fun timesAssign(dw: ULong) = mutateMulImpl(false, dw)
-    operator fun timesAssign(hi: HugeInt) = mutateMulImpl(hi.sign, hi.magia, hi.magia.size)
+    operator fun timesAssign(hi: HugeInt) =
+        mutateMulImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
     operator fun timesAssign(mhi: MutHugeInt) = mutateMulImpl(mhi.sign, mhi.magia, mhi.magia.size)
 
     operator fun divAssign(n: Int) = mutateDivImpl(n < 0, n.absoluteValue.toUInt())
     operator fun divAssign(w: UInt) = mutateDivImpl(false, w)
     operator fun divAssign(l: Long) = mutateDivImpl(l < 0, l.absoluteValue.toULong())
     operator fun divAssign(dw: ULong) = mutateDivImpl(false, dw)
-    operator fun divAssign(hi: HugeInt) = mutateDivImpl(hi.sign, hi.magia, hi.magia.size)
+    operator fun divAssign(hi: HugeInt) =
+        mutateDivImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
     operator fun divAssign(mhi: MutHugeInt) = mutateDivImpl(mhi.sign, mhi.magia, mhi.magia.size)
 
     operator fun remAssign(n: Int) = mutateModImpl(n.absoluteValue.toUInt())
     operator fun remAssign(w: UInt) = mutateModImpl(w)
     operator fun remAssign(l: Long) = mutateModImpl(l.absoluteValue.toULong())
     operator fun remAssign(dw: ULong) = mutateModImpl(dw)
-    operator fun remAssign(hi: HugeInt) = mutateModImpl(hi.magia, hi.magia.size)
+    operator fun remAssign(hi: HugeInt) =
+        mutateModImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
     operator fun remAssign(mhi: MutHugeInt) = mutateModImpl(mhi.magia, mhi.magia.size)
 
     private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
