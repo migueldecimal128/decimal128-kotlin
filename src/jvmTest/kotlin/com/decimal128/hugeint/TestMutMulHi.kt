@@ -13,6 +13,7 @@ class TestMutMulHi {
 
     val mhi = MutHugeInt()
     val prod1 = MutHugeInt()
+    val prod2 = MutHugeInt()
 
     @Test
     fun testMutAddHi() {
@@ -51,6 +52,7 @@ class TestMutMulHi {
         }
         assertTrue(prod1 EQ prodBi.toHugeInt())
 
+        val prod1Save = MutHugeInt().set(prod1)
         prod1 *= prod1
 
         val prodBi1 = prodBi * prodBi
@@ -59,6 +61,9 @@ class TestMutMulHi {
             println("fail! sum1:$prod1 sumBiHi1:$prodBiHi1")
         }
         assertTrue(prod1 EQ prodBiHi1)
+
+        prod2.setSquare(prod1Save)
+        assertTrue(prod1 EQ prod2)
     }
 
 }
