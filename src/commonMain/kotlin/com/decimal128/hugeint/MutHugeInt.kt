@@ -249,8 +249,10 @@ class MutHugeInt private constructor (
             cmp < 0 -> {
                 if (magia.size < yLen)
                     magia = Magia.newLongerCopyWithMinLen(magia, yLen)
-                Magia.mutateReverseSub(magia, limbLen, y, yLen)
-                limbLen = yLen
+                if (limbLen < yLen)
+                    magia.fill(0, limbLen, yLen)
+                Magia.mutateReverseSub(magia, yLen, y, yLen)
+                limbLen = Magia.nonZeroLimbLen(magia, yLen)
                 sign = ySign
             }
             else -> { setZero(); return }

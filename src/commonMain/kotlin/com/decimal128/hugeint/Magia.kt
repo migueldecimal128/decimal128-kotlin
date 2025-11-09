@@ -408,8 +408,10 @@ object Magia {
 
     fun mutateReverseSub(x: IntArray, xLen: Int, y: IntArray, yLen: Int) {
         if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
-            check(xLen == 0 || x[xLen - 1] != 0)
+            // x is usually not normalized .. so don't check for it
             check(yLen == 0 || y[yLen - 1] != 0)
+            if (xLen != yLen)
+                print("foo!")
             check(xLen == yLen)
             var borrow = 0uL // 0 or 1
             var i = 0
