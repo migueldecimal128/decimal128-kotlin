@@ -472,27 +472,19 @@ object Magia {
         val newBitLen = bitLen(x) + (64 - dw.countLeadingZeroBits())
         val z = newWithBitLen(newBitLen)
 
-        var t = dw32(x[0]) * lo
-        z[0] = t.toInt()
-        var carry = t shr 32
+        var carryLo = 0uL
 
-        t = dw32(x[0]) * hi
-        var prevUpLo = t and 0xFFFF_FFFFuL
-        var prevUpCarry = t shr 32
+        var ppPrevHi = 0uL
 
         // i = 1…n-1: do both halves in one pass
-        for (i in 1 until z.size) {
+        for (i in 0 until z.size) {
             val xi = if (i < x.size) dw32(x[i]) else 0uL
 
-            // 1) combine previous high-half, previous low-half carry, and xi * a
-            val s = prevUpLo + carry + xi * lo
-            z[i] = s.toInt()
-            carry = s shr 32
+            val pp = xi * lo + carryLo + (ppPrevHi and 0xFFFF_FFFFuL)
+            z[i] = pp.toInt()
+            carryLo = pp shr 32
 
-            // 2) compute this limb’s high-half product for next iteration
-            t = xi * hi + prevUpCarry
-            prevUpLo = t and 0xFFFF_FFFFuL
-            prevUpCarry = t shr 32
+            ppPrevHi = xi * hi + (ppPrevHi shr 32)
         }
 
         return z
