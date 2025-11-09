@@ -120,7 +120,12 @@ class MutHugeInt private constructor (
         return this
     }
     fun setSquare(hi: HugeInt): MutHugeInt = setSquareImpl(hi.magia, hi.magia.size)
-    fun setSquare(mhi: MutHugeInt): MutHugeInt = setSquareImpl(mhi.magia, mhi.magia.size)
+    fun setSquare(mhi: MutHugeInt): MutHugeInt {
+        return if (mhi == this)
+            mutateSquare() // prevent aliasing problems & improve performance
+        else
+            setSquareImpl(mhi.magia, mhi.magia.size)
+    }
 
     private fun setSquareImpl(x: IntArray, xLen: Int): MutHugeInt {
         val pLen = xLen + xLen
@@ -178,7 +183,12 @@ class MutHugeInt private constructor (
     operator fun timesAssign(dw: ULong) = mutateMulImpl(false, dw)
     operator fun timesAssign(hi: HugeInt) =
         mutateMulImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun timesAssign(mhi: MutHugeInt) = mutateMulImpl(mhi.sign, mhi.magia, mhi.magia.size)
+    operator fun timesAssign(mhi: MutHugeInt) {
+        if (this === mhi)
+            mutateSquare()  // prevent aliasing problems & improve performance
+        else
+            mutateMulImpl(mhi.sign, mhi.magia, mhi.magia.size)
+    }
 
     operator fun divAssign(n: Int) = mutateDivImpl(n < 0, n.absoluteValue.toUInt())
     operator fun divAssign(w: UInt) = mutateDivImpl(false, w)
@@ -339,24 +349,18 @@ class MutHugeInt private constructor (
     }
 
     private fun mutateMulImpl(wSign: Boolean, w: UInt) {
-        if (w == 0u) {
+        validate()
+        if (w == 0u || limbLen == 0) {
             setZero()
             return
         }
+        val newLimbLenMax = limbLen + 1
+        if (magia.size < newLimbLenMax)
+            magia = Magia.newLongerCopyWithMinLen(magia, newLimbLenMax)
+        magia[limbLen] = 0
+        Magia.mul(magia, magia, limbLen, w)
         sign = sign xor wSign
-        val dw = w.toULong()
-        val carry = 0uL
-        for (i in 0..<limbLen) {
-            val p = dw32(magia[i]) * dw + carry
-            magia[i] = p.toInt()
-        }
-        if (carry == 0uL)
-            return
-        val newLen = limbLen + 1
-        if (newLen > magia.size)
-            resize1(newLen)
-        magia[limbLen] = carry.toInt()
-        limbLen = newLen
+        limbLen += if (magia[limbLen] == 0) 0 else 1
     }
 
     private fun mutateMulImpl(wSign: Boolean, dw: ULong) {
@@ -364,12 +368,25 @@ class MutHugeInt private constructor (
             mutateMulImpl(wSign, dw.toUInt())
             return
         }
-        // FIXME
-        val y = intArrayOf(dw.toInt(), (dw shr 32).toInt())
-        mutateMulImpl(wSign, y, 2)
+        if (limbLen == 0)
+            return
+        if (magia.size < limbLen + 2)
+            magia = Magia.newLongerCopyWithMinLen(magia, limbLen + 2)
+        magia[limbLen] = 0
+        magia[limbLen + 1] = 0
+        limbLen += 2
+        Magia.mul(magia, limbLen, magia, limbLen, dw)
+        if (magia[limbLen - 1] == 0) {
+            --limbLen
+            check(magia[limbLen - 1] != 0)
+        }
     }
 
     private fun mutateMulImpl(ySign: Boolean, y: IntArray, yLen: Int) {
+        if (limbLen == 0 || yLen == 0) {
+            setZero()
+            return
+        }
         val m = if (limbLen >= yLen) magia else y
         val mLen = max(limbLen, yLen)
         val n = if (limbLen >= yLen) y else magia
@@ -384,6 +401,23 @@ class MutHugeInt private constructor (
         magia = tmp1
         tmp1 = t
         limbLen = pLen - if (magia[pLen - 1] == 0) 1 else 0
+        sign = sign xor ySign
+    }
+
+    fun mutateSquare(): MutHugeInt {
+        if (limbLen > 0) {
+            val newLimbLenMax = limbLen * 2
+            if (tmp1.size < newLimbLenMax)
+                tmp1 = Magia.newWithMinLen(newLimbLenMax)
+            else
+                tmp1.fill(0, 0, newLimbLenMax)
+            Magia.sqr(tmp1, magia, limbLen)
+            val t = tmp1
+            tmp1 = magia
+            magia = t
+            limbLen = newLimbLenMax - if (magia[newLimbLenMax - 1] == 0) 1 else 0
+        }
+        return this
     }
 
     private fun mutateDivImpl(wSign: Boolean, w: UInt) {

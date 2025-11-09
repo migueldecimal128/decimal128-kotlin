@@ -428,22 +428,34 @@ object Magia {
     }
 
     fun newMul(x: IntArray, w: UInt): IntArray {
-        val bitLenX = bitLen(x)
-        val bitLenN = 32 - w.countLeadingZeroBits()
-        if (bitLenX == 0 || bitLenN == 0)
+        val xLen = nonZeroLimbLen(x)
+        if (xLen == 0 || w == 0u)
             return ZERO
-        val newBitLen = bitLenX + bitLenN
-        val prod = newWithBitLen(newBitLen)
+        val pLenMax = xLen + 1
+        val p = IntArray(pLenMax)
+        mul(p, x, xLen, w)
+        return p
+    }
+
+    /**
+     * w should not be zero
+     * p.size must be >= xLen + 1
+     * p does not have to be zero-initialized.
+     * the final carry will be written, even if it is zero.
+     * So the resulting non-normalize pLen will be xLen + 1
+     * additional p limbs will not be zeroed-out
+     *
+     * can mutate in-place
+     */
+    fun mul(p: IntArray, x: IntArray, xLen: Int, w: UInt) {
         val w64 = w.toULong()
         var carry = 0uL
-        for (i in x.indices) {
+        for (i in 0..<xLen) {
             val t = dw32(x[i]) * w64 + carry
-            prod[i] = t.toInt()
+            p[i] = t.toInt()
             carry = t shr 32
         }
-        if (carry != 0uL)
-            prod[prod.lastIndex] = carry.toInt()
-        return prod
+        p[xLen] = carry.toInt()
     }
 
     /**
@@ -466,28 +478,49 @@ object Magia {
         val hi = dw shr 32
         if (hi == 0uL)
             return newMul(x, lo.toUInt())
-        val xBitLen = bitLen(x)
+        val xLen = nonZeroLimbLen(x)
+        val xBitLen = bitLen(x, xLen)
         if (xBitLen == 0)
             return ZERO
         val newBitLen = bitLen(x) + (64 - dw.countLeadingZeroBits())
         val z = newWithBitLen(newBitLen)
-
-        var carryLo = 0uL
-
-        var ppPrevHi = 0uL
-
-        // i = 1…n-1: do both halves in one pass
-        for (i in 0 until z.size) {
-            val xi = if (i < x.size) dw32(x[i]) else 0uL
-
-            val pp = xi * lo + carryLo + (ppPrevHi and 0xFFFF_FFFFuL)
-            z[i] = pp.toInt()
-            carryLo = pp shr 32
-
-            ppPrevHi = xi * hi + (ppPrevHi shr 32)
-        }
-
+        mul(z, z.size, x, xLen, dw)
         return z
+    }
+
+    /**
+     * implements multiply by the dw.
+     * makes a single pass.
+     * Does not overwrite, so it supports in-place multiplication by a dw.
+     * requires zLen > xLen ... presumably by 1 or 2.
+     * caller must ensure that zLen is sufficient to hold the product, either
+     * by checking limb lengths (yielding 2) or by checking the bit lengths (1 or 2).
+     */
+    fun mul(z: IntArray, zLen: Int, x: IntArray, xLen: Int, dw: ULong) {
+        if (zLen >= 0 && zLen <= z.size && xLen >= 0 && xLen <= x.size && zLen > xLen) {
+            val lo = dw and 0xFFFF_FFFFuL
+            val hi = dw shr 32
+
+            var ppPrevHi = 0uL
+
+
+            // i = 1…n-1: do both halves in one pass
+            for (i in 0..<xLen) {
+                val xi = dw32(x[i])
+
+                val pp = xi * lo + (ppPrevHi and 0xFFFF_FFFFuL)
+                z[i] = pp.toInt()
+
+                ppPrevHi = xi * hi + (ppPrevHi shr 32) + (pp shr 32)
+            }
+            for (i in xLen..<zLen) {
+                z[i] = ppPrevHi.toInt()
+                ppPrevHi = ppPrevHi shr 32
+            }
+            if (ppPrevHi == 0uL)
+                return
+        }
+        throw IllegalArgumentException()
     }
 
     fun newMul(x: IntArray, y: IntArray): IntArray {
@@ -529,52 +562,64 @@ object Magia {
         return p
     }
 
+    /**
+     * Squares x with len xLen, returning result in p.
+     *
+     * p must be zero-initialized by the caller to 2*xLen.
+     * p.size must be sufficient to hold the squared result ...
+     * 2*xLen or 2*xLen-1.
+     * Only the minimum required will be written to p.
+     * So, if only 2*xLen - 1 limbs are non-zero then that is
+     * how many will be written.
+     * Of course, this won't matter to the caller if you have
+     * followed instructions and zero-initialized 2*xLen limbs.
+     */
     fun sqr(p: IntArray, x: IntArray, xLen: Int) {
         // test to encourage bounds check elimination
         if (xLen > 0 && xLen <= x.size && xLen * 2 <= p.size) {
             // 1) Cross terms: for i<j, add (x[i]*x[j]) twice into p[i+j]
             // these terms are doubled
             for (i in 0..<xLen) {
-                val xi = U32(x[i])
-                var carry = 0L
+                val xi = dw32(x[i])
+                var carry = 0uL
                 for (j in (i + 1)..<xLen) {
-                    val prod = xi * U32(x[j])        // 32x32 -> 64
+                    val prod = xi * dw32(x[j])        // 32x32 -> 64
                     // add once
-                    val t1 = prod + U32(p[i + j]) + carry
-                    val p1 = t1 and 0xFFFF_FFFFL
-                    carry = t1 ushr 32
+                    val t1 = prod + dw32(p[i + j]) + carry
+                    val p1 = t1 and 0xFFFF_FFFFuL
+                    carry = t1 shr 32
                     // add second time (doubling) — avoids (prod << 1) overflow
                     val t2 = prod + p1
                     p[i + j] = t2.toInt()
-                    carry += t2 ushr 32
+                    carry += t2 shr 32
                 }
                 // flush carry to the next limb(s)
                 val k = i + xLen
-                val t = U32(p[k]) + carry
+                val t = dw32(p[k]) + carry
                 p[k] = t.toInt()
-                carry = t ushr 32
-                if (carry != 0L)
+                carry = t shr 32
+                if (carry != 0uL)
                     ++p[k + 1]
             }
 
             // 2) Diagonals: add x[i]**2 into columns 2*i and 2*i+1
             // terms on the diagonal are not doubled
             for (i in 0..<xLen) {
-                val sq = U32(x[i]) * U32(x[i])      // 64-bit
+                val sq = dw32(x[i]) * dw32(x[i])      // 64-bit
                 // add low 32 to p[2*i]
-                var t = U32(p[2 * i]) + (sq and 0xFFFF_FFFFL)
+                var t = dw32(p[2 * i]) + (sq and 0xFFFF_FFFFuL)
                 p[2 * i] = t.toInt()
-                var carry = t ushr 32
+                var carry = t shr 32
                 // add high 32 (and carry) to p[2*i+1]
-                t = U32(p[2 * i + 1]) + (sq ushr 32) + carry
+                t = dw32(p[2 * i + 1]) + (sq shr 32) + carry
                 p[2 * i + 1] = t.toInt()
-                carry = t ushr 32
+                carry = t shr 32
                 // propagate any remaining carry
                 var k = 2 * i + 2
-                while (carry != 0L) {
-                    t = U32(p[k]) + carry
+                while (carry != 0uL) {
+                    t = dw32(p[k]) + carry
                     p[k] = t.toInt()
-                    carry = t ushr 32
+                    carry = t shr 32
                     k++
                 }
             }
