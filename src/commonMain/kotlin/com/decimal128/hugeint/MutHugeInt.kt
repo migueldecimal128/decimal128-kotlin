@@ -196,7 +196,12 @@ class MutHugeInt private constructor (
     operator fun divAssign(dw: ULong) = mutateDivImpl(false, dw)
     operator fun divAssign(hi: HugeInt) =
         mutateDivImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun divAssign(mhi: MutHugeInt) = mutateDivImpl(mhi.sign, mhi.magia, mhi.magia.size)
+    operator fun divAssign(mhi: MutHugeInt) {
+        if (mhi === this)
+            set(1)
+        else
+            mutateDivImpl(mhi.sign, mhi.magia, mhi.magia.size)
+    }
 
     operator fun remAssign(n: Int) = mutateModImpl(n.absoluteValue.toUInt())
     operator fun remAssign(w: UInt) = mutateModImpl(w)
@@ -204,7 +209,44 @@ class MutHugeInt private constructor (
     operator fun remAssign(dw: ULong) = mutateModImpl(dw)
     operator fun remAssign(hi: HugeInt) =
         mutateModImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun remAssign(mhi: MutHugeInt) = mutateModImpl(mhi.magia, mhi.magia.size)
+    operator fun remAssign(mhi: MutHugeInt) {
+        when {
+            mhi.limbLen == 0 -> throw ArithmeticException("div by zero")
+            mhi == this -> setZero()
+            limbLen >= mhi.limbLen -> mutateModImpl(mhi.magia, mhi.magia.size)
+            // else the remainder is the quotient
+        }
+    }
+
+    fun addSquareOf(n: Int) = addSquareOf(n.absoluteValue.toUInt())
+    fun addSquareOf(w: UInt) = plusAssign(w.toULong() * w.toULong())
+    fun addSquareOf(l: Long) = addSquareOf(l.absoluteValue.toULong())
+    fun addSquareOf(dw: ULong) {
+        if ((dw shr 32) == 0uL) {
+            this += dw * dw
+            return
+        }
+        if (tmp2.size < 2)
+            tmp2 = Magia.newWithMinLen(2)
+        tmp2[0] = dw.toInt()
+        tmp2[1] = (dw shr 32).toInt()
+        addSquareOfImpl(tmp2, 2)
+    }
+    fun addSquareOf(hi: HugeInt) = addSquareOfImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
+    fun addSquareOf(mhi: MutHugeInt) {
+        when {
+            mhi.limbLen == 0 -> return
+            mhi === this -> {
+                if (tmp2.size < limbLen)
+                    tmp2 = Magia.newWithMinLen(limbLen)
+                System.arraycopy(magia, 0, tmp2, 0, limbLen)
+                addSquareOfImpl(tmp2, limbLen)
+            }
+            else -> {
+                addSquareOfImpl(mhi.magia, mhi.limbLen)
+            }
+        }
+    }
 
     private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
         validate()
@@ -286,10 +328,6 @@ class MutHugeInt private constructor (
         magia = Magia.newLongerCopyWithMinLen(magia, newLimbCount)
     }
 
-    private fun realloc2(newLimbCount: Int) {
-        tmp1 = Magia.newWithMinLen(newLimbCount)
-    }
-
     private fun normalizeLen1(maxLimbCount: Int) {
         var last = maxLimbCount - 1
         while (last >= 0 && magia[last] == 0)
@@ -322,6 +360,17 @@ class MutHugeInt private constructor (
             magia = Magia.newLongerCopyWithMinLen(magia, maxOperandLen + 1)
         magia[maxOperandLen] = 1
         limbLen = maxOperandLen + 1
+    }
+
+    private fun addSquareOfImpl(y: IntArray, yLen: Int) {
+        val sqrLenMax = yLen * 2
+        if (tmp1.size < sqrLenMax)
+            tmp1 = Magia.newWithMinLen(sqrLenMax)
+        else
+            tmp1.fill(0, 0, sqrLenMax)
+        Magia.sqr(tmp1, y, yLen)
+        val sqrLen = sqrLenMax - if (tmp1[sqrLenMax - 1] == 0) 1 else 0
+        mutateAddMagImpl(tmp1, sqrLen)
     }
 
     private fun mutateSubMagImpl(w: UInt) {
@@ -428,7 +477,7 @@ class MutHugeInt private constructor (
                 --limbLen
             sign = (sign xor wSign) && (limbLen > 0)
         } else {
-            // nada
+            // 0 / non-zero ... nada
         }
     }
 
@@ -486,25 +535,27 @@ class MutHugeInt private constructor (
     }
 
     private fun mutateModImpl(w: UInt) {
-        if (w == 0u)
-            throw ArithmeticException("div by zero")
-        val rem =
-            if (limbLen > 0)
-                Magia.mutateDivMod(this.magia, limbLen, w)
-            else
-                w
-        set(sign, rem)
+        when {
+            w == 0u -> throw ArithmeticException("div by zero")
+            limbLen == 0 -> setZero()
+            limbLen == 1 -> set(magia[0].toUInt() % w)
+            else -> Magia.mutateDivMod(this.magia, limbLen, w)
+        }
     }
 
     private fun mutateModImpl(dw: ULong) {
-        if ((dw shr 32) == 0uL) {
-            mutateModImpl(dw.toUInt())
-            return
+        when {
+            (dw shr 32) == 0uL -> mutateModImpl(dw.toUInt())
+            limbLen == 1 -> {} // nada
+            limbLen == 2 -> {
+                val dwT = (dw32(magia[1]) shl 32) or dw32(magia[0])
+                set(dwT % dw)
+            }
+            else -> {
+                // FIXME
+                mutateModImpl(intArrayOf(dw.toInt(), (dw shr 32).toInt()), 2)
+            }
         }
-        if (limbLen == 0)
-            return
-        // FIXME
-        mutateModImpl(intArrayOf(dw.toInt(), (dw shr 32).toInt()), 2)
     }
 
     private fun mutateModImpl(y: IntArray, yLen: Int) {
