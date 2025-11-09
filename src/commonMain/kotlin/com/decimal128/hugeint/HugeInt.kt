@@ -844,25 +844,25 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
     }
     operator fun times(n: Int): HugeInt {
         return if (isNotZero() && n != 0)
-            HugeInt(this.sign xor (n < 0), Magia.newMul(this.magia, n.absoluteValue))
+            HugeInt(this.sign xor (n < 0), Magia.newMul(this.magia, n.absoluteValue.toUInt()))
         else
             ZERO
     }
     operator fun times(w: UInt): HugeInt {
         return if (isNotZero() && w != 0u)
-            HugeInt(this.sign, Magia.newMul(this.magia, w.toInt()))
+            HugeInt(this.sign, Magia.newMul(this.magia, w))
         else
             ZERO
     }
     operator fun times(l: Long): HugeInt {
         return if (isNotZero() && l != 0L)
-            HugeInt(this.sign xor (l < 0), Magia.newMul(this.magia, l.absoluteValue))
+            HugeInt(this.sign xor (l < 0), Magia.newMul(this.magia, l.absoluteValue.toULong()))
         else
             ZERO
     }
     operator fun times(dw: ULong): HugeInt {
         return if (isNotZero() && dw != 0uL)
-            HugeInt(this.sign, Magia.newMul(this.magia, dw.toLong()))
+            HugeInt(this.sign, Magia.newMul(this.magia, dw))
         else
             ZERO
     }

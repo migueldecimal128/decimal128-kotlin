@@ -427,23 +427,21 @@ object Magia {
         }
     }
 
-
-
-    fun newMul(x: IntArray, n: Int): IntArray {
+    fun newMul(x: IntArray, w: UInt): IntArray {
         val bitLenX = bitLen(x)
-        val bitLenN = 32 - n.countLeadingZeroBits()
+        val bitLenN = 32 - w.countLeadingZeroBits()
         if (bitLenX == 0 || bitLenN == 0)
             return ZERO
         val newBitLen = bitLenX + bitLenN
         val prod = newWithBitLen(newBitLen)
-        val n64 = U32(n)
-        var carry = 0L
+        val w64 = w.toULong()
+        var carry = 0uL
         for (i in x.indices) {
-            val t = U32(x[i]) * n64 + carry
+            val t = dw32(x[i]) * w64 + carry
             prod[i] = t.toInt()
-            carry = t ushr 32
+            carry = t shr 32
         }
-        if (carry != 0L)
+        if (carry != 0uL)
             prod[prod.lastIndex] = carry.toInt()
         return prod
     }
@@ -463,38 +461,38 @@ object Magia {
         }
     }
 
-    fun newMul(x: IntArray, dw: Long): IntArray {
-        val lo = dw and 0xFFFF_FFFFL
-        val hi = dw ushr 32
-        if (hi == 0L)
-            return newMul(x, lo.toInt())
+    fun newMul(x: IntArray, dw: ULong): IntArray {
+        val lo = dw and 0xFFFF_FFFFuL
+        val hi = dw shr 32
+        if (hi == 0uL)
+            return newMul(x, lo.toUInt())
         val xBitLen = bitLen(x)
-        if (xBitLen == 0 || dw == 0L)
+        if (xBitLen == 0)
             return ZERO
         val newBitLen = bitLen(x) + (64 - dw.countLeadingZeroBits())
         val z = newWithBitLen(newBitLen)
 
-        var t = U32(x[0]) * lo
+        var t = dw32(x[0]) * lo
         z[0] = t.toInt()
-        var carry = t ushr 32
+        var carry = t shr 32
 
-        t = U32(x[0]) * hi
-        var prevHighLow = t and 0xFFFF_FFFFL
-        var prevHighCarry = t ushr 32
+        t = dw32(x[0]) * hi
+        var prevUpLo = t and 0xFFFF_FFFFuL
+        var prevUpCarry = t shr 32
 
         // i = 1…n-1: do both halves in one pass
         for (i in 1 until z.size) {
-            val xi = if (i < x.size) U32(x[i]) else 0L
+            val xi = if (i < x.size) dw32(x[i]) else 0uL
 
             // 1) combine previous high-half, previous low-half carry, and xi * a
-            val s = prevHighLow + carry + xi * lo
+            val s = prevUpLo + carry + xi * lo
             z[i] = s.toInt()
-            carry = s ushr 32
+            carry = s shr 32
 
             // 2) compute this limb’s high-half product for next iteration
-            t = xi * hi + prevHighCarry
-            prevHighLow = t and 0xFFFF_FFFFL
-            prevHighCarry = t ushr 32
+            t = xi * hi + prevUpCarry
+            prevUpLo = t and 0xFFFF_FFFFuL
+            prevUpCarry = t shr 32
         }
 
         return z
