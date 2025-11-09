@@ -3,8 +3,6 @@
 package com.decimal128.hugeint
 
 import com.decimal128.decimal.unsignedCmp
-import com.decimal128.decimal.unsignedDiv
-import com.decimal128.decimal.unsignedMod
 import com.decimal128.decimal.unsignedMulHi
 import kotlin.math.min
 import kotlin.math.max
@@ -962,9 +960,21 @@ object Magia {
     }
 
     fun newDiv(x: IntArray, dw: ULong): IntArray {
-        val lo = dw.toUInt()
-        val hi = (dw shr 32).toUInt()
-        return if (hi == 0u) newDiv(x, lo) else newDiv(x, intArrayOf(lo.toInt(), hi.toInt()))
+        if ((dw shr 32) == 0uL)
+            return newDiv(x, dw.toUInt())
+        val xLen = nonZeroLimbLen(x)
+        val cmp = compare(x, xLen, dw)
+        when {
+            cmp < 0 -> return ZERO
+            cmp == 0 -> return ONE
+        }
+        val u = x
+        val m = xLen
+        val vnDw = dw
+        val q = IntArray(m - 2 + 1)
+        val r = null
+        knuthDivide64(q, r, u, vnDw, m)
+        return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
     fun newDiv(x: IntArray, y: IntArray): IntArray {
@@ -978,8 +988,7 @@ object Magia {
         val v = y
         val q = IntArray(m - n + 1)
         val r = null
-        val status = knuthDivide(q, r, u, v, m, n)
-        require(status == 0)
+        knuthDivide(q, r, u, v, m, n)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
 
@@ -1011,8 +1020,7 @@ object Magia {
         val v = y
         val q = null
         val r = IntArray(y.size)
-        val status = knuthDivide(q, r, u, v, m, n)
-        require(status == 0)
+        knuthDivide(q, r, u, v, m, n)
         check (nonZeroLimbLen(r) <= n)
         return if (nonZeroLimbLen(r) > 0) r else ZERO
     }
@@ -1035,8 +1043,7 @@ object Magia {
         val v = y
         val q = IntArray(m - n + 1)
         val r = IntArray(n)
-        val status = knuthDivide(q, r, u, v, m, n)
-        require(status == 0)
+        knuthDivide(q, r, u, v, m, n)
         check (nonZeroLimbLen(r) <= n)
         return arrayOf(
             if (nonZeroLimbLen(q) > 0) q else ZERO, if (nonZeroLimbLen(r) > 0) r else ZERO
@@ -1062,9 +1069,9 @@ object Magia {
         v: IntArray,
         m: Int,
         n: Int
-    ): Int {
+    ) {
         if (m < n || n < 2 || v[n - 1] == 0)
-            return 1
+            throw IllegalArgumentException()
 
         // Step D1: Normalize
         val un = newCopyWithLimbLen(u, m + 1)
@@ -1081,7 +1088,6 @@ object Magia {
             mutateShiftRight(un, un.size, shift)
             copy(r, un)
         }
-        return 0
     }
 
     /**
@@ -1127,11 +1133,10 @@ object Magia {
             while ((qhat shr 32) != 0uL ||
                 qhat * vn_2 > (rhat shl 32) + dw32(un[j + n - 2])) {
                 qhat--
-                rhat += dw32(vn[n - 1])
+                rhat += vn_1
                 if ((rhat shr 32) != 0uL)
                     break
             }
-
 
             // multiply & subtract
             var carry = 0uL
@@ -1156,6 +1161,106 @@ object Magia {
                     c2 = sum shr 32
                 }
                 un[j + n] += c2.toInt()
+            }
+        }
+    }
+
+    fun knuthDivide64(
+        q: IntArray?,
+        r: IntArray?,
+        u: IntArray,
+        vDw: ULong,
+        m: Int,
+    ) {
+        if (m < 2 || (vDw shr 32) == 0uL)
+            throw IllegalArgumentException()
+
+        // Step D1: Normalize
+        val un = newCopyWithLimbLen(u, m + 1)
+        val shift = vDw.countLeadingZeroBits()
+        val vnDw = vDw shl shift
+        if (shift > 0)
+            mutateShiftLeft(un, un.size, shift)
+
+        knuthDivideNormalizedCore64(q, un, vnDw, m)
+
+        if (r != null) {
+            mutateShiftRight(un, un.size, shift)
+            copy(r, un)
+        }
+    }
+
+    fun knuthDivideNormalizedCore64(
+        q: IntArray?,
+        un: IntArray,
+        vnDw: ULong,
+        m: Int,
+    ) {
+        if (m < 2 || (vnDw shr 32) == 0uL)
+            throw IllegalArgumentException()
+
+        val vnHi = vnDw shr 32
+        val vnLo = vnDw and 0xFFFF_FFFFuL
+
+        // -- main loop --
+        for (j in m - 2 downTo 0) {
+
+            // estimate q̂ = (un[j+n]*B + un[j+n-1]) / vn[n-1]
+            val hi = dw32(un[j + 2])
+            val lo = dw32(un[j + 2 - 1])
+            //if (hi == 0L && lo < vn_1) // this would short-circuit,
+            //    continue               // but probability is astronomically small
+            val num = (hi shl 32) or lo
+            var qhat = num / vnHi
+            var rhat = num % vnHi
+
+            // correct estimate
+            while ((qhat shr 32) != 0uL ||
+                qhat * vnLo > (rhat shl 32) + dw32(un[j + 2 - 2])) {
+                qhat--
+                rhat += vnHi
+                if ((rhat shr 32) != 0uL)
+                    break
+            }
+
+
+            // multiply & subtract
+            var carry = 0uL
+            run {
+                val prod = qhat * vnLo
+                val prodHi = prod shr 32
+                val prodLo = prod and 0xFFFF_FFFFuL
+                val unIJ = dw32(un[j])
+                val t = unIJ - prodLo - carry
+                un[j] = t.toInt()
+                carry = prodHi - (t.toLong() shr 32).toULong() // yes, this is a signed shift right
+            }
+            run {
+                val prod = qhat * vnHi
+                val prodHi = prod shr 32
+                val prodLo = prod and 0xFFFF_FFFFuL
+                val unIJ = dw32(un[j + 1])
+                val t = unIJ - prodLo - carry
+                un[j + 1] = t.toInt()
+                carry = prodHi - (t.toLong() shr 32).toULong() // yes, this is a signed shift right
+            }
+            val t = dw32(un[j + 2]) - carry
+            un[j + 2] = t.toInt()
+            if (q != null)
+                q[j] = (qhat - (t shr 63)).toInt()
+            if (t.toLong() < 0L) {
+                var c2 = 0uL
+                run {
+                    val sum = dw32(un[j]) + vnLo + c2
+                    un[j] = sum.toInt()
+                    c2 = sum shr 32
+                }
+                run {
+                    val sum = dw32(un[j + 1]) + vnHi + c2
+                    un[j + 1] = sum.toInt()
+                    c2 = sum shr 32
+                }
+                un[j + 2] += c2.toInt()
             }
         }
     }
