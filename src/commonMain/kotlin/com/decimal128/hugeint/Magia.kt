@@ -1092,7 +1092,7 @@ object Magia {
      *
      * q: quotient array (length ≥ m – n + 1)
      * un: normalized dividend array (length = m + 1) with an extra zero limb
-     * vn: normalized divisor array (length = n ≥ 2), little‐endian, v[n − 1] ≠ 0
+     * vn: normalized divisor array (length = n ≥ 2), little‐endian, hi bit of vn[n - 1] is set
      * m: the original m ... one less than the length of un
      * n: number of words in vn (≥ 1)
      *
@@ -1105,58 +1105,55 @@ object Magia {
         m: Int,
         n: Int
     ) {
-        if (m < n || n < 2 || vn[n - 1] == 0)
+        if (m < n || n < 2 || vn[n - 1] >= 0)
             throw IllegalArgumentException()
 
-        val vn_1 = U32(vn[n - 1])
-        val vn_2 = U32(vn[n - 2])
+        val vn_1 = dw32(vn[n - 1])
+        val vn_2 = dw32(vn[n - 2])
 
         // -- main loop --
         for (j in m - n downTo 0) {
 
             // estimate q̂ = (un[j+n]*B + un[j+n-1]) / vn[n-1]
-            val hi = U32(un[j + n])
-            val lo = U32(un[j + n - 1])
+            val hi = dw32(un[j + n])
+            val lo = dw32(un[j + n - 1])
             //if (hi == 0L && lo < vn_1) // this would short-circuit,
             //    continue               // but probability is astronomically small
             val num = (hi shl 32) or lo
-            var qhat = unsignedDiv(num, vn_1)
-            var rhat = unsignedMod(num, vn_1)
+            var qhat = num / vn_1
+            var rhat = num % vn_1
 
             // correct estimate
-            while ((qhat ushr 32) != 0L ||
-                unsignedCmp(
-                    qhat * vn_2, (rhat shl 32) + U32(un[j + n - 2])
-                ) > 0
-            ) {
+            while ((qhat shr 32) != 0uL ||
+                qhat * vn_2 > (rhat shl 32) + dw32(un[j + n - 2])) {
                 qhat--
-                rhat += U32(vn[n - 1])
-                if ((rhat ushr 32) != 0L)
+                rhat += dw32(vn[n - 1])
+                if ((rhat shr 32) != 0uL)
                     break
             }
 
 
             // multiply & subtract
-            var carry = 0L
+            var carry = 0uL
             for (i in 0 until n) {
-                val prod = qhat * U32(vn[i])
-                val prodHi = prod ushr 32
-                val prodLo = prod and 0xFFFF_FFFFL
-                val unIJ = U32(un[j + i])
+                val prod = qhat * dw32(vn[i])
+                val prodHi = prod shr 32
+                val prodLo = prod and 0xFFFF_FFFFuL
+                val unIJ = dw32(un[j + i])
                 val t = unIJ - prodLo - carry
                 un[j + i] = t.toInt()
-                carry = prodHi - (t shr 32) // t is signed, so this should *indeed* be signed shr
+                carry = prodHi - (t.toLong() shr 32).toULong() // yes, this is a signed shift right
             }
-            val t = U32(un[j + n]) - carry
+            val t = dw32(un[j + n]) - carry
             un[j + n] = t.toInt()
             if (q != null)
-                q[j] = (qhat - (t ushr 63)).toInt()
-            if (t < 0) {
-                var c2 = 0L
+                q[j] = (qhat - (t shr 63)).toInt()
+            if (t.toLong() < 0L) {
+                var c2 = 0uL
                 for (i in 0 until n) {
-                    val sum = U32(un[j + i]) + U32(vn[i]) + c2
+                    val sum = dw32(un[j + i]) + dw32(vn[i]) + c2
                     un[j + i] = sum.toInt()
-                    c2 = sum ushr 32
+                    c2 = sum shr 32
                 }
                 un[j + n] += c2.toInt()
             }
