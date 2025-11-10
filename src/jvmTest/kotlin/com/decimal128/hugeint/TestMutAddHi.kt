@@ -35,7 +35,7 @@ class TestMutAddHi {
         var sumBi = bi + BigInteger("$hi")
         sum1.setZero()
         sum1 += mhi
-        sum1 += HugeInt.from(hi)
+        sum1 += hi
         sum2.set(mhi)
         sum2 += hi
         val sumBiHi = sumBi.toHugeInt()
@@ -50,7 +50,7 @@ class TestMutAddHi {
 
         for (i in 0..<25) {
             val hi2 = HugeInt.fromRandom(200)
-            sum1 += HugeInt.from(hi2)
+            sum1 += hi2
             sum2 += hi2
             sumBi += BigInteger("$hi2")
         }

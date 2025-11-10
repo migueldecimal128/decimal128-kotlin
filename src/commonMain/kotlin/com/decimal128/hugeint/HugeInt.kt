@@ -116,7 +116,9 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          */
         @JvmStatic
         fun from(l: Long) = when {
+            (l > 0L) && (l shr 32) == 0L -> HugeInt(false, intArrayOf(l.toInt()))
             l > 0L -> HugeInt(false, intArrayOf(l.toInt(), (l ushr 32).toInt()))
+            l < 0L && (l shr 32) == -1L -> HugeInt(true, intArrayOf(-l.toInt()))
             l < 0L -> HugeInt(true, intArrayOf(-l.toInt(), (-l ushr 32).toInt()))
             else -> ZERO
         }
@@ -141,15 +143,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the corresponding non-negative [HugeInt].
          */
         @JvmStatic
-        fun from(dw: ULong) =
-            if (dw != 0uL) HugeInt(false, intArrayOf(dw.toInt(), (dw shr 32).toInt())) else ZERO
+        fun from(dw: ULong) = when {
+            dw == 0uL -> ZERO
+            (dw shr 32) == 0uL -> HugeInt(false, intArrayOf(dw.toInt()))
+            else -> HugeInt(false, intArrayOf(dw.toInt(), (dw shr 32).toInt()))
+        }
 
-        /**
-         * Simply returns the HugeInt argument.
-         *
-         * Provided for convenience in some contexts.
-         */
-        inline fun from(hi: HugeInt) = hi
         /**
          * Parses a [String] representation of an integer into a [HugeInt].
          *

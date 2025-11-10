@@ -31,7 +31,7 @@ class TestMutSubHi {
             println("mhi:$mhi hi:$hi")
         var diffBi = bi - BigInteger("$hi")
         diff1.set(mhi)
-        diff1 -= HugeInt.from(hi)
+        diff1 -= hi
         diff2.set(mhi)
         diff2 -= hi
         val diffBiHi = diffBi.toHugeInt()
@@ -46,7 +46,7 @@ class TestMutSubHi {
 
         for (i in 0..<25) {
             val hi2 = HugeInt.fromRandom(200)
-            diff1 -= HugeInt.from(hi2)
+            diff1 -= hi2
             diff2 -= hi2
             diffBi -= BigInteger("$hi2")
         }
