@@ -3,6 +3,7 @@
 package com.decimal128.hugeint
 
 import kotlin.math.absoluteValue
+import kotlin.math.min
 import kotlin.random.Random
 
 /**
@@ -1085,14 +1086,31 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             Magia.EQ(this.magia, 2) -> HugeInt(resultSign, Magia.newWithSetBit(n))
             n == 2 -> sqr()
             else -> {
-                var baseMag = this.magia
-                var resultMag = MAGIA_ONE
+                val maxLimbLen = Magia.nonZeroLimbLen(this.magia) * n
+                var baseMag = Magia.newCopyWithLimbLen(this.magia, maxLimbLen)
+                var baseLen = Magia.nonZeroLimbLen(this.magia)
+                var resultMag = IntArray(maxLimbLen)
+                resultMag[0] = 1
+                var resultLen = 1
+                var tmpMag = IntArray(maxLimbLen)
+
                 var exp = n
-                while (exp != 0) {
-                    if ((exp and 1) != 0)
-                        resultMag = Magia.newMul(resultMag, baseMag)
-                    baseMag = Magia.newSqr(baseMag)
+                while (true) {
+                    if ((exp and 1) != 0) {
+                        tmpMag.fill(0, 0, baseLen)
+                        resultLen = Magia.mul(tmpMag, resultMag, resultLen, baseMag, baseLen)
+                        val t = tmpMag
+                        tmpMag = resultMag
+                        resultMag = t
+                    }
                     exp = exp ushr 1
+                    if (exp == 0)
+                        break
+                    tmpMag.fill(0, 0, min(tmpMag.size, 2 * baseLen))
+                    baseLen = Magia.sqr(tmpMag, baseMag, baseLen)
+                    val t = tmpMag
+                    tmpMag = baseMag
+                    baseMag = t
                 }
                 HugeInt(resultSign, resultMag)
             }

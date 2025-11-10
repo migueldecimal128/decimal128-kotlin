@@ -531,8 +531,13 @@ object Magia {
         return p
     }
 
-    fun mul(p: IntArray, x: IntArray, xLen: Int, y: IntArray, yLen: Int): IntArray {
-        if (xLen > 0 && yLen > 0 && xLen <= x.size && yLen <= y.size && (xLen + yLen) <= p.size) {
+    // p must be of size xLen + yLen or xLen + yLen - 1
+    // the first yLen entries must be zero-cleared by the caller before calling
+    // If you have a choice, make your longer array y
+    fun mul(p: IntArray, x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
+        if (xLen > 0 && yLen > 0 && xLen <= x.size && yLen <= y.size && (xLen + yLen) <= p.size + 1) {
+            check (x[xLen - 1] != 0)
+            check (y[yLen - 1] != 0)
             for (i in 0..<xLen) {
                 val xLimb = U32(x[i])
                 var carry = 0L
@@ -544,8 +549,12 @@ object Magia {
                 }
                 if (i + yLen < p.size)
                     p[i + yLen] = carry.toInt()
+                else if (carry != 0L)
+                    throw IllegalArgumentException()
             }
-            return p
+            val lastIndex = min(xLen + yLen, p.size) - 1
+            check (p[lastIndex] != 0 || p[lastIndex - 1] != 0)
+            return lastIndex + (if (p[lastIndex] == 0) 0 else 1)
         } else {
             throw IllegalArgumentException()
         }
@@ -563,7 +572,7 @@ object Magia {
     /**
      * Squares x with len xLen, returning result in p.
      *
-     * p must be zero-initialized by the caller to 2*xLen.
+     * p must be completely zero-initialized by the caller to 2*xLen.
      * p.size must be sufficient to hold the squared result ...
      * 2*xLen or 2*xLen-1.
      * Only the minimum required will be written to p.
@@ -572,7 +581,7 @@ object Magia {
      * Of course, this won't matter to the caller if you have
      * followed instructions and zero-initialized 2*xLen limbs.
      */
-    fun sqr(p: IntArray, x: IntArray, xLen: Int) {
+    fun sqr(p: IntArray, x: IntArray, xLen: Int) : Int {
         // test to encourage bounds check elimination
         if (xLen > 0 && xLen <= x.size && xLen * 2 <= p.size) {
             // 1) Cross terms: for i<j, add (x[i]*x[j]) twice into p[i+j]
@@ -621,6 +630,10 @@ object Magia {
                     k++
                 }
             }
+            var lastIndex = min(2 * xLen, p.size) - 1
+            while (p[lastIndex] == 0)
+                --lastIndex
+            return lastIndex + 1
         } else {
             throw IllegalArgumentException()
         }
@@ -633,7 +646,8 @@ object Magia {
     fun newCopyWithLimbLen(src: IntArray, newWordLen: Int): IntArray {
         if (newWordLen > 0) {
             val dst = IntArray(newWordLen)
-            copy(dst, src)
+            val copyCount = min(src.size, newWordLen)
+            System.arraycopy(src, 0, dst, 0, copyCount)
             return dst
         }
         return ZERO

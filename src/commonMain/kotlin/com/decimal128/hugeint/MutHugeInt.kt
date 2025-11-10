@@ -187,7 +187,7 @@ class MutHugeInt private constructor (
         if (this === mhi)
             mutateSquare()  // prevent aliasing problems & improve performance
         else
-            mutateMulImpl(mhi.sign, mhi.magia, mhi.magia.size)
+            mutateMulImpl(mhi.sign, mhi.magia, mhi.limbLen)
     }
 
     operator fun divAssign(n: Int) = mutateDivImpl(n < 0, n.absoluteValue.toUInt())
@@ -431,6 +431,7 @@ class MutHugeInt private constructor (
     }
 
     private fun mutateMulImpl(ySign: Boolean, y: IntArray, yLen: Int) {
+        validate()
         if (limbLen == 0 || yLen == 0) {
             setZero()
             return
