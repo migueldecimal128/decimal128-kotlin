@@ -1086,13 +1086,14 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             Magia.EQ(this.magia, 2) -> HugeInt(resultSign, Magia.newWithSetBit(n))
             n == 2 -> sqr()
             else -> {
-                val maxLimbLen = Magia.nonZeroLimbLen(this.magia) * n
-                var baseMag = Magia.newCopyWithLimbLen(this.magia, maxLimbLen)
+                val maxBitLen = Magia.bitLen(this.magia) * n
+                val maxBitLimbLen = (maxBitLen + 0x1F) ushr 5
+                var baseMag = Magia.newCopyWithLimbLen(this.magia, maxBitLimbLen)
                 var baseLen = Magia.nonZeroLimbLen(this.magia)
-                var resultMag = IntArray(maxLimbLen)
+                var resultMag = IntArray(maxBitLimbLen)
                 resultMag[0] = 1
                 var resultLen = 1
-                var tmpMag = IntArray(maxLimbLen)
+                var tmpMag = IntArray(maxBitLimbLen)
 
                 var exp = n
                 while (true) {

@@ -429,8 +429,10 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0 || w == 0u)
             return ZERO
-        val pLenMax = xLen + 1
-        val p = IntArray(pLenMax)
+        val wBitLen = 32 - w.countLeadingZeroBits()
+        val xBitLen = bitLen(x, xLen)
+        val pLen = (xBitLen + wBitLen + 0x1F) shr 5
+        val p = IntArray(pLen)
         mul(p, x, xLen, w)
         return p
     }
@@ -453,7 +455,10 @@ object Magia {
             p[i] = t.toInt()
             carry = t shr 32
         }
-        p[xLen] = carry.toInt()
+        if (p.size > xLen)
+            p[xLen] = carry.toInt()
+        else if (carry != 0uL)
+            throw IllegalArgumentException()
     }
 
     /**
@@ -564,7 +569,9 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0)
             return ZERO
-        val p = IntArray(2 * xLen)
+        val bitLen = bitLen(x, xLen)
+        val sqrLimbLen = (2 * bitLen + 0x1F) shr 5
+        val p = IntArray(sqrLimbLen)
         sqr(p, x, xLen)
         return p
     }
@@ -583,7 +590,7 @@ object Magia {
      */
     fun sqr(p: IntArray, x: IntArray, xLen: Int) : Int {
         // test to encourage bounds check elimination
-        if (xLen > 0 && xLen <= x.size && xLen * 2 <= p.size) {
+        if (xLen > 0 && xLen <= x.size && xLen * 2 <= p.size + 1) {
             // 1) Cross terms: for i<j, add (x[i]*x[j]) twice into p[i+j]
             // these terms are doubled
             for (i in 0..<xLen) {
@@ -602,11 +609,13 @@ object Magia {
                 }
                 // flush carry to the next limb(s)
                 val k = i + xLen
-                val t = dw32(p[k]) + carry
-                p[k] = t.toInt()
-                carry = t shr 32
-                if (carry != 0uL)
-                    ++p[k + 1]
+                if (carry != 0uL) {
+                    val t = dw32(p[k]) + carry
+                    p[k] = t.toInt()
+                    carry = t shr 32
+                    if (carry != 0uL)
+                        ++p[k + 1]
+                }
             }
 
             // 2) Diagonals: add x[i]**2 into columns 2*i and 2*i+1
@@ -618,16 +627,19 @@ object Magia {
                 p[2 * i] = t.toInt()
                 var carry = t shr 32
                 // add high 32 (and carry) to p[2*i+1]
-                t = dw32(p[2 * i + 1]) + (sq shr 32) + carry
-                p[2 * i + 1] = t.toInt()
-                carry = t shr 32
-                // propagate any remaining carry
-                var k = 2 * i + 2
-                while (carry != 0uL) {
-                    t = dw32(p[k]) + carry
-                    p[k] = t.toInt()
+                val s = (sq shr 32) + carry
+                if (s != 0uL) {
+                    t = dw32(p[2 * i + 1]) + s
+                    p[2 * i + 1] = t.toInt()
                     carry = t shr 32
-                    k++
+                    // propagate any remaining carry
+                    var k = 2 * i + 2
+                    while (carry != 0uL) {
+                        t = dw32(p[k]) + carry
+                        p[k] = t.toInt()
+                        carry = t shr 32
+                        k++
+                    }
                 }
             }
             var lastIndex = min(2 * xLen, p.size) - 1
