@@ -125,7 +125,7 @@ object Magia {
     }
 
     inline fun newWithBitLen(bitLen: Int) =
-        if (bitLen > 0) IntArray((bitLen + 0x1F) ushr 5) else ZERO
+        if (bitLen > 0) IntArray(limbLenFromBitLen(bitLen)) else ZERO
 
     inline fun newWithSetBit(bitIndex: Int): IntArray {
         if (bitIndex >= 0) {
@@ -429,10 +429,9 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0 || w == 0u)
             return ZERO
-        val wBitLen = 32 - w.countLeadingZeroBits()
         val xBitLen = bitLen(x, xLen)
-        val pLen = (xBitLen + wBitLen + 0x1F) shr 5
-        val p = IntArray(pLen)
+        val pBitLen = xBitLen + 32 - w.countLeadingZeroBits()
+        val p = newWithBitLen(pBitLen)
         mul(p, x, xLen, w)
         return p
     }
@@ -527,12 +526,12 @@ object Magia {
     }
 
     fun newMul(x: IntArray, y: IntArray): IntArray {
-        val xLen = nonZeroLimbLen(x)
-        val yLen = nonZeroLimbLen(y)
-        if (xLen == 0 || yLen == 0)
+        val xBitLen = bitLen(x)
+        val yBitLen = bitLen(y)
+        if (xBitLen == 0 || yBitLen == 0)
             return ZERO
-        val p = IntArray(xLen + yLen)
-        mul(p, x, xLen, y, yLen)
+        val p = newWithBitLen(xBitLen + yBitLen)
+        mul(p, x, limbLenFromBitLen(xBitLen), y, limbLenFromBitLen(yBitLen))
         return p
     }
 
@@ -799,6 +798,8 @@ object Magia {
             throw IllegalArgumentException()
         }
     }
+
+    inline fun limbLenFromBitLen(bitLen: Int): Int = (bitLen + 0x1F) ushr 5
 
     fun bitLengthBigIntegerStyle(sign: Boolean, x: IntArray): Int = bitLengthBigIntegerStyle(sign, x, x.size)
 
