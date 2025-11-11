@@ -41,7 +41,20 @@ class HugeIntAccumulator private constructor (
         return this
     }
 
-    private fun set(sign: Boolean, dw: ULong): HugeIntAccumulator {
+    fun set(n: Int) = set(n < 0, n.absoluteValue.toUInt().toULong())
+
+    fun set(w: UInt) = set(false, w.toULong())
+
+    fun set(l: Long) = set(l < 0, l.absoluteValue.toULong())
+
+    fun set(dw: ULong) = set(false, dw)
+
+
+    fun set(hi: HugeInt): HugeIntAccumulator = set(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
+
+    fun set(mhi: HugeIntAccumulator): HugeIntAccumulator = set(mhi.sign, mhi.magia, mhi.limbLen)
+
+    fun set(sign: Boolean, dw: ULong): HugeIntAccumulator {
         this.sign = sign
         // limbLen = if (dw == 0uL) 0 else if ((dw shr 32) == 0uL) 1 else 2
         limbLen = (64 - dw.countLeadingZeroBits() + 31) shr 5
@@ -49,10 +62,6 @@ class HugeIntAccumulator private constructor (
         magia[1] = (dw shr 32).toInt()
         return this
     }
-
-    fun set(hi: HugeInt): HugeIntAccumulator = set(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-
-    fun set(mhi: HugeIntAccumulator): HugeIntAccumulator = set(mhi.sign, mhi.magia, mhi.limbLen)
 
     private fun set(ySign: Boolean, y: IntArray, yLen: Int): HugeIntAccumulator {
         if (magia.size < yLen)
@@ -105,6 +114,8 @@ class HugeIntAccumulator private constructor (
             return
         }
         val hi64 = unsignedMulHi(dw, dw)
+        if (tmp1.size < 4)
+            tmp1 = IntArray(4)
         tmp1[0] = lo64.toInt()
         tmp1[1] = (lo64 shr 32).toInt()
         tmp1[2] = hi64.toInt()
@@ -120,9 +131,7 @@ class HugeIntAccumulator private constructor (
     }
 
     fun addAbsValueOf(n: Int) = plusAssign(n.absoluteValue.toUInt())
-    fun addAbsValueOf(w: UInt) = plusAssign(w)
     fun addAbsValueOf(l: Long) = plusAssign(l.absoluteValue.toULong())
-    fun addAbsValueOf(dw: ULong) = plusAssign(dw)
     fun addAbsValueOf(hi: HugeInt) =
         mutateAddMagImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
     fun addAbsValueOf(hia: HugeIntAccumulator) =
@@ -141,7 +150,7 @@ class HugeIntAccumulator private constructor (
         when {
             dw == 0uL -> {}
             this.sign == otherSign -> mutateAddMagImpl(dw)
-            limbLen == 0 -> set(!otherSign, dw)
+            limbLen == 0 -> set(otherSign, dw)
             limbLen > 2 || rawULong > dw -> {
                 Magia.mutateSub(magia, limbLen, dw)
                 limbLen = Magia.nonZeroLimbLen(magia, limbLen)
@@ -283,7 +292,7 @@ class HugeIntAccumulator private constructor (
         sign = sign xor ySign
     }
 
-    private fun mutateSquare(): HugeIntAccumulator {
+    private fun mutateSquare() {
         if (limbLen > 0) {
             val newLimbLenMax = limbLen * 2
             if (tmp1.size < newLimbLenMax)
@@ -294,8 +303,8 @@ class HugeIntAccumulator private constructor (
             magia = tmp1
             tmp1 = t
             limbLen = Magia.sqr(magia, t, limbLen)
+            sign = false
         }
-        return this
     }
 
     override fun toString(): String = Magia.toString(this.sign, this.magia, this.limbLen)

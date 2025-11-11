@@ -822,11 +822,20 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
 // No mutation of `magia` is allowed.
 
     /**
-     * Returns the absolute value of this HugeInt.
+     * Java/C-style function for the absolute value of this HugeInt.
+     *
+     * If already non-negative, returns `this`.
+     *
+     *@see absoluteValue
+     */
+    fun abs() = if (sign) HugeInt(false, magia) else this
+
+    /**
+     * Kotlin-style property for the absolute value of this HugeInt.
      *
      * If already non-negative, returns `this`.
      */
-    fun abs() = if (sign) HugeInt(false, magia) else this
+    public val absoluteValue: HugeInt = abs()
 
     /**
      * Returns a HugeInt with the opposite sign and the same magnitude.
