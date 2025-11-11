@@ -41,20 +41,10 @@ class HugeIntAccumulator private constructor (
         return this
     }
 
-    private fun set(sign: Boolean, w: UInt): HugeIntAccumulator {
-        this.sign = sign
-        limbLen = if (w == 0u) 0 else 1
-        magia[0] = w.toInt()
-        return this
-    }
-
     private fun set(sign: Boolean, dw: ULong): HugeIntAccumulator {
-        if (dw == dw.toUInt().toULong())
-            return set(sign, dw.toUInt())
         this.sign = sign
-        limbLen = 2
-        if (magia.size < 2)
-            magia = IntArray(4)
+        // limbLen = if (dw == 0uL) 0 else if ((dw shr 32) == 0uL) 1 else 2
+        limbLen = (64 - dw.countLeadingZeroBits() + 31) shr 5
         magia[0] = dw.toInt()
         magia[1] = (dw shr 32).toInt()
         return this
@@ -76,25 +66,16 @@ class HugeIntAccumulator private constructor (
     fun toHugeInt(): HugeInt =
         HugeInt.fromLittleEndianIntArray(sign, magia, limbLen)
 
-    private inline fun toRawULong(): ULong {
-        return when {
-            limbLen == 1 -> dw32(magia[0])
-            limbLen >= 2 -> (dw32(magia[1]) shl 32) or dw32(magia[0])
-            else -> 0uL
-        }
-    }
-
-
-    operator fun plusAssign(n: Int) = mutateAddSubImpl(n < 0, n.absoluteValue.toUInt())
-    operator fun plusAssign(w: UInt) = mutateAddSubImpl(false, w)
+    operator fun plusAssign(n: Int) = mutateAddSubImpl(n < 0, n.absoluteValue.toUInt().toULong())
+    operator fun plusAssign(w: UInt) = mutateAddSubImpl(false, w.toULong())
     operator fun plusAssign(l: Long) = mutateAddSubImpl(l < 0, l.absoluteValue.toULong())
     operator fun plusAssign(dw: ULong) = mutateAddSubImpl(false, dw)
     operator fun plusAssign(hi: HugeInt) =
         mutateAddSubImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
     operator fun plusAssign(mhi: HugeIntAccumulator) = mutateAddSubImpl(mhi.sign, mhi.magia, mhi.limbLen)
 
-    operator fun minusAssign(n: Int) = mutateAddSubImpl(n > 0, n.absoluteValue.toUInt())
-    operator fun minusAssign(w: UInt) = mutateAddSubImpl(w > 0u, w)
+    operator fun minusAssign(n: Int) = mutateAddSubImpl(n > 0, n.absoluteValue.toUInt().toULong())
+    operator fun minusAssign(w: UInt) = mutateAddSubImpl(w > 0u, w.toULong())
     operator fun minusAssign(l: Long) = mutateAddSubImpl(l > 0L, l.absoluteValue.toULong())
     operator fun minusAssign(dw: ULong) = mutateAddSubImpl(dw > 0uL, dw)
     operator fun minusAssign(hi: HugeInt) =
@@ -147,19 +128,11 @@ class HugeIntAccumulator private constructor (
     fun addAbsValueOf(hia: HugeIntAccumulator) =
         mutateAddMagImpl(hia.magia, hia.limbLen)
 
-    private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
-        validate()
-        when {
-            w == 0u -> {}
-            this.sign == otherSign -> mutateAddMagImpl(w.toULong())
-            limbLen == 0 -> set(!otherSign, w)
-            limbLen > 1 || magia[0].toUInt() > w -> {
-                Magia.mutateSub(magia, limbLen, w)
-                normalizeLen1(limbLen)
-                sign = sign and (limbLen > 0)
-            }
-            magia[0].toUInt() < w -> set(otherSign, w - magia[0].toUInt())
-            else -> setZero()
+    private inline fun toRawULong(): ULong {
+        return when {
+            limbLen == 1 -> dw32(magia[0])
+            limbLen >= 2 -> (dw32(magia[1]) shl 32) or dw32(magia[0])
+            else -> 0uL
         }
     }
 
@@ -167,12 +140,11 @@ class HugeIntAccumulator private constructor (
         val rawULong = toRawULong()
         when {
             dw == 0uL -> {}
-            (dw shr 32) == 0uL -> mutateAddSubImpl(otherSign, dw.toUInt())
             this.sign == otherSign -> mutateAddMagImpl(dw)
             limbLen == 0 -> set(!otherSign, dw)
             limbLen > 2 || rawULong > dw -> {
                 Magia.mutateSub(magia, limbLen, dw)
-                normalizeLen1(limbLen)
+                limbLen = Magia.nonZeroLimbLen(magia, limbLen)
                 sign = sign and (limbLen > 0)
             }
             rawULong < dw -> set(otherSign, dw - rawULong)
@@ -186,7 +158,7 @@ class HugeIntAccumulator private constructor (
             yLen <= 2 -> {
                 when {
                     yLen == 2 -> mutateAddSubImpl(ySign, (dw32(y[1]) shl 32) or dw32(y[0]))
-                    yLen == 1 -> mutateAddSubImpl(ySign, y[0].toUInt())
+                    yLen == 1 -> mutateAddSubImpl(ySign, y[0].toUInt().toULong())
                 }
                 // if yLen == 0 do nothing
                 return
@@ -197,7 +169,11 @@ class HugeIntAccumulator private constructor (
         }
         val cmp = Magia.cmp(magia, limbLen, y, yLen)
         when {
-            cmp > 0 -> Magia.mutateSub(magia, limbLen, y, yLen)
+            cmp > 0 -> {
+                Magia.mutateSub(magia, limbLen, y, yLen)
+                limbLen = Magia.nonZeroLimbLen(magia, limbLen)
+                sign = sign and (limbLen > 0)
+            }
             cmp < 0 -> {
                 if (magia.size < yLen)
                     magia = Magia.newLongerCopyWithMinLen(magia, yLen)
@@ -207,17 +183,10 @@ class HugeIntAccumulator private constructor (
                 limbLen = Magia.nonZeroLimbLen(magia, yLen)
                 sign = ySign
             }
-            else -> { setZero(); return }
+            else -> {
+                setZero()
+            }
         }
-        normalizeLen1(limbLen)
-        sign = sign and (limbLen > 0)
-    }
-
-    private fun normalizeLen1(maxLimbCount: Int) {
-        var last = maxLimbCount - 1
-        while (last >= 0 && magia[last] == 0)
-            --last
-        limbLen = last + 1
     }
 
     private fun mutateAddMagImpl(dw: ULong) {
@@ -256,30 +225,6 @@ class HugeIntAccumulator private constructor (
         Magia.sqr(tmp1, y, yLen)
         val sqrLen = sqrLenMax - if (tmp1[sqrLenMax - 1] == 0) 1 else 0
         mutateAddMagImpl(tmp1, sqrLen)
-    }
-
-    private fun mutateSubMagImpl(w: UInt) {
-        Magia.mutateSub(magia, limbLen, w)
-        var last = limbLen - 1
-        while (last >= 0 && magia[last] == 0)
-            --last
-        limbLen = last + 1
-        sign = sign and (limbLen > 0)
-    }
-
-    private fun mutateSubMagImpl(dw: ULong) {
-        Magia.mutateSub(magia, limbLen, dw)
-        var last = limbLen - 1
-        while (last >= 0 && magia[last] == 0)
-            --last
-        limbLen = last + 1
-        sign = sign and (limbLen > 0)
-    }
-
-    private fun mutateSubMagImpl(y: IntArray, yLen: Int) {
-        Magia.mutateSub(magia, limbLen, y, yLen)
-        normalizeLen1(limbLen)
-        sign = sign and (limbLen > 0)
     }
 
     private fun mutateMulImpl(wSign: Boolean, w: UInt) {

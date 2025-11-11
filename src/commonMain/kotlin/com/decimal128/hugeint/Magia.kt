@@ -377,13 +377,21 @@ object Magia {
     }
 
     fun mutateSub(x: IntArray, xLen: Int, dw: ULong) {
-        if (xLen >= 2 && xLen <= x.size) {
-            check(xLen >= 2)
-            val t0 = dw32(x[0]) - (dw and 0xFFFF_FFFFuL)
+        if (xLen >= 0 && xLen <= x.size) {
+
+            val lo = dw and 0xFFFF_FFFFuL
+            val hi = dw shr 32
+
+            var borrow = 0uL
+
+            val t0 = dw32(x[0]) - lo
             x[0] = t0.toInt()
-            val t1 = dw32(x[1]) - (dw shr 32) - (t0 shr 63)
+            borrow = t0 shr 63
+
+            val t1 = dw32(x[1]) - hi - borrow
             x[1] = t1.toInt()
-            var borrow = t1 shr 63
+            borrow = t1 shr 63
+
             var i = 2
             while (borrow != 0uL && i < xLen) {
                 borrow = dw32(x[i]) - borrow
