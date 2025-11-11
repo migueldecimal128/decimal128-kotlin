@@ -18,7 +18,7 @@ class MutHugeInt private constructor (
     var limbLen: Int,
     var tmp1: IntArray,
     var tmp2: IntArray) : Comparable<MutHugeInt> {
-    constructor() : this(false, Magia.ZERO, 0, Magia.ZERO, Magia.ZERO)
+    constructor() : this(false, IntArray(4), 0, Magia.ZERO, Magia.ZERO)
 
     fun isValid(): Boolean {
         if (limbLen < 0 || limbLen > magia.size)
@@ -35,7 +35,7 @@ class MutHugeInt private constructor (
 
     fun copy(): MutHugeInt {
         validate()
-        val newMagia = Magia.newCopyWithMinLen(magia, limbLen, limbLen)
+        val newMagia = magia.copyOf()
         val duplicate =
             MutHugeInt(sign, newMagia, limbLen, Magia.ZERO, Magia.ZERO)
         duplicate.validate()
@@ -48,24 +48,14 @@ class MutHugeInt private constructor (
         return this
     }
 
-    fun set(n: Int): MutHugeInt = set(n < 0, n.absoluteValue.toUInt())
-
-    fun set(w: UInt): MutHugeInt = set(false, w)
-
-    fun set(sign: Boolean, w: UInt): MutHugeInt {
+    private fun set(sign: Boolean, w: UInt): MutHugeInt {
         this.sign = sign
         limbLen = if (w == 0u) 0 else 1
-        if (magia.size == 0)
-            magia = IntArray(4)
         magia[0] = w.toInt()
         return this
     }
 
-    fun set(l: Long): MutHugeInt = set(l < 0, l.absoluteValue.toULong())
-
-    fun set(dw: ULong): MutHugeInt = set(false, dw)
-
-    fun set(sign: Boolean, dw: ULong): MutHugeInt {
+    private fun set(sign: Boolean, dw: ULong): MutHugeInt {
         if (dw == dw.toUInt().toULong())
             return set(sign, dw.toUInt())
         this.sign = sign
@@ -81,13 +71,6 @@ class MutHugeInt private constructor (
 
     fun set(mhi: MutHugeInt): MutHugeInt = set(mhi.sign, mhi.magia, mhi.limbLen)
 
-    fun set(str: String): MutHugeInt {
-        this.magia = Magia.from(str)
-        this.limbLen = Magia.nonZeroLimbLen(magia)
-        this.sign = str[0] == '-'
-        return this
-    }
-
     private fun set(ySign: Boolean, y: IntArray, yLen: Int): MutHugeInt {
         if (magia.size < yLen)
             magia = Magia.newWithMinLen(yLen)
@@ -97,66 +80,11 @@ class MutHugeInt private constructor (
         return this
     }
 
-    fun toRawULong(): ULong {
+    private inline fun toRawULong(): ULong {
         return when {
             limbLen == 1 -> dw32(magia[0])
             limbLen >= 2 -> (dw32(magia[1]) shl 32) or dw32(magia[0])
             else -> 0uL
-        }
-    }
-
-    fun setSquare(n: Int): MutHugeInt = setSquare(n.absoluteValue.toUInt())
-    fun setSquare(w: UInt): MutHugeInt = set(w.toULong() * w.toULong())
-    fun setSquare(l: Long): MutHugeInt = setSquare(l.absoluteValue.toULong())
-    fun setSquare(dw: ULong): MutHugeInt {
-        val hi = unsignedMulHi(dw, dw)
-        val lo = dw * dw
-        magia[0] = lo.toInt()
-        magia[1] = (lo shr 32).toInt()
-        magia[2] = hi.toInt()
-        magia[3] = (hi shr 32).toInt()
-        normalizeLen1(4)
-        sign = false
-        return this
-    }
-    fun setSquare(hi: HugeInt): MutHugeInt = setSquareImpl(hi.magia, hi.magia.size)
-    fun setSquare(mhi: MutHugeInt): MutHugeInt {
-        return if (mhi == this)
-            mutateSquare() // prevent aliasing problems & improve performance
-        else
-            setSquareImpl(mhi.magia, mhi.magia.size)
-    }
-
-    private fun setSquareImpl(x: IntArray, xLen: Int): MutHugeInt {
-        val pLen = xLen + xLen
-        if (pLen > magia.size)
-            magia = Magia.newWithMinLen(pLen)
-        else
-            magia.fill(0, 0, pLen)
-        Magia.sqr(magia, x, xLen)
-        normalizeLen1(pLen)
-        sign = false
-        return this
-    }
-
-    fun setRandom(bitLen: Int, random: Random = Random.Default): MutHugeInt {
-        if (bitLen >= 0) {
-            val bitLimbLen = limbLenFromBitLen(bitLen)
-            var zeroTest = 0
-            if (magia.size < bitLimbLen)
-                magia = Magia.newWithMinLen(bitLimbLen)
-            var mask = (if ((bitLen and 0x1F) == 0) 0 else 1 shl (bitLen and 0x1F)) - 1
-            for (i in bitLimbLen - 1 downTo 0) {
-                val rand = random.nextInt() and mask
-                magia[i] = rand
-                zeroTest = zeroTest or rand
-                mask = -1
-            }
-            this.limbLen = Magia.nonZeroLimbLen(magia, bitLimbLen)
-            validate()
-            return this
-        } else {
-            throw IllegalArgumentException()
         }
     }
 
@@ -188,34 +116,6 @@ class MutHugeInt private constructor (
             mutateSquare()  // prevent aliasing problems & improve performance
         else
             mutateMulImpl(mhi.sign, mhi.magia, mhi.limbLen)
-    }
-
-    operator fun divAssign(n: Int) = mutateDivImpl(n < 0, n.absoluteValue.toUInt())
-    operator fun divAssign(w: UInt) = mutateDivImpl(false, w)
-    operator fun divAssign(l: Long) = mutateDivImpl(l < 0, l.absoluteValue.toULong())
-    operator fun divAssign(dw: ULong) = mutateDivImpl(false, dw)
-    operator fun divAssign(hi: HugeInt) =
-        mutateDivImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun divAssign(mhi: MutHugeInt) {
-        if (mhi === this)
-            set(1)
-        else
-            mutateDivImpl(mhi.sign, mhi.magia, mhi.magia.size)
-    }
-
-    operator fun remAssign(n: Int) = mutateModImpl(n.absoluteValue.toUInt())
-    operator fun remAssign(w: UInt) = mutateModImpl(w)
-    operator fun remAssign(l: Long) = mutateModImpl(l.absoluteValue.toULong())
-    operator fun remAssign(dw: ULong) = mutateModImpl(dw)
-    operator fun remAssign(hi: HugeInt) =
-        mutateModImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun remAssign(mhi: MutHugeInt) {
-        when {
-            mhi.limbLen == 0 -> throw ArithmeticException("div by zero")
-            mhi == this -> setZero()
-            limbLen >= mhi.limbLen -> mutateModImpl(mhi.magia, mhi.magia.size)
-            // else the remainder is the quotient
-        }
     }
 
     fun addSquareOf(n: Int) = addSquareOf(n.absoluteValue.toUInt())
@@ -289,6 +189,7 @@ class MutHugeInt private constructor (
                     yLen == 2 -> mutateAddSubImpl(ySign, (dw32(y[1]) shl 32) or dw32(y[0]))
                     yLen == 1 -> mutateAddSubImpl(ySign, y[0].toUInt())
                 }
+                // if yLen == 0 do nothing
                 return
             }
 
@@ -313,26 +214,22 @@ class MutHugeInt private constructor (
         sign = sign and (limbLen > 0)
     }
 
+    private fun normalizeLen1(maxLimbCount: Int) {
+        var last = maxLimbCount - 1
+        while (last >= 0 && magia[last] == 0)
+            --last
+        limbLen = last + 1
+    }
+
     private fun mutateAddMagImpl(w: UInt) {
         val carry = Magia.mutateAdd(magia, limbLen, w)
         if (carry == 0u)
             return
         val newLen = limbLen + 1
         if (newLen > magia.size)
-            resize1(newLen)
+            magia = Magia.newLongerCopyWithMinLen(magia, newLen)
         magia[limbLen] = carry.toInt()
         limbLen = newLen
-    }
-
-    private fun resize1(newLimbCount: Int) {
-        magia = Magia.newLongerCopyWithMinLen(magia, newLimbCount)
-    }
-
-    private fun normalizeLen1(maxLimbCount: Int) {
-        var last = maxLimbCount - 1
-        while (last >= 0 && magia[last] == 0)
-            --last
-        limbLen = last + 1
     }
 
     private fun mutateAddMagImpl(dw: ULong) {
@@ -539,7 +436,7 @@ class MutHugeInt private constructor (
         when {
             w == 0u -> throw ArithmeticException("div by zero")
             limbLen == 0 -> setZero()
-            limbLen == 1 -> set(magia[0].toUInt() % w)
+            limbLen == 1 -> set(false, magia[0].toUInt() % w)
             else -> Magia.mutateDivMod(this.magia, limbLen, w)
         }
     }
@@ -550,7 +447,7 @@ class MutHugeInt private constructor (
             limbLen == 1 -> {} // nada
             limbLen == 2 -> {
                 val dwT = (dw32(magia[1]) shl 32) or dw32(magia[0])
-                set(dwT % dw)
+                set(false, dwT % dw)
             }
             else -> {
                 // FIXME

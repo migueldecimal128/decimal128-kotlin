@@ -27,7 +27,7 @@ class TestMutSub64 {
     }
 
     fun testUnsigned() {
-        mhi.setRandom(200)
+        mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
         assertTrue(mhi EQ bi.toHugeInt())
         val dw = rng.nextULong()
@@ -79,7 +79,7 @@ class TestMutSub64 {
     }
 
     fun testSigned() {
-        mhi.setRandom(200)
+        mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
         val l = rng.nextLong()
         if (verbose)

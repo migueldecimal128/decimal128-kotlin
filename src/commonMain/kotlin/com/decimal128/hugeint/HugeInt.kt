@@ -556,8 +556,15 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * Converts a Little-Endian IntArray to a HugeInt with the specified sign.
          */
         @JvmStatic
-        fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray): HugeInt {
-            val magia = Magia.newCopyMinimum(littleEndianIntArray)
+        fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray): HugeInt =
+            fromLittleEndianIntArray(sign, littleEndianIntArray, littleEndianIntArray.size)
+
+        /**
+         * Converts a Little-Endian IntArray to a HugeInt with the specified sign.
+         */
+        @JvmStatic
+        fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray, len: Int): HugeInt {
+            val magia = Magia.newNormalizedCopy(littleEndianIntArray, len)
             return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
 

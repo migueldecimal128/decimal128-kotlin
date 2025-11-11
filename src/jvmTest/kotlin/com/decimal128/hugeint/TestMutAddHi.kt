@@ -26,7 +26,7 @@ class TestMutAddHi {
     }
 
     fun testHi() {
-        mhi.setRandom(200)
+        mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
         assertTrue(mhi EQ bi.toHugeInt())
         val hi = HugeInt.fromRandom(200)

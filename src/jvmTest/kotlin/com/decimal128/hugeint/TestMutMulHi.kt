@@ -23,7 +23,7 @@ class TestMutMulHi {
     }
 
     fun testHi() {
-        mhi.setRandom(250)
+        mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
         assertTrue(mhi EQ bi.toHugeInt())
         val hi = HugeInt.fromRandom(250)
@@ -62,8 +62,6 @@ class TestMutMulHi {
         }
         assertTrue(prod1 EQ prodBiHi1)
 
-        prod2.setSquare(prod1Save)
-        assertTrue(prod1 EQ prod2)
     }
 
 }

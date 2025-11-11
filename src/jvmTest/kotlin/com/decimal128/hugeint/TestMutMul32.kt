@@ -23,7 +23,7 @@ class TestMutMul32 {
     }
 
     fun testUnsigned(mhi: MutHugeInt) {
-        mhi.setRandom(250)
+        mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
         val w = rng.nextUInt()
         if (verbose)
@@ -56,7 +56,7 @@ class TestMutMul32 {
     }
 
     fun testSigned(mhi: MutHugeInt) {
-        mhi.setRandom(250)
+        mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
         val n = rng.nextInt()
         if (verbose)

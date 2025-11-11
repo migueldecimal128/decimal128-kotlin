@@ -109,6 +109,21 @@ object Magia {
         return IntArray(allocSize)
     }
 
+    fun newNormalizedCopy(x: IntArray, xLen: Int): IntArray {
+        if (xLen >= 0 && xLen < x.size) {
+            var lastIndex = xLen - 1
+            while (lastIndex >= 0 && x[lastIndex] == 0)
+                --lastIndex
+            if (lastIndex < 0)
+                return ZERO
+            val limbLen = lastIndex + 1
+            val z = IntArray(limbLen)
+            System.arraycopy(x, 0, z, 0, limbLen)
+            return z
+        }
+        throw IllegalArgumentException()
+    }
+
     fun newLongerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
         if (newMinLimbLen > x.size) {
             val z = newWithMinLen(newMinLimbLen)
