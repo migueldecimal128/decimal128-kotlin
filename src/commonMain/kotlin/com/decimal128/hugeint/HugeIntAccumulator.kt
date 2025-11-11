@@ -1,6 +1,7 @@
 @file:Suppress("NOTHING_TO_INLINE")
 package com.decimal128.hugeint
 
+import com.decimal128.decimal.unsignedMulHi
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
@@ -118,30 +119,24 @@ class MutHugeInt private constructor (
     fun addSquareOf(w: UInt) = plusAssign(w.toULong() * w.toULong())
     fun addSquareOf(l: Long) = addSquareOf(l.absoluteValue.toULong())
     fun addSquareOf(dw: ULong) {
+        val lo64 = dw * dw
         if ((dw shr 32) == 0uL) {
-            this += dw * dw
+            mutateAddMagImpl(lo64)
             return
         }
-        if (tmp2.size < 2)
-            tmp2 = Magia.newWithMinLen(2)
-        tmp2[0] = dw.toInt()
-        tmp2[1] = (dw shr 32).toInt()
-        addSquareOfImpl(tmp2, 2)
+        val hi64 = unsignedMulHi(dw, dw)
+        tmp1[0] = lo64.toInt()
+        tmp1[1] = (lo64 shr 32).toInt()
+        tmp1[2] = hi64.toInt()
+        tmp1[3] = (hi64 shr 32).toInt()
+        mutateAddMagImpl(tmp1, Magia.nonZeroLimbLen(tmp1, 4))
     }
     fun addSquareOf(hi: HugeInt) = addSquareOfImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    fun addSquareOf(mhi: MutHugeInt) {
-        when {
-            mhi.limbLen == 0 -> return
-            mhi === this -> {
-                if (tmp2.size < limbLen)
-                    tmp2 = Magia.newWithMinLen(limbLen)
-                System.arraycopy(magia, 0, tmp2, 0, limbLen)
-                addSquareOfImpl(tmp2, limbLen)
-            }
-            else -> {
-                addSquareOfImpl(mhi.magia, mhi.limbLen)
-            }
-        }
+    fun addSquareOf(other: MutHugeInt) {
+        // this works OK when this == other because
+        // addSquareOfImpl multiplies into tmp1 before the add operation
+        if (other.limbLen > 0)
+            addSquareOfImpl(other.magia, other.limbLen)
     }
 
     fun addAbsValueOf(n: Int) = plusAssign(n.absoluteValue.toUInt())
@@ -253,7 +248,7 @@ class MutHugeInt private constructor (
         limbLen = maxOperandLen + 1
     }
 
-    private fun addSquareOfImpl(y: IntArray, yLen: Int) {
+    private inline fun addSquareOfImpl(y: IntArray, yLen: Int) {
         val sqrLenMax = yLen * 2
         if (tmp1.size < sqrLenMax)
             tmp1 = Magia.newWithMinLen(sqrLenMax)
