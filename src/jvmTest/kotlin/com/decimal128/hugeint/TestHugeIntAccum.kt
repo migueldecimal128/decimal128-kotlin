@@ -251,69 +251,6 @@ class TestHugeIntAccum {
         assertTrue(hi EQ hia.toHugeInt())
     }
 
-    fun testUnsigned() {
-        val mhi = HugeIntAccumulator()
-        mhi.set(HugeInt.fromRandom(200))
-        val bi = mhi.toBigInteger()
-        val w = rng.nextUInt()
-        if (verbose)
-            println("mhi:$mhi w:$w")
-        var sumBi = bi + BigInteger.valueOf(w.toLong())
-        val sum1 = mhi.copy()
-        sum1 += HugeInt.from(w)
-        val sum2 = mhi.copy()
-        sum2 += w
-        assertEquals("$sum1", "$sumBi")
-        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
-        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
-
-        for (i in 0..<25) {
-            val w2 = rng.nextUInt()
-            sum1 += HugeInt.from(w2)
-            sum2 += w2
-            sumBi += BigInteger.valueOf(w2.toLong())
-        }
-
-        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
-        assertEquals("$sum1", "$sum2")
-        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
-
-        val sum1Save = HugeIntAccumulator().set(sum1)
-        sum1 += sum2
-        sum2 += sum2
-
-        val sumBi1 = sumBi + sumBi
-        assertTrue(sum1.toHugeInt() EQ sumBi1.toHugeInt())
-        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
-
-    }
-
-    fun testSigned() {
-        val mhi = HugeIntAccumulator()
-        mhi.set(HugeInt.fromRandom(200))
-        val bi = mhi.toBigInteger()
-        val n = rng.nextInt()
-        if (verbose)
-            println("mhi:$mhi n:$n")
-        var sumBi = bi + BigInteger.valueOf(n.toLong())
-        val sum1 = mhi.copy()
-        sum1 += HugeInt.from(n)
-        val sum2 = mhi.copy()
-        sum2 += n
-        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
-        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
-
-        for (i in 0..<rng.nextInt(1000)) {
-            val n2 = rng.nextUInt()
-            sum1 += HugeInt.from(n2)
-            sum2 += n2
-            sumBi += BigInteger.valueOf(n2.toLong())
-        }
-
-        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
-        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
-    }
-
     val rng = Random.Default
 
     fun randomHugeInt(hiBitLen: Int): HugeInt {
