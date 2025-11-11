@@ -14,14 +14,14 @@ class TestMutMul64 {
 
     @Test
     fun testMutMul64() {
-        val mhi = MutHugeInt()
+        val mhi = HugeIntAccumulator()
         for (i in 0..<10000) {
             testUnsigned(mhi)
             testSigned(mhi)
         }
     }
 
-    fun testUnsigned(mhi: MutHugeInt) {
+    fun testUnsigned(mhi: HugeIntAccumulator) {
         mhi.set(HugeInt.fromRandom(5))
         val bi = mhi.toBigInteger()
         val dw = rng.nextULong()
@@ -54,7 +54,7 @@ class TestMutMul64 {
 
     }
 
-    fun testSigned(mhi: MutHugeInt) {
+    fun testSigned(mhi: HugeIntAccumulator) {
         mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
         val l = rng.nextLong()

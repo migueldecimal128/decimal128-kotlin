@@ -14,9 +14,9 @@ class TestMutAdd64 {
 
     val verbose = false
 
-    val mhi = MutHugeInt()
-    val sum1 = MutHugeInt()
-    val sum2 = MutHugeInt()
+    val mhi = HugeIntAccumulator()
+    val sum1 = HugeIntAccumulator()
+    val sum2 = HugeIntAccumulator()
 
     @Test
     fun testMutAdd64() {
@@ -62,8 +62,8 @@ class TestMutAdd64 {
         assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
         assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
-        val sum1Save = MutHugeInt().set(sum1)
-        val sum2Save = MutHugeInt().set(sum2)
+        val sum1Save = HugeIntAccumulator().set(sum1)
+        val sum2Save = HugeIntAccumulator().set(sum2)
         sum1 += sum2
         sum2 += sum2
 

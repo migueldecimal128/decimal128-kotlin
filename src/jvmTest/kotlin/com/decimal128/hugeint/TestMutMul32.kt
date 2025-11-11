@@ -7,7 +7,6 @@ import java.math.BigInteger
 import kotlin.random.Random
 import kotlin.random.nextUInt
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class TestMutMul32 {
 
@@ -15,14 +14,14 @@ class TestMutMul32 {
 
     @Test
     fun testMutMul32() {
-        val mhi = MutHugeInt()
+        val mhi = HugeIntAccumulator()
         for (i in 0..<10000) {
             testUnsigned(mhi)
             testSigned(mhi)
         }
     }
 
-    fun testUnsigned(mhi: MutHugeInt) {
+    fun testUnsigned(mhi: HugeIntAccumulator) {
         mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
         val w = rng.nextUInt()
@@ -55,7 +54,7 @@ class TestMutMul32 {
 
     }
 
-    fun testSigned(mhi: MutHugeInt) {
+    fun testSigned(mhi: HugeIntAccumulator) {
         mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
         val n = rng.nextInt()

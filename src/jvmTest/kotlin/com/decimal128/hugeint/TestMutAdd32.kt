@@ -15,14 +15,14 @@ class TestMutAdd32 {
 
     @Test
     fun testMutAdd32() {
-        val mhi = MutHugeInt()
+        val mhi = HugeIntAccumulator()
         for (i in 0..<100000) {
             testUnsigned(mhi)
             testSigned(mhi)
         }
     }
 
-    fun testUnsigned(mhi: MutHugeInt) {
+    fun testUnsigned(mhi: HugeIntAccumulator) {
         mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
         val w = rng.nextUInt()
@@ -48,7 +48,7 @@ class TestMutAdd32 {
         assertEquals("$sum1", "$sum2")
         assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
-        val sum1Save = MutHugeInt().set(sum1)
+        val sum1Save = HugeIntAccumulator().set(sum1)
         sum1 += sum2
         sum2 += sum2
 
@@ -58,7 +58,7 @@ class TestMutAdd32 {
 
     }
 
-    fun testSigned(mhi: MutHugeInt) {
+    fun testSigned(mhi: HugeIntAccumulator) {
         mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
         val n = rng.nextInt()

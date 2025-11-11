@@ -11,9 +11,9 @@ class TestMutSubHi {
 
     val verbose = false
 
-    val mhi = MutHugeInt()
-    val diff1 = MutHugeInt()
-    val diff2 = MutHugeInt()
+    val mhi = HugeIntAccumulator()
+    val diff1 = HugeIntAccumulator()
+    val diff2 = HugeIntAccumulator()
 
     @Test
     fun testMutSubHi() {
@@ -57,8 +57,8 @@ class TestMutSubHi {
         assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
         assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
-        val diff1Save = MutHugeInt().set(diff1)
-        val diff2Save = MutHugeInt().set(diff2)
+        val diff1Save = HugeIntAccumulator().set(diff1)
+        val diff2Save = HugeIntAccumulator().set(diff2)
         diff1 -= diff2
         diff2 -= diff2
 

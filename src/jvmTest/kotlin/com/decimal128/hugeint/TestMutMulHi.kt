@@ -11,9 +11,9 @@ class TestMutMulHi {
 
     val verbose = false
 
-    val mhi = MutHugeInt()
-    val prod1 = MutHugeInt()
-    val prod2 = MutHugeInt()
+    val mhi = HugeIntAccumulator()
+    val prod1 = HugeIntAccumulator()
+    val prod2 = HugeIntAccumulator()
 
     @Test
     fun testMutAddHi() {
@@ -52,7 +52,7 @@ class TestMutMulHi {
         }
         assertTrue(prod1.toHugeInt() EQ prodBi.toHugeInt())
 
-        val prod1Save = MutHugeInt().set(prod1)
+        val prod1Save = HugeIntAccumulator().set(prod1)
         prod1 *= prod1
 
         val prodBi1 = prodBi * prodBi

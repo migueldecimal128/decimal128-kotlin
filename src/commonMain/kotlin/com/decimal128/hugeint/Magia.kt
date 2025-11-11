@@ -601,6 +601,7 @@ object Magia {
      * how many will be written.
      * Of course, this won't matter to the caller if you have
      * followed instructions and zero-initialized 2*xLen limbs.
+     * returns the normalizedLimbLen
      */
     fun sqr(p: IntArray, x: IntArray, xLen: Int) : Int {
         // test to encourage bounds check elimination

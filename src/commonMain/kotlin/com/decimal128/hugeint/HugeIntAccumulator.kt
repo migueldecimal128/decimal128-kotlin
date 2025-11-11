@@ -6,13 +6,12 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
-class MutHugeInt private constructor (
+class HugeIntAccumulator private constructor (
     var sign: Boolean,
     var magia: IntArray,
     var limbLen: Int,
-    var tmp1: IntArray,
-    var tmp2: IntArray) {
-    constructor() : this(false, IntArray(4), 0, Magia.ZERO, Magia.ZERO)
+    var tmp1: IntArray) {
+    constructor() : this(false, IntArray(4), 0, Magia.ZERO)
 
     fun isValid(): Boolean {
         if (limbLen < 0 || limbLen > magia.size)
@@ -27,29 +26,29 @@ class MutHugeInt private constructor (
             check (false)
     }
 
-    fun copy(): MutHugeInt {
+    fun copy(): HugeIntAccumulator {
         validate()
         val newMagia = magia.copyOf()
         val duplicate =
-            MutHugeInt(sign, newMagia, limbLen, Magia.ZERO, Magia.ZERO)
+            HugeIntAccumulator(sign, newMagia, limbLen, Magia.ZERO)
         duplicate.validate()
         return duplicate
     }
 
-    fun setZero(): MutHugeInt {
+    fun setZero(): HugeIntAccumulator {
         sign = false
         limbLen = 0
         return this
     }
 
-    private fun set(sign: Boolean, w: UInt): MutHugeInt {
+    private fun set(sign: Boolean, w: UInt): HugeIntAccumulator {
         this.sign = sign
         limbLen = if (w == 0u) 0 else 1
         magia[0] = w.toInt()
         return this
     }
 
-    private fun set(sign: Boolean, dw: ULong): MutHugeInt {
+    private fun set(sign: Boolean, dw: ULong): HugeIntAccumulator {
         if (dw == dw.toUInt().toULong())
             return set(sign, dw.toUInt())
         this.sign = sign
@@ -61,11 +60,11 @@ class MutHugeInt private constructor (
         return this
     }
 
-    fun set(hi: HugeInt): MutHugeInt = set(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
+    fun set(hi: HugeInt): HugeIntAccumulator = set(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
 
-    fun set(mhi: MutHugeInt): MutHugeInt = set(mhi.sign, mhi.magia, mhi.limbLen)
+    fun set(mhi: HugeIntAccumulator): HugeIntAccumulator = set(mhi.sign, mhi.magia, mhi.limbLen)
 
-    private fun set(ySign: Boolean, y: IntArray, yLen: Int): MutHugeInt {
+    private fun set(ySign: Boolean, y: IntArray, yLen: Int): HugeIntAccumulator {
         if (magia.size < yLen)
             magia = Magia.newWithMinLen(yLen)
         sign = ySign
@@ -92,7 +91,7 @@ class MutHugeInt private constructor (
     operator fun plusAssign(dw: ULong) = mutateAddSubImpl(false, dw)
     operator fun plusAssign(hi: HugeInt) =
         mutateAddSubImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun plusAssign(mhi: MutHugeInt) = mutateAddSubImpl(mhi.sign, mhi.magia, mhi.limbLen)
+    operator fun plusAssign(mhi: HugeIntAccumulator) = mutateAddSubImpl(mhi.sign, mhi.magia, mhi.limbLen)
 
     operator fun minusAssign(n: Int) = mutateAddSubImpl(n > 0, n.absoluteValue.toUInt())
     operator fun minusAssign(w: UInt) = mutateAddSubImpl(w > 0u, w)
@@ -100,7 +99,7 @@ class MutHugeInt private constructor (
     operator fun minusAssign(dw: ULong) = mutateAddSubImpl(dw > 0uL, dw)
     operator fun minusAssign(hi: HugeInt) =
         mutateAddSubImpl(!hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun minusAssign(mhi: MutHugeInt) = mutateAddSubImpl(!mhi.sign, mhi.magia, mhi.limbLen)
+    operator fun minusAssign(mhi: HugeIntAccumulator) = mutateAddSubImpl(!mhi.sign, mhi.magia, mhi.limbLen)
 
     operator fun timesAssign(n: Int) = mutateMulImpl(n < 0, n.absoluteValue.toUInt())
     operator fun timesAssign(w: UInt) = mutateMulImpl(false, w)
@@ -108,7 +107,7 @@ class MutHugeInt private constructor (
     operator fun timesAssign(dw: ULong) = mutateMulImpl(false, dw)
     operator fun timesAssign(hi: HugeInt) =
         mutateMulImpl(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    operator fun timesAssign(mhi: MutHugeInt) {
+    operator fun timesAssign(mhi: HugeIntAccumulator) {
         if (this === mhi)
             mutateSquare()  // prevent aliasing problems & improve performance
         else
@@ -132,7 +131,7 @@ class MutHugeInt private constructor (
         mutateAddMagImpl(tmp1, Magia.nonZeroLimbLen(tmp1, 4))
     }
     fun addSquareOf(hi: HugeInt) = addSquareOfImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    fun addSquareOf(other: MutHugeInt) {
+    fun addSquareOf(other: HugeIntAccumulator) {
         // this works OK when this == other because
         // addSquareOfImpl multiplies into tmp1 before the add operation
         if (other.limbLen > 0)
@@ -145,7 +144,7 @@ class MutHugeInt private constructor (
     fun addAbsValueOf(dw: ULong) = plusAssign(dw)
     fun addAbsValueOf(hi: HugeInt) =
         mutateAddMagImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
-    fun addAbsValueOf(hia: MutHugeInt) =
+    fun addAbsValueOf(hia: HugeIntAccumulator) =
         mutateAddMagImpl(hia.magia, hia.limbLen)
 
     private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
@@ -339,18 +338,17 @@ class MutHugeInt private constructor (
         sign = sign xor ySign
     }
 
-    private fun mutateSquare(): MutHugeInt {
+    private fun mutateSquare(): HugeIntAccumulator {
         if (limbLen > 0) {
             val newLimbLenMax = limbLen * 2
             if (tmp1.size < newLimbLenMax)
                 tmp1 = Magia.newWithMinLen(newLimbLenMax)
             else
                 tmp1.fill(0, 0, newLimbLenMax)
-            Magia.sqr(tmp1, magia, limbLen)
-            val t = tmp1
-            tmp1 = magia
-            magia = t
-            limbLen = newLimbLenMax - if (magia[newLimbLenMax - 1] == 0) 1 else 0
+            val t = magia
+            magia = tmp1
+            tmp1 = t
+            limbLen = Magia.sqr(magia, t, limbLen)
         }
         return this
     }

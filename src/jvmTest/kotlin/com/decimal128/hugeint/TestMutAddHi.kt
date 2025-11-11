@@ -4,9 +4,6 @@ import com.decimal128.hugeint.HugeIntExtensions.toBigInteger
 import com.decimal128.hugeint.HugeIntExtensions.toHugeInt
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.math.BigInteger
-import kotlin.random.Random
-import kotlin.random.nextUInt
-import kotlin.random.nextULong
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,9 +11,9 @@ class TestMutAddHi {
 
     val verbose = false
 
-    val mhi = MutHugeInt()
-    val sum1 = MutHugeInt()
-    val sum2 = MutHugeInt()
+    val mhi = HugeIntAccumulator()
+    val sum1 = HugeIntAccumulator()
+    val sum2 = HugeIntAccumulator()
 
     @Test
     fun testMutAddHi() {
@@ -61,8 +58,8 @@ class TestMutAddHi {
         assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
         assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
-        val sum1Save = MutHugeInt().set(sum1)
-        val sum2Save = MutHugeInt().set(sum2)
+        val sum1Save = HugeIntAccumulator().set(sum1)
+        val sum2Save = HugeIntAccumulator().set(sum2)
         sum1 += sum2
         sum2 += sum2
 
