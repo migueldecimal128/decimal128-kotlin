@@ -85,7 +85,12 @@ object Magia {
     fun newFromULong(dw: ULong): IntArray =
         if (dw != 0uL) intArrayOf(dw.toInt(), (dw shr 32).toInt()) else ZERO
 
-    fun nonZeroLimbLen(x: IntArray): Int = nonZeroLimbLen(x, x.size)
+    fun nonZeroLimbLen(x: IntArray): Int {
+        for (i in x.size - 1 downTo 0)
+            if (x[i] != 0)
+                return i + 1
+        return 0
+    }
 
     fun nonZeroLimbLen(x: IntArray, xLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size) {
@@ -429,7 +434,7 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0 || w == 0u)
             return ZERO
-        val xBitLen = bitLen(x, xLen)
+        val xBitLen = bitLenFromLimbLen(x, xLen)
         val pBitLen = xBitLen + 32 - w.countLeadingZeroBits()
         val p = newWithBitLen(pBitLen)
         mul(p, x, xLen, w)
@@ -476,12 +481,10 @@ object Magia {
     }
 
     fun newMul(x: IntArray, dw: ULong): IntArray {
-        val lo = dw and 0xFFFF_FFFFuL
-        val hi = dw shr 32
-        if (hi == 0uL)
-            return newMul(x, lo.toUInt())
+        if ((dw shr 32) == 0uL)
+            return newMul(x, dw.toUInt())
         val xLen = nonZeroLimbLen(x)
-        val xBitLen = bitLen(x, xLen)
+        val xBitLen = bitLenFromLimbLen(x, xLen)
         if (xBitLen == 0)
             return ZERO
         val newBitLen = bitLen(x) + (64 - dw.countLeadingZeroBits())
@@ -568,7 +571,7 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0)
             return ZERO
-        val bitLen = bitLen(x, xLen)
+        val bitLen = bitLenFromLimbLen(x, xLen)
         val sqrLimbLen = (2 * bitLen + 0x1F) shr 5
         val p = IntArray(sqrLimbLen)
         sqr(p, x, xLen)
@@ -800,6 +803,11 @@ object Magia {
     }
 
     inline fun limbLenFromBitLen(bitLen: Int): Int = (bitLen + 0x1F) ushr 5
+
+    inline fun bitLenFromLimbLen(x: IntArray, xLen: Int) =
+        if (xLen == 0) 0 else 32 - x[xLen - 1].countLeadingZeroBits() + ((xLen - 1) shl 5)
+
+
 
     fun bitLengthBigIntegerStyle(sign: Boolean, x: IntArray): Int = bitLengthBigIntegerStyle(sign, x, x.size)
 
