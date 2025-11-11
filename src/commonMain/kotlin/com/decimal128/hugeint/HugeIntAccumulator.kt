@@ -1,16 +1,9 @@
 @file:Suppress("NOTHING_TO_INLINE")
 package com.decimal128.hugeint
 
-import com.decimal128.decimal.unsignedMulHi
-import com.decimal128.hugeint.Magia.knuthDivideNormalizedCore
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.random.Random
-
-private inline fun dw32(n: Int) = n.toULong() and 0xFFFF_FFFFuL
-
-private inline fun limbLenFromBitLen(n: Int) = (n + 31) ushr 5
 
 class MutHugeInt private constructor (
     var sign: Boolean,
@@ -150,6 +143,15 @@ class MutHugeInt private constructor (
             }
         }
     }
+
+    fun addAbsValueOf(n: Int) = plusAssign(n.absoluteValue.toUInt())
+    fun addAbsValueOf(w: UInt) = plusAssign(w)
+    fun addAbsValueOf(l: Long) = plusAssign(l.absoluteValue.toULong())
+    fun addAbsValueOf(dw: ULong) = plusAssign(dw)
+    fun addAbsValueOf(hi: HugeInt) =
+        mutateAddMagImpl(hi.magia, Magia.nonZeroLimbLen(hi.magia))
+    fun addAbsValueOf(hia: MutHugeInt) =
+        mutateAddMagImpl(hia.magia, hia.limbLen)
 
     private fun mutateAddSubImpl(otherSign: Boolean, w: UInt) {
         validate()
@@ -342,7 +344,7 @@ class MutHugeInt private constructor (
         sign = sign xor ySign
     }
 
-    fun mutateSquare(): MutHugeInt {
+    private fun mutateSquare(): MutHugeInt {
         if (limbLen > 0) {
             val newLimbLenMax = limbLen * 2
             if (tmp1.size < newLimbLenMax)
@@ -361,3 +363,5 @@ class MutHugeInt private constructor (
     override fun toString(): String = Magia.toString(this.sign, this.magia, this.limbLen)
 
 }
+
+private inline fun dw32(n: Int) = n.toULong() and 0xFFFF_FFFFuL
