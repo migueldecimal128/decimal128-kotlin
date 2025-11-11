@@ -29,7 +29,7 @@ class TestMutAdd64 {
     fun testUnsigned() {
         mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
-        assertTrue(mhi EQ bi.toHugeInt())
+        assertTrue(mhi.toHugeInt() EQ bi.toHugeInt())
         val dw = rng.nextULong()
         if (verbose)
             println("mhi:$mhi dw:$dw")
@@ -40,14 +40,14 @@ class TestMutAdd64 {
         sum2.set(mhi)
         sum2 += dw
         val sumBiHi = sumBi.toHugeInt()
-        if (sum1 NE sumBiHi) {
+        if (sum1.toHugeInt() NE sumBiHi) {
             println("fail! sum1:$sum1 sumBi:$sumBi")
-            val foo = sum1 EQ sumBiHi
+            val foo = sum1.toHugeInt() EQ sumBiHi
             println("foo:$foo")
         }
         assertEquals("$sum1", "$sumBi")
-        assertTrue(sum1 EQ sumBiHi)
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBiHi)
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
         for (i in 0..<25) {
             val dw2 = rng.nextULong()
@@ -56,11 +56,11 @@ class TestMutAdd64 {
             sumBi += BigInteger("$dw2")
         }
 
-        if (sum1 NE sumBi.toHugeInt()) {
+        if (sum1.toHugeInt() NE sumBi.toHugeInt()) {
             println("fail")
         }
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
         val sum1Save = MutHugeInt().set(sum1)
         val sum2Save = MutHugeInt().set(sum2)
@@ -69,13 +69,13 @@ class TestMutAdd64 {
 
         val sumBi1 = sumBi + sumBi
         val sumBiHi1 = sumBi1.toHugeInt()
-        if (sum1 NE sumBiHi1) {
+        if (sum1.toHugeInt() NE sumBiHi1) {
             println("fail! sum1:$sum1 sumBiHi1:$sumBiHi1")
             sum1Save += sum2Save
             println("sum1Save:$sum1Save sum2Save:$sum2Save")
         }
-        assertTrue(sum1 EQ sumBiHi1)
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBiHi1)
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
     }
 
@@ -90,8 +90,8 @@ class TestMutAdd64 {
         sum1 += HugeInt.from(l)
         val sum2 = mhi.copy()
         sum2 += l
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
         for (i in 0..<rng.nextInt(100)) {
             val n2 = rng.nextUInt()
@@ -100,8 +100,8 @@ class TestMutAdd64 {
             sumBi += BigInteger.valueOf(n2.toLong())
         }
 
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
     }
 
     val rng = Random.Default

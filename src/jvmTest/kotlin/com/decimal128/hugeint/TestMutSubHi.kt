@@ -25,7 +25,7 @@ class TestMutSubHi {
     fun testHi() {
         mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
-        assertTrue(mhi EQ bi.toHugeInt())
+        assertTrue(mhi.toHugeInt() EQ bi.toHugeInt())
         val hi = HugeInt.fromRandom(200)
         if (verbose)
             println("mhi:$mhi hi:$hi")
@@ -35,14 +35,14 @@ class TestMutSubHi {
         diff2.set(mhi)
         diff2 -= hi
         val diffBiHi = diffBi.toHugeInt()
-        if (diff1 NE diffBiHi) {
+        if (diff1.toHugeInt() NE diffBiHi) {
             println("fail! sum1:$diff1 sumBi:$diffBi")
-            val foo = diff1 EQ diffBiHi
+            val foo = diff1.toHugeInt() EQ diffBiHi
             println("foo:$foo")
         }
         assertEquals("$diff1", "$diffBi")
-        assertTrue(diff1 EQ diffBiHi)
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBiHi)
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         for (i in 0..<25) {
             val hi2 = HugeInt.fromRandom(200)
@@ -51,11 +51,11 @@ class TestMutSubHi {
             diffBi -= BigInteger("$hi2")
         }
 
-        if (diff1 NE diffBi.toHugeInt()) {
+        if (diff1.toHugeInt() NE diffBi.toHugeInt()) {
             println("fail")
         }
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         val diff1Save = MutHugeInt().set(diff1)
         val diff2Save = MutHugeInt().set(diff2)
@@ -64,13 +64,13 @@ class TestMutSubHi {
 
         val diffBi1 = diffBi - diffBi
         val diffBiHi1 = diffBi1.toHugeInt()
-        if (diff1 NE diffBiHi1) {
+        if (diff1.toHugeInt() NE diffBiHi1) {
             println("fail! diff1:$diff1 diffBiHi1:$diffBiHi1")
             diff1Save -= diff2Save
             println("diff1Save:$diff1Save diff2Save:$diff2Save")
         }
-        assertTrue(diff1 EQ diffBiHi1)
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBiHi1)
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
     }
 

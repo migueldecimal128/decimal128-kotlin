@@ -25,7 +25,7 @@ class TestMutMulHi {
     fun testHi() {
         mhi.set(HugeInt.fromRandom(250))
         val bi = mhi.toBigInteger()
-        assertTrue(mhi EQ bi.toHugeInt())
+        assertTrue(mhi.toHugeInt() EQ bi.toHugeInt())
         val hi = HugeInt.fromRandom(250)
         if (verbose)
             println("mhi:$mhi hi:$hi")
@@ -33,13 +33,13 @@ class TestMutMulHi {
         prod1.set(mhi)
         prod1 *= hi
         val sumBiHi = prodBi.toHugeInt()
-        if (prod1 NE sumBiHi) {
+        if (prod1.toHugeInt() NE sumBiHi) {
             println("fail! sum1:$prod1 sumBi:$prodBi")
-            val foo = prod1 EQ sumBiHi
+            val foo = prod1.toHugeInt() EQ sumBiHi
             println("foo:$foo")
         }
         assertEquals("$prod1", "$prodBi")
-        assertTrue(prod1 EQ sumBiHi)
+        assertTrue(prod1.toHugeInt() EQ sumBiHi)
 
         for (i in 0..<25) {
             val hi2 = HugeInt.fromRandom(200)
@@ -47,20 +47,20 @@ class TestMutMulHi {
             prodBi += BigInteger("$hi2")
         }
 
-        if (prod1 NE prodBi.toHugeInt()) {
+        if (prod1.toHugeInt() NE prodBi.toHugeInt()) {
             println("fail")
         }
-        assertTrue(prod1 EQ prodBi.toHugeInt())
+        assertTrue(prod1.toHugeInt() EQ prodBi.toHugeInt())
 
         val prod1Save = MutHugeInt().set(prod1)
         prod1 *= prod1
 
         val prodBi1 = prodBi * prodBi
         val prodBiHi1 = prodBi1.toHugeInt()
-        if (prod1 NE prodBiHi1) {
+        if (prod1.toHugeInt() NE prodBiHi1) {
             println("fail! sum1:$prod1 sumBiHi1:$prodBiHi1")
         }
-        assertTrue(prod1 EQ prodBiHi1)
+        assertTrue(prod1.toHugeInt() EQ prodBiHi1)
 
     }
 

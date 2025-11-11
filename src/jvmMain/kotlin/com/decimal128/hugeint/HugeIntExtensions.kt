@@ -7,7 +7,7 @@ object HugeIntExtensions {
 
     fun HugeInt.toBigInteger(): BigInteger = BigInteger(this.toTwosComplementBigEndianByteArray())
 
-    fun MutHugeInt.toBigInteger(): BigInteger = BigInteger(this.toTwosComplementBigEndianByteArray())
+    fun MutHugeInt.toBigInteger(): BigInteger = BigInteger(this.toHugeInt().toTwosComplementBigEndianByteArray())
 
     fun BigInteger.toHugeInt(): HugeInt = HugeInt.from(this.toString())
 

@@ -33,8 +33,9 @@ class TestMutAdd32 {
         sum1 += HugeInt.from(w)
         val sum2 = mhi.copy()
         sum2 += w
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertEquals("$sum1", "$sumBi")
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
         for (i in 0..<25) {
             val w2 = rng.nextUInt()
@@ -43,16 +44,17 @@ class TestMutAdd32 {
             sumBi += BigInteger.valueOf(w2.toLong())
         }
 
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertEquals("$sum1", "$sum2")
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
         val sum1Save = MutHugeInt().set(sum1)
         sum1 += sum2
         sum2 += sum2
 
         val sumBi1 = sumBi + sumBi
-        assertTrue(sum1 EQ sumBi1.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi1.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
     }
 
@@ -67,8 +69,8 @@ class TestMutAdd32 {
         sum1 += HugeInt.from(n)
         val sum2 = mhi.copy()
         sum2 += n
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
 
         for (i in 0..<rng.nextInt(1000)) {
             val n2 = rng.nextUInt()
@@ -77,8 +79,8 @@ class TestMutAdd32 {
             sumBi += BigInteger.valueOf(n2.toLong())
         }
 
-        assertTrue(sum1 EQ sumBi.toHugeInt())
-        assertTrue(sum1 EQ sum2)
+        assertTrue(sum1.toHugeInt() EQ sumBi.toHugeInt())
+        assertTrue(sum1.toHugeInt() EQ sum2.toHugeInt())
     }
 
     val rng = Random.Default

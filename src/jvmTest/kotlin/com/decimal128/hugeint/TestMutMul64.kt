@@ -32,8 +32,8 @@ class TestMutMul64 {
         prod1 *= HugeInt.from(dw)
         val prod2 = mhi.copy()
         prod2 *= dw
-        assertTrue(prod1 EQ prodBi.toHugeInt())
-        assertTrue(prod1 EQ prod2)
+        assertTrue(prod1.toHugeInt() EQ prodBi.toHugeInt())
+        assertTrue(prod1.toHugeInt() EQ prod2.toHugeInt())
 
         for (i in 0..<10) {
             val dw2 = rng.nextULong()
@@ -42,15 +42,15 @@ class TestMutMul64 {
             prodBi *= BigInteger("$dw2")
         }
 
-        assertTrue(prod1 EQ prodBi.toHugeInt())
-        assertTrue(prod1 EQ prod2)
+        assertTrue(prod1.toHugeInt() EQ prodBi.toHugeInt())
+        assertTrue(prod1.toHugeInt() EQ prod2.toHugeInt())
 
         prod1 *= prod2
         prod2 *= prod2
 
         val prodBi1 = prodBi * prodBi
-        assertTrue(prod1 EQ prodBi1.toHugeInt())
-        assertTrue(prod1 EQ prod2)
+        assertTrue(prod1.toHugeInt() EQ prodBi1.toHugeInt())
+        assertTrue(prod1.toHugeInt() EQ prod2.toHugeInt())
 
     }
 
@@ -65,8 +65,8 @@ class TestMutMul64 {
         prod1 *= HugeInt.from(l)
         val prod2 = mhi.copy()
         prod2 *= l
-        assertTrue(prod1 EQ prodBi.toHugeInt())
-        assertTrue(prod1 EQ prod2)
+        assertTrue(prod1.toHugeInt() EQ prodBi.toHugeInt())
+        assertTrue(prod1.toHugeInt() EQ prod2.toHugeInt())
 
         for (i in 0..<rng.nextInt(50)) {
             val l2 = rng.nextLong()
@@ -75,8 +75,8 @@ class TestMutMul64 {
             prodBi *= BigInteger("$l2")
         }
 
-        assertTrue(prod1 EQ prodBi.toHugeInt())
-        assertTrue(prod1 EQ prod2)
+        assertTrue(prod1.toHugeInt() EQ prodBi.toHugeInt())
+        assertTrue(prod1.toHugeInt() EQ prod2.toHugeInt())
     }
 
     val rng = Random.Default

@@ -17,7 +17,7 @@ class MutHugeInt private constructor (
     var magia: IntArray,
     var limbLen: Int,
     var tmp1: IntArray,
-    var tmp2: IntArray) : Comparable<MutHugeInt> {
+    var tmp2: IntArray) {
     constructor() : this(false, IntArray(4), 0, Magia.ZERO, Magia.ZERO)
 
     fun isValid(): Boolean {
@@ -79,6 +79,9 @@ class MutHugeInt private constructor (
         System.arraycopy(y, 0, magia, 0, yLen)
         return this
     }
+
+    fun toHugeInt(): HugeInt =
+        HugeInt.fromLittleEndianIntArray(sign, magia, limbLen)
 
     private inline fun toRawULong(): ULong {
         return when {
@@ -152,7 +155,7 @@ class MutHugeInt private constructor (
         validate()
         when {
             w == 0u -> {}
-            this.sign == otherSign -> mutateAddMagImpl(w)
+            this.sign == otherSign -> mutateAddMagImpl(w.toULong())
             limbLen == 0 -> set(!otherSign, w)
             limbLen > 1 || magia[0].toUInt() > w -> {
                 Magia.mutateSub(magia, limbLen, w)
@@ -219,17 +222,6 @@ class MutHugeInt private constructor (
         while (last >= 0 && magia[last] == 0)
             --last
         limbLen = last + 1
-    }
-
-    private fun mutateAddMagImpl(w: UInt) {
-        val carry = Magia.mutateAdd(magia, limbLen, w)
-        if (carry == 0u)
-            return
-        val newLen = limbLen + 1
-        if (newLen > magia.size)
-            magia = Magia.newLongerCopyWithMinLen(magia, newLen)
-        magia[limbLen] = carry.toInt()
-        limbLen = newLen
     }
 
     private fun mutateAddMagImpl(dw: ULong) {
@@ -365,201 +357,6 @@ class MutHugeInt private constructor (
         }
         return this
     }
-
-    private fun mutateDivImpl(wSign: Boolean, w: UInt) {
-        if (w == 0u)
-            throw ArithmeticException("div by zero")
-        if (limbLen > 0) {
-            Magia.mutateDivMod(this.magia, limbLen, w)
-            if (magia[limbLen - 1] == 0)
-                --limbLen
-            sign = (sign xor wSign) && (limbLen > 0)
-        } else {
-            // 0 / non-zero ... nada
-        }
-    }
-
-    private fun mutateDivImpl(wSign: Boolean, dw: ULong) {
-        if ((dw shr 32) == 0uL) {
-            mutateDivImpl(wSign, dw.toUInt())
-            return
-        }
-        if (limbLen == 0)
-            return
-        // FIXME
-        mutateDivImpl(wSign, intArrayOf(dw.toInt(), (dw shr 32).toInt()), 2)
-    }
-
-    private fun mutateDivImpl(ySign: Boolean, y: IntArray, yLen: Int) {
-        if (yLen >= 0 && yLen <= y.size) {
-            if (yLen <= 1) {
-                if (yLen == 0)
-                    throw ArithmeticException("div by zero")
-                mutateDivImpl(ySign, y[0].toUInt())
-                return
-            }
-            check(y[yLen - 1] != 0)
-            val m = limbLen
-            val n = yLen
-            if (m < n) {
-                setZero()
-                return
-            }
-            val normalizeShift = y[yLen - 1].countLeadingZeroBits()
-            val vn = if (normalizeShift > 0) {
-                if (tmp1.size < yLen)
-                    tmp1 = Magia.newWithMinLen(yLen)
-                System.arraycopy(y, 0, tmp1, 0, yLen)
-                Magia.mutateShiftLeft(tmp1, yLen, normalizeShift)
-                tmp1
-            } else {
-                y
-            }
-            if (tmp2.size < limbLen + 1)
-                tmp2 = Magia.newWithMinLen(limbLen + 1)
-            System.arraycopy(magia, 0, tmp2, 0, limbLen)
-            tmp2[limbLen] = 0
-            if (normalizeShift > 0)
-                Magia.mutateShiftLeft(tmp2, limbLen + 1, normalizeShift)
-            val un = tmp2
-            val q = magia
-            knuthDivideNormalizedCore(q, un, vn, m, n)
-            limbLen = Magia.nonZeroLimbLen(magia, m - n + 1)
-            sign = (sign xor ySign) and (limbLen > 0)
-        } else {
-            throw IllegalArgumentException()
-        }
-
-    }
-
-    private fun mutateModImpl(w: UInt) {
-        when {
-            w == 0u -> throw ArithmeticException("div by zero")
-            limbLen == 0 -> setZero()
-            limbLen == 1 -> set(false, magia[0].toUInt() % w)
-            else -> Magia.mutateDivMod(this.magia, limbLen, w)
-        }
-    }
-
-    private fun mutateModImpl(dw: ULong) {
-        when {
-            (dw shr 32) == 0uL -> mutateModImpl(dw.toUInt())
-            limbLen == 1 -> {} // nada
-            limbLen == 2 -> {
-                val dwT = (dw32(magia[1]) shl 32) or dw32(magia[0])
-                set(false, dwT % dw)
-            }
-            else -> {
-                // FIXME
-                mutateModImpl(intArrayOf(dw.toInt(), (dw shr 32).toInt()), 2)
-            }
-        }
-    }
-
-    private fun mutateModImpl(y: IntArray, yLen: Int) {
-        if (yLen >= 0 && yLen <= y.size) {
-            if (yLen <= 1) {
-                if (yLen == 0)
-                    throw ArithmeticException("div by zero")
-                mutateModImpl(y[0].toUInt())
-                return
-            }
-            check(y[yLen - 1] != 0)
-            val m = limbLen
-            val n = yLen
-            if (m < n) {
-                set(false, y, yLen)
-                return
-            }
-            val normalizeShift = y[yLen - 1].countLeadingZeroBits()
-            val vn = if (normalizeShift > 0) {
-                if (tmp1.size < yLen)
-                    tmp1 = Magia.newWithMinLen(yLen)
-                System.arraycopy(y, 0, tmp1, 0, yLen)
-                Magia.mutateShiftLeft(tmp1, yLen, normalizeShift)
-                tmp1
-            } else {
-                y
-            }
-            if (magia.size < limbLen + 1)
-                    magia = Magia.newLongerCopyWithMinLen(magia, limbLen + 1)
-            magia[limbLen] = 0
-            if (normalizeShift > 0)
-                Magia.mutateShiftLeft(magia, limbLen + 1, normalizeShift)
-            val un = magia
-            val q = null
-            knuthDivideNormalizedCore(q, un, vn, m, n)
-            // remainder is denormalized un .. which is magia1
-            // but this is the remainder, so the value < vn
-            // therefore, we only need to look at the bottom n==yLen limbs
-            if (normalizeShift > 0)
-                Magia.mutateShiftRight(magia, yLen, normalizeShift)
-            limbLen = Magia.nonZeroLimbLen(magia, yLen)
-            sign = sign and (limbLen > 0)
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-
-    fun magnitudeBitLen() = Magia.bitLen(magia, limbLen)
-
-    fun bitLengthBigIntegerStyle() = Magia.bitLengthBigIntegerStyle(sign, magia, limbLen)
-
-    //fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray =
-    //    Magia.toBinaryByteArray(isTwosComplement, isBigEndian)
-
-    fun toTwosComplementBigEndianByteArray(): ByteArray =
-        toBinaryByteArray(isTwosComplement = true, isBigEndian = true)
-
-    fun toBinaryByteArray(isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray =
-        Magia.toBinaryByteArray(sign, magia, limbLen, isTwosComplement, isBigEndian)
-
-    override operator fun compareTo(other: MutHugeInt) =
-        compareToHelper(other.sign, other.magia, other.limbLen)
-
-    operator fun compareTo(hi: HugeInt) = compareToHelper(hi.sign, hi.magia, Magia.nonZeroLimbLen(hi.magia))
-
-    operator fun compareTo(n: Int) = compareToHelper(n < 0, n.absoluteValue.toUInt().toULong())
-    operator fun compareTo(w: UInt) = compareToHelper(false, w.toULong())
-    operator fun compareTo(l: Long) = compareToHelper(l < 0, l.absoluteValue.toULong())
-    operator fun compareTo(dw: ULong) = compareToHelper(false, dw)
-
-    private fun compareToHelper(otherSign: Boolean, otherMagia: IntArray, otherLimbLen: Int): Int {
-        if (this.sign != otherSign)
-            return if (this.sign) -1 else 1
-        val cmp = Magia.compare(this.magia, this.limbLen, otherMagia, otherLimbLen)
-        return if (this.sign) -cmp else cmp
-    }
-
-    private fun compareToHelper(ulSign: Boolean, ulMag: ULong): Int {
-        if (this.sign != ulSign)
-            return if (this.sign) -1 else 1
-        val cmp = Magia.compare(this.magia, ulMag)
-        return if (!ulSign) cmp else -cmp
-    }
-
-    fun magnitudeCompareTo(other: MutHugeInt) = Magia.compare(this.magia, other.magia)
-    fun magnitudeCompareTo(hi: HugeInt) = Magia.compare(this.magia, hi.magia)
-    fun magnitudeCompareTo(n: Int) = Magia.compare(this.magia, n.toUInt())
-    fun magnitudeCompareTo(w: UInt) = Magia.compare(this.magia, w)
-    fun magnitudeCompareTo(l: Long) = Magia.compare(this.magia, l.toULong())
-    fun magnitudeCompareTo(dw: ULong) = Magia.compare(this.magia, dw)
-    fun magnitudeCompareTo(littleEndianIntArray: IntArray) =
-        Magia.compare(this.magia, littleEndianIntArray)
-
-    infix fun EQ(other: MutHugeInt): Boolean = compareTo(other) == 0
-    infix fun EQ(hi: HugeInt): Boolean = compareTo(hi) == 0
-    infix fun EQ(n: Int): Boolean = compareTo(n) == 0
-    infix fun EQ(w: UInt): Boolean = compareTo(w) == 0
-    infix fun EQ(l: Long): Boolean = compareTo(l) == 0
-    infix fun EQ(dw: ULong): Boolean = compareTo(dw) == 0
-
-    infix fun NE(other: MutHugeInt): Boolean = compareTo(other) != 0
-    infix fun NE(hi: HugeInt): Boolean = compareTo(hi) != 0
-    infix fun NE(n: Int): Boolean = compareTo(n) != 0
-    infix fun NE(w: UInt): Boolean = compareTo(w) != 0
-    infix fun NE(l: Long): Boolean = compareTo(l) != 0
-    infix fun NE(dw: ULong): Boolean = compareTo(dw) != 0
 
     override fun toString(): String = Magia.toString(this.sign, this.magia, this.limbLen)
 

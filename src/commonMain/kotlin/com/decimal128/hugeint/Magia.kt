@@ -110,7 +110,7 @@ object Magia {
     }
 
     fun newNormalizedCopy(x: IntArray, xLen: Int): IntArray {
-        if (xLen >= 0 && xLen < x.size) {
+        if (xLen >= 0 && xLen <= x.size) {
             var lastIndex = xLen - 1
             while (lastIndex >= 0 && x[lastIndex] == 0)
                 --lastIndex

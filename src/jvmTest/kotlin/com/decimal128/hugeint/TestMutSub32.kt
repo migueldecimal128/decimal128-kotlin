@@ -33,8 +33,8 @@ class TestMutSub32 {
         diff1 -= HugeInt.from(w)
         val diff2 = mhi.copy()
         diff2 -= w
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         for (i in 0..<25) {
             val w2 = rng.nextUInt()
@@ -43,16 +43,16 @@ class TestMutSub32 {
             diffBi -= BigInteger.valueOf(w2.toLong())
         }
 
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         val sum1Save = MutHugeInt().set(diff1)
         diff1 -= diff2
         diff2 -= diff2
 
         val diffBi1 = diffBi - diffBi
-        assertTrue(diff1 EQ diffBi1.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi1.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
     }
 
@@ -67,8 +67,8 @@ class TestMutSub32 {
         diff1 -= HugeInt.from(n)
         val diff2 = mhi.copy()
         diff2 -= n
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         for (i in 0..<rng.nextInt(1000)) {
             val n2 = rng.nextUInt()
@@ -77,8 +77,8 @@ class TestMutSub32 {
             diffBi -= BigInteger.valueOf(n2.toLong())
         }
 
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
     }
 
     val rng = Random.Default

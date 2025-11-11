@@ -29,7 +29,7 @@ class TestMutSub64 {
     fun testUnsigned() {
         mhi.set(HugeInt.fromRandom(200))
         val bi = mhi.toBigInteger()
-        assertTrue(mhi EQ bi.toHugeInt())
+        assertTrue(mhi.toHugeInt() EQ bi.toHugeInt())
         val dw = rng.nextULong()
         if (verbose)
             println("mhi:$mhi dw:$dw")
@@ -39,14 +39,14 @@ class TestMutSub64 {
         diff2.set(mhi)
         diff2 -= dw
         val diffBiHi = diffBi.toHugeInt()
-        if (diff1 NE diffBiHi) {
+        if (diff1.toHugeInt() NE diffBiHi) {
             println("fail! diff1:$diff1 diffBi:$diffBi")
-            val foo = diff1 EQ diffBiHi
+            val foo = diff1.toHugeInt() EQ diffBiHi
             println("foo:$foo")
         }
         assertEquals("$diff1", "$diffBi")
-        assertTrue(diff1 EQ diffBiHi)
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBiHi)
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         for (i in 0..<25) {
             val dw2 = rng.nextULong()
@@ -55,11 +55,11 @@ class TestMutSub64 {
             diffBi -= BigInteger("$dw2")
         }
 
-        if (diff1 NE diffBi.toHugeInt()) {
+        if (diff1.toHugeInt() NE diffBi.toHugeInt()) {
             println("fail")
         }
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         val diff1Save = MutHugeInt().set(diff1)
         val diff2Save = MutHugeInt().set(diff2)
@@ -68,13 +68,13 @@ class TestMutSub64 {
 
         val diffBi1 = diffBi - diffBi
         val sumBiHi1 = diffBi1.toHugeInt()
-        if (diff1 NE sumBiHi1) {
+        if (diff1.toHugeInt() NE sumBiHi1) {
             println("fail! diff1:$diff1 diffBiHi1:$sumBiHi1")
             diff1Save -= diff2Save
             println("diff1Save:$diff1Save diff2Save:$diff2Save")
         }
-        assertTrue(diff1 EQ sumBiHi1)
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ sumBiHi1)
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
     }
 
@@ -89,8 +89,8 @@ class TestMutSub64 {
         diff1 -= HugeInt.from(l)
         diff2.set(mhi)
         diff2 -= l
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
 
         for (i in 0..<rng.nextInt(100)) {
             val l2 = rng.nextLong()
@@ -100,8 +100,8 @@ class TestMutSub64 {
             val foo = true
         }
 
-        assertTrue(diff1 EQ diffBi.toHugeInt())
-        assertTrue(diff1 EQ diff2)
+        assertTrue(diff1.toHugeInt() EQ diffBi.toHugeInt())
+        assertTrue(diff1.toHugeInt() EQ diff2.toHugeInt())
     }
 
     val rng = Random.Default
