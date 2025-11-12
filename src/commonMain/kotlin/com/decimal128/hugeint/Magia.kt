@@ -10,8 +10,6 @@ import kotlin.math.max
 
 // magia == MAGnitude IntArray ... it's magic!
 
-private const val HEX_DIGIT_AND_UNDERSCORE_MASK  = 0x007E_8000_007E_03FFL
-
 private const val BARRETT_MU_1E9: Long = 0x44B82FA09L       // floor(2^64 / 1e9)
 private const val ONE_E_9: Long = 1_000_000_000L
 
@@ -24,52 +22,63 @@ private const val S_U32_DIV_1E2 = 37
 private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
 private const val S_U64_DIV_1E4 = 11 // + 64 high
 
+/**
+ * Provides low-level support for arbitrary-precision unsigned integer arithmetic.
+ *
+ * Unsigned magnitudes are represented in **little-endian** format, using 32-bit unsigned
+ * limbs stored within an [IntArray].
+ *
+ * Multi-limb values are stored in [IntArray] even though the individual limbs are
+ * unsigned. This stems from the lack of unsigned types in the JVM spec. Kotlin
+ * [UIntArray] is actually a wrapper around [IntArray] and is inappropriate for this
+ * application. Kotlin unsigned types [UInt] and [ULong] are used when primitive
+ * integer types are passed around.
+  *
+ * ### Design Overview
+ * - `new` functions return **immutable** [IntArray]s and are typically used by [HugeInt].
+ * - `mutate` functions modify the supplied destination [IntArray] in place and are used
+ *   by [HugeIntAccumulator].
+ *
+ * ### Available Functionality
+ * - Ths is effectively a complete arbitrary-length ALU Arithmetic Logic Unit
+ * - **Arithmetic operations:** `add`, `sub`, `mul`, `div`, `rem`, `sqr`
+ * - **Standard bitwise operations:** `and`, `or`, `xor`, `shl`, `shr`, `ushr`
+ * - **Advanced bit manipulation:** `bitLen`, `nlz`, `bitPopulation`, `testBit`, `setBit`,
+ *   and mask creation utilities
+ * - **Parsing:** Supports text input from `String`, `CharSequence`, `CharArray`, and
+ *   ASCII or UTF-8 encoded `ByteArray` representations
+ * - **Conversion:** To `String` and UTF-8 encoded `ByteArray`
+ * - **Serialization:** To and from little- or big-endian, two’s complement or unsigned
+ *   formats
+ *
+ * Be advised that these functions are intended for a high-performance library. The caller
+ * generally needs a deep understanding of low-level bit manipulation techniques. The goal
+ * of high performance often leads to bit-twiddling in an effort to have blocks of branchless
+ * code with a high level of instruction-level-parallelism. This adds significantly to the
+ * complexity.
+ *
+ * This object forms the computational core for higher-level numeric abstractions such as [HugeInt]
+ * and [HugeIntAccumulator].
+ */
 object Magia {
 
+    /**
+     * The one true zero-length array that is usually used to represent
+     * the value ZERO.
+     */
     val ZERO = IntArray(0)
-    // be careful if you ever start mutating not to inadvertently modify this
+
+    /**
+     * We occasionally need the value ONE.
+     *
+     * **WARNING** do NOT mutate this.
+     */
     val ONE = intArrayOf(1)
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
     private inline fun dw32(n: Int) = n.toUInt().toULong()
 
-    fun testBit(x: IntArray, bitIndex: Int): Boolean = testBit(x, x.size, bitIndex)
-
-    fun testBit(x: IntArray, xLen: Int, bitIndex: Int): Boolean {
-        if (xLen >= 0 && xLen <= x.size) {
-            val wordIndex = bitIndex ushr 5
-            if (wordIndex >= xLen)
-                return false
-            val word = x[wordIndex]
-            val bitMask = 1 shl (bitIndex and 0x1F)
-            return (word and bitMask) != 0
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-
-    fun testAnyBitInLowerN(x: IntArray, bitCount: Int): Boolean =
-        testAnyBitInLowerN(x, x.size, bitCount)
-
-    fun testAnyBitInLowerN(x: IntArray, xLen: Int, bitCount: Int): Boolean {
-        if (xLen >= 0 && xLen <= x.size) {
-            val lastBitIndex = bitCount - 1
-            val lastWordIndex = lastBitIndex ushr 5
-            for (i in 0..<lastWordIndex) {
-                if (i == xLen)
-                    return false
-                if (x[i] != 0)
-                    return true
-            }
-            if (lastWordIndex == xLen)
-                return false
-            val bitMask = -1 ushr (0x1F - (lastBitIndex and 0x1F))
-            return (x[lastWordIndex] and bitMask) != 0
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-
+    /*
     fun toRawULong(x: IntArray, xLen: Int): ULong {
         return when (xLen) {
             0 -> 0uL
@@ -81,10 +90,24 @@ object Magia {
     fun toRawInt(x: IntArray, xLen: Int): UInt {
         return if (xLen == 0) 0u else x[0].toUInt()
     }
+    */
 
-    fun newFromULong(dw: ULong): IntArray =
-        if (dw != 0uL) intArrayOf(dw.toInt(), (dw shr 32).toInt()) else ZERO
+    /**
+     * Returns a new limb array representing the given [ULong] value.
+     *
+     * Zero returns [ZERO].
+     */
+    fun newFromULong(dw: ULong): IntArray {
+        return when {
+            (dw shr 32) != 0uL -> intArrayOf(dw.toInt(), (dw shr 32).toInt())
+            dw != 0uL -> intArrayOf(dw.toInt())
+            else -> ZERO
+        }
+    }
 
+    /**
+     * Returns the number of nonzero limbs in [x], excluding any leading zeros.
+     */
     fun nonZeroLimbLen(x: IntArray): Int {
         for (i in x.size - 1 downTo 0)
             if (x[i] != 0)
@@ -92,6 +115,12 @@ object Magia {
         return 0
     }
 
+    /**
+     * Returns the number of nonzero limbs in the first [xLen] elements of [x],
+     * excluding any leading zeros.
+     *
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */
     fun nonZeroLimbLen(x: IntArray, xLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size) {
             for (i in xLen - 1 downTo 0)
@@ -103,12 +132,25 @@ object Magia {
         }
     }
 
+    /**
+     * Creates a new limb array with at least [minLimbLen] elements.
+     *
+     * The allocated length is rounded up to the next multiple of 4 for alignment.
+     */
     inline fun newWithMinLen(minLimbLen: Int) : IntArray {
         val t = if (minLimbLen <= 0) 1 else minLimbLen
         val allocSize = (t + 3) and 3.inv()
         return IntArray(allocSize)
     }
 
+    /**
+     * Returns a normalized copy of the first [xLen] limbs of [x],
+     * with any leading zero limbs removed.
+     *
+     * If all limbs are zero, returns [ZERO].
+     *
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */
     fun newNormalizedCopy(x: IntArray, xLen: Int): IntArray {
         if (xLen >= 0 && xLen <= x.size) {
             var lastIndex = xLen - 1
@@ -124,6 +166,13 @@ object Magia {
         throw IllegalArgumentException()
     }
 
+    /**
+     * Returns a copy of [x] extended to at least [newMinLimbLen] elements.
+     *
+     * The new array preserves the contents of [x] and zero-fills the remainder.
+     *
+     * @throws IllegalArgumentException if [newMinLimbLen] is not greater than [x.size].
+     */
     fun newLongerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
         if (newMinLimbLen > x.size) {
             val z = newWithMinLen(newMinLimbLen)
@@ -134,28 +183,19 @@ object Magia {
         }
     }
 
-    fun newCopyWithMinLen(x: IntArray, xLen: Int, newMinLimbLen: Int) : IntArray {
-        if (xLen >= 0 && xLen <= x.size && newMinLimbLen >= xLen) {
-            val z = newWithMinLen(newMinLimbLen)
-            System.arraycopy(x, 0, z, 0, xLen)
-            return z
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-
+    /**
+     * Creates a new limb array large enough to hold a value of [bitLen] bits.
+     *
+     * Returns [ZERO] if [bitLen] ≤ 0.
+     */
     inline fun newWithBitLen(bitLen: Int) =
         if (bitLen > 0) IntArray(limbLenFromBitLen(bitLen)) else ZERO
 
-    inline fun newWithSetBit(bitIndex: Int): IntArray {
-        if (bitIndex >= 0) {
-            val magia = Magia.newWithBitLen(bitIndex + 1)
-            magia[magia.lastIndex] = 1 shl (bitIndex and 0x1F)
-            return magia
-        }
-        throw IllegalArgumentException()
-    }
-
+    /**
+     * Returns a new limb array representing [x] plus the unsigned 32-bit value [w].
+     *
+     * The result is sized to accommodate any carry from the addition.
+     */
     fun newAdd(x: IntArray, w: UInt): IntArray {
         val newBitLen = max(bitLen(x), (32 - w.countLeadingZeroBits())) + 1
         val z = newWithBitLen(newBitLen)
@@ -171,6 +211,11 @@ object Magia {
         return z
     }
 
+    /**
+     * Returns a new limb array representing [x] plus the signed 64-bit value [dw].
+     *
+     * The result is extended as needed to hold any carry or sign extension from the addition.
+     */
     fun newAdd(x: IntArray, dw: Long): IntArray {
         val newBitLen = max(bitLen(x), (64 - dw.countLeadingZeroBits())) + 1
         val z = newWithBitLen(newBitLen)
@@ -188,6 +233,11 @@ object Magia {
         return z
     }
 
+    /**
+     * Returns a new limb array representing the sum of [x] and [y].
+     *
+     * The result is sized to accommodate any carry produced by the addition.
+     */
     fun newAdd(x: IntArray, y: IntArray): IntArray {
         val newBitLen = max(bitLen(x), bitLen(y)) + 1
         val z = newWithBitLen(newBitLen)
@@ -214,6 +264,12 @@ object Magia {
         return z
     }
 
+    /**
+     * Adds the unsigned 32-bit value [w] to [x], mutating it in place when possible.
+     *
+     * If the addition produces a carry beyond the current length of [x],
+     * a new extended array is returned.
+     */
     fun newOrMutateAdd(x: IntArray, w: UInt): IntArray {
         val carry = mutateAdd(x, x.size, w)
         if (carry == 0u)
@@ -223,6 +279,15 @@ object Magia {
         return z
     }
 
+    /**
+     * Adds the unsigned 32-bit value [w] to the first [xLen] limbs of [x], modifying [x] in place.
+     *
+     * A non-zero return indicates a single limb that must be
+     * handled by the caller.
+     *
+     * @return the final carry as an unsigned 32-bit value.
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */
     fun mutateAdd(x: IntArray, xLen: Int, w: UInt): UInt {
         if (xLen >= 0 && xLen <= x.size) {
             var carry = w.toULong()
@@ -239,7 +304,15 @@ object Magia {
         }
     }
 
-    fun mutateAdd(x: IntArray, xLen: Int, dw: ULong): ULong {
+    /**
+     * Adds the unsigned 64-bit value [dw] to the first [xLen] limbs of [x], modifying [x] in place.
+     *
+     * It is the caller's responsibility to properly handle the returned final carry,
+     * which may occupy one or two additional limbs.
+     *
+     * @return the resulting carry as an unsigned 64-bit value.
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */    fun mutateAdd(x: IntArray, xLen: Int, dw: ULong): ULong {
         if (xLen >= 0 && xLen <= x.size) {
             var carry = dw
             var i = 0
@@ -255,6 +328,16 @@ object Magia {
         }
     }
 
+    /**
+     * Adds the first [yLen] limbs of [y] to the first [xLen] limbs of [x], mutating [x] in place.
+     *
+     * Handles carry propagation across the limbs of [x] and [y].
+     * It is the caller's responsibility to check the returned carry and store it in [x],
+     * extending the length of [x] if needed.
+     *
+     * @return the final carry as an unsigned 32-bit value.
+     * @throws IllegalArgumentException if [xLen] or [yLen] are out of range for [x] or [y].
+     */
     fun mutateAdd(x: IntArray, xLen: Int, y: IntArray, yLen: Int): UInt {
         if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
             check(xLen == 0 || x[xLen - 1] != 0)
@@ -286,6 +369,11 @@ object Magia {
         }
     }
 
+    /**
+     * Returns a new limb array representing [x] minus the unsigned integer [w].
+     *
+     * If the result is zero or the subtraction underflows, returns [ZERO].
+     */
     fun newSub(x: IntArray, w: Int): IntArray {
         val z = IntArray(nonZeroLimbLen(x))
         var orAccumulator = 0
@@ -300,6 +388,12 @@ object Magia {
         return if (orAccumulator == 0 || borrow != 0L) ZERO else z
     }
 
+    /**
+     * Returns a new limb array representing [x] minus the signed 64-bit value [dw].
+     * The caller must ensure that x >= y.
+     *
+     * If the result is zero or the subtraction underflows, returns [ZERO].
+     */
     fun newSub(x: IntArray, dw: Long): IntArray {
         val z = IntArray(nonZeroLimbLen(x))
         var orAccumulator = 0
@@ -330,6 +424,12 @@ object Magia {
         return if (orAccumulator == 0 || borrow != 0L) ZERO else z
     }
 
+    /**
+     * Returns a new limb array representing [x] minus [y].
+     *
+     * Requires that [x] is greater than or equal to [y].
+     * If the result is zero, returns [ZERO].
+     */
     fun newSub(x: IntArray, y: IntArray): IntArray {
         check (compare(x, y) >= 0)
         val z = IntArray(nonZeroLimbLen(x))
@@ -361,21 +461,11 @@ object Magia {
             ZERO
     }
 
-    fun mutateSub(x: IntArray, xLen: Int, w: UInt) {
-        if (xLen >= 0 && xLen <= x.size) {
-            var borrow = w.toULong()
-            var i = 0
-            while (borrow != 0uL && i < xLen) {
-                borrow = dw32(x[i]) - borrow
-                x[i] = borrow.toInt()
-                borrow = borrow shr 63
-                ++i
-            }
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-
+    /**
+     * Subtracts the unsigned 64-bit value [dw] from the first [xLen] limbs of [x], mutating [x] in place.
+     *
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */
     fun mutateSub(x: IntArray, xLen: Int, dw: ULong) {
         if (xLen >= 0 && xLen <= x.size) {
 
@@ -404,6 +494,13 @@ object Magia {
         }
     }
 
+    /**
+     * Subtracts the first [yLen] limbs of [y] from the first [xLen] limbs of [x], mutating [x] in place.
+     *
+     * Requires that [x] is greater than or equal to [y].
+     *
+     * @throws IllegalArgumentException if [xLen] or [yLen] are out of range for [x] or [y].
+     */
     fun mutateSub(x: IntArray, xLen: Int, y: IntArray, yLen: Int) {
         if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
             check(xLen == 0 || x[xLen - 1] != 0)
@@ -429,6 +526,17 @@ object Magia {
         }
     }
 
+    /**
+     * Subtracts the first [xLen] limbs of [x] from the first [yLen] limbs of [y],
+     * storing the result back into [x] and mutating it in place.
+     *
+     * This is effectively a "reverse" subtraction: result = y - x.
+     * Requires that [xLen] equals [yLen] and that [y] is normalized.
+     * The actual value of [x] must be less than [y], so the caller
+     * should zero-pad [x] up to [xLen].
+     *
+     * @throws IllegalArgumentException if [xLen] or [yLen] are out of range for [x] or [y].
+     */
     fun mutateReverseSub(x: IntArray, xLen: Int, y: IntArray, yLen: Int) {
         if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
             // x is usually not normalized .. so don't check for it
@@ -483,21 +591,6 @@ object Magia {
             p[xLen] = carry.toInt()
         else if (carry != 0uL)
             throw IllegalArgumentException()
-    }
-
-    /**
-     * Mutates x: IntArray in-place.
-     *
-     * Used during parsing of base-10 text string.
-     */
-    private fun mutateFma(x: IntArray, m: Int, a: Int) {
-        val m64 = U32(m)
-        var carry = U32(a)
-        for (i in x.indices) {
-            val t = U32(x[i]) * m64 + carry
-            x[i] = t.toInt()
-            carry = t ushr 32
-        }
     }
 
     fun newMul(x: IntArray, dw: ULong): IntArray {
@@ -584,6 +677,21 @@ object Magia {
             return lastIndex + (if (p[lastIndex] == 0) 0 else 1)
         } else {
             throw IllegalArgumentException()
+        }
+    }
+
+    /**
+     * Mutates x: IntArray in-place.
+     *
+     * Used during parsing of base-10 text string.
+     */
+    private fun mutateFma(x: IntArray, m: Int, a: Int) {
+        val m64 = U32(m)
+        var carry = U32(a)
+        for (i in x.indices) {
+            val t = U32(x[i]) * m64 + carry
+            x[i] = t.toInt()
+            carry = t ushr 32
         }
     }
 
@@ -898,6 +1006,59 @@ object Magia {
             ++i
         }
         return if (nonZeroLimbLen(z) > 0) z else ZERO
+    }
+
+    /**
+     * Creates a new limb array with a single bit set at [bitIndex].
+     *
+     * The resulting array has the minimum length needed to contain that bit.
+     *
+     * @throws IllegalArgumentException if [bitIndex] is negative.
+     */
+    inline fun newWithSetBit(bitIndex: Int): IntArray {
+        if (bitIndex >= 0) {
+            val magia = Magia.newWithBitLen(bitIndex + 1)
+            magia[magia.lastIndex] = 1 shl (bitIndex and 0x1F)
+            return magia
+        }
+        throw IllegalArgumentException()
+    }
+
+    fun testBit(x: IntArray, bitIndex: Int): Boolean = testBit(x, x.size, bitIndex)
+
+    fun testBit(x: IntArray, xLen: Int, bitIndex: Int): Boolean {
+        if (xLen >= 0 && xLen <= x.size) {
+            val wordIndex = bitIndex ushr 5
+            if (wordIndex >= xLen)
+                return false
+            val word = x[wordIndex]
+            val bitMask = 1 shl (bitIndex and 0x1F)
+            return (word and bitMask) != 0
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
+    fun testAnyBitInLowerN(x: IntArray, bitCount: Int): Boolean =
+        testAnyBitInLowerN(x, x.size, bitCount)
+
+    fun testAnyBitInLowerN(x: IntArray, xLen: Int, bitCount: Int): Boolean {
+        if (xLen >= 0 && xLen <= x.size) {
+            val lastBitIndex = bitCount - 1
+            val lastWordIndex = lastBitIndex ushr 5
+            for (i in 0..<lastWordIndex) {
+                if (i == xLen)
+                    return false
+                if (x[i] != 0)
+                    return true
+            }
+            if (lastWordIndex == xLen)
+                return false
+            val bitMask = -1 ushr (0x1F - (lastBitIndex and 0x1F))
+            return (x[lastWordIndex] and bitMask) != 0
+        } else {
+            throw IllegalArgumentException()
+        }
     }
 
     fun EQ(x: IntArray, y: Int): Boolean {
@@ -1582,12 +1743,18 @@ object Magia {
     fun newFromAsciiHex(bytes: ByteArray, off: Int, len: Int) =
         fromHex(ByteArrayLatin1Iterator(bytes, off, len))
 
-    @Suppress("NOTHING_TO_INLINE")
+    /**
+     * Predicate to determine if a char is valid when parsing
+     * a hex value in text format.
+     */
     private inline fun isHexAsciiCharOrUnderscore(c: Char): Boolean {
+        // if a bit is turned on, then it is a valid char in
+        // hex representation.
+        // this means [0-9A-Fa-f_]
+        val hexDigitAndUnderscoreMask = 0x007E_8000_007E_03FFL
         val idx = c.code - '0'.code
-        if (idx < 0 || idx > 'f'.code - '0'.code)
-            return false
-        return ((HEX_DIGIT_AND_UNDERSCORE_MASK ushr idx) and 1L) != 0L
+        return (idx >= 0) and (idx <= 'f'.code - '0'.code) and
+                (((hexDigitAndUnderscoreMask ushr idx) and 1L) != 0L)
     }
 
     /**
