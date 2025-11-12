@@ -40,14 +40,14 @@ private const val S_U64_DIV_1E4 = 11 // + 64 high
  *   by [HugeIntAccumulator].
  *
  * ### Available Functionality
- * - Ths is effectively a complete arbitrary-length ALU Arithmetic Logic Unit
+ * - Magia is effectively a complete arbitrary-length integer ALU Arithmetic Logic Unit
  * - **Arithmetic operations:** `add`, `sub`, `mul`, `div`, `rem`, `sqr`
- * - **Standard bitwise operations:** `and`, `or`, `xor`, `shl`, `shr`, `ushr`
+ * - **Standard bitwise operations:** `and`, `or`, `xor`, `shl`, `shr`
  * - **Advanced bit manipulation:** `bitLen`, `nlz`, `bitPopulation`, `testBit`, `setBit`,
- *   and mask creation utilities
+ *   and bit-mask creation routines
  * - **Parsing:** Supports text input from `String`, `CharSequence`, `CharArray`, and
- *   ASCII or UTF-8 encoded `ByteArray` representations
- * - **Conversion:** To `String` and UTF-8 encoded `ByteArray`
+ *   UTF-8/ASCII encoded `ByteArray` representations
+ * - **Conversion:** To `String` and UTF-8/ASCII encoded `ByteArray`
  * - **Serialization:** To and from little- or big-endian, two’s complement or unsigned
  *   formats
  *
@@ -133,6 +133,14 @@ object Magia {
     }
 
     /**
+     * Creates a new limb array large enough to hold a value of [bitLen] bits.
+     *
+     * Returns [ZERO] if [bitLen] ≤ 0.
+     */
+    inline fun newWithBitLen(bitLen: Int) =
+        if (bitLen > 0) IntArray(limbLenFromBitLen(bitLen)) else ZERO
+
+    /**
      * Creates a new limb array with at least [floorLen] elements.
      *
      * Mutable routines use this to utilize all allocated storage,
@@ -183,14 +191,6 @@ object Magia {
             throw IllegalArgumentException()
         }
     }
-
-    /**
-     * Creates a new limb array large enough to hold a value of [bitLen] bits.
-     *
-     * Returns [ZERO] if [bitLen] ≤ 0.
-     */
-    inline fun newWithBitLen(bitLen: Int) =
-        if (bitLen > 0) IntArray(limbLenFromBitLen(bitLen)) else ZERO
 
     /**
      * Returns a new limb array representing [x] plus the unsigned 32-bit value [w].

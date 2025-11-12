@@ -1245,12 +1245,12 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      */
     infix fun ushr(bitCount: Int): HugeInt {
         return when {
-            bitCount < 0 -> throw IllegalArgumentException("bitCount < 0")
-            bitCount == 0 -> this
-            else -> {
+            bitCount > 0 -> {
                 val magia = Magia.newShiftRight(this.magia, bitCount)
-                if (magia.isNotEmpty()) HugeInt(false, magia) else ZERO
+                if (magia !== Magia.ZERO) HugeInt(false, magia) else ZERO
             }
+            bitCount == 0 -> this
+            else -> throw IllegalArgumentException("bitCount < 0")
         }
     }
 
@@ -1264,17 +1264,21 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      */
     infix fun shr(bitCount: Int): HugeInt {
         return when {
-            bitCount < 0 -> throw IllegalArgumentException("bitCount < 0")
-            bitCount == 0 -> this
-            else -> {
+            bitCount > 0 -> {
                 var magia = Magia.newShiftRight(this.magia, bitCount)
-                if (sign) {
-                    // Mimic twos-complement rounding down for negative numbers
-                    val roundDown = Magia.testAnyBitInLowerN(this.magia, bitCount)
-                    if (roundDown) magia = Magia.newOrMutateAdd(magia, 1u)
+                when {
+                    magia !== Magia.ZERO -> {
+                        // Mimic twos-complement rounding down for negative numbers
+                        if (sign && Magia.testAnyBitInLowerN(this.magia, bitCount))
+                            magia = Magia.newOrMutateAdd(magia, 1u)
+                        HugeInt(this.sign, magia)
+                    }
+                    sign -> NEG_ONE
+                    else -> ZERO
                 }
-                if (magia.isNotEmpty()) HugeInt(this.sign, magia) else ZERO
             }
+            bitCount == 0 -> this
+            else -> throw IllegalArgumentException("bitCount < 0")
         }
     }
 
@@ -1286,10 +1290,10 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      */
     infix fun shl(bitCount: Int): HugeInt {
         return when {
-            bitCount < 0 -> throw IllegalArgumentException("bitCount < 0")
-            bitCount == 0 -> this
-            isZero() -> this
-            else -> HugeInt(this.sign, Magia.newShiftLeft(this.magia, bitCount))
+            isZero() || bitCount == 0 -> this
+            bitCount > 0 -> HugeInt(this.sign,
+                                    Magia.newShiftLeft(this.magia, bitCount))
+            else -> throw IllegalArgumentException("bitCount < 0")
         }
     }
 
