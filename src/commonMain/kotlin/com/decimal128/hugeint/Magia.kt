@@ -558,6 +558,11 @@ object Magia {
         }
     }
 
+    /**
+     * Returns a new limb array representing [x] multiplied by the unsigned 32-bit value [w].
+     *
+     * Returns [ZERO] if [x] or [w] is zero.
+     */
     fun newMul(x: IntArray, w: UInt): IntArray {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0 || w == 0u)
@@ -570,14 +575,19 @@ object Magia {
     }
 
     /**
-     * w should not be zero
-     * p.size must be >= xLen + 1
-     * p does not have to be zero-initialized.
-     * the final carry will be written, even if it is zero.
-     * So the resulting non-normalize pLen will be xLen + 1
-     * additional p limbs will not be zeroed-out
+     * Multiplies the first [xLen] limbs of [x] by the unsigned 32-bit value [w], storing the result in [p].
      *
-     * can mutate in-place
+     * Requirements:
+     * - [w] must not be zero.
+     * - [p.size] must be at least [xLen] + 1.
+     * - [p] does not need to be zero-initialized.
+     *
+     * The final carry will always be written to [p][xLen] if present, even if zero.
+     * The result is non-normalized; any additional limbs in [p] beyond [xLen] + 1 are not zeroed.
+     *
+     * This function can mutate [p] in-place.
+     *
+     * @throws IllegalArgumentException if [p.size] is too small to hold the result and carry.
      */
     fun mul(p: IntArray, x: IntArray, xLen: Int, w: UInt) {
         val w64 = w.toULong()
@@ -593,6 +603,12 @@ object Magia {
             throw IllegalArgumentException()
     }
 
+    /**
+     * Returns a new limb array representing [x] multiplied by the unsigned 64-bit value [dw].
+     *
+     * Optimized to delegate to [newMul] with a 32-bit value if the upper 32 bits of [dw] are zero.
+     * Returns [ZERO] if [x] or [dw] is zero.
+     */
     fun newMul(x: IntArray, dw: ULong): IntArray {
         if ((dw shr 32) == 0uL)
             return newMul(x, dw.toUInt())
@@ -607,12 +623,16 @@ object Magia {
     }
 
     /**
-     * implements multiply by the dw.
-     * makes a single pass.
-     * Does not overwrite, so it supports in-place multiplication by a dw.
-     * requires zLen > xLen ... presumably by 1 or 2.
-     * caller must ensure that zLen is sufficient to hold the product, either
-     * by checking limb lengths (yielding 2) or by checking the bit lengths (1 or 2).
+     * Multiplies the first [xLen] limbs of [x] by the unsigned 64-bit value [dw], storing the result in [z].
+     *
+     * - Performs a single-pass multiplication.
+     * - Does not overwrite [x], allowing in-place multiplication scenarios.
+     * - [zLen] must be greater than [xLen]; caller must ensure it is large enough to hold the full product.
+     *
+     * The caller is responsible for ensuring that [zLen] is sufficient, either by checking limb lengths
+     * (typically requiring +2 limbs) or by checking bit lengths (1 or 2 extra limbs).
+     *
+     * @throws IllegalArgumentException if [xLen], [zLen], or array sizes are invalid.
      */
     fun mul(z: IntArray, zLen: Int, x: IntArray, xLen: Int, dw: ULong) {
         if (zLen >= 0 && zLen <= z.size && xLen >= 0 && xLen <= x.size && zLen > xLen) {
@@ -641,6 +661,11 @@ object Magia {
         throw IllegalArgumentException()
     }
 
+    /**
+     * Returns a new limb array representing the product of [x] and [y].
+     *
+     * Returns [ZERO] if either [x] or [y] is zero.
+     */
     fun newMul(x: IntArray, y: IntArray): IntArray {
         val xBitLen = bitLen(x)
         val yBitLen = bitLen(y)
@@ -651,9 +676,20 @@ object Magia {
         return p
     }
 
-    // p must be of size xLen + yLen or xLen + yLen - 1
-    // the first yLen entries must be zero-cleared by the caller before calling
-    // If you have a choice, make your longer array y
+    /**
+     * Multiplies the first [xLen] limbs of [x] by the first [yLen] limbs of [y],
+     * accumulating the result into [p].
+     *
+     * Requirements:
+     * - [p] must be of size [xLen] + [yLen] or [xLen] + [yLen] - 1.
+     * - The first [yLen] entries of [p] must be zeroed by the caller.
+     * - [xLen] and [yLen] must be greater than zero and within the array bounds.
+     * - The most significant limbs of [x] and [y] must be nonzero.
+     * - For efficiency, if one array is longer, it is preferable to use it as [y].
+     *
+     * @return the number of limbs actually used in [p].
+     * @throws IllegalArgumentException if preconditions on array sizes or lengths are violated.
+     */
     fun mul(p: IntArray, x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
         if (xLen > 0 && yLen > 0 && xLen <= x.size && yLen <= y.size && (xLen + yLen) <= p.size + 1) {
             check (x[xLen - 1] != 0)
@@ -681,9 +717,13 @@ object Magia {
     }
 
     /**
-     * Mutates x: IntArray in-place.
+     * Performs an in-place fused multiply-add on [x]: x[i] = x[i] * [m] + [a], propagating carry.
      *
-     * Used during parsing of base-10 text string.
+     * Used internally when parsing base-10 text strings.
+     *
+     * @param x the limb array to be mutated.
+     * @param m the multiplier.
+     * @param a the addend.
      */
     private fun mutateFma(x: IntArray, m: Int, a: Int) {
         val m64 = U32(m)
@@ -695,6 +735,11 @@ object Magia {
         }
     }
 
+    /**
+     * Returns a new limb array representing the square of [x].
+     *
+     * Returns [ZERO] if [x] is zero.
+     */
     fun newSqr(x: IntArray): IntArray {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0)
@@ -707,17 +752,16 @@ object Magia {
     }
 
     /**
-     * Squares x with len xLen, returning result in p.
+     * Squares the first [xLen] limbs of [x], storing the result in [p].
      *
-     * p must be completely zero-initialized by the caller to 2*xLen.
-     * p.size must be sufficient to hold the squared result ...
-     * 2*xLen or 2*xLen-1.
-     * Only the minimum required will be written to p.
-     * So, if only 2*xLen - 1 limbs are non-zero then that is
-     * how many will be written.
-     * Of course, this won't matter to the caller if you have
-     * followed instructions and zero-initialized 2*xLen limbs.
-     * returns the normalizedLimbLen
+     * Requirements:
+     * - [p] must be completely zero-initialized by the caller.
+     * - [p.size] must be sufficient to hold the squared result (2 * [xLen] or 2 * [xLen] - 1 limbs).
+     *
+     * Only the minimum required limbs are written to [p]; if only 2 * [xLen] - 1 limbs are non-zero,
+     * that is how many will be written. The caller must ensure zero-initialization of all 2 * [xLen] limbs.
+     *
+     * @return the normalized limb length of the result.
      */
     fun sqr(p: IntArray, x: IntArray, xLen: Int) : Int {
         // test to encourage bounds check elimination
@@ -783,8 +827,6 @@ object Magia {
     }
 
     fun newCopyMinimum(src: IntArray) = newCopyWithLimbLen(src, nonZeroLimbLen(src))
-
-    fun newCopyMinimum4(src: IntArray, srcLen: Int) = newCopyWithLimbLen(src, max(nonZeroLimbLen(src, srcLen), 4))
 
     fun newCopyWithLimbLen(src: IntArray, newWordLen: Int): IntArray {
         if (newWordLen > 0) {
