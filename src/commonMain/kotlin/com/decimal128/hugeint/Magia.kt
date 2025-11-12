@@ -133,12 +133,13 @@ object Magia {
     }
 
     /**
-     * Creates a new limb array with at least [minLimbLen] elements.
+     * Creates a new limb array with at least [floorLen] elements.
      *
-     * The allocated length is rounded up to the next multiple of 4 for alignment.
+     * Mutable routines use this to utilize all allocated storage,
+     * rounding up to a 4 Int 16 byte boundary.
      */
-    inline fun newWithMinLen(minLimbLen: Int) : IntArray {
-        val t = if (minLimbLen <= 0) 1 else minLimbLen
+    inline fun newWithFloorLen(floorLen: Int) : IntArray {
+        val t = if (floorLen <= 0) 1 else floorLen
         val allocSize = (t + 3) and 3.inv()
         return IntArray(allocSize)
     }
@@ -151,7 +152,7 @@ object Magia {
      *
      * @throws IllegalArgumentException if [xLen] is out of range for [x].
      */
-    fun newNormalizedCopy(x: IntArray, xLen: Int): IntArray {
+    fun newCopyTrimmed(x: IntArray, xLen: Int): IntArray {
         if (xLen >= 0 && xLen <= x.size) {
             var lastIndex = xLen - 1
             while (lastIndex >= 0 && x[lastIndex] == 0)
@@ -167,16 +168,16 @@ object Magia {
     }
 
     /**
-     * Returns a copy of [x] extended to at least [newMinLimbLen] elements.
+     * Returns a copy of [x] extended to at least [floorLen] elements.
      *
      * The new array preserves the contents of [x] and zero-fills the remainder.
      *
-     * @throws IllegalArgumentException if [newMinLimbLen] is not greater than [x.size].
+     * @throws IllegalArgumentException if [floorLen] is not greater than [x.size].
      */
-    fun newLongerCopyWithMinLen(x: IntArray, newMinLimbLen: Int) : IntArray {
-        if (newMinLimbLen > x.size) {
-            val z = newWithMinLen(newMinLimbLen)
-            System.arraycopy(x, 0, z, 0, x.size)
+    fun newCopyWithFloorLen(x: IntArray, floorLen: Int) : IntArray {
+        if (floorLen > x.size) {
+            val z = newWithFloorLen(floorLen)
+            System.arraycopy(x, 0, z, 0, min(x.size, z.size))
             return z
         } else {
             throw IllegalArgumentException()
@@ -274,7 +275,7 @@ object Magia {
         val carry = mutateAdd(x, x.size, w)
         if (carry == 0u)
             return x
-        val z = newCopyWithLimbLen(x, x.size + 1)
+        val z = newCopyWithExactLen(x, x.size + 1)
         z[x.size] = carry.toInt()
         return z
     }
@@ -826,24 +827,13 @@ object Magia {
         }
     }
 
-    fun newCopyMinimum(src: IntArray) = newCopyWithLimbLen(src, nonZeroLimbLen(src))
+    fun newCopyTrimmed(src: IntArray) = newCopyWithExactLen(src, nonZeroLimbLen(src))
 
-    fun newCopyWithLimbLen(src: IntArray, newWordLen: Int): IntArray {
-        if (newWordLen > 0) {
-            val dst = IntArray(newWordLen)
-            val copyCount = min(src.size, newWordLen)
+    fun newCopyWithExactLen(src: IntArray, exactLimbLen: Int): IntArray {
+        if (exactLimbLen > 0) {
+            val dst = IntArray(exactLimbLen)
+            val copyCount = min(src.size, exactLimbLen)
             System.arraycopy(src, 0, dst, 0, copyCount)
-            return dst
-        }
-        return ZERO
-    }
-
-    fun newCopyRoundUp(src: IntArray, srcLen: Int) = newCopyWithLimbLen(src, max(nonZeroLimbLen(src, srcLen), 4))
-
-    fun newCopyWithLimbLenRoundUp(src: IntArray, srcLen: Int, newWordLen: Int): IntArray {
-        if (newWordLen > 0) {
-            val dst = IntArray(newWordLen)
-            copy(dst, src)
             return dst
         }
         return ZERO
@@ -1213,7 +1203,7 @@ object Magia {
     }
 
     fun newDiv(x: IntArray, w: UInt): IntArray {
-        val q = newCopyMinimum(x)
+        val q = newCopyTrimmed(x)
         mutateDivMod(q, w)
         return if (nonZeroLimbLen(q) > 0) q else ZERO
     }
@@ -1252,7 +1242,7 @@ object Magia {
     }
 
     fun newMod(x: IntArray, w: UInt): IntArray {
-        val q = newCopyMinimum(x)
+        val q = newCopyTrimmed(x)
         val rem = mutateDivMod(q, w)
         return if (rem == 0u) ZERO else intArrayOf(rem.toInt())
     }
@@ -1274,7 +1264,7 @@ object Magia {
         if (m == 0)
             return ZERO
         if (m < n)
-            return newCopyMinimum(x)
+            return newCopyTrimmed(x)
         val u = x
         val v = y
         val q = null
@@ -1289,7 +1279,7 @@ object Magia {
         if (n <= 1) {
             if (n == 0)
                 throw ArithmeticException("div by zero")
-            var div = newCopyMinimum(x)
+            var div = newCopyTrimmed(x)
             val rem = mutateDivMod(div, y[0].toUInt())
             if (nonZeroLimbLen(div) == 0)
                 div = ZERO
@@ -1297,7 +1287,7 @@ object Magia {
         }
         val m = nonZeroLimbLen(x)
         if (m < n)
-            return arrayOf(ZERO, newCopyMinimum(x))
+            return arrayOf(ZERO, newCopyTrimmed(x))
         val u = x
         val v = y
         val q = IntArray(m - n + 1)
@@ -1333,8 +1323,8 @@ object Magia {
             throw IllegalArgumentException()
 
         // Step D1: Normalize
-        val un = newCopyWithLimbLen(u, m + 1)
-        val vn = newCopyWithLimbLen(v, n)
+        val un = newCopyWithExactLen(u, m + 1)
+        val vn = newCopyWithExactLen(v, n)
         val shift = vn[n - 1].countLeadingZeroBits()
         if (shift > 0) {
             mutateShiftLeft(vn, vn.size, shift)
@@ -1435,7 +1425,7 @@ object Magia {
             throw IllegalArgumentException()
 
         // Step D1: Normalize
-        val un = newCopyWithLimbLen(u, m + 1)
+        val un = newCopyWithExactLen(u, m + 1)
         val shift = vDw.countLeadingZeroBits()
         val vnDw = vDw shl shift
         if (shift > 0)
@@ -1567,7 +1557,7 @@ object Magia {
             val maxDigitLen = ((bitLen * 1234) shr 12) + 1
             val maxSignedLen = maxDigitLen + if (isNegative) 1 else 0
             var wordLen = nonZeroLimbLen(x, xLen)
-            var t = newCopyWithLimbLen(x, wordLen)
+            var t = newCopyWithExactLen(x, wordLen)
             val utf8 = ByteArray(maxSignedLen)
             var ib = utf8.size
             while (wordLen > 1) {
@@ -1575,7 +1565,7 @@ object Magia {
                 val chunk = newLenAndRemainder and 0xFFFF_FFFFL
                 renderChunk9(chunk, utf8, ib)
                 wordLen = (newLenAndRemainder ushr 32).toInt()
-                t = newCopyWithLimbLen(t, wordLen)
+                t = newCopyWithExactLen(t, wordLen)
                 ib -= 9
             }
             ib -= renderChunkTail(t[0], utf8, ib)

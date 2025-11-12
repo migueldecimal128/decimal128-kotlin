@@ -183,7 +183,7 @@ class HugeIntAccumulator private constructor (
      */
     private fun set(ySign: Boolean, y: IntArray, yLen: Int): HugeIntAccumulator {
         if (magia.size < yLen)
-            magia = Magia.newWithMinLen(yLen)
+            magia = Magia.newWithFloorLen(yLen)
         sign = ySign
         limbLen = yLen
         System.arraycopy(y, 0, magia, 0, yLen)
@@ -633,7 +633,7 @@ class HugeIntAccumulator private constructor (
             }
             cmp < 0 -> {
                 if (magia.size < yLen)
-                    magia = Magia.newLongerCopyWithMinLen(magia, yLen)
+                    magia = Magia.newCopyWithFloorLen(magia, yLen)
                 if (limbLen < yLen)
                     magia.fill(0, limbLen, yLen)
                 Magia.mutateReverseSub(magia, yLen, y, yLen)
@@ -664,7 +664,7 @@ class HugeIntAccumulator private constructor (
             return
         val newLen = limbLen + if ((carry shr 32) == 0uL) 1 else 2
         if (newLen > magia.size)
-            magia = Magia.newLongerCopyWithMinLen(magia, newLen)
+            magia = Magia.newCopyWithFloorLen(magia, newLen)
         magia[newLen - 1] = (carry shr 32).toInt() // overwritten when carry hi word == 0
         magia[limbLen] = carry.toInt()
         limbLen = newLen
@@ -685,7 +685,7 @@ class HugeIntAccumulator private constructor (
      */
     private fun mutateAddMagImpl(y: IntArray, yLen: Int) {
         if (yLen > magia.size)
-            magia = Magia.newLongerCopyWithMinLen(magia, yLen + 1)
+            magia = Magia.newCopyWithFloorLen(magia, yLen + 1)
         val carry: UInt = Magia.mutateAdd(magia, limbLen, y, yLen)
         val maxOperandLen = max(limbLen, yLen)
         if (carry == 0u) {
@@ -693,7 +693,7 @@ class HugeIntAccumulator private constructor (
             return
         }
         if (maxOperandLen + 1 > magia.size)
-            magia = Magia.newLongerCopyWithMinLen(magia, maxOperandLen + 1)
+            magia = Magia.newCopyWithFloorLen(magia, maxOperandLen + 1)
         magia[maxOperandLen] = 1
         limbLen = maxOperandLen + 1
     }
@@ -715,7 +715,7 @@ class HugeIntAccumulator private constructor (
     private inline fun addSquareOfImpl(y: IntArray, yLen: Int) {
         val sqrLenMax = yLen * 2
         if (tmp1.size < sqrLenMax)
-            tmp1 = Magia.newWithMinLen(sqrLenMax)
+            tmp1 = Magia.newWithFloorLen(sqrLenMax)
         else
             tmp1.fill(0, 0, sqrLenMax)
         Magia.sqr(tmp1, y, yLen)
@@ -744,7 +744,7 @@ class HugeIntAccumulator private constructor (
         }
         val newLimbLenMax = limbLen + 1
         if (magia.size < newLimbLenMax)
-            magia = Magia.newLongerCopyWithMinLen(magia, newLimbLenMax)
+            magia = Magia.newCopyWithFloorLen(magia, newLimbLenMax)
         magia[limbLen] = 0
         Magia.mul(magia, magia, limbLen, w)
         sign = sign xor wSign
@@ -773,7 +773,7 @@ class HugeIntAccumulator private constructor (
         if (limbLen == 0)
             return
         if (magia.size < limbLen + 2)
-            magia = Magia.newLongerCopyWithMinLen(magia, limbLen + 2)
+            magia = Magia.newCopyWithFloorLen(magia, limbLen + 2)
         magia[limbLen] = 0
         magia[limbLen + 1] = 0
         Magia.mul(magia, limbLen + 2, magia, limbLen, dw)
@@ -809,7 +809,7 @@ class HugeIntAccumulator private constructor (
         val nLen = min(limbLen, yLen)
         val pLen = mLen + nLen
         if (tmp1.size < pLen)
-            tmp1 = Magia.newWithMinLen(pLen)
+            tmp1 = Magia.newWithFloorLen(pLen)
         else
             tmp1.fill(0, 0, pLen)
         Magia.mul(tmp1, magia, limbLen, y, yLen)
@@ -833,7 +833,7 @@ class HugeIntAccumulator private constructor (
         if (limbLen > 0) {
             val newLimbLenMax = limbLen * 2
             if (tmp1.size < newLimbLenMax)
-                tmp1 = Magia.newWithMinLen(newLimbLenMax)
+                tmp1 = Magia.newWithFloorLen(newLimbLenMax)
             else
                 tmp1.fill(0, 0, newLimbLenMax)
             val t = magia

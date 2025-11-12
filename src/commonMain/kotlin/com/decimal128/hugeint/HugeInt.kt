@@ -564,7 +564,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          */
         @JvmStatic
         fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray, len: Int): HugeInt {
-            val magia = Magia.newNormalizedCopy(littleEndianIntArray, len)
+            val magia = Magia.newCopyTrimmed(littleEndianIntArray, len)
             return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
 
@@ -1104,7 +1104,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
             else -> {
                 val maxBitLen = Magia.bitLen(this.magia) * n
                 val maxBitLimbLen = (maxBitLen + 0x1F) ushr 5
-                var baseMag = Magia.newCopyWithLimbLen(this.magia, maxBitLimbLen)
+                var baseMag = Magia.newCopyWithExactLen(this.magia, maxBitLimbLen)
                 var baseLen = Magia.nonZeroLimbLen(this.magia)
                 var resultMag = IntArray(maxBitLimbLen)
                 resultMag[0] = 1
@@ -1591,7 +1591,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
      *
      * @return a new IntArray containing the magnitude in little-endian order
      */
-    fun magnitudeToLittleEndianIntArray(): IntArray = Magia.newCopyMinimum(magia)
+    fun magnitudeToLittleEndianIntArray(): IntArray = Magia.newCopyTrimmed(magia)
 
     /**
      * Returns a copy of the magnitude as a little-endian LongArray.
@@ -1758,7 +1758,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         return when {
             wMag == 0u -> throw ArithmeticException("div by zero")
             this.isNotZero() -> {
-                val quot = Magia.newCopyMinimum(this.magia)
+                val quot = Magia.newCopyTrimmed(this.magia)
                 val remN = Magia.mutateDivMod(quot, wMag)
                 val hiQuot =
                     if (Magia.nonZeroLimbLen(quot) > 0) HugeInt(this.sign xor wSign, quot) else ZERO
