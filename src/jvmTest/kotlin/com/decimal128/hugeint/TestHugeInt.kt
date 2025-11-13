@@ -57,6 +57,11 @@ class TestHugeInt {
     }
 
     @Test
+    fun testProblemChildHex() {
+        testHexStr(BigInteger("1234ABCD", 16))
+    }
+
+    @Test
     fun testRoundTrip() {
         for (i in 0..10000) {
             val bi = randBi()

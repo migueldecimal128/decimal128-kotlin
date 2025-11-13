@@ -2456,27 +2456,26 @@ object Magia {
                 break@invalid_syntax
             }
             val z = newWithBitLen(nybbleCount shl 2)
-            var k = 0
             var nybblesLeft = nybbleCount
-            do {
+            for (k in 0..<z.size) {
                 var w = 0
                 val stepCount = min(nybblesLeft, 8)
-                var n = 0
-                do {
-                    ch = src.prevChar()
+                repeat(stepCount) { n ->
+                    var ch: Char
+                    do {
+                        ch = src.prevChar()
+                    } while (ch == '_')
                     val nybble = when (ch) {
                         in '0'..'9' -> ch - '0'
                         in 'A'..'F' -> ch - 'A' + 10
                         in 'a'..'f' -> ch - 'a' + 10
-                        '_' -> continue
                         else -> throw IllegalStateException()
                     }
                     w = w or (nybble shl (n shl 2))
-                    ++n
-                } while (n < stepCount)
-                z[k++] = w
+                }
+                z[k] = w // compiler knows 0 <= k < zLen <= z.size, bounds check can be eliminated
                 nybblesLeft -= stepCount
-            } while (nybblesLeft > 0)
+            }
             return z
         } while (false)
         throw IllegalArgumentException("integer parse error:$src")
@@ -2494,7 +2493,16 @@ object Magia {
     }
 
     /**
-     * number of bits that are set in the provided magia
+     * Returns the number of trailing zero bits in the given arbitrary-precision integer,
+     * represented as an array of 32-bit limbs.
+     *
+     * A "trailing zero bit" is a zero bit in the least significant position of the number.
+     *
+     * The count is computed starting from the least significant limb (index 0).
+     * If the entire number is zero, -1 is returned.
+     *
+     * @param magia the integer array (least significant limb first)
+     * @return the number of trailing zero bits, or -1 if all limbs are zero
      */
     fun bitPopulationCount(magia: IntArray): Int {
         var popCount = 0
