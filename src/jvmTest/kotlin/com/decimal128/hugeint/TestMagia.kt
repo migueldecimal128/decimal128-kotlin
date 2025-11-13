@@ -59,18 +59,18 @@ class TestMagia {
 
     fun testRoundTripShift(bi: BigInteger) {
         val shift = random.nextInt(100)
-        val car = MagiaTransducer.magiaFromBi(bi)
+        val magia = MagiaTransducer.magiaFromBi(bi)
 
         val biLeft = bi.shiftLeft(shift)
-        val carLeft = Magia.newShiftLeft(car, shift)
+        val carLeft = Magia.newShiftLeft(magia, shift)
         assert(MagiaTransducer.EQ(carLeft, biLeft))
 
         Magia.mutateShiftRight(carLeft, carLeft.size, shift)
         assert(MagiaTransducer.EQ(carLeft, bi))
 
         val biRight = bi.shiftRight(shift)
-        Magia.mutateShiftRight(car, car.size, shift)
-        assert(MagiaTransducer.EQ(car, biRight))
+        Magia.mutateShiftRight(magia, magia.size, shift)
+        assert(MagiaTransducer.EQ(magia, biRight))
     }
 
     fun testBitLen(bi: BigInteger) {

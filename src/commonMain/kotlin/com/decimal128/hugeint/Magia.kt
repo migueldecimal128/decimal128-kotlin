@@ -143,6 +143,7 @@ object Magia {
     /**
      * Creates a new limb array with at least [floorLen] elements.
      *
+     * This will never allocate less than 4 elements
      * Mutable routines use this to utilize all allocated storage,
      * rounding up to a 4 Int 16 byte boundary.
      */
@@ -153,43 +154,66 @@ object Magia {
     }
 
     /**
-     * Returns a normalized copy of the first [xLen] limbs of [x],
+     * Returns a normalized copy of of [x] with any leading
+     * zero limbs removed.
+     *
+     * If all limbs are zero, returns [ZERO].
+     */
+    inline fun newCopyTrimmed(x: IntArray): IntArray = newCopyTrimmed(x, x.size)
+
+    /**
+     * Returns a normalized copy of the first [xLen] limbs of [src],
      * with any leading zero limbs removed.
      *
      * If all limbs are zero, returns [ZERO].
      *
-     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     * @throws IllegalArgumentException if [xLen] is out of range for [src].
      */
-    fun newCopyTrimmed(x: IntArray, xLen: Int): IntArray {
-        if (xLen >= 0 && xLen <= x.size) {
+    fun newCopyTrimmed(src: IntArray, xLen: Int): IntArray {
+        if (xLen >= 0 && xLen <= src.size) {
             var lastIndex = xLen - 1
-            while (lastIndex >= 0 && x[lastIndex] == 0)
+            while (lastIndex >= 0 && src[lastIndex] == 0)
                 --lastIndex
             if (lastIndex < 0)
                 return ZERO
             val limbLen = lastIndex + 1
             val z = IntArray(limbLen)
-            System.arraycopy(x, 0, z, 0, limbLen)
+            System.arraycopy(src, 0, z, 0, limbLen)
             return z
         }
         throw IllegalArgumentException()
     }
 
     /**
-     * Returns a copy of [x] extended to at least [floorLen] elements.
+     * Returns a copy of [src] extended to at least [floorLen] elements.
      *
-     * The new array preserves the contents of [x] and zero-fills the remainder.
+     * The new array preserves the contents of [src] and zero-fills the remainder.
      *
-     * @throws IllegalArgumentException if [floorLen] is not greater than [x.size].
+     * @throws IllegalArgumentException if [floorLen] is not greater than [src.size].
      */
-    fun newCopyWithFloorLen(x: IntArray, floorLen: Int) : IntArray {
-        if (floorLen > x.size) {
+    fun newCopyWithFloorLen(src: IntArray, floorLen: Int) : IntArray {
+        if (floorLen > src.size) {
             val z = newWithFloorLen(floorLen)
-            System.arraycopy(x, 0, z, 0, min(x.size, z.size))
+            System.arraycopy(src, 0, z, 0, min(src.size, z.size))
             return z
         } else {
             throw IllegalArgumentException()
         }
+    }
+
+    fun newCopyWithExactLen(src: IntArray, exactLimbLen: Int): IntArray {
+        if (exactLimbLen > 0) {
+            val dst = IntArray(exactLimbLen)
+            System.arraycopy(src, 0, dst, 0, min(src.size, dst.size))
+            return dst
+        }
+        return ZERO
+    }
+
+    private fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
+        val dst = newWithBitLen(newBitLen)
+        copy(dst, src)
+        return dst
     }
 
     /**
@@ -827,24 +851,6 @@ object Magia {
         }
     }
 
-    fun newCopyTrimmed(src: IntArray) = newCopyWithExactLen(src, nonZeroLimbLen(src))
-
-    fun newCopyWithExactLen(src: IntArray, exactLimbLen: Int): IntArray {
-        if (exactLimbLen > 0) {
-            val dst = IntArray(exactLimbLen)
-            val copyCount = min(src.size, exactLimbLen)
-            System.arraycopy(src, 0, dst, 0, copyCount)
-            return dst
-        }
-        return ZERO
-    }
-
-    private fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
-        val dst = newWithBitLen(newBitLen)
-        copy(dst, src)
-        return dst
-    }
-
     private fun copy(dst: IntArray, src: IntArray) {
         var i = 0
         val m = min(dst.size, src.size)
@@ -856,6 +862,17 @@ object Magia {
             dst[i++] = 0
     }
 
+    /**
+     * Returns a new [IntArray] representing [x] logically shifted right by [bitCount] bits.
+     *
+     * Bits shifted out of the least significant end are discarded, and new high bits are filled with zeros.
+     * The original [x] is not modified.
+     *
+     * @param x the source magnitude in little-endian limb order.
+     * @param bitCount the number of bits to shift right; must be non-negative.
+     * @return a new [IntArray] containing the shifted result, normalized if all bits are shifted out.
+     * @throws IllegalArgumentException if [bitCount] is negative.
+     */
     fun newShiftRight(x: IntArray, bitCount: Int): IntArray {
         require(bitCount >= 0)
         val newBitLen = bitLen(x) - bitCount
@@ -882,6 +899,14 @@ object Magia {
         return z
     }
 
+    /**
+     * Shifts the first [xLen] limbs of [x] right by [bitCount] bits, in place.
+     *
+     * Bits shifted out of the low end are discarded, and high bits are filled with zeros.
+     * Returns [x] for convenience.
+     *
+     * @throws IllegalArgumentException if [xLen] or [bitCount] is out of range.
+     */
     fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
         require(bitCount >= 0)
         check(xLen <= x.size)
@@ -906,13 +931,51 @@ object Magia {
         return x
     }
 
+    /**
+     * Returns a new [IntArray] representing [x] shifted left by [bitCount] bits.
+     *
+     * Bits shifted out of the low end propagate into higher limbs. The returned
+     * array will be longer than [x] to accommodate the resulting value.
+     *
+     * @param x the source magnitude in little-endian limb order.
+     * @param bitCount the number of bits to shift left; must be non-negative.
+     * @return a new [IntArray] containing the shifted value.
+     * @throws IllegalArgumentException if [bitCount] is negative.
+     */
     fun newShiftLeft(x: IntArray, bitCount: Int): IntArray {
         val newBitLen = bitLen(x) + bitCount
         val z = newCopyWithBitLen(x, newBitLen)
-        mutateShiftLeft(z, z.size, bitCount)
+        mutateShiftLeft(z, bitCount)
         return z
     }
 
+    /**
+     * Shifts [x] left by [bitCount] bits in place.
+     *
+     * Bits shifted out of the low end propagate into higher limbs.
+     * The array [x] is mutated to contain the shifted result; its length
+     * must be sufficient to hold any carry propagated into the top limb.
+     * Otherwise, bits will be lost out the top.
+     *
+     * @param x the magnitude to shift, in little-endian limb order.
+     * @param bitCount the number of bits to shift left; must be non-negative.
+     * @throws IllegalArgumentException if [bitCount] is negative.
+     */
+    fun mutateShiftLeft(x: IntArray, bitCount: Int) =
+        mutateShiftLeft(x, x.size, bitCount)
+
+    /**
+     * Shifts the lower [xLen] limbs of [x] left by [bitCount] bits, in place.
+     *
+     * Bits shifted out of the top (xLen-1) limb are discarded. Limbs at indices
+     * >= [xLen] are not modified. This operation mutates [x] directly and does
+     * not extend its length or preserve overflow bits.
+     *
+     * @param x the array of limbs, in little-endian order.
+     * @param xLen the number of valid limbs to process from [x].
+     * @param bitCount the number of bits to shift left; must be non-negative.
+     * @throws IllegalArgumentException if [bitCount] is negative.
+     */
     fun mutateShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
@@ -927,12 +990,23 @@ object Magia {
                 x[i] = 0
         }
         if (innerShift > 0) {
-            for (i in x.size - 1 downTo 1)
+            for (i in xLen - 1 downTo 1)
                 x[i] = (x[i] shl innerShift) or (x[i - 1] ushr -innerShift)
             x[0] = x[0] shl innerShift
         }
     }
 
+    /**
+     * Returns true if the value represented by the lower [xLen] limbs of [x]
+     * is an exact power of two.
+     *
+     * A power of two has exactly one bit set in its binary representation.
+     * Limbs above [xLen] are ignored.
+     *
+     * @param x the array of limbs, in little-endian order.
+     * @param xLen the number of valid limbs to examine.
+     * @return true if the value is a power of two; false otherwise.
+     */
     fun isPowerOfTwo(x: IntArray, xLen: Int): Boolean {
         if (xLen >= 0 && xLen <= x.size) {
             var bitSeen = false
@@ -1327,8 +1401,8 @@ object Magia {
         val vn = newCopyWithExactLen(v, n)
         val shift = vn[n - 1].countLeadingZeroBits()
         if (shift > 0) {
-            mutateShiftLeft(vn, vn.size, shift)
-            mutateShiftLeft(un, un.size, shift)
+            mutateShiftLeft(vn, shift)
+            mutateShiftLeft(un, shift)
         }
 
         knuthDivideNormalizedCore(q, un, vn, m, n)
@@ -1429,7 +1503,7 @@ object Magia {
         val shift = vDw.countLeadingZeroBits()
         val vnDw = vDw shl shift
         if (shift > 0)
-            mutateShiftLeft(un, un.size, shift)
+            mutateShiftLeft(un, shift)
 
         knuthDivideNormalizedCore64(q, un, vnDw, m)
 
