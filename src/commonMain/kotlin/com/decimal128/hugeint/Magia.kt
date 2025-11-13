@@ -80,33 +80,31 @@ object Magia {
     /**
      * Converts the first limb of [x] into a single [UInt] value.
      *
-     * - If [xLen] is 0, returns 0.
-     * - Otherwise, returns the value of the first limb ([x[0]]) as an unsigned integer.
+     * - If [x] is empty, returns 0.
+     * - If [x] has one or more limbs, returns x[0] as a UInt.
      *
-     * Ignores any limbs beyond the first.
+     * Any limbs beyond the first are ignored.
      *
-     * @param x the array of 32-bit limbs representing the magnitude (normalized up to [xLen]).
-     * @param xLen the number of significant limbs to consider.
-     * @return the unsigned 32-bit value of the first limb, or 0 if [xLen] is 0.
+     * @param x the array of 32-bit limbs representing the magnitude (not necessarily normalized).
+     * @return the unsigned 32-bit value represented by the first one or two limbs of [x].
      */
-    fun toRawUInt(x: IntArray, xLen: Int): UInt = if (xLen == 0) 0u else x[0].toUInt()
+    fun toRawUInt(x: IntArray): UInt = if (x.size == 0) 0u else x[0].toUInt()
 
     /**
      * Converts the first one or two limbs of [x] into a single [ULong] value.
      *
-     * - If [xLen] is 0, returns 0.
-     * - If [xLen] is 1, returns the value of the first limb.
-     * - If [xLen] is 2 or more, returns a 64-bit value constructed from the first two limbs,
-     *   where [x[0]] is the low 32 bits and [x[1]] is the high 32 bits.
+     * - If [x] is empty, returns 0.
+     * - If [x] has one limb, returns its value as an unsigned 64-bit integer.
+     * - If [x] has two or more limbs, returns the combined value of the first two limbs
+     *   with [x[0]] as the low 32 bits and [x[1]] as the high 32 bits.
      *
-     * Does **not** check for additional limbs beyond the first two; higher limbs are ignored.
+     * Any limbs beyond the first two are ignored.
      *
-     * @param x the array of 32-bit limbs representing the magnitude (normalized up to [xLen]).
-     * @param xLen the number of significant limbs to consider (0, 1, or 2+).
-     * @return the combined unsigned 64-bit value of the first one or two limbs.
+     * @param x the array of 32-bit limbs representing the magnitude (not necessarily normalized).
+     * @return the unsigned 64-bit value represented by the first one or two limbs of [x].
      */
-    fun toRawULong(x: IntArray, xLen: Int): ULong {
-        return when (xLen) {
+    fun toRawULong(x: IntArray): ULong {
+        return when (x.size) {
             0 -> 0uL
             1 -> dw32(x[0])
             else -> (dw32(x[1]) shl 32) or dw32(x[0])
@@ -1359,6 +1357,15 @@ object Magia {
      */
     fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
 
+    /**
+     * Compares two arbitrary-precision integers represented as arrays of 32-bit limbs.
+     *
+     * Comparison is performed over the full lengths of both arrays.
+     *
+     * @param x the first integer array (least significant limb first).
+     * @param y the second integer array (least significant limb first).
+     * @return -1 if x < y, 0 if x == y, 1 if x > y.
+     */
     fun compare(x: IntArray, y: IntArray): Int {
         val minLen = min(x.size, y.size)
         for (i in x.size - 1 downTo minLen)
@@ -1369,10 +1376,43 @@ object Magia {
                 return -1
         for (i in minLen - 1 downTo 0) {
             if (x[i] != y[i])
-                return x[i].toUInt().compareTo(y[i].toUInt())
+                return ((((U32(x[i]) - U32(y[i])) shr 63) shl 1) + 1).toInt()
         }
         return 0
     }
+
+    /**
+     * Compares two arbitrary-precision integers represented as arrays of 32-bit limbs,
+     * considering only the first [xLen] limbs of [x] and [yLen] limbs of [y].
+     *
+     * Both input ranges must be normalized: the last limb of each range (if non-zero length)
+     * must be non-zero.
+     *
+     * Comparison is unsigned per-limb (32-bit) from most significant to least significant limb.
+     *
+     * @param x the first integer array (least significant limb first).
+     * @param xLen the number of significant limbs in [x] to consider; must be normalized.
+     * @param y the second integer array (least significant limb first).
+     * @param yLen the number of significant limbs in [y] to consider; must be normalized.
+     * @return -1 if x < y, 0 if x == y, 1 if x > y.
+     * @throws IllegalArgumentException if [xLen] or [yLen] are out of bounds for the respective arrays.
+     */
+    fun compare(x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
+        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
+            check(xLen == 0 || x[xLen - 1] != 0)
+            check(yLen == 0 || y[yLen - 1] != 0)
+            if (xLen != yLen)
+                return if (xLen > yLen) 1 else -1
+            for (i in xLen - 1 downTo 0) {
+                if (x[i] != y[i])
+                    return ((((U32(x[i]) - U32(y[i])) shr 63) shl 1) + 1).toInt()
+            }
+            return 0
+        } else {
+            throw IllegalArgumentException()
+        }
+    }
+
 
     /**
      * Compares a multi-limb unsigned integer [x] with a single-limb unsigned value [w].
@@ -1402,49 +1442,42 @@ object Magia {
     fun compare(x: IntArray, xLen: Int, dw: ULong): Int {
         if (xLen >= 0 && xLen <= x.size) {
             check (xLen == 0 || x[xLen - 1] != 0)
-            return when {
-                (xLen > 2) -> 1
-                (xLen == 2) -> {
-                    val xT = (dw32(x[1]) shl 32) or dw32(x[0])
-                    xT.compareTo(dw)
-                }
-                (xLen == 1) -> if ((dw shr 32) == 0uL) x[0].toUInt().compareTo(dw.toUInt()) else -1
-                else -> if (dw == 0uL) 0 else -1
-            }
+            return if (xLen > 2) 1 else toRawULong(x).compareTo(dw)
         } else {
             throw IllegalArgumentException()
         }
     }
 
-    fun cmp(x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
-        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
-            check(xLen == 0 || x[xLen - 1] != 0)
-            check(yLen == 0 || y[yLen - 1] != 0)
-            if (xLen != yLen)
-                return if (xLen > yLen) 1 else -1
-            for (i in xLen - 1 downTo 0) {
-                val cmp = x[i].toUInt().compareTo(y[i].toUInt())
-                if (cmp != 0)
-                    return cmp
-            }
-            return 0
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-
-
-//    // returns a 32 bit value as a Long
-//    fun mutateDivideRemainder(x: IntArray, n: Int): Long =
-//        mutateDivideRemainder(x, x.size, n.toUInt()).toLong()
-
+    /**
+     * Divides the arbitrary-precision integer [x] by the 32-bit unsigned integer [w] in-place.
+     *
+     * Updates [x] with the quotient and returns the remainder.
+     *
+     * @param x the integer array (least significant limb first) to be divided; mutated with the quotient.
+     * @param w the 32-bit unsigned divisor.
+     * @return the remainder after division.
+     * @throws ArithmeticException if [w] is zero.
+     */
     fun mutateDivMod(x: IntArray, w: UInt): UInt =
         mutateDivMod(x, x.size, w)
 
+    /**
+     * Divides the first [xLen] limbs of [x] by the 32-bit unsigned integer [w] in-place.
+     *
+     * Updates [x] with the quotient and returns the remainder.
+     * Only the lower [xLen] limbs are considered; higher limbs, if any, are ignored.
+     *
+     * @param x the integer array (least significant limb first) to be divided; mutated with the quotient.
+     * @param xLen the number of significant limbs in [x] to include in the division; must be within `0..x.size`.
+     * @param w the 32-bit unsigned divisor.
+     * @return the remainder after division.
+     * @throws ArithmeticException if [w] is zero.
+     * @throws IllegalArgumentException if [xLen] is out of range.
+     */
     fun mutateDivMod(x: IntArray, xLen: Int, w: UInt): UInt {
         if (xLen >= 0 && xLen <= x.size) {
             if (w == 0u)
-                throw RuntimeException("DivByZero")
+                throw ArithmeticException("div by zero")
             val dw = w.toULong()
             var carry = 0uL
             for (i in xLen - 1 downTo 0) {
@@ -1460,6 +1493,17 @@ object Magia {
         }
     }
 
+    /**
+     * Returns a new integer array representing [x] divided by the 32-bit unsigned integer [w].
+     *
+     * This operation does not mutate the input [x]. The quotient is computed and returned as a
+     * new array. If the quotient is zero, a shared [ZERO] array is returned.
+     *
+     * @param x the integer array (least significant limb first) to be divided.
+     * @param w the 32-bit unsigned divisor.
+     * @return a new [IntArray] containing the quotient of the division.
+     * @throws ArithmeticException if [w] is zero.
+     */
     fun newDiv(x: IntArray, w: UInt): IntArray {
         val q = newCopyTrimmed(x)
         mutateDivMod(q, w)
@@ -1672,6 +1716,21 @@ object Magia {
         }
     }
 
+    /**
+     * Divides a multi-limb unsigned integer by a 64-bit divisor.
+     *
+     * This is a convenience wrapper around [knuthDivide], where the divisor
+     * `vDw` is expanded into two 32-bit limbs. The quotient and remainder
+     * are written to `q` and `r` if provided.
+     *
+     * @param q optional quotient array (length ≥ m − 1)
+     * @param r optional remainder array (length ≥ m + 1)
+     * @param u dividend limbs (least-significant limb first)
+     * @param vDw 64-bit unsigned divisor (high 32 bits must be non-zero)
+     * @param m number of significant limbs in `u` (≥ 2)
+     * @throws IllegalArgumentException if `m < 2` or the high 32 bits of `vDw` are zero
+     * @see knuthDivide
+     */
     fun knuthDivide64(
         q: IntArray?,
         r: IntArray?,
@@ -1682,94 +1741,8 @@ object Magia {
         if (m < 2 || (vDw shr 32) == 0uL)
             throw IllegalArgumentException()
 
-        // Step D1: Normalize
-        val un = newCopyWithExactLen(u, m + 1)
-        val shift = vDw.countLeadingZeroBits()
-        val vnDw = vDw shl shift
-        if (shift > 0)
-            mutateShiftLeft(un, shift)
-
-        knuthDivideNormalizedCore64(q, un, vnDw, m)
-
-        if (r != null) {
-            mutateShiftRight(un, un.size, shift)
-            copy(r, un)
-        }
-    }
-
-    fun knuthDivideNormalizedCore64(
-        q: IntArray?,
-        un: IntArray,
-        vnDw: ULong,
-        m: Int,
-    ) {
-        if (m < 2 || (vnDw shr 32) == 0uL)
-            throw IllegalArgumentException()
-
-        val vnHi = vnDw shr 32
-        val vnLo = vnDw and 0xFFFF_FFFFuL
-
-        // -- main loop --
-        for (j in m - 2 downTo 0) {
-
-            // estimate q̂ = (un[j+n]*B + un[j+n-1]) / vn[n-1]
-            val hi = dw32(un[j + 2])
-            val lo = dw32(un[j + 2 - 1])
-            //if (hi == 0L && lo < vn_1) // this would short-circuit,
-            //    continue               // but probability is astronomically small
-            val num = (hi shl 32) or lo
-            var qhat = num / vnHi
-            var rhat = num % vnHi
-
-            // correct estimate
-            while ((qhat shr 32) != 0uL ||
-                qhat * vnLo > (rhat shl 32) + dw32(un[j + 2 - 2])) {
-                qhat--
-                rhat += vnHi
-                if ((rhat shr 32) != 0uL)
-                    break
-            }
-
-
-            // multiply & subtract
-            var carry = 0uL
-            run {
-                val prod = qhat * vnLo
-                val prodHi = prod shr 32
-                val prodLo = prod and 0xFFFF_FFFFuL
-                val unIJ = dw32(un[j])
-                val t = unIJ - prodLo - carry
-                un[j] = t.toInt()
-                carry = prodHi - (t.toLong() shr 32).toULong() // yes, this is a signed shift right
-            }
-            run {
-                val prod = qhat * vnHi
-                val prodHi = prod shr 32
-                val prodLo = prod and 0xFFFF_FFFFuL
-                val unIJ = dw32(un[j + 1])
-                val t = unIJ - prodLo - carry
-                un[j + 1] = t.toInt()
-                carry = prodHi - (t.toLong() shr 32).toULong() // yes, this is a signed shift right
-            }
-            val t = dw32(un[j + 2]) - carry
-            un[j + 2] = t.toInt()
-            if (q != null)
-                q[j] = (qhat - (t shr 63)).toInt()
-            if (t.toLong() < 0L) {
-                var c2 = 0uL
-                run {
-                    val sum = dw32(un[j]) + vnLo + c2
-                    un[j] = sum.toInt()
-                    c2 = sum shr 32
-                }
-                run {
-                    val sum = dw32(un[j + 1]) + vnHi + c2
-                    un[j + 1] = sum.toInt()
-                    c2 = sum shr 32
-                }
-                un[j + 2] += c2.toInt()
-            }
-        }
+        val v = intArrayOf(vDw.toInt(), (vDw shr 32).toInt())
+        knuthDivide(q, r, u, v, m, 2)
     }
 
     /**
@@ -1804,6 +1777,14 @@ object Magia {
     fun toString(isNegative: Boolean, magia: IntArray): String =
         toString(isNegative, magia, nonZeroLimbLen(magia))
 
+    /**
+     * Converts a multi-limb integer to its decimal string representation.
+     *
+     * @param isNegative whether the resulting string should include a leading minus sign.
+     * @param x the array of 32-bit limbs representing the integer (least-significant limb first).
+     * @param xLen the number of significant limbs to consider from `x`.
+     * @return the decimal string representation of the integer value.
+     */
     fun toString(isNegative: Boolean, x: IntArray, xLen: Int): String {
         if (xLen >= 0 && xLen <= x.size) {
             val bitLen = bitLen(x, xLen)
@@ -1905,6 +1886,11 @@ object Magia {
         val h = (hi * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
         val i = hi - (h * 10L)
 
+        // Explicit bounds check to enable elimination of individual checks
+        val offMin = offMaxx - 9
+        if (offMin < 0 || offMaxx > utf8.size)
+            throw ArrayIndexOutOfBoundsException()
+
         utf8[offMaxx - 9] = (a.toInt() + '0'.code).toByte()
         utf8[offMaxx - 8] = (b.toInt() + '0'.code).toByte()
         utf8[offMaxx - 7] = (c.toInt() + '0'.code).toByte()
@@ -1974,8 +1960,37 @@ object Magia {
         return (newLen.toLong() shl 32) or (rem and 0xFFFF_FFFFL)
     }
 
+    /**
+     * Converts the given magnitude array to a positive hexadecimal string representation.
+     *
+     * This is equivalent to calling [toHexString] with `isNegative = false`.
+     * The returned string is prefixed with `"0x"`.
+     *
+     * @param magia the magnitude of the number, stored as an `IntArray` of 32-bit limbs.
+     * @return the hexadecimal string representation of the magnitude.
+     */
     fun toHexString(magia: IntArray) = toHexString(false, magia)
 
+    /**
+     * Converts the given magnitude array to a hexadecimal string representation.
+     *
+     * The resulting string is prefixed with `"0x"`, and a leading `'-'` sign is
+     * included if [isNegative] is `true`. For example, a positive value might render
+     * as `"0x1AF3"`, while a negative value would render as `"-0x1AF3"`.
+     *
+     * Each element of [magia] represents a 32-bit limb of the unsigned magnitude,
+     * with the least significant limb first (little-endian order).
+     *
+     * @param isNegative whether the number is negative.
+     * @param magia the magnitude of the number, stored as an `IntArray` of 32-bit limbs.
+     * @return the hexadecimal string representation, prefixed with `"0x"`.
+     *
+     * Example:
+     * ```
+     * toHexString(false, intArrayOf(0x89ABCDEFu.toInt(), 0x01234567)) == "0x123456789ABCDEF"
+     * toHexString(true,  intArrayOf(0x00000001)) == "-0x1"
+     * ```
+     */
     fun toHexString(isNegative: Boolean, magia: IntArray): String {
         val bitLen = bitLen(magia)
         var nybbleCount = (bitLen + 3) ushr 2
@@ -2002,6 +2017,31 @@ object Magia {
         return String(bytes)
     }
 
+
+    /**
+     * Factory methods for constructing a numeric value from Latin-1 (ASCII) encoded input.
+     *
+     * Each overload accepts a different input source — `String`, `CharSequence`, `CharArray`,
+     * or `ByteArray` — and creates a new instance by parsing its contents as an unsigned
+     * or signed decimal number (depending on the implementation of `from`).
+     *
+     * For efficiency, these overloads avoid intermediate string conversions by using
+     * specialized iterator types that stream the input data directly.
+     *
+     * @receiver none
+     * @param str the source string to parse.
+     * @param csq the character sequence to parse.
+     * @param chars the character array to parse.
+     * @param bytes the ASCII byte array to parse.
+     * @param off the starting offset of the input segment (inclusive).
+     * @param len the number of characters or bytes to read from the input.
+     * @return a parsed numeric value represented internally by this class.
+     *
+     * @see StringLatin1Iterator
+     * @see CharSequenceLatin1Iterator
+     * @see CharArrayLatin1Iterator
+     * @see ByteArrayLatin1Iterator
+     */
     fun from(str: String) = from(StringLatin1Iterator(str))
     fun from(str: String, off: Int, len: Int) = from(StringLatin1Iterator(str, off, len))
     fun from(csq: CharSequence) = from(CharSequenceLatin1Iterator(csq))
@@ -2017,25 +2057,60 @@ object Magia {
         from(ByteArrayLatin1Iterator(bytes, off, len))
 
 
-    fun newFromHex(str: String) = fromHex(StringLatin1Iterator(str, 0, str.length))
-    fun newFromHex(str: String, off: Int, len: Int) = fromHex(StringLatin1Iterator(str, off, len))
-    fun newFromHex(csq: CharSequence) = fromHex(CharSequenceLatin1Iterator(csq, 0, csq.length))
-    fun newFromHex(csq: CharSequence, off: Int, len: Int) =
+    /**
+     * Factory methods for constructing a numeric value from a hexadecimal representation
+     * in Latin-1 (ASCII) encoded input.
+     *
+     * Each overload accepts a different input source — `String`, `CharSequence`,
+     * `CharArray`, or `ByteArray` — and parses its contents as a hexadecimal number.
+     * The input may include digits '0'–'9' and letters 'A'–'F' or 'a'–'f'.
+     *
+     * These overloads use specialized iterator types to stream input efficiently,
+     * avoiding intermediate string allocations.
+     *
+     * @receiver none
+     * @param str the source string containing hexadecimal digits.
+     * @param csq the character sequence containing hexadecimal digits.
+     * @param chars the character array containing hexadecimal digits.
+     * @param bytes the ASCII byte array containing hexadecimal digits.
+     * @param off the starting offset of the input segment (inclusive).
+     * @param len the number of characters or bytes to read from the input.
+     * @return a numeric value parsed from the hexadecimal input.
+     *
+     * @see StringLatin1Iterator
+     * @see CharSequenceLatin1Iterator
+     * @see CharArrayLatin1Iterator
+     * @see ByteArrayLatin1Iterator
+     */
+    fun fromHex(str: String) = fromHex(StringLatin1Iterator(str, 0, str.length))
+    fun fromHex(str: String, off: Int, len: Int) = fromHex(StringLatin1Iterator(str, off, len))
+    fun fromHex(csq: CharSequence) = fromHex(CharSequenceLatin1Iterator(csq, 0, csq.length))
+    fun fromHex(csq: CharSequence, off: Int, len: Int) =
         fromHex(CharSequenceLatin1Iterator(csq, off, len))
 
-    fun newFromHex(chars: CharArray) = fromHex(CharArrayLatin1Iterator(chars, 0, chars.size))
-    fun newFromHex(chars: CharArray, off: Int, len: Int) =
+    fun fromHex(chars: CharArray) = fromHex(CharArrayLatin1Iterator(chars, 0, chars.size))
+    fun fromHex(chars: CharArray, off: Int, len: Int) =
         fromHex(CharArrayLatin1Iterator(chars, off, len))
-
-    fun newFromAsciiHex(bytes: ByteArray) =
+    fun fromAsciiHex(bytes: ByteArray) =
         fromHex(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
-
-    fun newFromAsciiHex(bytes: ByteArray, off: Int, len: Int) =
+    fun fromAsciiHex(bytes: ByteArray, off: Int, len: Int) =
         fromHex(ByteArrayLatin1Iterator(bytes, off, len))
 
     /**
-     * Predicate to determine if a char is valid when parsing
-     * a hex value in text format.
+     * Determines whether a character is valid in a textual hexadecimal representation.
+     *
+     * Valid characters include:
+     * - Digits '0'–'9'
+     * - Letters 'A'–'F' and 'a'–'f'
+     * - Underscore '_'
+     *
+     * Underscores are commonly allowed as digit separators in numeric literals.
+     *
+     * This function uses a bitmask to efficiently check if the character is one
+     * of the allowed hexadecimal characters or an underscore.
+     *
+     * @param c the character to test
+     * @return `true` if [c] is a valid hexadecimal digit or underscore, `false` otherwise
      */
     private inline fun isHexAsciiCharOrUnderscore(c: Char): Boolean {
         // if a bit is turned on, then it is a valid char in
@@ -2128,6 +2203,21 @@ object Magia {
         return magia
     }
 
+    /**
+     * Converts an arbitrary-precision integer into a binary representation as a [ByteArray].
+     *
+     * The integer is represented by an array of 32-bit limbs, optionally in two's-complement form.
+     *
+     * @param sign `true` if the number is negative, `false` otherwise.
+     * @param x the array of 32-bit limbs representing the integer, least-significant limb first.
+     * @param xLen the number of significant limbs to consider; must be normalized (trailing zeros ignored).
+     * @param isTwosComplement if `true`, the number is converted to two's-complement form.
+     *                        Otherwise, magnitude-only representation is used.
+     * @param isBigEndian if `true`, the most significant byte is first in the output array;
+     *                    if `false`, least significant byte is first.
+     * @return a [ByteArray] containing the binary representation of the integer.
+     * @throws IllegalArgumentException if [xLen] is out of bounds (negative or greater than x.size).
+     */
     fun toBinaryByteArray(sign: Boolean, x: IntArray, xLen: Int, isTwosComplement: Boolean, isBigEndian: Boolean): ByteArray {
         if (xLen >= 0 && xLen <= x.size) {
             val bitLen =
@@ -2141,10 +2231,48 @@ object Magia {
         }
     }
 
+    /**
+     * Converts an arbitrary-precision integer into a binary representation within a [ByteArray],
+     * automatically considering only the significant limbs (ignoring trailing zero limbs).
+     *
+     * This is a convenience wrapper around [toBinaryBytes] that computes [xLen] via [nonZeroLimbLen].
+     *
+     * @param x the array of 32-bit limbs representing the integer, least-significant limb first.
+     * @param isNegative whether the integer should be treated as negative (for two's-complement output).
+     * @param isBigEndian if `true`, the most significant byte is stored first; if `false`, the least significant byte is first.
+     * @param bytes the destination byte array.
+     * @param off the starting offset in [bytes] where output begins.
+     * @param requestedLen the number of bytes to write; if non-positive, the minimal number of bytes
+     *                     required to represent the value is used.
+     * @return the actual number of bytes written.
+     * @throws IllegalArgumentException if [off] or [requestedLen] exceed array bounds.
+     */
     internal fun toBinaryBytes(x: IntArray, isNegative: Boolean, isBigEndian: Boolean,
                                bytes: ByteArray, off: Int, requestedLen: Int): Int =
         toBinaryBytes(x, nonZeroLimbLen(x), isNegative, isBigEndian, bytes, off, requestedLen)
 
+    /**
+     * Converts an arbitrary-precision integer into a binary representation within a given [ByteArray].
+     *
+     * The integer is represented by an array of 32-bit limbs. This function writes the
+     * binary bytes into the provided [bytes] array starting at offset [off], up to [requestedLen] bytes.
+     * It supports both big-endian and little-endian byte ordering, as well as two's-complement
+     * representation for negative numbers.
+     *
+     * @param x the array of 32-bit limbs representing the integer, least-significant limb first.
+     * @param xLen the number of significant limbs in [x] to process.
+     * @param isNegative whether the integer should be treated as negative (for two's-complement output).
+     * @param isBigEndian if `true`, the most significant byte is stored first; if `false`, the least significant byte is first.
+     * @param bytes the destination byte array.
+     * @param off the starting offset in [bytes] where output begins.
+     * @param requestedLen the number of bytes to write; if non-positive, the minimal number of bytes
+     *                     required to represent the value is used.
+     * @return the actual number of bytes written.
+     * @throws IllegalArgumentException if [xLen] or [off] is out of bounds, or if [requestedLen] exceeds the available space.
+     *
+     * @implNote This function manually handles byte ordering and sign extension to allow
+     * efficient serialization of large integers without additional temporary arrays.
+     */
     internal fun toBinaryBytes(x: IntArray, xLen: Int, isNegative: Boolean, isBigEndian: Boolean,
                                bytes: ByteArray, off: Int, requestedLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size &&
@@ -2214,9 +2342,21 @@ object Magia {
         }
     }
 
-
     /**
-     * This layer works with magnitudes, so any optional leading sign char is ignored.
+     * Parses an unsigned decimal integer from a [Latin1Iterator] into a new [IntArray] representing its magnitude.
+     *
+     * This layer ignores any optional leading sign characters ('+' or '-') and processes only the magnitude.
+     * Leading zeros and underscores ('_') are handled according to numeric literal conventions:
+     * - Leading zeros are skipped.
+     * - Underscores are ignored between digits.
+     * - Hexadecimal input prefixed with "0x" or "0X" is delegated to [fromHex].
+     *
+     * The function accumulates decimal digits in blocks of 9 for efficiency, using
+     * [mutateFma] to multiply and add into the resulting array.
+     *
+     * @param src the input iterator providing characters in Latin-1 encoding.
+     * @return a new [IntArray] representing the magnitude of the parsed integer.
+     * @throws IllegalArgumentException if the input does not contain a valid decimal integer.
      */
     fun from(src: Latin1Iterator): IntArray {
         invalid_syntax@
@@ -2324,11 +2464,11 @@ object Magia {
                 var n = 0
                 do {
                     ch = src.prevChar()
-                    val nybble = ch.code - when {
-                        ch <= '9' -> '0'.code
-                        ch <= 'F' -> 'A'.code - 10
-                        ch >= 'a' -> 'a'.code - 10
-                        ch == '_' -> continue
+                    val nybble = when (ch) {
+                        in '0'..'9' -> ch - '0'
+                        in 'A'..'F' -> ch - 'A' + 10
+                        in 'a'..'f' -> ch - 'a' + 10
+                        '_' -> continue
                         else -> throw IllegalStateException()
                     }
                     w = w or (nybble shl (n shl 2))

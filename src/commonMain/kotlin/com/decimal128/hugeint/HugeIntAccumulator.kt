@@ -624,7 +624,7 @@ class HugeIntAccumulator private constructor (
             limbLen == 0 -> { set(ySign, y, yLen); return }
             this.sign == ySign -> { mutateAddMagImpl(y, yLen); return }
         }
-        val cmp = Magia.cmp(magia, limbLen, y, yLen)
+        val cmp = Magia.compare(magia, limbLen, y, yLen)
         when {
             cmp > 0 -> {
                 Magia.mutateSub(magia, limbLen, y, yLen)
