@@ -2,7 +2,6 @@
 
 package com.decimal128.hugeint
 
-import com.decimal128.decimal.unsignedCmp
 import com.decimal128.decimal.unsignedMulHi
 import kotlin.math.min
 import kotlin.math.max
@@ -78,7 +77,34 @@ object Magia {
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
     private inline fun dw32(n: Int) = n.toUInt().toULong()
 
-    /*
+    /**
+     * Converts the first limb of [x] into a single [UInt] value.
+     *
+     * - If [xLen] is 0, returns 0.
+     * - Otherwise, returns the value of the first limb ([x[0]]) as an unsigned integer.
+     *
+     * Ignores any limbs beyond the first.
+     *
+     * @param x the array of 32-bit limbs representing the magnitude (normalized up to [xLen]).
+     * @param xLen the number of significant limbs to consider.
+     * @return the unsigned 32-bit value of the first limb, or 0 if [xLen] is 0.
+     */
+    fun toRawUInt(x: IntArray, xLen: Int): UInt = if (xLen == 0) 0u else x[0].toUInt()
+
+    /**
+     * Converts the first one or two limbs of [x] into a single [ULong] value.
+     *
+     * - If [xLen] is 0, returns 0.
+     * - If [xLen] is 1, returns the value of the first limb.
+     * - If [xLen] is 2 or more, returns a 64-bit value constructed from the first two limbs,
+     *   where [x[0]] is the low 32 bits and [x[1]] is the high 32 bits.
+     *
+     * Does **not** check for additional limbs beyond the first two; higher limbs are ignored.
+     *
+     * @param x the array of 32-bit limbs representing the magnitude (normalized up to [xLen]).
+     * @param xLen the number of significant limbs to consider (0, 1, or 2+).
+     * @return the combined unsigned 64-bit value of the first one or two limbs.
+     */
     fun toRawULong(x: IntArray, xLen: Int): ULong {
         return when (xLen) {
             0 -> 0uL
@@ -87,10 +113,6 @@ object Magia {
         }
     }
 
-    fun toRawInt(x: IntArray, xLen: Int): UInt {
-        return if (xLen == 0) 0u else x[0].toUInt()
-    }
-    */
 
     /**
      * Returns a new limb array representing the given [ULong] value.
@@ -592,7 +614,7 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0 || w == 0u)
             return ZERO
-        val xBitLen = bitLenFromLimbLen(x, xLen)
+        val xBitLen = bitLengthFromNormalized(x, xLen)
         val pBitLen = xBitLen + 32 - w.countLeadingZeroBits()
         val p = newWithBitLen(pBitLen)
         mul(p, x, xLen, w)
@@ -638,7 +660,7 @@ object Magia {
         if ((dw shr 32) == 0uL)
             return newMul(x, dw.toUInt())
         val xLen = nonZeroLimbLen(x)
-        val xBitLen = bitLenFromLimbLen(x, xLen)
+        val xBitLen = bitLengthFromNormalized(x, xLen)
         if (xBitLen == 0)
             return ZERO
         val newBitLen = bitLen(x) + (64 - dw.countLeadingZeroBits())
@@ -769,7 +791,7 @@ object Magia {
         val xLen = nonZeroLimbLen(x)
         if (xLen == 0)
             return ZERO
-        val bitLen = bitLenFromLimbLen(x, xLen)
+        val bitLen = bitLengthFromNormalized(x, xLen)
         val sqrLimbLen = (2 * bitLen + 0x1F) shr 5
         val p = IntArray(sqrLimbLen)
         sqr(p, x, xLen)
@@ -1012,10 +1034,11 @@ object Magia {
             var bitSeen = false
             for (i in 0..<xLen) {
                 val w = x[i]
-                if (w == 0) continue
-                if ((w and (w - 1)) != 0) return false
-                if (bitSeen) return false
-                bitSeen = true
+                if (w != 0) {
+                    if (bitSeen || (w and (w - 1)) != 0)
+                        return false
+                    bitSeen = true
+                }
             }
             return bitSeen
         } else {
@@ -1024,8 +1047,29 @@ object Magia {
     }
 
 
+    /**
+     * Returns the bit length of the value represented by the entire [x] array.
+     *
+     * The bit length is defined as the index (1-based) of the most significant set bit
+     * in the integer. If all limbs are zero, the result is 0.
+     *
+     * This is equivalent to calling [bitLen] with [xLen] equal to [x.size].
+     *
+     * @param x the array of limbs, in little-endian order.
+     * @return the number of bits required to represent the value.
+     */
     fun bitLen(x: IntArray): Int = bitLen(x, x.size)
 
+    /**
+     * Returns the bit length of the value represented by the first [xLen] limbs of [x].
+     *
+     * Scans from the most significant limb to find the highest set bit.
+     * Returns 0 if all limbs are zero.
+     *
+     * @param x the limb array representing the integer.
+     * @param xLen the number of significant limbs to examine.
+     * @throws IllegalArgumentException if [xLen] is out of range.
+     */
     fun bitLen(x: IntArray, xLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size) {
             for (i in xLen - 1 downTo 0)
@@ -1037,15 +1081,63 @@ object Magia {
         }
     }
 
+    /**
+     * Returns the number of 32-bit limbs required to represent a value with the given [bitLen].
+     *
+     * Equivalent to ceiling(bitLen / 32).
+     *
+     * @param bitLen the number of significant bits.
+     * @return the minimum number of 32-bit limbs needed to hold that many bits.
+     */
     inline fun limbLenFromBitLen(bitLen: Int): Int = (bitLen + 0x1F) ushr 5
 
-    inline fun bitLenFromLimbLen(x: IntArray, xLen: Int) =
-        if (xLen == 0) 0 else 32 - x[xLen - 1].countLeadingZeroBits() + ((xLen - 1) shl 5)
+    /**
+     * Fast path to return the bit length of [x] with a normalized [xLen].
+     *
+     * The parameter [xLen] _must_ represent a normalized length — that is,
+     * if [xLen] > 0, then the most significant limb at index [xLen - 1]
+     * must be non-zero. The result is the number of bits required to
+     * represent the value contained in the lower [xLen] limbs of [x].
+     *
+     * @param x the array of 32-bit limbs.
+     * @param xLen the number of significant limbs; must be normalized.
+     * @return the bit length of the value represented by [x].
+     */
+    inline fun bitLengthFromNormalized(x: IntArray, xLen: Int): Int =
+        if (xLen != 0) {
+            check(xLen >= 0 && xLen <= x.size && x[xLen - 1] != 0)
+            32 - x[xLen - 1].countLeadingZeroBits() + ((xLen - 1) shl 5)
+        } else {
+            0
+        }
 
-
-
+    /**
+     * Overload of [bitLengthBigIntegerStyle] that considers all limbs in [x].
+     *
+     * Equivalent to calling [bitLengthBigIntegerStyle] with `xLen = x.size`.
+     *
+     * @param sign `true` if the value is negative, `false` otherwise.
+     * @param x the array of 32-bit limbs representing the magnitude.
+     * @return the bit length following BigInteger’s definition.
+     */
     fun bitLengthBigIntegerStyle(sign: Boolean, x: IntArray): Int = bitLengthBigIntegerStyle(sign, x, x.size)
 
+    /**
+     * Returns the bit length using Java's BigInteger-style semantics.
+     *
+     * This represents the number of bits required to encode the value in
+     * two's-complement form, excluding the sign bit.
+     *
+     * For positive values, this is identical to [bitLen(x, xLen)].
+     * For negative values, the result is one less if the magnitude is an
+     * exact power of two (for example, -128 has a bit length of 7 not 8,
+     * and -1 has a bit length of 0).
+     *
+     * @param sign `true` if the value is negative, `false` otherwise.
+     * @param x the array of 32-bit limbs representing the magnitude.
+     * @param xLen the number of significant limbs to consider; must be normalized.
+     * @return the bit length following BigInteger’s definition.
+     */
     fun bitLengthBigIntegerStyle(sign: Boolean, x: IntArray, xLen: Int): Int {
         if (xLen >= 0 && xLen <= x.size) {
             val bitLen = bitLen(x, xLen)
@@ -1057,15 +1149,47 @@ object Magia {
         }
     }
 
-
+    /**
+     * Returns a new normalized array representing the bitwise AND of [x] and [y].
+     *
+     * The result contains only the significant limbs (no trailing zeros). The last limb
+     * is determined by the highest index where `x[i] and y[i]` is non-zero. If the
+     * result is entirely zero, [ZERO] is returned.
+     *
+     * @param x the first operand, represented as an array of 32-bit limbs.
+     * @param y the second operand, represented as an array of 32-bit limbs.
+     * @return a new [IntArray] containing the normalized bitwise AND result,
+     *         or [ZERO] if the result is zero.
+     */
     fun newAnd(x: IntArray, y: IntArray): IntArray {
-        val minLen = min(nonZeroLimbLen(x), nonZeroLimbLen(y))
-        val z = IntArray(minLen)
-        for (i in z.indices)
-            z[i] = x[i] and y[i]
-        return if (nonZeroLimbLen(z) > 0) z else ZERO
+        var iLast = min(x.size, y.size)
+        do {
+            --iLast
+            if (iLast < 0)
+                return ZERO
+        } while ((x[iLast] and y[iLast]) == 0)
+        val z = IntArray(iLast + 1)
+        while (iLast >= 0) {
+            z[iLast] = x[iLast] and y[iLast]
+            --iLast
+        }
+        return z
     }
 
+    /**
+     * Returns a new normalized array representing the bitwise OR of [x] and [y].
+     *
+     * The resulting array contains only the significant limbs (no trailing zeros).
+     * If the result is entirely zero, [ZERO] is returned.
+     *
+     * The operation first computes the OR for the overlapping portion of [x] and [y],
+     * then copies any remaining limbs from the longer array.
+     *
+     * @param x the first operand, represented as an array of 32-bit limbs.
+     * @param y the second operand, represented as an array of 32-bit limbs.
+     * @return a new [IntArray] containing the normalized bitwise OR result,
+     *         or [ZERO] if the result is zero.
+     */
     fun newOr(x: IntArray, y: IntArray): IntArray {
         val xLen = nonZeroLimbLen(x)
         val yLen = nonZeroLimbLen(y)
@@ -1079,17 +1203,24 @@ object Magia {
             z[i] = x[i] or y[i]
             ++i
         }
-        while (i < xLen) {
-            z[i] = x[i]
-            ++i
-        }
-        while (i < yLen) {
-            z[i] = y[i]
-            ++i
+        when {
+            i < xLen -> System.arraycopy(x, i, z, i, xLen - i)
+            i < yLen -> System.arraycopy(y, i, z, i, yLen - i)
         }
         return z
     }
 
+    /**
+     * Returns a new IntArray representing the bitwise XOR of [x] and [y].
+     *
+     * The operation is performed limb-wise up to the lengths of the inputs' non-zero limbs.
+     * Any extra limbs from the longer array are copied as-is.
+     * The resulting array may contain trailing zero limbs and is **not guaranteed to be normalized**.
+     *
+     * @param x the first operand array of 32-bit limbs.
+     * @param y the second operand array of 32-bit limbs.
+     * @return an IntArray containing the XOR of [x] and [y], possibly with trailing zero limbs.
+     */
     fun newXor(x: IntArray, y: IntArray): IntArray {
         val xLen = nonZeroLimbLen(x)
         val yLen = nonZeroLimbLen(y)
@@ -1098,20 +1229,20 @@ object Magia {
         if (maxLen == 0)
             return ZERO
         val z = IntArray(maxLen)
+        var nonZeroAccumulator = 0
         var i = 0
         while (i < minLen) {
-            z[i] = x[i] xor y[i]
+            val t = x[i] xor y[i]
+            z[i] = t
+            nonZeroAccumulator = nonZeroAccumulator or t
             ++i
         }
-        while (i < xLen) {
-            z[i] = x[i]
-            ++i
+        when {
+            i < xLen -> System.arraycopy(x, i, z, i, xLen - i)
+            i < yLen -> System.arraycopy(y, i, z, i, yLen - i)
+            else -> if (nonZeroAccumulator == 0) return ZERO
         }
-        while (i < yLen) {
-            z[i] = y[i]
-            ++i
-        }
-        return if (nonZeroLimbLen(z) > 0) z else ZERO
+        return z
     }
 
     /**
@@ -1130,8 +1261,26 @@ object Magia {
         throw IllegalArgumentException()
     }
 
+    /**
+     * Tests whether the bit at the specified [bitIndex] is set in the given unsigned integer.
+     *
+     * This is a convenience overload that considers all limbs in [x].
+     *
+     * @param x the array of 32-bit limbs representing the integer.
+     * @param bitIndex the zero-based index of the bit to test (0 is least significant bit).
+     * @return `true` if the specified bit is set, `false` otherwise.
+     */
     fun testBit(x: IntArray, bitIndex: Int): Boolean = testBit(x, x.size, bitIndex)
 
+    /**
+     * Tests whether the bit at the specified [bitIndex] is set in the given unsigned integer.
+     *
+     * @param x the array of 32-bit limbs representing the integer.
+     * @param xLen the number of significant limbs to consider; must be normalized.
+     * @param bitIndex the zero-based index of the bit to test (0 is least significant bit).
+     * @return `true` if the specified bit is set, `false` otherwise.
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */
     fun testBit(x: IntArray, xLen: Int, bitIndex: Int): Boolean {
         if (xLen >= 0 && xLen <= x.size) {
             val wordIndex = bitIndex ushr 5
@@ -1145,9 +1294,30 @@ object Magia {
         }
     }
 
+    /**
+     * Checks if any of the lower [bitCount] bits in [x] are set.
+     *
+     * Considers all limbs of [x]. Efficiently stops scanning as soon as a set bit is found.
+     *
+     * @param x the array of 32-bit limbs representing the integer.
+     * @param bitCount the number of least-significant bits to check.
+     * @return `true` if at least one of the lower [bitCount] bits is set, `false` otherwise.
+     */
     fun testAnyBitInLowerN(x: IntArray, bitCount: Int): Boolean =
         testAnyBitInLowerN(x, x.size, bitCount)
 
+    /**
+     * Checks if any of the lower [bitCount] bits in [x] are set.
+     *
+     * Only the first [xLen] limbs of [x] are considered.
+     * Scans efficiently, stopping as soon as a set bit is found.
+     *
+     * @param x the array of 32-bit limbs representing the integer.
+     * @param xLen the number of significant limbs to consider; must be within `0..x.size`.
+     * @param bitCount the number of lower bits to check (starting from the least significant bit).
+     * @return `true` if at least one of the lower [bitCount] bits is set, `false` otherwise.
+     * @throws IllegalArgumentException if [xLen] is out of range for [x].
+     */
     fun testAnyBitInLowerN(x: IntArray, xLen: Int, bitCount: Int): Boolean {
         if (xLen >= 0 && xLen <= x.size) {
             val lastBitIndex = bitCount - 1
@@ -1167,43 +1337,57 @@ object Magia {
         }
     }
 
-    fun EQ(x: IntArray, y: Int): Boolean {
-        if (x.isNotEmpty()) {
-            if (x[0] == y) {
-                for (i in 1..x.lastIndex)
-                    if (x[i] != 0)
-                        return false
-                return true
-            }
-        }
-        return false
-    }
+    /**
+     * Checks whether the unsigned integer represented by [x] is equal to the single 32-bit value [y].
+     *
+     * Only the significant limbs of [x] are considered. Trailing zero limbs in [x] are ignored.
+     *
+     * @param x the array of 32-bit limbs representing the integer.
+     * @param y the 32-bit integer to compare against.
+     * @return `true` if [x] equals [y], `false` otherwise.
+     */
+    fun EQ(x: IntArray, y: Int) = nonZeroLimbLen(x) == 1 && x[0] == y
 
+    /**
+     * Checks whether the unsigned integers represented by [x] and [y] are equal.
+     *
+     * Comparison is based on the significant limbs of each array, ignoring any trailing zero limbs.
+     *
+     * @param x the first array of 32-bit limbs representing an unsigned integer.
+     * @param y the second array of 32-bit limbs representing an unsigned integer.
+     * @return `true` if [x] and [y] represent the same value, `false` otherwise.
+     */
     fun EQ(x: IntArray, y: IntArray): Boolean = compare(x, y) == 0
 
-    fun compare(x: IntArray, y: IntArray): Int =
-        compare(x, nonZeroLimbLen(x), y, nonZeroLimbLen(y))
-
-    fun compare(x: IntArray, xLen: Int, y: IntArray, yLen: Int): Int {
-        if (xLen >= 0 && xLen <= x.size && yLen >= 0 && yLen <= y.size) {
-            val minSize = min(xLen, yLen)
-            for (i in xLen - 1 downTo minSize)
-                if (x[i] != 0)
-                    return 1
-            for (i in yLen - 1 downTo minSize)
-                if (y[i] != 0)
-                    return -1
-            for (i in minSize - 1 downTo 0) {
-                val cmp = unsignedCmp(x[i], y[i])
-                if (cmp != 0)
-                    return cmp
-            }
-            return 0
-        } else {
-            throw IllegalArgumentException()
+    fun compare(x: IntArray, y: IntArray): Int {
+        val minLen = min(x.size, y.size)
+        for (i in x.size - 1 downTo minLen)
+            if (x[i] != 0)
+                return 1
+        for (i in y.size - 1 downTo minLen)
+            if (y[i] != 0)
+                return -1
+        for (i in minLen - 1 downTo 0) {
+            if (x[i] != y[i])
+                return x[i].toUInt().compareTo(y[i].toUInt())
         }
+        return 0
     }
 
+    /**
+     * Compares a multi-limb unsigned integer [x] with a single-limb unsigned value [w].
+     *
+     * - Returns `-1` if `x < w`
+     * - Returns `0`  if `x == w`
+     * - Returns `1`  if `x > w`
+     *
+     * The comparison treats [x] as an unsigned integer represented by its
+     * 32-bit limbs, with the least significant limb at index 0.
+     *
+     * @param x the multi-limb unsigned integer to compare.
+     * @param w the single-limb unsigned value to compare against.
+     * @return `-1`, `0`, or `1` following the standard comparison semantics.
+     */
     fun compare(x: IntArray, w: UInt): Int {
         val limbLen = nonZeroLimbLen(x)
         return when {
