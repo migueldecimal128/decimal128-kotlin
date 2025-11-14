@@ -110,7 +110,7 @@ class MutDec() : C256() {
                             // when x is zero, x + x and x − (−x) have the sign of x.
                             z.setZero()
                             z.sign = xSign
-                            z.qExp = Math.min(qX, qY)
+                            z.qExp = min(qX, qY)
                             return z
                         }
                         xSign == ySign -> {
@@ -993,7 +993,7 @@ class MutDec() : C256() {
 
     private /*inline*/ fun toDecimalPointString() : String {
         val digitsRightOfDecimal = -qExp
-        val leadingZeroCount = Math.max(1 + digitsRightOfDecimal - digitLen, 0)
+        val leadingZeroCount = max(1 + digitsRightOfDecimal - digitLen, 0)
         val signLen = if (sign) 1 else 0
         val decimalPointLen = 1
         val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
@@ -1018,10 +1018,10 @@ class MutDec() : C256() {
         val eExp = sciExp()
         val signLen = if (sign) 1 else 0
         val decimalPointLen = if (digitLen > 1) 1 else 0
-        val printedDigitLen = Math.max(digitLen, 1)
+        val printedDigitLen = max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = Math.max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
         var i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
@@ -1044,11 +1044,11 @@ class MutDec() : C256() {
         val adjustedExp = eExp - expAdjustment
         val signLen = if (sign) 1 else 0
         val decimalPointLen = if (digitLen > 1) 1 else 0
-        val printedDigitLen = Math.max(digitLen, 1)
+        val printedDigitLen = max(digitLen, 1)
         val additionalLeftOfPointZeroCount = max(0, 1 + expAdjustment - digitLen)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = Math.max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
                 printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
@@ -1115,10 +1115,10 @@ class MutDec() : C256() {
 
     fun calcDebugPrintLength(): Int {
         val signLen = if (sign) 1 else 0
-        val coeffLen = Math.max(digitLen, 1)
+        val coeffLen = max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (qExp < 0) 1 else 0
-        val expDigitLen = Math.max(U256Pow10.calcDigitLen64(Math.abs(qExp).toLong()), 1)
+        val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(qExp).toLong()), 1)
         return signLen + coeffLen + expELen + expSignLen + expDigitLen
     }
 

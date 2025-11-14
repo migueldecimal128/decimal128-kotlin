@@ -51,18 +51,14 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * This ensures that identity comparisons and optimizations relying on
          * reference equality (`===`) for zero values are valid.
          */
-        @JvmStatic
-        val ZERO = HugeInt(false, Magia.ZERO)
+                val ZERO = HugeInt(false, Magia.ZERO)
 
         private val MAGIA_ONE = intArrayOf(1)
-        @JvmStatic
-        val ONE = HugeInt(false, MAGIA_ONE)
+                val ONE = HugeInt(false, MAGIA_ONE)
 
-        @JvmStatic
-        val TEN = HugeInt(false, intArrayOf(10))
+                val TEN = HugeInt(false, intArrayOf(10))
 
-        @JvmStatic
-        val NEG_ONE = HugeInt(true, MAGIA_ONE) // share magia .. but no mutation allowed
+                val NEG_ONE = HugeInt(true, MAGIA_ONE) // share magia .. but no mutation allowed
 
         private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
@@ -76,8 +72,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param n the signed 32-bit integer to convert.
          * @return the corresponding [HugeInt] representation.
          */
-        @JvmStatic
-        fun from(n: Int): HugeInt = when {
+                fun from(n: Int): HugeInt = when {
             n > 0 -> HugeInt(false, intArrayOf(n))
             n < 0 -> HugeInt(true, intArrayOf(-n))
             else -> ZERO
@@ -90,8 +85,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param n the unsigned 32-bit value (stored in an [Int]) to convert.
          * @return a non-negative [HugeInt] equivalent to `n.toUInt()`.
          */
-        @JvmStatic
-        fun fromUnsigned(n: Int) = from(n.toUInt())
+                fun fromUnsigned(n: Int) = from(n.toUInt())
 
         /**
          * Converts a 32-bit unsigned [UInt] into a non-negative [HugeInt].
@@ -102,8 +96,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param w the unsigned integer to convert.
          * @return the corresponding non-negative [HugeInt].
          */
-        @JvmStatic
-        fun from(w: UInt) = if (w != 0u) HugeInt(false, intArrayOf(w.toInt())) else ZERO
+                fun from(w: UInt) = if (w != 0u) HugeInt(false, intArrayOf(w.toInt())) else ZERO
 
         /**
          * Converts a 64-bit signed [Long] into a signed [HugeInt].
@@ -115,8 +108,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param l the signed 64-bit integer to convert.
          * @return the corresponding [HugeInt] representation.
          */
-        @JvmStatic
-        fun from(l: Long) = when {
+                fun from(l: Long) = when {
             (l > 0L) && (l shr 32) == 0L -> HugeInt(false, intArrayOf(l.toInt()))
             l > 0L -> HugeInt(false, intArrayOf(l.toInt(), (l ushr 32).toInt()))
             l < 0L && (l shr 32) == -1L -> HugeInt(true, intArrayOf(-l.toInt()))
@@ -131,8 +123,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param l the unsigned 64-bit value (stored in a [Long]) to convert.
          * @return a non-negative [HugeInt] equivalent to `l.toULong()`.
          */
-        @JvmStatic
-        fun fromUnsigned(l: Long) = from(l.toULong())
+                fun fromUnsigned(l: Long) = from(l.toULong())
 
         /**
          * Converts a 64-bit unsigned [ULong] into a non-negative [HugeInt].
@@ -143,8 +134,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param dw the unsigned long integer to convert.
          * @return the corresponding non-negative [HugeInt].
          */
-        @JvmStatic
-        fun from(dw: ULong) = when {
+                fun from(dw: ULong) = when {
             dw == 0uL -> ZERO
             (dw shr 32) == 0uL -> HugeInt(false, intArrayOf(dw.toInt()))
             else -> HugeInt(false, intArrayOf(dw.toInt(), (dw shr 32).toInt()))
@@ -167,8 +157,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt].
          * @throws IllegalArgumentException if the string is empty or contains invalid characters.
          */
-        @JvmStatic
-        fun from(str: String) =
+                fun from(str: String) =
             from(StringLatin1Iterator(str, 0, str.length))
 
         /**
@@ -186,8 +175,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt].
          * @throws IllegalArgumentException if the range is empty, invalid, or contains invalid characters.
          */
-        @JvmStatic
-        fun from(str: String, offset: Int, length: Int) =
+                fun from(str: String, offset: Int, length: Int) =
             from(StringLatin1Iterator(str, offset, length))
 
         /**
@@ -203,8 +191,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt].
          * @throws IllegalArgumentException if the input is empty or contains invalid characters.
          */
-        @JvmStatic
-        fun from(csq: CharSequence) =
+                fun from(csq: CharSequence) =
             from(CharSequenceLatin1Iterator(csq, 0, csq.length))
 
         /**
@@ -272,8 +259,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt].
          * @throws IllegalArgumentException if the array is empty or contains non-ASCII bytes.
          */
-        @JvmStatic
-        fun fromAscii(bytes: ByteArray) =
+                fun fromAscii(bytes: ByteArray) =
             from(ByteArrayLatin1Iterator(bytes, 0, bytes.size))
 
         /**
@@ -292,8 +278,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt].
          * @throws IllegalArgumentException if the specified range is invalid or contains non-ASCII bytes.
          */
-        @JvmStatic
-        fun fromAscii(bytes: ByteArray, offset: Int, length: Int) =
+                fun fromAscii(bytes: ByteArray, offset: Int, length: Int) =
             from(ByteArrayLatin1Iterator(bytes, offset, length))
 
         /**
@@ -309,8 +294,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the string is empty or contains invalid characters
          */
-        @JvmStatic
-        fun fromHex(str: String) = fromHex(str, 0, str.length)
+                fun fromHex(str: String) = fromHex(str, 0, str.length)
 
 
         /**
@@ -328,8 +312,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the range is empty, invalid, or contains invalid characters
          */
-        @JvmStatic
-        fun fromHex(str: String, offset: Int, length: Int) =
+                fun fromHex(str: String, offset: Int, length: Int) =
             fromHex(StringLatin1Iterator(str, offset, length))
 
 
@@ -342,8 +325,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the sequence is empty or contains invalid characters
          */
-        @JvmStatic
-        fun fromHex(csq: CharSequence) = fromHex(csq, 0, csq.length)
+                fun fromHex(csq: CharSequence) = fromHex(csq, 0, csq.length)
 
 
         /**
@@ -355,8 +337,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the range is empty, invalid, or contains invalid characters
          */
-        @JvmStatic
-        fun fromHex(csq: CharSequence, offset: Int, length: Int) =
+                fun fromHex(csq: CharSequence, offset: Int, length: Int) =
             fromHex(CharSequenceLatin1Iterator(csq, offset, length))
 
 
@@ -369,8 +350,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the array is empty or contains invalid characters
          */
-        @JvmStatic
-        fun fromHex(chars: CharArray) = fromHex(chars, 0, chars.size)
+                fun fromHex(chars: CharArray) = fromHex(chars, 0, chars.size)
 
 
         /**
@@ -382,8 +362,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the range is empty, invalid, or contains invalid characters
          */
-        @JvmStatic
-        fun fromHex(chars: CharArray, offset: Int, length: Int) =
+                fun fromHex(chars: CharArray, offset: Int, length: Int) =
             fromHex(CharArrayLatin1Iterator(chars, offset, length))
 
 
@@ -396,8 +375,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the array is empty or contains non-ASCII or invalid characters
          */
-        @JvmStatic
-        fun fromHexAscii(bytes: ByteArray) = fromHexAscii(bytes, 0, bytes.size)
+                fun fromHexAscii(bytes: ByteArray) = fromHexAscii(bytes, 0, bytes.size)
 
 
         /**
@@ -411,8 +389,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return the parsed [HugeInt]
          * @throws IllegalArgumentException if the range is empty, invalid, or contains non-ASCII or invalid characters
          */
-        @JvmStatic
-        fun fromHexAscii(bytes: ByteArray, offset: Int, length: Int) =
+                fun fromHexAscii(bytes: ByteArray, offset: Int, length: Int) =
             fromHex(ByteArrayLatin1Iterator(bytes, offset, length))
 
         /**
@@ -472,8 +449,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @param bytes  The source byte array.
          * @return The corresponding [HugeInt] value.
          */
-        @JvmStatic
-        fun fromTwosComplementBigEndianBytes(bytes: ByteArray): HugeInt =
+                fun fromTwosComplementBigEndianBytes(bytes: ByteArray): HugeInt =
             fromTwosComplementBigEndianBytes(bytes, 0, bytes.size)
 
         /**
@@ -491,8 +467,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          * @return The corresponding [HugeInt] value.
          * @throws IllegalArgumentException if [offset] or [length] specify an invalid range.
          */
-        @JvmStatic
-        fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int, length: Int): HugeInt =
+                fun fromTwosComplementBigEndianBytes(bytes: ByteArray, offset: Int, length: Int): HugeInt =
             fromBinaryBytes(isTwosComplement = true, isBigEndian = true, bytes, offset, length)
 
         /**
@@ -555,15 +530,13 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
         /**
          * Converts a Little-Endian IntArray to a HugeInt with the specified sign.
          */
-        @JvmStatic
-        fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray): HugeInt =
+                fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray): HugeInt =
             fromLittleEndianIntArray(sign, littleEndianIntArray, littleEndianIntArray.size)
 
         /**
          * Converts a Little-Endian IntArray to a HugeInt with the specified sign.
          */
-        @JvmStatic
-        fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray, len: Int): HugeInt {
+                fun fromLittleEndianIntArray(sign: Boolean, littleEndianIntArray: IntArray, len: Int): HugeInt {
             val magia = Magia.newCopyTrimmed(littleEndianIntArray, len)
             return if (magia.isNotEmpty()) HugeInt(sign, magia) else ZERO
         }
@@ -575,8 +548,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          *
          * @throws kotlin.IllegalArgumentException for a negative bitIndex
          */
-        @JvmStatic
-        fun withSetBit(bitIndex: Int): HugeInt {
+                fun withSetBit(bitIndex: Int): HugeInt {
             if (bitIndex < 0)
                 throw IllegalArgumentException("negative bitIndex:$bitIndex")
             if (bitIndex == 0)
@@ -593,8 +565,7 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          *
          * @throws IllegalArgumentException if `bitWidth` is negative.
          */
-        @JvmStatic
-        fun withBitMask(bitWidth: Int): HugeInt {
+                fun withBitMask(bitWidth: Int): HugeInt {
             return when {
                 bitWidth > 1 -> {
                     val magia = Magia.newWithBitLen(bitWidth)
@@ -621,14 +592,13 @@ class HugeInt private constructor(val sign: Boolean, val magia: IntArray): Compa
          *
          * @throws IllegalArgumentException if `bitIndex` or `bitWidth` is negative.
          */
-        @JvmStatic
-        fun withIndexedBitMask(bitIndex: Int, bitWidth: Int): HugeInt = when {
+                fun withIndexedBitMask(bitIndex: Int, bitWidth: Int): HugeInt = when {
             bitIndex > 0 && bitWidth > 1 -> {
                 val bitLen = bitIndex + bitWidth
                 val magia = Magia.newWithBitLen(bitLen)
                 var wordIndex = bitIndex ushr 5
                 val initialInnerIndex = bitIndex and 0x1F
-                val initialBitCount = Math.min(bitWidth, 32 - initialInnerIndex)
+                val initialBitCount = min(bitWidth, 32 - initialInnerIndex)
                 val initialMask = (((1L shl initialBitCount) - 1) shl initialInnerIndex).toInt()
                 magia[wordIndex++] = initialMask
                 var remainingBitCount = bitWidth - initialBitCount

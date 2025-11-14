@@ -94,7 +94,7 @@ object DecimalParsePrint {
             md.qExp < 0 && md.sciExp() >= -6 -> { // decimal point string
                 val digitsRightOfDecimal = -md.qExp
                 // FIXME ... why is there a max(foo, 0) here ... why can it go negative
-                val leadingZeroCount = Math.max(1 + digitsRightOfDecimal - md.digitLen, 0)
+                val leadingZeroCount = max(1 + digitsRightOfDecimal - md.digitLen, 0)
                 val decimalPointLen = 1
                 leadingZeroCount + decimalPointLen + md.digitLen
             }

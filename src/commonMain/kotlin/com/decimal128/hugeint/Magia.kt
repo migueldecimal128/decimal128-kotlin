@@ -2005,7 +2005,7 @@ object Magia {
         var j = bytes.size
         while (nybbleCount > 0) {
             var w = magia[i++]
-            val stepCount = Math.min(8, nybbleCount)
+            val stepCount = min(8, nybbleCount)
             repeat(stepCount) {
                 val nybble = w and 0x0F
                 val ch = nybble + if (nybble < 10) '0'.code else 'A'.code - 10
