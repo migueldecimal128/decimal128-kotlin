@@ -20,7 +20,7 @@ actual inline fun shiftUp1(x: ByteArray, srcIndex: Int, len: Int) =
     System.arraycopy(x, srcIndex, x, srcIndex + 1, len)
 
 actual inline fun shiftUp(x: ByteArray, srcIndex: Int, dstIndex: Int, len: Int) =
-    System.arraycopy(x, srcIndex, x, dstIndex, dstIndex - srcIndex)
+    System.arraycopy(x, srcIndex, x, dstIndex, len)
 
 actual inline fun shiftUp1(x: IntArray, srcIndex: Int, len: Int) =
     System.arraycopy(x, srcIndex, x, srcIndex + 1, len)
@@ -32,10 +32,10 @@ actual inline fun shiftDown1(x: ByteArray, srcIndex: Int, len: Int) =
     System.arraycopy(x, srcIndex, x, srcIndex - 1, len)
 
 actual inline fun shiftDown(x: ByteArray, srcIndex: Int, dstIndex: Int, len: Int) =
-    System.arraycopy(x, srcIndex, x, dstIndex, srcIndex - dstIndex)
+    System.arraycopy(x, srcIndex, x, dstIndex, len)
 
 actual inline fun shiftDown1(x: IntArray, srcIndex: Int, len: Int) =
     System.arraycopy(x, srcIndex, x, srcIndex - 1, len)
 
 actual inline fun shiftDown(x: IntArray, srcIndex: Int, dstIndex: Int, len: Int) =
-    System.arraycopy(x, srcIndex, x, dstIndex, srcIndex - dstIndex)
+    System.arraycopy(x, srcIndex, x, dstIndex, len)

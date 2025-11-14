@@ -932,8 +932,7 @@ object Magia {
      * @throws IllegalArgumentException if [xLen] or [bitCount] is out of range.
      */
     fun mutateShiftRight(x: IntArray, xLen: Int, bitCount: Int): IntArray {
-        require(bitCount >= 0)
-        check(xLen <= x.size)
+        require (bitCount >= 0 && xLen >= 0 && xLen <= x.size)
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
         if (wordShift >= xLen) {
@@ -942,7 +941,10 @@ object Magia {
         }
         val newLen = xLen - wordShift
         if (wordShift > 0) {
-            System.arraycopy(x, wordShift, x, 0, newLen)
+            //System.arraycopy(x, wordShift, x, 0, newLen)
+            //shiftDown(x, wordShift, 0, newLen)
+            for (i in 0..<newLen)
+                x[i] = x[i + wordShift]
             for (i in newLen..<xLen)
                 x[i] = 0
         }
@@ -1001,15 +1003,18 @@ object Magia {
      * @throws IllegalArgumentException if [bitCount] is negative.
      */
     fun mutateShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
+        require (bitCount >= 0 && xLen >= 0 && xLen <= x.size)
         val wordShift = bitCount ushr 5
         val innerShift = bitCount and ((1 shl 5) - 1)
         if (wordShift >= xLen) {
             x.fill(0, 0, xLen)
             return
         }
-        val newLen = xLen - wordShift
         if (wordShift > 0) {
-            System.arraycopy(x, 0, x, wordShift, newLen)
+            //val newLen = xLen - wordShift
+            //System.arraycopy(x, 0, x, wordShift, newLen)
+            for (i in xLen - 1 downTo wordShift)
+                x[i] = x[i - wordShift]
             for (i in wordShift - 1 downTo 0)
                 x[i] = 0
         }
