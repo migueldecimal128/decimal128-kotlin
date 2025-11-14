@@ -150,7 +150,7 @@ object DecimalParsePrint {
         if (isNonSciDecimal) {
             if (isNonSciDecimalGE1) {
                 val decimalIndex = ib - scale
-                System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
+                shiftUp1(bytes, decimalIndex, scale)
                 bytes[decimalIndex] = BYTE_DOT
                 ++ib
             }

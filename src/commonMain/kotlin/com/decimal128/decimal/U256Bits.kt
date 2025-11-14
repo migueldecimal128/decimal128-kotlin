@@ -174,7 +174,7 @@ object U256Bits {
         val hiBitLen = min(53, x.bitLen)
         val hiBitIndex = x.bitLen - hiBitLen
         val hiBits = getDwordAtBitIndex(x, hiBitIndex)
-        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitIndex)
+        val dHiBits = scalb(hiBits.toDouble(), hiBitIndex)
         return dHiBits
     }
 
@@ -197,7 +197,7 @@ object U256Bits {
         val hiBitsLen = min(53, x.bitLen)
         val hiBitsIndex = x.bitLen - hiBitsLen
         val hiBits = getDwordAtBitIndex(x, hiBitsIndex)
-        val dHiBits = Math.scalb(hiBits.toDouble(), hiBitsIndex)
+        val dHiBits = scalb(hiBits.toDouble(), hiBitsIndex)
         if (hiBitsIndex == 0)
             return DoubleDouble(dHiBits, 0.0)
         var loBits64Index: Int = max(0, hiBitsIndex - 64)
@@ -215,7 +215,7 @@ object U256Bits {
         val extraBits = max(0, 11 - nlz)
         loBits = loBits ushr extraBits
         val loBits53Index = loBits64Index + extraBits
-        val dLoBits = Math.scalb(loBits.toDouble(), loBits53Index)
+        val dLoBits = scalb(loBits.toDouble(), loBits53Index)
         return DoubleDouble(dHiBits, dLoBits)
     }
 
