@@ -198,7 +198,8 @@ object Magia {
                 return ZERO
             val limbLen = lastIndex + 1
             val z = IntArray(limbLen)
-            System.arraycopy(src, 0, z, 0, limbLen)
+            //System.arraycopy(src, 0, z, 0, limbLen)
+            src.copyInto(z, 0, 0, limbLen)
             return z
         }
         throw IllegalArgumentException()
@@ -214,7 +215,8 @@ object Magia {
     fun newCopyWithFloorLen(src: IntArray, floorLen: Int) : IntArray {
         if (floorLen > src.size) {
             val z = newWithFloorLen(floorLen)
-            System.arraycopy(src, 0, z, 0, min(src.size, z.size))
+            //System.arraycopy(src, 0, z, 0, min(src.size, z.size))
+            src.copyInto(z, 0, 0, min(src.size, z.size))
             return z
         } else {
             throw IllegalArgumentException()
@@ -224,7 +226,8 @@ object Magia {
     fun newCopyWithExactLen(src: IntArray, exactLimbLen: Int): IntArray {
         if (exactLimbLen > 0) {
             val dst = IntArray(exactLimbLen)
-            System.arraycopy(src, 0, dst, 0, min(src.size, dst.size))
+            //System.arraycopy(src, 0, dst, 0, min(src.size, dst.size))
+            src.copyInto(dst, 0, 0, min(src.size, dst.size))
             return dst
         }
         return ZERO
@@ -232,7 +235,8 @@ object Magia {
 
     private fun newCopyWithBitLen(src: IntArray, newBitLen: Int): IntArray {
         val dst = newWithBitLen(newBitLen)
-        copy(dst, src)
+        //copy(dst, src)
+        src.copyInto(dst, 0, 0, min(src.size, dst.size))
         return dst
     }
 
@@ -1202,8 +1206,10 @@ object Magia {
             ++i
         }
         when {
-            i < xLen -> System.arraycopy(x, i, z, i, xLen - i)
-            i < yLen -> System.arraycopy(y, i, z, i, yLen - i)
+            i < xLen ->
+                x.copyInto(z, i, i, xLen) // System.arraycopy(x, i, z, i, xLen - i)
+            i < yLen ->
+                y.copyInto(z, i, i, yLen) //System.arraycopy(y, i, z, i, yLen - i)
         }
         return z
     }
@@ -1236,8 +1242,10 @@ object Magia {
             ++i
         }
         when {
-            i < xLen -> System.arraycopy(x, i, z, i, xLen - i)
-            i < yLen -> System.arraycopy(y, i, z, i, yLen - i)
+            i < xLen ->
+                x.copyInto(z, i, i, xLen) // System.arraycopy(x, i, z, i, xLen - i)
+            i < yLen ->
+                y.copyInto(z, i, i, yLen) // System.arraycopy(y, i, z, i, yLen - i)
             else -> if (nonZeroAccumulator == 0) return ZERO
         }
         return z
