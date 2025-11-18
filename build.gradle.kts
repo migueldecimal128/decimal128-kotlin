@@ -13,9 +13,10 @@ plugins {
 }
 
 group = "com.decimal128"
-version = "1.0-SNAPSHOT"
+version = "0.1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven(url="https://dl.bintray.com/kotlin/dokka")
 }
@@ -64,7 +65,11 @@ kotlin {
     }
 
     sourceSets {
-	    val commonMain by getting
+	    val commonMain by getting {
+            dependencies {
+                implementation("com.decimal128:hugeint:0.9.0-SNAPSHOT")
+            }
+        }
 	    val commonTest by getting
 		val jvmMain   by getting  // your existing code lives here
 		val jvmTest   by getting {
