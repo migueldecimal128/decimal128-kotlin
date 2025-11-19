@@ -8,6 +8,8 @@ buildscript {
 }
 
 plugins {
+    id("maven-publish")
+    id("signing")
     kotlin("multiplatform") version "2.2.0"
     id("org.jetbrains.dokka") version "2.0.0"
 }
@@ -18,7 +20,6 @@ version = "0.1.0-SNAPSHOT"
 repositories {
     mavenLocal()
     mavenCentral()
-    maven(url="https://dl.bintray.com/kotlin/dokka")
 }
 
 tasks.dokkaHtml {
@@ -57,7 +58,10 @@ tasks.register<Test>("testHsdis") {
 }
 
 
+@OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 kotlin {
+    applyDefaultHierarchyTemplate()
+
     jvmToolchain(21)
 
     jvm {

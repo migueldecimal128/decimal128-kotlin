@@ -158,7 +158,7 @@ object DivRangeRecipMulPow10 {
         val prod = dividendAlfa * M
         val quotPlusRound = prod ushr S
         val quot = quotPlusRound ushr 1
-        val round = quotPlusRound.testBit(0)
+        val round = quotPlusRound.isBitSet(0)
 
         if (expectedQuot != quot)
             return false

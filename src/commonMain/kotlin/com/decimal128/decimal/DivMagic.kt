@@ -53,7 +53,7 @@ object DivMagic {
 
         // 5) extract the “true” multiplier and shift
         val Mtrue   = q2 + 1
-        val addFlag = Mtrue.testBit(N)            // bit-64 set?
+        val addFlag = Mtrue.isBitSet(N)            // bit-64 set?
         val m_mod   = Mtrue.magnitudeRawLong()           // low 64 bits
         val s       = (p - N).toInt()
 
