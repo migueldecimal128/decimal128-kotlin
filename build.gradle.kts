@@ -62,6 +62,10 @@ tasks.register<Test>("testHsdis") {
 kotlin {
     applyDefaultHierarchyTemplate()
 
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvmToolchain(21)
 
     jvm {
