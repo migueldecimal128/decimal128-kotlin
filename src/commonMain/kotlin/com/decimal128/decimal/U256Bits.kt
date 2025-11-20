@@ -7,11 +7,16 @@ import kotlin.math.max
 
 object U256Bits {
 
+    inline fun calcBitLen64(dw0: ULong): Int = calcBitLen64(dw0.toLong())
+
     inline fun calcBitLen64(dw0: Long): Int {
         val nlz0 = dw0.countLeadingZeroBits()
         val bitLen = 64 - nlz0
         return bitLen
     }
+
+    inline fun calcBitLen128(dw1: ULong, dw0: ULong): Int =
+        calcBitLen128(dw1.toLong(), dw0.toLong())
 
     inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
         val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
