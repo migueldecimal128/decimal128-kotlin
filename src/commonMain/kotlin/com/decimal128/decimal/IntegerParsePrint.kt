@@ -26,8 +26,7 @@ private const val M_U64_DIV_1E8 = 0xABCC77118461CEFDuL // -6067343680855748867 /
 private const val S_U64_DIV_1E8 = 26 // + 64 high
 
 // WARNING ... 1E9 has the add correction flag set because it overflows to 129 bits
-//
-private const val M_U64_DIV_1E9 = 1360296554856532783 // (0x12E0BE826D694B2F)
+private const val M_U64_DIV_1E9 = 1360296554856532783uL // (0x12E0BE826D694B2F)
 private const val S_U64_DIV_1E9 = 30
 
 private const val M_U64_DIV_1E10 = -2601111570856684097 // (0xDBE6FECEBDEDD5BF)
@@ -212,7 +211,7 @@ internal object IntegerParsePrint {
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
         when {
-            digitPrintCount > 1 -> u64ToUtf8_chunk8(digitPrintCount, dw0, utf8, off)
+            digitPrintCount > 1 -> u64ToUtf8_chunk9(digitPrintCount, dw0, utf8, off)
             digitPrintCount == 1 -> utf8[off] = ('0'.code + dw0.toInt()).toByte()
         }
         return digitPrintCount
@@ -265,21 +264,28 @@ internal object IntegerParsePrint {
         throw IllegalArgumentException()
     }
 
-    internal fun u64ToUtf8_chunk8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
+    internal fun u64ToUtf8_chunk9(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining
-        var dwT = dw0.toULong()
-        while (digitsRemaining >= 8) {
-            val q = unsignedMulHi(dwT, M_U64_DIV_1E8) shr 26
-            val r = dwT - (q * 1_0000_0000uL)
+        var dwT = dw0
+        while (digitsRemaining >= 9) {
+            // magic division by 1E9 requires a correction, so is more complicated than most
+            // but, still a big performance win relative to division
+            val potentialCarry = 1uL shl (64 - S_U64_DIV_1E9)
+            val hiUncorrected = unsignedMulHi(dwT, M_U64_DIV_1E9) shr S_U64_DIV_1E9
+            val hiCorrected = hiUncorrected + dwT
+            val actualCarry = if (hiCorrected < hiUncorrected) potentialCarry else 0uL
+            val q = (hiCorrected shr S_U64_DIV_1E9) + actualCarry
+            //val q = dwT / 1_000_000_000uL
+            val r = dwT - (q * 1_000_000_000uL)
             dwT = q
-            Magia.renderChunk8(r, utf8, ich)
-            ich -= 8
-            digitsRemaining -= 8
+            Magia.render9DigitsBeforeIndex(r, utf8, ich)
+            ich -= 9
+            digitsRemaining -= 9
         }
         if (digitsRemaining > 0)
-            if (Magia.renderChunkTail(dwT.toUInt(), utf8, ich) != digitsRemaining)
-                throw IllegalStateException()
+            if (Magia.renderTailDigitsBeforeIndex(dwT.toUInt(), utf8, ich) != digitsRemaining)
+                throw IllegalStateException() // rendered digits did not match digitsRemaining
         return digitPrintCount
     }
 

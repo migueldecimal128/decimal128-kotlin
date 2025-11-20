@@ -7,8 +7,7 @@ import com.decimal128.decimal.U256Bits.calcBitLen64
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import com.decimal128.hugeint.Latin1Iterator
-import com.decimal128.hugeint.Magia.renderChunk8
-import com.decimal128.hugeint.Magia.renderChunkTail
+import com.decimal128.hugeint.Magia
 import kotlin.math.max
 import kotlin.math.min
 
@@ -402,7 +401,7 @@ class Dec2 private constructor(
         val iE = signLen + decimalPointLen + printedDigitLen
         utf8[iE] = 'E'.code.toByte()
         utf8[iE + 1] = expSignByte
-        val j = renderChunkTail(eExpAbs.toUInt(), utf8, utf8.size)
+        val j = Magia.renderTailDigitsBeforeIndex(eExpAbs.toUInt(), utf8, utf8.size)
         check (j == expDigitLen)
         return utf8.decodeToString()
     }
@@ -413,31 +412,31 @@ class Dec2 private constructor(
         var i = off + digitLen
         var remainingDigits = digitLen
         while (dw1T != 0uL) {
-            val dw1Q = dw1T / 1_0000_0000uL
-            val dw1R = dw1T % 1_0000_0000uL
+            val dw1Q = dw1T / 1_000_000_000uL
+            val dw1R = dw1T % 1_000_000_000uL
             val limb1 = (dw1R shl 32) or (dw0T shr 32)
-            val dw0Qmid = limb1 / 1_0000_0000uL
-            val dw0Rmid = limb1 % 1_0000_0000uL
+            val dw0Qmid = limb1 / 1_000_000_000uL
+            val dw0Rmid = limb1 % 1_000_000_000uL
             val limb0 = (dw0Rmid shl 32) or (dw0T and 0xFFFF_FFFFuL)
-            val dw0Qlo = limb0 / 1_0000_0000uL
-            val dw0Rlo = limb0 % 1_0000_0000uL
+            val dw0Qlo = limb0 / 1_000_000_000uL
+            val dw0Rlo = limb0 % 1_000_000_000uL
             val straddle = (dw0Qmid shl 32) + dw0Qlo
             dw0T = straddle
             dw1T = dw1Q
-            renderChunk8(dw0Rlo, utf8, i)
-            i -= 8
-            remainingDigits -= 8
+            Magia.render9DigitsBeforeIndex(dw0Rlo, utf8, i)
+            i -= 9
+            remainingDigits -= 9
         }
-        while (remainingDigits >= 8) {
-            val t0 = dw0T / 1_0000_0000uL
-            val r0 = dw0T % 1_0000_0000uL
+        while (remainingDigits >= 9) {
+            val t0 = dw0T / 1_000_000_000uL
+            val r0 = dw0T % 1_000_000_000uL
             dw0T = t0
-            renderChunk8(r0, utf8, i)
-            i -= 8
-            remainingDigits -= 8
+            Magia.render9DigitsBeforeIndex(r0, utf8, i)
+            i -= 9
+            remainingDigits -= 9
         }
         if (remainingDigits > 0) {
-            renderChunkTail(dw0T.toUInt(), utf8, i)
+            Magia.renderTailDigitsBeforeIndex(dw0T.toUInt(), utf8, i)
         }
     }
 
