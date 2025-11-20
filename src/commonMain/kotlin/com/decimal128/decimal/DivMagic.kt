@@ -116,7 +116,7 @@ object DivMagic {
                 val s = flagAndShift and 0x3F
                 val correctionMask = (flagAndShift shr 31).toLong()
 
-                val carryAmount = 1L shl -s
+                val carryAmount = 1L shl -s // 1L shl (64 - s)
                 val pHiUncorrected = unsignedMulHi(x0, m)
                 val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
                 val carry = if (unsignedLT(pHiCorrected, pHiUncorrected)) carryAmount else 0L

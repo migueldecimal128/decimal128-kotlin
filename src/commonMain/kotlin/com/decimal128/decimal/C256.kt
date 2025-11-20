@@ -22,7 +22,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     //constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
     constructor() : this(0L, 0L, 0L, 0L)
     constructor(str: String) : this() {
-        Int256ParsePrint.u256FromString(this, false, str)
+        IntegerParsePrint.u256FromString(this, false, str)
     }
     constructor(c: C256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
 
@@ -229,7 +229,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
 
-    internal inline fun c256Set(str: String) = Int256ParsePrint.u256FromString(this, false, str)
+    internal inline fun c256Set(str: String) = IntegerParsePrint.u256FromString(this, false, str)
 
     internal inline fun c256SetShiftRight(x: C256, bitShift: Int) = U256Set.u256SetShiftRight(this, x, bitShift)
 
@@ -269,14 +269,14 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256DwordAtBitIndex(bitIndex: Int) = U256Bits.getDwordAtBitIndex(this, bitIndex)
 
-    open fun toHexString() = Int256ParsePrint.int256ToHexString(false, this)
+    open fun toHexString() = IntegerParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() =
         if (bitLen == -1)
             "MutDec \uD83D\uDEA7 under construction \uD83D\uDEA7"
         else
-            Int256ParsePrint.int256ToString(false, this)
-    fun u256ToUtf8(bytes: ByteArray, off: Int) = Int256ParsePrint.int256ToUtf8(false, this, bytes, off)
+            IntegerParsePrint.int256ToString(false, this)
+    fun u256ToUtf8(bytes: ByteArray, off: Int) = IntegerParsePrint.int256ToUtf8(false, this, bytes, off)
 
     override fun equals(other: Any?) = other is C256 && U256Compare.u256UnscaledEQ(this, other)
 

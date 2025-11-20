@@ -3,7 +3,9 @@
 package com.decimal128.decimal
 
 import com.decimal128.hugeint.Latin1Iterator
+import com.decimal128.hugeint.Magia
 import com.decimal128.hugeint.StringLatin1Iterator
+import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09
@@ -20,8 +22,13 @@ private const val S_U32_DIV_1E4 = 43
 private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
 private const val S_U64_DIV_1E4 = 11 // + 64 high
 
-private const val M_U64_DIV_1E8 = -6067343680855748867 // (0xABCC77118461CEFD)
+private const val M_U64_DIV_1E8 = 0xABCC77118461CEFDuL // -6067343680855748867 // (0xABCC77118461CEFD)
 private const val S_U64_DIV_1E8 = 26 // + 64 high
+
+// WARNING ... 1E9 has the add correction flag set because it overflows to 129 bits
+//
+private const val M_U64_DIV_1E9 = 1360296554856532783 // (0x12E0BE826D694B2F)
+private const val S_U64_DIV_1E9 = 30
 
 private const val M_U64_DIV_1E10 = -2601111570856684097 // (0xDBE6FECEBDEDD5BF)
 private const val S_U64_DIV_1E10 = 33
@@ -32,7 +39,7 @@ private const val S_U64_DIV_1E12 = 37
 private const val M_U64_DIV_1E16 = 4153837486827862103L // (0x39A5652FB1137857)
 private const val S_U64_DIV_1E16 = 51
 
-internal object Int256ParsePrint {
+internal object IntegerParsePrint {
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
 
@@ -108,23 +115,23 @@ internal object Int256ParsePrint {
 
     private fun render0To10Digits(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
         var remaining = digitPrintCount
-        var t = dw
+        var t = dw.toULong()
         if (digitPrintCount >= 8) {
-            val q = unsignedMulHi(t, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
-            val abcdefgh = t - (q * 1_0000_0000L)
+            val q = unsignedMulHi(t, M_U64_DIV_1E8) shr S_U64_DIV_1E8
+            val abcdefgh = t - (q * 1_0000_0000uL)
             t = q
             remaining -= 8
-            render8Digits(abcdefgh, utf8, off + remaining)
+            render8Digits(abcdefgh.toLong(), utf8, off + remaining)
         }
         if (remaining >= 4) {
-            val q = (t * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-            val abcd = t - (q * 10000L)
+            val q = (t * M_U32_DIV_1E4.toULong()) shr S_U32_DIV_1E4
+            val abcd = t - (q * 10000uL)
             t = q
             remaining -= 4
-            render4Digits(abcd, utf8, off + remaining)
+            render4Digits(abcd.toLong(), utf8, off + remaining)
         }
         if (remaining > 0)
-            render1To4Digits(remaining, t, utf8, off)
+            render1To4Digits(remaining, t.toLong(), utf8, off)
     }
 
     private fun render10Digits(abcdefghij: Long, utf8: ByteArray, off: Int) {
@@ -200,8 +207,17 @@ internal object Int256ParsePrint {
         utf8[off + iD] = (d + '0'.code).toByte()
     }
 
-    internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int =
-        u64ToUtf8_sequential(digitPrintCount, dw0, utf8, off)
+    internal fun u64ToUtf8(dw0: ULong, utf8: ByteArray, off: Int): Int =
+        u64ToUtf8(max(U256Pow10.calcDigitLen64(dw0), 1), dw0, utf8, off)
+
+    internal fun u64ToUtf8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
+        when {
+            digitPrintCount > 1 -> u64ToUtf8_chunk8(digitPrintCount, dw0, utf8, off)
+            digitPrintCount == 1 -> utf8[off] = ('0'.code + dw0.toInt()).toByte()
+        }
+        return digitPrintCount
+    }
+
 
     internal fun u64ToUtf8_sequential(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
         val z = C256()
@@ -247,6 +263,24 @@ internal object Int256ParsePrint {
             return off + digitPrintCount
         }
         throw IllegalArgumentException()
+    }
+
+    internal fun u64ToUtf8_chunk8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
+        var digitsRemaining = digitPrintCount
+        var ich = off + digitsRemaining
+        var dwT = dw0.toULong()
+        while (digitsRemaining >= 8) {
+            val q = unsignedMulHi(dwT, M_U64_DIV_1E8) shr 26
+            val r = dwT - (q * 1_0000_0000uL)
+            dwT = q
+            Magia.renderChunk8(r, utf8, ich)
+            ich -= 8
+            digitsRemaining -= 8
+        }
+        if (digitsRemaining > 0)
+            if (Magia.renderChunkTail(dwT.toUInt(), utf8, ich) != digitsRemaining)
+                throw IllegalStateException()
+        return digitPrintCount
     }
 
     fun int256ToHexString(sign: Boolean, u: C256): String {

@@ -984,7 +984,7 @@ class MutDec() : C256() {
 
     fun toString(toEngineeringExp: Boolean): String {
         return when {
-            qExp == 0 -> Int256ParsePrint.int256ToString(sign, this)
+            qExp == 0 -> IntegerParsePrint.int256ToString(sign, this)
             qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString()
             qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
             else -> toScientificString(toEngineeringExp)
@@ -1024,7 +1024,7 @@ class MutDec() : C256() {
         val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
-        var i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+        var i = IntegerParsePrint.int256ToUtf8(sign, this, utf8, 0)
         if (digitLen > 1) {
             val insertionPoint = signLen + 1
             moveBytesUp1(utf8, insertionPoint, digitLen - 1)
@@ -1032,7 +1032,7 @@ class MutDec() : C256() {
             ++i
         }
         utf8[i] = 'E'.code.toByte()
-        val j = Int256ParsePrint.int32ToUtf8(eExp, utf8, i+1)
+        val j = IntegerParsePrint.int32ToUtf8(eExp, utf8, i+1)
         check (i + 1 + j == utf8.size)
         return String(utf8)
     }
@@ -1052,7 +1052,7 @@ class MutDec() : C256() {
         val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
                 printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
-        var i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+        var i = IntegerParsePrint.int256ToUtf8(sign, this, utf8, 0)
         when {
             additionalLeftOfPointZeroCount > 0 ->  {
                 utf8[i++] = '0'.code.toByte()
@@ -1067,7 +1067,7 @@ class MutDec() : C256() {
             }
         }
         utf8[i] = 'E'.code.toByte()
-        val j = Int256ParsePrint.int32ToUtf8(adjustedExp, utf8, i+1)
+        val j = IntegerParsePrint.int32ToUtf8(adjustedExp, utf8, i+1)
         check (i + 1 + j == utf8.size)
         return String(utf8)
     }
@@ -1103,9 +1103,9 @@ class MutDec() : C256() {
         if (qExp < MIN_SPECIAL_VALUE) {
             val printLen = calcDebugPrintLength()
             val utf8 = ByteArray(printLen)
-            val i = Int256ParsePrint.int256ToUtf8(sign, this, utf8, 0)
+            val i = IntegerParsePrint.int256ToUtf8(sign, this, utf8, 0)
             utf8[i] = 'E'.code.toByte()
-            val j = Int256ParsePrint.int32ToUtf8(qExp, utf8, i + 1)
+            val j = IntegerParsePrint.int32ToUtf8(qExp, utf8, i + 1)
             check(i + 1 + j == utf8.size)
             return String(utf8)
         } else {

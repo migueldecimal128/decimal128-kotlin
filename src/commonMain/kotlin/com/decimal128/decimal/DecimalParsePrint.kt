@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.Int256ParsePrint.int32ToUtf8
+import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import com.decimal128.decimal.U256Bits.calcBitLen64
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.StringLatin1Iterator
@@ -146,7 +146,7 @@ object DecimalParsePrint {
             ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
         }
         // render integer coeff, including a single 0
-        ib += Int256ParsePrint.c256ToUtf8(x, bytes, ib, tmp)
+        ib += IntegerParsePrint.c256ToUtf8(x, bytes, ib, tmp)
         if (isNonSciDecimal) {
             if (isNonSciDecimalGE1) {
                 val decimalIndex = ib - scale
@@ -210,13 +210,13 @@ object DecimalParsePrint {
         bytes[ib] = (if (sciExp < 0) '-' else '+').code.toByte()
         ib += if ((sciExp < 0) or prefs.printExponentPlusSign) 1 else 0
         val sciExpAbs = abs(sciExp)
-        ib += Int256ParsePrint.int32ToUtf8(sciExpAbs, bytes, ib)
+        ib += IntegerParsePrint.int32ToUtf8(sciExpAbs, bytes, ib)
         val cb = ib - off
         return cb
     }
 
     private fun finiteIntegerToUtf8(x: MutDec, bytes: ByteArray, off: Int, tmp: C256?): Int =
-        Int256ParsePrint.c256ToUtf8(x, bytes, off, tmp)
+        IntegerParsePrint.c256ToUtf8(x, bytes, off, tmp)
 
     private fun finiteSingleDigitScientificToUtf8(x: MutDec, bytes: ByteArray, offWithSign: Int): Int {
         bytes[offWithSign] = (x.dw0.toInt() + '0'.code).toByte()
@@ -227,7 +227,7 @@ object DecimalParsePrint {
         val printDigitLen = x.digitLen + 1 - (-x.digitLen ushr 31)
         val digitsLeftOfDot = printDigitLen + x.qExp
         if (digitsLeftOfDot > 0) {
-            val cb = Int256ParsePrint.c256ToUtf8(x, bytes, off + 1, tmp)
+            val cb = IntegerParsePrint.c256ToUtf8(x, bytes, off + 1, tmp)
             for (i in 0..<digitsLeftOfDot)
                 bytes[off + i] = bytes[off + i + 1]
             bytes[off + digitsLeftOfDot] = BYTE_DOT
@@ -238,12 +238,12 @@ object DecimalParsePrint {
         for (i in 0..<leadingZeroPlusDotCount)
             bytes[off + i] = BYTE_ZERO
         bytes[off + 1] = BYTE_DOT
-        val cb = Int256ParsePrint.c256ToUtf8(x, bytes, off + leadingZeroPlusDotCount, tmp)
+        val cb = IntegerParsePrint.c256ToUtf8(x, bytes, off + leadingZeroPlusDotCount, tmp)
         return leadingZeroPlusDotCount + cb
     }
 
     private fun finiteScientificDecimalToUtf8(x: MutDec, bytes: ByteArray, off: Int, tmp: C256?): Int {
-        val cb = Int256ParsePrint.c256ToUtf8(x, bytes, off + 1, tmp)
+        val cb = IntegerParsePrint.c256ToUtf8(x, bytes, off + 1, tmp)
         bytes[off] = bytes[off + 1]
         bytes[off + 1] = BYTE_DOT
         return cb + 1
@@ -274,7 +274,7 @@ object DecimalParsePrint {
             ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
         }
         // render integer coeff, including a single 0
-        ib += Int256ParsePrint.c256ToUtf8(x, bytes, ib, tmp)
+        ib += IntegerParsePrint.c256ToUtf8(x, bytes, ib, tmp)
         if (isNonSciDecimal) {
             if (isNonSciDecimalGE1) {
                 val decimalIndex = ib - scale
@@ -329,7 +329,7 @@ object DecimalParsePrint {
         utf8[ib + 2] =  'N'.code.toByte()
         ib += 3
         if (z.bitLen > 0)
-            ib += Int256ParsePrint.c256ToUtf8(z, utf8, ib, tmp)
+            ib += IntegerParsePrint.c256ToUtf8(z, utf8, ib, tmp)
         return ib - off
     }
 
