@@ -225,7 +225,7 @@ object Dec2ParsePrint {
         return when {
             dec.qExp == 0 -> toIntegerString(dec)
             dec.qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString(dec)
-            dec.qExp < 0 && dec.sciExp >= -6 -> toDecimalPointString(dec)
+            dec.qExp < 0 && dec.eExp >= -6 -> toDecimalPointString(dec)
             else -> toNormalizedScientificString(dec)
         }
     }
@@ -273,7 +273,7 @@ object Dec2ParsePrint {
     }
 
     private fun toNormalizedScientificString(dec: Dec2): String {
-        val eExp = dec.sciExp
+        val eExp = dec.eExp
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
         val signLen = dec.sign01
         val decimalPointLen = if (dec.digitLen > 1) 1 else 0
