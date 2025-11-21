@@ -17,20 +17,20 @@ private const val S_U32_DIV_1E1 = 35
 private const val M_U32_DIV_1E2 = 0x51EB851FuL
 private const val S_U32_DIV_1E2 = 37
 
-private const val M_U32_DIV_1E4 = 0x346DC5D7
+private const val M_U32_DIV_1E4 = 0x346DC5D7uL
 private const val S_U32_DIV_1E4 = 43
 
 private const val M_U64_DIV_1E4 = 0x346DC5D63886594BuL
 private const val S_U64_DIV_1E4 = 11 // + 64 high
 
-private const val M_U64_DIV_1E8 = 0xABCC77118461CEFDuL // -6067343680855748867 // (0xABCC77118461CEFD)
+private const val M_U64_DIV_1E8 = 0xABCC77118461CEFDuL // -6067343680855748867
 private const val S_U64_DIV_1E8 = 26 // + 64 high
 
 // WARNING ... 1E9 has the add correction flag set because it overflows to 129 bits
-private const val M_U64_DIV_1E9 = 1360296554856532783uL // (0x12E0BE826D694B2F)
+private const val M_U64_DIV_1E9 = 0x12E0BE826D694B2FuL // 1360296554856532783uL
 private const val S_U64_DIV_1E9 = 30
 
-private const val M_U64_DIV_1E10 = -2601111570856684097 // (0xDBE6FECEBDEDD5BF)
+private const val M_U64_DIV_1E10 = 0xDBE6FECEBDEDD5BFuL // -2601111570856684097
 private const val S_U64_DIV_1E10 = 33
 
 private const val M_U64_DIV_1E12 = 2535301200456458803L // (0x232F33025BD42233)
@@ -40,9 +40,6 @@ private const val M_U64_DIV_1E16 = 4153837486827862103L // (0x39A5652FB1137857)
 private const val S_U64_DIV_1E16 = 51
 
 internal object IntegerParsePrint {
-
-    private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
-    private inline fun dw32(n: Int) = n.toULong() and 0xFFFF_FFFFuL
 
     fun int256ToString(sign: Boolean, c: C256): String {
         val signMask = if (sign) -1L else 0L
@@ -83,7 +80,7 @@ internal object IntegerParsePrint {
     }
 
     fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
-        val dwAbs = dw32((n xor (n shr 31)) - (n shr 31))
+        val dwAbs = ((n xor (n shr 31)) - (n shr 31)).toUInt().toULong()
         val sign01 = n ushr 31
         utf8[off] = '-'.code.toByte()
         val digitLen = U256Pow10.calcDigitLen64(dwAbs)
@@ -133,13 +130,13 @@ internal object IntegerParsePrint {
             i -= 9
             remainingDigits -= 9
         }
-        while (remainingDigits >= 9) {
-            val t0 = dw0T / 1_000_000_000uL
-            val r0 = dw0T % 1_000_000_000uL
+        while (remainingDigits >= 8) {
+            val t0 = unsignedMulHi(dw0T, M_U64_DIV_1E8) shr S_U64_DIV_1E8
+            val r0 = dw0T - (t0 * 1_0000_0000uL)
             dw0T = t0
-            Magia.render9DigitsBeforeIndex(r0, utf8, i)
-            i -= 9
-            remainingDigits -= 9
+            render8DigitsBeforeIndex(r0, utf8, i)
+            i -= 8
+            remainingDigits -= 8
         }
         if (remainingDigits > 0) {
             Magia.renderTailDigitsBeforeIndex(dw0T.toUInt(), utf8, i)
