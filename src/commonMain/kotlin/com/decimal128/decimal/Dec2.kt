@@ -349,7 +349,7 @@ class Dec2 private constructor(
         val utf8 = ByteArray(nanStr.length + digitLen)
         for (i in nanStr.indices)
             utf8[i] = nanStr[i].code.toByte()
-        u128ToUtf8(utf8, nanStr.length, digitLen, dw1, dw0)
+        IntegerParsePrint.u128ToUtf8(digitLen, dw1, dw0, utf8, nanStr.length, )
         return String(utf8)
     }
 
@@ -360,7 +360,7 @@ class Dec2 private constructor(
         }
         val utf8 = ByteArray(sign01 + digitLen)
         utf8[0] = '-'.code.toByte() // will be overwritten if positive
-        u128ToUtf8(utf8, sign01, digitLen, dw1, dw0)
+        IntegerParsePrint.u128ToUtf8(digitLen, dw1, dw0, utf8, sign01)
         return utf8.decodeToString()
     }
 
@@ -374,7 +374,7 @@ class Dec2 private constructor(
         utf8[0] = '-'.code.toByte() // overwritten when positive
         for (i in signLen..leadingZeroCount) // there is one extra here
             utf8[i] = '0'.code.toByte()
-        u128ToUtf8(utf8, signLen + leadingZeroCount, digitLen, dw1, dw0)
+        IntegerParsePrint.u128ToUtf8(digitLen, dw1, dw0, utf8, signLen + leadingZeroCount)
         for (i in totalLen-1 downTo totalLen-digitsRightOfDecimal)
             utf8[i] = utf8[i - 1]
         utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
@@ -393,7 +393,7 @@ class Dec2 private constructor(
         val expDigitLen = max(calcDigitLen64(eExpAbs.toULong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
-        u128ToUtf8(utf8, signLen + decimalPointLen, printedDigitLen, dw1, dw0)
+        IntegerParsePrint.u128ToUtf8(printedDigitLen, dw1, dw0, utf8, signLen + decimalPointLen)
         if (decimalPointLen > 0) {
             utf8[signLen] = utf8[signLen + 1]
             utf8[signLen + 1] = '.'.code.toByte()
@@ -405,41 +405,6 @@ class Dec2 private constructor(
         check (j == expDigitLen)
         return utf8.decodeToString()
     }
-
-    private fun u128ToUtf8(utf8: ByteArray, off: Int, digitLen: Int, dw1: ULong, dw0: ULong) {
-        var dw1T = dw1
-        var dw0T = dw0
-        var i = off + digitLen
-        var remainingDigits = digitLen
-        while (dw1T != 0uL) {
-            val dw1Q = dw1T / 1_000_000_000uL
-            val dw1R = dw1T % 1_000_000_000uL
-            val limb1 = (dw1R shl 32) or (dw0T shr 32)
-            val dw0Qmid = limb1 / 1_000_000_000uL
-            val dw0Rmid = limb1 % 1_000_000_000uL
-            val limb0 = (dw0Rmid shl 32) or (dw0T and 0xFFFF_FFFFuL)
-            val dw0Qlo = limb0 / 1_000_000_000uL
-            val dw0Rlo = limb0 % 1_000_000_000uL
-            val straddle = (dw0Qmid shl 32) + dw0Qlo
-            dw0T = straddle
-            dw1T = dw1Q
-            Magia.render9DigitsBeforeIndex(dw0Rlo, utf8, i)
-            i -= 9
-            remainingDigits -= 9
-        }
-        while (remainingDigits >= 9) {
-            val t0 = dw0T / 1_000_000_000uL
-            val r0 = dw0T % 1_000_000_000uL
-            dw0T = t0
-            Magia.render9DigitsBeforeIndex(r0, utf8, i)
-            i -= 9
-            remainingDigits -= 9
-        }
-        if (remainingDigits > 0) {
-            Magia.renderTailDigitsBeforeIndex(dw0T.toUInt(), utf8, i)
-        }
-    }
-
 
 }
 
