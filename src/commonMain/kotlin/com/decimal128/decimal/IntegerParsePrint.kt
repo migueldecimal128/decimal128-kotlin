@@ -5,21 +5,22 @@ package com.decimal128.decimal
 import com.decimal128.hugeint.Latin1Iterator
 import com.decimal128.hugeint.Magia
 import com.decimal128.hugeint.StringLatin1Iterator
+import com.decimal128.hugeint.intrinsic.unsignedMulHi
 import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09L
 
-private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
+private const val M_U32_DIV_1E1 = 0xCCCCCCCDuL
 private const val S_U32_DIV_1E1 = 35
 
-private const val M_U32_DIV_1E2 = 0x51EB851FL
+private const val M_U32_DIV_1E2 = 0x51EB851FuL
 private const val S_U32_DIV_1E2 = 37
 
 private const val M_U32_DIV_1E4 = 0x346DC5D7
 private const val S_U32_DIV_1E4 = 43
 
-private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
+private const val M_U64_DIV_1E4 = 0x346DC5D63886594BuL
 private const val S_U64_DIV_1E4 = 11 // + 64 high
 
 private const val M_U64_DIV_1E8 = 0xABCC77118461CEFDuL // -6067343680855748867 // (0xABCC77118461CEFD)
@@ -70,12 +71,12 @@ internal object IntegerParsePrint {
         do {
             val ibMaxx = off + t.digitLen
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            Magia.render9DigitsBeforeIndex(r.toULong(), utf8, off + ibMaxx)
+            Magia.render9DigitsBeforeIndex(r.toULong(), utf8, ibMaxx)
         } while (t.bitLen > 128)
         do {
-            val ich = t.digitLen - 9
+            val ibMaxx = off + t.digitLen
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
-            render9Digits(r, utf8, off + ich)
+            Magia.render9DigitsBeforeIndex(r.toULong(), utf8, ibMaxx)
         } while (t.bitLen > 64)
         u64ToUtf8(t.digitLen, t.dw0.toULong(), utf8, off)
         return printDigitLen
@@ -98,122 +99,12 @@ internal object IntegerParsePrint {
         return sign01 + c256ToUtf8(c, utf8, off + sign01)
     }
 
-    private fun render0To20Digits(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
-        var remainingDigits = digitPrintCount
-        var t = dw
-        while (remainingDigits >= 8) {
-
-        }
-        if (digitPrintCount >= 10) {
-            val q = unsignedMulHi(t, M_U64_DIV_1E10) ushr S_U64_DIV_1E10
-            val abcdefghij = t - (q * 1_00000_00000L)
-            t = q
-            remainingDigits -= 10
-            render10Digits(abcdefghij, utf8, off + remainingDigits)
-        }
-        render0To10Digits(remainingDigits, t, utf8, off)
-    }
-
-    private fun render0To10Digits(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
-        var remaining = digitPrintCount
-        var t = dw.toULong()
-        if (digitPrintCount >= 8) {
-            val q = unsignedMulHi(t, M_U64_DIV_1E8) shr S_U64_DIV_1E8
-            val abcdefgh = t - (q * 1_0000_0000uL)
-            t = q
-            remaining -= 8
-            render8Digits(abcdefgh.toLong(), utf8, off + remaining)
-        }
-        if (remaining >= 4) {
-            val q = (t * M_U32_DIV_1E4.toULong()) shr S_U32_DIV_1E4
-            val abcd = t - (q * 10000uL)
-            t = q
-            remaining -= 4
-            render4Digits(abcd.toLong(), utf8, off + remaining)
-        }
-        if (remaining > 0)
-            render1To4Digits(remaining, t.toLong(), utf8, off)
-    }
-
-    private fun render10Digits(abcdefghij: Long, utf8: ByteArray, off: Int) {
-        val abcdef = unsignedMulHi(abcdefghij, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
-        val ab = (abcdef * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-        render2Digits(ab, utf8, off)
-        val cdef = abcdef - (ab * 10000L)
-        val ghij = abcdefghij - (abcdef * 10000L)
-        render4Digits(cdef, utf8, off + 2)
-        render4Digits(ghij, utf8, off + 6)
-    }
-
-    private fun render9Digits(abcdefghi: Long, utf8: ByteArray, off: Int) {
-        val abcde = (abcdefghi * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-        val a = (abcde * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-        render1Digit(a, utf8, off)
-        val bcde = abcde - (a * 10000L)
-        val fghi = abcdefghi - (abcde * 10000L)
-        render4Digits(bcde, utf8, off + 1)
-        render4Digits(fghi, utf8, off + 5)
-    }
-
-    private fun render8Digits(abcdefgh: Long, utf8: ByteArray, off: Int) {
-        val abcd = (abcdefgh * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-        val efgh = abcdefgh - (abcd * 10000L)
-        render4Digits(abcd, utf8, off)
-        render4Digits(efgh, utf8, off + 4)
-    }
-
-    private inline fun render4Digits(abcd: Long, utf8: ByteArray, off: Int) {
-        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-        val cd = abcd - (ab * 100L)
-        render2Digits(ab, utf8, off)
-        render2Digits(cd, utf8, off + 2)
-    }
-
-    private inline fun render2Digits(ab: Long, utf8: ByteArray, off: Int) {
-        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val b = ab - (a * 10L)
-        utf8[off + 0] = (a.toInt() + '0'.code).toByte()
-        utf8[off + 1] = (b.toInt() + '0'.code).toByte()
-    }
-
-    private inline fun render1Digit(a: Long, utf8: ByteArray, off: Int) {
-        utf8[off] = (a.toInt() + '0'.code).toByte()
-    }
-
-    private inline fun render1To4Digits(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
-        val abcd = dw
-
-        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-        val aDw = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val a = aDw.toInt()
-        val b = (ab - (aDw * 10L)).toInt()
-        val tA = digitPrintCount - 4;
-        val maskA = -tA shr 31;
-        val iA = tA and maskA
-        utf8[off + iA] = (a + '0'.code).toByte()
-        val tB = digitPrintCount - 3;
-        val maskB = -tB shr 31;
-        val iB = tB and maskB
-        utf8[off + iB] = (b + '0'.code).toByte()
-
-        val cd = abcd - (ab * 100L)
-        val cDw = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val c = cDw.toInt()
-        val tC = digitPrintCount - 2;
-        val maskC = -tC shr 31;
-        val iC = tC and maskC
-        utf8[off + iC] = (c + '0'.code).toByte()
-        val d = (cd - (cDw * 10L)).toInt()
-        val iD = digitPrintCount - 1
-        utf8[off + iD] = (d + '0'.code).toByte()
-    }
-
     internal fun u64ToUtf8(dw0: ULong, utf8: ByteArray, off: Int): Int =
         u64ToUtf8(max(U256Pow10.calcDigitLen64(dw0), 1), dw0, utf8, off)
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
         when {
-            digitPrintCount > 1 -> u64ToUtf8_chunk9(digitPrintCount, dw0, utf8, off)
+            digitPrintCount > 1 -> u64ToUtf8_chunk8(digitPrintCount, dw0, utf8, off)
             digitPrintCount == 1 -> utf8[off] = ('0'.code + dw0.toInt()).toByte()
         }
         return digitPrintCount
@@ -256,80 +147,17 @@ internal object IntegerParsePrint {
         return digitPrintCount
     }
 
-    internal fun u64ToUtf8_sequential(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
-        val z = C256()
-        DivMagic.magicDivPow10_64(z, dw0, 8)
-        if (digitPrintCount in 1..20) {
-            var d = dw0
-            var i = digitPrintCount - 1
-            while (i >= 3) {
-                val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitA = ((d - (qA * 10L)) + '0'.code).toByte()
-                val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-                val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
-                val qD = unsignedMulHi(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitD = ((qC - (qD * 10L)) + '0'.code).toByte()
-
-                utf8[off + i - 3] = digitD
-                utf8[off + i - 2] = digitC
-                utf8[off + i - 1] = digitB
-                utf8[off + i    ] = digitA
-
-                d = qD
-                i -= 4
-            }
-            if (i >= 0) {
-                val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitA = ((d - (qA * 10L)) + '0'.code).toByte()
-                val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-                val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-                val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
-
-                val tB = i - 1;
-                val maskB = -tB shr 31;
-                val iB = tB and maskB
-
-                utf8[off     ] = digitC
-                utf8[off + iB] = digitB
-                utf8[off + i ] = digitA
-
-            }
-            return off + digitPrintCount
-        }
-        throw IllegalArgumentException()
-    }
-
-    internal fun u64ToUtf8_chunk9(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
+    internal fun u64ToUtf8_chunk8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining
         var dwT = dw0
-        while (digitsRemaining >= 9) {
-            // magic division by 1E9 requires a correction, so is more complicated than most
-            // but, still a big performance win relative to division
-            //val potentialCarry = 1uL shl (64 - S_U64_DIV_1E9)
-            //val hiUncorrected = unsignedMulHi(dwT, M_U64_DIV_1E9) shr S_U64_DIV_1E9
-            //val hiCorrected = hiUncorrected + dwT
-            //val actualCarry = if (hiCorrected < hiUncorrected) potentialCarry else 0uL
-            //val q = (hiCorrected shr S_U64_DIV_1E9) + actualCarry
-            //
-            val pHiUncorrected = unsignedMulHi(dwT, M_U64_DIV_1E9)
-            val pHiCorrected = pHiUncorrected + dwT
-
-            // we lost a 2^64 if that add overflowed; after >> s that’s 2^(64-s)
-            val carryAmount = 1uL shl (64 - S_U64_DIV_1E9)
-            val carry = if (pHiCorrected < pHiUncorrected) carryAmount else 0uL
-
-            val q = (pHiCorrected shr S_U64_DIV_1E9) + carry
-
-            //val q = dwT / 1_000_000_000uL
-            val r = dwT - (q * 1_000_000_000uL)
+        while (digitsRemaining >= 8) {
+            val q = unsignedMulHi(dwT, M_U64_DIV_1E8) shr S_U64_DIV_1E8
+            val r = dwT - (q * 1_0000_0000uL)
             dwT = q
-            Magia.render9DigitsBeforeIndex(r, utf8, ich)
-            ich -= 9
-            digitsRemaining -= 9
+            render8DigitsBeforeIndex(r, utf8, ich)
+            ich -= 8
+            digitsRemaining -= 8
         }
         if (digitsRemaining > 0)
             if (Magia.renderTailDigitsBeforeIndex(dwT.toUInt(), utf8, ich) != digitsRemaining)
@@ -484,6 +312,44 @@ internal object IntegerParsePrint {
             return sign
         } while (false)
         throw NumberFormatException("invalid hex integer syntax:$src")
+    }
+
+    fun render8DigitsBeforeIndex(dw: ULong, utf8: ByteArray, offMaxx: Int) {
+        val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) shr S_U64_DIV_1E4
+        val efgh  = dw - (abcd * 10000uL)
+
+        val ab = (abcd * M_U32_DIV_1E2) shr S_U32_DIV_1E2
+        val cd = abcd - (ab * 100uL)
+
+        val ef = (efgh * M_U32_DIV_1E2) shr S_U32_DIV_1E2
+        val gh = efgh - (ef * 100uL)
+
+        val a = (ab * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val b = ab - (a * 10uL)
+
+        val c = (cd * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val d = cd - (c * 10uL)
+
+        val e = (ef * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val f = ef - (e * 10uL)
+
+        val g = (gh * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val h = gh - (g * 10uL)
+
+        // Explicit bounds check to enable elimination of individual checks
+        val offMin = offMaxx - 8
+        if (offMin >= 0 && offMaxx <= utf8.size) {
+            utf8[offMaxx - 8] = (a.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 7] = (b.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 6] = (c.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 5] = (d.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 4] = (e.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 3] = (f.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 2] = (g.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 1] = (h.toInt() + '0'.code).toByte()
+        } else {
+            throw IndexOutOfBoundsException()
+        }
     }
 
 }
