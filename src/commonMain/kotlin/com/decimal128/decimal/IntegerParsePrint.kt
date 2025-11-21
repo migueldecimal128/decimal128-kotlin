@@ -115,20 +115,19 @@ internal object IntegerParsePrint {
         var i = off + digitPrintCount
         var remainingDigits = digitPrintCount
         while (dw1T != 0uL) {
-            val dw1Q = dw1T / 1_000_000_000uL
-            val dw1R = dw1T % 1_000_000_000uL
-            val limb1 = (dw1R shl 32) or (dw0T shr 32)
-            val dw0Qmid = limb1 / 1_000_000_000uL
-            val dw0Rmid = limb1 % 1_000_000_000uL
-            val limb0 = (dw0Rmid shl 32) or (dw0T and 0xFFFF_FFFFuL)
-            val dw0Qlo = limb0 / 1_000_000_000uL
-            val dw0Rlo = limb0 % 1_000_000_000uL
-            val straddle = (dw0Qmid shl 32) + dw0Qlo
-            dw0T = straddle
-            dw1T = dw1Q
-            Magia.render9DigitsBeforeIndex(dw0Rlo, utf8, i)
-            i -= 9
-            remainingDigits -= 9
+            val q2 = unsignedMulHi(dw1T, M_U64_DIV_1E8) shr S_U64_DIV_1E8
+            val r2 = dw1T - (q2 * 1_0000_0000uL)
+            val s2 = (r2 shl 32) or (dw0T shr 32)
+            val q1 = unsignedMulHi(s2, M_U64_DIV_1E8) shr S_U64_DIV_1E8
+            val r1 = s2 - (q1 * 1_0000_0000uL)
+            val s1 = (r1 shl 32) or (dw0T and 0xFFFF_FFFFuL)
+            val q0 = unsignedMulHi(s1, M_U64_DIV_1E8) shr S_U64_DIV_1E8
+            val r0 = s1 - (q0 * 1_0000_0000uL)
+            dw0T = (q1 shl 32) + q0
+            dw1T = q2
+            render8DigitsBeforeIndex(r0, utf8, i)
+            i -= 8
+            remainingDigits -= 8
         }
         while (remainingDigits >= 8) {
             val t0 = unsignedMulHi(dw0T, M_U64_DIV_1E8) shr S_U64_DIV_1E8
