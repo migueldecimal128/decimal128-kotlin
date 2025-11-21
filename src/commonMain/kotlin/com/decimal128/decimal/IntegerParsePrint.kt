@@ -8,7 +8,7 @@ import com.decimal128.hugeint.StringLatin1Iterator
 import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L
-private const val MU_1E9 = 0x44B82FA09
+private const val MU_1E9 = 0x44B82FA09L
 
 private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
 private const val S_U32_DIV_1E1 = 35
@@ -41,6 +41,7 @@ private const val S_U64_DIV_1E16 = 51
 internal object IntegerParsePrint {
 
     private inline fun U32(n: Int) = n.toLong() and 0xFFFF_FFFFL
+    private inline fun dw32(n: Int) = n.toULong() and 0xFFFF_FFFFuL
 
     fun int256ToString(sign: Boolean, c: C256): String {
         val signMask = if (sign) -1L else 0L
@@ -63,32 +64,30 @@ internal object IntegerParsePrint {
         // minimum printDigitLen is 1
         // add 1, then add -1 if the inbound digitLen was non-zero
         val printDigitLen = c.digitLen + 1 + (-c.digitLen shr 31)
-        if (c.bitLen <= 64) {
-            render0To20Digits(printDigitLen, c.dw0, utf8, off)
-            return printDigitLen
-        }
+        if (c.bitLen <= 128)
+            return u128ToUtf8(printDigitLen, c.dw1.toULong(), c.dw0.toULong(), utf8, off)
         val t: C256 = tmp?.c256Set(c) ?: C256(c)
-        while (t.bitLen > 128) {
-            val ich = t.digitLen - 9
+        do {
+            val ibMaxx = off + t.digitLen
             val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            render9Digits(r, utf8, off + ich)
-        }
-        while (t.bitLen > 64) {
+            Magia.render9DigitsBeforeIndex(r.toULong(), utf8, off + ibMaxx)
+        } while (t.bitLen > 128)
+        do {
             val ich = t.digitLen - 9
             val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
             render9Digits(r, utf8, off + ich)
-        }
-        render0To20Digits(t.digitLen, t.dw0, utf8, off)
+        } while (t.bitLen > 64)
+        u64ToUtf8(t.digitLen, t.dw0.toULong(), utf8, off)
         return printDigitLen
     }
 
     fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
-        val dwAbs = U32((n xor (n shr 31)) - (n shr 31))
+        val dwAbs = dw32((n xor (n shr 31)) - (n shr 31))
         val sign01 = n ushr 31
         utf8[off] = '-'.code.toByte()
         val digitLen = U256Pow10.calcDigitLen64(dwAbs)
         val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
-        render0To10Digits(digitPrintCount, dwAbs, utf8, off + sign01)
+        u64ToUtf8(digitPrintCount, dwAbs, utf8, off + sign01)
         return sign01 + digitPrintCount
     }
 
@@ -100,16 +99,19 @@ internal object IntegerParsePrint {
     }
 
     private fun render0To20Digits(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
-        var remaining = digitPrintCount
+        var remainingDigits = digitPrintCount
         var t = dw
+        while (remainingDigits >= 8) {
+
+        }
         if (digitPrintCount >= 10) {
             val q = unsignedMulHi(t, M_U64_DIV_1E10) ushr S_U64_DIV_1E10
             val abcdefghij = t - (q * 1_00000_00000L)
             t = q
-            remaining -= 10
-            render10Digits(abcdefghij, utf8, off + remaining)
+            remainingDigits -= 10
+            render10Digits(abcdefghij, utf8, off + remainingDigits)
         }
-        render0To10Digits(remaining, t, utf8, off)
+        render0To10Digits(remainingDigits, t, utf8, off)
     }
 
     private fun render0To10Digits(digitPrintCount: Int, dw: Long, utf8: ByteArray, off: Int) {
@@ -217,6 +219,42 @@ internal object IntegerParsePrint {
         return digitPrintCount
     }
 
+    internal fun u128ToUtf8(digitPrintCount: Int, dw1: ULong, dw0: ULong, utf8: ByteArray, off: Int): Int {
+        if (dw1 == 0uL)
+            return u64ToUtf8(digitPrintCount, dw0, utf8, off)
+        var dw1T = dw1
+        var dw0T = dw0
+        var i = off + digitPrintCount
+        var remainingDigits = digitPrintCount
+        while (dw1T != 0uL) {
+            val dw1Q = dw1T / 1_000_000_000uL
+            val dw1R = dw1T % 1_000_000_000uL
+            val limb1 = (dw1R shl 32) or (dw0T shr 32)
+            val dw0Qmid = limb1 / 1_000_000_000uL
+            val dw0Rmid = limb1 % 1_000_000_000uL
+            val limb0 = (dw0Rmid shl 32) or (dw0T and 0xFFFF_FFFFuL)
+            val dw0Qlo = limb0 / 1_000_000_000uL
+            val dw0Rlo = limb0 % 1_000_000_000uL
+            val straddle = (dw0Qmid shl 32) + dw0Qlo
+            dw0T = straddle
+            dw1T = dw1Q
+            Magia.render9DigitsBeforeIndex(dw0Rlo, utf8, i)
+            i -= 9
+            remainingDigits -= 9
+        }
+        while (remainingDigits >= 9) {
+            val t0 = dw0T / 1_000_000_000uL
+            val r0 = dw0T % 1_000_000_000uL
+            dw0T = t0
+            Magia.render9DigitsBeforeIndex(r0, utf8, i)
+            i -= 9
+            remainingDigits -= 9
+        }
+        if (remainingDigits > 0) {
+            Magia.renderTailDigitsBeforeIndex(dw0T.toUInt(), utf8, i)
+        }
+        return digitPrintCount
+    }
 
     internal fun u64ToUtf8_sequential(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
         val z = C256()
@@ -271,11 +309,21 @@ internal object IntegerParsePrint {
         while (digitsRemaining >= 9) {
             // magic division by 1E9 requires a correction, so is more complicated than most
             // but, still a big performance win relative to division
-            val potentialCarry = 1uL shl (64 - S_U64_DIV_1E9)
-            val hiUncorrected = unsignedMulHi(dwT, M_U64_DIV_1E9) shr S_U64_DIV_1E9
-            val hiCorrected = hiUncorrected + dwT
-            val actualCarry = if (hiCorrected < hiUncorrected) potentialCarry else 0uL
-            val q = (hiCorrected shr S_U64_DIV_1E9) + actualCarry
+            //val potentialCarry = 1uL shl (64 - S_U64_DIV_1E9)
+            //val hiUncorrected = unsignedMulHi(dwT, M_U64_DIV_1E9) shr S_U64_DIV_1E9
+            //val hiCorrected = hiUncorrected + dwT
+            //val actualCarry = if (hiCorrected < hiUncorrected) potentialCarry else 0uL
+            //val q = (hiCorrected shr S_U64_DIV_1E9) + actualCarry
+            //
+            val pHiUncorrected = unsignedMulHi(dwT, M_U64_DIV_1E9)
+            val pHiCorrected = pHiUncorrected + dwT
+
+            // we lost a 2^64 if that add overflowed; after >> s that’s 2^(64-s)
+            val carryAmount = 1uL shl (64 - S_U64_DIV_1E9)
+            val carry = if (pHiCorrected < pHiUncorrected) carryAmount else 0uL
+
+            val q = (pHiCorrected shr S_U64_DIV_1E9) + carry
+
             //val q = dwT / 1_000_000_000uL
             val r = dwT - (q * 1_000_000_000uL)
             dwT = q
