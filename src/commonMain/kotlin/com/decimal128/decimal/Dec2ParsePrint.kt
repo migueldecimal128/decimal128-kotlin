@@ -87,24 +87,16 @@ object Dec2ParsePrint {
                 ++payloadDigitCount
             }
         }
-        var dw1 = 0uL
-        var dw0 = accumulator19
+        var payloadDw1 = 0uL
+        var payloadDw0 = accumulator19
         if (payloadDigitCount > 19) {
             val m = tenPow(payloadDigitCount - 19)
-            dw0 = accumulator19 * m
-            dw1 = unsignedMulHi(accumulator19, m)
-            dw0 += accumulator34
-            dw1 += if (dw0 < accumulator34) 1uL else 0uL
+            payloadDw0 = accumulator19 * m
+            payloadDw1 = unsignedMulHi(accumulator19, m)
+            payloadDw0 += accumulator34
+            payloadDw1 += if (payloadDw0 < accumulator34) 1uL else 0uL
         }
-        if ((dw1 or dw0) == 0uL) {
-            return when {
-                !hasS && !sign -> Dec2.POS_QNAN
-                !hasS && sign -> Dec2.NEG_QNAN
-                sign -> Dec2.NEG_SNAN
-                else -> Dec2.POS_SNAN
-            }
-        }
-        return Dec2(sign, if (hasS) NON_FINITE_SNAN else NON_FINITE_QNAN, dw1, dw0)
+        return Dec2.NaN(sign, hasS, payloadDw1, payloadDw0)
     }
 
     fun parseFiniteValueText(str: String): Dec2? {

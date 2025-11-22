@@ -258,6 +258,36 @@ class Dec2 private constructor(
 
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
+        fun NaN() = POS_QNAN
+
+        fun NaN(sign: Boolean, signaling: Boolean = false): Dec2 {
+            return when {
+                !signaling && !sign -> Dec2.POS_QNAN
+                !signaling && sign -> Dec2.NEG_QNAN
+                sign -> Dec2.NEG_SNAN
+                else -> Dec2.POS_SNAN
+            }
+        }
+
+        fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Dec2 =
+            NaN(sign, signaling, 0uL, payloadDw0)
+
+        fun NaN(sign: Boolean = false, signaling: Boolean = false,
+                payloadDw1: ULong, payloadDw0: ULong = 0uL
+        ): Dec2 {
+            if ((payloadDw1 or payloadDw0) == 0uL)
+                return NaN(sign, signaling)
+            // payload is 11 declets ... 11 * 10 = 110 bits
+            // 110 - 64 = 46 bits in the upper dword
+            val ILLEGAL_HIGH_BITS_MASK = ((1uL shl 46) - 1uL).inv()
+            if (payloadDw1 and ILLEGAL_HIGH_BITS_MASK != 0uL)
+                throw IllegalArgumentException("payload too large")
+            return Dec2(sign, if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN,
+                payloadDw1, payloadDw0)
+            }
+        }
+
+
     }
 
     fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
