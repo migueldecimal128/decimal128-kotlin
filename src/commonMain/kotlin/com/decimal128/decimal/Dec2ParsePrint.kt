@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.decimal.U256Bits.calcBitLen128
@@ -17,6 +19,19 @@ object Dec2ParsePrint {
         "-8", "-9", "-10", "-11", "-12", "-13", "-14", "-15"
     )
 
+    /**
+     * Parses a textual infinity representation into a [`Dec2`] value.
+     *
+     * Accepted forms are case-insensitive:
+     *
+     *   - `INF`, `Infinity`
+     *   - Optional leading sign: `+inf`, `-infinity`
+     *
+     * The entire string must match one of these forms exactly (no trailing
+     * characters). Returns `null` if the text is not a valid infinity form.
+     *
+     * @return the parsed positive or negative infinity, or `null` if not matched.
+     */
     fun parseInfinityText(str: String): Dec2? {
         if (str.length < 3)
             return null
@@ -52,6 +67,26 @@ object Dec2ParsePrint {
         return pow
     }
 
+    /**
+     * Parses a textual NaN representation into a [`Dec2`] value.
+     *
+     * Accepted forms (case-insensitive):
+     *
+     *   - `nan`, `snan`
+     *   - Optional leading sign: `+nan`, `-snan`
+     *   - Any characters may follow the `nan`/`snan` prefix.
+     *
+     * After the prefix, all decimal digits found anywhere in the remainder of
+     * the string are collected (in order) up to a maximum of **33 digits**.
+     * These digits form the NaN payload; excess digits are ignored. If no digits
+     * are present, the payload is zero.
+     *
+     * Returns a quiet NaN or signaling NaN depending on whether the prefix began
+     * with `s`. If the string does not begin with a valid NaN prefix, returns
+     * `null`.
+     *
+     * @return the parsed NaN value, or `null` if not a NaN text form.
+     */
     fun parseNanText(str: String): Dec2? {
         if (str.length < 3)
             return null
@@ -72,18 +107,19 @@ object Dec2ParsePrint {
         ich += 2
         var payloadDigitCount = 0
         var accumulator19 = 0uL
-        var accumulator34 = 0uL
+        var accumulator33 = 0uL
         while (ich < str.length) {
             val chDigit = str[ich++]
-            if (chDigit !in '0'..'9')
-                return null
+            // be very lenient when parsing NaN payload
+            // IEEE754 says nothing about external text representation of NaN payload
+            if (chDigit !in '0'..'9' || payloadDigitCount == 33)
+                continue
             val d = (chDigit - '0').toULong()
             if (payloadDigitCount > 0 || d != 0uL) {
-                when {
-                    payloadDigitCount < 19 -> accumulator19 = (accumulator19 * 10uL) + d
-                    payloadDigitCount < 34 -> accumulator34 = (accumulator34 * 10uL) + d
-                    else -> return null
-                }
+                if (payloadDigitCount < 19)
+                    accumulator19 = (accumulator19 * 10uL) + d
+                else
+                    accumulator33 = (accumulator33 * 10uL) + d
                 ++payloadDigitCount
             }
         }
@@ -93,12 +129,29 @@ object Dec2ParsePrint {
             val m = tenPow(payloadDigitCount - 19)
             payloadDw0 = accumulator19 * m
             payloadDw1 = unsignedMulHi(accumulator19, m)
-            payloadDw0 += accumulator34
-            payloadDw1 += if (payloadDw0 < accumulator34) 1uL else 0uL
+            payloadDw0 += accumulator33
+            payloadDw1 += if (payloadDw0 < accumulator33) 1uL else 0uL
         }
         return Dec2.NaN(sign, hasS, payloadDw1, payloadDw0)
     }
 
+    /**
+     * Parses a finite decimal value into a [`Dec2`] (decimal128) with **no rounding**.
+     *
+     * This is a simple numeric parser that accepts only standard finite forms:
+     *
+     *   - Optional leading sign (`+` or `-`)
+     *   - Digits with optional decimal point `.`
+     *   - Optional exponent using `e` or `E`
+     *   - Optional exponent sign
+     *   - All characters must be ASCII/Basic-Latin
+     *
+     * If the input requires rounding, contains invalid syntax, or exceeds the
+     * exact range of decimal128 finite values, this method returns `null`.
+     *
+     * @return the parsed finite `Dec2` value, or `null` if not a valid finite
+     *         decimal128 text form without rounding.
+     */
     fun parseFiniteValueText(str: String): Dec2? {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros

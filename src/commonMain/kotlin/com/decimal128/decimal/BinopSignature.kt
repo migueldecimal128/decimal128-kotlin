@@ -24,31 +24,43 @@ enum class BinopSignature {
         @Suppress("NOTHING_TO_INLINE")
         internal inline fun indexOf(x: MutDec, y: MutDec) = indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen)
 
-        private val signatures = values()
+        private val signatures16 = Array<BinopSignature>(16) {
+            i ->
+            val xSig = i shr 2
+            val ySig = i and 0x03
+            if (xSig == 3 || ySig == 3)
+                NAN_FOUND
+            else
+                entries[xSig * 3 + ySig]
+        }
 
         fun enumOf(x: Decimal, y: Decimal): BinopSignature =
-            signatures[indexOf(x, y)]
+            signatures16[indexOf(x, y) and 0x0F]
 
         fun enumOf(x: MutDec, y: MutDec): BinopSignature =
-            signatures[indexOf(x, y)]
+            signatures16[indexOf(x, y)]
 
         private fun indexOf(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
             // these flags are 0/1 Int
-            val xIsSpecial = (qX - MIN_SPECIAL_VALUE).inv() ushr 31
-            val yIsSpecial = (qY - MIN_SPECIAL_VALUE).inv() ushr 31
-            val xNonZero = -bitLenX ushr 31
-            val yNonZero = -bitLenY ushr 31
-            val xNegativeIfNaN = NON_FINITE_INF - qX
-            val yNegativeIfNaN = NON_FINITE_INF - qY
+            // each operand is identified by 2 bits
+            // bit 1 says whether or not the value isSpecial
+            // bit 0 says either zer/fnz or inf/nan
 
-            if ((xNegativeIfNaN or yNegativeIfNaN) >= 0) {
-                val x012 = (xIsSpecial shl 1) + xNonZero
-                val y012 = (yIsSpecial shl 1) + yNonZero
-                val cat = x012 * 3 + y012
-                return cat
-            } else {
-                return NAN_FOUND.ordinal
-            }
+            val xIsSpecial01 = (qX - MIN_SPECIAL_VALUE).inv() ushr 31
+            val yIsSpecial01 = (qY - MIN_SPECIAL_VALUE).inv() ushr 31
+            val xIsFinite01 = 1 - xIsSpecial01
+            val yIsFinite01 = 1 - yIsSpecial01
+            val xNonZero01 = -bitLenX ushr 31
+            val yNonZero01 = -bitLenY ushr 31
+            val xIsNan01 = (NON_FINITE_INF - qX) ushr 31
+            val yIsNan01 = (NON_FINITE_INF - qY) ushr 31
+
+            val xSignature =
+                (xIsSpecial01 shl 1) or (xIsFinite01 and xNonZero01) or (xIsSpecial01 and xIsNan01)
+            val ySignature =
+                (yIsSpecial01 shl 1) or (yIsFinite01 and yNonZero01) or (yIsSpecial01 and yIsNan01)
+
+            return (xSignature shl 2) + ySignature
         }
 
     }

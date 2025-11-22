@@ -6,38 +6,8 @@ import com.decimal128.decimal.U256Bits.calcBitLen128
 import com.decimal128.decimal.U256Bits.calcBitLen64
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
-
-internal inline fun packSeal(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int): Int =
-    (if (sign) Int.MIN_VALUE else 0) or (((qExp and 0x7FFF) shl 16) or
-            (digitLen shl 9) or bitLen)
-
-internal inline fun packSeal(sign01: Int, qExp: Int, digitLen: Int, bitLen: Int): Int =
-    (sign01 shl 31) or (((qExp and 0x7FFF) shl 16) or (digitLen shl 9) or bitLen)
-
-internal fun calcSeal(sign: Boolean, qExp: Int, dw1: ULong, dw0: ULong): Int {
-    val bitLen = calcBitLen128(dw1, dw0)
-    val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-    return packSeal(sign, qExp, digitLen, bitLen)
-}
-
-internal fun calcSeal(sign01: Int, qExp: Int, dw1: ULong, dw0: ULong): Int {
-    val bitLen = calcBitLen128(dw1, dw0)
-    val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-    return packSeal(sign01, qExp, digitLen, bitLen)
-}
-
-internal fun calcSeal(sign01: Int, dw0: ULong): Int {
-    val bitLen = calcBitLen64(dw0)
-    val digitLen = calcDigitLen64(bitLen, dw0)
-    return packSeal(sign01, 0, digitLen, bitLen)
-}
-
-// These are scaled by 2**32
-private const val LOG2_10_FLOOR: Long = 14_267_572_564L
-private const val LOG2_10_CEIL: Long = 14_267_572_565L
-
-private const val SIGN_0 = 0
-private const val SIGN_1 = 1
+import kotlin.math.max
+import kotlin.math.min
 
 class Dec2 private constructor(
     // pronounced:
@@ -59,9 +29,11 @@ class Dec2 private constructor(
         get() = seal shr 31
     internal val qExp: Int
         get() = (seal shl 1) shr 17
+
     // the normalized scientific base 10 exponent
     internal val eExp: Int
         get() = qExp + (digitLen - (-digitLen ushr 31))
+
     // the lower bound of the normalized binary exponent interval
     internal val bExpMin: Int
         get() = calcBExpMin(bitLen, qExp)
@@ -86,6 +58,42 @@ class Dec2 private constructor(
         val NEG_QNAN = POS_QNAN.negate()
         val POS_SNAN = Dec2(false, NON_FINITE_SNAN, 0, 0, 0uL, 0uL)
         val NEG_SNAN = POS_SNAN.negate()
+
+        // These are scaled by 2**32
+        private const val LOG2_10_FLOOR: Long = 14_267_572_564L
+        private const val LOG2_10_CEIL: Long = 14_267_572_565L
+
+        private const val SIGN_0 = 0
+        private const val SIGN_1 = 1
+
+        private const val DECIMAL128_QTINY = -6176
+        private const val DECIMAL128_MAX = 6111
+
+        internal inline fun packSeal(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int): Int =
+            (if (sign) Int.MIN_VALUE else 0) or (((qExp and 0x7FFF) shl 16) or
+                    (digitLen shl 9) or bitLen)
+
+        internal inline fun packSeal(sign01: Int, qExp: Int, digitLen: Int, bitLen: Int): Int =
+            (sign01 shl 31) or (((qExp and 0x7FFF) shl 16) or (digitLen shl 9) or bitLen)
+
+        internal fun calcSeal(sign: Boolean, qExp: Int, dw1: ULong, dw0: ULong): Int {
+            val bitLen = calcBitLen128(dw1, dw0)
+            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+            return packSeal(sign, qExp, digitLen, bitLen)
+        }
+
+        internal fun calcSeal(sign01: Int, qExp: Int, dw1: ULong, dw0: ULong): Int {
+            val bitLen = calcBitLen128(dw1, dw0)
+            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+            return packSeal(sign01, qExp, digitLen, bitLen)
+        }
+
+        internal fun calcSeal(sign01: Int, dw0: ULong): Int {
+            val bitLen = calcBitLen64(dw0)
+            val digitLen = calcDigitLen64(bitLen, dw0)
+            return packSeal(sign01, 0, digitLen, bitLen)
+        }
+
 
         /**
          * Computes a conservative **lower bound** on the binary exponent of a finite
@@ -256,24 +264,38 @@ class Dec2 private constructor(
             TODO()
         }
 
+        fun zero() = POS_ZEROe0
+
+        fun zero(sign: Boolean = false, qExp: Int): Dec2 {
+            if (qExp == 0)
+                return if (sign) NEG_ZEROe0 else POS_ZEROe0
+            val clampedQExp = max(min(qExp, DECIMAL128_MAX), DECIMAL128_QTINY)
+            val seal = packSeal(sign, clampedQExp, 0, 0)
+            val zero = Dec2(seal, 0uL, 0uL)
+            return zero
+        }
+
+
+
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
         fun NaN() = POS_QNAN
 
         fun NaN(sign: Boolean, signaling: Boolean = false): Dec2 {
             return when {
-                !signaling && !sign -> Dec2.POS_QNAN
-                !signaling && sign -> Dec2.NEG_QNAN
-                sign -> Dec2.NEG_SNAN
-                else -> Dec2.POS_SNAN
+                !signaling && !sign -> POS_QNAN
+                !signaling && sign -> NEG_QNAN
+                sign -> NEG_SNAN
+                else -> POS_SNAN
             }
         }
 
         fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Dec2 =
             NaN(sign, signaling, 0uL, payloadDw0)
 
-        fun NaN(sign: Boolean = false, signaling: Boolean = false,
-                payloadDw1: ULong, payloadDw0: ULong = 0uL
+        fun NaN(
+            sign: Boolean = false, signaling: Boolean = false,
+            payloadDw1: ULong, payloadDw0: ULong = 0uL
         ): Dec2 {
             if ((payloadDw1 or payloadDw0) == 0uL)
                 return NaN(sign, signaling)
@@ -282,15 +304,49 @@ class Dec2 private constructor(
             val ILLEGAL_HIGH_BITS_MASK = ((1uL shl 46) - 1uL).inv()
             if (payloadDw1 and ILLEGAL_HIGH_BITS_MASK != 0uL)
                 throw IllegalArgumentException("payload too large")
-            return Dec2(sign, if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN,
-                payloadDw1, payloadDw0)
-            }
+            return Dec2(
+                sign, if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN,
+                payloadDw1, payloadDw0
+            )
         }
+
+        internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
+            // both x.qExp and y.qExp must < MIN_SPECIAL_VALUE
+            // and x and y must have non-zero bitLens
+            // the only thing important in the following line is the sign bits
+            return ((x.qExp - MIN_SPECIAL_VALUE) and
+                    (y.qExp - MIN_SPECIAL_VALUE) and
+                    -x.bitLen and
+                    -y.bitLen) < 0
+        }
+
+        internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
+            x.qExp or y.qExp >= NON_FINITE_QNAN
 
 
     }
 
+    fun isFinite(): Boolean = qExp < NON_FINITE_INF
+    fun isInfinite(): Boolean = qExp == NON_FINITE_INF
+    fun isNaN(): Boolean = qExp >= NON_FINITE_QNAN
+    fun isZero(): Boolean = isFinite() && bitLen == 0
+    fun isNegative(): Boolean = seal < 0
+
     fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
+
+    fun abs(): Dec2 = if (isNegative()) negate() else this
+
+    // 5.7.3 Decimal operation
+    fun sameQuantum(other: Dec2) = (this.qExp == other.qExp)
+
+    internal fun isValid(): Boolean {
+        if (bitLen != calcBitLen128(dw1, dw0))
+            return false
+        if (digitLen != U256Pow10.calcDigitLen128(bitLen, dw1, dw0))
+            return false;
+        return true
+    }
+
 
     override fun toString(): String = Dec2ParsePrint.toString(this)
 }

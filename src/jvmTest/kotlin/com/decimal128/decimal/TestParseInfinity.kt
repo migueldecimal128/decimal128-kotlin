@@ -38,14 +38,14 @@ class TestParseInfinity {
         val negSnan = Dec2ParsePrint.parseNanText("-Snan")
         assertEquals(Dec2.NEG_SNAN, negSnan)
         val null1 = Dec2ParsePrint.parseNanText("NaN ")
-        assertEquals(null, null1)
+        assertEquals("NaN", null1.toString())
         val plussNaN = Dec2ParsePrint.parseNanText("+sNaN")
         assertEquals(Dec2.POS_SNAN, plussNaN)
         val NaN0 = Dec2ParsePrint.parseNanText("NaN0")
         assertEquals(Dec2.POS_QNAN, NaN0)
 
         val null2 = Dec2ParsePrint.parseNanText("NaN+1")
-        assertEquals(null, null2)
+        assertEquals("NaN1", null2.toString())
         val null3 = Dec2ParsePrint.parseNanText("")
         assertEquals(null, null3)
 
@@ -59,12 +59,17 @@ class TestParseInfinity {
         assertEquals("NaN12345678901234567890", nan20.toString())
         val nan21 = Dec2ParsePrint.parseNanText("nan123456789012345678901")
         assertEquals("NaN123456789012345678901", nan21.toString())
+        val NAN33 = Dec2ParsePrint.parseNanText("+NAN123456789012345678901234567890123")
+        assertEquals("NaN123456789012345678901234567890123", NAN33.toString())
+        // only accept the first 33 digits
         val NAN34 = Dec2ParsePrint.parseNanText("+NAN1234567890123456789012345678901234")
-        assertEquals("NaN1234567890123456789012345678901234", NAN34.toString())
+        assertEquals("NaN123456789012345678901234567890123", NAN34.toString())
+        val NAN33nines = Dec2ParsePrint.parseNanText("+NAN999999999999999999999999999999999")
+        assertEquals("NaN999999999999999999999999999999999", NAN33nines.toString())
         val NAN34nines = Dec2ParsePrint.parseNanText("+NAN9999999999999999999999999999999999")
-        assertEquals("NaN9999999999999999999999999999999999", NAN34nines.toString())
+        assertEquals("NaN999999999999999999999999999999999", NAN34nines.toString())
         val NAN35nines = Dec2ParsePrint.parseNanText("+NAN99999999999999999999999999999999999")
-        assertEquals(null, NAN35nines)
+        assertEquals("NaN999999999999999999999999999999999", NAN35nines.toString())
 
     }
 
