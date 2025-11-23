@@ -1,19 +1,19 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.Decimal.Companion.NEG_ONE
-import com.decimal128.decimal.Decimal.Companion.NaN
-import com.decimal128.decimal.Decimal.Companion.POS_ONE
-import com.decimal128.decimal.Decimal.Companion.ZERO
-import com.decimal128.decimal.Decimal.Companion.bothFnz
-import com.decimal128.decimal.Decimal.Companion.hasNaN
+import com.decimal128.decimal.DecOld.Companion.NEG_ONE
+import com.decimal128.decimal.DecOld.Companion.NaN
+import com.decimal128.decimal.DecOld.Companion.POS_ONE
+import com.decimal128.decimal.DecOld.Companion.ZERO
+import com.decimal128.decimal.DecOld.Companion.bothFnz
+import com.decimal128.decimal.DecOld.Companion.hasNaN
 
 class Binop128cmp : Binop() {
 
 
     companion object {
 
-        private val mapToDecimal: Array<Decimal> =
+        private val mapToDecimal: Array<DecOld> =
             arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
 
         /*
@@ -39,7 +39,7 @@ class Binop128cmp : Binop() {
 
          */
 
-        fun cmpImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun cmpImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
             if (hasNaN(x, y))
                 return cmpNanFound(x, y, env)
             val binopSig = BinopSignature.of(x, y)
@@ -70,7 +70,7 @@ class Binop128cmp : Binop() {
             return mapToDecimal[t + 1]
         }
 
-        fun cmpMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun cmpMagnitudeImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
             val cmp =  if (bothFnz(x, y)) {
                 cmpMagnitudeFnzFnz(x, y)
             } else when (BinopSignature.of(x, y)) {
@@ -91,14 +91,14 @@ class Binop128cmp : Binop() {
             return mapToDecimal[cmp + 1]
         }
 
-        private fun cmpFnzFnz(x: Decimal, y: Decimal): Int {
+        private fun cmpFnzFnz(x: DecOld, y: DecOld): Int {
             if (x.sign != y.sign)
                 return if (x.sign) -1 else 1
             val negateMask = x.sign0Neg1 // 0 or -1
             return (cmpMagnitudeFnzFnz(x, y) xor negateMask) - negateMask
         }
 
-        private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal) : Int {
+        private fun cmpMagnitudeFnzFnz(x: DecOld, y: DecOld) : Int {
             if (x.qExp == y.qExp)
                 return ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
             val cmpSci = x.sciExp.compareTo(y.sciExp)
@@ -124,22 +124,22 @@ class Binop128cmp : Binop() {
             }
         }
 
-        private fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun cmpMagnitudeNanFound(x: DecOld, y: DecOld, env: DecEnv): DecOld {
             TODO()
         }
 
-        private fun cmpNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun cmpNanFound(x: DecOld, y: DecOld, env: DecEnv): DecOld {
             TODO()
         }
 
-        fun cmpTotalOrderImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
+        fun cmpTotalOrderImpl(x: DecOld, y: DecOld, env: DecEnv): Int {
             if (x.sign != y.sign)
                 return if (x.sign) -1 else 1
             val negateMask = -x.sign01 // 0 or -1
             return (cmpTotalOrderMagnitudeImpl(x, y, env) xor negateMask) - negateMask
         }
 
-        private fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
+        private fun cmpTotalOrderMagnitudeImpl(x: DecOld, y: DecOld, env: DecEnv): Int {
             return if (bothFnz(x, y)) {
                 cmpTotalOrderMagnitudeFnzFnz(x, y)
             } else when (BinopSignature.of(x, y)) {
@@ -158,7 +158,7 @@ class Binop128cmp : Binop() {
             }
         }
 
-        private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
+        private fun cmpTotalOrderMagnitudeFnzFnz(x: DecOld, y: DecOld): Int {
             val cmp = cmpMagnitudeFnzFnz(x, y)
             if (cmp != 0)
                 return cmp
@@ -170,7 +170,7 @@ class Binop128cmp : Binop() {
             return x.qExp.compareTo(y.qExp)
         }
 
-        private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
+        private fun cmpTotalOrderMagnitudeNanFound(x: DecOld, y: DecOld): Int {
             return when {
                 x.qExp < NON_FINITE_QNAN -> -1
                 y.qExp < NON_FINITE_QNAN -> 1

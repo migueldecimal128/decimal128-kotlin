@@ -25,7 +25,7 @@ class Dec2 private constructor(
     internal val seal: Int,
     internal val dw1: ULong,
     internal val dw0: ULong
-) {
+) : Comparable<Dec2> {
     internal val bitLen: Int
         get() = seal and 0x1FF
     internal val digitLen: Int
@@ -264,15 +264,32 @@ class Dec2 private constructor(
 
         fun from(dw: ULong): Dec2 = Dec2(calcSeal(SIGN_0, dw), 0uL, dw)
 
-        fun from(str: String): Dec2 {
-            // parse only Decimal128
-            // 34 digits ... exponent in range
-            // unsignedMulHi will give up to 128 bits ... good
-            // no rounding.
-            // Any parse error throws IllegalArgumentException("invalid decimal format")
-            // if someone wants something more complicated then they use DecEnv.parse()
-            TODO()
-        }
+        /**
+         * Parses a decimal128 value from its textual representation.
+         *
+         * This is a strict, context-free parser for the **decimal128** interchange
+         * format. It accepts only valid decimal128 encodings:
+         *
+         *  • up to 34 decimal digits in the coefficient
+         *  • exponent within the decimal128 range (−6143 to +6144)
+         *  • optional leading sign
+         *  • no rounding is performed; the input must fit exactly
+         *
+         * The parser produces a fully-formed `Dec2` value using only the
+         * decimal128 rules. More flexible or environment-dependent parsing
+         * (including rounding, alternate syntaxes, or extended formats) should
+         * be performed via `DecEnv.parse()`.
+         *
+         * Any malformed input results in:
+         *  ```
+         *  IllegalArgumentException("invalid decimal format")
+         *  ```
+         *
+         * @param str a textual representation of a decimal128 value
+         * @return the parsed `Dec2` value
+         * @throws IllegalArgumentException if the text does not encode a valid decimal128
+         */
+        fun from(str: String): Dec2 = Dec2ParsePrint.parseDecText(str)
 
         fun zero() = POS_ZEROe0
 
@@ -309,6 +326,8 @@ class Dec2 private constructor(
         ): Dec2 {
             if ((payloadDw1 or payloadDw0) == 0uL)
                 return NaN(sign, signaling)
+            // FIXME - note that this 110 bits is inconsistent with
+            //  Dec2ParsePrint where it is restricted to 33 digits
             // payload is 11 declets ... 11 * 10 = 110 bits
             // 110 - 64 = 46 bits in the upper dword
             val ILLEGAL_HIGH_BITS_MASK = ((1uL shl 46) - 1uL).inv()
@@ -330,9 +349,11 @@ class Dec2 private constructor(
                     -y.bitLen) < 0
         }
 
-        internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
+        internal fun hasNaN(x: Dec2, y: Dec2): Boolean =
             x.qExp or y.qExp >= NON_FINITE_QNAN
 
+        internal fun neitherIsNaN(x: Dec2, y: Dec2) =
+            x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
 
     }
 
@@ -474,7 +495,7 @@ class Dec2 private constructor(
      *         this value and [other].
      */
 
-    fun compareTotalOrder(other: Dec2) = Dec2Compare.cmpTotalOrder(this, other)
+    fun compareTotalOrderTo(other: Dec2) = Dec2Compare.cmpTotalOrder(this, other)
 
     /**
      * Compares the *magnitudes* of two decimal128 values according to the
@@ -485,7 +506,81 @@ class Dec2 private constructor(
      *
      * @return −1, 0, or +1 describing the total-order magnitude relation.
      */
-    fun compareTotalOrderMag(other: Dec2) = Dec2Compare.cmpTotalOrderMag(this, other)
+    fun compareTotalOrderMagTo(other: Dec2) = Dec2Compare.cmpTotalOrderMag(this, other)
+
+    /**
+     * Compares this decimal128 value with [other] using **Java-style numeric
+     * comparison** semantics.
+     *
+     * This follows the ordering defined by Java’s `Double.compare` and
+     * `BigDecimal.compareTo`:
+     *
+     *  • All **finite non-zero** cohort members (different encodings of the
+     *    same numerical value) compare as **equal**.
+     *
+     *  • **−0** compares less than **+0**, matching Java’s tie-break rule
+     *    on the sign bit of zero.
+     *
+     *  • All **NaNs** compare greater than any non-NaN, and all NaNs are
+     *    considered **equal**, ignoring sign, payload and signaling/quiet
+     *    distinction.
+     *
+     *  • **−∞ < -normal < -0 < +0 < +normal < +∞ < NaN**
+     *
+     * No IEEE-754 flags are set, and signaling NaNs do not trigger
+     * exceptions; they are treated as ordinary NaNs in the Java-style
+     * sense.
+     *
+     * The return value uses the Kotlin/Java comparison convention:
+     *
+     *  • **−1** → `this` is less than [other]
+     *  • **0**  → `this` and [other] are equal under Java-style rules
+     *  • **+1** → `this` is greater than [other]
+     *
+     * @return −1, 0, or +1 describing the Java-style ordering of this
+     *         value relative to [other].
+     */
+    fun compareJavaStyleTo(other: Dec2): Int = Dec2Compare.cmpJavaStyle(this, other)
+
+    fun equalsJavaStyle(other: Dec2): Boolean = Dec2Compare.eqJavaStyle(this, other)
+
+    /**
+     * Compares this decimal128 value with [other] using **Java-style numeric
+     * comparison** semantics. This is the default comparison used by the
+     * Kotlin `Comparable` interface.
+     *
+     * The ordering matches Java’s `Double.compare` / `BigDecimal.compareTo`
+     * behavior:
+     *
+     *  • All **finite non-zero** cohort members compare as **equal**
+     *    (encoding differences such as trailing zeros are ignored).
+     *
+     *  • **−0 < +0**, matching Java’s signed-zero tie-break rule.
+     *
+     *  • Any finite value is less than **+∞**, and greater than **−∞**.
+     *
+     *  • **NaN** compares greater than all non-NaN values, and all NaNs
+     *    compare equal to each other (payload and sNaN/qNaN differences
+     *    are ignored).
+     *
+     * This comparison performs **no IEEE-754 signaling**, and does not
+     * examine **NaN signs** or **NaN payloads**. It is a pure, deterministic,
+     * context-free ordering suitable for sorting, sets, and all Kotlin/Java
+     * comparison operations.
+     *
+     * For IEEE-754–compliant comparisons (quiet/signaling, ordered/unordered,
+     * totalOrder, etc.), use the operations provided by `DecEnv`.
+     *
+     * @return −1, 0, or +1 according to Java-style numeric ordering.
+     */
+    override fun compareTo(other: Dec2): Int = compareJavaStyleTo(other)
+
+    /**
+     * Java-style equality: compares numerical value only.
+     * Signed zeros compare as equal, and all NaNs compare equal to each other.
+     */
+    override fun equals(other: Any?): Boolean =
+        other is Dec2 && equalsJavaStyle(other)
 
     fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
 
@@ -502,7 +597,19 @@ class Dec2 private constructor(
         return true
     }
 
-
+    /**
+     * Returns the canonical text form of this value.
+     *
+     * Formatting is compatible with Java’s `BigDecimal.toString()`,
+     * including the use of an uppercase **'E'** for scientific notation.
+     *
+     * The exact formatting rules (plain decimal vs scientific notation)
+     * follow the same general conventions as `BigDecimal`: values with
+     * very large or very small exponents may be rendered using an
+     * `E`-notation exponent; others appear as a decimal-point string.
+     *
+     * @return a canonical decimal128 textual representation of this value
+     */
     override fun toString(): String = Dec2ParsePrint.toString(this)
 }
 

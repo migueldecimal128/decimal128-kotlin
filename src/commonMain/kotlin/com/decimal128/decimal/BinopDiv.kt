@@ -1,13 +1,13 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.Decimal.Companion.bothFnz
-import com.decimal128.decimal.Decimal.Companion.newZero
+import com.decimal128.decimal.DecOld.Companion.bothFnz
+import com.decimal128.decimal.DecOld.Companion.newZero
 
 class BinopDiv : Binop() {
     companion object {
 
-        fun divImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun divImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
             return if (bothFnz(x, y)) {
                 divFnzFnz(x, y, env)
             } else when (BinopSignature.of(x, y)) {
@@ -15,7 +15,7 @@ class BinopDiv : Binop() {
                 ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp, env)
                 ZER_INF -> newZero(x.sign xor y.sign, env.eMin, env)
 
-                FNZ_ZER -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
+                FNZ_ZER -> if (x.sign xor y.sign) DecOld.NEG_INFINITY else DecOld.POS_INFINITY
                 FNZ_FNZ -> throw IllegalStateException()
                 FNZ_INF -> newZero(x.sign xor y.sign, env.eMin, env)
 
@@ -27,17 +27,17 @@ class BinopDiv : Binop() {
             }
         }
 
-        private fun divZeroZero(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+        private fun divZeroZero(x: DecOld, y: DecOld, env: DecEnv): DecOld =
             env.signal(DecExceptionReason.DIVISION_OF_ZERO_BY_ZERO)
 
-        private fun divInfInf(x: Decimal, y: Decimal, env: DecEnv): Decimal =
+        private fun divInfInf(x: DecOld, y: DecOld, env: DecEnv): DecOld =
             env.signal(DecExceptionReason.DIVISION_OF_INFINITY_BY_INFINITY)
 
-        private fun divFnzFnz(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun divFnzFnz(x: DecOld, y: DecOld, env: DecEnv): DecOld {
             val dividend = env.decTemps.mdecArg1.set(x)
             val divisor = env.decTemps.mdecArg2.set(y)
             val quotient = env.decTemps.mutDecResult.setDiv(dividend, divisor, env)
-            return Decimal.from(quotient)
+            return DecOld.from(quotient)
         }
     }
 }

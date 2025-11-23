@@ -9,7 +9,7 @@ import com.decimal128.decimal.U256Pow10.pow10Offset
 
 internal object C128ScalePow10 {
 
-    fun c128ScaleUpPow10(x: Decimal, pow10: Int, signExp: Short): Decimal {
+    fun c128ScaleUpPow10(x: DecOld, pow10: Int, signExp: Short): DecOld {
         check(pow10 > 0)
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -22,10 +22,10 @@ internal object C128ScalePow10 {
                 check(x.dw1 == 0L)
                 umul128x64to128(pow10dw1, pow10dw0, x.dw0)
             }
-        return Decimal.from(p1, p0, signExp)
+        return DecOld.from(p1, p0, signExp)
     }
 
-    fun c128ScaleUpPow10(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, pow10: Int, env: DecEnv): Decimal {
+    fun c128ScaleUpPow10(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, pow10: Int, env: DecEnv): DecOld {
         check(pow10 > 0)
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -40,7 +40,7 @@ internal object C128ScalePow10 {
             }
         val bitLen = calcBitLen128(dw1, dw0)
         val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-        return Decimal.from(sign, p1, p0, qExp - pow10)
+        return DecOld.from(sign, p1, p0, qExp - pow10)
     }
 
     fun c128ScaleUpPow10(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {

@@ -5,13 +5,13 @@ import com.decimal128.decimal.U256Pow10.pow10Offset
 
 object C128Compare {
 
-    fun c128IsZero(x: Decimal) = x.packedLengths.toInt() == 0
+    fun c128IsZero(x: DecOld) = x.packedLengths.toInt() == 0
 
-    fun c128IsNotZero(x: Decimal) = x.packedLengths.toInt() != 0
+    fun c128IsNotZero(x: DecOld) = x.packedLengths.toInt() != 0
 
-    fun c128IsOne(x: Decimal) = x.packedLengths.toInt() == ((1 shl 9) or 1)
+    fun c128IsOne(x: DecOld) = x.packedLengths.toInt() == ((1 shl 9) or 1)
 
-    fun c128UnscaledCompare(x: Decimal, y: Decimal) : Int {
+    fun c128UnscaledCompare(x: DecOld, y: DecOld) : Int {
         if (x.packedLengths != y.packedLengths)
             return x.packedLengths.compareTo(y.packedLengths)
         val cmp0 = unsignedCmp(x.dw0, y.dw0)
@@ -20,14 +20,14 @@ object C128Compare {
         return cmp10
     }
 
-    fun c128UnscaledEQ(x: Decimal, y: Decimal) : Boolean {
+    fun c128UnscaledEQ(x: DecOld, y: DecOld) : Boolean {
         return ((x.packedLengths - y.packedLengths).toLong() or
                 (x.dw0 - y.dw0) or (x.dw1 - y.dw1)) == 0L
     }
 
-    fun c128GTOne(x: Decimal) = x.packedLengths.toInt() > ((1 shl 9) or 1)
+    fun c128GTOne(x: DecOld) = x.packedLengths.toInt() > ((1 shl 9) or 1)
 
-    fun c128ScaledCompare(x: Decimal, y: Decimal, pow10Delta: Int) : Int {
+    fun c128ScaledCompare(x: DecOld, y: DecOld, pow10Delta: Int) : Int {
         val pow10BitLen = pow10BitLen(pow10Delta)
         val minYBitLen = y.bitLen + pow10BitLen - 1
         val maxYBitLen = y.bitLen + pow10BitLen(pow10Delta + 1)
@@ -54,7 +54,7 @@ object C128Compare {
         return ret
     }
 
-    fun c128ScaledEQ(x: Decimal, y: Decimal, pow10Delta: Int) : Boolean {
+    fun c128ScaledEQ(x: DecOld, y: DecOld, pow10Delta: Int) : Boolean {
         val pow10BitLen = pow10BitLen(pow10Delta)
         val minYBitLen = y.bitLen + pow10BitLen - 1
         val maxYBitLen = y.bitLen + pow10BitLen(pow10Delta + 1)

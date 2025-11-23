@@ -292,7 +292,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun set(x: Decimal): MutDec {
+    fun set(x: DecOld): MutDec {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
         this.bitLen = x.bitLen

@@ -1,18 +1,16 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Pow10.pow10BitLen
-import com.decimal128.decimal.U256Pow10.pow10Offset
 import kotlin.math.max
 import kotlin.math.min
 
 object D128Compare {
 
-    fun isZero(d: Decimal) =
+    fun isZero(d: DecOld) =
         d.packedLengths.toInt() == 0 && d.qExp != NON_FINITE_INF
 
-    fun isOne(d: Decimal): Boolean = d.packedLengths.toInt() == 0x0201
+    fun isOne(d: DecOld): Boolean = d.packedLengths.toInt() == 0x0201
 
-    fun compare(x: Decimal, y: Decimal) : Int {
+    fun compare(x: DecOld, y: DecOld) : Int {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax >= NON_FINITE_QNAN -> return when {
@@ -31,7 +29,7 @@ object D128Compare {
         return if (x.sign) -cmp else cmp
     }
 
-    fun magnitudeCompare(x: Decimal, y: Decimal) : Int {
+    fun magnitudeCompare(x: DecOld, y: DecOld) : Int {
         val qMax = max(x.qExp, y.qExp)
         return when {
             qMax < NON_FINITE_INF -> magnitudeCompareFinite(x, y)
@@ -40,7 +38,7 @@ object D128Compare {
         }
     }
 
-    private fun magnitudeCompareFinite(x: Decimal, y: Decimal) : Int {
+    private fun magnitudeCompareFinite(x: DecOld, y: DecOld) : Int {
         if (x.qExp == y.qExp)
             return ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
         val cmpSci = x.sciExp.compareTo(y.sciExp)
@@ -66,7 +64,7 @@ object D128Compare {
         }
     }
 
-    private fun magnitudeCompareInfinite(x: Decimal, y: Decimal) : Int {
+    private fun magnitudeCompareInfinite(x: DecOld, y: DecOld) : Int {
         check (max(x.qExp, y.qExp) == NON_FINITE_INF)
         val minExp = min(x.qExp, y.qExp)
         return when {
@@ -76,7 +74,7 @@ object D128Compare {
         }
     }
 
-    private fun magnitudeCompareNaN(x: Decimal, y: Decimal) : Int {
+    private fun magnitudeCompareNaN(x: DecOld, y: DecOld) : Int {
         val minExp = min(x.qExp, y.qExp)
         return when {
             minExp >= NON_FINITE_QNAN -> 0

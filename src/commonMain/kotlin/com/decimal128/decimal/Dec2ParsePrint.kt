@@ -2,6 +2,9 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecimalParsePrint.isFiniteValueText
+import com.decimal128.decimal.DecimalParsePrint.isInfinityText
+import com.decimal128.decimal.DecimalParsePrint.isNanText
 import com.decimal128.decimal.U256Bits.calcBitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
@@ -19,7 +22,20 @@ object Dec2ParsePrint {
         "-8", "-9", "-10", "-11", "-12", "-13", "-14", "-15"
     )
 
-    /**
+    fun parseDecText(str: String): Dec2 {
+        var dec = parseFiniteValueText(str)
+        if (dec != null)
+            return dec
+        dec = parseInfinityText(str)
+        if (dec != null)
+            return dec
+        dec = parseNanText(str)
+        if (dec != null)
+            return dec
+        throw IllegalArgumentException("invalid decimal format:'$str'")
+    }
+
+        /**
      * Parses a textual infinity representation into a [`Dec2`] value.
      *
      * Accepted forms are case-insensitive:
@@ -263,7 +279,9 @@ object Dec2ParsePrint {
         // or just document that it won't accept subnormals
         if (qExp < -6176 || qExp > 6111)
             return null
-        return Dec2(sign, qExp, digitLen, bitLen, dw1T, dw0T)
+        if ((qExp or bitLen) != 0)
+            return Dec2(sign, qExp, digitLen, bitLen, dw1T, dw0T)
+        return if (sign) Dec2.NEG_ZEROe0 else Dec2.POS_ZEROe0
     }
 
     fun toString(dec: Dec2): String {

@@ -2,16 +2,16 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.DecException.INVALID_OPERATION
 import com.decimal128.decimal.DecExceptionReason.*
-import com.decimal128.decimal.Decimal.Companion.NEG_INFINITY
-import com.decimal128.decimal.Decimal.Companion.NEG_ZERO
-import com.decimal128.decimal.Decimal.Companion.POS_INFINITY
-import com.decimal128.decimal.Decimal.Companion.ZERO
+import com.decimal128.decimal.DecOld.Companion.NEG_INFINITY
+import com.decimal128.decimal.DecOld.Companion.NEG_ZERO
+import com.decimal128.decimal.DecOld.Companion.POS_INFINITY
+import com.decimal128.decimal.DecOld.Companion.ZERO
 import kotlin.math.max
 import kotlin.math.min
 
 object D128Div {
 
-    fun divImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    fun divImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
         val qMax = max(x.qExp, y.qExp)
         return when {
             qMax < MIN_SPECIAL_VALUE ->
@@ -23,7 +23,7 @@ object D128Div {
                     INVALID_OPERATION,
                     SIGNALING_NAN_OPERAND,
                     "div",
-                    Decimal.NaN)
+                    DecOld.NaN)
             x.qExp == NON_FINITE_QNAN -> x
             y.qExp == NON_FINITE_QNAN -> y
             else -> throw IllegalStateException()
@@ -31,12 +31,12 @@ object D128Div {
 
     }
 
-    private fun finiteDivImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun finiteDivImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
         check (x.isFinite() && y.isFinite())
         return when {
             y.packedLengths > 0 -> {
                 if (x.packedLengths.toInt() == 0)
-                    Decimal.newZero(false, x.qExp - y.qExp, env)
+                    DecOld.newZero(false, x.qExp - y.qExp, env)
                 else
                     finiteDivNonZero(x, y, env)
             }
@@ -53,19 +53,19 @@ object D128Div {
         }
     }
 
-    private fun finiteDivNonZero(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun finiteDivNonZero(x: DecOld, y: DecOld, env: DecEnv): DecOld {
         val dividend = env.decTemps.mdecArg1.set(x)
         val divisor = env.decTemps.mdecArg2.set(y)
         val quotient = env.decTemps.mutDecResult.setDiv(dividend, divisor, env)
-        return Decimal.from(quotient)
+        return DecOld.from(quotient)
     }
 
-    private fun infiniteDivImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun infiniteDivImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
         val minExp = min(x.qExp, y.qExp)
         val quotSign = x.sign xor y.sign
         return when {
             minExp == NON_FINITE_INF ->
-                env.signal(INVALID_OPERATION, DIVISION_OF_INFINITY_BY_INFINITY, "x", Decimal.NaN)
+                env.signal(INVALID_OPERATION, DIVISION_OF_INFINITY_BY_INFINITY, "x", DecOld.NaN)
             x.qExp == NON_FINITE_INF ->
                 if (quotSign) NEG_INFINITY else POS_INFINITY
             y.qExp == NON_FINITE_INF ->

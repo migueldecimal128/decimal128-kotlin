@@ -63,12 +63,12 @@ data class DecEnv(
     fun hasTrapHandler(decException: DecException) =
         decTraps?.hasTrapHandler(decException) ?: false
 
-    fun signal(trapContext: DecExceptionContext): Decimal {
+    fun signal(trapContext: DecExceptionContext): DecOld {
         require(decTraps != null)
         return decTraps.signal(trapContext)
     }
 
-    fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, d: Decimal): Decimal {
+    fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, d: DecOld): DecOld {
         if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return d
@@ -84,9 +84,9 @@ data class DecEnv(
         return mutDec.set(decTraps.signal(trapContext))
     }
 
-    fun signal(decExceptionReason: DecExceptionReason): Decimal {
+    fun signal(decExceptionReason: DecExceptionReason): DecOld {
         // TODO
-        return Decimal.NaN
+        return DecOld.NaN
     }
 
     fun signalInvalid(mutDec: MutDec): MutDec {
@@ -105,8 +105,8 @@ data class DecEnv(
         return signal(DIV_BY_ZERO, OTHER, "whatever", mutDec)
     }
 
-    fun signalDivByZero(sign: Boolean): Decimal {
-        val inf = if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
+    fun signalDivByZero(sign: Boolean): DecOld {
+        val inf = if (sign) DecOld.NEG_INFINITY else DecOld.POS_INFINITY
         if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
             decFlags.set(DIV_BY_ZERO)
             return inf
@@ -124,7 +124,7 @@ data class DecEnv(
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
-    fun signalInexactOverflow(decInfinity: Decimal): Decimal {
+    fun signalInexactOverflow(decInfinity: DecOld): DecOld {
         if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)
             decFlags.set(INEXACT)
@@ -134,7 +134,7 @@ data class DecEnv(
         return signal(trap, OTHER, "whatever", decInfinity)
     }
 
-    fun signalRoundedInexact(dec: Decimal): Decimal {
+    fun signalRoundedInexact(dec: DecOld): DecOld {
         if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return dec
@@ -153,7 +153,7 @@ data class DecEnv(
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
-    fun signalInexactUnderflow(dec: Decimal): Decimal {
+    fun signalInexactUnderflow(dec: DecOld): DecOld {
         if (decTraps == null || !decTraps.hasTrapHandler(UNDERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(UNDERFLOW)
             decFlags.set(INEXACT)
@@ -171,7 +171,7 @@ data class DecEnv(
         return signal(INEXACT, IS_INEXACT, "whatever", mutDec)
     }
 
-    fun signalInexact(dec: Decimal): Decimal {
+    fun signalInexact(dec: DecOld): DecOld {
         if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return dec
@@ -192,9 +192,9 @@ data class DecEnv(
     }
 
     // Member-extension operator overloads:
-    operator fun Decimal.plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other, this@DecEnv)
-    operator fun Decimal.minus(other: Decimal): Decimal = BinopAddSub.subImpl(this, other, this@DecEnv)
-    operator fun Decimal.times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, this@DecEnv)
+    operator fun DecOld.plus(other: DecOld): DecOld = BinopAddSub.addImpl(this, other, this@DecEnv)
+    operator fun DecOld.minus(other: DecOld): DecOld = BinopAddSub.subImpl(this, other, this@DecEnv)
+    operator fun DecOld.times(other: DecOld): DecOld = D128Mul.mulImpl(this, other, this@DecEnv)
 
     fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 

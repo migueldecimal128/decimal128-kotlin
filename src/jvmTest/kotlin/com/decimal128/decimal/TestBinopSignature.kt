@@ -1,11 +1,11 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.Decimal.Companion.INFINITY
-import com.decimal128.decimal.Decimal.Companion.NaN
-import com.decimal128.decimal.Decimal.Companion.ONE
-import com.decimal128.decimal.Decimal.Companion.ZERO
-import com.decimal128.decimal.Decimal.Companion.sNaN
+import com.decimal128.decimal.DecOld.Companion.INFINITY
+import com.decimal128.decimal.DecOld.Companion.NaN
+import com.decimal128.decimal.DecOld.Companion.ONE
+import com.decimal128.decimal.DecOld.Companion.ZERO
+import com.decimal128.decimal.DecOld.Companion.sNaN
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

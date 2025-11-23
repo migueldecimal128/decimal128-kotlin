@@ -38,7 +38,7 @@ fun C256.coeffToBigInteger(): BigInteger {
     return bi
 }
 
-fun Decimal.coeffToBigInteger(): BigInteger {
+fun DecOld.coeffToBigInteger(): BigInteger {
     var bi = BigInteger.ZERO
     val dw0Lo = this.dw0 and 0xFFFFFFFFL
     val dw0Hi = this.dw0 ushr 32

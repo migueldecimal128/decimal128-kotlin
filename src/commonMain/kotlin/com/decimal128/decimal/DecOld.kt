@@ -5,7 +5,7 @@ import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import kotlin.math.max
 import kotlin.math.min
 
-class Decimal private constructor(
+class DecOld private constructor(
     @field: JvmField internal val dw1: Long,
     @field: JvmField internal val dw0: Long,
     @field: JvmField internal val packedLengths: Short,
@@ -34,32 +34,32 @@ class Decimal private constructor(
             this(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, qExp))
 
     companion object {
-        val POS_ZERO = Decimal(0L, 0L, 0, 0)
-        val NEG_ZERO = Decimal(0L, 0L, 0, Short.MIN_VALUE)
+        val POS_ZERO = DecOld(0L, 0L, 0, 0)
+        val NEG_ZERO = DecOld(0L, 0L, 0, Short.MIN_VALUE)
         val ZERO = POS_ZERO
-        val POS_ONE = Decimal(0L, 1L, 1, 0)
-        val NEG_ONE = Decimal(0L, 1L, 1, 0x8000.toShort())
+        val POS_ONE = DecOld(0L, 1L, 1, 0)
+        val NEG_ONE = DecOld(0L, 1L, 1, 0x8000.toShort())
         val ONE = POS_ONE
-        val POS_INFINITY = Decimal(0L, 0L, 0, NON_FINITE_INF.toShort())
-        val NEG_INFINITY = Decimal(0L, 0L, 0, packSignExp(true, NON_FINITE_INF))
+        val POS_INFINITY = DecOld(0L, 0L, 0, NON_FINITE_INF.toShort())
+        val NEG_INFINITY = DecOld(0L, 0L, 0, packSignExp(true, NON_FINITE_INF))
         val INFINITY = POS_INFINITY
-        val POS_QNAN = Decimal(0L, 0L, 0, NON_FINITE_QNAN.toShort())
-        val NEG_QNAN = Decimal(0L, 0L, 0, (0x8000 or NON_FINITE_QNAN).toShort())
+        val POS_QNAN = DecOld(0L, 0L, 0, NON_FINITE_QNAN.toShort())
+        val NEG_QNAN = DecOld(0L, 0L, 0, (0x8000 or NON_FINITE_QNAN).toShort())
         val NaN = POS_QNAN
-        val POS_SNAN = Decimal(0L, 0L, 0, NON_FINITE_SNAN.toShort())
-        val NEG_SNAN = Decimal(0L, 0L, 0, (0x8000 or NON_FINITE_SNAN).toShort())
+        val POS_SNAN = DecOld(0L, 0L, 0, NON_FINITE_SNAN.toShort())
+        val NEG_SNAN = DecOld(0L, 0L, 0, (0x8000 or NON_FINITE_SNAN).toShort())
         val sNaN = POS_SNAN
 
-        fun newZero(sign: Boolean, qExp: Int, env: DecEnv): Decimal {
+        fun newZero(sign: Boolean, qExp: Int, env: DecEnv): DecOld {
             if (qExp == 0)
                 return if (sign) NEG_ZERO else ZERO
             val finalExp = max(min(qExp, env.qMax), env.qTiny)
             val signExp = packSignExp(sign, finalExp)
-            val zero = Decimal(0L, 0L, 0, signExp)
+            val zero = DecOld(0L, 0L, 0, signExp)
             return zero
         }
 
-        fun newZero(signExp: Short, env: DecEnv): Decimal {
+        fun newZero(signExp: Short, env: DecEnv): DecOld {
             return when {
                 signExp.toInt() == 0 -> POS_ZERO
                 signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZERO
@@ -67,7 +67,7 @@ class Decimal private constructor(
                     val finalExp = max(min(unpackExp(signExp), env.qMax), env.qTiny)
                     val finalSignExp =
                         (finalExp or (signExp.toInt() and Short.MIN_VALUE.toInt())).toShort()
-                    val zero = Decimal(0L, 0L, 0, finalSignExp)
+                    val zero = DecOld(0L, 0L, 0, finalSignExp)
                     return zero
                 }
             }
@@ -75,44 +75,44 @@ class Decimal private constructor(
 
         fun from(n: Int) = from(n.toLong())
 
-        fun from(l: Long): Decimal {
+        fun from(l: Long): DecOld {
             return when {
                 l == 0L -> ZERO
-                l < 0L -> Decimal(0L, -l, calcPackedLengths(-l), Short.MIN_VALUE)
+                l < 0L -> DecOld(0L, -l, calcPackedLengths(-l), Short.MIN_VALUE)
                 l == 1L -> ONE
-                else -> Decimal(0L, l, calcPackedLengths(l), 0)
+                else -> DecOld(0L, l, calcPackedLengths(l), 0)
             }
         }
 
-        fun from(str: String) = Decimal.from(DECIMAL128.decTemps.mutDecResult.set(str))
+        fun from(str: String) = DecOld.from(DECIMAL128.decTemps.mutDecResult.set(str))
 
-        fun from(mutDec: MutDec): Decimal {
+        fun from(mutDec: MutDec): DecOld {
             require(mutDec.digitLen <= 34)
             require(mutDec.qExp <= DecFormat.DECIMAL_128.qMax || mutDec.qExp >= MIN_SPECIAL_VALUE)
-            val dec = Decimal(mutDec.sign, mutDec.dw1, mutDec.dw0, mutDec.bitLen, mutDec.digitLen, mutDec.qExp)
+            val dec = DecOld(mutDec.sign, mutDec.dw1, mutDec.dw0, mutDec.bitLen, mutDec.digitLen, mutDec.qExp)
             return dec
         }
 
-        fun from(dw1: Long, dw0: Long, signExp: Short): Decimal {
+        fun from(dw1: Long, dw0: Long, signExp: Short): DecOld {
             val lengths = calcPackedLengths(dw1, dw0)
-            val dec = Decimal(dw1, dw0, lengths, signExp)
+            val dec = DecOld(dw1, dw0, lengths, signExp)
             return dec
         }
 
-        fun from(dw1: Long, dw0: Long, packedLengths: Short, signExp: Short): Decimal {
-            val dec = Decimal(dw1, dw0, packedLengths, signExp)
+        fun from(dw1: Long, dw0: Long, packedLengths: Short, signExp: Short): DecOld {
+            val dec = DecOld(dw1, dw0, packedLengths, signExp)
             return dec
         }
 
-        fun from(sign: Boolean, dw1: Long, dw0: Long, qExp: Int): Decimal {
+        fun from(sign: Boolean, dw1: Long, dw0: Long, qExp: Int): DecOld {
             val packedLengths = calcPackedLengths(dw1, dw0)
             val signExp = packSignExp(sign, qExp)
-            val dec = Decimal(dw1, dw0, packedLengths, signExp)
+            val dec = DecOld(dw1, dw0, packedLengths, signExp)
             return dec
         }
 
         @Suppress("NOTHING_TO_INLINE")
-        internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
+        internal inline fun bothFnz(x: DecOld, y: DecOld): Boolean {
             // both x.qExp and y.qExp must < MIN_SPECIAL_VALUE
             // and x and y must have non-zero bitLens
             // the only thing important in the following line is the sign bits
@@ -124,28 +124,28 @@ class Decimal private constructor(
 
         fun qNaN(sign: Boolean) = if (sign) NEG_QNAN else POS_QNAN
 
-        fun qNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
+        fun qNaN(sign: Boolean, dw1: Long, dw0: Long): DecOld {
             val payloadIsZero = (dw1 or dw0) == 0L
             return when {
                 payloadIsZero && sign -> NEG_QNAN
                 payloadIsZero         -> POS_QNAN
-                else -> Decimal(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_QNAN))
+                else -> DecOld(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_QNAN))
             }
         }
 
         fun sNaN(sign: Boolean) = if (sign) NEG_SNAN else POS_SNAN
 
-        fun sNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
+        fun sNaN(sign: Boolean, dw1: Long, dw0: Long): DecOld {
             val payloadIsZero = (dw1 or dw0) == 0L
             return when {
                 payloadIsZero && sign -> NEG_SNAN
                 payloadIsZero         -> POS_SNAN
-                else -> Decimal(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_SNAN))
+                else -> DecOld(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_SNAN))
             }
         }
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
-        internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
+        internal fun hasNaN(x: DecOld, y: DecOld): Boolean =
             max(x.qExp, y.qExp) >= NON_FINITE_QNAN
 
     }
@@ -159,15 +159,15 @@ class Decimal private constructor(
     fun isFinite() = this.qExp < NON_FINITE_INF
 
     // 5.7.3 Decimal operation
-    fun sameQuantum(other: Decimal) = (this.qExp == other.qExp)
+    fun sameQuantum(other: DecOld) = (this.qExp == other.qExp)
 
     fun abs() = if (sign) negate() else this
 
-    fun negate(): Decimal {
+    fun negate(): DecOld {
         return when {
-            qExp < NON_FINITE_INF -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
+            qExp < NON_FINITE_INF -> DecOld(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
             qExp == NON_FINITE_INF -> infinity(sign)
-            packedLengths.toInt() != 0 -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
+            packedLengths.toInt() != 0 -> DecOld(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
             qExp == NON_FINITE_QNAN -> qNaN(! sign)
             else -> sNaN(! sign)
         }
@@ -191,15 +191,15 @@ class Decimal private constructor(
 
      */
 
-    fun add(other: Decimal): Decimal = D128AddSub.addImpl(this, other.sign, other, DECIMAL128)
-    fun sub(other: Decimal): Decimal = D128AddSub.addImpl(this, !other.sign, other, DECIMAL128)
-    fun mul(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
-    fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
+    fun add(other: DecOld): DecOld = D128AddSub.addImpl(this, other.sign, other, DECIMAL128)
+    fun sub(other: DecOld): DecOld = D128AddSub.addImpl(this, !other.sign, other, DECIMAL128)
+    fun mul(other: DecOld): DecOld = D128Mul.mulImpl(this, other, DECIMAL128)
+    fun div(other: DecOld): DecOld = D128Div.divImpl(this, other, DECIMAL128)
 
-    fun compareTo(other: Decimal): Int = D128Compare.compare(this, other)
-    fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
+    fun compareTo(other: DecOld): Int = D128Compare.compare(this, other)
+    fun magnitudeCompareTo(other: DecOld): Int = D128Compare.magnitudeCompare(this, other)
 
-    fun coefficientCompareTo(other: Decimal): Int {
+    fun coefficientCompareTo(other: DecOld): Int {
         val cmpBitLen = this.bitLen.compareTo(other.bitLen)
         if (cmpBitLen != 0)
             return cmpBitLen
