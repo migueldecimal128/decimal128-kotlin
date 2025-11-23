@@ -336,15 +336,7 @@ class Dec2 private constructor(
 
     }
 
-    fun isFinite(): Boolean = qExp < NON_FINITE_INF
-    fun isInfinite(): Boolean = qExp == NON_FINITE_INF
-    fun isNaN(): Boolean = qExp >= NON_FINITE_QNAN
-    fun isZero(): Boolean = isFinite() && bitLen == 0
-    fun isNegative(): Boolean = seal < 0
-
-    fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
-
-    fun abs(): Dec2 = if (isNegative()) negate() else this
+    // IEEE754-2019 5.7.2
 
     /**
      * Returns the IEEE-754-2019 *class* of this decimal128 value.
@@ -396,6 +388,108 @@ class Dec2 private constructor(
         }
     }
 
+    /**
+     * isSignMinus(x) is true if and only if x has negative sign. isSignMinus applies to zeros and NaNs
+     * as well.
+     */
+    fun isSignMinus(): Boolean = seal < 0 // IEEE754 5.7.2
+    fun isNegative(): Boolean = seal < 0
+
+    /**
+     * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
+     * In this implementation, the check for subnormal is hardwired to the decimal128 `eExp`
+     * adjusted (scientific) exponent -6143
+     */
+    fun isNormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp >= -6143
+
+    /**
+     * isFinite(x) is true if and only if x is zero, subnormal or normal (not infinite or NaN).
+     */
+    fun isFinite(): Boolean = qExp < NON_FINITE_INF
+
+    /**
+     * isZero(x) is true if and only if x is ±0.
+     *
+     * Recall that in the decimal floating point world, the zero cohort
+     * consists of all valid exponents with the zero coefficient.
+     */
+    fun isZero(): Boolean = isFinite() && bitLen == 0
+
+    /**
+     * isInfinite(x) is true if and only if x is infinite.
+     *
+     * This includes positiveInfinity and negativeInfinity.
+     */
+    fun isInfinite(): Boolean = qExp == NON_FINITE_INF
+
+    /**
+     * isNaN(x) is true if and only if x is a NaN.
+     *
+     * NaN Not A Number values may be quiet or signaling.
+     */
+    fun isNaN(): Boolean = qExp >= NON_FINITE_QNAN
+
+    /**
+     * isSignaling(x) is true if and only if x is a signaling NaN.
+     *
+     * Generally, when sNaN signaling NaN values are encountered during
+     * operations an environment flag is set and trapping to an
+     * optional exception handler may take place.
+     */
+    fun isSignaling(): Boolean = qExp == NON_FINITE_SNAN
+
+    /**
+     * Compares this decimal128 value with [other] using the IEEE-754
+     * *totalOrder* relation.
+     *
+     * This operation follows the ordering referenced in
+     * IEEE-754-2019 **§5.7.2 General operations** and defined in
+     * **§5.10 Details of totalOrder predicate**, which specifies a *total*
+     * ordering over all floating-point values, including NaNs, signed zeros,
+     * subnormals, infinities, and normal numbers.
+     *
+     * Unlike the usual <, ≤, >, and ≥ comparisons, the `totalOrder`
+     * relation produces a complete ordering for **all** values, including:
+     *
+     *  • members of the same *cohort* that represent the same numeric value
+     *  • signaling and quiet NaNs, which are generally unordered
+     *
+     * Ordering is determined by IEEE-754 rules based on:
+     *
+     *  • **sign**
+     *  • **magnitude**, using canonical comparison of exponents and
+     *    coefficients
+     *  • **NaN category**, where signaling NaNs precede quiet NaNs, and
+     *    NaNs are ordered by their payloads
+     *
+     * The return value uses the comparison convention:
+     *
+     *  • **−1** → `this` is less than `other`
+     *  • **0**  → `this` and `other` are equal in totalOrder
+     *  • **+1** → `this` is greater than `other`
+     *
+     * No rounding, exceptions, or signaling behavior are produced.
+     *
+     * @return −1, 0, or +1 indicating the total-order relationship between
+     *         this value and [other].
+     */
+
+    fun compareTotalOrder(other: Dec2) = Dec2Compare.cmpTotalOrder(this, other)
+
+    /**
+     * Compares the *magnitudes* of two decimal128 values according to the
+     * IEEE-754-2019 totalOrder rules (see §§5.10 and 5.7.2).
+     *
+     * This handles ordering among zeros, finite non-zero values, infinities,
+     * and NaNs. Sign is *not* considered here.
+     *
+     * @return −1, 0, or +1 describing the total-order magnitude relation.
+     */
+    fun compareTotalOrderMag(other: Dec2) = Dec2Compare.cmpTotalOrderMag(this, other)
+
+    fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
+
+    fun abs(): Dec2 = if (isNegative()) negate() else this
 
     // 5.7.3 Decimal operation
     fun sameQuantum(other: Dec2) = (this.qExp == other.qExp)
@@ -407,8 +501,6 @@ class Dec2 private constructor(
             return false;
         return true
     }
-
-    fun compareTotalOrder(other: Dec2) = Dec2Compare.cmpTotalOrder(this, other)
 
 
     override fun toString(): String = Dec2ParsePrint.toString(this)
