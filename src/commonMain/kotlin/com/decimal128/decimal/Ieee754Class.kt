@@ -41,15 +41,3 @@ enum class Ieee754Class {
     positiveNormal,
     positiveInfinity
 }
-enum class Ieee754Class {
-    signalingNaN,
-    quietNaN,
-    negativeInfinity,
-    negativeNormal,
-    negativeSubnormal,
-    negativeZero,
-    positiveZero,
-    positiveSubnormal,
-    positiveNormal,
-    positiveInfinity
-}
