@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 enum class BinopSignature {
@@ -18,12 +20,6 @@ enum class BinopSignature {
 
     companion object {
 
-        @Suppress("NOTHING_TO_INLINE")
-        internal inline fun indexOf(x: Decimal, y: Decimal) = indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen)
-
-        @Suppress("NOTHING_TO_INLINE")
-        internal inline fun indexOf(x: MutDec, y: MutDec) = indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen)
-
         private val signatures16 = Array<BinopSignature>(16) {
             i ->
             val xSig = i shr 2
@@ -34,11 +30,14 @@ enum class BinopSignature {
                 entries[xSig * 3 + ySig]
         }
 
-        fun enumOf(x: Decimal, y: Decimal): BinopSignature =
-            signatures16[indexOf(x, y) and 0x0F]
+        fun of(x: Decimal, y: Decimal): BinopSignature =
+            signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
-        fun enumOf(x: MutDec, y: MutDec): BinopSignature =
-            signatures16[indexOf(x, y)]
+        fun of(x: Dec2, y: Dec2): BinopSignature =
+            signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
+
+        fun of(x: MutDec, y: MutDec): BinopSignature =
+            signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
         private fun indexOf(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
             // these flags are 0/1 Int

@@ -310,7 +310,7 @@ class Dec2 private constructor(
             )
         }
 
-        internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
+        internal inline fun bothFnz(x: Dec2, y: Dec2): Boolean {
             // both x.qExp and y.qExp must < MIN_SPECIAL_VALUE
             // and x and y must have non-zero bitLens
             // the only thing important in the following line is the sign bits
@@ -346,6 +346,8 @@ class Dec2 private constructor(
             return false;
         return true
     }
+
+    fun compareTotalOrder(other: Dec2) = Dec2Compare.cmpTotalOrder(this, other)
 
 
     override fun toString(): String = Dec2ParsePrint.toString(this)

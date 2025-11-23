@@ -10,7 +10,7 @@ class BinopDiv : Binop() {
         fun divImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 divFnzFnz(x, y, env)
-            } else when (BinopSignature.enumOf(x, y)) {
+            } else when (BinopSignature.of(x, y)) {
                 ZER_ZER -> divZeroZero(x, y, env)
                 ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp, env)
                 ZER_INF -> newZero(x.sign xor y.sign, env.eMin, env)

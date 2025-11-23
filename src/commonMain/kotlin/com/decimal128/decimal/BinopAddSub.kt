@@ -11,7 +11,7 @@ class BinopAddSub : Binop() {
         fun addImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, y.sign, y, env)
-            } else when (BinopSignature.enumOf(x, y)) {
+            } else when (BinopSignature.of(x, y)) {
                 ZER_ZER -> addZeroZero(x, y.sign, y, env)
                 ZER_FNZ -> scaleToMinExp(y, x.qExp, env)
                 ZER_INF -> y
@@ -31,7 +31,7 @@ class BinopAddSub : Binop() {
         fun subImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, !y.sign, y, env)
-            } else when (BinopSignature.enumOf(x, y)) {
+            } else when (BinopSignature.of(x, y)) {
                 ZER_ZER -> addZeroZero(x, !y.sign, y, env)
                 ZER_FNZ -> y.negate()
                 ZER_INF -> y.negate()

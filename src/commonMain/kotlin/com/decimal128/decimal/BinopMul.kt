@@ -10,7 +10,7 @@ class BinopMul : Binop() {
         fun mulImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 mulFnzFnz(x, y, env)
-            } else when (BinopSignature.enumOf(x, y)) {
+            } else when (BinopSignature.of(x, y)) {
                 ZER_ZER -> mulZero(x, y, env)
                 ZER_FNZ -> mulZero(x, y, env)
                 ZER_INF -> mulInfZero(x, y, env)

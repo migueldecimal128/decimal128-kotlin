@@ -8,6 +8,12 @@ inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     return carryAB to sumAB
 }
 
+inline fun sumU64(dwA:ULong, dwB:ULong) :Pair<ULong, ULong> {
+    val sumAB = dwA + dwB
+    val carryAB = if (sumAB < dwA) 1uL else 0uL
+    return carryAB to sumAB
+}
+
 /*inline*/ fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
@@ -490,6 +496,60 @@ fun ucmp128(dw1X: Long, dw0X: Long, dw1Y: Long, dw0Y: Long): Int {
     return unsignedCmp(dw0X, dw0Y)
 }
 
+inline fun cmp32(x: Int, y: Int): Int {
+    val d = x - y
+    val lt = d ushr 31
+    val gt = -d ushr 31
+    return gt - lt
+}
+
+inline fun cmp64(x: Long, y: Long): Int {
+    val d = x - y
+    val lt = d ushr 63
+    val gt = -d ushr 63
+    return (gt - lt).toInt()
+}
+
+inline fun ucmp64(x: ULong, y: ULong): Int {
+    val sx = x.toLong() xor Long.MIN_VALUE
+    val sy = y.toLong() xor Long.MIN_VALUE
+    val d = sx - sy
+    val lt = d ushr 63
+    val gt = -d ushr 63
+    return (gt - lt).toInt()
+}
+
+inline fun ucmp128(x1: ULong, x0:ULong, y1: ULong, y0: ULong): Int {
+    val sx1 = x1.toLong() xor Long.MIN_VALUE
+    val sy1 = y1.toLong() xor Long.MIN_VALUE
+    val d1 = sx1 - sy1
+    val lt1 = d1 ushr 63
+    val gt1 = -d1 ushr 63
+    val cmp1 = (gt1 - lt1).toInt()
+
+    val sx0 = x0.toLong() xor Long.MIN_VALUE
+    val sy0 = y0.toLong() xor Long.MIN_VALUE
+    val d0 = sx0 - sy0
+    val lt0 = d0 ushr 63
+    val gt0 = -d0 ushr 63
+    val cmp0 = (gt0 - lt0).toInt()
+
+    val cmp1IsZeroMask = (cmp1 or -cmp1).inv()
+
+    return cmp1 or (cmp0 and cmp1IsZeroMask)
+}
+
+fun ucmp128ScalePow10(x1: ULong, x0: ULong, y1: ULong, y0: ULong, pow10: Int): Int {
+    check (pow10 in 1..<MIN_POW10_DIGIT_LEN_192)
+    if (pow10 < MIN_POW10_DIGIT_LEN_128)
+        return ucmp128_128x64(x1, x0, y1, y0, POW10[pow10].toULong())
+    check (y1 == 0uL)
+    val pow10Offset = U256Pow10.pow10Offset(pow10)
+    val p0 = POW10[pow10Offset].toULong()
+    val p1 = POW10[pow10Offset + 1].toULong()
+    return ucmp128_128x64(x1, x0, p1, p0, y0)
+}
+
 fun ucmp128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Int {
     val p1 = unsignedMulHi(y0, z0)
     val p0 = y0 * z0
@@ -513,6 +573,22 @@ fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Int {
     val cmp10 = if (cmp1 != 0) cmp1 else cmp0
     val p2 = carry1 + pp10Hi
     val cmp210 = if (p2 != 0L) -1 else cmp10
+    return cmp210
+}
+
+fun ucmp128_128x64(x1: ULong, x0: ULong, y1: ULong, y0: ULong, z0: ULong) : Int {
+    val pp00Hi = unsignedMulHi(y0, z0)
+    val pp00Lo = y0 * z0
+    val p0 = pp00Lo
+    val cmp0 = x0.compareTo(p0)
+
+    val pp10Hi = unsignedMulHi(y1, z0)
+    val pp10Lo = y1 * z0
+    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    val cmp1 = x1.compareTo(p1)
+    val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+    val p2 = carry1 + pp10Hi
+    val cmp210 = if (p2 != 0uL) -1 else cmp10
     return cmp210
 }
 

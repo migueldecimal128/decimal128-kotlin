@@ -42,7 +42,7 @@ class Binop128cmp : Binop() {
         fun cmpImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             if (hasNaN(x, y))
                 return cmpNanFound(x, y, env)
-            val binopSig = BinopSignature.enumOf(x, y)
+            val binopSig = BinopSignature.of(x, y)
             if (binopSig == ZER_ZER)
                 return ZERO
             if (x.sign != y.sign)
@@ -73,7 +73,7 @@ class Binop128cmp : Binop() {
         fun cmpMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             val cmp =  if (bothFnz(x, y)) {
                 cmpMagnitudeFnzFnz(x, y)
-            } else when (BinopSignature.enumOf(x, y)) {
+            } else when (BinopSignature.of(x, y)) {
                 ZER_ZER -> 0
                 ZER_FNZ -> -1
                 ZER_INF -> -1
@@ -142,7 +142,7 @@ class Binop128cmp : Binop() {
         private fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
             return if (bothFnz(x, y)) {
                 cmpTotalOrderMagnitudeFnzFnz(x, y)
-            } else when (BinopSignature.enumOf(x, y)) {
+            } else when (BinopSignature.of(x, y)) {
                 ZER_ZER -> x.qExp.compareTo(y.qExp)
                 ZER_FNZ -> -1
                 ZER_INF -> -1
