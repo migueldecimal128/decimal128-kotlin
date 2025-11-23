@@ -76,6 +76,8 @@ object Dec2Compare {
         }
     }
 
+
+
     /**
      * Returns `cmp` when `sign0Neg1 == 0` and `-cmp` when `sign0Neg1 == -1`,
      * using the branch-free transform `(cmp xor sign0Neg1) - sign0Neg1`.

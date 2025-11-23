@@ -8,7 +8,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.Class754.*
+import com.decimal128.decimal.Ieee754Class.*
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
@@ -944,10 +944,10 @@ class MutDec() : C256() {
     }
     // 5.7.2 General operations
 
-    fun valueClass(): Class754 {
+    fun valueClass(): Ieee754Class {
         return when {
             qExp == NON_FINITE_SNAN -> signalingNaN
-            qExp == NON_FINITE_QNAN -> quiteNaN
+            qExp == NON_FINITE_QNAN -> quietNaN
             qExp == NON_FINITE_INF ->
                 return if (sign == false) positiveInfinity else negativeInfinity
             c256IsZero() ->

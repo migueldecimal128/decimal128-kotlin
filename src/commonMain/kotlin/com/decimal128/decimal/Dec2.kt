@@ -2,6 +2,16 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Ieee754Class.negativeInfinity
+import com.decimal128.decimal.Ieee754Class.negativeNormal
+import com.decimal128.decimal.Ieee754Class.negativeSubnormal
+import com.decimal128.decimal.Ieee754Class.negativeZero
+import com.decimal128.decimal.Ieee754Class.positiveInfinity
+import com.decimal128.decimal.Ieee754Class.positiveNormal
+import com.decimal128.decimal.Ieee754Class.positiveSubnormal
+import com.decimal128.decimal.Ieee754Class.positiveZero
+import com.decimal128.decimal.Ieee754Class.quietNaN
+import com.decimal128.decimal.Ieee754Class.signalingNaN
 import com.decimal128.decimal.U256Bits.calcBitLen128
 import com.decimal128.decimal.U256Bits.calcBitLen64
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
@@ -335,6 +345,57 @@ class Dec2 private constructor(
     fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
 
     fun abs(): Dec2 = if (isNegative()) negate() else this
+
+    /**
+     * Returns the IEEE-754-2019 *class* of this decimal128 value.
+     *
+     * This implements the classification defined in IEEE-754-2019 §7.5.2
+     * (“General operations”), which specifies a 10-way partition of all
+     * floating-point values into NaNs, infinities, zeros, subnormals,
+     * and normals, each distinguished by sign and (for NaNs) signaling
+     * behavior.
+     *
+     * The returned value is one of:
+     *
+     *  * **quietNaN** – a non-finite datum encoded as a quiet NaN
+     *  * **signalingNaN** – a non-finite datum encoded as a signaling NaN
+     *  * **positiveInfinity / negativeInfinity** – signed infinities
+     *  * **positiveZero / negativeZero** – signed zeros
+     *  * **positiveSubnormal / negativeSubnormal** – finite values whose
+     *    *derived scientific exponent* `eExp` is below the minimum normal exponent
+     *  * **positiveNormal / negativeNormal** – all other finite, non-zero decimals
+     *
+     * Classification is determined using the value’s encoded sign,
+     * coefficient bit-length, quantum exponent (`qExp`), and its
+     * derived adjusted/scientific exponent (`eExp`).
+     * NaNs are identified first from the non-finite `qExp` range; zeros
+     * are detected via a zero coefficient; and subnormals are identified
+     * by comparing `eExp` with the minimum normal exponent for decimal128 (–6143).
+     *
+     * This routine performs no rounding, signaling, or exception
+     * processing; it only inspects the encoding to produce the IEEE-754
+     * class of the operand for decimal128
+     *
+     * @return the IEEE-754 class of this decimal128 value, in accordance
+     *         with IEEE-754-2019 §7.5.2.
+     */
+    fun ieeeClass(): Ieee754Class {
+        return when {
+            qExp >= NON_FINITE_INF -> when {
+                qExp == NON_FINITE_QNAN -> quietNaN
+                qExp > NON_FINITE_QNAN -> signalingNaN
+                sign -> negativeInfinity
+                else -> positiveInfinity
+            }
+            bitLen == 0 && sign -> negativeZero
+            bitLen == 0 -> positiveZero
+            eExp < -6143 && sign -> negativeSubnormal
+            eExp < -6143 -> positiveSubnormal
+            sign -> negativeNormal
+            else -> positiveNormal
+        }
+    }
+
 
     // 5.7.3 Decimal operation
     fun sameQuantum(other: Dec2) = (this.qExp == other.qExp)
