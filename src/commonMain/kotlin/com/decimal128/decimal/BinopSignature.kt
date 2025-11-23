@@ -33,7 +33,7 @@ enum class BinopSignature {
         fun of(x: DecOld, y: DecOld): BinopSignature =
             signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
-        fun of(x: Dec2, y: Dec2): BinopSignature =
+        fun of(x: Decimal, y: Decimal): BinopSignature =
             signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
         fun of(x: MutDec, y: MutDec): BinopSignature =

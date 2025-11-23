@@ -19,13 +19,13 @@ import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import kotlin.math.max
 import kotlin.math.min
 
-class Dec2 private constructor(
+class Decimal private constructor(
     // pronounced:
     // seal = Sign Exponent And Lengths
     internal val seal: Int,
     internal val dw1: ULong,
     internal val dw0: ULong
-) : Comparable<Dec2> {
+) : Comparable<Decimal> {
     internal val bitLen: Int
         get() = seal and 0x1FF
     internal val digitLen: Int
@@ -58,15 +58,15 @@ class Dec2 private constructor(
 
 
     companion object {
-        val POS_ZEROe0 = Dec2(SIGN_0, 0uL, 0uL)
+        val POS_ZEROe0 = Decimal(SIGN_0, 0uL, 0uL)
         val NEG_ZEROe0 = POS_ZEROe0.negate()
         val POS_ONEe0 = from(1)
         val NEG_ONEe0 = POS_ONEe0.negate()
-        val POS_INFINITY = Dec2(false, NON_FINITE_INF, 0, 0, 0uL, 0uL)
+        val POS_INFINITY = Decimal(false, NON_FINITE_INF, 0, 0, 0uL, 0uL)
         val NEG_INFINITY = POS_INFINITY.negate()
-        val POS_QNAN = Dec2(false, NON_FINITE_QNAN, 0, 0, 0uL, 0uL)
+        val POS_QNAN = Decimal(false, NON_FINITE_QNAN, 0, 0, 0uL, 0uL)
         val NEG_QNAN = POS_QNAN.negate()
-        val POS_SNAN = Dec2(false, NON_FINITE_SNAN, 0, 0, 0uL, 0uL)
+        val POS_SNAN = Decimal(false, NON_FINITE_SNAN, 0, 0, 0uL, 0uL)
         val NEG_SNAN = POS_SNAN.negate()
 
         // These are scaled by 2**32
@@ -252,17 +252,17 @@ class Dec2 private constructor(
             return bExpMax
         }
 
-        fun from(n: Int): Dec2 = from(n.toLong())
+        fun from(n: Int): Decimal = from(n.toLong())
 
-        fun from(w: UInt): Dec2 = from(w.toULong())
+        fun from(w: UInt): Decimal = from(w.toULong())
 
-        fun from(l: Long): Dec2 {
+        fun from(l: Long): Decimal {
             val mask = l shr 63
             val abs = ((l xor mask) - mask).toULong()
-            return Dec2(calcSeal(mask.toInt(), abs), 0uL, abs)
+            return Decimal(calcSeal(mask.toInt(), abs), 0uL, abs)
         }
 
-        fun from(dw: ULong): Dec2 = Dec2(calcSeal(SIGN_0, dw), 0uL, dw)
+        fun from(dw: ULong): Decimal = Decimal(calcSeal(SIGN_0, dw), 0uL, dw)
 
         /**
          * Parses a decimal128 value from its textual representation.
@@ -275,7 +275,7 @@ class Dec2 private constructor(
          *  • optional leading sign
          *  • no rounding is performed; the input must fit exactly
          *
-         * The parser produces a fully-formed `Dec2` value using only the
+         * The parser produces a fully-formed `Decimal` value using only the
          * decimal128 rules. More flexible or environment-dependent parsing
          * (including rounding, alternate syntaxes, or extended formats) should
          * be performed via `DecEnv.parse()`.
@@ -286,19 +286,19 @@ class Dec2 private constructor(
          *  ```
          *
          * @param str a textual representation of a decimal128 value
-         * @return the parsed `Dec2` value
+         * @return the parsed `Decimal` value
          * @throws IllegalArgumentException if the text does not encode a valid decimal128
          */
-        fun from(str: String): Dec2 = Dec2ParsePrint.parseDecText(str)
+        fun from(str: String): Decimal = DecParsePrint.parseDecText(str)
 
         fun zero() = POS_ZEROe0
 
-        fun zero(sign: Boolean = false, qExp: Int): Dec2 {
+        fun zero(sign: Boolean = false, qExp: Int): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
             val clampedQExp = max(min(qExp, DECIMAL128_MAX), DECIMAL128_QTINY)
             val seal = packSeal(sign, clampedQExp, 0, 0)
-            val zero = Dec2(seal, 0uL, 0uL)
+            val zero = Decimal(seal, 0uL, 0uL)
             return zero
         }
 
@@ -308,7 +308,7 @@ class Dec2 private constructor(
 
         fun NaN() = POS_QNAN
 
-        fun NaN(sign: Boolean, signaling: Boolean = false): Dec2 {
+        fun NaN(sign: Boolean, signaling: Boolean = false): Decimal {
             return when {
                 !signaling && !sign -> POS_QNAN
                 !signaling && sign -> NEG_QNAN
@@ -317,29 +317,29 @@ class Dec2 private constructor(
             }
         }
 
-        fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Dec2 =
+        fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Decimal =
             NaN(sign, signaling, 0uL, payloadDw0)
 
         fun NaN(
             sign: Boolean = false, signaling: Boolean = false,
             payloadDw1: ULong, payloadDw0: ULong = 0uL
-        ): Dec2 {
+        ): Decimal {
             if ((payloadDw1 or payloadDw0) == 0uL)
                 return NaN(sign, signaling)
             // FIXME - note that this 110 bits is inconsistent with
-            //  Dec2ParsePrint where it is restricted to 33 digits
+            //  DecParsePrint where it is restricted to 33 digits
             // payload is 11 declets ... 11 * 10 = 110 bits
             // 110 - 64 = 46 bits in the upper dword
             val ILLEGAL_HIGH_BITS_MASK = ((1uL shl 46) - 1uL).inv()
             if (payloadDw1 and ILLEGAL_HIGH_BITS_MASK != 0uL)
                 throw IllegalArgumentException("payload too large")
-            return Dec2(
+            return Decimal(
                 sign, if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN,
                 payloadDw1, payloadDw0
             )
         }
 
-        internal inline fun bothFnz(x: Dec2, y: Dec2): Boolean {
+        internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
             // both x.qExp and y.qExp must < MIN_SPECIAL_VALUE
             // and x and y must have non-zero bitLens
             // the only thing important in the following line is the sign bits
@@ -349,10 +349,10 @@ class Dec2 private constructor(
                     -y.bitLen) < 0
         }
 
-        internal fun hasNaN(x: Dec2, y: Dec2): Boolean =
+        internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
             x.qExp or y.qExp >= NON_FINITE_QNAN
 
-        internal fun neitherIsNaN(x: Dec2, y: Dec2) =
+        internal fun neitherIsNaN(x: Decimal, y: Decimal) =
             x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
 
     }
@@ -495,7 +495,7 @@ class Dec2 private constructor(
      *         this value and [other].
      */
 
-    fun compareTotalOrderTo(other: Dec2) = Dec2Compare.cmpTotalOrder(this, other)
+    fun compareTotalOrderTo(other: Decimal) = DecCompare.cmpTotalOrder(this, other)
 
     /**
      * Compares the *magnitudes* of two decimal128 values according to the
@@ -506,7 +506,7 @@ class Dec2 private constructor(
      *
      * @return −1, 0, or +1 describing the total-order magnitude relation.
      */
-    fun compareTotalOrderMagTo(other: Dec2) = Dec2Compare.cmpTotalOrderMag(this, other)
+    fun compareTotalOrderMagTo(other: Decimal) = DecCompare.cmpTotalOrderMag(this, other)
 
     /**
      * Compares this decimal128 value with [other] using **Java-style numeric
@@ -540,9 +540,9 @@ class Dec2 private constructor(
      * @return −1, 0, or +1 describing the Java-style ordering of this
      *         value relative to [other].
      */
-    fun compareJavaStyleTo(other: Dec2): Int = Dec2Compare.cmpJavaStyle(this, other)
+    fun compareJavaStyleTo(other: Decimal): Int = DecCompare.cmpJavaStyle(this, other)
 
-    fun equalsJavaStyle(other: Dec2): Boolean = Dec2Compare.eqJavaStyle(this, other)
+    fun equalsJavaStyle(other: Decimal): Boolean = DecCompare.eqJavaStyle(this, other)
 
     /**
      * Compares this decimal128 value with [other] using **Java-style numeric
@@ -573,21 +573,30 @@ class Dec2 private constructor(
      *
      * @return −1, 0, or +1 according to Java-style numeric ordering.
      */
-    override fun compareTo(other: Dec2): Int = compareJavaStyleTo(other)
+    override fun compareTo(other: Decimal): Int = compareJavaStyleTo(other)
 
     /**
      * Java-style equality: compares numerical value only.
      * Signed zeros compare as equal, and all NaNs compare equal to each other.
      */
     override fun equals(other: Any?): Boolean =
-        other is Dec2 && equalsJavaStyle(other)
+        other is Decimal && equalsJavaStyle(other)
 
-    fun negate(): Dec2 = Dec2(seal xor Int.MIN_VALUE, dw1, dw0)
+    override fun hashCode(): Int {
+        TODO()
+        // FIXME
+        //  strip Trailing zeros to canonicalize and
+        //  generate a hashCode such that
+        //  if a.equals(b) then a.hashCode() == b.hashCode()
+        //  if a.notEquals(b) then a.hashCode() != b.hashCode() ... generally :)
+    }
 
-    fun abs(): Dec2 = if (isNegative()) negate() else this
+    fun negate(): Decimal = Decimal(seal xor Int.MIN_VALUE, dw1, dw0)
+
+    fun abs(): Decimal = if (isNegative()) negate() else this
 
     // 5.7.3 Decimal operation
-    fun sameQuantum(other: Dec2) = (this.qExp == other.qExp)
+    fun sameQuantum(other: Decimal) = (this.qExp == other.qExp)
 
     internal fun isValid(): Boolean {
         if (bitLen != calcBitLen128(dw1, dw0))
@@ -610,6 +619,6 @@ class Dec2 private constructor(
      *
      * @return a canonical decimal128 textual representation of this value
      */
-    override fun toString(): String = Dec2ParsePrint.toString(this)
+    override fun toString(): String = DecParsePrint.toString(this)
 }
 

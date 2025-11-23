@@ -2,16 +2,13 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecimalParsePrint.isFiniteValueText
-import com.decimal128.decimal.DecimalParsePrint.isInfinityText
-import com.decimal128.decimal.DecimalParsePrint.isNanText
 import com.decimal128.decimal.U256Bits.calcBitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import com.decimal128.hugeint.Magia
 import kotlin.math.max
 
-object Dec2ParsePrint {
+object DecParsePrint {
     private val SPECIAL_VALUE_STRINGS = arrayOf(
         "Infinity", "-Infinity", "NaN", "-NaN", "sNaN", "-sNaN"
     )
@@ -22,7 +19,7 @@ object Dec2ParsePrint {
         "-8", "-9", "-10", "-11", "-12", "-13", "-14", "-15"
     )
 
-    fun parseDecText(str: String): Dec2 {
+    fun parseDecText(str: String): Decimal {
         var dec = parseFiniteValueText(str)
         if (dec != null)
             return dec
@@ -36,7 +33,7 @@ object Dec2ParsePrint {
     }
 
         /**
-     * Parses a textual infinity representation into a [`Dec2`] value.
+     * Parses a textual infinity representation into a [`Decimal`] value.
      *
      * Accepted forms are case-insensitive:
      *
@@ -48,7 +45,7 @@ object Dec2ParsePrint {
      *
      * @return the parsed positive or negative infinity, or `null` if not matched.
      */
-    fun parseInfinityText(str: String): Dec2? {
+    fun parseInfinityText(str: String): Decimal? {
         if (str.length < 3)
             return null
         var ch = str[0].code
@@ -66,7 +63,7 @@ object Dec2ParsePrint {
         }
         if (ich != str.length || (ch != 'f'.code && ch != 'y'.code))
             return null
-        return Dec2.infinity(sign)
+        return Decimal.infinity(sign)
     }
 
     inline fun tenPow(n: Int): ULong {
@@ -84,7 +81,7 @@ object Dec2ParsePrint {
     }
 
     /**
-     * Parses a textual NaN representation into a [`Dec2`] value.
+     * Parses a textual NaN representation into a [`Decimal`] value.
      *
      * Accepted forms (case-insensitive):
      *
@@ -103,7 +100,7 @@ object Dec2ParsePrint {
      *
      * @return the parsed NaN value, or `null` if not a NaN text form.
      */
-    fun parseNanText(str: String): Dec2? {
+    fun parseNanText(str: String): Decimal? {
         if (str.length < 3)
             return null
         var ch = str[0].code
@@ -148,11 +145,11 @@ object Dec2ParsePrint {
             payloadDw0 += accumulator33
             payloadDw1 += if (payloadDw0 < accumulator33) 1uL else 0uL
         }
-        return Dec2.NaN(sign, hasS, payloadDw1, payloadDw0)
+        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0)
     }
 
     /**
-     * Parses a finite decimal value into a [`Dec2`] (decimal128) with **no rounding**.
+     * Parses a finite decimal value into a [`Decimal`] (decimal128) with **no rounding**.
      *
      * This is a simple numeric parser that accepts only standard finite forms:
      *
@@ -165,10 +162,10 @@ object Dec2ParsePrint {
      * If the input requires rounding, contains invalid syntax, or exceeds the
      * exact range of decimal128 finite values, this method returns `null`.
      *
-     * @return the parsed finite `Dec2` value, or `null` if not a valid finite
+     * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String): Dec2? {
+    fun parseFiniteValueText(str: String): Decimal? {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
@@ -280,11 +277,11 @@ object Dec2ParsePrint {
         if (qExp < -6176 || qExp > 6111)
             return null
         if ((qExp or bitLen) != 0)
-            return Dec2(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Dec2.NEG_ZEROe0 else Dec2.POS_ZEROe0
+            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
+        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
     }
 
-    fun toString(dec: Dec2): String {
+    fun toString(dec: Decimal): String {
         return when {
             dec.qExp == 0 -> toIntegerString(dec)
             dec.qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString(dec)
@@ -293,7 +290,7 @@ object Dec2ParsePrint {
         }
     }
 
-    private fun toSpecialValueString(dec: Dec2): String {
+    private fun toSpecialValueString(dec: Decimal): String {
         if (dec.qExp < NON_FINITE_QNAN)
             return SPECIAL_VALUE_STRINGS[dec.sign01]
         val nanIndex = (if (dec.qExp == NON_FINITE_QNAN) 2 else 4) + dec.sign01
@@ -307,7 +304,7 @@ object Dec2ParsePrint {
         return String(utf8)
     }
 
-    private fun toIntegerString(dec: Dec2): String {
+    private fun toIntegerString(dec: Decimal): String {
         if (dec.bitLen < 4) {
             val i = ((16 and dec.sign0Neg1) + dec.dw0.toInt()) and 0x1F // bounds-check-elimination
             return SMALL_INTEGER_STRINGS[i]
@@ -318,7 +315,7 @@ object Dec2ParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toDecimalPointString(dec: Dec2): String {
+    private fun toDecimalPointString(dec: Decimal): String {
         val digitsRightOfDecimal = -dec.qExp
         val leadingZeroCount = max(1 + digitsRightOfDecimal - dec.digitLen, 0)
         val signLen = dec.sign01
@@ -335,7 +332,7 @@ object Dec2ParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toNormalizedScientificString(dec: Dec2): String {
+    private fun toNormalizedScientificString(dec: Decimal): String {
         val eExp = dec.eExp
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
         val signLen = dec.sign01
