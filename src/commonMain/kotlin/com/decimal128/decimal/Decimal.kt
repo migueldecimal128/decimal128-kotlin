@@ -595,8 +595,22 @@ class Decimal private constructor(
 
     fun abs(): Decimal = if (isNegative()) negate() else this
 
-    // 5.7.3 Decimal operation
-    fun sameQuantum(other: Decimal) = (this.qExp == other.qExp)
+    /**
+     * Returns `true` if this value and [other] have the **same quantum**, i.e.,
+     * if they use the **same encoded exponent (qExp)**,
+     * following IEEE 754-2019 §5.7.3 Decimal Operation.
+     *
+     * In IEEE 754-2019 terminology, two decimal numbers have the *same quantum*
+     * when their exponents are identical after encoding. This is a structural
+     * property of the representation, not of numerical value. For example,
+     * `1.230 × 10⁻²` and `12.30 × 10⁻³` are numerically equal but **do not**
+     * have the same quantum because their exponents differ.
+     *
+     * This method performs no normalization or coefficient adjustments; it
+     * simply compares the raw `qExp` fields.
+     */
+    fun sameQuantum(other: Decimal) =
+        (this.qExp == other.qExp) || (this.qExp >= NON_FINITE_QNAN && other.qExp >= NON_FINITE_QNAN)
 
     internal fun isValid(): Boolean {
         if (bitLen != calcBitLen128(dw1, dw0))

@@ -181,30 +181,12 @@ class DecOld private constructor(
         return true
     }
 
-    /* cannot have these because they take precedence over
-     * my env member extension operators
-
-    operator fun plus(other: Decimal): Decimal = D128Add.addImpl(this, other.sign, other, DECIMAL128)
-    operator fun minus(other: Decimal): Decimal = D128Add.addImpl(this, !other.sign, other, DECIMAL128)
-    operator fun times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
-    operator fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
-
-     */
-
     fun add(other: DecOld): DecOld = D128AddSub.addImpl(this, other.sign, other, DECIMAL128)
-    fun sub(other: DecOld): DecOld = D128AddSub.addImpl(this, !other.sign, other, DECIMAL128)
     fun mul(other: DecOld): DecOld = D128Mul.mulImpl(this, other, DECIMAL128)
     fun div(other: DecOld): DecOld = D128Div.divImpl(this, other, DECIMAL128)
 
     fun compareTo(other: DecOld): Int = D128Compare.compare(this, other)
     fun magnitudeCompareTo(other: DecOld): Int = D128Compare.magnitudeCompare(this, other)
-
-    fun coefficientCompareTo(other: DecOld): Int {
-        val cmpBitLen = this.bitLen.compareTo(other.bitLen)
-        if (cmpBitLen != 0)
-            return cmpBitLen
-        return ucmp128(this.dw1, this.dw0, other.dw1, other.dw0)
-    }
 
     override fun toString(): String {
         val mutDec = MutDec()

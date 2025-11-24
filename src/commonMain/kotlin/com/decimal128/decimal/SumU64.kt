@@ -329,6 +329,47 @@ fun udivMod128x64to128_stage2(x1: Long, x0: Long, y0: Long) : Triple<Long, Long,
     return knuthUdiv128x64to128(x1, x0, y0)
 }
 
+fun udivMod128x64to128(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, ULong> {
+
+    // 1) special-case “pure 64-bit” dividend
+    if (x1 == 0uL) {
+        val q0 = x0 / y0
+        val r0  = x0 % y0
+        return Triple(0uL, q0, r0)
+    } else {
+        return udivMod128x64to128_stage2(x1, x0, y0)
+    }
+}
+
+fun udivMod128x64to128_stage2(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, ULong> {
+    require(y0 != 0uL) { "division by zero" }
+    val v1 = y0 shr 32
+    val v0 = y0 and 0xFFFF_FFFFuL
+    if (v1 == 0uL) {
+        val u3 = x1 shr 32
+        val u2 = x1 and 0xFFFF_FFFFuL
+        val u1 = x0 shr 32
+        val u0 = x0 and 0xFFFF_FFFFuL
+
+        val t3 = u3
+        val q3 = t3 / v0; val r3 = t3 % v0
+        val t2 = (r3 shl 32) or u2
+        val q2 = t2 / v0; val r2 = t2 % v0
+        val t1 = (r2 shl 32) or u1
+        val q1 = t1 / v0; val r1 = t1 % v0
+        val t0 = (r1 shl 32) or u0
+        val q0 = t0 / v0; val r0 = t0 % v0
+
+        val qDw1 = (q3 shl 32) or q2
+        val qDw0 = (q1 shl 32) or q0
+        val rDw0 = r0
+        return Triple(qDw1, qDw0, rDw0)
+    }
+
+    val (d1, d0, e0) = knuthUdiv128x64to128(x1.toLong(), x0.toLong(), y0.toLong())
+    return Triple(d1.toULong(), d0.toULong(), e0.toULong())
+}
+
 /**
  * Divide the 128-bit unsigned (xHigh<<64 | xLow) by the 64-bit unsigned y,
  * returning (quotientHigh64, quotientLow64, remainder64).
