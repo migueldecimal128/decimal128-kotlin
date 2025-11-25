@@ -1,0 +1,236 @@
+package com.decimal128.decimal
+
+import com.decimal128.hugeint.HugeInt
+import com.decimal128.hugeint.Magia
+import org.junit.jupiter.api.Assertions.assertEquals
+import kotlin.random.Random
+import kotlin.random.nextUInt
+import kotlin.random.nextULong
+import kotlin.test.Test
+
+private const val M_U64_DIV_1E16 = 0x39A5652FB1137857uL
+private const val S_U64_DIV_1E16 = 51
+private const val oneE16 = 1_0000_0000_0000_0000uL
+
+private const val M_U64_DIV_1E8 = 0xABCC77118461CEFDuL
+private const val S_U64_DIV_1E8 = 26
+private const val oneE8 = 1_0000_0000uL
+
+private const val M_1E9_DIV_1E4 = 879_609_303uL
+private const val S_1E9_DIV_1E4 = 43
+private const val oneE4 = 1_0000uL
+
+private const val M_U32_DIV_1E1 = 0xCCCCCCCDuL
+private const val S_U32_DIV_1E1 = 35
+
+
+class TestStripTrailingZeros {
+
+    val verbose = true
+
+    @Test
+    fun test1() {
+        // force the load of U256Pow10
+        val x = U256Pow10.pow10BitLen(1)
+        val foo = 9876543210987654321uL
+        for (pow10 in 1..9) {
+            val (q1, q0, r) = DivBarrett.barrettDivMod128Pow10(0uL, foo, pow10)
+            if (verbose)
+                println("pow10:$pow10 q1:$q1 q0:$q0")
+        }
+    }
+
+    @Test
+    fun testStrip64() {
+        test1(1234567890uL)
+        test1(10000000000uL)
+        test1(10000000000uL)
+    }
+
+    @Test
+    fun testRandom64() {
+        for (i in 0..<10000)
+            test1(Random.nextULong())
+        for (i in 0..<10000) {
+            val base = Random.nextULong() and 0x0FFF_FFFFuL
+            val pow = pow10(Random.nextInt(10))
+            test1(base * pow)
+        }
+        for (i in 0..<10000) {
+            val base = Random.Default.nextULong() and 0x0FFF_FFFFuL
+            val pow = pow10(Random.nextInt(10))
+            test1(base * pow)
+        }
+    }
+
+    @Test
+    fun testRandom128() {
+        for (i in 0..<1000) {
+            val hi = HugeInt.fromRandom(Random.nextInt(129))
+            test1(hi)
+        }
+        for (i in 0..<1000) {
+            val hi = HugeInt.from(Random.nextInt(100)) * HugeInt.from(10).pow(Random.nextInt(20))
+            if (hi.magnitudeBitLen() > 128)
+                continue
+            test1(hi)
+
+        }
+    }
+
+    fun test1(hi: HugeInt) {
+        if (verbose)
+            println("hi:$hi")
+        val dw0 = hi.toRawULong()
+        val dw1 = hi.extractULongAtBitIndex(64)
+
+        val ntzHi = ntzHugeInt(hi)
+        val (q1, q0, ntz) = ntzDecimalU128(dw1, dw0)
+
+        assertEquals(ntzHi, ntz)
+
+        val hiReduced = hi / HugeInt.from(10).pow(ntz)
+        val r0 = hiReduced.toRawULong()
+        val r1 = hiReduced.extractULongAtBitIndex(64)
+
+        assertEquals(r1, q1)
+        assertEquals(r0, q0)
+    }
+
+    fun ntzHugeInt(hi: HugeInt): Int {
+        val s = "$hi"
+        var ntz = 0
+        for (i in s.lastIndex downTo 0)
+            if (s[i] == '0')
+                ++ntz
+            else
+                return ntz
+        return 0
+    }
+
+    fun test1(v: ULong) {
+        if (verbose)
+            println("v:$v")
+
+        val (q1, tzCount1) = stripTrailingZeros64_1(v)
+        if (verbose)
+            println(" q1:$q1 tzCount1:$tzCount1")
+
+        val (qNtz, tzCountNtz) = ntzDecimalU64(v)
+        if (verbose)
+            println(" qNtz:$qNtz tzCountNtz:$tzCountNtz")
+
+        assertEquals(q1, qNtz)
+        assertEquals(tzCount1, tzCountNtz)
+
+    }
+
+    // 0xABCC77118461CEFD s = 26
+
+    fun stripTrailingZeros64_1(dw: ULong): Pair<ULong, Int> {
+        check (dw != 0uL)
+        var t = dw
+        var ntz = 0
+        while ((t % 10000uL) == 0uL) {
+            t /= 10000uL
+            ntz += 4
+        }
+        while ((t % 10uL) == 0uL) {
+            t /= 10uL
+            ntz += 1
+        }
+        return Pair(t, ntz)
+    }
+
+    fun pow10(n: Int): ULong {
+        var p = 1uL
+        for (i in 1..n)
+            p *= 10uL
+        return p
+    }
+
+    fun ntzDecimalU32(r0: UInt): Pair<UInt, Int> {
+        var r = r0
+        var ntz = 0
+
+        if (r >= 1_0000_0000u && r % 1_0000_0000u == 0u) {
+            r /= 1_0000_0000u
+            ntz += 8
+        }
+        if (r >= 1_0000u && r % 1_0000u == 0u) {
+            r /= 1_0000u
+            ntz += 4
+        }
+        // Strip 10^2 (up to 2 more zeros)
+        if (r >= 100u && r % 100u == 0u) {
+            r /= 100u
+            ntz += 2
+        }
+        if (r >= 10u && r % 10u == 0u) {
+            r /= 10u
+            ntz += 1
+        }
+
+        return r to ntz
+    }
+
+    fun ntzDecimalU64(r0: ULong): Pair<ULong, Int> {
+        var r = r0
+        var ntz = 0
+
+        if (r >= 1_0000_0000_0000_0000uL && r % 1_0000_0000_0000_0000uL == 0uL) {
+            r /= 1_0000_0000_0000_0000uL
+            ntz += 16
+        }
+        if (r >= 1_0000_0000uL && r % 1_0000_0000uL == 0uL) {
+            r /= 1_0000_0000uL
+            ntz += 8
+        }
+        if (r >= 1_0000uL && r % 1_0000uL == 0uL) {
+            r /= 1_0000u
+            ntz += 4
+        }
+        // Strip 10^2 (up to 2 more zeros)
+        if (r >= 100uL && r % 100uL == 0uL) {
+            r /= 100uL
+            ntz += 2
+        }
+        if (r >= 10uL && r % 10uL == 0uL) {
+            r /= 10u
+            ntz += 1
+        }
+
+        return r to ntz
+    }
+
+    fun ntzDecimalU128(r1: ULong, r0: ULong): Triple<ULong, ULong, Int> {
+        if (r1 == 0uL) {
+            val (q0, ntz) = ntzDecimalU64(r0)
+            return Triple(0uL, q0, ntz)
+        }
+        var ntz = 0
+        val tmp = intArrayOf(r0.toInt(), (r0 shr 32).toInt(), r1.toInt(), (r1 shr 32).toInt())
+        var tmpLen = if (tmp[3] == 0) 3 else 4
+        do {
+            val packed = Magia.mutateBarrettDivBy1e9(tmp, tmpLen)
+            val r = packed.toUInt()
+            tmpLen = (packed shr 32).toInt()
+            if (r != 0u) {
+                val (rPrime, ntzTail) = ntzDecimalU32(r)
+                ntz += ntzTail
+                if (ntz == 0)
+                    return Triple(r1, r0, 0)
+                Magia.mutateFmaPow10(tmp, 9 - ntzTail, rPrime)
+                val r1Prime = (tmp[3].toULong() shl 32) or (tmp[2].toUInt().toULong())
+                val r0Prime = (tmp[1].toULong() shl 32) or (tmp[0].toUInt().toULong())
+                return Triple(r1Prime, r0Prime, ntz)
+            }
+            ntz += 9
+        } while (tmpLen > 2)
+        val r0Prime = (tmp[1].toULong() shl 32) or (tmp[0].toUInt().toULong())
+        val (rPrime, ntzTail) = ntzDecimalU64(r0Prime)
+        ntz += ntzTail
+        return Triple(0uL, rPrime, ntz)
+    }
+
+}

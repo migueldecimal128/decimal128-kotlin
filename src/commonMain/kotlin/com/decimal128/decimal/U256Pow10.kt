@@ -176,16 +176,16 @@ internal object U256Pow10 {
         for (i in 1..<BARRETT_POW10_MAXX) {
             hiPow10 *= 10
             val mu10 = hiTwoPow64 / hiPow10
-            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.magnitudeRawLong()
+            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.toRawLong()
 
             val pow5 = hiPow10 ushr i
             val mu5 = hiTwoPow64 / pow5
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.magnitudeRawLong()
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.toRawLong()
         }
         for (i in 1..<BARRETT_POW5_MAX) {
             val t = HugeInt.fromUnsigned(POW10[POW5_64_OFFSET + i])
             val mu = hiTwoPow64 / t
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.magnitudeRawLong()
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toRawLong()
         }
         // initialization of Magic multipliers M is in DivMagic
     }
