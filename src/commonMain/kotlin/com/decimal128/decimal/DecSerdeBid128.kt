@@ -39,7 +39,7 @@ import com.decimal128.decimal.U256Bits.calcBitLen128
  *
  * They are **not** required or used for normal arithmetic or text formatting.
  */
-object DecSerDeBid128 {
+object DecSerdeBid128 {
 
     /**
      * Encodes `d` into its 128-bit **BID** representation and writes the two
@@ -200,50 +200,135 @@ object DecSerDeBid128 {
      * Decodes a Decimal128 value in **BID** format from its two 64-bit words.
      *
      * This extracts the sign, the 17-bit G-combination field, and the upper
-     * 46 bits of the significand from `bid128Hi`, combines them with the
-     * remaining 64 significand bits in `bid128Lo`, and reconstructs the
-     * corresponding `Decimal` value. Finite, infinite, quiet NaN, signaling NaN,
-     * and non-canonical encodings are all handled per IEEE 754-2019 rules.
+     * 46 coefficient bits from `bid128Hi`, combines them with the remaining
+     * 64 coefficient bits in `bid128Lo`, and reconstructs the corresponding
+     * `Decimal` value. Finite numbers, infinities, quiet NaNs, and signaling
+     * NaNs are handled per IEEE 754-2019 rules.
+     *
+     *  - For **finite values**, coefficients with more than 34 decimal digits
+     *    are non-canonical; such encodings are treated as having coefficient 0.
+     *  - For **infinity**, all lower bits are ignored.
+     *  - For **NaNs**, lower bits of the combination field are ignored,
+     *    the lower 110 (46 + 64) bits form the payload; non-canonical
+     *    payloads (more than 33 digits) have the payload set to 0.
      *
      * @param bid128Hi the high 64 bits of the BID128 encoding
      * @param bid128Lo the low 64 bits of the BID128 encoding
      * @return the decoded `Decimal` value
      */
     private fun decodeBid128ULongs(bid128Hi: ULong, bid128Lo: ULong): Decimal {
+        // 1 + 17 + 46 == 64
+        // 1 bit for the sign
         val sign = bid128Hi.toLong() < 0L
+        // 17 bit combination field ... 0x1FFFF
         val combination = (bid128Hi shr 46).toInt() and 0x1FFFF
-        val significand110Hi = bid128Hi and ((1uL shl (110 - 64)) - 1uL)
-        val d = when {
+        // 46 bits for the middle-chunk of the coefficient 46 + 64 == 110
+        val coefficientMid46 = bid128Hi and ((1uL shl (110 - 64)) - 1uL)
+        // To identify bits, IEEE754-2019 uses the terminology G0-G16 to identify
+        // the bits of the 17-bit combination field, with G0 as most significant.
+        when {
+            // if the top 2 bits are not 0b11
             (combination and 0x18000) != 0x18000 -> {
+                //  IEEE754-2019 3.5.2 c) 2) i) -- p 21
+                //   If G0 and G1 together are one of 00, 01, or 10, then the biased
+                //   exponent E is formed from G0 through G16 and the significand
+                //   is formed from bits G17 through the end of the encoding (including T).
+                //
+                // the top 14 bits of the combination field represent the biased exponent ...
                 val biasedExponent = combination shr 3
                 val qExp = biasedExponent + QTINY_Neg6176 // this is effectively a subtraction
+                // ... and the bottom 3 bits are the most significant bits of the significand
+                // coeff/significant is 3 + 46 + 64 == 113 ... but that's not all ... see below
                 val mostSignificant3 = (combination and 0x07).toULong() shl (110 - 64)
-                var dw1 = mostSignificant3 or significand110Hi
-                var dw0 = bid128Lo
-                var bitLen = calcBitLen128(dw1, dw0)
-                var digitLen = U256Pow10.calcDigitLen128(bitLen, dw1, dw0)
-                if (digitLen > 34) {
-                    // IEEE754-2019 3.5.2 p21
-                    //  If the value exceeds the maximum, the significand c is
-                    //  non-canonical and the value used for c is zero.
-                    dw1 = 0uL; dw0 = 0uL; bitLen = 0; digitLen = 0
-                }
-                Decimal(sign, qExp, bitLen, digitLen, dw1, dw0)
+                val dw1 = mostSignificant3 or coefficientMid46
+                val dw0 = bid128Lo
+                val bitLen = calcBitLen128(dw1, dw0)
+                val digitLen = U256Pow10.calcDigitLen128(bitLen, dw1, dw0)
+                // IEEE754-2019 3.5.2 p21
+                //  If the value exceeds the maximum, the significand c is
+                //  non-canonical and the value used for c is zero.
+                if (digitLen > 34)
+                    return Decimal.zero(sign, qExp)
+                return Decimal(sign, qExp, bitLen, digitLen, dw1, dw0)
             }
-            (combination and 0x1F000) == 0x1E000 -> Decimal.infinity(sign)
+            // otherwise, the top two bits are 0b11
+            // if the top 5 bits are 0x11110 then Infinity
+            (combination and 0x1F000) == 0x1E000 -> return Decimal.infinity(sign)
+            // if the top 5 bits are 0x11111 then NaN
             (combination and 0x1F000) == 0x1F000 -> {
-                val isSignaling = (combination and 0x800) == 0x800
-                Decimal.NaN(sign, isSignaling, significand110Hi, bid128Lo)
+                // with the next bit determining signaling NaN
+                val isSignaling = (combination and 0x1F800) == 0x1F800
+                return Decimal.NaN(sign, isSignaling, coefficientMid46, bid128Lo)
             }
+            // otherwise, top 4 bits were 0x1100 0x1101 0x1110
             else -> {
-                // large-form finite pattern => non-canonical for decimal128:
+                // IEEE754-2019 3.5.2 c) 2) ii) -- p 21
+                //  If G0 and G1 together are 11 and G2 and G3 together are one
+                //  of 00, 01, or 10, then the biased exponent E is formed from
+                //  G2 through G18 and the significand is formed by prefixing
+                //  the 4 bits (8 + G19) to T.
+                //
+                // This pattern is non-canonical for decimal128 because all
+                // all 114-bit coefficients starting with 0b100x exceed 34
+                // decimal digits.
+                // This encoding exists because for bid64 and bid32 having
+                // the top bit set is needed, so they simply replicated the
+                // encoding technique for bid128.
+                // this bit combination *is* used by DPD format.
+                //
                 // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
                 val E = (combination ushr 1) and 0x3FFF   // 14 bits
-                val qExp = E + QTINY_Neg6176                // preserve exponent
-                Decimal.zero(sign, qExp)
+                val qExp = E + QTINY_Neg6176              // preserve exponent
+                return Decimal.zero(sign, qExp)
             }
         }
-        return d
     }
+
+    /**
+     * Parses a 128-bit BID hex value in the IntelRDFPMathLib20U3 test format.
+     *
+     * Found in intel decimal floating point library:
+     * https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html
+     * https://www.netlib.org/misc/intel/
+     *
+     * The test suite is the file: IntelRDFPMathLib20U3/TESTS/readtest.in
+     *
+     * It contains text representations of decimal32, decimal64, and decimal128 values,
+     * some of which are in hexadecimal.
+     *
+     * The 128-bit hex values consist of 32 hexadecimal digits enclosed in square brackets,
+     * with an optional comma separating the upper and lower 64-bit words:
+     *
+     *  • `[bc92000000000000,0000000000000000]`
+     *  • `[291a7e63609fe32501e21199f946252b]`
+     *
+     * @param str the input string in Intel BID128 hex format
+     * @return a triple of (isValid, hiWord, loWord)
+     */
+    fun parseIntelBidHex(str: String): Triple<Boolean, ULong, ULong> {
+        if (str.length !in 34..35 ||
+            str[0] != '[' || str[str.lastIndex] != ']' ||
+            str.length == 35 && str[17] != ',')
+            return Triple(false, 0uL, 0uL)
+        val (isValidHi, bid128Hi) = parseHexDword(str, 1)
+        val (isValidLo, bid128Lo) = parseHexDword(str, (str.length + 1) shr 1)
+        return Triple(isValidHi && isValidLo, bid128Hi, bid128Lo)
+    }
+
+    private fun parseHexDword(str: String, off: Int): Pair<Boolean, ULong> {
+        var dw = 0uL
+        for (i in 0..15) {
+            val ch = str[off + i]
+            dw = when (ch) {
+                in '0'..'9' -> (dw shl 4) or (ch - '0').toULong()
+                in 'A'..'F' -> (dw shl 4) or (ch - 'A' + 10).toULong()
+                in 'a'..'f' -> (dw shl 4) or (ch - 'a' + 10).toULong()
+                else -> return false to 0uL
+            }
+        }
+        return true to dw
+    }
+
+
 
 }
