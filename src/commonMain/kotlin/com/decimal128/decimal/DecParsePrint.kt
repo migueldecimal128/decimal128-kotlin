@@ -19,17 +19,26 @@ object DecParsePrint {
         "-8", "-9", "-10", "-11", "-12", "-13", "-14", "-15"
     )
 
+    private const val DECIMAL128_QTINY = -6176
+    private const val DECIMAL128_QMAX_6111 = 6111
+
+
     fun parseDecText(str: String): Decimal {
-        var dec = parseFiniteValueText(str)
-        if (dec != null)
+        var dec: Any? = parseFiniteValueText(str)
+        var msg = ""
+        if (dec is Decimal)
             return dec
-        dec = parseInfinityText(str)
-        if (dec != null)
-            return dec
-        dec = parseNanText(str)
-        if (dec != null)
-            return dec
-        throw IllegalArgumentException("invalid decimal format:'$str'")
+        if (dec is String) {
+            msg = dec
+        } else {
+            dec = parseInfinityText(str)
+            if (dec is Decimal)
+                return dec
+            dec = parseNanText(str)
+            if (dec is Decimal)
+                return dec
+        }
+        throw IllegalArgumentException("invalid decimal format:$msg:'$str'")
     }
 
         /**
@@ -165,17 +174,17 @@ object DecParsePrint {
      * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String): Decimal? {
+    fun parseFiniteValueText(str: String): Any? {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
-        var hasExp = false
+        var hasE = false
         var hasExpDigit = false
         var expSign = false
         var expSignificantDigitCount = 0
 
         if (str.length == 0)
-            return null
+            return "empty string"
         var ch = str[0]
         var ich = 1
         var chLast = '\u0000'
@@ -183,7 +192,7 @@ object DecParsePrint {
         val sign = ch == '-'
         if (ch == '-' || ch == '+') {
             if (ich == str.length)
-                return null
+                return "invalid"
             ch = str[ich++]
         }
         var fractionalDigitCount = 0
@@ -203,33 +212,38 @@ object DecParsePrint {
                     } else if (significantDigitCount <= 34) {
                         coeff34 = coeff34 * 10uL + n.toULong()
                     } else {
-                        return null
+                        // we will allow excess trailing zero digits ...
+                        // ... as long as there has been a dot
+                        // ... and we will ignore them
+                        return "more than 34 significant digits"
                     }
                     if (hasDot)
                         ++fractionalDigitCount
                 }
                 ch == '.' -> {
-                    if (hasDot || chLast == '_')
-                        return null
+                    if (hasDot)
+                        return "double decimal point"
+                    if (chLast == '_')
+                        return "invalid _ placement"
                     hasDot = true
                 }
                 ch == '_' -> {
-                    if (! hasCoefficientDigit)
-                        return null
-                    if (hasDot && fractionalDigitCount == 0)
-                        return null
+                    if (! hasCoefficientDigit || chLast == '.')
+                        return "invalid _ placement"
                 }
             }
             chLast = ch
             ch = if (ich < str.length) str[ich++] else '\u0000'
         }
+        if (! hasCoefficientDigit)
+            return null // try other options Infinity, NaN
         if (ch == 'E' || ch == 'e') {
             if (chLast == '_')
-                return null
-            hasExp = true
+                return "invalid _ placement"
+            hasE = true
             ch = if (ich < str.length) str[ich++] else '\u0000'
             if (ch == '_')
-                return null
+                return "invalid _ placement"
             if (ch == '+' || ch == '-') {
                 expSign = ch == '-'
                 ch = if (ich < str.length) str[ich++] else '\u0000'
@@ -243,19 +257,18 @@ object DecParsePrint {
                     exp = exp * 10 + (ch - '0')
                 } else {
                     if (! hasExpDigit)
-                        return null
+                        return "invalid _ placement"
                 }
                 chLast = ch
                 ch = if (ich < str.length) str[ich++] else '\u0000'
             }
         }
+        if (chLast == '_')
+            return "invalid _ placement"
         if (ch != '\u0000' ||
-            ich != str.length ||
-            chLast == '_' ||
-            ! hasCoefficientDigit ||
-            hasExp && !hasExpDigit ||
+            hasE && !hasExpDigit ||
             expSignificantDigitCount > 4)
-            return null
+            return "invalid"
         // we have at least one digit
         var dw0T = coeff19
         var dw1T = 0uL
@@ -267,15 +280,23 @@ object DecParsePrint {
             dw1T += if (dw0T < coeff34) 1uL else 0uL
         }
         val signedExp = if (expSign) -exp else exp
-        // fractionalDigitCount can exceed significantDigitCount ... 0.00000123
-        val integerDigitCount = significantDigitCount - fractionalDigitCount
-        val qExp = signedExp - fractionalDigitCount
-        val bitLen = calcBitLen128(dw1T, dw0T)
-        val digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
-        // FIXME ... make sure that this is clamping properly
-        // or just document that it won't accept subnormals
-        if (qExp < -6176 || qExp > 6111)
-            return null
+        var qExp = signedExp - fractionalDigitCount
+        var bitLen = calcBitLen128(dw1T, dw0T)
+        var digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
+        if (qExp < -6176)
+            return "out of decimal128 range"
+        if (qExp > DECIMAL128_QMAX_6111) {
+            val overage = qExp - DECIMAL128_QMAX_6111
+            println("str:$str overage:$overage")
+            if (overage > 34 - digitLen)
+                return "out of decimal128 range"
+            val (t1, t0) = DecPow10.umul128Pow10(dw1T, dw0T, overage)
+            dw1T = t1
+            dw0T = t0
+            qExp = DECIMAL128_QMAX_6111
+            bitLen = calcBitLen128(dw1T, dw0T)
+            digitLen += overage
+        }
         if ((qExp or bitLen) != 0)
             return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
         return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0

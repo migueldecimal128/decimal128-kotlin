@@ -205,6 +205,16 @@ fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
     return p1 to p0
 }
 
+/*inline*/ fun umul128x64to128(x1: ULong, x0: ULong, y0: ULong): Pair<ULong, ULong> {
+    val pp00Hi = unsignedMulHi(x0, y0)
+    val pp00Lo = x0 * y0
+    val pp10Lo = x1 * y0
+
+    val p0 = pp00Lo
+    val p1 = pp00Hi + pp10Lo
+    return p1 to p0
+}
+
 
 /*inline*/ fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)

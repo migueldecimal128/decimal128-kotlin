@@ -76,8 +76,16 @@ class Decimal private constructor(
         private const val SIGN_0 = 0
         private const val SIGN_1 = 1
 
-        private const val DECIMAL128_QTINY = -6176
-        private const val DECIMAL128_MAX = 6111
+        private const val DECIMAL128_QTINY_Neg6176 = -6176
+        private const val DECIMAL128_QMAX_6111 = 6111
+
+        private const val HASH_CODE_SIGN_FALSE = 1237 * 31 * 31 * 31
+        private const val HASH_CODE_SIGN_TRUE = 1231 * 31 * 31 * 31
+        private const val HASH_CODE_POS_ZERO = 36851467
+        private const val HASH_CODE_NEG_ZERO = 36672721
+        private const val HASH_CODE_POS_INFINITY = 52593608
+        private const val HASH_CODE_NEG_INFINITY = 52414862
+        private const val HASH_CODE_NAN = 52594569
 
         internal inline fun packSeal(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int): Int =
             (if (sign) Int.MIN_VALUE else 0) or (((qExp and 0x7FFF) shl 16) or
@@ -296,7 +304,7 @@ class Decimal private constructor(
         fun zero(sign: Boolean = false, qExp: Int): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
-            val clampedQExp = max(min(qExp, DECIMAL128_MAX), DECIMAL128_QTINY)
+            val clampedQExp = max(min(qExp, DECIMAL128_QMAX_6111), DECIMAL128_QTINY_Neg6176)
             val seal = packSeal(sign, clampedQExp, 0, 0)
             val zero = Decimal(seal, 0uL, 0uL)
             return zero
@@ -326,13 +334,15 @@ class Decimal private constructor(
         ): Decimal {
             if ((payloadDw1 or payloadDw0) == 0uL)
                 return NaN(sign, signaling)
-            // FIXME - note that this 110 bits is inconsistent with
-            //  DecParsePrint where it is restricted to 33 digits
-            // payload is 11 declets ... 11 * 10 = 110 bits
-            // 110 - 64 = 46 bits in the upper dword
-            val ILLEGAL_HIGH_BITS_MASK = ((1uL shl 46) - 1uL).inv()
-            if (payloadDw1 and ILLEGAL_HIGH_BITS_MASK != 0uL)
-                throw IllegalArgumentException("payload too large")
+            var dw1 = payloadDw1
+            var dw0 = payloadDw0
+            val digitLen = calcDigitLen128(dw1, dw0)
+            if (digitLen > 33) {
+                // IEEE754-2019 3.5.2 p21
+                //  If the value exceeds the maximum, the significand c is
+                //  non-canonical and the value used for c is zero.
+                dw1 = 0uL; dw0 = 0uL;
+            }
             return Decimal(
                 sign, if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN,
                 payloadDw1, payloadDw0
@@ -418,15 +428,30 @@ class Decimal private constructor(
 
     /**
      * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
-     * In this implementation, the check for subnormal is hardwired to the decimal128 `eExp`
-     * adjusted (scientific) exponent -6143
+     * In this implementation, the check for subnormal is hardwired to the
+     * decimal128 `eExp` adjusted (scientific) exponent -6143.
      */
     fun isNormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp >= -6143
 
     /**
-     * isFinite(x) is true if and only if x is zero, subnormal or normal (not infinite or NaN).
+     * isSubnormal(x) is true if and only if x is subnormal
+     * (not zero, normal, infinite, or NaN).
+     * In this implementation, the check for subnormal is hardwired to the
+     * decimal128 `eExp` adjusted (scientific) exponent -6143.
+     */
+    fun isSubnormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp >= -6143
+
+    /**
+     * isFinite(x) is true if and only if x is zero, normal, or subnormal
+     * (not infinite or NaN).
      */
     fun isFinite(): Boolean = qExp < NON_FINITE_INF
+
+    /**
+     * isFiniteNonZero(x) is true if and only if x is normal or subnormal
+     * (not zero, infinite, or NaN).
+     */
+    fun isFiniteNonZero(): Boolean = qExp < NON_FINITE_INF && bitLen > 0
 
     /**
      * isZero(x) is true if and only if x is ±0.
@@ -583,12 +608,40 @@ class Decimal private constructor(
         other is Decimal && equalsJavaStyle(other)
 
     override fun hashCode(): Int {
-        TODO()
-        // FIXME
-        //  strip Trailing zeros to canonicalize and
-        //  generate a hashCode such that
-        //  if a.equals(b) then a.hashCode() == b.hashCode()
-        //  if a.notEquals(b) then a.hashCode() != b.hashCode() ... generally :)
+        return when {
+            isFiniteNonZero() -> {
+                var r1 = dw1
+                var r0 = dw0
+                var rQExp = qExp
+                if (qExp < DECIMAL128_QMAX_6111) {
+                    val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
+                    val (t1, t0, ntzd) = DecNtzd.ntzdU128(r1, r0)
+                    r1 = t1
+                    r0 = t0
+                    rQExp += ntzd
+                    if (ntzd > maxNtzdClamp) {
+                        check (rQExp > DECIMAL128_QMAX_6111)
+                        // oops ... we removed too many trailing zeros and pushed qExp too hi
+                        // give back some zeros to bring down qExp
+                        val giveBack = ntzd - maxNtzdClamp
+                        val (t1, t0) = DecPow10.umul128Pow10(r1, r0, giveBack)
+                        r1 = t1
+                        r0 = t0
+                        rQExp = DECIMAL128_QMAX_6111
+                    }
+                }
+                val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
+                val hcQExp = rQExp * 31 * 31
+                val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
+                val hcDw0 = (r0 xor (r0 shr 32)).toInt()
+                hcSign + hcQExp + hcDw1 + hcDw0
+            }
+            isNegative() && isZero() -> HASH_CODE_NEG_ZERO
+            isZero() -> HASH_CODE_POS_ZERO
+            isNegative() && isInfinite() -> HASH_CODE_NEG_INFINITY
+            isInfinite() -> HASH_CODE_POS_INFINITY
+            else -> HASH_CODE_NAN
+        }
     }
 
     fun negate(): Decimal = Decimal(seal xor Int.MIN_VALUE, dw1, dw0)

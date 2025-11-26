@@ -2,9 +2,8 @@ package com.decimal128.decimal
 
 import com.decimal128.hugeint.HugeInt
 import com.decimal128.hugeint.Magia
-import org.junit.jupiter.api.Assertions.assertEquals
+import kotlin.test.assertEquals
 import kotlin.random.Random
-import kotlin.random.nextUInt
 import kotlin.random.nextULong
 import kotlin.test.Test
 
@@ -64,6 +63,11 @@ class TestStripTrailingZeros {
     }
 
     @Test
+    fun testProblemChild() {
+        test1(HugeInt.from("980000000000000000000"))
+    }
+
+    @Test
     fun testRandom128() {
         for (i in 0..<1000) {
             val hi = HugeInt.fromRandom(Random.nextInt(129))
@@ -71,7 +75,7 @@ class TestStripTrailingZeros {
         }
         for (i in 0..<1000) {
             val hi = HugeInt.from(Random.nextInt(100)) * HugeInt.from(10).pow(Random.nextInt(20))
-            if (hi.magnitudeBitLen() > 128)
+            if (hi.magnitudeBitLen() > 128 || hi.isZero())
                 continue
             test1(hi)
 
@@ -85,7 +89,7 @@ class TestStripTrailingZeros {
         val dw1 = hi.extractULongAtBitIndex(64)
 
         val ntzHi = ntzHugeInt(hi)
-        val (q1, q0, ntz) = ntzDecimalU128(dw1, dw0)
+        val (q1:ULong, q0:ULong, ntz: Int) = ntzdU128(dw1, dw0)
 
         assertEquals(ntzHi, ntz)
 
@@ -116,7 +120,7 @@ class TestStripTrailingZeros {
         if (verbose)
             println(" q1:$q1 tzCount1:$tzCount1")
 
-        val (qNtz, tzCountNtz) = ntzDecimalU64(v)
+        val (qNtz, tzCountNtz) = ntzdU64(v)
         if (verbose)
             println(" qNtz:$qNtz tzCountNtz:$tzCountNtz")
 
@@ -149,7 +153,7 @@ class TestStripTrailingZeros {
         return p
     }
 
-    fun ntzDecimalU32(r0: UInt): Pair<UInt, Int> {
+    fun ntzdU32(r0: UInt): Pair<UInt, Int> {
         var r = r0
         var ntz = 0
 
@@ -161,7 +165,6 @@ class TestStripTrailingZeros {
             r /= 1_0000u
             ntz += 4
         }
-        // Strip 10^2 (up to 2 more zeros)
         if (r >= 100u && r % 100u == 0u) {
             r /= 100u
             ntz += 2
@@ -174,7 +177,7 @@ class TestStripTrailingZeros {
         return r to ntz
     }
 
-    fun ntzDecimalU64(r0: ULong): Pair<ULong, Int> {
+    fun ntzdU64(r0: ULong): Pair<ULong, Int> {
         var r = r0
         var ntz = 0
 
@@ -190,7 +193,6 @@ class TestStripTrailingZeros {
             r /= 1_0000u
             ntz += 4
         }
-        // Strip 10^2 (up to 2 more zeros)
         if (r >= 100uL && r % 100uL == 0uL) {
             r /= 100uL
             ntz += 2
@@ -203,9 +205,9 @@ class TestStripTrailingZeros {
         return r to ntz
     }
 
-    fun ntzDecimalU128(r1: ULong, r0: ULong): Triple<ULong, ULong, Int> {
+    fun ntzdU128_0(r1: ULong, r0: ULong): Triple<ULong, ULong, Int> {
         if (r1 == 0uL) {
-            val (q0, ntz) = ntzDecimalU64(r0)
+            val (q0, ntz) = ntzdU64(r0)
             return Triple(0uL, q0, ntz)
         }
         var ntz = 0
@@ -216,7 +218,7 @@ class TestStripTrailingZeros {
             val r = packed.toUInt()
             tmpLen = (packed shr 32).toInt()
             if (r != 0u) {
-                val (rPrime, ntzTail) = ntzDecimalU32(r)
+                val (rPrime, ntzTail) = ntzdU32(r)
                 ntz += ntzTail
                 if (ntz == 0)
                     return Triple(r1, r0, 0)
@@ -228,9 +230,48 @@ class TestStripTrailingZeros {
             ntz += 9
         } while (tmpLen > 2)
         val r0Prime = (tmp[1].toULong() shl 32) or (tmp[0].toUInt().toULong())
-        val (rPrime, ntzTail) = ntzDecimalU64(r0Prime)
+        val (rPrime, ntzTail) = ntzdU64(r0Prime)
         ntz += ntzTail
         return Triple(0uL, rPrime, ntz)
+    }
+
+    fun ntzdU128(d1: ULong, d0: ULong): Triple<ULong, ULong, Int> {
+        var t1 = d1
+        var t0 = d0
+        var ntzd = 0
+        retTriple@
+        do {
+            if (t1 != 0uL) {
+                val tmp = intArrayOf(t0.toInt(), (t0 shr 32).toInt(), t1.toInt(), (t1 shr 32).toInt())
+                var tmpLen = if (tmp[3] == 0) 3 else 4
+                do {
+                    val packed = Magia.mutateBarrettDivBy1e9(tmp, tmpLen)
+                    val r = packed.toUInt()
+                    tmpLen = (packed shr 32).toInt()
+                    if (r != 0u) {
+                        val (rPrime, ntzTail) = ntzdU32(r)
+                        ntzd += ntzTail
+                        if (ntzd == 0)
+                            break@retTriple
+                        Magia.mutateFmaPow10(tmp, 9 - ntzTail, rPrime)
+                        t1 = (tmp[3].toULong() shl 32) or (tmp[2].toUInt().toULong())
+                        t0 = (tmp[1].toULong() shl 32) or (tmp[0].toUInt().toULong())
+                        break@retTriple
+                    }
+                    ntzd += 9
+                } while (tmpLen > 2)
+                t0 = (tmp[1].toULong() shl 32) or (tmp[0].toUInt().toULong())
+                check(ntzd == 9 || ntzd == 18)
+            }
+            // arrive here when the high word is zero
+            // either because it started off zero .OR.
+            // because we reduced 9 or 18 zeros
+            val (q0, ntzdTail) = ntzdU64(t0)
+            t1 = 0uL
+            t0 = q0
+            ntzd += ntzdTail
+        } while (false)
+        return Triple(t1, t0, ntzd)
     }
 
 }
