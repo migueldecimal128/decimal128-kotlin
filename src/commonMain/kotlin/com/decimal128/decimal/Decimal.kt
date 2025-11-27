@@ -13,9 +13,7 @@ import com.decimal128.decimal.Ieee754Class.positiveZero
 import com.decimal128.decimal.Ieee754Class.quietNaN
 import com.decimal128.decimal.Ieee754Class.signalingNaN
 import com.decimal128.decimal.U256Bits.calcBitLen128
-import com.decimal128.decimal.U256Bits.calcBitLen64
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
-import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import kotlin.math.max
 import kotlin.math.min
 
@@ -269,7 +267,7 @@ class Decimal private constructor(
          * @return the parsed `Decimal` value
          * @throws IllegalArgumentException if the text does not encode a valid decimal128
          */
-        fun from(str: String): Decimal = DecParsePrint.parseDecText(str)
+        fun from(str: String): Decimal = DecParsePrint.parseDecimal(str)
 
         fun zero() = POS_ZEROe0
 

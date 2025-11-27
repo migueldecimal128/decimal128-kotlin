@@ -22,26 +22,55 @@ object DecParsePrint {
     private const val DECIMAL128_QTINY = -6176
     private const val DECIMAL128_QMAX_6111 = 6111
 
-
-    fun parseDecText(str: String): Decimal {
-        var dec: Any? = parseFiniteValueText(str)
-        var msg = ""
-        if (dec is Decimal)
-            return dec
-        if (dec is String) {
-            msg = dec
-        } else {
-            dec = parseInfinityText(str)
-            if (dec is Decimal)
-                return dec
-            dec = parseNanText(str)
-            if (dec is Decimal)
-                return dec
-        }
+    /**
+     * Parses a decimal string into a `Decimal` (decimal128).
+     *
+     * Accepts the same finite-value syntax as `parseFiniteValueText`:
+     * optional sign, digits with optional decimal point, optional `e`/`E`
+     * exponent (with optional sign), and only ASCII/Basic-Latin characters.
+     *
+     * If the input is valid, a `Decimal` is returned. Otherwise an
+     * `IllegalArgumentException` is thrown containing the diagnostic text
+     * produced by `parseDecimalOrErrorString`.
+     *
+     * @throws IllegalArgumentException if the input is not a valid finite
+     *         decimal128 text form or would require rounding.
+     */
+    fun parseDecimal(str: String): Decimal {
+        val decOrErrStr = parseDecimalOrErrorString(str)
+        if (decOrErrStr is Decimal)
+            return decOrErrStr
+        val msg = decOrErrStr ?: ""
         throw IllegalArgumentException("invalid decimal format:$msg:'$str'")
     }
 
-        /**
+    /**
+     * Attempts to parse the input as a Decimal128 value.
+     *
+     * Parsing is attempted in order:
+     *  1. `parseFiniteValueText`
+     *  2. `parseInfinityText`
+     *  3. `parseNanText`
+     *
+     * Returns the first non-null result, which may be:
+     *  * a `Decimal` for a successful parse, or
+     *  * a `String` describing an error.
+     *
+     * Error messages are returned as `String` constant values
+     * to reduce any performance overhead for failed parse attempts.
+     */
+    fun parseDecimalOrErrorString(str: String): Any? {
+        var d: Any? = parseFiniteValueText(str)
+        if (d is Decimal || d is String)
+            return d
+        d = parseInfinityText(str)
+        if (d is Decimal)
+            return d
+        d = parseNanText(str)
+        return d
+    }
+
+    /**
      * Parses a textual infinity representation into a [`Decimal`] value.
      *
      * Accepted forms are case-insensitive:
