@@ -22,27 +22,26 @@ import kotlin.math.min
 class Decimal private constructor(
     // pronounced:
     // seal = Sign Exponent And Lengths
-    internal val seal: Int,
+    internal val seal: Seal,
     internal val dw1: ULong,
     internal val dw0: ULong
 ) : Comparable<Decimal> {
     internal val bitLen: Int
-        get() = seal and 0x1FF
+        get() = seal.bitLen
     internal val digitLen: Int
-        get() = (seal shr 9) and 0x7F
+        get() = seal.digitLen
 
     internal val sign: Boolean
-        get() = seal < 0
+        get() = seal.isNegative
     internal val sign01: Int
-        get() = seal ushr 31
+        get() = seal.signBit
     internal val sign0Neg1: Int
-        get() = seal shr 31
+        get() = seal.signMask
     internal val qExp: Int
-        get() = (seal shl 1) shr 17
-
+        get() = seal.qExp
     // the normalized scientific base 10 exponent
     internal val eExp: Int
-        get() = qExp + (digitLen - (-digitLen ushr 31))
+        get() = seal.eExp
 
     // the lower bound of the normalized binary exponent interval
     internal val bExpMin: Int
@@ -51,14 +50,14 @@ class Decimal private constructor(
         get() = calcBExpMax(bitLen, qExp)
 
     constructor(sign: Boolean, qExp: Int, dw1: ULong, dw0: ULong) :
-            this(calcSeal(sign, qExp, dw1, dw0), dw1, dw0)
+            this(Seal(sign, qExp, dw1, dw0), dw1, dw0)
 
     constructor(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int, dw1: ULong, dw0: ULong) :
-            this(packSeal(sign, qExp, digitLen, bitLen), dw1, dw0)
+            this(Seal(sign, qExp, digitLen, bitLen), dw1, dw0)
 
 
     companion object {
-        val POS_ZEROe0 = Decimal(SIGN_0, 0uL, 0uL)
+        val POS_ZEROe0 = Decimal(Seal(false, 0, 0, 0), 0uL, 0uL)
         val NEG_ZEROe0 = POS_ZEROe0.negate()
         val POS_ONEe0 = from(1)
         val NEG_ONEe0 = POS_ONEe0.negate()
@@ -73,9 +72,6 @@ class Decimal private constructor(
         private const val LOG2_10_FLOOR: Long = 14_267_572_564L
         private const val LOG2_10_CEIL: Long = 14_267_572_565L
 
-        private const val SIGN_0 = 0
-        private const val SIGN_1 = 1
-
         private const val DECIMAL128_QTINY_Neg6176 = -6176
         private const val DECIMAL128_QMAX_6111 = 6111
 
@@ -86,32 +82,6 @@ class Decimal private constructor(
         private const val HASH_CODE_POS_INFINITY = 52593608
         private const val HASH_CODE_NEG_INFINITY = 52414862
         private const val HASH_CODE_NAN = 52594569
-
-        internal inline fun packSeal(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int): Int =
-            (if (sign) Int.MIN_VALUE else 0) or (((qExp and 0x7FFF) shl 16) or
-                    (digitLen shl 9) or bitLen)
-
-        internal inline fun packSeal(sign01: Int, qExp: Int, digitLen: Int, bitLen: Int): Int =
-            (sign01 shl 31) or (((qExp and 0x7FFF) shl 16) or (digitLen shl 9) or bitLen)
-
-        internal fun calcSeal(sign: Boolean, qExp: Int, dw1: ULong, dw0: ULong): Int {
-            val bitLen = calcBitLen128(dw1, dw0)
-            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-            return packSeal(sign, qExp, digitLen, bitLen)
-        }
-
-        internal fun calcSeal(sign01: Int, qExp: Int, dw1: ULong, dw0: ULong): Int {
-            val bitLen = calcBitLen128(dw1, dw0)
-            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-            return packSeal(sign01, qExp, digitLen, bitLen)
-        }
-
-        internal fun calcSeal(sign01: Int, dw0: ULong): Int {
-            val bitLen = calcBitLen64(dw0)
-            val digitLen = calcDigitLen64(bitLen, dw0)
-            return packSeal(sign01, 0, digitLen, bitLen)
-        }
-
 
         /**
          * Computes a conservative **lower bound** on the binary exponent of a finite
@@ -267,10 +237,12 @@ class Decimal private constructor(
         fun from(l: Long): Decimal {
             val mask = l shr 63
             val abs = ((l xor mask) - mask).toULong()
-            return Decimal(calcSeal(mask.toInt(), abs), 0uL, abs)
+            val signBit = (mask.toInt() ushr 31)
+            val seal = Seal(signBit, 0, 0uL, abs)
+            return Decimal(seal, 0uL, abs)
         }
 
-        fun from(dw: ULong): Decimal = Decimal(calcSeal(SIGN_0, dw), 0uL, dw)
+        fun from(dw: ULong): Decimal = Decimal(Seal(false, 0, 0uL, dw), 0uL, dw)
 
         /**
          * Parses a decimal128 value from its textual representation.
@@ -305,7 +277,7 @@ class Decimal private constructor(
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
             val clampedQExp = max(min(qExp, DECIMAL128_QMAX_6111), DECIMAL128_QTINY_Neg6176)
-            val seal = packSeal(sign, clampedQExp, 0, 0)
+            val seal = Seal(sign, clampedQExp, 0, 0)
             val zero = Decimal(seal, 0uL, 0uL)
             return zero
         }
@@ -423,8 +395,8 @@ class Decimal private constructor(
      * isSignMinus(x) is true if and only if x has negative sign. isSignMinus applies to zeros and NaNs
      * as well.
      */
-    fun isSignMinus(): Boolean = seal < 0 // IEEE754 5.7.2
-    fun isNegative(): Boolean = seal < 0
+    fun isSignMinus(): Boolean = seal.isNegative // IEEE754 5.7.2
+    fun isNegative(): Boolean = seal.isNegative
 
     /**
      * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
@@ -644,7 +616,7 @@ class Decimal private constructor(
         }
     }
 
-    fun negate(): Decimal = Decimal(seal xor Int.MIN_VALUE, dw1, dw0)
+    fun negate(): Decimal = Decimal(seal.negate(), dw1, dw0)
 
     fun abs(): Decimal = if (isNegative()) negate() else this
 
