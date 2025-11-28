@@ -1,4 +1,4 @@
-package com.decimal128.decimal
+package com.decimal128.decimal.intel
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.Test

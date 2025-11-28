@@ -1,7 +1,10 @@
-package com.decimal128.decimal
+package com.decimal128.decimal.intel
 
+import com.decimal128.decimal.DecParsePrint
+import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.IntelTest.Companion.parseIntelTest
+import com.decimal128.decimal.DecSerdeBid128
+import com.decimal128.decimal.Decimal
 import kotlin.test.Test
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
@@ -80,10 +83,13 @@ class IntelTest private constructor (
     val resBid128: Decimal
         get() = parseBid128(resStr)
 
+    val resInt: Int
+        get() = resStr.toInt()
+
     companion object {
         val decRoundingMap = arrayOf(
-            ROUND_TIES_TO_EVEN, DecRounding.ROUND_TOWARD_NEGATIVE,
-            DecRounding.ROUND_TOWARD_POSITIVE, DecRounding.ROUND_TOWARD_ZERO, DecRounding.ROUND_TIES_TO_AWAY
+            ROUND_TIES_TO_EVEN, DecRounding.Companion.ROUND_TOWARD_NEGATIVE,
+            DecRounding.Companion.ROUND_TOWARD_POSITIVE, DecRounding.Companion.ROUND_TOWARD_ZERO, DecRounding.Companion.ROUND_TIES_TO_AWAY
         )
 
         val allowedTailKeys = setOf(
@@ -250,10 +256,24 @@ class IntelTestSmokeTest {
     }
 
     fun test1Line(line: String) {
-        val intelTest = parseIntelTest(line)
+        val intelTest = IntelTest.Companion.parseIntelTest(line)
         testDecimalParse(intelTest.op1Str)
         testDecimalParse(intelTest.op2Str)
         testDecimalParse(intelTest.op3Str)
         testDecimalParse(intelTest.resStr)
+    }
+
+    @Test
+    fun testFuncNames128() {
+        val fileText = IntelTest::class.java.getResource("/intel/readtest.in")!!.readText()
+        val allTests = IntelTest.parseAllTests(fileText)
+
+        val funcs128: List<String> =
+            allTests.map { it.funcStr }
+                .filter { it.startsWith("bid128_") }
+                .toSet()
+                .sorted()
+
+        funcs128.forEach { println(it) }
     }
 }

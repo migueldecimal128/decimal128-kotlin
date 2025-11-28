@@ -39,5 +39,30 @@ enum class Ieee754Class {
     positiveZero,
     positiveSubnormal,
     positiveNormal,
-    positiveInfinity
+    positiveInfinity;
+
+    companion object {
+        val values = Ieee754Class.values()
+
+        fun fromOrdinal(ordinal: Int) = values[ordinal]
+    }
 }
+
+/*
+Intel library bid_functions.h declares (with // # added by me)
+
+typedef enum class_types {
+  signalingNaN,        // 0
+  quietNaN,            // 1
+  negativeInfinity,    // 2
+  negativeNormal,      // 3
+  negativeSubnormal,   // 4
+  negativeZero,        // 5
+  positiveZero,        // 6
+  positiveSubnormal,   // 7
+  positiveNormal,      // 8
+  positiveInfinity     // 9
+} class_t;
+
+
+ */
