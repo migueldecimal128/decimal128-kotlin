@@ -3,6 +3,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.U256Bits.calcBitLen128
+import com.decimal128.decimal.U256Pow10.calcDigitLen64
 
 /**
  * Serialization helpers for IEEE-754 Decimal128 values using the
@@ -136,6 +137,12 @@ object DecSerdeBid128 {
     private const val QTINY_Neg6176 = -6176
     private const val QMAX_6111 = 6111
 
+    private const val BID64_QTINY_Neg398 = -398
+    private const val BID64_QMAX_369 = 369
+
+    private const val BID32_QTINY_Neg101 = -101
+    private const val BID32_QMAX_90 = 90
+
     /**
      * Encodes the Decimal128 BID **sign bit** and **17-bit G-combination field**.
      *
@@ -231,9 +238,9 @@ object DecSerdeBid128 {
             (combination and 0x18000) != 0x18000 -> {
                 //  IEEE754-2019 3.5.2 c) 2) i) -- p 21
                 //   If G0 and G1 together are one of 00, 01, or 10, then the biased
-                //   exponent E is formed from G0 through G16 and the significand
-                //   is formed from bits G17 through the end of the encoding (including T).
-                //
+                //   exponent E is formed from G0 through Gw+1 and the significand
+                //   is formed from bits Gw+2 through the end of the encoding (including T).
+                // w+5=17 w=12 Gw+1=G13 Gw+2=G14
                 // the top 14 bits of the combination field represent the biased exponent ...
                 val biasedExponent = combination shr 3
                 val qExp = biasedExponent + QTINY_Neg6176 // this is effectively a subtraction
@@ -265,8 +272,8 @@ object DecSerdeBid128 {
                 // IEEE754-2019 3.5.2 c) 2) ii) -- p 21
                 //  If G0 and G1 together are 11 and G2 and G3 together are one
                 //  of 00, 01, or 10, then the biased exponent E is formed from
-                //  G2 through G18 and the significand is formed by prefixing
-                //  the 4 bits (8 + G19) to T.
+                //  G2 through Gw+3 and the significand is formed by prefixing
+                //  the 4 bits (8 + Gw+4) to T.
                 //
                 // This pattern is non-canonical for decimal128 because all
                 // all 114-bit coefficients starting with 0b100x exceed 34
@@ -280,6 +287,146 @@ object DecSerdeBid128 {
                 val E = (combination ushr 1) and 0x3FFF   // 14 bits
                 val qExp = E + QTINY_Neg6176              // preserve exponent
                 return Decimal.zero(sign, qExp)
+            }
+        }
+    }
+
+    fun decodeBid64(bid64: ULong): Decimal {
+        // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
+        val k = 64 // storage width in bits
+        val p = 16 // precision in digits
+        val emax = 384
+        val bias = 398
+        val w5 = 13 // w+5, combination field width in bits
+        val w = w5 - 5
+        val t = 50 // trailing significand field width in bits
+        check (1 + w5 + t == k)
+        // 1 + 13 + 50 == 64
+        // 1 bit for the sign
+        val sign = bid64.toLong() < 0L
+        // w5 bit combination field ... for bid64 0x1FFF
+        val combination = ((bid64 and 0x7FFF_FFFF_FFFF_FFFFuL) shr t).toInt()
+        // t bits for the coefficient
+        val coefficientLoT = bid64 and ((1uL shl t) - 1uL)
+        when {
+            // if the top 2 bits are not 0b11
+            (combination shr (w5 - 2)) != 0b11 -> {
+                //  IEEE754-2019 3.5.2 c) 2) i) -- p 21
+                //   If G0 and G1 together are one of 00, 01, or 10, then the biased
+                //   exponent E is formed from G0 through Gw+1 and the significand
+                //   is formed from bits Gw+2 through the end of the encoding (including T).
+                //
+                // w+5=13 w=8 Gw+1=G9 Gw+2=G10
+                // the top 10 bits of the combination field represent the biased exponent ...
+                val biasedExponentE = combination shr 3
+                val qExp = biasedExponentE - bias
+                // ... and the bottom 3 bits are the most significant bits of the significand
+                // coeff/significant is 3 + 50 == 53 ... but that's not all ... see below
+                val mostSignificant3 = (combination and 0x07).toULong() shl t
+                val dw0 = mostSignificant3 or coefficientLoT
+                val bitLen = 64 - dw0.countLeadingZeroBits()
+                val digitLen = calcDigitLen64(bitLen, dw0)
+                // IEEE754-2019 3.5.2 p21
+                //  If the value exceeds the maximum, the significand c is
+                //  non-canonical and the value used for c is zero.
+                if (digitLen > p)
+                    return Decimal.zero(sign, qExp)
+                return Decimal(sign, qExp, digitLen, bitLen, 0uL, dw0)
+            }
+            // otherwise, the top two bits are 0b11
+            // if the top 5 bits are 0b11110 then Infinity
+            (combination shr (w5 - 5)) == 0b11110 -> return Decimal.infinity(sign)
+            // if the top 5 bits are 0x11111 then NaN
+            (combination shr (w5 - 5)) == 0b11111 -> {
+                // with the next bit determining signaling NaN
+                val isSignaling = (combination and 0x1F80) == 0x1F80
+                val payload = if (calcDigitLen64(coefficientLoT) < p) coefficientLoT else 0uL
+                return Decimal.NaN(sign, isSignaling, 0uL, payload)
+            }
+            // otherwise, top 4 bits were 0x1100 0x1101 0x1110
+            else -> {
+                // IEEE754-2019 3.5.2 c) 2) ii) -- p 21
+                //  If G0 and G1 together are 11 and G2 and G3 together are one
+                //  of 00, 01, or 10, then the biased exponent E is formed from
+                //  G2 through Gw+3 and the significand is formed by prefixing
+                //  the 4 bits (8 + Gw+4) to T.
+                //
+                // w+5=13 w=8 Gw+3=G11 Gw+4=G12
+                //
+                val biasedExponentE = (combination ushr 1) and ((1 shl (w + 2)) - 1)
+                val qExp = biasedExponentE - bias
+                val coeff = ((8uL + (combination and 1).toULong()) shl t) or coefficientLoT
+                return Decimal(sign, qExp, 0uL, coeff)
+            }
+        }
+    }
+
+    fun decodeBid32(bid32: UInt): Decimal {
+        // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
+        val k = 32 // storage width in bits
+        val p = 7 // precision in digits
+        val emax = 96
+        val bias = 101
+        val w5 = 11 // w+5, combination field width in bits
+        val w = w5 - 5
+        val t = 20 // trailing significand field width in bits
+        check (1 + w5 + t == k)
+        // 1 + 11 + 20 == 32
+        // 1 bit for the sign
+        val sign = bid32.toInt() < 0L
+        // w5 bit combination field ... for bid64 0x1FFF
+        val combination = ((bid32 and 0x7FFF_FFFFu) shr t).toInt()
+        // t bits for the coefficient
+        val coefficientLoT = (bid32 and ((1u shl t) - 1u)).toULong()
+        when {
+            // if the top 2 bits are not 0b11
+            (combination shr (w5 - 2)) != 0b11 -> {
+                //  IEEE754-2019 3.5.2 c) 2) i) -- p 21
+                //   If G0 and G1 together are one of 00, 01, or 10, then the biased
+                //   exponent E is formed from G0 through Gw+1 and the significand
+                //   is formed from bits Gw+2 through the end of the encoding (including T).
+                //
+                // w+5=13 w=8 Gw+1=G9 Gw+2=G10
+                // the top 10 bits of the combination field represent the biased exponent ...
+                val biasedExponentE = combination shr 3
+                val qExp = biasedExponentE - bias
+                // ... and the bottom 3 bits are the most significant bits of the significand
+                // coeff/significant is 3 + 50 == 53 ... but that's not all ... see below
+                val mostSignificant3 = (combination and 0x07).toULong() shl t
+                val w0 = mostSignificant3 or coefficientLoT
+                val bitLen = 32 - w0.countLeadingZeroBits()
+                val digitLen = calcDigitLen64(bitLen, w0.toULong())
+                // IEEE754-2019 3.5.2 p21
+                //  If the value exceeds the maximum, the significand c is
+                //  non-canonical and the value used for c is zero.
+                if (digitLen > p)
+                    return Decimal.zero(sign, qExp)
+                return Decimal(sign, qExp, digitLen, bitLen, 0uL, w0.toULong())
+            }
+            // otherwise, the top two bits are 0b11
+            // if the top 5 bits are 0b11110 then Infinity
+            (combination shr (w5 - 5)) == 0b11110 -> return Decimal.infinity(sign)
+            // if the top 5 bits are 0x11111 then NaN
+            (combination shr (w5 - 5)) == 0b11111 -> {
+                // with the next bit determining signaling NaN
+                val isSignaling = (combination and 0x1F80) == 0x1F80
+                val payload = if (calcDigitLen64(coefficientLoT) < p) coefficientLoT else 0uL
+                return Decimal.NaN(sign, isSignaling, 0uL, payload)
+            }
+            // otherwise, top 4 bits were 0x1100 0x1101 0x1110
+            else -> {
+                // IEEE754-2019 3.5.2 c) 2) ii) -- p 21
+                //  If G0 and G1 together are 11 and G2 and G3 together are one
+                //  of 00, 01, or 10, then the biased exponent E is formed from
+                //  G2 through Gw+3 and the significand is formed by prefixing
+                //  the 4 bits (8 + Gw+4) to T.
+                //
+                // w+5=13 w=8 Gw+3=G11 Gw+4=G12
+                //
+                val biasedExponentE = (combination ushr 1) and ((1 shl (w + 2)) - 1)
+                val qExp = biasedExponentE - bias
+                val coeff = ((8uL + (combination and 1).toULong()) shl t) or coefficientLoT
+                return Decimal(sign, qExp, 0uL, coeff)
             }
         }
     }
