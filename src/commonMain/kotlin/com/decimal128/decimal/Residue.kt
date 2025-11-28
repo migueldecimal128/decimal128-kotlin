@@ -9,7 +9,7 @@ import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_2
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_3
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_4
 import com.decimal128.hugeint.HugeInt
-
+import com.decimal128.decimal.U256Pow10.POW10
 
 private const val RESIDUE_IS_VALUE_CLASS = true
 @JvmInline

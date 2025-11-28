@@ -2,6 +2,12 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.BARRETT_POW10_MAXX
+import com.decimal128.decimal.U256Pow10.BARRETT_POW10_MU_OFFSET
+import com.decimal128.decimal.U256Pow10.BARRETT_POW5_MAX
+import com.decimal128.decimal.U256Pow10.BARRETT_POW5_MU_OFFSET
+import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.U256Pow10.POW5_64_OFFSET
 
 object DivBarrett {
 

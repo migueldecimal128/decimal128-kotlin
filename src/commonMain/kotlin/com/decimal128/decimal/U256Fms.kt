@@ -3,6 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.U256Pow10.pow10BitLen
 import com.decimal128.decimal.U256Pow10.pow10Offset
 import kotlin.math.max
+import com.decimal128.decimal.U256Pow10.POW10
 
 object U256Fms {
 

@@ -2,6 +2,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.BARRETT_POW10_MAXX
 import com.decimal128.hugeint.HugeInt
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul256
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul192

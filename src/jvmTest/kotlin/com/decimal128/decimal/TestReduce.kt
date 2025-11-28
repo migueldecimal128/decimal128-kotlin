@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.BARRETT_POW5_MAX
 import org.junit.jupiter.api.Test
 import java.lang.Long.bitCount
 import java.lang.Math.unsignedMultiplyHigh

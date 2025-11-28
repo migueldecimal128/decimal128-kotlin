@@ -2,6 +2,7 @@ package com.decimal128.decimal
 
 import kotlin.math.max
 import kotlin.math.min
+import com.decimal128.decimal.U256Pow10.POW10
 
 object D128Compare {
 

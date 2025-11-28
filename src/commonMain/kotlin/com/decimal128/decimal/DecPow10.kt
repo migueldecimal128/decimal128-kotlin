@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.POW10
+
 object DecPow10 {
     fun umul128Pow10(dw1: ULong, dw0: ULong, pow10: Int): Pair<ULong, ULong> {
         return when {

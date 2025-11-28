@@ -9,6 +9,7 @@ import com.decimal128.decimal.U256Bits.calcBitLen256
 import com.decimal128.decimal.U256Pow10.calcDigitLen256
 import com.decimal128.decimal.U256Pow10.pow10BitLen
 import com.decimal128.decimal.U256Pow10.pow10Offset
+import com.decimal128.decimal.U256Pow10.POW10
 
 const val PRECISION_34 = 34
 

@@ -2,6 +2,8 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.POW10
+
 inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L

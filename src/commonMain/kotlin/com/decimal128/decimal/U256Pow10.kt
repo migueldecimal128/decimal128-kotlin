@@ -6,27 +6,27 @@ import com.decimal128.decimal.U256Bits.calcBitLen128
 import com.decimal128.hugeint.HugeInt
 import kotlin.math.max
 
-private const val POW10_DWORD_COUNT =
-    POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
-
-internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
-internal const val BARRETT_POW10_MAXX = 10
-
-internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAXX
-internal const val POW5_64_MAX = 28
-
-internal const val BARRETT_POW5_MU_OFFSET = POW5_64_OFFSET + POW5_64_MAX
-internal const val BARRETT_POW5_MAX = 14
-
-internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAX
-internal const val MAGIC_POW10_MAXX = 20
-
-private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
-
-internal val POW10 = LongArray(TOTAL_ALLOCATION)
-private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
-
 internal object U256Pow10 {
+    private const val POW10_DWORD_COUNT =
+        POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
+
+    internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
+    internal const val BARRETT_POW10_MAXX = 10
+
+    internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAXX
+    internal const val POW5_64_MAX = 28
+
+    internal const val BARRETT_POW5_MU_OFFSET = POW5_64_OFFSET + POW5_64_MAX
+    internal const val BARRETT_POW5_MAX = 14
+
+    internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAX
+    internal const val MAGIC_POW10_MAXX = 20
+
+    private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
+
+    internal val POW10 = LongArray(TOTAL_ALLOCATION)
+    private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
+
     /*
     // minBitCount:0  maxBitCount:64
     1L, // 1 (0)

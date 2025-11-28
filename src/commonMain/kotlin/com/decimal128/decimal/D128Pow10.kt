@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.POW10
+
 object D128Pow10 {
 
     fun scaleCoeffUpPow10(x: DecOld, pow10: Int): DecOld {

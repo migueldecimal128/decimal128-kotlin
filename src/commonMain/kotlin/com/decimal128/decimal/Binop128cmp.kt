@@ -7,6 +7,7 @@ import com.decimal128.decimal.DecOld.Companion.POS_ONE
 import com.decimal128.decimal.DecOld.Companion.ZERO
 import com.decimal128.decimal.DecOld.Companion.bothFnz
 import com.decimal128.decimal.DecOld.Companion.hasNaN
+import com.decimal128.decimal.U256Pow10.POW10
 
 class Binop128cmp : Binop() {
 

@@ -1,6 +1,9 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.U256Pow10.MAGIC_POW10_MAXX
+import com.decimal128.decimal.U256Pow10.MAGIC_POW10_M_OFFSET
 import com.decimal128.hugeint.HugeInt
+import com.decimal128.decimal.U256Pow10.POW10
 
 object DivMagic {
 

@@ -13,6 +13,7 @@ import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
+import com.decimal128.decimal.U256Pow10.POW10
 
 internal const val MIN_SPECIAL_VALUE = 16381
 internal const val NON_FINITE_INF = 16381
