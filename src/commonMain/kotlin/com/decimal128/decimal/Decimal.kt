@@ -304,19 +304,14 @@ class Decimal private constructor(
         ): Decimal {
             if ((payloadDw1 or payloadDw0) == 0uL)
                 return NaN(sign, signaling)
-            var dw1 = payloadDw1
-            var dw0 = payloadDw0
-            val digitLen = calcDigitLen128(dw1, dw0)
-            if (digitLen > 33) {
-                // IEEE754-2019 3.5.2 p21
-                //  If the value exceeds the maximum, the significand c is
-                //  non-canonical and the value used for c is zero.
-                dw1 = 0uL; dw0 = 0uL;
-            }
-            return Decimal(
-                sign, if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN,
-                payloadDw1, payloadDw0
-            )
+            val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
+            val digitLen = calcDigitLen128(payloadDw1, payloadDw0)
+            if (digitLen <= 33)
+                return Decimal(sign, qExp, payloadDw1, payloadDw0)
+            // IEEE754-2019 3.5.2 p21
+            //  If the value exceeds the maximum, the significand c is
+            //  non-canonical and the value used for c is zero.
+            return NaN(sign, signaling)
         }
 
         internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
@@ -455,6 +450,12 @@ class Decimal private constructor(
     fun isSignaling(): Boolean = qExp == NON_FINITE_SNAN
 
     /**
+     * Not sure what this means in the BID context.
+     * There are no non-canonical encodings ... unless one counted too many digits
+     */
+    fun isCanonical(): Boolean = true
+
+    /**
      * Compares this decimal128 value with [other] using the IEEE-754
      * *totalOrder* relation.
      *
@@ -492,6 +493,8 @@ class Decimal private constructor(
 
     fun compareTotalOrderTo(other: Decimal) = DecCompare.cmpTotalOrder(this, other)
 
+    fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
+
     /**
      * Compares the *magnitudes* of two decimal128 values according to the
      * IEEE-754-2019 totalOrder rules (see §§5.10 and 5.7.2).
@@ -502,6 +505,8 @@ class Decimal private constructor(
      * @return −1, 0, or +1 describing the total-order magnitude relation.
      */
     fun compareTotalOrderMagTo(other: Decimal) = DecCompare.cmpTotalOrderMag(this, other)
+
+    fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
 
     /**
      * Compares this decimal128 value with [other] using **Java-style numeric
@@ -617,6 +622,15 @@ class Decimal private constructor(
     fun negate(): Decimal = Decimal(seal.negate(), dw1, dw0)
 
     fun abs(): Decimal = if (isNegative()) negate() else this
+
+    // this is only provided for IEEE754-2019 completeness.
+    // in an immutable world it serves no purpose
+    fun copy(): Decimal = Decimal(seal, dw1, dw0)
+
+    fun copySign(other: Decimal) =
+        if (isNegative() xor other.isNegative()) negate() else this
+
+    fun radix(): Int = 10
 
     /**
      * Returns `true` if this value and [other] have the **same quantum**, i.e.,

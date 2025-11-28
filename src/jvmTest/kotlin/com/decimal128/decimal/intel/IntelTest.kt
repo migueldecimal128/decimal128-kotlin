@@ -86,6 +86,15 @@ class IntelTest private constructor (
     val resInt: Int
         get() = resStr.toInt()
 
+    val resBoolean: Boolean
+        get() {
+            if (resStr == "0")
+                return false
+            if (resStr == "1")
+                return true
+            throw IllegalStateException("non-boolean 0/1 Intel test result")
+        }
+
     companion object {
         val decRoundingMap = arrayOf(
             ROUND_TIES_TO_EVEN, DecRounding.Companion.ROUND_TOWARD_NEGATIVE,

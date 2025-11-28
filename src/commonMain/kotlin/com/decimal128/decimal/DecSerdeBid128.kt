@@ -217,7 +217,7 @@ object DecSerdeBid128 {
      *  - For **infinity**, all lower bits are ignored.
      *  - For **NaNs**, lower bits of the combination field are ignored,
      *    the lower 110 (46 + 64) bits form the payload; non-canonical
-     *    payloads (more than 33 digits) have the payload set to 0.
+     *    payloads (more than 34 digits) have the payload set to 0.
      *
      * @param bid128Hi the high 64 bits of the BID128 encoding
      * @param bid128Lo the low 64 bits of the BID128 encoding
