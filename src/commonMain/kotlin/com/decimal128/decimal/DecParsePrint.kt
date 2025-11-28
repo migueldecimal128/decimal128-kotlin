@@ -147,7 +147,8 @@ object DecParsePrint {
         if (ch == '-'.code || ch == '+'.code)
             ch = str[ich++].code
         val hasS = (ch or 0x20) == 's'.code
-        if (hasS)
+        val hasQ = (ch or 0x20) == 'q'.code
+        if (hasQ || hasS)
             ch = str[ich++].code
         if ((str.length - ich) < 2)
             return null
@@ -316,7 +317,7 @@ object DecParsePrint {
             return "out of decimal128 range"
         if (qExp > DECIMAL128_QMAX_6111) {
             val overage = qExp - DECIMAL128_QMAX_6111
-            println("str:$str overage:$overage")
+            println("parseFiniteValueText => str:$str overage:$overage")
             if (overage > 34 - digitLen)
                 return "out of decimal128 range"
             val (t1, t0) = DecPow10.umul128Pow10(dw1T, dw0T, overage)
@@ -394,6 +395,7 @@ object DecParsePrint {
         val expDigitLen = max(calcDigitLen64(eExpAbs.toULong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
+        utf8[0] = '-'.code.toByte() // overwritten if non-negative
         IntegerParsePrint.u128ToUtf8(printedDigitLen, dec.dw1, dec.dw0, utf8, signLen + decimalPointLen)
         if (decimalPointLen > 0) {
             utf8[signLen] = utf8[signLen + 1]

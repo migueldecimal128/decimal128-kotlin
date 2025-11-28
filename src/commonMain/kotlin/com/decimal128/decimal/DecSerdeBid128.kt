@@ -104,7 +104,7 @@ object DecSerdeBid128 {
         val bid128Hi = longs[iMS].toULong()
         val bid128Lo = longs[iLS].toULong()
 
-        return decodeBid128ULongs(bid128Hi, bid128Lo)
+        return decodeBid128(bid128Hi, bid128Lo)
     }
 
     /**
@@ -130,7 +130,7 @@ object DecSerdeBid128 {
         }
         val bid128Hi = if (isLittleEndian) hi else lo
         val bid128Lo = if (isLittleEndian) lo else hi
-        return decodeBid128ULongs(bid128Hi, bid128Lo)
+        return decodeBid128(bid128Hi, bid128Lo)
     }
 
     private const val QTINY_Neg6176 = -6176
@@ -216,7 +216,7 @@ object DecSerdeBid128 {
      * @param bid128Lo the low 64 bits of the BID128 encoding
      * @return the decoded `Decimal` value
      */
-    private fun decodeBid128ULongs(bid128Hi: ULong, bid128Lo: ULong): Decimal {
+    fun decodeBid128(bid128Hi: ULong, bid128Lo: ULong): Decimal {
         // 1 + 17 + 46 == 64
         // 1 bit for the sign
         val sign = bid128Hi.toLong() < 0L
@@ -249,7 +249,7 @@ object DecSerdeBid128 {
                 //  non-canonical and the value used for c is zero.
                 if (digitLen > 34)
                     return Decimal.zero(sign, qExp)
-                return Decimal(sign, qExp, bitLen, digitLen, dw1, dw0)
+                return Decimal(sign, qExp, digitLen, bitLen, dw1, dw0)
             }
             // otherwise, the top two bits are 0b11
             // if the top 5 bits are 0x11110 then Infinity

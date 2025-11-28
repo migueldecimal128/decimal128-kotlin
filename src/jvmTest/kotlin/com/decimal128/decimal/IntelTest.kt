@@ -1,8 +1,9 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.IntelTest.Companion.parseIntelTestOrNull
+import com.decimal128.decimal.IntelTest.Companion.parseIntelTest
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
 // readtest.c - read tests from stdin
@@ -56,11 +57,11 @@ class IntelTest private constructor (
         val whitespaceRegex = Regex("\\s+")
         val strPrefixRegex = Regex("""str_prefix=\|(.*?)\|""")
 
-        fun parseIntelTestOrNull(line: String): IntelTest? {
+        fun parseIntelTest(line: String): IntelTest {
             // strip trailing comments
             val noComments = line.substringBefore("--").trim()
 
-            val m = statusRegex.findAll(noComments).lastOrNull() ?: return null
+            val m = statusRegex.findAll(noComments).last()
 
             val start = m.range.first + 1     // skip the whitespace before the hex
             val end   = start + 2             // position immediately after the hex token
@@ -123,7 +124,8 @@ class IntelTest private constructor (
 
 class IntelTestSmokeTest {
 
-    val verbose = false
+    val verbose = true
+    val veryVerbose = true
 
     @Test
     fun testBasicReadFile() {
@@ -135,10 +137,49 @@ class IntelTestSmokeTest {
                 // includes trimming comments
                 if (line.substringBefore("--").trim().isEmpty())
                     continue
-                if (verbose)
+                if (veryVerbose)
                     println(line)
-                val intelTest = parseIntelTestOrNull(line)
+                test1Line(line)
             }
         }
+    }
+
+    fun testDecimalParse(str: String?) {
+        if (str == null)
+            return
+        if (verbose)
+            println("str:$str")
+        val (isValid, dw1, dw0) = DecSerdeBid128.parseIntelBidHex(str)
+        if (isValid) {
+            val decimal = DecSerdeBid128.decodeBid128(dw1, dw0)
+            if (verbose)
+                println(" => $decimal")
+            return
+        }
+        val d = DecParsePrint.parseDecimalOrErrorString(str)
+        if (d is Decimal) {
+            if (verbose)
+                println(" => $d")
+            return
+        }
+        print("problem: $str => $d")
+    }
+
+    val tcs = arrayOf(
+        "bid128_add 0 +101001100000101.000000E6138 -7695957767658598867966685688.99E6120 [7c000000000000000000000000000000] 01",
+    )
+
+    @Test
+    fun testCases() {
+        for (tc in tcs)
+            test1Line(tc)
+    }
+
+    fun test1Line(line: String) {
+        val intelTest = parseIntelTest(line)
+        testDecimalParse(intelTest.op1Str)
+        testDecimalParse(intelTest.op2Str)
+        testDecimalParse(intelTest.op3Str)
+        testDecimalParse(intelTest.resStr)
     }
 }

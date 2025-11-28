@@ -11,6 +11,9 @@ class TestParseSimple {
     @Test
     fun test() {
         // if you supply one arg remember to make it in canonical format
+        test1("+101001100000101.000000E5138", "1.01001100000101000000E+5152")
+        test1("+101001100000101.000000E6138")
+        test1("-8.E-6083", "-8E-6083")
         test1("1E+6111")
         test1("1E-6176")
         test1("10e10", "1.0E+11")
