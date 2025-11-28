@@ -3,6 +3,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.U256Bits.calcBitLen128
+import com.decimal128.decimal.U256Pow10.POW10
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import com.decimal128.hugeint.Magia
@@ -105,20 +106,6 @@ object DecParsePrint {
         return Decimal.infinity(sign)
     }
 
-    inline fun tenPow(n: Int): ULong {
-        var exp = n
-        var pow = 1uL
-        var base = 10uL
-        while (exp != 0) {
-            if ((exp and 1) != 0)
-                pow *= base
-            exp = exp ushr 1
-            if (exp != 0)
-                base *= base
-        }
-        return pow
-    }
-
     /**
      * Parses a textual NaN representation into a [`Decimal`] value.
      *
@@ -179,9 +166,9 @@ object DecParsePrint {
         var payloadDw1 = 0uL
         var payloadDw0 = accumulator19
         if (payloadDigitCount > 19) {
-            val m = tenPow(payloadDigitCount - 19)
-            payloadDw0 = accumulator19 * m
-            payloadDw1 = unsignedMulHi(accumulator19, m)
+            val p10 = POW10[payloadDigitCount - 19].toULong()
+            payloadDw0 = accumulator19 * p10
+            payloadDw1 = unsignedMulHi(accumulator19, p10)
             payloadDw0 += accumulator33
             payloadDw1 += if (payloadDw0 < accumulator33) 1uL else 0uL
         }
@@ -304,9 +291,9 @@ object DecParsePrint {
         var dw0T = coeff19
         var dw1T = 0uL
         if (significantDigitCount > 19) {
-            val m = tenPow(significantDigitCount - 19)
-            dw0T = coeff19 * m
-            dw1T = unsignedMulHi(coeff19, m)
+            val p10 = POW10[significantDigitCount - 19].toULong()
+            dw0T = coeff19 * p10
+            dw1T = unsignedMulHi(coeff19, p10)
             dw0T += coeff34
             dw1T += if (dw0T < coeff34) 1uL else 0uL
         }
