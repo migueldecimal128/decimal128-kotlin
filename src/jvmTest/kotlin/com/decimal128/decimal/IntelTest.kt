@@ -3,7 +3,6 @@ package com.decimal128.decimal
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.IntelTest.Companion.parseIntelTest
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
 // readtest.c - read tests from stdin
@@ -50,7 +49,7 @@ my guess is that "FE" => "Float Exception"
 #define BID_OVERFLOW_INEXACT_EXCEPTION (DEC_FE_OVERFLOW|DEC_FE_INEXACT)
 */
 class IntelTest private constructor (
-    val line: String,
+    val testLine: String,
     val funcStr: String,
     val rnd: Int,
     val op1Str: String,
@@ -60,6 +59,27 @@ class IntelTest private constructor (
     val status: Int,
     val attrs: Map<String, String>
 ) {
+
+    val op1Bid128: Decimal
+        get() = parseBid128(op1Str)
+
+    val op2Bid128: Decimal
+        get() {
+            if (op2Str == null)
+                throw IllegalStateException("op2 is null:$testLine")
+            return parseBid128(op2Str)
+        }
+
+    val op3Bid128: Decimal
+        get() {
+            if (op3Str == null)
+                throw IllegalStateException("op3 is null:$testLine")
+            return parseBid128(op3Str)
+        }
+
+    val resBid128: Decimal
+        get() = parseBid128(resStr)
+
     companion object {
         val decRoundingMap = arrayOf(
             ROUND_TIES_TO_EVEN, DecRounding.ROUND_TOWARD_NEGATIVE,
@@ -148,6 +168,22 @@ class IntelTest private constructor (
             return allTests
         }
 
+        val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
+        val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
+
+        fun parseBid128(str: String): Decimal {
+            if (str.startsWith('[')) {
+                if (regexHex64.matches(str) || regexHex32.matches(str))
+                    throw IllegalArgumentException("not bid128:$str")
+                val (isValid, dw1, dw0) = DecSerdeBid128.parseIntelBidHex(str)
+                if (! isValid)
+                    throw IllegalArgumentException("something invalid with bid128:$str")
+                val decimal = DecSerdeBid128.decodeBid128(dw1, dw0)
+                return decimal
+            }
+            return DecParsePrint.parseDecimal(str)
+        }
+
     }
 
     val decRounding: DecRounding
@@ -161,11 +197,11 @@ class IntelTestSmokeTest {
     @Test
     fun testBasicReadFile() {
         val fileText = IntelTest::class.java.getResource("/intel/readtest.in")!!.readText()
-        val tests = IntelTest.parseAllTests(fileText)
-        for (test in tests) {
+        val allTests = IntelTest.parseAllTests(fileText)
+        for (test in allTests) {
             testDecimalParse(test.op1Str)
             test.op2Str?.let { testDecimalParse(test.op2Str) }
-            test.op3Str?.let { testDecimalParse(test.op3Str) }
+
             testDecimalParse(test.resStr)
         }
     }
