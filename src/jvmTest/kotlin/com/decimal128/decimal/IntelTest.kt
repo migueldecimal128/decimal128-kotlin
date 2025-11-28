@@ -74,7 +74,7 @@ class IntelTest private constructor (
             "str_prefix",
         )
 
-        val statusRegex = Regex("""\s([0-9A-Fa-f]{2})(?=\s|$)""")
+        val statusRegex = Regex("""\s((?:0x)?[0-9A-Fa-f]{1,2})(?=\s|$)""")
         val whitespaceRegex = Regex("\\s+")
         val strPrefixRegex = Regex("""str_prefix=\|(.*?)\|""")
 
@@ -83,9 +83,7 @@ class IntelTest private constructor (
             val noComments = line.substringBefore("--").trim()
 
             val m = statusRegex.findAll(noComments).last()
-
-            val start = m.range.first + 1     // skip the whitespace before the hex
-            val end   = start + 2             // position immediately after the hex token
+            val end = m.range.first + m.value.length
 
             val head        = noComments.substring(0, end)
             val baseTokens = head.split(whitespaceRegex)
@@ -125,7 +123,7 @@ class IntelTest private constructor (
             }
 
             val res = baseTokens[baseTokens.size - 2]
-            val status = baseTokens[baseTokens.size - 1].toInt(16)
+            val status = baseTokens[baseTokens.size - 1].removePrefix("0x").toInt(16)
             val chopped = baseTokens.dropLast(2)
 
             val funcStr = chopped[0]
@@ -137,6 +135,19 @@ class IntelTest private constructor (
             val intelTest = IntelTest(line, funcStr, rnd, op1, op2, op3, res, status, tailAttrs)
             return intelTest
         }
+
+        fun parseAllTests(fileText: String): List<IntelTest> {
+            val allTests = ArrayList<IntelTest>()
+            for (line in fileText.lineSequence()) {
+                // trim comments
+                if (line.substringBefore("--").trim().isEmpty())
+                    continue
+                val intelTest = parseIntelTest(line)
+                allTests.add(intelTest)
+            }
+            return allTests
+        }
+
     }
 
     val decRounding: DecRounding
@@ -145,31 +156,36 @@ class IntelTest private constructor (
 
 class IntelTestSmokeTest {
 
-    val verbose = true
-    val veryVerbose = true
+    val verbose = false
 
     @Test
     fun testBasicReadFile() {
-        val stream = IntelTest::class.java.getResourceAsStream("/intel/readtest.in")
-            ?: error("Resource not found: intel/readtest.in")
-
-        stream.bufferedReader().useLines { sequence ->
-            for (line in sequence) {
-                // includes trimming comments
-                if (line.substringBefore("--").trim().isEmpty())
-                    continue
-                if (veryVerbose)
-                    println(line)
-                test1Line(line)
-            }
+        val fileText = IntelTest::class.java.getResource("/intel/readtest.in")!!.readText()
+        val tests = IntelTest.parseAllTests(fileText)
+        for (test in tests) {
+            testDecimalParse(test.op1Str)
+            test.op2Str?.let { testDecimalParse(test.op2Str) }
+            test.op3Str?.let { testDecimalParse(test.op3Str) }
+            testDecimalParse(test.resStr)
         }
     }
+
+    val regexHex128 = Regex("""\[[0-9A-Fa-f]{16},?[0-9A-Fa-f]{16}\]""")
+    val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
+    val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
 
     fun testDecimalParse(str: String?) {
         if (str == null)
             return
         if (verbose)
             println("str:$str")
+        if (str.startsWith('[')) {
+            if (regexHex64.matches(str) || regexHex32.matches(str)) {
+                if (verbose)
+                    println(" => skipped")
+                return
+            }
+        }
         val (isValid, dw1, dw0) = DecSerdeBid128.parseIntelBidHex(str)
         if (isValid) {
             val decimal = DecSerdeBid128.decodeBid128(dw1, dw0)
@@ -183,7 +199,8 @@ class IntelTestSmokeTest {
                 println(" => $d")
             return
         }
-        print("problem: $str => $d")
+        if (verbose)
+            println("problem: $str => $d")
     }
 
     val tcs = arrayOf(

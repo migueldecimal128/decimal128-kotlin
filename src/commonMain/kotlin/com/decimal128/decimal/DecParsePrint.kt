@@ -7,6 +7,7 @@ import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import com.decimal128.hugeint.Magia
 import kotlin.math.max
+import kotlin.math.min
 
 object DecParsePrint {
     private val SPECIAL_VALUE_STRINGS = arrayOf(
@@ -313,6 +314,8 @@ object DecParsePrint {
         var qExp = signedExp - fractionalDigitCount
         var bitLen = calcBitLen128(dw1T, dw0T)
         var digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
+        if (digitLen == 0)
+            qExp = min(max(qExp, -6176), 6111)
         if (qExp < -6176)
             return "out of decimal128 range"
         if (qExp > DECIMAL128_QMAX_6111) {

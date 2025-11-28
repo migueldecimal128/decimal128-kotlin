@@ -25,7 +25,7 @@ private const val S_U32_DIV_1E1 = 35
 
 class TestStripTrailingZeros {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun test1() {
