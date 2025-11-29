@@ -47,14 +47,27 @@ class Decimal private constructor(
     internal val bExpMax: Int
         get() = calcBExpMax(bitLen, qExp)
 
-    constructor(sign: Boolean, qExp: Int, dw1: ULong, dw0: ULong) :
-            this(Seal(sign, qExp, dw1, dw0), dw1, dw0)
-
-    constructor(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int, dw1: ULong, dw0: ULong) :
-            this(Seal(sign, qExp, digitLen, bitLen), dw1, dw0)
-
-
     companion object {
+
+        internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     dw1: ULong, dw0: ULong,
+                                     allowOversizeCoefficient: Boolean = false): Decimal {
+            val bitLen = calcBitLen128(dw1, dw0)
+            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+            return Decimal(sign, qExp, digitLen, bitLen, dw1, dw0, allowOversizeCoefficient)
+        }
+
+        internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     digitLen: Int, bitLen: Int,
+                                     dw1: ULong, dw0: ULong,
+                                     allowOversizeCoefficient: Boolean = false): Decimal {
+            check (bitLen == calcBitLen128(dw1, dw0))
+            check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
+            check (digitLen <= 34 || allowOversizeCoefficient)
+            return Decimal(Seal(sign, qExp, digitLen, bitLen), dw1, dw0)
+        }
+
+
         val POS_ZEROe0 = Decimal(Seal(false, 0, 0, 0), 0uL, 0uL)
         val NEG_ZEROe0 = POS_ZEROe0.negate()
         val POS_ONEe0 = from(1)
@@ -298,20 +311,52 @@ class Decimal private constructor(
         fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Decimal =
             NaN(sign, signaling, 0uL, payloadDw0)
 
+        private const val PAYLOAD_33_NINES_HI = 0x044B82FA09B5A53FuL
+        private const val PAYLOAD_33_NINES_LO = 0x86C2ABFAFF7FFFFFuL
+
+        /**
+         * Constructs a quiet or signaling NaN with an optional diagnostic payload.
+         *
+         * The payload is provided as a full 128-bit unsigned integer, split into a
+         * high 64-bit word (`payloadDw1`) and a low 64-bit word (`payloadDw0`). If the
+         * payload is zero, the canonical quiet NaN or signaling NaN (with no payload)
+         * is returned.
+         *
+         * Decimal128 NaN payloads have a canonical limit of **33 decimal digits**.
+         * If `allowOversizePayload` is `false` and the supplied payload exceeds this
+         * limit, the payload is clamped to the maximal canonical value of
+         * 33 nines.
+         *
+         * If `allowOversizePayload` is `true`, oversized payloads are accepted
+         * verbatim, up to the full 128-bit range, and no clamping is performed.
+         *
+         * The `signaling` flag selects between quiet NaN (`qNaN`) and signaling NaN
+         * (`sNaN`); the sign bit is preserved as provided, although it has no numeric
+         * meaning.
+         *
+         * @param sign whether the NaN has its sign bit set
+         * @param signaling whether to construct an `sNaN` instead of a `qNaN`
+         * @param payloadDw1 the high 64 bits of the diagnostic payload
+         * @param payloadDw0 the low 64 bits of the diagnostic payload
+         * @param allowOversizePayload whether payloads longer than the canonical
+         *        33-digit limit should be accepted verbatim rather than clamped
+         *
+         * @return a `Decimal` representing a quiet or signaling NaN
+         */
         fun NaN(
             sign: Boolean = false, signaling: Boolean = false,
-            payloadDw1: ULong, payloadDw0: ULong = 0uL
+            payloadDw1: ULong, payloadDw0: ULong = 0uL, allowOversizePayload: Boolean = false
         ): Decimal {
             if ((payloadDw1 or payloadDw0) == 0uL)
                 return NaN(sign, signaling)
             val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-            val digitLen = calcDigitLen128(payloadDw1, payloadDw0)
-            if (digitLen <= 33)
-                return Decimal(sign, qExp, payloadDw1, payloadDw0)
-            // IEEE754-2019 3.5.2 p21
-            //  If the value exceeds the maximum, the significand c is
-            //  non-canonical and the value used for c is zero.
-            return NaN(sign, signaling)
+            var p0 = payloadDw0
+            var p1 = payloadDw1
+            if (!allowOversizePayload && calcDigitLen128(payloadDw1, payloadDw0) > 33) {
+                p1 = PAYLOAD_33_NINES_HI
+                p0 = PAYLOAD_33_NINES_LO
+            }
+            return Decimal(sign, qExp, p1, p0, allowOversizePayload)
         }
 
         internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {

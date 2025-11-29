@@ -52,8 +52,8 @@ value class Seal private constructor(val seal: Int) {
             check (signBit in 0..1)
             check (qExp in -6176..6111 || qExp in NON_FINITE_INF..NON_FINITE_SNAN)
             // allow 38 digits for DECIMAL128_EXTENDED precision
-            check (digitLen in 0..38)
-            check (bitLen in 0..127)
+            check (digitLen in 0..39)
+            check (bitLen in 0..128)
             return Seal((signBit shl 31) or
                     ((qExp and 0x7FFF) shl 16) or
                     (digitLen shl 9) or

@@ -38,8 +38,8 @@ object DecParsePrint {
      * @throws IllegalArgumentException if the input is not a valid finite
      *         decimal128 text form or would require rounding.
      */
-    fun parseDecimal(str: String): Decimal {
-        val decOrErrStr = parseDecimalOrErrorString(str)
+    fun parseDecimal(str: String, allowOversizeCoefficient: Boolean = false): Decimal {
+        val decOrErrStr = parseDecimalOrErrorString(str, allowOversizeCoefficient)
         if (decOrErrStr is Decimal)
             return decOrErrStr
         val msg = decOrErrStr ?: ""
@@ -61,14 +61,14 @@ object DecParsePrint {
      * Error messages are returned as `String` constant values
      * to reduce any performance overhead for failed parse attempts.
      */
-    fun parseDecimalOrErrorString(str: String): Any? {
-        var d: Any? = parseFiniteValueText(str)
+    fun parseDecimalOrErrorString(str: String, allowOversizeCoefficient: Boolean): Any? {
+        var d: Any? = parseFiniteValueText(str, allowOversizeCoefficient)
         if (d is Decimal || d is String)
             return d
         d = parseInfinityText(str)
         if (d is Decimal)
             return d
-        d = parseNanText(str)
+        d = parseNanText(str, allowOversizeCoefficient)
         return d
     }
 
@@ -106,27 +106,47 @@ object DecParsePrint {
         return Decimal.infinity(sign)
     }
 
+    private const val MAX128_HI19 = 3402823669209384634uL // hi 19 digits of 2**128-1
+    private const val MAX128_LO20 = 72997609508796735uL   // lo 20 digits of 2**128-1
+
     /**
      * Parses a textual NaN representation into a [`Decimal`] value.
      *
      * Accepted forms (case-insensitive):
      *
-     *   - `nan`, `snan`
+     *   - `nan`,`qnan`, `snan`
      *   - Optional leading sign: `+nan`, `-snan`
-     *   - Any characters may follow the `nan`/`snan` prefix.
+     *   - Optional `q` prefix, though `qnan` and `nan` are treated identically
+     *   - Any characters may follow the `nan` / `snan` prefix
+     *   - Digits after the `nan` are parsed for the payload
      *
-     * After the prefix, all decimal digits found anywhere in the remainder of
-     * the string are collected (in order) up to a maximum of **33 digits**.
-     * These digits form the NaN payload; excess digits are ignored. If no digits
-     * are present, the payload is zero.
+     * After the prefix, the parser scans the remainder of the string and
+     * collects **decimal digits only** (in order). These digits form the NaN
+     * payload.
      *
-     * Returns a quiet NaN or signaling NaN depending on whether the prefix began
-     * with `s`. If the string does not begin with a valid NaN prefix, returns
-     * `null`.
+     * Canonical DPD and BID Decimal128 NaN payloads allow at most
+     * **33 decimal digits**. If `allowOversizeCoefficient` is `false`,
+     * payloads longer than 33 digits are clamped to the largest canonical
+     * 33-digit payload ... 33 nines.
      *
-     * @return the parsed NaN value, or `null` if not a NaN text form.
+     * If `allowOversizeCoefficient` is `true`, the parser accepts any number of
+     * digits, although the payload value is clamped to `2¹²⁸−1`.
+     *
+     * Leading zeros are ignored when computing the payload length; if no digits
+     * appear at all, the payload is zero.
+     *
+     * The function returns either a quiet NaN (`qNaN`) or a signaling NaN
+     * (`sNaN`) depending on whether the prefix began with `s`. If the input
+     * does not begin with a valid NaN text prefix, this returns `null`.
+     *
+     * @param allowOversizePayload
+     *        Whether payloads longer than the canonical 33-digit limit should be
+     *        accepted (up to the 128-bit numerical maximum), rather than being
+     *        clamped to the canonical range.
+     *
+     * @return the parsed NaN value, or `null` if the string is not a NaN form.
      */
-    fun parseNanText(str: String): Decimal? {
+    fun parseNanText(str: String, allowOversizePayload: Boolean = false): Decimal? {
         if (str.length < 3)
             return null
         var ch = str[0].code
@@ -146,33 +166,48 @@ object DecParsePrint {
             return null
         ich += 2
         var payloadDigitCount = 0
-        var accumulator19 = 0uL
-        var accumulator33 = 0uL
+        var payload19 = 0uL
+        var payloadLo = 0uL
         while (ich < str.length) {
             val chDigit = str[ich++]
             // be very lenient when parsing NaN payload
             // IEEE754 says nothing about external text representation of NaN payload
-            if (chDigit !in '0'..'9' || payloadDigitCount == 33)
+            if (chDigit !in '0'..'9')
                 continue
             val d = (chDigit - '0').toULong()
             if (payloadDigitCount > 0 || d != 0uL) {
-                if (payloadDigitCount < 19)
-                    accumulator19 = (accumulator19 * 10uL) + d
-                else
-                    accumulator33 = (accumulator33 * 10uL) + d
                 ++payloadDigitCount
+                if (payloadDigitCount <= 19) {
+                    payload19 = (payload19 * 10uL) + d
+                } else {
+                    payloadLo = (payloadLo * 10uL) + d
+                    if (payloadDigitCount > 33) {
+                        if (!allowOversizePayload) {
+                            payload19 = 9_999_999_999_999_999_999uL
+                            payloadLo = 99_999_999_999_999uL
+                            payloadDigitCount = 33
+                        }
+                        if (payloadDigitCount > 39 ||
+                            (payloadDigitCount == 39 &&
+                                        (payload19 > MAX128_HI19 ||
+                                                (payload19 == MAX128_HI19 && payloadLo > MAX128_LO20)))) {
+                            payload19 = MAX128_HI19
+                            payloadLo = MAX128_LO20
+                        }
+                    }
+                }
             }
         }
         var payloadDw1 = 0uL
-        var payloadDw0 = accumulator19
+        var payloadDw0 = payload19
         if (payloadDigitCount > 19) {
             val p10 = POW10[payloadDigitCount - 19].toULong()
-            payloadDw0 = accumulator19 * p10
-            payloadDw1 = unsignedMulHi(accumulator19, p10)
-            payloadDw0 += accumulator33
-            payloadDw1 += if (payloadDw0 < accumulator33) 1uL else 0uL
+            payloadDw0 = payload19 * p10
+            payloadDw1 = unsignedMulHi(payload19, p10)
+            payloadDw0 += payloadLo
+            payloadDw1 += if (payloadDw0 < payloadLo) 1uL else 0uL
         }
-        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0)
+        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0, allowOversizePayload)
     }
 
     /**
@@ -192,7 +227,7 @@ object DecParsePrint {
      * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String): Any? {
+    fun parseFiniteValueText(str: String, allowOversizeCoefficient: Boolean = false): Any? {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
@@ -215,7 +250,7 @@ object DecParsePrint {
         }
         var fractionalDigitCount = 0
         var coeff19 = 0uL
-        var coeff34 = 0uL
+        var coeffLo = 0uL
         var exp = 0
 
         while (ch in '0'..'9' || ch == '.' || ch == '_') {
@@ -227,13 +262,18 @@ object DecParsePrint {
                     significantDigitCount += (-(significantDigitCount or n)) ushr 31
                     if (significantDigitCount <= 19) {
                         coeff19 = coeff19 * 10uL + n.toULong()
-                    } else if (significantDigitCount <= 34) {
-                        coeff34 = coeff34 * 10uL + n.toULong()
                     } else {
-                        // we will allow excess trailing zero digits ...
-                        // ... as long as there has been a dot
-                        // ... and we will ignore them
-                        return "more than 34 significant digits"
+                        coeffLo = coeffLo * 10uL + n.toULong()
+                        if (significantDigitCount > 34) {
+                            if (!allowOversizeCoefficient)
+                                return "more than 34 significant digits"
+                            if (significantDigitCount > 39 ||
+                                (significantDigitCount == 39 &&
+                                        (coeff19 > MAX128_HI19 ||
+                                                (coeff19 == MAX128_HI19 && coeffLo > MAX128_LO20)))
+                            )
+                                return "oversize coefficient exceeds 128 bits"
+                        }
                     }
                     if (hasDot)
                         ++fractionalDigitCount
@@ -294,8 +334,8 @@ object DecParsePrint {
             val p10 = POW10[significantDigitCount - 19].toULong()
             dw0T = coeff19 * p10
             dw1T = unsignedMulHi(coeff19, p10)
-            dw0T += coeff34
-            dw1T += if (dw0T < coeff34) 1uL else 0uL
+            dw0T += coeffLo
+            dw1T += if (dw0T < coeffLo) 1uL else 0uL
         }
         val signedExp = if (expSign) -exp else exp
         var qExp = signedExp - fractionalDigitCount

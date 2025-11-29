@@ -61,15 +61,32 @@ class TestParseSpecials {
         assertEquals("NaN123456789012345678901", nan21.toString())
         val NAN33 = DecParsePrint.parseNanText("+NAN123456789012345678901234567890123")
         assertEquals("NaN123456789012345678901234567890123", NAN33.toString())
-        // only accept the first 33 digits
+        // NANs that overflow canonical 33 nines get clamped
         val NAN34 = DecParsePrint.parseNanText("+NAN1234567890123456789012345678901234")
-        assertEquals("NaN123456789012345678901234567890123", NAN34.toString())
+        assertEquals("NaN999999999999999999999999999999999", NAN34.toString())
+        val NAN32nines = DecParsePrint.parseNanText("+NAN99999999999999999999999999999999")
+        assertEquals("NaN99999999999999999999999999999999", NAN32nines.toString())
         val NAN33nines = DecParsePrint.parseNanText("+NAN999999999999999999999999999999999")
         assertEquals("NaN999999999999999999999999999999999", NAN33nines.toString())
         val NAN34nines = DecParsePrint.parseNanText("+NAN9999999999999999999999999999999999")
         assertEquals("NaN999999999999999999999999999999999", NAN34nines.toString())
         val NAN35nines = DecParsePrint.parseNanText("+NAN99999999999999999999999999999999999")
         assertEquals("NaN999999999999999999999999999999999", NAN35nines.toString())
+
+        // now, allow oversize payload
+        val NAN34oversize = DecParsePrint.parseNanText("+NAN1234567890123456789012345678901234",
+            allowOversizePayload = true)
+        assertEquals("NaN1234567890123456789012345678901234", NAN34oversize.toString())
+
+        val NAN35ninesOversize = DecParsePrint.parseNanText("+NAN99999999999999999999999999999999999",
+            allowOversizePayload = true)
+        assertEquals("NaN99999999999999999999999999999999999", NAN35ninesOversize.toString())
+
+        val NAN128bitsOversize = DecParsePrint.parseNanText("+NAN340282366920938463463374607431768211455",
+            allowOversizePayload = true)
+        assertEquals("NaN340282366920938463463374607431768211455", NAN128bitsOversize.toString())
+
+
 
     }
 
