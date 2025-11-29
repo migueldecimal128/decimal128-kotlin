@@ -582,6 +582,38 @@ class Decimal private constructor(
     override fun equals(other: Any?): Boolean =
         other is Decimal && equalsJavaStyle(other)
 
+    /**
+     * Returns `true` if and only if this `Decimal` value has the exact same
+     * internal bitwise representation as [other].
+     *
+     * This performs a strict, field-by-field comparison of the underlying
+     * 128-bit Decimal128 value, including:
+     *
+     *  * the sign bit
+     *  * the exponent field (including the encoded NaN/sNaN pattern)
+     *  * the coefficient field (including any NaN payload bits)
+     *
+     * No numeric interpretation is applied. This is therefore stricter than
+     * IEEE 754 *numeric equality*. In particular:
+     *
+     *  * `+0` and `-0` are **not** equal
+     *  * all NaNs are unequal unless every representation bit matches
+     *  * canonical vs non-canonical encodings would differ (although this
+     *    implementation produces only canonical encodings)
+     *
+     * This operator is intended for conformance and regression testing, where
+     * the produced Decimal128 representation must match the expected value
+     * exactly.
+     *
+     * Example:
+     *
+     * ```
+     * assertTrue(observed bitwiseEQ expected)
+     * ```
+     */
+    infix fun bitwiseEQ(other: Decimal): Boolean =
+        this.seal == other.seal && this.dw1 == other.dw1 && this.dw0 == other.dw0
+
     override fun hashCode(): Int {
         return when {
             isFiniteNonZero() -> {
