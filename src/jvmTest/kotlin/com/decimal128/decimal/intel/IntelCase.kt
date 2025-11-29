@@ -51,8 +51,8 @@ my guess is that "FE" => "Float Exception"
 #define BID_UNDERFLOW_INEXACT_EXCEPTION (DEC_FE_UNDERFLOW|DEC_FE_INEXACT)
 #define BID_OVERFLOW_INEXACT_EXCEPTION (DEC_FE_OVERFLOW|DEC_FE_INEXACT)
 */
-class IntelTest private constructor (
-    val testLine: String,
+class IntelCase private constructor (
+    val text: String,
     val funcStr: String,
     val rnd: Int,
     val op1Str: String,
@@ -69,14 +69,14 @@ class IntelTest private constructor (
     val op2Bid128: Decimal
         get() {
             if (op2Str == null)
-                throw IllegalStateException("op2 is null:$testLine")
+                throw IllegalStateException("op2 is null:$text")
             return parseBid128(op2Str)
         }
 
     val op3Bid128: Decimal
         get() {
             if (op3Str == null)
-                throw IllegalStateException("op3 is null:$testLine")
+                throw IllegalStateException("op3 is null:$text")
             return parseBid128(op3Str)
         }
 
@@ -113,9 +113,9 @@ class IntelTest private constructor (
         val whitespaceRegex = Regex("\\s+")
         val strPrefixRegex = Regex("""str_prefix=\|(.*?)\|""")
 
-        fun parseIntelTest(line: String): IntelTest {
+        fun parseIntelCase(text: String): IntelCase {
             // strip trailing comments
-            val noComments = line.substringBefore("--").trim()
+            val noComments = text.substringBefore("--").trim()
 
             val m = statusRegex.findAll(noComments).last()
             val end = m.range.first + m.value.length
@@ -167,20 +167,8 @@ class IntelTest private constructor (
             val op2 = chopped.getOrNull(3)
             val op3 = chopped.getOrNull(4)
 
-            val intelTest = IntelTest(line, funcStr, rnd, op1, op2, op3, res, status, tailAttrs)
-            return intelTest
-        }
-
-        fun parseAllTests(fileText: String): List<IntelTest> {
-            val allTests = ArrayList<IntelTest>()
-            for (line in fileText.lineSequence()) {
-                // trim comments
-                if (line.substringBefore("--").trim().isEmpty())
-                    continue
-                val intelTest = parseIntelTest(line)
-                allTests.add(intelTest)
-            }
-            return allTests
+            val intelCase = IntelCase(text, funcStr, rnd, op1, op2, op3, res, status, tailAttrs)
+            return intelCase
         }
 
         val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
@@ -203,86 +191,4 @@ class IntelTest private constructor (
 
     val decRounding: DecRounding
         get() = decRoundingMap[rnd]
-}
-
-class IntelTestSmokeTest {
-
-    val verbose = false
-
-    @Test
-    fun testBasicReadFile() {
-        val fileText = IntelTest::class.java.getResource("/intel/readtest.in")!!.readText()
-        val allTests = IntelTest.parseAllTests(fileText)
-        for (test in allTests) {
-            testDecimalParse(test.op1Str)
-            test.op2Str?.let { testDecimalParse(test.op2Str) }
-
-            testDecimalParse(test.resStr)
-        }
-    }
-
-    val regexHex128 = Regex("""\[[0-9A-Fa-f]{16},?[0-9A-Fa-f]{16}\]""")
-    val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
-    val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
-
-    fun testDecimalParse(str: String?) {
-        if (str == null)
-            return
-        if (verbose)
-            println("str:$str")
-        if (str.startsWith('[')) {
-            if (regexHex64.matches(str) || regexHex32.matches(str)) {
-                if (verbose)
-                    println(" => skipped")
-                return
-            }
-        }
-        val (isValid, dw1, dw0) = DecSerdeBid128.parseIntelBidHex(str)
-        if (isValid) {
-            val decimal = DecSerdeBid128.decodeBid128(dw1, dw0)
-            if (verbose)
-                println(" => $decimal")
-            return
-        }
-        val d = DecParsePrint.parseDecimalOrErrorString(str)
-        if (d is Decimal) {
-            if (verbose)
-                println(" => $d")
-            return
-        }
-        if (verbose)
-            println("problem: $str => $d")
-    }
-
-    val tcs = arrayOf(
-        "bid128_add 0 +101001100000101.000000E6138 -7695957767658598867966685688.99E6120 [7c000000000000000000000000000000] 01",
-    )
-
-    @Test
-    fun testCases() {
-        for (tc in tcs)
-            test1Line(tc)
-    }
-
-    fun test1Line(line: String) {
-        val intelTest = IntelTest.Companion.parseIntelTest(line)
-        testDecimalParse(intelTest.op1Str)
-        testDecimalParse(intelTest.op2Str)
-        testDecimalParse(intelTest.op3Str)
-        testDecimalParse(intelTest.resStr)
-    }
-
-    @Test
-    fun testFuncNames128() {
-        val fileText = IntelTest::class.java.getResource("/intel/readtest.in")!!.readText()
-        val allTests = IntelTest.parseAllTests(fileText)
-
-        val funcs128: List<String> =
-            allTests.map { it.funcStr }
-                .filter { it.startsWith("bid128_") }
-                .toSet()
-                .sorted()
-
-        funcs128.forEach { println(it) }
-    }
 }

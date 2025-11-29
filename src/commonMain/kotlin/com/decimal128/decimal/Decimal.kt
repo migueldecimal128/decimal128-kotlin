@@ -403,8 +403,10 @@ class Decimal private constructor(
      * (not zero, normal, infinite, or NaN).
      * In this implementation, the check for subnormal is hardwired to the
      * decimal128 `eExp` adjusted (scientific) exponent -6143.
+     *
+     * This last test is the same as: `qExp == -6176 && digitLen < 34`
      */
-    fun isSubnormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp >= -6143
+    fun isSubnormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp < -6143
 
     /**
      * isFinite(x) is true if and only if x is zero, normal, or subnormal
@@ -453,7 +455,12 @@ class Decimal private constructor(
      * Not sure what this means in the BID context.
      * There are no non-canonical encodings ... unless one counted too many digits
      */
-    fun isCanonical(): Boolean = true
+    fun isCanonical(): Boolean {
+        return (qExp in -6176..6111) &&
+                (bitLen == calcBitLen128(dw1, dw0)) &&
+                (digitLen == calcDigitLen128(bitLen, dw1, dw0)) &&
+                (digitLen <= 34)
+    }
 
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
