@@ -70,7 +70,7 @@ class TestBid128NonComputational {
     fun testIsZero() = IntelRunner.runUnaryBooleanOp(
         getAllCases(),
         "bid128_isZero",
-        Decimal::isZero,
+        Decimal::isCanonicalZero,
         verbose = verbose
     )
 

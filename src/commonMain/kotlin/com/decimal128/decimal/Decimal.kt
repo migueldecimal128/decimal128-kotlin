@@ -492,10 +492,18 @@ class Decimal private constructor(
      * Recall that in the decimal floating point world, the zero cohort
      * consists of all valid exponents with the zero coefficient.
      *
+     * This version tests for Zero, even on oversized coefficients.
+     */
+    fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+
+    /**
+     * isCanonicalZero(x) is true if x is ±0 and the coefficient
+     * digit length <= 34.
+     *
      * IEEE rules state that nonCanonical coefficients must be treated
      * as zero. Therefore, more than 34 digits == 0
      */
-    fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+    fun isCanonicalZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
 
     /**
      * isInfinite(x) is true if and only if x is infinite.
