@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestBid128NonComputational {
 
-    val verbose = true
+    val verbose = false
 
     /*****************************************************************************
      *
@@ -43,7 +43,11 @@ class TestBid128NonComputational {
         getAllCases(),
         "bid128_isNormal",
         Decimal::isNormal,
-        verbose = verbose
+        verbose = verbose,
+        targetOnly = false,
+        targetCases = arrayOf(
+            "bid128_isNormal 0 [0001ed09bead87c0378d8e64ffffffff] 0 00",
+        ),
     )
 
     @Test
@@ -91,7 +95,11 @@ class TestBid128NonComputational {
         getAllCases(),
         "bid128_isCanonical",
         Decimal::isCanonical,
-        verbose = verbose
+        verbose = verbose,
+        targetOnly = true,
+        targetCases = arrayOf(
+            "bid128_isCanonical 0 [7c0013e87ada0359,835044d68d872147] 1 00",
+        )
     )
 
     @Test

@@ -109,6 +109,12 @@ object DecParsePrint {
     private const val MAX128_HI19 = 3402823669209384634uL // hi 19 digits of 2**128-1
     private const val MAX128_LO20 = 72997609508796735uL   // lo 20 digits of 2**128-1
 
+    private const val NINES_33_HI = 0x0000314DC6448D93uL
+    private const val NINES_33_LO = 0x38C15B09FFFFFFFFuL
+
+    private const val NINES_38_HI = 0x04B3B4CA85A86C47uL
+    private const val NINES_38_LO = 0xA098A223FFFFFFFFuL
+
     /**
      * Parses a textual NaN representation into a [`Decimal`] value.
      *
@@ -130,7 +136,7 @@ object DecParsePrint {
      * 33-digit payload ... 33 nines.
      *
      * If `allowOversizeCoefficient` is `true`, the parser accepts any number of
-     * digits, although the payload value is clamped to `2¹²⁸−1`.
+     * digits, although the value is clamped to 38 digits ... 38 nines.
      *
      * Leading zeros are ignored when computing the payload length; if no digits
      * appear at all, the payload is zero.
@@ -165,47 +171,46 @@ object DecParsePrint {
             ((str[ich+1].code or 0x20) != 'n'.code))
             return null
         ich += 2
-        var payloadDigitCount = 0
-        var payload19 = 0uL
-        var payloadLo = 0uL
+        var accumDigitCount = 0
+        var accum19a = 0uL
+        var accum19b = 0uL
         while (ich < str.length) {
             val chDigit = str[ich++]
             // be very lenient when parsing NaN payload
             // IEEE754 says nothing about external text representation of NaN payload
+            // could have parens, brackets, etc.
             if (chDigit !in '0'..'9')
                 continue
-            val d = (chDigit - '0').toULong()
-            if (payloadDigitCount > 0 || d != 0uL) {
-                ++payloadDigitCount
-                if (payloadDigitCount <= 19) {
-                    payload19 = (payload19 * 10uL) + d
-                } else {
-                    payloadLo = (payloadLo * 10uL) + d
-                    if (payloadDigitCount > 33) {
-                        if (!allowOversizePayload) {
-                            payload19 = 9_999_999_999_999_999_999uL
-                            payloadLo = 99_999_999_999_999uL
-                            payloadDigitCount = 33
-                        }
-                        if (payloadDigitCount > 39 ||
-                            (payloadDigitCount == 39 &&
-                                        (payload19 > MAX128_HI19 ||
-                                                (payload19 == MAX128_HI19 && payloadLo > MAX128_LO20)))) {
-                            payload19 = MAX128_HI19
-                            payloadLo = MAX128_LO20
-                        }
-                    }
+            val d = chDigit - '0'
+            // flush leading zeros from payload ... don't increment
+            accumDigitCount += (-(accumDigitCount or d)) ushr 31
+            when {
+                accumDigitCount <= 19 -> accum19a = (accum19a * 10uL) + d.toULong()
+                accumDigitCount > 33 && !allowOversizePayload -> {
+                    accum19a = 999_9999_9999_9999_9999uL
+                    accum19b = 99_9999_9999_9999uL
+                    accumDigitCount = 33
+                    break;
+                }
+                accumDigitCount > 38 -> {
+                    accum19a = 999_9999_9999_9999_9999uL
+                    accum19b = 999_9999_9999_9999_9999uL
+                    accumDigitCount = 38
+                    break;
+                }
+                else -> {
+                    accum19b = (accum19b * 10uL) + d.toULong()
                 }
             }
         }
+        var payloadDw0 = accum19a
         var payloadDw1 = 0uL
-        var payloadDw0 = payload19
-        if (payloadDigitCount > 19) {
-            val p10 = POW10[payloadDigitCount - 19].toULong()
-            payloadDw0 = payload19 * p10
-            payloadDw1 = unsignedMulHi(payload19, p10)
-            payloadDw0 += payloadLo
-            payloadDw1 += if (payloadDw0 < payloadLo) 1uL else 0uL
+        if (accumDigitCount > 19) {
+            val p10 = POW10[accumDigitCount - 19].toULong()
+            payloadDw0 = accum19a * p10
+            payloadDw1 = unsignedMulHi(accum19a, p10)
+            payloadDw0 += accum19b
+            payloadDw1 += if (payloadDw0 < accum19b) 1uL else 0uL
         }
         return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0, allowOversizePayload)
     }
@@ -231,8 +236,6 @@ object DecParsePrint {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
-        var hasE = false
-        var hasExpDigit = false
         var expSign = false
         var expSignificantDigitCount = 0
 
@@ -249,56 +252,50 @@ object DecParsePrint {
             ch = str[ich++]
         }
         var fractionalDigitCount = 0
-        var coeff19 = 0uL
-        var coeffLo = 0uL
+        var accum19a = 0uL
+        var accum19b = 0uL
         var exp = 0
 
         while (ch in '0'..'9' || ch == '.' || ch == '_') {
-            when {
-                ch in '0'..'9' -> {
-                    val n = ch - '0'
+            when (ch) {
+                in '0'..'9' -> {
+                    val d = ch - '0'
                     hasCoefficientDigit = true
-                    // increment if we have seen other digits or n != 0
-                    significantDigitCount += (-(significantDigitCount or n)) ushr 31
-                    if (significantDigitCount <= 19) {
-                        coeff19 = coeff19 * 10uL + n.toULong()
-                    } else {
-                        coeffLo = coeffLo * 10uL + n.toULong()
-                        if (significantDigitCount > 34) {
-                            if (!allowOversizeCoefficient)
-                                return "more than 34 significant digits"
-                            if (significantDigitCount > 39 ||
-                                (significantDigitCount == 39 &&
-                                        (coeff19 > MAX128_HI19 ||
-                                                (coeff19 == MAX128_HI19 && coeffLo > MAX128_LO20)))
-                            )
-                                return "oversize coefficient exceeds 128 bits"
-                        }
+                    significantDigitCount += (-(significantDigitCount or d)) ushr 31
+                    when {
+                        significantDigitCount <= 19 -> accum19a = (accum19a * 10uL) + d.toULong()
+                        significantDigitCount > 34 && !allowOversizeCoefficient ->
+                            return "more than decimal128 34 significant digits"
+
+                        significantDigitCount > 38 ->
+                            return "oversize coefficient exceeds decimal128_extended 38 digits"
+
+                        else -> accum19b = (accum19b * 10uL) + d.toULong()
                     }
                     if (hasDot)
                         ++fractionalDigitCount
                 }
-                ch == '.' -> {
-                    if (hasDot)
-                        return "double decimal point"
-                    if (chLast == '_')
-                        return "invalid _ placement"
-                    hasDot = true
+
+                '.' -> when {
+                    hasDot -> return "double decimal point"
+                    chLast == '_' -> return "invalid _ placement"
+                    else -> hasDot = true
                 }
-                ch == '_' -> {
+
+                '_' ->
                     if (! hasCoefficientDigit || chLast == '.')
                         return "invalid _ placement"
-                }
             }
             chLast = ch
             ch = if (ich < str.length) str[ich++] else '\u0000'
         }
         if (! hasCoefficientDigit)
             return null // try other options Infinity, NaN
+        // this path has at least one digit
         if (ch == 'E' || ch == 'e') {
+            var hasExpDigit = false
             if (chLast == '_')
                 return "invalid _ placement"
-            hasE = true
             ch = if (ich < str.length) str[ich++] else '\u0000'
             if (ch == '_')
                 return "invalid _ placement"
@@ -311,7 +308,9 @@ object DecParsePrint {
                     hasExpDigit = true
                     val eDigit = ch - '0'
                     expSignificantDigitCount +=
-                        (eDigit or -expSignificantDigitCount) ushr 31
+                        (-(expSignificantDigitCount or eDigit)) ushr 31
+                    if (expSignificantDigitCount > 4)
+                        return "exponent out of decimal128 range"
                     exp = exp * 10 + (ch - '0')
                 } else {
                     if (! hasExpDigit)
@@ -320,22 +319,22 @@ object DecParsePrint {
                 chLast = ch
                 ch = if (ich < str.length) str[ich++] else '\u0000'
             }
+            if (! hasExpDigit)
+                return "E with no exponent digits"
         }
         if (chLast == '_')
             return "invalid _ placement"
-        if (ch != '\u0000' ||
-            hasE && !hasExpDigit ||
-            expSignificantDigitCount > 4)
+        if (ch != '\u0000')
             return "invalid"
         // we have at least one digit
-        var dw0T = coeff19
+        var dw0T = accum19a
         var dw1T = 0uL
         if (significantDigitCount > 19) {
             val p10 = POW10[significantDigitCount - 19].toULong()
-            dw0T = coeff19 * p10
-            dw1T = unsignedMulHi(coeff19, p10)
-            dw0T += coeffLo
-            dw1T += if (dw0T < coeffLo) 1uL else 0uL
+            dw0T = accum19a * p10
+            dw1T = unsignedMulHi(accum19a, p10)
+            dw0T += accum19b
+            dw1T += if (dw0T < accum19b) 1uL else 0uL
         }
         val signedExp = if (expSign) -exp else exp
         var qExp = signedExp - fractionalDigitCount
@@ -344,12 +343,14 @@ object DecParsePrint {
         if (digitLen == 0)
             qExp = min(max(qExp, -6176), 6111)
         if (qExp < -6176)
-            return "out of decimal128 range"
+            return "exponent out of decimal128 range"
         if (qExp > DECIMAL128_QMAX_6111) {
             val overage = qExp - DECIMAL128_QMAX_6111
-            println("parseFiniteValueText => str:$str overage:$overage")
-            if (overage > 34 - digitLen)
+            //println("parseFiniteValueText => str:$str overage:$overage")
+            if (!allowOversizeCoefficient && overage > 34 - digitLen)
                 return "out of decimal128 range"
+            else if (allowOversizeCoefficient && overage > 38 - digitLen)
+                return "out of decimal128_extended range"
             val (t1, t0) = DecPow10.umul128Pow10(dw1T, dw0T, overage)
             dw1T = t1
             dw0T = t0

@@ -63,6 +63,7 @@ class Decimal private constructor(
                                      allowOversizeCoefficient: Boolean = false): Decimal {
             check (bitLen == calcBitLen128(dw1, dw0))
             check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
+            check (digitLen <= 38)
             check (digitLen <= 34 || allowOversizeCoefficient)
             return Decimal(Seal(sign, qExp, digitLen, bitLen), dw1, dw0)
         }
@@ -311,8 +312,13 @@ class Decimal private constructor(
         fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Decimal =
             NaN(sign, signaling, 0uL, payloadDw0)
 
-        private const val PAYLOAD_33_NINES_HI = 0x044B82FA09B5A53FuL
-        private const val PAYLOAD_33_NINES_LO = 0x86C2ABFAFF7FFFFFuL
+        private const val NINES_33_HI = 0x044B82FA09B5A53FuL
+        private const val NINES_33_LO = 0x86C2ABFAFF7FFFFFuL
+        private const val NINES_33_BITLEN = 112
+
+        private const val NINES_38_HI = 0x4B3B4CA85A86C47AuL
+        private const val NINES_38_LO = 0x098A223FFFFFFFFFuL
+        private const val NINES_38_BITLEN = 127
 
         /**
          * Constructs a quiet or signaling NaN with an optional diagnostic payload.
@@ -352,11 +358,22 @@ class Decimal private constructor(
             val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
             var p0 = payloadDw0
             var p1 = payloadDw1
-            if (!allowOversizePayload && calcDigitLen128(payloadDw1, payloadDw0) > 33) {
-                p1 = PAYLOAD_33_NINES_HI
-                p0 = PAYLOAD_33_NINES_LO
+            var bitLen = calcBitLen128(payloadDw1, payloadDw0)
+            var digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
+            if (digitLen > 33) {
+                if (! allowOversizePayload) {
+                    p1 = NINES_33_HI
+                    p0 = NINES_33_LO
+                    bitLen = NINES_33_BITLEN
+                    digitLen = 33
+                } else if (digitLen > 38) {
+                    p1 = NINES_38_HI
+                    p0 = NINES_38_LO
+                    bitLen = NINES_38_BITLEN
+                    digitLen = 38
+                }
             }
-            return Decimal(sign, qExp, p1, p0, allowOversizePayload)
+            return Decimal(sign, qExp, digitLen, bitLen, p1, p0, allowOversizePayload)
         }
 
         internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
@@ -439,9 +456,13 @@ class Decimal private constructor(
     /**
      * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
      * In this implementation, the check for subnormal is hardwired to the
-     * decimal128 `eExp` adjusted (scientific) exponent -6143.
+     * decimal128 `eExp` adjusted (scientific) exponent -6143 and 34 digits.
      */
-    fun isNormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp >= -6143
+    fun isNormal(): Boolean =
+        qExp < NON_FINITE_INF &&
+                digitLen <= 34 &&
+                bitLen > 0 &&
+                eExp >= -6143
 
     /**
      * isSubnormal(x) is true if and only if x is subnormal
@@ -470,8 +491,11 @@ class Decimal private constructor(
      *
      * Recall that in the decimal floating point world, the zero cohort
      * consists of all valid exponents with the zero coefficient.
+     *
+     * IEEE rules state that nonCanonical coefficients must be treated
+     * as zero. Therefore, more than 34 digits == 0
      */
-    fun isZero(): Boolean = isFinite() && bitLen == 0
+    fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
 
     /**
      * isInfinite(x) is true if and only if x is infinite.
@@ -497,14 +521,16 @@ class Decimal private constructor(
     fun isSignaling(): Boolean = qExp == NON_FINITE_SNAN
 
     /**
-     * Not sure what this means in the BID context.
+     * In the context of Decimal128 BID encoding, the only
+     * non-canonical encodings are coeff digits > 34 for finite
+     * and payload digits > 33 for NaN
      * There are no non-canonical encodings ... unless one counted too many digits
      */
     fun isCanonical(): Boolean {
-        return (qExp in -6176..6111) &&
-                (bitLen == calcBitLen128(dw1, dw0)) &&
-                (digitLen == calcDigitLen128(bitLen, dw1, dw0)) &&
-                (digitLen <= 34)
+        check (bitLen == calcBitLen128(dw1, dw0))
+        check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
+        return (qExp in -6176..6111 && digitLen <= 34) ||
+                (qExp >= NON_FINITE_QNAN && digitLen <= 33)
     }
 
     /**

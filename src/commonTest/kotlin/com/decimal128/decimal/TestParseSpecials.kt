@@ -44,8 +44,9 @@ class TestParseSpecials {
         val NaN0 = DecParsePrint.parseNanText("NaN0")
         assertEquals(Decimal.POS_QNAN, NaN0)
 
-        val null2 = DecParsePrint.parseNanText("NaN+1")
-        assertEquals("NaN1", null2.toString())
+        val nanPlus1 = DecParsePrint.parseNanText("NaN+1")
+        val nanPlus1Str = nanPlus1.toString()
+        assertEquals("NaN1", nanPlus1Str)
         val null3 = DecParsePrint.parseNanText("")
         assertEquals(null, null3)
 
@@ -84,7 +85,8 @@ class TestParseSpecials {
 
         val NAN128bitsOversize = DecParsePrint.parseNanText("+NAN340282366920938463463374607431768211455",
             allowOversizePayload = true)
-        assertEquals("NaN340282366920938463463374607431768211455", NAN128bitsOversize.toString())
+        // clamp at nines38
+        assertEquals("NaN99999999999999999999999999999999999999", NAN128bitsOversize.toString())
 
 
 

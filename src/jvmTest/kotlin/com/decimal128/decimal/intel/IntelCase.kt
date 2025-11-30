@@ -64,24 +64,24 @@ class IntelCase private constructor (
 ) {
 
     val op1Bid128: Decimal
-        get() = parseBid128(op1Str)
+        get() = parseBid128(op1Str, allowOversizeCoefficient = true)
 
     val op2Bid128: Decimal
         get() {
             if (op2Str == null)
                 throw IllegalStateException("op2 is null:$text")
-            return parseBid128(op2Str)
+            return parseBid128(op2Str, allowOversizeCoefficient = true)
         }
 
     val op3Bid128: Decimal
         get() {
             if (op3Str == null)
                 throw IllegalStateException("op3 is null:$text")
-            return parseBid128(op3Str)
+            return parseBid128(op3Str, allowOversizeCoefficient = true)
         }
 
     val resBid128: Decimal
-        get() = parseBid128(resStr)
+        get() = parseBid128(resStr, allowOversizeCoefficient = true)
 
     val resInt: Int
         get() = resStr.toInt()
@@ -174,14 +174,14 @@ class IntelCase private constructor (
         val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
         val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
 
-        fun parseBid128(str: String): Decimal {
+        fun parseBid128(str: String, allowOversizeCoefficient: Boolean = false): Decimal {
             if (str.startsWith('[')) {
                 if (regexHex64.matches(str) || regexHex32.matches(str))
                     throw IllegalArgumentException("not bid128:$str")
                 val (isValid, dw1, dw0) = DecSerdeBid128.parseIntelBidHex(str)
                 if (! isValid)
                     throw IllegalArgumentException("something invalid with bid128:$str")
-                val decimal = DecSerdeBid128.decodeBid128(dw1, dw0)
+                val decimal = DecSerdeBid128.decodeBid128(dw1, dw0, allowOversizeCoefficient)
                 return decimal
             }
             return DecParsePrint.parseDecimal(str)
