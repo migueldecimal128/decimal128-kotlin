@@ -14,9 +14,25 @@ object IntelParser {
         return allCases
     }
 
-    fun parseTestsInFile(fileName: String = "/intel/readtest.in"): List<IntelCase> {
-        val fileText = IntelParser::class.java.getResource(fileName)!!.readText()
-        val allTests = parseAllCases(fileText)
-        return allTests
+    fun parseCases(cases: Array<String>): List<IntelCase> {
+        val casesList = ArrayList<IntelCase>()
+        cases.forEach {
+            val intelCase = IntelCase.parseIntelCase(it)
+            casesList.add(intelCase)
+        }
+        return casesList
     }
+
+    private val fileCaseCache = HashMap<String, List<IntelCase>>()
+
+    fun parseTestsInFile(fileName: String = "/intel/readtest.in"): List<IntelCase> {
+        val v = fileCaseCache[fileName]
+        if (v != null)
+            return v
+        val fileText = IntelParser::class.java.getResource(fileName)!!.readText()
+        val allCases = parseAllCases(fileText)
+        fileCaseCache[fileName] = allCases
+        return allCases
+    }
+
 }

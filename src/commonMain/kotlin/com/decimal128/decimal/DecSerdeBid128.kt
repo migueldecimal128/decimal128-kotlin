@@ -3,7 +3,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.U256Bits.calcBitLen128
-import com.decimal128.decimal.U256Pow10.calcDigitLen64
 import kotlin.math.min
 
 /**
@@ -299,7 +298,7 @@ object DecSerdeBid128 {
         }
     }
 
-    fun decodeBid128(bid128Hi: ULong, bid128Lo: ULong, allowOversizeCoefficient: Boolean = false): Decimal {
+    fun decodeBid128(bid128Hi: ULong, bid128Lo: ULong, allowNonCanonical: Boolean = false): Decimal {
         // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
         val k = 128 // storage width in bits
         val p = 34 // precision in digits
@@ -312,7 +311,7 @@ object DecSerdeBid128 {
         val coeffMaxLo: ULong
         val payloadMaxHi: ULong
         val payloadMaxLo: ULong
-        if (allowOversizeCoefficient) {
+        if (allowNonCanonical) {
             // (0b1001uL shl t) + ((1uL shl t) - 1uL)
             coeffMaxHi = 0x00027FFFFFFFFFFFuL
             coeffMaxLo = 0xFFFFFFFFFFFFFFFFuL
@@ -366,7 +365,12 @@ object DecSerdeBid128 {
                 coeffHi = 8uL + (combination and 1).toULong()
             }
             // if the top 5 bits are 0b11110 then Infinity
-            (combination shr (w5 - 5)) == 0b11110 -> return Decimal.infinity(sign)
+            (combination shr (w5 - 5)) == 0b11110 -> {
+                if (! allowNonCanonical)
+                    return Decimal.infinity(sign)
+                val remaining58Hi = (bid128Hi shl 6) shr 6
+                return Decimal.infinityNonCanonical(sign, remaining58Hi, bid128Lo)
+            }
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
@@ -377,7 +381,7 @@ object DecSerdeBid128 {
                     payloadHi = payloadMaxHi
                     payloadLo = payloadMaxLo
                 }
-                return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo, allowOversizeCoefficient)
+                return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo, allowNonCanonical)
             }
             else -> {
                 // all possible cases were covered above
@@ -391,7 +395,7 @@ object DecSerdeBid128 {
         //  non-canonical and the value used for c is zero.
         if (dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
             return Decimal.zero(sign, qExp)
-        return Decimal(sign, qExp, dw1, dw0, allowOversizeCoefficient)
+        return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
     }
 
     fun decodeBid64(bid64: ULong, allowOversizeCoefficient: Boolean = false): Decimal {
@@ -489,6 +493,7 @@ object DecSerdeBid128 {
                 coeffHi = 8uL + (combination and 1).toULong()
             }
             // if the top 5 bits are 0b11110 then Infinity
+            // FIXME ... does not yet support non-canonical Infinity encodings
             (combination shr (w5 - 5)) == 0b11110 -> return Decimal.infinity(sign)
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {

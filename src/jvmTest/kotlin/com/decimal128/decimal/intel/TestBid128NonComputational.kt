@@ -32,7 +32,7 @@ class TestBid128NonComputational {
 
     @Test
     fun testIsSigned() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isSigned",
         Decimal::isNegative,
         verbose = verbose
@@ -40,19 +40,25 @@ class TestBid128NonComputational {
 
     @Test
     fun testIsNormal() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isNormal",
         Decimal::isNormal,
-        verbose = verbose,
-        targetOnly = false,
-        targetCases = arrayOf(
-            "bid128_isNormal 0 [0001ed09bead87c0378d8e64ffffffff] 0 00",
-        ),
+        verbose = verbose
     )
 
     @Test
+    fun testIsNormalCases() = IntelRunner.runUnaryBooleanOp(
+        Decimal::isNormal,
+        verbose = verbose,
+        cases = arrayOf(
+            "bid128_isNormal 0 [0001ed09bead87c0378d8e64ffffffff] 0 00",
+        )
+    )
+
+
+    @Test
     fun testIsSubnormal() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isSubnormal",
         Decimal::isSubnormal,
         verbose = verbose
@@ -60,7 +66,7 @@ class TestBid128NonComputational {
 
     @Test
     fun testIsFinite() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isFinite",
         Decimal::isFinite,
         verbose = verbose
@@ -68,15 +74,24 @@ class TestBid128NonComputational {
 
     @Test
     fun testIsZero() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isZero",
         Decimal::isCanonicalZero,
         verbose = verbose
     )
 
     @Test
+    fun testIsZeroCases() = IntelRunner.runUnaryBooleanOp(
+        Decimal::isCanonicalZero,
+        verbose = verbose,
+        cases = arrayOf(
+            "bid128_isZero 0 [789b88be70d10384,ffffffffffffffff] 0 00"
+        )
+    )
+
+    @Test
     fun testIsInf() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isInf",
         Decimal::isInfinite,
         verbose = verbose
@@ -84,7 +99,7 @@ class TestBid128NonComputational {
 
     @Test
     fun testIsSignaling() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isSignaling",
         Decimal::isSignaling,
         verbose = verbose
@@ -92,19 +107,27 @@ class TestBid128NonComputational {
 
     @Test
     fun testIsCanonical() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isCanonical",
         Decimal::isCanonical,
+        verbose = verbose
+    )
+
+
+    @Test
+    fun testIsCanonicalCases() = IntelRunner.runUnaryBooleanOp(
+        Decimal::isCanonical,
         verbose = verbose,
-        targetOnly = true,
-        targetCases = arrayOf(
+        cases = arrayOf(
+            "bid128_isCanonical 0 [f800000001000000,0000000000000000] 0 00",
+            "bid128_isCanonical 0 [f800000000000000,0000000000000000] 1 00",
             "bid128_isCanonical 0 [7c0013e87ada0359,835044d68d872147] 1 00",
         )
     )
 
     @Test
     fun testIsNaN() = IntelRunner.runUnaryBooleanOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_isNaN",
         Decimal::isNaN,
         verbose = verbose
@@ -112,23 +135,12 @@ class TestBid128NonComputational {
 
     @Test
     fun testAbs() = IntelRunner.runUnaryDecimalOp(
-        getAllCases(),
+        "/intel/readtest.in",
         "bid128_abs",
         Decimal::abs,
         verbose = verbose
     )
 
-    private var allCases: List<IntelCase>? = null
-
-    fun getAllCases(): List<IntelCase> {
-        var cases = allCases
-        if (cases == null) {
-            val fileText = IntelParser::class.java.getResource("/intel/readtest.in")!!.readText()
-            cases = IntelParser.parseAllCases(fileText)
-            allCases = cases
-        }
-        return cases
-    }
 
 
 }

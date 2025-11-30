@@ -51,20 +51,20 @@ class Decimal private constructor(
 
         internal operator fun invoke(sign: Boolean, qExp: Int,
                                      dw1: ULong, dw0: ULong,
-                                     allowOversizeCoefficient: Boolean = false): Decimal {
+                                     allowNonCanonical: Boolean = false): Decimal {
             val bitLen = calcBitLen128(dw1, dw0)
             val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-            return Decimal(sign, qExp, digitLen, bitLen, dw1, dw0, allowOversizeCoefficient)
+            return Decimal(sign, qExp, digitLen, bitLen, dw1, dw0, allowNonCanonical)
         }
 
         internal operator fun invoke(sign: Boolean, qExp: Int,
                                      digitLen: Int, bitLen: Int,
                                      dw1: ULong, dw0: ULong,
-                                     allowOversizeCoefficient: Boolean = false): Decimal {
+                                     allowNonCanonical: Boolean = false): Decimal {
             check (bitLen == calcBitLen128(dw1, dw0))
             check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
             check (digitLen <= 38)
-            check (digitLen <= 34 || allowOversizeCoefficient)
+            check (digitLen <= 34 || allowNonCanonical)
             return Decimal(Seal(sign, qExp, digitLen, bitLen), dw1, dw0)
         }
 
@@ -298,6 +298,12 @@ class Decimal private constructor(
 
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
+        fun infinityNonCanonical(sign: Boolean, dw1: ULong, dw0: ULong): Decimal =
+            if ((dw1 or dw0) == 0uL)
+                infinity(sign)
+            else
+                Decimal(sign, NON_FINITE_INF, dw1, dw0, allowNonCanonical = true)
+
         fun NaN() = POS_QNAN
 
         fun NaN(sign: Boolean, signaling: Boolean = false): Decimal {
@@ -530,15 +536,17 @@ class Decimal private constructor(
 
     /**
      * In the context of Decimal128 BID encoding, the only
-     * non-canonical encodings are coeff digits > 34 for finite
-     * and payload digits > 33 for NaN
-     * There are no non-canonical encodings ... unless one counted too many digits
+     * non-canonical encodings are coeff
+     * - finite: digits > 34
+     * - infinite: non-zero payload/coeff
+     * - NaN: payload digits > 33
      */
     fun isCanonical(): Boolean {
         check (bitLen == calcBitLen128(dw1, dw0))
         check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
         return (qExp in -6176..6111 && digitLen <= 34) ||
-                (qExp >= NON_FINITE_QNAN && digitLen <= 33)
+                (qExp == NON_FINITE_INF && bitLen == 0) ||
+                (qExp > NON_FINITE_INF && digitLen <= 33)
     }
 
     /**

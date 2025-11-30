@@ -8,23 +8,22 @@ import kotlin.test.assertTrue
 
 object IntelRunner {
 
-    fun runUnaryDecimalOp(cases: List<IntelCase>,
+    fun runUnaryDecimalOp(fileName: String,
                           funcStr: String,
                           unaryDecimalOp: Decimal.() -> Decimal,
-                          skip: Boolean = true,
-                          skipCases: Array<String> = emptyArray(),
                           verbose: Boolean = false,
-                          targetOnly: Boolean = false,
-                          targetCases: Array<String> = emptyArray()) {
+                          skip: Boolean = true,
+                          skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser.parseTestsInFile(fileName)
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
-        val targetSet: Set<String> = if (targetOnly) targetCases.toSet() else emptySet()
-        val filtered = cases.filter { it.funcStr == funcStr }
-        filtered.forEach { tc ->
-            val isTarget = targetSet.contains(tc.text)
-            if (!isTarget && skipSet.contains(tc.text))
-                return@forEach
-            if (targetOnly && !isTarget)
-                return@forEach
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runUnaryDecimalOp(filtered, unaryDecimalOp, verbose)
+    }
+
+    fun runUnaryDecimalOp(cases: List<IntelCase>,
+                          unaryDecimalOp: Decimal.() -> Decimal,
+                          verbose: Boolean = false ) {
+        cases.forEach { tc ->
             if (verbose)
                 println(tc.text)
             val observed = tc.op1Bid128.unaryDecimalOp()
@@ -35,36 +34,46 @@ object IntelRunner {
         }
     }
 
+    fun runUnaryBooleanOp(fileName: String,
+                          funcStr: String,
+                          unaryBooleanOp: Decimal.() -> Boolean,
+                          verbose: Boolean = false,
+                          skip: Boolean = true,
+                          skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runUnaryBooleanOp(filtered, unaryBooleanOp, verbose)
+    }
+
     fun runUnaryBooleanOp(cases: List<IntelCase>,
                           funcStr: String,
                           unaryBooleanOp: Decimal.() -> Boolean,
-                          skip: Boolean = true,
-                          skipCases: Array<String> = emptyArray(),
                           verbose: Boolean = false,
-                          targetOnly: Boolean = false,
-                          targetCases: Array<String> = emptyArray()) {
+                          skip: Boolean = true,
+                          skipCases: Array<String> = emptyArray() ) {
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
-        val targetSet: Set<String> = if (targetOnly) targetCases.toSet() else emptySet()
-        val filtered = cases.filter { it.funcStr == funcStr }
-        var caseRunCount = 0
-        filtered.forEach { tc ->
-            val isTarget = targetSet.contains(tc.text)
-            if (!isTarget && skipSet.contains(tc.text))
-                return@forEach
-            if (targetOnly && !isTarget)
-                return@forEach
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runUnaryBooleanOp(filtered, unaryBooleanOp, verbose)
+    }
+
+    fun runUnaryBooleanOp(unaryBooleanOp: Decimal.() -> Boolean,
+                          verbose: Boolean = false,
+                          cases: Array<String> ) =
+        runUnaryBooleanOp(IntelParser.parseCases(cases), unaryBooleanOp, verbose)
+
+    fun runUnaryBooleanOp(cases: List<IntelCase>,
+                          unaryBooleanOp: Decimal.() -> Boolean,
+                          verbose: Boolean = false ) {
+        cases.forEach { tc ->
             if (verbose) {
                 println(tc.text)
-                println("  op1Bid128:${tc.op1Bid128}")
+                println("op1=${tc.op1Bid128}")
             }
             val observed = tc.op1Bid128.unaryBooleanOp()
             val expected = tc.resBoolean
             assertEquals(expected, observed)
-            ++caseRunCount
         }
-        if (verbose)
-            println("$funcStr caseRunCount:$caseRunCount")
-        assert(caseRunCount > 0)
     }
 
 }
