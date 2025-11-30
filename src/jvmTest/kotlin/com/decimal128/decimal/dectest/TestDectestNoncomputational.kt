@@ -19,13 +19,17 @@ class TestDectestNoncomputational {
             "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
 
             "dqabs900 abs  # -> NaN Invalid_operation",
-        ),
-        targetOnly = false,
-        targetCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testAbsCases() = runUnaryDecimalOp(
+        Decimal::abs,
+        verbose = true,
+        cases = arrayOf(
             "dqabs121 abs   2682682682682682682682682682682682    ->  2682682682682682682682682682682682",
             "dqabs038 abs '+0.000000000001' -> '1E-12'",
         )
     )
-
-
 }
+

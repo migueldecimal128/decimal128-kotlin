@@ -7,6 +7,9 @@ object DectestParser {
     fun parse(input: String): List<DectestCase> =
         parseLines(input.lineSequence())
 
+    fun parse(lines: Array<String>): List<DectestCase> =
+        parseLines(lines.asSequence())
+
     fun parseLines(lines: Sequence<String>): List<DectestCase> {
         var env = DectestEnv()
         val out = ArrayList<DectestCase>()
