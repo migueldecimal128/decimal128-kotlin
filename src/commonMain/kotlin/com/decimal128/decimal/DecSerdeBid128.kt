@@ -398,7 +398,7 @@ object DecSerdeBid128 {
         return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
     }
 
-    fun decodeBid64(bid64: ULong, allowOversizeCoefficient: Boolean = false): Decimal {
+    fun decodeBid64(bid64: ULong, allowNonCanonical: Boolean = false): Decimal {
         // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
         val k = 64 // storage width in bits
         val p = 16 // precision in digits
@@ -407,17 +407,18 @@ object DecSerdeBid128 {
         val w5 = 13 // w+5, combination field width in bits
         val t = 50 // trailing significand field width in bits
         check (1 + w5 + t == k)
-        val coeffMax =
-            if (allowOversizeCoefficient)
-                (0b1001uL shl t) + ((1uL shl t) - 1uL)
-            else
-                9999_9999_9999_9999uL
-        val payloadMax =
-            if (allowOversizeCoefficient)
-                (0b1001uL shl t) + ((1uL shl t) - 1uL)
-            else
-                999_999_999_999_999uL
-
+        val coeffMax: ULong
+        val payloadMax: ULong
+        val infPayload: ULong
+        if (allowNonCanonical) {
+            coeffMax = (0b1001uL shl t) + ((1uL shl t) - 1uL)
+            payloadMax = (0b1001uL shl t) + ((1uL shl t) - 1uL)
+            infPayload = (bid64 shl 6) shr 6
+        } else {
+            coeffMax = 9999_9999_9999_9999uL
+            payloadMax = 999_999_999_999_999uL
+            infPayload = 0uL
+        }
         // 1 + 13 + 50 == 64
         // 1 bit for the sign
         val sign = bid64.toLong() < 0L
@@ -426,10 +427,10 @@ object DecSerdeBid128 {
         // t bits for the coefficient
         val coeffT = bid64 and ((1uL shl t) - 1uL)
 
-        return decodeBidHelper(w5, bias, t, sign, combination, coeffT, coeffMax, payloadMax)
+        return decodeBidHelper(w5, bias, t, sign, combination, coeffT, coeffMax, payloadMax, infPayload)
     }
 
-    fun decodeBid32(bid32: UInt, allowOversizeCoefficient: Boolean = false): Decimal {
+    fun decodeBid32(bid32: UInt, allowNonCanonical: Boolean = false): Decimal {
         // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
         val k = 32 // storage width in bits
         val p = 7 // precision in digits
@@ -438,17 +439,18 @@ object DecSerdeBid128 {
         val w5 = 11 // w+5, combination field width in bits
         val t = 20 // trailing significand field width in bits
         check (1 + w5 + t == k)
-        val coeffMax =
-            if (allowOversizeCoefficient)
-                ((0b1001 shl t) + ((1 shl t) - 1)).toULong()
-            else
-                9_999_999uL
-        val payloadMax =
-            if (allowOversizeCoefficient)
-                ((0b1001 shl t) + ((1 shl t) - 1)).toULong()
-            else
-                999_999uL
-
+        val coeffMax: ULong
+        val payloadMax: ULong
+        val infPayload: ULong
+        if (allowNonCanonical) {
+            coeffMax = (0b1001uL shl t) + ((1uL shl t) - 1uL)
+            payloadMax = (0b1001uL shl t) + ((1uL shl t) - 1uL)
+            infPayload = ((bid32 shl 6) shr 6).toULong()
+        } else {
+            coeffMax = 9_999_999uL
+            payloadMax = 999_999uL
+            infPayload = 0uL
+        }
         // 1 + 11 + 20 == 32
         // 1 bit for the sign
         val sign = bid32.toInt() < 0
@@ -457,10 +459,12 @@ object DecSerdeBid128 {
         // t bits for the coefficient
         val coeffT = (bid32 and ((1u shl t) - 1u)).toULong()
 
-        return decodeBidHelper(w5, bias, t, sign, combination, coeffT, coeffMax, payloadMax)
+        return decodeBidHelper(w5, bias, t, sign, combination, coeffT, coeffMax, payloadMax, infPayload)
     }
 
-    private fun decodeBidHelper(w5: Int, bias: Int, t: Int, sign: Boolean, combination: Int, coeffT: ULong, coeffMax: ULong, payloadMax: ULong): Decimal {
+    private fun decodeBidHelper(w5: Int, bias: Int, t: Int,
+                                sign: Boolean, combination: Int, coeffT: ULong,
+                                coeffMax: ULong, payloadMax: ULong, infPayload: ULong): Decimal {
         val coeffHi: ULong
         val qExp: Int
         when {
@@ -493,8 +497,8 @@ object DecSerdeBid128 {
                 coeffHi = 8uL + (combination and 1).toULong()
             }
             // if the top 5 bits are 0b11110 then Infinity
-            // FIXME ... does not yet support non-canonical Infinity encodings
-            (combination shr (w5 - 5)) == 0b11110 -> return Decimal.infinity(sign)
+            (combination shr (w5 - 5)) == 0b11110 ->
+                return Decimal.infinityNonCanonical(sign, 0uL,  infPayload)
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
