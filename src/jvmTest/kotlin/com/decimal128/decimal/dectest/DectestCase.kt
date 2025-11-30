@@ -17,8 +17,25 @@ data class DectestCase(
     val operand1: Decimal
         get() = parseDpd128(operand1Str)
 
+    val operand2: Decimal
+        get() {
+            if (operand2Str == null)
+                throw IllegalArgumentException()
+            return parseDpd128(operand2Str)
+        }
+
     val result: Decimal
         get() = parseDpd128(resultStr)
+
+    val resultInt: Int
+        get() = resultStr.toInt()
+
+    val resultBoolean: Boolean
+        get() = when (resultStr) {
+            "0" -> false
+            "1" -> true
+            else -> throw IllegalArgumentException("expected 0/1 boolean:$resultStr")
+        }
 
     companion object {
 

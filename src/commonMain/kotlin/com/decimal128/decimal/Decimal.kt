@@ -756,6 +756,9 @@ class Decimal private constructor(
     fun copySign(other: Decimal) =
         if (isNegative() xor other.isNegative()) negate() else this
 
+    fun copyAbs(other: Decimal) = Decimal(seal.abs(), dw1, dw0)
+
+
     fun radix(): Int = 10
 
     /**

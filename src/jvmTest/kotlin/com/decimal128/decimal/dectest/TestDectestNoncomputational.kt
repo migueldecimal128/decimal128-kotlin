@@ -1,6 +1,8 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.dectest.DectestRunner.runBinaryBooleanOp
+import com.decimal128.decimal.dectest.DectestRunner.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner.runUnaryDecimalOp
 
@@ -60,5 +62,44 @@ class TestDectestNoncomputational {
             "dqmns117 minus      0E-141  -> 0E-141",
         )
     )
+
+    @Test
+    fun testCopy() = runUnaryDecimalOp(
+        "dqCopy.dectest",
+        Decimal::copy,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testTotalOrder() = runBinaryIntOp(
+        "dqCompareTotal.dectest",
+        Decimal::compareTotalOrderTo,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            "dqcot9990 comparetotal 10  # -> NaN Invalid_operation",
+            "dqcot9991 comparetotal  # 10 -> NaN Invalid_operation",
+        )
+    )
+
+    @Test
+    fun testTotalOrderMag() = runBinaryIntOp(
+        "dqCompareTotalMag.dectest",
+        Decimal::compareTotalOrderMagTo,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            "dqctm9990 comparetotmag 10  # -> NaN Invalid_operation",
+            "dqctm9991 comparetotmag  # 10 -> NaN Invalid_operation",
+        )
+    )
+
+    @Test
+    fun testSameQuantum() = runBinaryBooleanOp(
+        "dqSameQuantum.dectest",
+        Decimal::sameQuantum,
+        verbose = verbose
+    )
+
 }
 

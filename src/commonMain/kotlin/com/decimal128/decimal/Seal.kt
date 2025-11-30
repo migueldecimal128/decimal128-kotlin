@@ -115,4 +115,6 @@ value class Seal private constructor(val seal: Int) {
 
     fun negate() = Seal(seal xor Int.MIN_VALUE)
 
+    fun abs() = Seal(seal and Int.MAX_VALUE)
+
 }
