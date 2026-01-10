@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Magia
+import com.decimal128.bigint.Magia
 import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import com.decimal128.decimal.U256Compare.u256GTOne
 import com.decimal128.decimal.Residue.Companion.EXACT

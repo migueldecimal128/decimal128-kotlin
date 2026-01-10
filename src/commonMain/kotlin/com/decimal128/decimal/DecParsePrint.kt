@@ -6,7 +6,7 @@ import com.decimal128.decimal.U256Bits.calcBitLen128
 import com.decimal128.decimal.U256Pow10.POW10
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen64
-import com.decimal128.hugeint.Magia
+import com.decimal128.bigint.Magia
 import kotlin.math.max
 import kotlin.math.min
 

@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.U256Pow10.MAGIC_POW10_MAXX
 import com.decimal128.decimal.U256Pow10.MAGIC_POW10_M_OFFSET
-import com.decimal128.hugeint.HugeInt
+import com.decimal128.bigint.BigInt
 import com.decimal128.decimal.U256Pow10.POW10
 
 object DivMagic {
@@ -30,26 +30,30 @@ object DivMagic {
 
     /**
      * Compute magic number and shift for unsigned division by d (1 ≤ d < 2^64),
-     * using HugeInt instead of BigInteger.
+     * using BigInt instead of BigInteger.
      */
     fun magicu64(d: Long): Magic {
         require(d != 0L) { "divisor must be nonzero" }
         val N = 64
 
-        // 1) build HugeInt version of 2^N and of the unsigned divisor
-        val hiD        = HugeInt.fromUnsigned(d)
+        // 1) build BigInt version of 2^N and of the unsigned divisor
+        val hiD        = BigInt.fromUnsigned(d)
 
         // 2) anc = (2^N − 1) − ((2^N − 1) mod d)
-        val nBitMask   = HugeInt.withBitMask(N)
+        val nBitMask   = BigInt.withBitMask(N)
         val anc      = nBitMask - (nBitMask % hiD)
 
         // 3) initialize p, q1/r1 for anc and q2/r2 for d
         var p          = (N - 1).toLong()
-        val twoPowN1 = HugeInt.withSetBit(N - 1)         // 2^(N−1)
+        val twoPowN1 = BigInt.withSetBit(N - 1)         // 2^(N−1)
 
-        var (q1, r1) = twoPowN1.divMod(anc)
-        var (q2, r2) = twoPowN1.divMod(hiD)
-        lateinit var delta: HugeInt
+        //var (q1, r1) = twoPowN1.divMod(anc)
+        var q1 = twoPowN1 / anc
+        var r1 = twoPowN1 % anc
+        //var (q2, r2) = twoPowN1.divMod(hiD)
+        var q2 = twoPowN1 / hiD
+        var r2 = twoPowN1 % hiD
+        lateinit var delta: BigInt
 
         do {
             p += 1
@@ -76,7 +80,7 @@ object DivMagic {
         // 5) extract the “true” multiplier and shift
         val Mtrue   = q2 + 1
         val addFlag = Mtrue.isBitSet(N)            // bit-64 set?
-        val m_mod   = Mtrue.toRawLong()           // low 64 bits
+        val m_mod   = Mtrue.toLong()           // low 64 bits
         val s       = (p - N).toInt()
 
         return Magic(m_mod, addFlag, s)

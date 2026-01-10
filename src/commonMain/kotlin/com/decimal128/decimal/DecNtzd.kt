@@ -2,7 +2,7 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Magia
+import com.decimal128.bigint.Magia
 
 /**
  * Number of Trailing Zero Digits

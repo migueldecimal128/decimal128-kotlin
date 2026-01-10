@@ -41,7 +41,9 @@ class Decimal private constructor(
     internal val eExp: Int
         get() = seal.eExp
 
-    // the lower bound of the normalized binary exponent interval
+    // the lower/upper bound of the normalized binary exponent interval
+    // what is the range of binary exponents given a decimal with
+    // bitLen bits in the coeff and qExp
     internal val bExpMin: Int
         get() = calcBExpMin(bitLen, qExp)
     internal val bExpMax: Int
@@ -80,7 +82,7 @@ class Decimal private constructor(
         val POS_SNAN = Decimal(false, NON_FINITE_SNAN, 0, 0, 0uL, 0uL)
         val NEG_SNAN = POS_SNAN.negate()
 
-        // These are scaled by 2**32
+        // These have an implied binary decimal point at 2**32
         private const val LOG2_10_FLOOR: Long = 14_267_572_564L
         private const val LOG2_10_CEIL: Long = 14_267_572_565L
 
@@ -393,7 +395,7 @@ class Decimal private constructor(
         }
 
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
-            x.qExp or y.qExp >= NON_FINITE_QNAN
+            x.qExp >= NON_FINITE_QNAN || y.qExp >= NON_FINITE_QNAN
 
         internal fun neitherIsNaN(x: Decimal, y: Decimal) =
             x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN

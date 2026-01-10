@@ -3,7 +3,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.U256Bits.calcBitLen128
-import com.decimal128.hugeint.HugeInt
+import com.decimal128.bigint.BigInt
 import kotlin.math.max
 
 internal object U256Pow10 {
@@ -154,7 +154,7 @@ internal object U256Pow10 {
     */
 
     init {
-        var hiPow10 = HugeInt.ONE
+        var hiPow10 = BigInt.ONE
         var j = 0
         for (i in 0..<MAX_DIGIT_LEN) {
             POW10_BIT_LEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
@@ -169,23 +169,23 @@ internal object U256Pow10 {
             POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
         // initialize Barrett division
-        val hiTwoPow64 = HugeInt.ONE.shl(64)
-        hiPow10 = HugeInt.ONE
+        val hiTwoPow64 = BigInt.ONE.shl(64)
+        hiPow10 = BigInt.ONE
 
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAXX) {
             hiPow10 *= 10
             val mu10 = hiTwoPow64 / hiPow10
-            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.toRawLong()
+            POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.toLong()
 
             val pow5 = hiPow10 ushr i
             val mu5 = hiTwoPow64 / pow5
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.toRawLong()
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.toLong()
         }
         for (i in 1..<BARRETT_POW5_MAX) {
-            val t = HugeInt.fromUnsigned(POW10[POW5_64_OFFSET + i])
+            val t = BigInt.fromUnsigned(POW10[POW5_64_OFFSET + i])
             val mu = hiTwoPow64 / t
-            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toRawLong()
+            POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toLong()
         }
         // initialization of Magic multipliers M is in DivMagic
     }

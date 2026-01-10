@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.HugeInt
-import com.decimal128.hugeint.Magia
+import com.decimal128.bigint.BigInt
+import com.decimal128.bigint.Magia
 import kotlin.test.assertEquals
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -64,17 +64,17 @@ class TestStripTrailingZeros {
 
     @Test
     fun testProblemChild() {
-        test1(HugeInt.from("980000000000000000000"))
+        test1(BigInt.from("980000000000000000000"))
     }
 
     @Test
     fun testRandom128() {
         for (i in 0..<1000) {
-            val hi = HugeInt.fromRandom(Random.nextInt(129))
+            val hi = BigInt.fromRandom(Random.nextInt(129))
             test1(hi)
         }
         for (i in 0..<1000) {
-            val hi = HugeInt.from(Random.nextInt(100)) * HugeInt.from(10).pow(Random.nextInt(20))
+            val hi = BigInt.from(Random.nextInt(100)) * BigInt.from(10).pow(Random.nextInt(20))
             if (hi.magnitudeBitLen() > 128 || hi.isZero())
                 continue
             test1(hi)
@@ -82,26 +82,26 @@ class TestStripTrailingZeros {
         }
     }
 
-    fun test1(hi: HugeInt) {
+    fun test1(hi: BigInt) {
         if (verbose)
             println("hi:$hi")
-        val dw0 = hi.toRawULong()
+        val dw0 = hi.toULong()
         val dw1 = hi.extractULongAtBitIndex(64)
 
-        val ntzHi = ntzHugeInt(hi)
+        val ntzHi = ntzBigInt(hi)
         val (q1:ULong, q0:ULong, ntz: Int) = ntzdU128(dw1, dw0)
 
         assertEquals(ntzHi, ntz)
 
-        val hiReduced = hi / HugeInt.from(10).pow(ntz)
-        val r0 = hiReduced.toRawULong()
+        val hiReduced = hi / BigInt.from(10).pow(ntz)
+        val r0 = hiReduced.toULong()
         val r1 = hiReduced.extractULongAtBitIndex(64)
 
         assertEquals(r1, q1)
         assertEquals(r0, q0)
     }
 
-    fun ntzHugeInt(hi: HugeInt): Int {
+    fun ntzBigInt(hi: BigInt): Int {
         val s = "$hi"
         var ntz = 0
         for (i in s.lastIndex downTo 0)

@@ -2,10 +2,10 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.hugeint.Latin1Iterator
-import com.decimal128.hugeint.Magia
-import com.decimal128.hugeint.StringLatin1Iterator
-import com.decimal128.hugeint.intrinsic.unsignedMulHi
+import com.decimal128.bigint.Latin1Iterator
+import com.decimal128.bigint.Magia
+import com.decimal128.bigint.StringLatin1Iterator
+import com.decimal128.bigint.intrinsic.unsignedMulHi
 import kotlin.math.max
 
 private const val DIVISOR_1E9 = 1_000_000_000L

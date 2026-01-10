@@ -2,8 +2,8 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.bigint.BigInt
 import com.decimal128.decimal.U256Pow10.BARRETT_POW10_MAXX
-import com.decimal128.hugeint.HugeInt
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul256
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul192
 import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul128
@@ -17,8 +17,8 @@ const val K_MAXX = Q_MAXX - 34
 
 object DivRangeRecipMulPow10 {
 
-    private var POW_10 = Array<HugeInt>(Q_MAXX) { HugeInt.ONE }
-    private var POW_5 = Array<HugeInt>(K_MAXX) { HugeInt.ONE }
+    private var POW_10 = Array<BigInt>(Q_MAXX) { BigInt.ONE }
+    private var POW_5 = Array<BigInt>(K_MAXX) { BigInt.ONE }
 
     private fun calcPowTables() {
         for (i in 1..<Q_MAXX)
@@ -27,7 +27,7 @@ object DivRangeRecipMulPow10 {
             POW_5[i] = POW_5[i - 1] * 5
     }
 
-    private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: HugeInt, val S: Int) {
+    private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: BigInt, val S: Int) {
         var qMin = qMax
         fun prodDwordLen() = (prodBitLen + 0x3f) ushr 6
 
@@ -59,7 +59,7 @@ object DivRangeRecipMulPow10 {
     private fun unpackS(d: Long) = (d ushr 16).toInt() and 0xFFFF
     private fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
 
-    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, HugeInt.ONE, -1)
+    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, BigInt.ONE, -1)
 
     private var recipTable : Array<Array<TableEntry>> = Array(Q_MAXX) { Array<TableEntry>(K_MAXX) { NULL_TABLE_ENTRY} }
 
@@ -105,7 +105,7 @@ object DivRangeRecipMulPow10 {
     }
 
     private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
-        val twoPowY = HugeInt.ONE shl y
+        val twoPowY = BigInt.ONE shl y
         val fivePowK = POW_5[k]
         val tenPowK = POW_10[k]
         val tenPowQ = POW_10[q]
@@ -146,13 +146,15 @@ object DivRangeRecipMulPow10 {
         return TableEntry(q, k, bitLen, M, y)
     }
 
-    private fun isValid(dividend: HugeInt, k: Int, M: HugeInt, S: Int): Boolean {
+    private fun isValid(dividend: BigInt, k: Int, M: BigInt, S: Int): Boolean {
         val tenPowK = POW_10[k]
-        val (expectedQuot, expectedRem) = dividend.divMod(tenPowK)
+        //val (expectedQuot, expectedRem) = dividend.divMod(tenPowK)
+        val expectedQuot = dividend / tenPowK
+        val expectedRem = dividend % tenPowK
         val expectedResidue = Residue.residueFromRemainderDivisor(expectedRem, tenPowK)
 
         val dividendAlfa = dividend shr (k - 1)
-        val maskAlfa = HugeInt.withBitMask(k - 1)
+        val maskAlfa = BigInt.withBitMask(k - 1)
         val fracAlfa = dividend and maskAlfa
         val stickyAlfa = fracAlfa.isNotZero()
 

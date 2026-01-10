@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.bigint.BigInt
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
@@ -8,7 +9,6 @@ import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_1
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_2
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_3
 import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_4
-import com.decimal128.hugeint.HugeInt
 import com.decimal128.decimal.U256Pow10.POW10
 
 private const val RESIDUE_IS_VALUE_CLASS = true
@@ -115,7 +115,7 @@ value class Residue private constructor(val value:Int) {
             return residue
         }
 
-        fun residueFromRemainderDivisor(remainder: HugeInt, divisor: HugeInt): Residue {
+        fun residueFromRemainderDivisor(remainder: BigInt, divisor: BigInt): Residue {
             if (remainder.isZero())
                 return EXACT
             val remainderDoubled = remainder shl 1

@@ -76,7 +76,7 @@ kotlin {
     sourceSets {
 	    val commonMain by getting {
             dependencies {
-                implementation("com.decimal128:hugeint:0.9.0-SNAPSHOT")
+                implementation("com.decimal128:bigint:0.9.0-SNAPSHOT")
             }
         }
 	    val commonTest by getting
