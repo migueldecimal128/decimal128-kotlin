@@ -74,13 +74,9 @@ kotlin {
     }
 
     sourceSets {
-	    val commonMain by getting {
-            dependencies {
-                implementation("com.decimal128:bigint:0.9.0-SNAPSHOT")
-            }
-        }
+	    val commonMain by getting
 	    val commonTest by getting
-		val jvmMain   by getting  // your existing code lives here
+		val jvmMain   by getting
 		val jvmTest   by getting {
 			dependencies {
                 implementation(kotlin("test"))     // <-- pulls in kotlin-test on jvmTest
