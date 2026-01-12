@@ -50,7 +50,7 @@ class MutDec() : C256() {
                 qMax == NON_FINITE_INF ->
                     infiniteAddImpl(z, x, ySign, y, env)
 
-                else -> { z.setNaN(x, y, env); return z }
+                else -> { z.setNaNOperand(x, y, env); return z }
             }
         }
 
@@ -141,7 +141,7 @@ class MutDec() : C256() {
                     }
                 }
                 else -> {
-                    z.setNaN(x, y, env)
+                    z.setNaNOperand(x, y, env)
                 }
             }
             return z
@@ -192,20 +192,12 @@ class MutDec() : C256() {
         this.sign = sign
     }
 
-    private fun setNaN(x: MutDec, y: MutDec, env: DecEnv) {
+    private fun setNaNOperand(x: MutDec, y: MutDec, env: DecEnv) {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
         check(maxQ >= NON_FINITE_QNAN)
-        this.set(if (maxQ == xQ) x else y)
-        if (maxQ == NON_FINITE_SNAN) {
-            env.operandIsSignalingNaN(if (xQ == NON_FINITE_SNAN) x else y)
-            env.signalInvalid(this)
-        }
-        // note that a sNaN gets mapped to a NaN with sNaN + Infinity ...
-        // ... according to MFColishaw decTest
-        qExp = NON_FINITE_QNAN
-        //FIXME - see IEEE754r 6.2
+        this.set(if (maxQ == xQ) x else y, env)
     }
 
     private fun sNaNOperand() {
@@ -224,7 +216,6 @@ class MutDec() : C256() {
         setZero()
         sign = false
         qExp = NON_FINITE_QNAN
-        //FIXME - see IEEE754r 6.2
     }
 
     internal fun setNaN(payload: Int, env: DecEnv) {
@@ -232,6 +223,11 @@ class MutDec() : C256() {
         c256Set64(payload.toLong())
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
+    }
+
+    internal fun setNaN() {
+        setZero()
+        qExp = NON_FINITE_QNAN
     }
 
     internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
@@ -293,6 +289,17 @@ class MutDec() : C256() {
         return this
     }
 
+    fun set(x: MutDec, env: DecEnv): MutDec {
+        val isSignaling = x.isSignaling()
+        c256Set(x)
+        this.qExp = x.qExp
+        this.sign = x.sign
+        if (! isSignaling)
+            return this
+        this.qExp = NON_FINITE_QNAN
+        return env.signalInvalid(this)
+    }
+
     fun set(x: DecOld): MutDec {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
@@ -340,7 +347,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setNegate(x: MutDec, env: DecEnv) = set(x).mutateNegate()
+    fun setNegate(x: MutDec, env: DecEnv) = set(x, env).mutateNegate()
 
     // NOTE
     //  that Colishaw's DecTest requires more complex handling of
@@ -356,7 +363,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setAbs(x: MutDec, env: DecEnv) = set(x).mutateAbs()
+    fun setAbs(x: MutDec, env: DecEnv) = set(x, env).mutateAbs()
 
     fun mutateAbs(): MutDec {
         if (this.qExp >= NON_FINITE_QNAN)
@@ -446,13 +453,13 @@ class MutDec() : C256() {
             }
             qMaxXY == NON_FINITE_INF -> {
                 if (x.isZero() || y.isZero()) {
-                    setNaN(env)
+                    setNaN()
                     return env.signalInvalid(this)
                 } else {
                     setInfinite(productSign)
                 }
             }
-            else -> setNaN(x, y, env)
+            else -> setNaNOperand(x, y, env)
         }
         return this
     }
@@ -503,7 +510,7 @@ class MutDec() : C256() {
                 }
             }
             else -> {
-                this.setNaN(x, y, env)
+                this.setNaNOperand(x, y, env)
             }
         }
         return this
@@ -551,7 +558,7 @@ class MutDec() : C256() {
                     }
                 }
             }
-            else -> setNaN(x, y, env)
+            else -> setNaNOperand(x, y, env)
         }
         return this
     }

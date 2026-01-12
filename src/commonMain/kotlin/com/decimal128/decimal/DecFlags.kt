@@ -3,14 +3,18 @@ package com.decimal128.decimal
 import com.decimal128.decimal.DecException.*
 
 class DecFlags {
-    var flags = 0
+    private var flags = 0
 
     fun set(decException: DecException) {
         flags = flags or (1 shl decException.ordinal)
     }
 
-    fun reset(decException: DecException) {
+    fun clear(decException: DecException) {
         flags = flags and (1 shl decException.ordinal).inv()
+    }
+
+    fun clearAll() {
+        flags = 0
     }
 
     fun isSet(decException: DecException): Boolean {
@@ -21,7 +25,7 @@ class DecFlags {
         if (t)
             set(INVALID_OPERATION)
         else
-            reset(INVALID_OPERATION)
+            clear(INVALID_OPERATION)
     }
 
     //
@@ -58,6 +62,15 @@ class DecFlags {
         return String(bytes, 0, ib)
     }
 
+    fun getSetExceptions(): Set<DecException> {
+        return DecException.entries.filter { isSet(it) }.toSet()
+    }
 
-
+    override fun toString(): String {
+        val setExceptions = getSetExceptions()
+        return when {
+            setExceptions.isEmpty() -> "DecFlags[]"
+            else -> setExceptions.joinToString(", ", "DecFlags[", "]") { it.name }
+        }
+    }
 }

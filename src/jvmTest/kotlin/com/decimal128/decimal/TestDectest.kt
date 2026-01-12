@@ -2,11 +2,13 @@ package com.decimal128.decimal
 
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.util.EnumSet
+import kotlin.test.assertEquals
 
-class TestDecTest {
+class TestDectest {
 
-    private val veryVerbose = false
-    private val verbose = false
+    private val veryVerbose = true
+    private val verbose = true
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -49,10 +51,10 @@ class TestDecTest {
 
     val tcs = arrayOf(
         "rounding: half_even",
-        "dqmul767 multiply 1e-6069 1e-108 -> 0E-6176 Underflow Subnormal Inexact Rounded Clamped",
+        "dqadd6445 add   1   -77e-37      ->  1.000000000000000000000000000000000 Inexact Rounded",
 
         "rounding: half_even",
-        "dqadd6445 add   1   -77e-37      ->  1.000000000000000000000000000000000 Inexact Rounded",
+        "dqmul767 multiply 1e-6069 1e-108 -> 0E-6176 Underflow Subnormal Inexact Rounded Clamped",
 
         "rounding:half_up",
         "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded",
@@ -187,7 +189,7 @@ class TestDecTest {
             ?.toTypedArray()
             ?: emptyArray()
 
-        val dectest = DecTest(id, op, operand1, operand2, operand3, result, conditions)
+        val dectest = Dectest(id, op, operand1, operand2, operand3, result, conditions)
 
         if (verbose)
             println(dectest)
@@ -197,12 +199,13 @@ class TestDecTest {
 
     private val MY_NAN = MutDec().set("sNaN")
 
-    inner class DecTest(val id: String, val op: String, val operand1: String, val operand2: String, val operand3: String,
-                  val result: String, val conditions: Array<String>) {
+    inner class Dectest(val id: String, val op: String, val operand1: String, val operand2: String, val operand3: String,
+                        val result: String, val conditions: Array<String>) {
         val op1 = parseOperand(operand1)
         val op2 = if (operand2 == "") MY_NAN else parseOperand(operand2)
         val op3 = if (op2 !== MY_NAN || operand3 == "") MY_NAN else parseOperand(operand3)
         val res = parseOperand(result)
+        val exceptionSet: Set<DecException> = captureExceptionSet(conditions)
 
         override fun toString(): String {
             val sb = StringBuilder("test id:$id op:$op op1:$op1")
@@ -215,6 +218,30 @@ class TestDecTest {
             if (conditions.isNotEmpty())
                 sb.append(conditions.contentToString())
             return sb.toString()
+        }
+
+        fun captureExceptionSet(conditions: Array<String>): Set<DecException> {
+            val exceptionSet = EnumSet.noneOf(DecException::class.java)
+            for (cond in conditions) {
+                when (cond.lowercase()) {
+                    "clamped" -> {}
+                    "conversion_syntax" -> {}
+                    "division_by_zero" -> exceptionSet.add(DecException.DIV_BY_ZERO)
+                    "division_impossible" -> exceptionSet.add(DecException.INVALID_OPERATION)
+                    "division_undefined" -> exceptionSet.add(DecException.INVALID_OPERATION)
+                    "inexact" -> exceptionSet.add(DecException.INEXACT)
+                    "insufficient_storage" -> exceptionSet.add(DecException.INVALID_OPERATION)
+                    "invalid_context" -> exceptionSet.add(DecException.INVALID_OPERATION)
+                    "invalid_operation" -> exceptionSet.add(DecException.INVALID_OPERATION)
+                    "lost_digits" -> {}
+                    "overflow" -> exceptionSet.add(DecException.OVERFLOW)
+                    "rounded" -> {}
+                    "subnormal" -> {}
+                    "underflow" -> exceptionSet.add(DecException.UNDERFLOW)
+                    else -> throw RuntimeException("unrecognized condition:$cond")
+                }
+            }
+            return exceptionSet
         }
 
         fun eval() {
@@ -237,6 +264,9 @@ class TestDecTest {
             if (verbose)
                 println("    observed:$observed")
             require (res.exactlyEQ(observed))
+
+            val observedExceptions = env.decFlags.getSetExceptions()
+            assertEquals(this.exceptionSet, observedExceptions)
         }
     }
 
@@ -248,7 +278,9 @@ class TestDecTest {
             t = t.substring(1, t.lastIndex).replace("''", "'")
         if (t[0] == '\"' && t[t.lastIndex] == '\"')
             t = t.substring(1, t.lastIndex).replace("\"\"", "\"")
-        if (t.contains('#')) {
+        if (t == "#")
+            return MY_NAN
+        if (t.startsWith('#')) {
             println("octothorpe not fully implemented")
             return MY_NAN
         }
@@ -265,11 +297,6 @@ class TestDecTest {
         val fmt = DecFormat(precision, maxExponent)
         val env = DecEnv().with(fmt).with(decRoundings[roundingIndex])
         return env
-    }
-
-    @Test
-    fun test1() {
-        println("hello world!")
     }
 
 }
