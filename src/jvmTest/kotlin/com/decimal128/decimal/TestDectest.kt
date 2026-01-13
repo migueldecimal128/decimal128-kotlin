@@ -40,13 +40,14 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqCompareSig.decTest",
+        "dqCompareTotal.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
         "dqBase.decTest",
         "dqCanonical.decTest",
         "dqCompare.decTest",
+        "dqCompareSig.decTest",
         "dqMinus.decTest",
         "dqMultiply.decTest",
         "dqSubtract.decTest",
@@ -77,13 +78,15 @@ class TestDectest {
         "dqmns113 minus       0E+4   -> 0E+4",
         "dqmns115 minus     0.0000   -> 0.0000",
         "dqmns117 minus      0E-141  -> 0E-141",
+        "dqcot9990 comparetotal 10  # -> NaN Invalid_operation",
+        "dqcot9991 comparetotal  # 10 -> NaN Invalid_operation",
 
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
     // in more operations than IEEE.
     // We will run those tests, but ignore the INVALID flag
-    val ignoreInvalidCases = arrayOf(
+    val ignoreInvalidOperationCases = arrayOf(
         "dqmul9990 multiply 10  # -> NaN Invalid_operation",
         "dqmul9991 multiply  # 10 -> NaN Invalid_operation",
         "dqsub9990 subtract 10  # -> NaN Invalid_operation",
@@ -132,6 +135,8 @@ class TestDectest {
     )
 
     val tcs = arrayOf(
+        "dqcot850 comparetotal  sNaN  NaN   ->  -1",
+        "dqcot101 comparetotal   7.0    7      -> -1",
         "dqadd9990 add 10  # -> NaN Invalid_operation",
         "dqadd9991 add  # 10 -> NaN Invalid_operation",
         "dqmul9991 multiply  # 10 -> NaN Invalid_operation",
@@ -357,7 +362,7 @@ class TestDectest {
                     "insufficient_storage" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "invalid_context" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "invalid_operation" -> {
-                        if (!ignoreInvalidCases.contains(line))
+                        if (!ignoreInvalidOperationCases.contains(line))
                             exceptionSet.add(DecException.INVALID_OPERATION)
                     }
                     "lost_digits" -> {}
@@ -392,6 +397,7 @@ class TestDectest {
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 "compare" -> op1.partialCompareTo(op2, env)
                 "comparesig" -> op1.partialCompareTo(op2, env)
+                "comparetotal" -> MutDec().set(op1.totalCompareTo(op2))
                 else -> return
             }
             if (verbose)
