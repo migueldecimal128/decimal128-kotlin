@@ -351,6 +351,7 @@ object DecimalParsePrint {
     fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: DecEnv): Boolean {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
+        var leadingFractionalZeroCount = 0  // NEW: track leading zeros after decimal
         var hasDot = false
         var hasExp = false
         var hasExpDigit = false
@@ -363,10 +364,8 @@ object DecimalParsePrint {
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
             ch = src.nextChar()
-        var fractionalDigitCount = 0
+        var fractionalDigitCount = 0  // NOW: only counts significant fractional digits
         var coeff19 = 0L
-        // FIXME ... looks like I wired this to 34 digits and it will fail for
-        //  38 digit DECIMAL128_EXTENDED
         var coeff34 = 0L
         var guardDigit = 0
         var stickyBits = 0
@@ -376,19 +375,27 @@ object DecimalParsePrint {
             when {
                 ch in '0'..'9' -> {
                     val n = ch - '0'
+
                     hasCoefficientDigit = true
-                    significantDigitCount += (-(n or significantDigitCount)) ushr 31
-                    if (significantDigitCount <= 19) {
-                        coeff19 = coeff19 * 10L + n
-                    } else if (significantDigitCount <= 34) {
-                        coeff34 = coeff34 * 10L + n
-                    } else if (significantDigitCount == 35) {
-                        guardDigit = n
+                    // Track leading fractional zeros separately
+                    if (hasDot && significantDigitCount == 0 && n == 0) {
+                        leadingFractionalZeroCount++
                     } else {
-                        stickyBits = stickyBits or n
+                        significantDigitCount += (-(n or significantDigitCount)) ushr 31
+
+                        if (significantDigitCount <= 19) {
+                            coeff19 = coeff19 * 10L + n
+                        } else if (significantDigitCount <= 34) {
+                            coeff34 = coeff34 * 10L + n
+                        } else if (significantDigitCount == 35) {
+                            guardDigit = n
+                        } else {
+                            stickyBits = stickyBits or n
+                        }
+
+                        if (hasDot)
+                            ++fractionalDigitCount
                     }
-                    if (hasDot)
-                        ++fractionalDigitCount
                 }
                 ch == '.' -> {
                     if (hasDot)
@@ -398,15 +405,16 @@ object DecimalParsePrint {
                     hasDot = true
                 }
                 ch == '_' -> {
-                    if (! hasCoefficientDigit)
+                    if (!hasCoefficientDigit)
                         return false
-                    if (hasDot && fractionalDigitCount == 0)
+                    if (hasDot && fractionalDigitCount == 0 && leadingFractionalZeroCount == 0)
                         return false
                 }
             }
             chLast = ch
             ch = src.nextChar()
         }
+
         if (ch == 'E' || ch == 'e') {
             if (chLast == '_')
                 return false
@@ -423,22 +431,23 @@ object DecimalParsePrint {
                     hasExpDigit = true
                     val eDigit = ch - '0'
                     expSignificantDigitCount +=
-                        (eDigit or -expSignificantDigitCount) ushr 31
+                        (-(eDigit or expSignificantDigitCount)) ushr 31
                     exp = exp * 10 + (ch - '0')
                 } else {
-                    if (! hasExpDigit)
+                    if (!hasExpDigit)
                         return false
                 }
                 chLast = ch
                 ch = src.nextChar()
             }
         }
+
         if (ch != '\u0000' ||
             chLast == '_' ||
-            ! hasCoefficientDigit ||
-            hasExp && !hasExpDigit ||
-            expSignificantDigitCount > 9)
+            !hasCoefficientDigit ||
+            hasExp && !hasExpDigit)
             return false
+
         // we have at least one digit
         val coeffDigitCount = min(34, significantDigitCount)
         x.c256Set64(coeff19)
@@ -447,18 +456,29 @@ object DecimalParsePrint {
             x.u256MutateFmaPow10(pow10, coeff34)
         }
         x.sign = sign
+
+        if (expSignificantDigitCount > 4 || exp > 6200)
+            exp = 6666
+
         val signedExp = if (expSign) -exp else exp
-        val integerDigitCount = significantDigitCount - fractionalDigitCount
-        val discardedIntegerDigitCount = max(0, integerDigitCount - 34)
-        val qExp = signedExp + discardedIntegerDigitCount - fractionalDigitCount
+        val discardedDigitCount = significantDigitCount - coeffDigitCount
+        val totalDigitsAfterDecimal = leadingFractionalZeroCount + fractionalDigitCount
+        val qExp = signedExp - totalDigitsAfterDecimal + discardedDigitCount
+
         x.qExp = qExp
+
+        val hasDiscardedNonZero = guardDigit or stickyBits != 0
+
         // FIXME ... make sure that this limiting range and properly scaling subnormal values
-        if (((guardDigit or stickyBits) == 0) && (qExp >= env.qTiny) && (qExp <= env.qMax))
+        if (!hasDiscardedNonZero && (qExp >= env.qTiny) && (qExp <= env.qMax))
             return true
         val roundBit = if (guardDigit < 5) 0 else 1
-        val stickyBit = (-stickyBits) ushr 31
+        // if guardDigit > 5 then it is a sticky bit.
+        val stickyBit = (-stickyBits or (5 - guardDigit)) ushr 31
         val residue = Residue.residueFrom(roundBit, stickyBit)
         x.roundAndFinalize(residue, env)
+        if (hasDiscardedNonZero)
+            env.signalInexact(x)
         return true
     }
 

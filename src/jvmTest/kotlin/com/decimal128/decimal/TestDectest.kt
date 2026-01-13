@@ -40,6 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
+        "dqBase.decTest",
         "dqAbs.decTest",
         "dqMinus.decTest",
         "dqMultiply.decTest",
@@ -50,6 +51,16 @@ class TestDectest {
     )
 
     val tcs = arrayOf(
+        "dqbas906 toSci '99e999999999'       -> Infinity Overflow  Inexact Rounded",
+        "dqbas610 toSci  .0               -> 0.0",
+        "dqbas519 toSci ''                -> NaN Conversion_syntax",
+        "dqbas510 toSci ' +1'             -> NaN Conversion_syntax",
+
+        "dqbas450  toSci 10000000000000000000000000000000009    -> 1.000000000000000000000000000000001E+34   Rounded Inexact",
+        "dqbas444  toSci 10000000000000000000000000000000003    -> 1.000000000000000000000000000000000E+34   Rounded Inexact",
+
+        "dqbas035 toSci '0.000000123456789'   -> '1.23456789E-7'",
+
         "rounding: half_even",
         "dqadd6445 add   1   -77e-37      ->  1.000000000000000000000000000000000 Inexact Rounded",
 
@@ -162,8 +173,30 @@ class TestDectest {
         return true
     }
 
-    val testLhsRegex = """^(\w+)\s+(\w+)\s+(\S+)(?:\s+(\S+))?(?:\s+(\S+))?$""".toRegex()
-    val testRhsRegex = """^(\S+)(?:\s+(\S+(?:\s+\S+)*))?$""".toRegex()
+    fun splitTestTokens(s: String): List<String> {
+        val tokens = mutableListOf<String>()
+        var i = 0
+        while (i < s.length) {
+            when {
+                s[i].isWhitespace() -> i++
+                s[i] == '\'' -> {
+                    // Parse quoted string
+                    val start = i
+                    i++ // skip opening quote
+                    while (i < s.length && s[i] != '\'') i++
+                    i++ // skip closing quote
+                    tokens.add(s.substring(start, i))
+                }
+                else -> {
+                    // Parse unquoted token
+                    val start = i
+                    while (i < s.length && !s[i].isWhitespace()) i++
+                    tokens.add(s.substring(start, i))
+                }
+            }
+        }
+        return tokens
+    }
 
     fun processTest(line: String): Boolean {
         val arrowIndex = line.indexOf("->")
@@ -172,22 +205,22 @@ class TestDectest {
         val lhs = line.substring(0, arrowIndex).trim()
         val rhs = line.substring(arrowIndex + 2).trim()
 
-        val lhsMatch = testLhsRegex.matchEntire(lhs)
-        val rhsMatch = testRhsRegex.matchEntire(rhs)
+        val lhsTokens = splitTestTokens(lhs)
+        val rhsTokens = splitTestTokens(rhs)
 
-        if (lhsMatch == null || rhsMatch == null) {
-            println("regex mismatch")
+        if (lhsTokens.size < 3) {
+            println("Invalid LHS format")
             return false
         }
 
-        val (id, op, operand1, operand2, operand3) = lhsMatch.destructured
-        val (result, conditionsString) = rhsMatch.destructured
-        val conditions: Array<String> = conditionsString
-            .trim()
-            .takeIf { it.isNotEmpty() }
-            ?.split(Regex("\\s+"))
-            ?.toTypedArray()
-            ?: emptyArray()
+        val id = lhsTokens[0]
+        val op = lhsTokens[1]
+        val operand1 = lhsTokens.getOrElse(2) { "" }
+        val operand2 = lhsTokens.getOrElse(3) { "" }
+        val operand3 = lhsTokens.getOrElse(4) { "" }
+
+        val result = rhsTokens.getOrElse(0) { "" }
+        val conditions = rhsTokens.drop(1).toTypedArray()
 
         val dectest = Dectest(id, op, operand1, operand2, operand3, result, conditions)
 
@@ -197,7 +230,7 @@ class TestDectest {
         return true
     }
 
-    private val MY_NAN = MutDec().set("sNaN")
+    private val MY_NAN = MutDec().set("NaN")
 
     inner class Dectest(val id: String, val op: String, val operand1: String, val operand2: String, val operand3: String,
                         val result: String, val conditions: Array<String>) {
@@ -258,11 +291,23 @@ class TestDectest {
                 "minus" -> MutDec().setNegate(op1, env)
                 "multiply" -> MutDec().setMul(op1, op2, env)
                 "divide" -> MutDec().setDiv(op1, op2, env)
+                "toSci" -> {
+                    val parseResult = parseOperand(operand1, env)
+                    parseResult
+                }
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 else -> return
             }
             if (verbose)
                 println("    observed:$observed")
+            if (! res.exactlyEQ(observed)) {
+                println("snafu!")
+                val parseResult = parseOperand(operand1, env)
+                println("res:$res observed:$observed")
+                val eq = res.exactlyEQ(observed)
+                println("eq:$eq")
+                println(":(")
+            }
             require (res.exactlyEQ(observed))
 
             val observedExceptions = env.decFlags.getSetExceptions()
@@ -274,10 +319,13 @@ class TestDectest {
         if (str.length == 0)
             return MY_NAN
         var t = str
-        if (t[0] == '\'' && t[t.lastIndex] == '\'')
+        if (t[0] == '\'' && t[t.lastIndex] == '\'') {
             t = t.substring(1, t.lastIndex).replace("''", "'")
-        if (t[0] == '\"' && t[t.lastIndex] == '\"')
+        } else if (t[0] == '\"' && t[t.lastIndex] == '\"') {
             t = t.substring(1, t.lastIndex).replace("\"\"", "\"")
+        }
+        if (t.length == 0)
+            return MY_NAN
         if (t == "#")
             return MY_NAN
         if (t.startsWith('#')) {
@@ -285,6 +333,27 @@ class TestDectest {
             return MY_NAN
         }
         val d = MutDec().set(t)
+        return d
+    }
+
+    fun parseOperand(str: String, env: DecEnv): MutDec {
+        if (str.length == 0)
+            return MY_NAN
+        var t = str
+        if (t[0] == '\'' && t[t.lastIndex] == '\'') {
+            t = t.substring(1, t.lastIndex).replace("''", "'")
+        } else if (t[0] == '\"' && t[t.lastIndex] == '\"') {
+            t = t.substring(1, t.lastIndex).replace("\"\"", "\"")
+        }
+        if (t.length == 0)
+            return MY_NAN
+        if (t == "#")
+            return MY_NAN
+        if (t.startsWith('#')) {
+            println("octothorpe not fully implemented")
+            return MY_NAN
+        }
+        val d = MutDec().set(t, env)
         return d
     }
 
