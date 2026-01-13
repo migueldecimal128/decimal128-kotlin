@@ -197,7 +197,10 @@ class MutDec() : C256() {
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
         check(maxQ >= NON_FINITE_QNAN)
-        this.set(if (maxQ == xQ) x else y, env)
+        this.set(if (maxQ == xQ) x else y)
+        this.qExp = NON_FINITE_QNAN
+        if (maxQ == NON_FINITE_SNAN)
+            env.signalInvalid(this)
     }
 
     private fun sNaNOperand() {
@@ -289,17 +292,6 @@ class MutDec() : C256() {
         return this
     }
 
-    fun set(x: MutDec, env: DecEnv): MutDec {
-        val isSignaling = x.isSignaling()
-        c256Set(x)
-        this.qExp = x.qExp
-        this.sign = x.sign
-        if (! isSignaling)
-            return this
-        this.qExp = NON_FINITE_QNAN
-        return env.signalInvalid(this)
-    }
-
     fun set(x: DecOld): MutDec {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
@@ -347,29 +339,22 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setNegate(x: MutDec, env: DecEnv) = set(x, env).mutateNegate()
+    fun setNegate(x: MutDec, env: DecEnv) = set(x).mutateNegate()
 
     // NOTE
-    //  that Colishaw's DecTest requires more complex handling of
-    //  negate that what seems to be dictated by IEEE754-2019 ...
+    //  that Colishaw's GDAS and Dectest require more complex handling
+    //  of negate than what seems to be dictated by IEEE754-2019 ...
     //  which would simply be a sign change
     fun mutateNegate(): MutDec {
-        when (this.qExp) {
-            NON_FINITE_QNAN -> {}
-            NON_FINITE_SNAN -> this.qExp = NON_FINITE_QNAN
-            NON_FINITE_INF -> this.sign = !this.sign
-            else -> this.sign = !this.sign && bitLen > 0
-        }
+        this.sign = !this.sign
         return this
     }
 
-    fun setAbs(x: MutDec, env: DecEnv) = set(x, env).mutateAbs()
+    fun setAbs(x: MutDec, env: DecEnv) = set(x).mutateAbs()
 
     fun mutateAbs(): MutDec {
-        if (this.qExp >= NON_FINITE_QNAN)
-            this.qExp = NON_FINITE_QNAN
-        else
-            this.sign = false
+        // IEEE differs from GDAS/Colishaw
+        this.sign = false
         return this
     }
 
@@ -1053,7 +1038,8 @@ class MutDec() : C256() {
         val signLen = if (sign) 1 else 0
         val decimalPointLen = if (digitLen > 1) 1 else 0
         val printedDigitLen = max(digitLen, 1)
-        val additionalLeftOfPointZeroCount = max(0, 1 + expAdjustment - digitLen)
+        val additionalLeftOfPointZeroCount =
+            if (digitLen == 0) 0 else max(0, 1 + expAdjustment - digitLen)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
         val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)

@@ -50,7 +50,50 @@ class TestDectest {
         //"dqRemainder.decTest",
     )
 
+    val ignoredCases = arrayOf(
+        "dqabs900 abs  # -> NaN Invalid_operation", // IEEE says to ignore abs sign change
+        "dqabs526 abs  -NaN22  -> -NaN22",
+        "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
+        "dqabs523 abs  sNaN    ->  NaN   Invalid_operation",
+        "dqabs525 abs  sNaN33  ->  NaN33 Invalid_operation",
+        "dqmns021 minus         NaN  -> NaN",
+        "dqmns022 minus        -NaN  -> -NaN",
+        "dqmns023 minus        sNaN  -> NaN  Invalid_operation",
+        "dqmns024 minus       -sNaN  -> -NaN Invalid_operation",
+        "dqmns031 minus       NaN13  -> NaN13",
+        "dqmns032 minus      -NaN13  -> -NaN13",
+        "dqmns033 minus      sNaN13  -> NaN13   Invalid_operation",
+        "dqmns034 minus     -sNaN13  -> -NaN13  Invalid_operation",
+        "dqmns035 minus       NaN70  -> NaN70",
+        "dqmns036 minus      -NaN70  -> -NaN70",
+        "dqmns037 minus      sNaN101 -> NaN101  Invalid_operation",
+        "dqmns038 minus     -sNaN101 -> -NaN101 Invalid_operation",
+        "dqmns111 minus          0   -> 0",
+        "dqmns113 minus       0E+4   -> 0E+4",
+        "dqmns115 minus     0.0000   -> 0.0000",
+        "dqmns117 minus      0E-141  -> 0E-141",
+
+    )
+
+    // Colishaw GDAS says that NaN triggers INVALID
+    // in more operations than IEEE.
+    // We will run those tests, but ignore the INVALID flag
+    val ignoreInvalidCases = arrayOf(
+        "dqmul9990 multiply 10  # -> NaN Invalid_operation",
+        "dqmul9991 multiply  # 10 -> NaN Invalid_operation",
+        "dqsub9990 subtract 10  # -> NaN Invalid_operation",
+        "dqsub9991 subtract  # 10 -> NaN Invalid_operation",
+        "dqdiv9998 divide 10  # -> NaN Invalid_operation",
+        "dqdiv9999 divide  # 10 -> NaN Invalid_operation",
+    )
+
     val tcs = arrayOf(
+        "dqmul9991 multiply  # 10 -> NaN Invalid_operation",
+        "dqmns117 minus      0E-141  -> 0E-141",
+        "dqabs525 abs  sNaN33  ->  NaN33 Invalid_operation",
+        "dqmul9990 multiply 10  # -> NaN Invalid_operation",
+        "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
+        "dqabs900 abs  # -> NaN Invalid_operation",
         "dqbas906 toSci '99e999999999'       -> Infinity Overflow  Inexact Rounded",
         "dqbas610 toSci  .0               -> 0.0",
         "dqbas519 toSci ''                -> NaN Conversion_syntax",
@@ -118,6 +161,7 @@ class TestDectest {
         val trimmed = (if (commentIndex >= 0) line.substring(0, commentIndex) else line).trim()
         when {
             trimmed.length == 0 -> {}
+            ignoredCases.contains(trimmed) -> {}
             processDirective(trimmed) -> {}
             processTest(trimmed) -> {}
             else -> {
@@ -222,7 +266,7 @@ class TestDectest {
         val result = rhsTokens.getOrElse(0) { "" }
         val conditions = rhsTokens.drop(1).toTypedArray()
 
-        val dectest = Dectest(id, op, operand1, operand2, operand3, result, conditions)
+        val dectest = Dectest(line, id, op, operand1, operand2, operand3, result, conditions)
 
         if (verbose)
             println(dectest)
@@ -232,7 +276,8 @@ class TestDectest {
 
     private val MY_NAN = MutDec().set("NaN")
 
-    inner class Dectest(val id: String, val op: String, val operand1: String, val operand2: String, val operand3: String,
+    inner class Dectest(val line: String, val id: String, val op: String,
+                        val operand1: String, val operand2: String, val operand3: String,
                         val result: String, val conditions: Array<String>) {
         val op1 = parseOperand(operand1)
         val op2 = if (operand2 == "") MY_NAN else parseOperand(operand2)
@@ -265,7 +310,10 @@ class TestDectest {
                     "inexact" -> exceptionSet.add(DecException.INEXACT)
                     "insufficient_storage" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "invalid_context" -> exceptionSet.add(DecException.INVALID_OPERATION)
-                    "invalid_operation" -> exceptionSet.add(DecException.INVALID_OPERATION)
+                    "invalid_operation" -> {
+                        if (!ignoreInvalidCases.contains(line))
+                            exceptionSet.add(DecException.INVALID_OPERATION)
+                    }
                     "lost_digits" -> {}
                     "overflow" -> exceptionSet.add(DecException.OVERFLOW)
                     "rounded" -> {}
