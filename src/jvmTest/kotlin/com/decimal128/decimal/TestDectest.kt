@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqCompareTotal.decTest",
+        "dqCopyAbs.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -48,6 +48,9 @@ class TestDectest {
         "dqCanonical.decTest",
         "dqCompare.decTest",
         "dqCompareSig.decTest",
+        "dqCompareTotal.decTest",
+        "dqCompareTotalMag.decTest",
+        "dqCopy.decTest",
         "dqMinus.decTest",
         "dqMultiply.decTest",
         "dqSubtract.decTest",
@@ -80,7 +83,8 @@ class TestDectest {
         "dqmns117 minus      0E-141  -> 0E-141",
         "dqcot9990 comparetotal 10  # -> NaN Invalid_operation",
         "dqcot9991 comparetotal  # 10 -> NaN Invalid_operation",
-
+        "dqctm9990 comparetotmag 10  # -> NaN Invalid_operation",
+        "dqctm9991 comparetotmag  # 10 -> NaN Invalid_operation",
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -383,7 +387,7 @@ class TestDectest {
             if (verbose)
                 println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
-                "abs" -> MutDec().setAbs(op1, env)
+                "abs" -> MutDec().setAbs(op1)
                 "add" -> MutDec().setAdd(op1, op2, env)
                 "fma" -> MutDec().setFma(op1, op2, op3, env)
                 "subtract" -> MutDec().setSub(op1, op2, env)
@@ -398,6 +402,9 @@ class TestDectest {
                 "compare" -> op1.partialCompareTo(op2, env)
                 "comparesig" -> op1.partialCompareTo(op2, env)
                 "comparetotal" -> MutDec().set(op1.totalCompareTo(op2))
+                "comparetotmag" -> MutDec().set(op1.magnitudeTotalCompareTo(op2))
+                "copy" -> MutDec().set(op1)
+                "copyabs" -> MutDec().setAbs(op1)
                 else -> return
             }
             if (verbose)

@@ -350,7 +350,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setAbs(x: MutDec, env: DecEnv) = set(x).mutateAbs()
+    fun setAbs(x: MutDec) = set(x).mutateAbs()
 
     fun mutateAbs(): MutDec {
         // IEEE differs from GDAS/Colishaw
