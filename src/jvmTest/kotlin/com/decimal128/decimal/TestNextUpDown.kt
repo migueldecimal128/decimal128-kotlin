@@ -71,7 +71,7 @@ class TestNextUpDown {
         t.setNextDown(up, env)
         assertEquals(n, t)
 
-        assert(n.compareTo(up, env) < 0)
-        assert(n.compareTo(down, env) > 0)
+        assert(n.compareTo(up) < 0)
+        assert(n.compareTo(down) > 0)
     }
 }

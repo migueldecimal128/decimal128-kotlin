@@ -40,11 +40,14 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqBase.decTest",
+        "dqCompare.decTest",
+
         "dqAbs.decTest",
+        "dqAdd.decTest",
+        "dqBase.decTest",
+        "dqCanonical.decTest",
         "dqMinus.decTest",
         "dqMultiply.decTest",
-        "dqAdd.decTest",
         "dqSubtract.decTest",
         "dqDivide.decTest",
         //"dqRemainder.decTest",
@@ -85,9 +88,15 @@ class TestDectest {
         "dqsub9991 subtract  # 10 -> NaN Invalid_operation",
         "dqdiv9998 divide 10  # -> NaN Invalid_operation",
         "dqdiv9999 divide  # 10 -> NaN Invalid_operation",
+        "dqadd9990 add 10  # -> NaN Invalid_operation",
+        "dqadd9991 add  # 10 -> NaN Invalid_operation",
+        "dqcom990 compare 10  # -> NaN Invalid_operation",
+        "dqcom991 compare  # 10 -> NaN Invalid_operation",
     )
 
     val tcs = arrayOf(
+        "dqadd9990 add 10  # -> NaN Invalid_operation",
+        "dqadd9991 add  # 10 -> NaN Invalid_operation",
         "dqmul9991 multiply  # 10 -> NaN Invalid_operation",
         "dqmns117 minus      0E-141  -> 0E-141",
         "dqabs525 abs  sNaN33  ->  NaN33 Invalid_operation",
@@ -344,6 +353,7 @@ class TestDectest {
                     parseResult
                 }
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
+                "compare" -> op1.partialCompareTo(op2, env)
                 else -> return
             }
             if (verbose)
@@ -377,11 +387,19 @@ class TestDectest {
         if (t == "#")
             return MY_NAN
         if (t.startsWith('#')) {
-            println("octothorpe not fully implemented")
-            return MY_NAN
+            require(t.length == 33)
+            val hi = hexStringToLong(t.substring(1, 17))
+            val lo = hexStringToLong(t.substring(17, 33))
+            val dpd = MutDec().setDpd128(hi, lo)
+            return dpd
         }
         val d = MutDec().set(t)
         return d
+    }
+
+    fun hexStringToLong(hex: String): Long {
+        require(hex.length == 16)
+        return hex.toULong(16).toLong()
     }
 
     fun parseOperand(str: String, env: DecEnv): MutDec {

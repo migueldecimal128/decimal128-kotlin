@@ -375,7 +375,7 @@ class MutDec() : C256() {
                                 return MutDec()
                             }
                             val half = MutDec().set(5L, -1, env)
-                            val cmp = this.compareTo(half, env)
+                            val cmp = this.compareTo(half)
                             if (cmp < 0 || cmp == 0 && env.decRounding == ROUND_TIES_TO_EVEN) {
                                 // FIXME this is a mutate ... what am I doing creating new instances?
                                 return MutDec()
@@ -594,40 +594,43 @@ class MutDec() : C256() {
         return this
     }
 
-    fun compareTo(other: MutDec, env: DecEnv) : Int {
+    fun compareTo(other: MutDec) : Int {
         val qMax = max(qExp, other.qExp)
         when {
             (qMax < MIN_SPECIAL_VALUE) -> {
-                if (c256IsZero()) {
-                    if (other.c256IsZero())
+                // Both are finite numbers
+                if (sign != other.sign) {
+                    if (this.isZero() && other.isZero())
                         return 0
-                    else
-                        return if (other.sign) 1 else -1
-                }
-                if (other.c256IsZero() || sign != other.sign) {
+                    // At least one is non-zero, signs differ
                     return if (sign) -1 else 1
                 }
+
+                // Same sign - compare magnitudes
                 val cmp = magnitudeCompareTo(other)
-                val ret = if (sign) -cmp else cmp
-                return ret
+                return if (sign) -cmp else cmp
             }
 
-            (qMax == NON_FINITE_INF) -> when {
-                (sign != other.sign) -> {
-                    return if (sign) -1 else 1
-                }
-
+            (qMax == NON_FINITE_INF) -> return when {
+                (sign != other.sign) -> if (sign) -1 else 1
                 (qExp == NON_FINITE_INF) -> {
-                    if (other.qExp == NON_FINITE_INF)
-                        return 0
-                    return if (sign) -1 else 1
+                    if (other.qExp == NON_FINITE_INF) 0
+                    else if (sign) -1 else 1
                 }
-                else -> {
-                    return if (sign) 1 else -1
-                }
+                else -> if (sign) 1 else -1
             }
+
             else -> throw RuntimeException("somebody is a NaN")
         }
+    }
+
+    // FIXME this is not the best, but is OK for now for testing
+    fun partialCompareTo(other: MutDec, env: DecEnv): MutDec {
+        val md = MutDec()
+        if (this.qExp < NON_FINITE_QNAN && other.qExp < NON_FINITE_QNAN)
+            return md.set(compareTo(other))
+        md.setNaNOperand(this, other, env)
+        return md
     }
 
     fun magnitudeCompareTo(other: MutDec) : Int {
@@ -770,7 +773,7 @@ class MutDec() : C256() {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax <= NON_FINITE_INF -> {
-                val cmp = (x.compareTo(y, env) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
+                val cmp = (x.compareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
                 set(if (cmp <= 0) x else y)
             }
             qMax == NON_FINITE_QNAN -> {

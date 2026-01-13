@@ -89,6 +89,16 @@ data class DecEnv(
         return DecOld.NaN
     }
 
+    // used by partialCompare when there is a sNaN, but no return value
+    fun signalInvalid() {
+        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+            decFlags.set(INVALID_OPERATION)
+            return
+        }
+        // provide a dummy value when none was provided ... e.g. by partialCompare
+        signal(INVALID_OPERATION, OTHER, "whatever", MutDec())
+    }
+
     fun signalInvalid(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
