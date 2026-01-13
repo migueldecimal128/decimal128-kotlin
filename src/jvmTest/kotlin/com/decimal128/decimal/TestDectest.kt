@@ -40,16 +40,18 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqCompare.decTest",
+        "dqCompareSig.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
         "dqBase.decTest",
         "dqCanonical.decTest",
+        "dqCompare.decTest",
         "dqMinus.decTest",
         "dqMultiply.decTest",
         "dqSubtract.decTest",
         "dqDivide.decTest",
+
         //"dqRemainder.decTest",
     )
 
@@ -92,6 +94,41 @@ class TestDectest {
         "dqadd9991 add  # 10 -> NaN Invalid_operation",
         "dqcom990 compare 10  # -> NaN Invalid_operation",
         "dqcom991 compare  # 10 -> NaN Invalid_operation",
+        "dqcms821 comparesig  NaN -Inf    ->  NaN  Invalid_operation",
+        "dqcms822 comparesig  NaN -1000   ->  NaN  Invalid_operation",
+        "dqcms823 comparesig  NaN -1      ->  NaN  Invalid_operation",
+        "dqcms824 comparesig  NaN -0      ->  NaN  Invalid_operation",
+        "dqcms825 comparesig  NaN  0      ->  NaN  Invalid_operation",
+        "dqcms826 comparesig  NaN  1      ->  NaN  Invalid_operation",
+        "dqcms827 comparesig  NaN  1000   ->  NaN  Invalid_operation",
+        "dqcms828 comparesig  NaN  Inf    ->  NaN  Invalid_operation",
+        "dqcms829 comparesig  NaN  NaN    ->  NaN  Invalid_operation",
+        "dqcms830 comparesig -Inf  NaN    ->  NaN  Invalid_operation",
+        "dqcms831 comparesig -1000 NaN    ->  NaN  Invalid_operation",
+        "dqcms832 comparesig -1    NaN    ->  NaN  Invalid_operation",
+        "dqcms833 comparesig -0    NaN    ->  NaN  Invalid_operation",
+        "dqcms834 comparesig  0    NaN    ->  NaN  Invalid_operation",
+        "dqcms835 comparesig  1    NaN    ->  NaN  Invalid_operation",
+        "dqcms836 comparesig  1000 NaN    ->  NaN  Invalid_operation",
+        "dqcms837 comparesig  Inf  NaN    ->  NaN  Invalid_operation",
+        "dqcms838 comparesig -NaN -NaN    -> -NaN  Invalid_operation",
+        "dqcms839 comparesig +NaN -NaN    ->  NaN  Invalid_operation",
+        "dqcms840 comparesig -NaN +NaN    -> -NaN  Invalid_operation",
+
+        "dqcms860 comparesig  NaN9 -Inf   ->  NaN9    Invalid_operation",
+        "dqcms861 comparesig  NaN8  999   ->  NaN8    Invalid_operation",
+        "dqcms862 comparesig  NaN77 Inf   ->  NaN77   Invalid_operation",
+        "dqcms863 comparesig -NaN67 NaN5  -> -NaN67   Invalid_operation",
+        "dqcms864 comparesig -Inf  -NaN4  -> -NaN4    Invalid_operation",
+        "dqcms865 comparesig -999  -NaN33 -> -NaN33   Invalid_operation",
+        "dqcms866 comparesig  Inf   NaN2  ->  NaN2    Invalid_operation",
+        "dqcms867 comparesig -NaN41 -NaN42 -> -NaN41  Invalid_operation",
+        "dqcms868 comparesig +NaN41 -NaN42 ->  NaN41  Invalid_operation",
+        "dqcms869 comparesig -NaN41 +NaN42 -> -NaN41  Invalid_operation",
+        "dqcms870 comparesig +NaN41 +NaN42 ->  NaN41  Invalid_operation",
+        "dqcms990 comparesig 10  # -> NaN Invalid_operation",
+        "dqcms991 comparesig  # 10 -> NaN Invalid_operation",
+        "dqcan244 comparesig  #7c400ff3ffff3fcff3fcff3fcff3fcff   -1000 -> #7c000ff3fcff3fcff3fcff3fcff3fcff Invalid_operation",
     )
 
     val tcs = arrayOf(
@@ -354,6 +391,7 @@ class TestDectest {
                 }
                 //"remainder" -> Decimal.newMod(op1, op2, ctx)
                 "compare" -> op1.partialCompareTo(op2, env)
+                "comparesig" -> op1.partialCompareTo(op2, env)
                 else -> return
             }
             if (verbose)
