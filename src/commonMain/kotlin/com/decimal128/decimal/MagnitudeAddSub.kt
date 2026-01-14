@@ -80,14 +80,9 @@ object MagnitudeAddSub {
 
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
-    fun magSub(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
-        check(x.magnitudeCompareTo(y) >= 0)
+    fun magScaledSub(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
+        check(x.magnitudeCompareTo(y) > 0)
         check(x.qExp != y.qExp) // should be caught earlier
-        //if (x.qExp == y.qExp) {
-        //    z.qExp = x.qExp
-        //    U256Sub.u256SubUnscaled(z, x, y)
-        //    return Residue.EXACT
-        //}
         if (x.qExp > y.qExp) {
             val qDelta = x.qExp - y.qExp
             // one guard digit is enough ...

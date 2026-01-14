@@ -131,11 +131,11 @@ class MutDec() : C256() {
                 val cmp = x.magnitudeCompareTo(y)
                 when {
                     cmp > 0 -> {
-                        residue = MagnitudeAddSub.magSub(z, x, y, env)
+                        residue = MagnitudeAddSub.magScaledSub(z, x, y, env)
                         z.sign = xSign
                     }
                     cmp < 0 -> {
-                        residue = MagnitudeAddSub.magSub(z, y, x, env)
+                        residue = MagnitudeAddSub.magScaledSub(z, y, x, env)
                         z.sign = ySign
                     }
                     else -> {
