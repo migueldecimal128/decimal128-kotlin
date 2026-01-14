@@ -22,4 +22,6 @@ const val MIN_POW10_DIGIT_LEN_192 = 39          // 0x00000027 39
 
 const val MIN_POW10_DIGIT_LEN_256 = 58          // 0x0000003A 58
 
-const val MAX_DIGIT_LEN = 78          // 0x0000004E 78
+const val MAX_DIGIT_LEN = 77          // 0x0000004D 77
+
+const val MAXX_DIGIT_LEN = 78          // 0x0000004E 78

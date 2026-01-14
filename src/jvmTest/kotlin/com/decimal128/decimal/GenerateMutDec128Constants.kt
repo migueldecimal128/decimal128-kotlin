@@ -21,7 +21,8 @@ class GenerateMutDec128Constants {
         Constant("MIN_POW10_DIGIT_LEN_128", 20),
         Constant("MIN_POW10_DIGIT_LEN_192", 39),
         Constant("MIN_POW10_DIGIT_LEN_256", 58),
-        Constant("MAX_DIGIT_LEN", 78),
+        Constant("MAX_DIGIT_LEN", 77),
+        Constant("MAXX_DIGIT_LEN", 78),
     )
     @Test
     fun generateConstants() {

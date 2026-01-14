@@ -84,6 +84,10 @@ object MagnitudeAddSub {
         check(x.magnitudeCompareTo(y) > 0)
         check(x.qExp != y.qExp) // should be caught earlier
         if (x.qExp > y.qExp) {
+            val gap = x.qExp - y.qExp
+            val xScaledDigitLen = x.digitLen + gap
+            val yScaledDigitLen = y.digitLen
+
             val qDelta = x.qExp - y.qExp
             // one guard digit is enough ...
             // ... residue provides sufficient info for rounding

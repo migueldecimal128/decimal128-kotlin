@@ -25,7 +25,7 @@ internal object U256Pow10 {
     private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
 
     internal val POW10 = LongArray(TOTAL_ALLOCATION)
-    private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAX_DIGIT_LEN)
+    private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAXX_DIGIT_LEN)
 
     /*
     // minBitCount:0  maxBitCount:64
@@ -156,7 +156,7 @@ internal object U256Pow10 {
     init {
         var hiPow10 = BigInt.ONE
         var j = 0
-        for (i in 0..<MAX_DIGIT_LEN) {
+        for (i in 0..<MAXX_DIGIT_LEN) {
             POW10_BIT_LEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
             for (dw in hiPow10.magnitudeToLittleEndianLongArray())
                 POW10[j++] = dw
@@ -378,8 +378,8 @@ internal object U256Pow10 {
     }
 
     fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
-        check(pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAX_DIGIT_LEN)
-        if (pow10 < MAX_DIGIT_LEN) {
+        check(pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAXX_DIGIT_LEN)
+        if (pow10 < MAXX_DIGIT_LEN) {
             val pow10Offset = pow10Offset(pow10)
             val pow10Dw0 = POW10[pow10Offset + 0]
             val pow10Dw1 = POW10[pow10Offset + 1]
