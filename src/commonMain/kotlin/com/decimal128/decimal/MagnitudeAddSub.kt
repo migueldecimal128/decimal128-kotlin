@@ -49,11 +49,12 @@ object MagnitudeAddSub {
                         // shift right first into our destination
                         // then do a fused scaling, allowing us to
                         // perform this op without allocating of temp variables
-                        val residue = u256ScaleDownPow10(z, n, shiftRight)
+                        val t = if (m === z) MutDec() else z
+                        val residue = u256ScaleDownPow10(t, n, shiftRight)
                         if (shiftLeft > 0)
-                            u256AddScaled(z, m, shiftLeft, z)
+                            u256AddScaled(z, m, shiftLeft, t)
                         else
-                            u256AddUnscaled(z, m, z)
+                            u256AddUnscaled(z, m, t)
                         residue
                     }
                 }
@@ -93,8 +94,7 @@ object MagnitudeAddSub {
             // ... residue provides sufficient info for rounding
             val headroomWithGuard = 1 + env.precision - x.digitLen
             // shiftLeft is always >0 because guard digit provides 1 digit of headroom
-            val shiftLeft = min(qDelta, headroomWithGuard)
-            check (shiftLeft > 0)
+            val shiftLeft = max(0, min(qDelta, headroomWithGuard))
             val qAlign = x.qExp - shiftLeft
             when {
                 (x.bitLen > 0 && y.bitLen > 0) -> {

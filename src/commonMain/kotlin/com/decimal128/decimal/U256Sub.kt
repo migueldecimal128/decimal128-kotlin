@@ -67,8 +67,8 @@ object U256Sub {
         check(scaleDelta > 0)
         check(scaleDelta < 34)
 
-        check((x.dw3 or x.dw2) == 0L)
-        check((y.dw3 or y.dw2) == 0L)
+        //check((x.dw3 or x.dw2) == 0L) allow longer because of FMA
+        //check((y.dw3 or y.dw2) == 0L)
         check(x.c256HasValidLengths())
         check(y.c256HasValidLengths())
         check(z.c256HasValidLengths())

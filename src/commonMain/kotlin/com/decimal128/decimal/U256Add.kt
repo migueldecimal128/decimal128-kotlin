@@ -17,16 +17,22 @@ object U256Add {
 
     fun u256AddUnscaled(z: C256, x: C256, y: C256) {
         val maxBitLen = max(x.bitLen, y.bitLen) + 1
-        check (maxBitLen <= 128)
 
-        val p0 = x.dw0 + y.dw0
         if (maxBitLen < 64) {
-            z.c256Set64(p0)
+            z.c256Set64(x.dw0 + y.dw0)
             return
         }
-        val carry0 = if (unsignedLT(p0, x.dw0)) 1L else 0L
-        val p1 = x.dw1 + y.dw1 + carry0
-        z.c256Set128(p1, p0)
+        val (carry0, p0) = sumU64(x.dw0, y.dw0)
+        if (maxBitLen < 128) {
+            val p1 = x.dw1 + y.dw1 + carry0
+            z.c256Set128(p1, p0)
+            return
+        }
+        val (carry1, p1) = sumU64(x.dw1, y.dw1, carry0)
+        val (carry2, p2) = sumU64(x.dw2, y.dw2, carry1)
+        val (carry3, p3) = sumU64(x.dw3, y.dw3, carry2)
+        check(carry3 == 0L)
+        z.c256Set256(p3, p2, p1, p0)
     }
 
     fun u256AddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {

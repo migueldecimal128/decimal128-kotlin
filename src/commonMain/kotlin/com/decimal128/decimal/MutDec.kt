@@ -37,7 +37,7 @@ class MutDec() : C256() {
     companion object {
 
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
-            check (x.digitLen <= 38)
+            //check (x.digitLen <= 38) // x is allowed more digits because of FMA
             check (y.digitLen <= 38)
             val qMax = max(x.qExp, y.qExp)
             return when {
@@ -292,6 +292,13 @@ class MutDec() : C256() {
         return this
     }
 
+    fun set(xMagnitude: MutDec, sign: Boolean): MutDec {
+        c256Set(xMagnitude)
+        this.qExp = xMagnitude.qExp
+        this.sign = sign
+        return this
+    }
+
     fun set(x: DecOld): MutDec {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
@@ -339,7 +346,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setNegate(x: MutDec, env: DecEnv) = set(x).mutateNegate()
+    fun setNegate(x: MutDec) = set(x).mutateNegate()
 
     // NOTE
     //  that Colishaw's GDAS and Dectest require more complex handling

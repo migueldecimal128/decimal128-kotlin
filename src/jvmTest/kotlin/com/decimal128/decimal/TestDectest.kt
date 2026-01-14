@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqCopyAbs.decTest",
+        "dqFMA.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -51,10 +51,17 @@ class TestDectest {
         "dqCompareTotal.decTest",
         "dqCompareTotalMag.decTest",
         "dqCopy.decTest",
+        "dqCopyAbs.decTest",
+        "dqCopyNegate.decTest",
+        "dqCopySign.decTest",
+        "dqDivide.decTest",
+        // dqDivideInt.decTest is not supported
+        "dqEncode.decTest",
+
+
         "dqMinus.decTest",
         "dqMultiply.decTest",
         "dqSubtract.decTest",
-        "dqDivide.decTest",
 
         //"dqRemainder.decTest",
     )
@@ -139,6 +146,10 @@ class TestDectest {
     )
 
     val tcs = arrayOf(
+        "dqfma0268  fma          21590290365127685.3675       7853139227576541379426.8       -3275859437236180.761544  ->  1.695515562011520746125607502237558E+38 Inexact Rounded",
+        "dqfma0258  fma        817941336593541742159684       733867339769310729266598      78563844650942419311830.8  ->  6.002604327732568490562249875306822E+47 Inexact Rounded",
+        "dqfma0229  fma        2539892357016099706.4126      -996142232667504817717435       53682082598315949425.937  ->  -2.530094043253148806272276368579143E+42 Inexact Rounded",
+        "dqfma0202  fma       68537985861355864457.5694      6565875762972086605.85969       35892634447236753.172812  ->  4.500119002100000209469729375698779E+38 Inexact Rounded",
         "dqcot850 comparetotal  sNaN  NaN   ->  -1",
         "dqcot101 comparetotal   7.0    7      -> -1",
         "dqadd9990 add 10  # -> NaN Invalid_operation",
@@ -336,7 +347,7 @@ class TestDectest {
                         val result: String, val conditions: Array<String>) {
         val op1 = parseOperand(operand1)
         val op2 = if (operand2 == "") MY_NAN else parseOperand(operand2)
-        val op3 = if (op2 !== MY_NAN || operand3 == "") MY_NAN else parseOperand(operand3)
+        val op3 = if (op2 === MY_NAN || operand3 == "") MY_NAN else parseOperand(operand3)
         val res = parseOperand(result)
         val exceptionSet: Set<DecException> = captureExceptionSet(conditions)
 
@@ -391,7 +402,7 @@ class TestDectest {
                 "add" -> MutDec().setAdd(op1, op2, env)
                 "fma" -> MutDec().setFma(op1, op2, op3, env)
                 "subtract" -> MutDec().setSub(op1, op2, env)
-                "minus" -> MutDec().setNegate(op1, env)
+                "minus" -> MutDec().setNegate(op1)
                 "multiply" -> MutDec().setMul(op1, op2, env)
                 "divide" -> MutDec().setDiv(op1, op2, env)
                 "toSci" -> {
@@ -405,6 +416,10 @@ class TestDectest {
                 "comparetotmag" -> MutDec().set(op1.magnitudeTotalCompareTo(op2))
                 "copy" -> MutDec().set(op1)
                 "copyabs" -> MutDec().setAbs(op1)
+                "copynegate" -> MutDec().setNegate(op1)
+                "copysign" -> MutDec().set(op1, op2.sign)
+                "apply" -> MutDec().set(op1)
+                "fma" -> MutDec().setFma(op1, op2, op3, env)
                 else -> return
             }
             if (verbose)

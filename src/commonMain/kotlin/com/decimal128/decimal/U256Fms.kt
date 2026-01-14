@@ -201,11 +201,16 @@ object U256Fms {
         }
     }
 
-    fun u256FmsPow10(z: C256, x: C256, y: C256, pow10: Int) {
+    fun u256FmsPow10(z: C256, x: C256, y: C256, pow10: Int) =
+        u256FmsPow10_x256(z, x, y, pow10)
+
+    fun u256FmsPow10_x128(z: C256, x: C256, y: C256, pow10: Int) {
         check(pow10 > 0)
         check(z.c256HasValidLengths())
         check(x.c256HasValidLengths())
         check(y.c256HasValidLengths())
+        // FIXME I am removing this because of FMA ... but it seems dangerous
+        //  ... and indeed it *was* dangerous ... because it failed
         check(x.bitLen <= 128)
         check(x.c256ScaledCompareTo(y, pow10) >= 0)
         val xBitLen = x.bitLen
@@ -229,6 +234,36 @@ object U256Fms {
         val (borrow0, d0) = diffU64(x0, f0)
         val d1 = x1 - f1 - borrow0
         z.c256Set128(d1, d0)
+    }
+
+    fun u256FmsPow10_x256(z: C256, x: C256, y: C256, pow10: Int) {
+        check(pow10 > 0)
+        check(z.c256HasValidLengths())
+        check(x.c256HasValidLengths())
+        check(y.c256HasValidLengths())
+        check(x.c256ScaledCompareTo(y, pow10) >= 0)
+        val xBitLen = x.bitLen
+        val yBitLen = y.bitLen
+        val p10BitLen = pow10BitLen(pow10)
+        val pow10Offset = pow10Offset(pow10)
+        val y0 = y.dw0
+        val y1 = y.dw1
+        val p0 = POW10[pow10Offset + 0]
+        val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
+
+        val pp00Hi = unsignedMulHi(y0, p0)
+        val pp00Lo = y0 * p0
+        val pp10Lo = y1 * p0
+        val pp01Lo = y0 * p1
+
+        val f0 = pp00Lo
+        val f1 = pp00Hi + pp10Lo + pp01Lo
+        val (borrow0, d0) = diffU64(x.dw0, f0)
+        val (borrow1, d1) = diffU64withBorrow(x.dw1, f1, borrow0)
+        val (borrow2, d2) = diffU64(x.dw2, borrow1)
+        val (borrow3, d3) = diffU64(x.dw3, borrow2)
+        check (d3 == 0L)
+        z.c256Set256(d3, d2, d1, d0)
     }
 
     @Suppress("UNUSED")
