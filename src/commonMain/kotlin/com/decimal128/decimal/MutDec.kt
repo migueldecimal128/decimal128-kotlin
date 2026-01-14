@@ -70,7 +70,7 @@ class MutDec() : C256() {
                             u256ScaleUpPow10(z, y, shiftLeft)
                         }
                         x.qExp == y.qExp -> unscaledFiniteNonZeroAddImpl(z, x, ySign, y, env)
-                        else -> scaledFiniteAddImpl(z, x, ySign, y, env)
+                        else -> scaledFiniteNonZeroAddImpl(z, x, ySign, y, env)
                     }
                 }
                 qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, env)
@@ -115,56 +115,38 @@ class MutDec() : C256() {
             return z.finalize(env)
         }
 
-        private fun scaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+        private fun scaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
             val qX = x.qExp
             val qY = y.qExp
+            check (qX != qY)
             val xSign = x.sign
             val qMax = max(qX, qY)
-            val xIsZero = x.bitLen == 0
-            val yIsZero = y.bitLen == 0
-            when {
-                qMax < MIN_SPECIAL_VALUE -> {
-                    val residue = when {
-                        xIsZero and yIsZero and (xSign == ySign) -> {
-                            // IEEE754-2019 6.3 The sign bit
-                            // However, under all rounding-direction attributes,
-                            // when x is zero, x + x and x − (−x) have the sign of x.
-                            z.setZero()
-                            z.sign = xSign
-                            z.qExp = min(qX, qY)
-                            return z
-                        }
-                        xSign == ySign -> {
-                            z.sign = xSign
-                            MagnitudeAddSub.magScaledAdd(z, x, y, env)
-                        }
-                        x.magnitudeCompareTo(y) >= 0 -> {
-                            val res = MagnitudeAddSub.magSub(z, x, y, env)
-                            z.sign = xSign and (z.bitLen > 0)
-                            res
-                        }
-                        else -> {
-                            z.sign = ySign
-                            MagnitudeAddSub.magSub(z, y, x, env)
-                        }
+            check (qMax < MIN_SPECIAL_VALUE)
+            check (x.bitLen > 0 && y.bitLen > 0)
+            val residue: Residue
+            if (xSign == ySign) {
+                    residue = MagnitudeAddSub.magScaledAdd(z, x, y, env)
+                z.sign = xSign
+            } else {
+                val cmp = x.magnitudeCompareTo(y)
+                when {
+                    cmp > 0 -> {
+                        residue = MagnitudeAddSub.magSub(z, x, y, env)
+                        z.sign = xSign
                     }
-                    z.sign = z.sign or ((z.bitLen == 0) and env.isRoundTowardNegative())
-                    return z.roundAndFinalize(residue, env)
-                }
-                qMax == NON_FINITE_INF -> when {
-                    (xSign != ySign) && (qX == qY) -> {
-                        z.setNaN(env)
-                        return env.signalInvalid(z)
+                    cmp < 0 -> {
+                        residue = MagnitudeAddSub.magSub(z, y, x, env)
+                        z.sign = ySign
                     }
                     else -> {
-                        z.setInfinite(if (qX == NON_FINITE_INF) xSign else ySign)
+                        // Magnitudes are equal and signs opposite → exact cancellation
+                        // IEEE 754: sign is +0 except when rounding toward negative
+                        z.setZero(env.isRoundTowardNegative(), min(qX, qY))
+                        return z // I don't think I need to finalize in this case
                     }
                 }
-                else -> {
-                    z.setNaNOperand(x, y, env)
-                }
             }
-            return z
+            return z.roundAndFinalize(residue, env)
         }
 
         private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
