@@ -48,6 +48,8 @@ class MutDec() : C256() {
                         x.bitLen == 0 && y.bitLen == 0 -> z.setZero(qExp = qMin)
                         y.bitLen == 0 && x.qExp == qMin -> z.set(x)
                         y.bitLen == 0 -> {
+                            // y.qExp is already in-range, so we don't need
+                            // roundAndFinalize()
                             val gap = x.qExp - y.qExp
                             val headroom = env.precision - x.digitLen
                             val shiftLeft = min(headroom, gap)
@@ -67,7 +69,7 @@ class MutDec() : C256() {
                             z.sign = ySign
                             u256ScaleUpPow10(z, y, shiftLeft)
                         }
-                        x.qExp == y.qExp -> unscaledFiniteAddImpl(z, x, ySign, y, env)
+                        x.qExp == y.qExp -> unscaledFiniteNonZeroAddImpl(z, x, ySign, y, env)
                         else -> scaledFiniteAddImpl(z, x, ySign, y, env)
                     }
                 }
@@ -77,15 +79,19 @@ class MutDec() : C256() {
             return z
         }
 
-        private fun unscaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+        private fun unscaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
+            check(x.bitLen > 0 && y.bitLen > 0)  // Optional: could remove in production
+            check(x.qExp == y.qExp)
             val xSign = x.sign
-            if (x.bitLen == 0 && y.bitLen == 0 && xSign == ySign) {
-                // IEEE754-2019 6.3 The sign bit
-                // However, under all rounding-direction attributes,
-                // when x is zero, x + x and x − (−x) have the sign of x.
-                return z.set(x)
-            }
             z.qExp = x.qExp
+            // IEEE754-2019 6.3 The sign bit
+            // When the sum of two operands with opposite signs
+            // (or the difference of two operands with like signs) is
+            // exactly zero, the sign of that sum (or difference)
+            // shall be +0 under all rounding-direction attributes except
+            // roundTowardNegative; under that attribute, the sign of an
+            // exact zero sum (or difference) shall be −0.
+            val isRoundTowardNegative = env.isRoundTowardNegative()
             if (xSign == ySign) {
                 z.c256SetAdd(x, y)
                 z.sign = xSign
@@ -94,27 +100,18 @@ class MutDec() : C256() {
                 when {
                     (cmp > 0) -> {
                         z.c256SetSub(x, y)
-                        z.sign = xSign and (z.bitLen > 0)
+                        z.sign = if (z.bitLen > 0) xSign else isRoundTowardNegative
                     }
                     (cmp < 0) -> {
                         z.c256SetSub(y, x)
-                        z.sign = ySign and (z.bitLen > 0)
+                        z.sign = if (z.bitLen > 0) ySign else isRoundTowardNegative
                     }
                     else -> {
-                        z.sign = false
                         z.c256SetZero()
+                        z.sign = isRoundTowardNegative
                     }
                 }
             }
-
-            // IEEE754-2019 6.3 The sign bit
-            // When the sum of two operands with opposite signs
-            // (or the difference of two operands with like signs) is
-            // exactly zero, the sign of that sum (or difference)
-            // shall be +0 under all rounding-direction attributes except
-            // roundTowardNegative; under that attribute, the sign of an
-            // exact zero sum (or difference) shall be −0.
-            z.sign = z.sign or ((z.bitLen == 0) and env.isRoundTowardNegative())
             return z.finalize(env)
         }
 
