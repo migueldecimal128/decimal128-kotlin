@@ -14,6 +14,7 @@ import com.decimal128.decimal.U256Compare.u256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
 import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.U256ScalePow10.u256ScaleUpPow10
 
 internal const val MIN_SPECIAL_VALUE = 16381
 internal const val NON_FINITE_INF = 16381
@@ -38,20 +39,42 @@ class MutDec() : C256() {
 
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
             //check (x.digitLen <= 38) // x is allowed more digits because of FMA
-            check (y.digitLen <= 38)
+            check(y.digitLen <= 38)
             val qMax = max(x.qExp, y.qExp)
-            return when {
-                qMax < MIN_SPECIAL_VALUE && x.qExp == y.qExp ->
-                    unscaledFiniteAddImpl(z, x, ySign, y, env)
-
-                qMax < MIN_SPECIAL_VALUE ->
-                    scaledFiniteAddImpl(z, x, ySign, y, env)
-
-                qMax == NON_FINITE_INF ->
-                    infiniteAddImpl(z, x, ySign, y, env)
-
-                else -> { z.setNaNOperand(x, y, env); return z }
+            when {
+                qMax < NON_FINITE_INF -> {
+                    val qMin = min(x.qExp, y.qExp)
+                    when {
+                        x.bitLen == 0 && y.bitLen == 0 -> z.setZero(qExp = qMin)
+                        y.bitLen == 0 && x.qExp == qMin -> z.set(x)
+                        y.bitLen == 0 -> {
+                            val gap = x.qExp - y.qExp
+                            val headroom = env.precision - x.digitLen
+                            val shiftLeft = min(headroom, gap)
+                            z.qExp = x.qExp - shiftLeft
+                            z.sign = x.sign
+                            u256ScaleUpPow10(z, x, shiftLeft)
+                        }
+                        x.bitLen == 0 && y.qExp == qMin -> {
+                            z.set(y)
+                            z.sign = ySign
+                        }
+                        x.bitLen == 0 -> {
+                            val gap = y.qExp - x.qExp
+                            val headroom = env.precision - y.digitLen
+                            val shiftLeft = min(headroom, gap)
+                            z.qExp = y.qExp - shiftLeft
+                            z.sign = ySign
+                            u256ScaleUpPow10(z, y, shiftLeft)
+                        }
+                        x.qExp == y.qExp -> unscaledFiniteAddImpl(z, x, ySign, y, env)
+                        else -> scaledFiniteAddImpl(z, x, ySign, y, env)
+                    }
+                }
+                qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, env)
+                else -> z.setNaNOperand(x, y, env)
             }
+            return z
         }
 
         private fun unscaledFiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
@@ -186,9 +209,9 @@ class MutDec() : C256() {
 
     fun setZero()  = setZero(false)
 
-    fun setZero(sign: Boolean) {
+    fun setZero(sign: Boolean = false, qExp: Int = 0) {
         c256SetZero()
-        this.qExp = 0
+        this.qExp = qExp
         this.sign = sign
     }
 
