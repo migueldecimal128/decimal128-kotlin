@@ -64,6 +64,8 @@ object U256Sub {
     }
 
     fun u256SubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
+        check(!x.c256IsZero())
+        check(!y.c256IsZero())
         check(scaleDelta > 0)
         check(scaleDelta < 34)
 

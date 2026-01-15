@@ -81,6 +81,8 @@ object MagnitudeAddSub {
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
     fun magScaledSub(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
+        check(!x.isZero())
+        check(!y.isZero())
         check(x.magnitudeCompareTo(y) > 0)
         check(x.qExp != y.qExp) // should be caught earlier
         if (x.qExp > y.qExp) {
@@ -95,76 +97,49 @@ object MagnitudeAddSub {
             // shiftLeft is always >0 because guard digit provides 1 digit of headroom
             val shiftLeft = max(0, min(qDelta, headroomWithGuard))
             val qAlign = x.qExp - shiftLeft
-            when {
-                (x.bitLen > 0 && y.bitLen > 0) -> {
-                    val shiftRight = qAlign - y.qExp
-                    val residue = when {
-                        shiftRight == 0 -> {
-                            check(shiftLeft > 0)
-                            u256SubScaled(z, x, shiftLeft, y)
-                            Residue.EXACT
-                        }
-
-                        shiftRight >= y.digitLen -> {
-                            // swamp cases
-                            u256ScaleUpPow10(z, x, shiftLeft)
-                            // we always decrement in this case because y is never zero
-                            // so Residue.EXACT cannot occur because ZERO would have taken
-                            // another path
-                            z.c256MutateDecrement()
-                            if (shiftRight > y.digitLen)
-                                Residue.GT_HALF
-                            else
-                                Residue.residueFrom(y).subtractionInverse()
-                        }
-
-                        else -> {
-                            // shift right required ... shift left maybe
-                            // shift right first into our destination
-                            // then do a fused scaling, allowing us to
-                            // perform this op without allocating of temp variables
-                            val residue = u256ScaleDownPow10(z, y, shiftRight)
-                            u256SubScaled(z, x, shiftLeft, z)
-                            // if ! EXACT then decrement,
-                            // take the inverse of the residue,
-                            // and the normal roundAndFinalize() will take care of it
-                            if (residue != EXACT)
-                                z.c256MutateDecrement()
-                            residue.subtractionInverse()
-                        }
-                    }
-                    z.qExp = qAlign
-                    return residue
+            val shiftRight = qAlign - y.qExp
+            val residue = when {
+                shiftRight == 0 -> {
+                    check(shiftLeft > 0)
+                    u256SubScaled(z, x, shiftLeft, y)
+                    Residue.EXACT
                 }
-                // one of the two is zero
-                // return the value of the non-zero (if any), scaled to the smaller exponent
-                (x.bitLen > 0) -> {
-                    z.qExp = qAlign
+
+                shiftRight >= y.digitLen -> {
+                    // swamp cases
                     u256ScaleUpPow10(z, x, shiftLeft)
-                    return Residue.EXACT
+                    // we always decrement in this case because y is never zero
+                    // so Residue.EXACT cannot occur because ZERO would have taken
+                    // another path
+                    z.c256MutateDecrement()
+                    if (shiftRight > y.digitLen)
+                        Residue.GT_HALF
+                    else
+                        Residue.residueFrom(y).subtractionInverse()
                 }
 
                 else -> {
-                    // if x == 0 then return y ... y != 0 and y == 0
-                    z.c256Set(y)
-                    z.qExp = y.qExp
-                    return Residue.EXACT
+                    // shift right required ... shift left maybe
+                    // shift right first into our destination
+                    // then do a fused scaling, allowing us to
+                    // perform this op without allocating of temp variables
+                    val residue = u256ScaleDownPow10(z, y, shiftRight)
+                    u256SubScaled(z, x, shiftLeft, z)
+                    // if ! EXACT then decrement,
+                    // take the inverse of the residue,
+                    // and the normal roundAndFinalize() will take care of it
+                    if (residue != EXACT)
+                        z.c256MutateDecrement()
+                    residue.subtractionInverse()
                 }
             }
+            z.qExp = qAlign
+            return residue
         } else {
             // TC("22E1", "2E2"),
             // x has a smaller q, but y needs to be scaled
-            if (y.c256IsZero()) {
-                // subtracting zero with a larger exponent from x
-                // simply return x
-                z.c256Set(x)
-                z.qExp = x.qExp
-                return EXACT
-            }
             val qDeltaY = y.qExp - x.qExp
-            // FIXME
-            //  PRECISION needs to come from env
-            check(qDeltaY < PRECISION_34)
+            check(qDeltaY < env.precision)
             U256Sub.u256SubScaled(z, x, y, qDeltaY)
             z.qExp = x.qExp
             val zDigitLen = z.digitLen
