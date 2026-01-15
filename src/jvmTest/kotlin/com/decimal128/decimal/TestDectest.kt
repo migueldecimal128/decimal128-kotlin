@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqMax.decTest",
+//        "dqMaxMag.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -59,6 +59,8 @@ class TestDectest {
         "dqEncode.decTest",
         "dqFMA.decTest",
         "dqLogB.decTest",
+        "dqMax.decTest",
+        "dqMaxMag.decTest",
 
         "dqMinus.decTest",
         "dqMultiply.decTest",
@@ -122,6 +124,30 @@ class TestDectest {
         "dqmax900 max 10  #  -> NaN Invalid_operation",
         "dqmax901 max  # 10  -> NaN Invalid_operation",
 
+        "dqmxg161 maxmag  sNaN -Inf   ->  NaN  Invalid_operation",
+        "dqmxg162 maxmag  sNaN -1000  ->  NaN  Invalid_operation",
+        "dqmxg163 maxmag  sNaN -1     ->  NaN  Invalid_operation",
+        "dqmxg164 maxmag  sNaN -0     ->  NaN  Invalid_operation",
+        "dqmxg165 maxmag  sNaN  0     ->  NaN  Invalid_operation",
+        "dqmxg166 maxmag  sNaN  1     ->  NaN  Invalid_operation",
+        "dqmxg167 maxmag  sNaN  1000  ->  NaN  Invalid_operation",
+        "dqmxg171 maxmag -Inf  sNaN   ->  NaN  Invalid_operation",
+        "dqmxg172 maxmag -1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmxg173 maxmag -1    sNaN   ->  NaN  Invalid_operation",
+        "dqmxg174 maxmag -0    sNaN   ->  NaN  Invalid_operation",
+        "dqmxg175 maxmag  0    sNaN   ->  NaN  Invalid_operation",
+        "dqmxg176 maxmag  1    sNaN   ->  NaN  Invalid_operation",
+        "dqmxg177 maxmag  1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmxg178 maxmag  Inf  sNaN   ->  NaN  Invalid_operation",
+
+        "dqmxg191 maxmag  sNaN99 -Inf    ->  NaN99 Invalid_operation",
+        "dqmxg192 maxmag  sNaN98 -1      ->  NaN98 Invalid_operation",
+        "dqmxg196 maxmag -Inf    sNaN92  ->  NaN92 Invalid_operation",
+        "dqmxg197 maxmag  0      sNaN91  ->  NaN91 Invalid_operation",
+        "dqmxg198 maxmag  Inf   -sNaN90  -> -NaN90 Invalid_operation",
+
+        "dqmxg900 maxmag 10  #  -> NaN Invalid_operation",
+        "dqmxg901 maxmag  # 10  -> NaN Invalid_operation",
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -182,6 +208,7 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqmxg091 maxmag  Inf  -1000  ->  Infinity",
         // these are adapted from Colishaw decTest
         // max == maximumNumber
         // behavior of sNaN treatment changed from
@@ -469,6 +496,7 @@ class TestDectest {
                 "apply" -> MutDec().set(op1)
                 "logb" -> MutDec().setLogB(op1, env)
                 "max" -> MutDec().setMaximumNumber(op1, op2, env)
+                "maxmag" -> MutDec().setMaximumMagnitudeNumber(op1, op2, env)
                 else -> return
             }
             if (verbose)

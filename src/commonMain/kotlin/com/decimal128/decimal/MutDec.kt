@@ -192,6 +192,19 @@ class MutDec() : C256() {
         fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
             SerDeDpd128.decodeBigEndianDpd128(MutDec(), bigEndianBytes)
 
+        private const val MAX_MASK = 1
+        private const val MAG_MASK = 2
+        private const val NUM_MASK = 4
+
+        private const val MIN_OP = 0
+        private const val MAX_OP = MAX_MASK
+        private const val MIN_MAG_OP = MAG_MASK
+        private const val MAX_MAG_OP = MAX_MASK or MAG_MASK
+        private const val MIN_NUM_OP = NUM_MASK
+        private const val MAX_NUM_OP = MAX_MASK or NUM_MASK
+        private const val MIN_MAG_NUM_OP = MAG_MASK or NUM_MASK
+        private const val MAX_MAG_NUM_OP = MAX_MASK or MAG_MASK or NUM_MASK
+
     }
 
     // if the digitLen is non-zero then subtract 1
@@ -653,9 +666,7 @@ class MutDec() : C256() {
         val qMax = max(qExp, other.qExp)
         when {
             (qMax < MIN_SPECIAL_VALUE) -> return finiteCompareTo(other)
-
             (qMax == NON_FINITE_INF) -> return infiniteCompareTo(other)
-
             else -> throw RuntimeException("somebody is a NaN")
         }
     }
@@ -705,6 +716,15 @@ class MutDec() : C256() {
     }
 
     fun magnitudeCompareTo(other: MutDec) : Int {
+        val qMax = max(qExp, other.qExp)
+        when {
+            (qMax < MIN_SPECIAL_VALUE) -> return finiteMagnitudeCompareTo(other)
+            (qMax == NON_FINITE_INF) -> return infiniteMagnitudeCompareTo(other)
+            else -> throw RuntimeException("somebody is a NaN")
+        }
+    }
+
+    fun finiteMagnitudeCompareTo(other: MutDec) : Int {
         val thisIsZero = c256IsZero()
         val otherIsZero = other.c256IsZero()
         val eitherIsZero = thisIsZero or otherIsZero
@@ -728,6 +748,12 @@ class MutDec() : C256() {
                 return 1
             }
         }
+    }
+
+    fun infiniteMagnitudeCompareTo(other: MutDec): Int {
+        check(this.qExp <= NON_FINITE_INF && other.qExp <= NON_FINITE_INF)
+        check(this.qExp == NON_FINITE_INF || other.qExp == NON_FINITE_INF)
+        return qExp.compareTo(other.qExp)
     }
 
     fun magnitudeTotalCompareTo(other: MutDec): Int {
@@ -965,40 +991,57 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setMaximum(x: MutDec, y: MutDec, env: DecEnv): MutDec {
-        val qX = x.qExp
-        val qY = y.qExp
-        val qMax = max(qX, qY)
-        if (qMax <= NON_FINITE_INF) {
-            var cmp = x.compareTo(y)
-            if (cmp == 0)
-                cmp = x.totalCompareTo(y)
-            return set(if (cmp >= 0) x else y)
-        }
-        return setNaNOperand(x, y, env)
-    }
+    fun setMinimum(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MIN_OP, env)
 
-    fun setMaximumNumber(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+    fun setMinimumMagnitude(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MIN_MAG_OP, env)
+
+    fun setMinimumNumber(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MIN_NUM_OP, env)
+
+    fun setMinimumMagnitudeNumber(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MIN_MAG_NUM_OP, env)
+
+    fun setMaximum(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MAX_OP, env)
+
+    fun setMaximumMagnitude(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MAX_MAG_OP, env)
+
+    fun setMaximumNumber(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MAX_NUM_OP, env)
+
+    fun setMaximumMagnitudeNumber(x: MutDec, y: MutDec, env: DecEnv): MutDec =
+        setMinMaxImpl(x, y, MAX_MAG_NUM_OP, env)
+
+
+    fun setMinMaxImpl(x: MutDec, y: MutDec, op: Int, env: DecEnv): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val qMax = max(qX, qY)
         if (qMax <= NON_FINITE_INF) {
-            var cmp = x.compareTo(y)
+            var cmp = if ((op and MAG_MASK) != 0)
+                x.magnitudeCompareTo(y)
+            else
+                x.compareTo(y)
             if (cmp == 0)
                 cmp = x.totalCompareTo(y)
-            return set(if (cmp >= 0) x else y)
+            return set(if ((cmp >= 0) xor ((op and MAX_MASK) == 0)) x else y)
         }
-        if (qX <= NON_FINITE_INF) {
-            set(x)
-            if (qY == NON_FINITE_SNAN)
-                env.signalInvalid(this)
-            return this
-        }
-        if (qY <= NON_FINITE_INF) {
-            set(y)
-            if (qX == NON_FINITE_SNAN)
-                env.signalInvalid(this)
-            return this
+        if ((op and NUM_MASK) != 0) {
+            if (qX <= NON_FINITE_INF) {
+                set(x)
+                if (qY == NON_FINITE_SNAN)
+                    env.signalInvalid(this)
+                return this
+            }
+            if (qY <= NON_FINITE_INF) {
+                set(y)
+                if (qX == NON_FINITE_SNAN)
+                    env.signalInvalid(this)
+                return this
+            }
         }
         return setNaNOperand(x, y, env)
     }
