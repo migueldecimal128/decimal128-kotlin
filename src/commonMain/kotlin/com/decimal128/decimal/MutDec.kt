@@ -52,18 +52,22 @@ class MutDec() : C256() {
                             } else {
                                 env.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
                             }
-                            z.setZero(sign, qExp = qMin)
+                            z.setZero(sign, qMin, env)
                         }
-                        y.bitLen == 0 && x.qExp == qMin -> z.set(x)
+                        y.bitLen == 0 && x.qExp == qMin -> {
+                            z.set(x)
+                            z.finalize(env)
+                        }
                         y.bitLen == 0 -> {
-                            // y.qExp is already in-range, so we don't need
-                            // roundAndFinalize()
                             val gap = x.qExp - y.qExp
                             val headroom = env.precision - x.digitLen
-                            val shiftLeft = min(headroom, gap)
+                            // FMA adding 0 will lead to -headroom
+                            val shiftLeft = max(0, min(headroom, gap))
                             z.qExp = x.qExp - shiftLeft
                             z.sign = x.sign
                             u256ScaleUpPow10(z, x, shiftLeft)
+                            // we could be here because of FMA, so need to finalize
+                            z.finalize(env)
                         }
                         x.bitLen == 0 && y.qExp == qMin -> {
                             z.set(y)
@@ -149,7 +153,7 @@ class MutDec() : C256() {
                     else -> {
                         // Magnitudes are equal and signs opposite → exact cancellation
                         // IEEE 754: sign is +0 except when rounding toward negative
-                        z.setZero(env.isRoundTowardNegative(), min(qX, qY))
+                        z.setZero(env.isRoundTowardNegative(), min(qX, qY), env)
                         return z // I don't think I need to finalize in this case
                     }
                 }
@@ -194,11 +198,17 @@ class MutDec() : C256() {
     // if digitLen == 0 then sciExp stays 0 ... 0e0
     fun sciExp() = qExp + (digitLen - (-digitLen ushr 31))
 
-    fun setZero()  = setZero(false)
+    fun setZero() = setZero(false)
 
-    fun setZero(sign: Boolean = false, qExp: Int = 0) {
+    fun setZero(sign: Boolean) {
         c256SetZero()
-        this.qExp = qExp
+        this.qExp = 0
+        this.sign = sign
+    }
+
+    fun setZero(sign: Boolean = false, qExp: Int = 0, env: DecEnv) {
+        c256SetZero()
+        this.qExp = max(min(qExp, env.qMax), env.qTiny)
         this.sign = sign
     }
 
@@ -229,6 +239,11 @@ class MutDec() : C256() {
         setZero()
         sign = false
         qExp = NON_FINITE_QNAN
+    }
+
+    internal fun setNaNSignalInvalid(env: DecEnv) {
+        setNaN(env)
+        env.signalInvalid(this)
     }
 
     internal fun setNaN(payload: Int, env: DecEnv) {
@@ -501,18 +516,28 @@ class MutDec() : C256() {
                 this.setAdd(this, aT, env)
             }
             qMaxXYA == NON_FINITE_INF -> when {
-                (qMaxXY == NON_FINITE_INF) && (x.isZero() || y.isZero()) -> {
-                    setNaN(env)
-                }
+                // addend is infinite
                 (qA == NON_FINITE_INF) -> {
                     if ((qMaxXY < NON_FINITE_INF) || (productSign == a.sign))
                         this.set(a)
-                    else
-                        this.setNaN(env)
+                    else {
+                        this.setNaNSignalInvalid(env)
+                    }
                 }
+                // if we are here then one of the product terms is INF
+                // and the other is ZERO
+                (x.isZero() || y.isZero()) -> {
+                    check(qMaxXY == NON_FINITE_INF)
+                    setNaNSignalInvalid(env)
+                }
+                else ->
+                    setInfinite(productSign)
             }
             else -> {
-                this.setNaNOperand(x, y, env)
+                if (qX == qMaxXYA)
+                    this.setNaNOperand(x, y, env)
+                else
+                    this.setNaNOperand(y, a, env)
             }
         }
         return this

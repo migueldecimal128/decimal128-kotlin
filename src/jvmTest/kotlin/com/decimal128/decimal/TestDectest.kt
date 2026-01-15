@@ -145,7 +145,19 @@ class TestDectest {
         "dqcan244 comparesig  #7c400ff3ffff3fcff3fcff3fcff3fcff   -1000 -> #7c000ff3fcff3fcff3fcff3fcff3fcff Invalid_operation",
     )
 
+    @Test
+    fun testCases() {
+        for (tc in tcs)
+            processLine(tc)
+    }
+
     val tcs = arrayOf(
+        "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",
+        "dqfma2504  fma   0E-4260 1000E-4260    0e+6144  -> 0E-6176 Clamped",
+        "dqfma0902 fma  0     0     NaN5   ->  NaN5",
+        "dqfma0801 fma  Inf   Inf  -Inf    ->  NaN Invalid_operation",
+        "dqfma0305  fma   1e-6176    0.1  0         -> 0E-6176 Underflow Subnormal Inexact Rounded Clamped",
+        "dqfma0300  fma   9e+6144    10   0         -> Infinity  Overflow Inexact Rounded",
         "dqfma0268  fma          21590290365127685.3675       7853139227576541379426.8       -3275859437236180.761544  ->  1.695515562011520746125607502237558E+38 Inexact Rounded",
         "dqfma0258  fma        817941336593541742159684       733867339769310729266598      78563844650942419311830.8  ->  6.002604327732568490562249875306822E+47 Inexact Rounded",
         "dqfma0229  fma        2539892357016099706.4126      -996142232667504817717435       53682082598315949425.937  ->  -2.530094043253148806272276368579143E+42 Inexact Rounded",
@@ -199,12 +211,6 @@ class TestDectest {
         "rounding:half_up",
         "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded",
     )
-
-    @Test
-    fun testCases() {
-        for (tc in tcs)
-            processLine(tc)
-    }
 
     @Test
     fun testReadDectestFiles() {
@@ -419,7 +425,6 @@ class TestDectest {
                 "copynegate" -> MutDec().setNegate(op1)
                 "copysign" -> MutDec().set(op1, op2.sign)
                 "apply" -> MutDec().set(op1)
-                "fma" -> MutDec().setFma(op1, op2, op3, env)
                 else -> return
             }
             if (verbose)
