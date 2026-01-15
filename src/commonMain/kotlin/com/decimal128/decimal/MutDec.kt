@@ -200,28 +200,31 @@ class MutDec() : C256() {
 
     fun setZero() = setZero(false)
 
-    fun setZero(sign: Boolean) {
+    fun setZero(sign: Boolean): MutDec {
         c256SetZero()
         this.qExp = 0
         this.sign = sign
+        return this
     }
 
-    fun setZero(sign: Boolean = false, qExp: Int = 0, env: DecEnv) {
+    fun setZero(sign: Boolean = false, qExp: Int = 0, env: DecEnv): MutDec {
         c256SetZero()
         this.qExp = max(min(qExp, env.qMax), env.qTiny)
         this.sign = sign
+        return this
     }
 
-    private fun setNaNOperand(x: MutDec, env: DecEnv) {
+    private fun setNaNOperand(x: MutDec, env: DecEnv): MutDec {
         val xQ = x.qExp
         check(xQ >= NON_FINITE_QNAN)
         this.set(x)
         this.qExp = NON_FINITE_QNAN
         if (xQ == NON_FINITE_SNAN)
             env.signalInvalid(this)
+        return this
     }
 
-    private fun setNaNOperand(x: MutDec, y: MutDec, env: DecEnv) {
+    private fun setNaNOperand(x: MutDec, y: MutDec, env: DecEnv): MutDec {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
@@ -230,6 +233,7 @@ class MutDec() : C256() {
         this.qExp = NON_FINITE_QNAN
         if (maxQ == NON_FINITE_SNAN)
             env.signalInvalid(this)
+        return this
     }
 
     private fun sNaNOperand() {
@@ -648,30 +652,38 @@ class MutDec() : C256() {
     fun compareTo(other: MutDec) : Int {
         val qMax = max(qExp, other.qExp)
         when {
-            (qMax < MIN_SPECIAL_VALUE) -> {
-                // Both are finite numbers
-                if (sign != other.sign) {
-                    if (this.isZero() && other.isZero())
-                        return 0
-                    // At least one is non-zero, signs differ
-                    return if (sign) -1 else 1
-                }
+            (qMax < MIN_SPECIAL_VALUE) -> return finiteCompareTo(other)
 
-                // Same sign - compare magnitudes
-                val cmp = magnitudeCompareTo(other)
-                return if (sign) -cmp else cmp
-            }
-
-            (qMax == NON_FINITE_INF) -> return when {
-                (sign != other.sign) -> if (sign) -1 else 1
-                (qExp == NON_FINITE_INF) -> {
-                    if (other.qExp == NON_FINITE_INF) 0
-                    else if (sign) -1 else 1
-                }
-                else -> if (sign) 1 else -1
-            }
+            (qMax == NON_FINITE_INF) -> return infiniteCompareTo(other)
 
             else -> throw RuntimeException("somebody is a NaN")
+        }
+    }
+
+    fun finiteCompareTo(other: MutDec): Int {
+        check(qExp < NON_FINITE_INF && other.qExp < NON_FINITE_INF)
+        if (sign != other.sign) {
+            if (this.isZero() && other.isZero())
+                return 0
+            // At least one is non-zero, signs differ
+            return if (sign) -1 else 1
+        }
+
+        // Same sign - compare magnitudes
+        val cmp = magnitudeCompareTo(other)
+        return if (sign) -cmp else cmp
+    }
+
+    fun infiniteCompareTo(other: MutDec): Int {
+        check(this.qExp <= NON_FINITE_INF && other.qExp <= NON_FINITE_INF)
+        check(this.qExp == NON_FINITE_INF || other.qExp == NON_FINITE_INF)
+        return when {
+            (sign != other.sign) -> if (sign) -1 else 1
+            (qExp == NON_FINITE_INF) -> {
+                if (other.qExp == NON_FINITE_INF) 0
+                else if (sign) -1 else 1
+            }
+            else -> if (sign) 1 else -1
         }
     }
 
@@ -952,6 +964,45 @@ class MutDec() : C256() {
         }
         return this
     }
+
+    fun setMaximum(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        val qX = x.qExp
+        val qY = y.qExp
+        val qMax = max(qX, qY)
+        if (qMax <= NON_FINITE_INF) {
+            var cmp = x.compareTo(y)
+            if (cmp == 0)
+                cmp = x.totalCompareTo(y)
+            return set(if (cmp >= 0) x else y)
+        }
+        return setNaNOperand(x, y, env)
+    }
+
+    fun setMaximumNumber(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        val qX = x.qExp
+        val qY = y.qExp
+        val qMax = max(qX, qY)
+        if (qMax <= NON_FINITE_INF) {
+            var cmp = x.compareTo(y)
+            if (cmp == 0)
+                cmp = x.totalCompareTo(y)
+            return set(if (cmp >= 0) x else y)
+        }
+        if (qX <= NON_FINITE_INF) {
+            set(x)
+            if (qY == NON_FINITE_SNAN)
+                env.signalInvalid(this)
+            return this
+        }
+        if (qY <= NON_FINITE_INF) {
+            set(y)
+            if (qX == NON_FINITE_SNAN)
+                env.signalInvalid(this)
+            return this
+        }
+        return setNaNOperand(x, y, env)
+    }
+
 
     fun compareQuiet754(other: MutDec, env: DecEnv): Compare754Result =
         compare754(other, false, env)

@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqLogB.decTest",
+        "dqMax.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -58,6 +58,7 @@ class TestDectest {
         // dqDivideInt.decTest is not supported
         "dqEncode.decTest",
         "dqFMA.decTest",
+        "dqLogB.decTest",
 
         "dqMinus.decTest",
         "dqMultiply.decTest",
@@ -96,6 +97,31 @@ class TestDectest {
         "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
         "dqfma2991 fma   # 10   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
         "dqlogb900  logb #   -> NaN Invalid_operation",
+        // dectest was done before ieee754-2019, which redefined this
+        // note that Colishaw decTest is using "max" for "maximumNumber"
+        "dqmax161 max  sNaN -Inf   ->  NaN  Invalid_operation",
+        "dqmax162 max  sNaN -1000  ->  NaN  Invalid_operation",
+        "dqmax163 max  sNaN -1     ->  NaN  Invalid_operation",
+        "dqmax164 max  sNaN -0     ->  NaN  Invalid_operation",
+        "dqmax165 max  sNaN  0     ->  NaN  Invalid_operation",
+        "dqmax166 max  sNaN  1     ->  NaN  Invalid_operation",
+        "dqmax167 max  sNaN  1000  ->  NaN  Invalid_operation",
+        "dqmax171 max -Inf  sNaN   ->  NaN  Invalid_operation",
+        "dqmax172 max -1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmax173 max -1    sNaN   ->  NaN  Invalid_operation",
+        "dqmax174 max -0    sNaN   ->  NaN  Invalid_operation",
+        "dqmax175 max  0    sNaN   ->  NaN  Invalid_operation",
+        "dqmax176 max  1    sNaN   ->  NaN  Invalid_operation",
+        "dqmax177 max  1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmax178 max  Inf  sNaN   ->  NaN  Invalid_operation",
+        "dqmax191 max  sNaN99 -Inf    ->  NaN99 Invalid_operation",
+        "dqmax192 max  sNaN98 -1      ->  NaN98 Invalid_operation",
+        "dqmax196 max -Inf    sNaN92  ->  NaN92 Invalid_operation",
+        "dqmax197 max  0      sNaN91  ->  NaN91 Invalid_operation",
+        "dqmax198 max  Inf   -sNaN90  -> -NaN90 Invalid_operation",
+        "dqmax900 max 10  #  -> NaN Invalid_operation",
+        "dqmax901 max  # 10  -> NaN Invalid_operation",
+
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -156,6 +182,13 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        // these are adapted from Colishaw decTest
+        // max == maximumNumber
+        // behavior of sNaN treatment changed from
+        // IEEE754-2008 => IEEE754-2019
+        "dqmax161 max  sNaN -Inf   ->  -Inf  Invalid_operation",
+        "dqmax162 max  sNaN -1000  ->  -1000  Invalid_operation",
+
         "dqadd36444 fma  1    1   -77e-36      ->  0.9999999999999999999999999999999999 Inexact Rounded",
         "dqadd3038 fma  1  '70000'  '10000e+34' -> '1.000000000000000000000000000000001E+38' Inexact Rounded",
         "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",
@@ -239,7 +272,10 @@ class TestDectest {
         val trimmed = (if (commentIndex >= 0) line.substring(0, commentIndex) else line).trim()
         when {
             trimmed.length == 0 -> {}
-            ignoredCases.contains(trimmed) -> {}
+            ignoredCases.contains(trimmed) -> {
+                if (veryVerbose)
+                    println("<<<ignored>>>")
+            }
             processDirective(trimmed) -> {}
             processTest(trimmed) -> {}
             else -> {
@@ -432,6 +468,7 @@ class TestDectest {
                 "copysign" -> MutDec().set(op1, op2.sign)
                 "apply" -> MutDec().set(op1)
                 "logb" -> MutDec().setLogB(op1, env)
+                "max" -> MutDec().setMaximumNumber(op1, op2, env)
                 else -> return
             }
             if (verbose)
