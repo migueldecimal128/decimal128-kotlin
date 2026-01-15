@@ -67,6 +67,7 @@ class TestDectest {
     )
 
     val ignoredCases = arrayOf(
+
         "dqabs900 abs  # -> NaN Invalid_operation", // IEEE says to ignore abs sign change
         "dqabs526 abs  -NaN22  -> -NaN22",
         "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
@@ -92,6 +93,8 @@ class TestDectest {
         "dqcot9991 comparetotal  # 10 -> NaN Invalid_operation",
         "dqctm9990 comparetotmag 10  # -> NaN Invalid_operation",
         "dqctm9991 comparetotmag  # 10 -> NaN Invalid_operation",
+        "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
+        "dqfma2991 fma   # 10   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -152,6 +155,8 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqadd36444 fma  1    1   -77e-36      ->  0.9999999999999999999999999999999999 Inexact Rounded",
+        "dqadd3038 fma  1  '70000'  '10000e+34' -> '1.000000000000000000000000000000001E+38' Inexact Rounded",
         "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",
         "dqfma2504  fma   0E-4260 1000E-4260    0e+6144  -> 0E-6176 Clamped",
         "dqfma0902 fma  0     0     NaN5   ->  NaN5",
@@ -353,7 +358,7 @@ class TestDectest {
                         val result: String, val conditions: Array<String>) {
         val op1 = parseOperand(operand1)
         val op2 = if (operand2 == "") MY_NAN else parseOperand(operand2)
-        val op3 = if (op2 === MY_NAN || operand3 == "") MY_NAN else parseOperand(operand3)
+        val op3 = if (operand3 == "") MY_NAN else parseOperand(operand3)
         val res = parseOperand(result)
         val exceptionSet: Set<DecException> = captureExceptionSet(conditions)
 

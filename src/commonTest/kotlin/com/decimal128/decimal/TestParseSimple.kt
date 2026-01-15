@@ -11,6 +11,7 @@ class TestParseSimple {
     @Test
     fun test() {
         // if you supply one arg remember to make it in canonical format
+        test1("0e+6144", "0E+6111")
         test1("-0.E6139", "-0E+6111")
         test1("+101001100000101.000000E5138", "1.01001100000101000000E+5152")
         //test1("+101001100000101.000000E6138") ... invalid ... out of range

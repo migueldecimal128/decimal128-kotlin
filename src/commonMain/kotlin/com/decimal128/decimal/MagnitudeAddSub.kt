@@ -37,11 +37,13 @@ object MagnitudeAddSub {
                     }
 
                     shiftRight >= n.digitLen -> {
-                        u256ScaleUpPow10(z, m, shiftLeft)
-                        if (shiftRight > n.digitLen)
+                        // perform in this order to avoid aliasing z === n issue
+                        val residueT = if (shiftRight > n.digitLen)
                             Residue.LT_HALF
                         else
                             Residue.residueFrom(n)
+                        u256ScaleUpPow10(z, m, shiftLeft)
+                        residueT
                     }
 
                     else -> {
@@ -86,12 +88,6 @@ object MagnitudeAddSub {
         check(x.magnitudeCompareTo(y) > 0)
         check(x.qExp != y.qExp)
 
-        // DEBUG OUTPUT
-        println("=== magScaledSub DEBUG ===")
-        println("x.digitLen = ${x.digitLen}, x.qExp = ${x.qExp}")
-        println("y.digitLen = ${y.digitLen}, y.qExp = ${y.qExp}")
-        println("x.qExp > y.qExp: ${x.qExp > y.qExp}")
-
         if (x.qExp > y.qExp) {
             val gap = x.qExp - y.qExp
             val headroomWithGuard = 1 + env.precision - x.digitLen
@@ -103,16 +99,6 @@ object MagnitudeAddSub {
             val qAlign = x.qExp - shiftLeft
             val shiftRight = qAlign - y.qExp
 
-            println("BRANCH: x.qExp > y.qExp")
-            println("gap = $gap")
-            println("headroomWithGuard = $headroomWithGuard")
-            println("shiftLeft = $shiftLeft")
-            println("qAlign = $qAlign")
-            println("shiftRight = $shiftRight")
-            println("y.digitLen = ${y.digitLen}")
-            println("shiftRight >= y.digitLen: ${shiftRight >= y.digitLen}")
-            println("=========================")
-
             val residue = when {
                 shiftRight == 0 -> {
                     check(shiftLeft > 0)
@@ -121,15 +107,19 @@ object MagnitudeAddSub {
                 }
 
                 shiftRight >= y.digitLen -> {
+                    val residueT = if (shiftRight > y.digitLen)
+                        Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
+                    else
+                        Residue.residueFrom(y).subtractionInverse()
                     if (shiftLeft > 0) {
                         u256ScaleUpPow10(z, x, shiftLeft)
                     } else {
                         z.c256Set(x)
                     }
-                    if (shiftRight > y.digitLen)
-                        Residue.LT_HALF
-                    else
-                        Residue.residueFrom(y).subtractionInverse()
+                    check(residueT != Residue.EXACT)
+                    // decrement and let the residue possibly round it back up
+                    z.c256MutateDecrement()
+                    residueT
                 }
 
                 else -> {
@@ -152,10 +142,6 @@ object MagnitudeAddSub {
 
         } else {
             val gap = y.qExp - x.qExp
-
-            println("BRANCH: x.qExp < y.qExp")
-            println("gap = $gap")
-            println("=========================")
 
             val qDeltaY = y.qExp - x.qExp
             check(qDeltaY < env.precision)
