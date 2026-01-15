@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqMinMag.decTest",
+        "dqNextPlus.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -62,9 +62,11 @@ class TestDectest {
         "dqMax.decTest",
         "dqMaxMag.decTest",
         "dqMin.decTest",
-
+        "dqMinMag.decTest",
         "dqMinus.decTest",
         "dqMultiply.decTest",
+        "dqNextMinus.decTest",
+
         "dqSubtract.decTest",
 
         //"dqRemainder.decTest",
@@ -73,6 +75,7 @@ class TestDectest {
     val ignoredCases = arrayOf(
 
         "dqabs900 abs  # -> NaN Invalid_operation", // IEEE says to ignore abs sign change
+
         "dqabs526 abs  -NaN22  -> -NaN22",
         "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
         "dqabs523 abs  sNaN    ->  NaN   Invalid_operation",
@@ -200,6 +203,10 @@ class TestDectest {
         "dqmng900 minmag 10  # -> NaN Invalid_operation",
         "dqmng901 minmag  # 10 -> NaN Invalid_operation",
 
+        "dqnextm900 nextminus  # -> NaN Invalid_operation",
+
+        "dqnextp900 nextplus  # -> NaN Invalid_operation",
+
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -260,6 +267,12 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+
+        "dqnextp192 nextplus   9.999999999999999999999999999999998E+6144  ->  9.999999999999999999999999999999999E+6144",
+
+        "dqnextm193 nextminus  -9.999999999999999999999999999999999E+6144  -> -Infinity",
+        "dqnextm025 nextminus -0.9999999999999999999999999999999999 ->  -1.000000000000000000000000000000000",
+
         "dqmxg091 maxmag  Inf  -1000  ->  Infinity",
         // these are adapted from Colishaw decTest
         // max == maximumNumber
@@ -551,6 +564,8 @@ class TestDectest {
                 "maxmag" -> MutDec().setMaximumMagnitudeNumber(op1, op2, env)
                 "min" -> MutDec().setMinimumNumber(op1, op2, env)
                 "minmag" -> MutDec().setMinimumMagnitudeNumber(op1, op2, env)
+                "nextminus" -> MutDec().setNextDown(op1, env)
+                "nextplus" -> MutDec().setNextUp(op1, env)
                 else -> return
             }
             if (verbose)
