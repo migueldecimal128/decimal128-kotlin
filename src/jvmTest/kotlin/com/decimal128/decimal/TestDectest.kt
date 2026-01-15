@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqFMA.decTest",
+        "dqLogB.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -57,7 +57,7 @@ class TestDectest {
         "dqDivide.decTest",
         // dqDivideInt.decTest is not supported
         "dqEncode.decTest",
-
+        "dqFMA.decTest",
 
         "dqMinus.decTest",
         "dqMultiply.decTest",
@@ -95,6 +95,7 @@ class TestDectest {
         "dqctm9991 comparetotmag  # 10 -> NaN Invalid_operation",
         "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
         "dqfma2991 fma   # 10   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
+        "dqlogb900  logb #   -> NaN Invalid_operation",
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -430,6 +431,7 @@ class TestDectest {
                 "copynegate" -> MutDec().setNegate(op1)
                 "copysign" -> MutDec().set(op1, op2.sign)
                 "apply" -> MutDec().set(op1)
+                "logb" -> MutDec().setLogB(op1, env)
                 else -> return
             }
             if (verbose)

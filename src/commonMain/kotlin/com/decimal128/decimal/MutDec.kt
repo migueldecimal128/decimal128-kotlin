@@ -212,6 +212,15 @@ class MutDec() : C256() {
         this.sign = sign
     }
 
+    private fun setNaNOperand(x: MutDec, env: DecEnv) {
+        val xQ = x.qExp
+        check(xQ >= NON_FINITE_QNAN)
+        this.set(x)
+        this.qExp = NON_FINITE_QNAN
+        if (xQ == NON_FINITE_SNAN)
+            env.signalInvalid(this)
+    }
+
     private fun setNaNOperand(x: MutDec, y: MutDec, env: DecEnv) {
         val xQ = x.qExp
         val yQ = y.qExp
@@ -925,8 +934,23 @@ class MutDec() : C256() {
     }
 
     // IEEE754-2008 5.3.3
-    fun logB(): Int {
-        return qExp
+    fun setLogB(x: MutDec, env: DecEnv): MutDec {
+        val qX = x.qExp
+        when {
+            x.isZero() -> {
+                setInfinite(sign = true)
+                env.signalDivByZero(this)
+            }
+            qX < NON_FINITE_INF -> {
+                val logB = qX + x.digitLen - 1
+                set(logB)
+            }
+            qX == NON_FINITE_INF ->
+                setInfinite()
+            else ->
+                setNaNOperand(x, env)
+        }
+        return this
     }
 
     fun compareQuiet754(other: MutDec, env: DecEnv): Compare754Result =
