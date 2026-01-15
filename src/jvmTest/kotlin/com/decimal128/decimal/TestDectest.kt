@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-//        "dqMaxMag.decTest",
+        "dqMinMag.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -61,6 +61,7 @@ class TestDectest {
         "dqLogB.decTest",
         "dqMax.decTest",
         "dqMaxMag.decTest",
+        "dqMin.decTest",
 
         "dqMinus.decTest",
         "dqMultiply.decTest",
@@ -148,6 +149,57 @@ class TestDectest {
 
         "dqmxg900 maxmag 10  #  -> NaN Invalid_operation",
         "dqmxg901 maxmag  # 10  -> NaN Invalid_operation",
+
+        "dqmin161 min  sNaN -Inf   ->  NaN  Invalid_operation",
+        "dqmin162 min  sNaN -1000  ->  NaN  Invalid_operation",
+        "dqmin163 min  sNaN -1     ->  NaN  Invalid_operation",
+        "dqmin164 min  sNaN -0     ->  NaN  Invalid_operation",
+        "dqmin165 min -sNaN  0     -> -NaN  Invalid_operation",
+        "dqmin166 min -sNaN  1     -> -NaN  Invalid_operation",
+        "dqmin167 min  sNaN  1000  ->  NaN  Invalid_operation",
+        "dqmin171 min -Inf  sNaN   ->  NaN  Invalid_operation",
+        "dqmin172 min -1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmin173 min -1    sNaN   ->  NaN  Invalid_operation",
+        "dqmin174 min -0    sNaN   ->  NaN  Invalid_operation",
+        "dqmin175 min  0    sNaN   ->  NaN  Invalid_operation",
+        "dqmin176 min  1    sNaN   ->  NaN  Invalid_operation",
+        "dqmin177 min  1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmin178 min  Inf  sNaN   ->  NaN  Invalid_operation",
+
+        "dqmin191 min  sNaN99 -Inf    ->  NaN99 Invalid_operation",
+        "dqmin192 min  sNaN98 -11     ->  NaN98 Invalid_operation",
+        "dqmin196 min -Inf    sNaN92  ->  NaN92 Invalid_operation",
+        "dqmin197 min  088    sNaN91  ->  NaN91 Invalid_operation",
+        "dqmin198 min  Inf   -sNaN90  -> -NaN90 Invalid_operation",
+
+        "dqmin900 min 10  # -> NaN Invalid_operation",
+        "dqmin901 min  # 10 -> NaN Invalid_operation",
+
+        "dqmng161 minmag  sNaN -Inf   ->  NaN  Invalid_operation",
+        "dqmng162 minmag  sNaN -1000  ->  NaN  Invalid_operation",
+        "dqmng163 minmag  sNaN -1     ->  NaN  Invalid_operation",
+        "dqmng164 minmag  sNaN -0     ->  NaN  Invalid_operation",
+        "dqmng165 minmag -sNaN  0     -> -NaN  Invalid_operation",
+        "dqmng166 minmag -sNaN  1     -> -NaN  Invalid_operation",
+        "dqmng167 minmag  sNaN  1000  ->  NaN  Invalid_operation",
+        "dqmng171 minmag -Inf  sNaN   ->  NaN  Invalid_operation",
+        "dqmng172 minmag -1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmng173 minmag -1    sNaN   ->  NaN  Invalid_operation",
+        "dqmng174 minmag -0    sNaN   ->  NaN  Invalid_operation",
+        "dqmng175 minmag  0    sNaN   ->  NaN  Invalid_operation",
+        "dqmng176 minmag  1    sNaN   ->  NaN  Invalid_operation",
+        "dqmng177 minmag  1000 sNaN   ->  NaN  Invalid_operation",
+        "dqmng178 minmag  Inf  sNaN   ->  NaN  Invalid_operation",
+
+        "dqmng191 minmag  sNaN99 -Inf    ->  NaN99 Invalid_operation",
+        "dqmng192 minmag  sNaN98 -11     ->  NaN98 Invalid_operation",
+        "dqmng196 minmag -Inf    sNaN92  ->  NaN92 Invalid_operation",
+        "dqmng197 minmag  088    sNaN91  ->  NaN91 Invalid_operation",
+        "dqmng198 minmag  Inf   -sNaN90  -> -NaN90 Invalid_operation",
+
+        "dqmng900 minmag 10  # -> NaN Invalid_operation",
+        "dqmng901 minmag  # 10 -> NaN Invalid_operation",
+
     )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -497,6 +549,8 @@ class TestDectest {
                 "logb" -> MutDec().setLogB(op1, env)
                 "max" -> MutDec().setMaximumNumber(op1, op2, env)
                 "maxmag" -> MutDec().setMaximumMagnitudeNumber(op1, op2, env)
+                "min" -> MutDec().setMinimumNumber(op1, op2, env)
+                "minmag" -> MutDec().setMinimumMagnitudeNumber(op1, op2, env)
                 else -> return
             }
             if (verbose)
