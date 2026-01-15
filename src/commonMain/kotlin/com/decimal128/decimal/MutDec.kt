@@ -45,7 +45,15 @@ class MutDec() : C256() {
                 qMax < NON_FINITE_INF -> {
                     val qMin = min(x.qExp, y.qExp)
                     when {
-                        x.bitLen == 0 && y.bitLen == 0 -> z.setZero(qExp = qMin)
+                        x.bitLen == 0 && y.bitLen == 0 -> {
+                            // IEEE 754: Handle sign of -0 + -0 = -0
+                            val sign = if (x.sign == ySign) {
+                                ySign  // Both same sign → use that sign
+                            } else {
+                                env.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
+                            }
+                            z.setZero(sign, qExp = qMin)
+                        }
                         y.bitLen == 0 && x.qExp == qMin -> z.set(x)
                         y.bitLen == 0 -> {
                             // y.qExp is already in-range, so we don't need

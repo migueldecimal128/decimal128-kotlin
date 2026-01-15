@@ -84,20 +84,35 @@ object MagnitudeAddSub {
         check(!x.isZero())
         check(!y.isZero())
         check(x.magnitudeCompareTo(y) > 0)
-        check(x.qExp != y.qExp) // should be caught earlier
+        check(x.qExp != y.qExp)
+
+        // DEBUG OUTPUT
+        println("=== magScaledSub DEBUG ===")
+        println("x.digitLen = ${x.digitLen}, x.qExp = ${x.qExp}")
+        println("y.digitLen = ${y.digitLen}, y.qExp = ${y.qExp}")
+        println("x.qExp > y.qExp: ${x.qExp > y.qExp}")
+
         if (x.qExp > y.qExp) {
             val gap = x.qExp - y.qExp
-            val xScaledDigitLen = x.digitLen + gap
-            val yScaledDigitLen = y.digitLen
-
-            val qDelta = x.qExp - y.qExp
-            // one guard digit is enough ...
-            // ... residue provides sufficient info for rounding
             val headroomWithGuard = 1 + env.precision - x.digitLen
-            // shiftLeft is always >0 because guard digit provides 1 digit of headroom
-            val shiftLeft = max(0, min(qDelta, headroomWithGuard))
+            val shiftLeft = if (headroomWithGuard > 0) {
+                min(gap, headroomWithGuard)
+            } else {
+                0
+            }
             val qAlign = x.qExp - shiftLeft
             val shiftRight = qAlign - y.qExp
+
+            println("BRANCH: x.qExp > y.qExp")
+            println("gap = $gap")
+            println("headroomWithGuard = $headroomWithGuard")
+            println("shiftLeft = $shiftLeft")
+            println("qAlign = $qAlign")
+            println("shiftRight = $shiftRight")
+            println("y.digitLen = ${y.digitLen}")
+            println("shiftRight >= y.digitLen: ${shiftRight >= y.digitLen}")
+            println("=========================")
+
             val residue = when {
                 shiftRight == 0 -> {
                     check(shiftLeft > 0)
@@ -106,44 +121,46 @@ object MagnitudeAddSub {
                 }
 
                 shiftRight >= y.digitLen -> {
-                    // swamp cases
-                    u256ScaleUpPow10(z, x, shiftLeft)
-                    // we always decrement in this case because y is never zero
-                    // so Residue.EXACT cannot occur because ZERO would have taken
-                    // another path
-                    z.c256MutateDecrement()
+                    if (shiftLeft > 0) {
+                        u256ScaleUpPow10(z, x, shiftLeft)
+                    } else {
+                        z.c256Set(x)
+                    }
                     if (shiftRight > y.digitLen)
-                        Residue.GT_HALF
+                        Residue.LT_HALF
                     else
                         Residue.residueFrom(y).subtractionInverse()
                 }
 
                 else -> {
-                    // shift right required ... shift left maybe
-                    // shift right first into our destination
-                    // then do a fused scaling, allowing us to
-                    // perform this op without allocating of temp variables
-                    val residue = u256ScaleDownPow10(z, y, shiftRight)
-                    u256SubScaled(z, x, shiftLeft, z)
-                    // if ! EXACT then decrement,
-                    // take the inverse of the residue,
-                    // and the normal roundAndFinalize() will take care of it
-                    if (residue != EXACT)
-                        z.c256MutateDecrement()
+                    val tempY = MutDec()
+                    val residue = u256ScaleDownPow10(tempY, y, shiftRight)
+                    if (shiftLeft > 0) {
+                        u256SubScaled(z, x, shiftLeft, tempY)
+                        if (residue != EXACT)
+                            z.c256MutateDecrement()
+                    } else {
+                        z.c256SetSub(x, tempY)  // Now uses tempY instead of z
+                        if (residue != EXACT && z.bitLen > 0)
+                            z.c256MutateDecrement()
+                    }
                     residue.subtractionInverse()
                 }
             }
             z.qExp = qAlign
             return residue
+
         } else {
-            // TC("22E1", "2E2"),
-            // x has a smaller q, but y needs to be scaled
+            val gap = y.qExp - x.qExp
+
+            println("BRANCH: x.qExp < y.qExp")
+            println("gap = $gap")
+            println("=========================")
+
             val qDeltaY = y.qExp - x.qExp
             check(qDeltaY < env.precision)
             U256Sub.u256SubScaled(z, x, y, qDeltaY)
             z.qExp = x.qExp
-            val zDigitLen = z.digitLen
-            val zExp = z.qExp
             return EXACT
         }
     }
