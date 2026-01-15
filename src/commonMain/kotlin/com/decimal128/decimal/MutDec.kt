@@ -835,22 +835,19 @@ class MutDec() : C256() {
     fun setNextUp(x: MutDec, env: DecEnv): MutDec {
         set(x)
         when {
-            qExp > NON_FINITE_INF -> {
-                if (qExp == NON_FINITE_SNAN) {
-                    env.signalInvalid(this)
-                    qExp = NON_FINITE_QNAN
-                }
-                return this
+            qExp == NON_FINITE_SNAN -> {
+                env.signalInvalid(this)
+                qExp = NON_FINITE_QNAN
             }
+            qExp == NON_FINITE_QNAN -> {}
+
             qExp == NON_FINITE_INF -> {
                 if (sign)
                     setMaxFiniteMagnitude(env)
-                return this
             }
             c256IsZero() -> {
                 setMinFiniteMagnitude(env)
                 sign = false
-                return this
             }
             sign == false -> {
                 // nextUp is not an arithmetic operation and
@@ -859,32 +856,27 @@ class MutDec() : C256() {
                 mutateNextAwayFromZero(env)
                 if (qExp > env.qMax)
                     setInfinite(sign = false)
-                return this
             }
             else -> mutateNextTowardZero(env)
         }
-        return finalize(ROUND_TOWARD_POSITIVE, env)
+        return this
     }
 
     fun setNextDown(x: MutDec, env: DecEnv): MutDec {
         set(x)
         when {
-            qExp > NON_FINITE_INF -> {
-                if (qExp == NON_FINITE_SNAN) {
-                    env.signalInvalid(this)
-                    qExp = NON_FINITE_QNAN
-                }
-                return this
+            qExp == NON_FINITE_SNAN -> {
+                env.signalInvalid(this)
+                qExp = NON_FINITE_QNAN
             }
+            qExp == NON_FINITE_QNAN -> { }
             qExp == NON_FINITE_INF -> {
                 if (sign == false)
                     setMaxFiniteMagnitude(env)
-                return this
             }
             c256IsZero() -> {
                 setMinFiniteMagnitude(env)
                 sign = true
-                return this
             }
 
             sign -> {
@@ -892,12 +884,11 @@ class MutDec() : C256() {
                 mutateNextAwayFromZero(env)
                 if (qExp > env.qMax)
                     setInfinite(sign = true)
-                return this
             }
 
             else -> mutateNextTowardZero(env)
         }
-        return finalize(ROUND_TOWARD_NEGATIVE, env)
+        return this
     }
 
     private fun mutateNextAwayFromZero(env: DecEnv) {
