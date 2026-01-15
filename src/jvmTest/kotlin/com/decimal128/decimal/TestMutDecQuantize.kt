@@ -41,7 +41,7 @@ class TestMutDecQuantize {
         val f = MutDec()
         d.set(bdX)
         e.set(bdY)
-        f.quantize(d,e, tc.env)
+        f.setQuantize(d,e, tc.env)
         if (verbose)
             println("f:$f")
     }

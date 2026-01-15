@@ -145,6 +145,7 @@ internal fun MutDec.roundAndFinalize2(residue: Residue, rounding: DecRounding, e
         digitLen > env.precision -> roundAndFinalizeFnzLongCoeff(residue, rounding, env)
         eExp < env.eMin -> roundAndFinalizeTiny(residue, rounding, env)
         digitLen == env.precision -> roundAndFinalizeFnzValidCoeff(residue, rounding, env)
+        digitLen < env.precision -> roundAndFinalizeShortCoeff(residue, rounding, env)
         else -> throw IllegalStateException()
     }
 }
@@ -186,4 +187,14 @@ private fun MutDec.roundAndFinalizeFnzValidCoeff(residue: Residue, rounding: Dec
         qExp < env.qTiny -> roundAndFinalizeTiny(residue, rounding, env)
         else -> env.signalInexact(this)
     }
+}
+
+internal fun MutDec.roundAndFinalizeShortCoeff(residue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
+    check (residue != EXACT)
+    check (digitLen < env.precision)
+    check (qExp <= env.qMax && qExp >= env.qTiny)
+    val roundUp = residue.ulpRoundUp(rounding.negate(sign), dw0)
+    if (roundUp)
+        c256MutateIncrement()
+    return env.signalInexact(this)
 }

@@ -343,6 +343,17 @@ class MutDec() : C256() {
         return this
     }
 
+    fun set(x: MutDec, env: DecEnv): MutDec {
+        c256Set(x)
+        this.qExp = x.qExp
+        this.sign = x.sign
+        if (qExp == NON_FINITE_SNAN) {
+            qExp = NON_FINITE_QNAN
+            env.signalInvalid(this)
+        }
+        return this
+    }
+
     fun set(xMagnitude: MutDec, sign: Boolean): MutDec {
         c256Set(xMagnitude)
         this.qExp = xMagnitude.qExp
@@ -832,6 +843,11 @@ class MutDec() : C256() {
     fun setRoundToIntegralTowardNegative(x: MutDec, env: DecEnv) =
         mutateRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, env)
 
+    /**
+     * setNextUp and setNextDown are not considered arithmetic
+     * operations. Therefore, flags are not set when they roll
+     * over to Infinity
+     */
     fun setNextUp(x: MutDec, env: DecEnv): MutDec {
         set(x)
         when {
@@ -949,32 +965,65 @@ class MutDec() : C256() {
         return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
 
-    fun setScale(x: MutDec, pow10: Int, env: DecEnv) {
-        set(x)
-        val p10 = capExponentRange(pow10)
-        if (qExp < NON_FINITE_INF) {
-            qExp += p10
-            val residue = when {
-                c256IsZero() -> EXACT
-                (p10 > 0) -> {
-                    val headroom = env.precision - digitLen
-                    val scaleUp = min(headroom, p10)
-                    this.c256SetScaleUpPow10(this, scaleUp)
-                    qExp -= scaleUp
-                    EXACT
-                }
-                (p10 < 0) -> this.c256SetScaleDownPow10(this, -p10)
-                else -> return // p10 == 0 .. no scaling
-            }
-            roundAndFinalize(residue, env)
-        } else if (qExp == NON_FINITE_SNAN)
-            sNaNOperand()
-    }
-
     // IEEE754-2008 5.3.2
-    fun quantize(x: MutDec, y: MutDec, env: DecEnv) {
-        val targetQ = y.qExp
-        setScale(x, -targetQ, env)
+    fun setQuantize(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        // Handle NaN propagation
+        val qX = x.qExp
+        val qY = y.qExp
+        if (qX > NON_FINITE_INF || qY > NON_FINITE_INF)
+            return setNaNOperand(x, y, env)
+        // Handle infinity cases
+        if (qX == NON_FINITE_INF || qY == NON_FINITE_INF) {
+            if (qX == NON_FINITE_INF && qY == NON_FINITE_INF)
+                return set(x)
+            this.setNaN()
+            env.signalInvalid(this)
+            return this
+        }
+
+        // Both are finite
+        val delta = qY - qX
+
+        when {
+            delta == 0 -> return set(x)
+
+            delta > 0 -> {
+                // Target exponent is larger: need to scale coefficient DOWN
+                // This means truncating with rounding
+                if (x.c256IsZero())
+                    return setZero(x.sign, qY, env)
+                // Scale down by delta positions
+                val residue = this.c256SetScaleDownPow10(x, delta)
+                qExp = qY
+                sign = x.sign
+                if (residue != Residue.EXACT)
+                    roundAndFinalizeShortCoeff(residue, env.decRounding, env)
+                return this
+            }
+
+            else -> {  // delta < 0
+                if (x.c256IsZero())
+                    return setZero(x.sign, qY, env)
+
+                // Target exponent is smaller: need to scale coefficient UP
+                val scaleAmount = -delta
+                val resultDigitLen = x.digitLen + scaleAmount
+
+                // Check if result would exceed precision
+                if (resultDigitLen > env.precision) {
+                    this.setNaN()
+                    env.signalInvalid(this)
+                    return this
+                }
+
+                // Scale up coefficient
+                this.c256SetScaleUpPow10(x, scaleAmount)
+                this.qExp = qY
+                this.sign = x.sign
+                check(digitLen <= env.precision)
+                return this
+            }
+        }
     }
 
     // IEEE754-2008 5.3.3

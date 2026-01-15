@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqNextPlus.decTest",
+        "dqQuantize.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -66,6 +66,7 @@ class TestDectest {
         "dqMinus.decTest",
         "dqMultiply.decTest",
         "dqNextMinus.decTest",
+        "dqNextPlus.decTest",
 
         "dqSubtract.decTest",
 
@@ -267,6 +268,7 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqqua003 quantize 0.1    1e+2   -> 0E+2 Inexact Rounded",
 
         "dqnextp192 nextplus   9.999999999999999999999999999999998E+6144  ->  9.999999999999999999999999999999999E+6144",
 
@@ -566,6 +568,7 @@ class TestDectest {
                 "minmag" -> MutDec().setMinimumMagnitudeNumber(op1, op2, env)
                 "nextminus" -> MutDec().setNextDown(op1, env)
                 "nextplus" -> MutDec().setNextUp(op1, env)
+                "quantize" -> MutDec().setQuantize(op1, op2, env)
                 else -> return
             }
             if (verbose)
