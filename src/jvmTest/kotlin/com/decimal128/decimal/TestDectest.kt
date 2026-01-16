@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqQuantize.decTest",
+        "dqReduce.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -67,6 +67,7 @@ class TestDectest {
         "dqMultiply.decTest",
         "dqNextMinus.decTest",
         "dqNextPlus.decTest",
+        "dqQuantize.decTest",
 
         "dqSubtract.decTest",
 
@@ -259,6 +260,8 @@ class TestDectest {
         "dqcms990 comparesig 10  # -> NaN Invalid_operation",
         "dqcms991 comparesig  # 10 -> NaN Invalid_operation",
         "dqcan244 comparesig  #7c400ff3ffff3fcff3fcff3fcff3fcff   -1000 -> #7c000ff3fcff3fcff3fcff3fcff3fcff Invalid_operation",
+
+        "dqred900 reduce  # -> NaN Invalid_operation",
     )
 
     @Test
@@ -268,6 +271,8 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqred152 reduce  9.999999999999999999999999000000000E+6140   -> 9.99999999999999999999999900000E+6140",
+
         "dqqua003 quantize 0.1    1e+2   -> 0E+2 Inexact Rounded",
 
         "dqnextp192 nextplus   9.999999999999999999999999999999998E+6144  ->  9.999999999999999999999999999999999E+6144",
@@ -569,6 +574,7 @@ class TestDectest {
                 "nextminus" -> MutDec().setNextDown(op1, env)
                 "nextplus" -> MutDec().setNextUp(op1, env)
                 "quantize" -> MutDec().setQuantize(op1, op2, env)
+                "reduce" -> MutDec().setStripTrailingZeros(op1, env)
                 else -> return
             }
             if (verbose)

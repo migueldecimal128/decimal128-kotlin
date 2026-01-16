@@ -205,6 +205,16 @@ class MutDec() : C256() {
         private const val MIN_MAG_NUM_OP = MAG_MASK or NUM_MASK
         private const val MAX_MAG_NUM_OP = MAX_MASK or MAG_MASK or NUM_MASK
 
+        private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
+        private const val S_U32_DIV_1E1 = 35
+
+        private const val M_U32_DIV_1E2 = 0x51EB851FL
+        private const val S_U32_DIV_1E2 = 37
+
+        private const val M_U32_DIV_1E4 = 0x346DC5D7L
+        private const val S_U32_DIV_1E4 = 43
+
+
     }
 
     // if the digitLen is non-zero then subtract 1
@@ -1059,6 +1069,71 @@ class MutDec() : C256() {
                 setNaNOperand(x, env)
         }
         return this
+    }
+
+    fun setStripTrailingZeros(x: MutDec, env: DecEnv): MutDec {
+        val qX = x.qExp
+        when {
+            x.isZero() -> return setZero(x.sign)
+            qX < NON_FINITE_INF -> {
+                var ctzd = 0
+                val t = env.decTemps.mdecArg1
+                var t0 = x
+                var m: Long
+                while (true) {
+                    m = DivDirect.divModX32(t, t0, 1_000_000_000L)
+                    if (m != 0L)
+                        break
+                    t0 = t
+                    ctzd += 9
+                }
+                ctzd += ctzd32(m.toInt())
+                // cap when qExp gets clamped
+                ctzd = min(ctzd, env.qMax - qX)
+                if (ctzd == 0)
+                    return set(x)
+                c256SetScaleDownPow10(x, ctzd)
+                qExp = qX + ctzd
+                sign = x.sign
+                return this
+            }
+            else -> return set(x, env)
+        }
+    }
+
+    fun ctzd32(n: Int): Int {
+        check(n > 0)
+        var d = n.toLong()
+        var ntzd = 0
+
+        var q: Long
+        var r: Long
+        var mask: Long
+
+        q = (d * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
+        r = d - (q * 1_0000)
+        mask = ((d - 10000) or (-r)) shr 63
+        d = (d and mask) or (q and mask.inv())
+        ntzd += 4 and (mask.inv()).toInt()
+
+        q = (d * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
+        r = d - (q * 1_0000)
+        mask = ((d - 10000) or (-r)) shr 63
+        d = (d and mask) or (q and mask.inv())
+        ntzd += 4 and (mask.inv()).toInt()
+
+        q = (d * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+        r = d - (q * 100)
+        mask = ((d - 100) or (-r)) shr 63
+        d = (d and mask) or (q and mask.inv())
+        ntzd += 2 and (mask.inv()).toInt()
+
+        q = (d * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+        r = d - (q * 10)
+        mask = ((d - 10) or (-r)) shr 63
+        ntzd += 1 and (mask.inv()).toInt()
+
+        return ntzd
     }
 
     fun setMinimum(x: MutDec, y: MutDec, env: DecEnv): MutDec =
