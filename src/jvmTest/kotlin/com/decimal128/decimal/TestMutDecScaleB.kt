@@ -41,7 +41,7 @@ class TestMutDecScaleB {
         val d = MutDec()
         d.set(bd)
         val s = MutDec()
-        s.scaleB(d, pow10, tc.env)
+        s.setScaleB(d, pow10, tc.env)
         val observed = (
                 if (s.isFinite())
                     BigDecimal(s.toString())

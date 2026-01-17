@@ -295,9 +295,10 @@ class MutDec() : C256() {
         //FIXME - see IEEE754r 6.2
     }
 
-    internal fun setNaN() {
+    internal fun setNaN(): MutDec {
         setZero()
         qExp = NON_FINITE_QNAN
+        return this
     }
 
     internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
@@ -1042,18 +1043,19 @@ class MutDec() : C256() {
     }
 
     // IEEE754-2008 5.3.3
-    fun scaleB(x: MutDec, pow10: Int, env: DecEnv) {
+    fun setScaleB(x: MutDec, pow10: Int, env: DecEnv): MutDec {
         set(x)
         when {
-            qExp <= NON_FINITE_INF -> {
+            qExp < NON_FINITE_INF -> {
                 val p10 = capExponentRange(pow10)
-                qExp += p10
+                qExp = capExponentRange(qExp + p10)
                 if (qExp > env.qMax || qExp < env.qTiny)
-                    finalize(env)
+                    return finalize(env)
             }
-            x.qExp <= NON_FINITE_QNAN -> {}
-            else -> sNaNOperand()
+            qExp == NON_FINITE_INF -> {}
+            else -> setNaNOperand(x, env)
         }
+        return this
     }
 
     // IEEE754-2008 5.3.3
@@ -1353,6 +1355,7 @@ class MutDec() : C256() {
     fun totalOrder(x: MutDec) {
         throw RuntimeException("not impl")
     }
+
     // 5.7.3 Decimal operation
     fun sameQuantum(x: MutDec): Boolean =
         (this.qExp == x.qExp) ||

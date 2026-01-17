@@ -66,6 +66,9 @@ private fun MutDec.roundAndFinalizeZero(inboundResidue: Residue, rounding: DecRo
 internal fun MutDec.finalize(env: DecEnv) = finalize(env.decRounding, env)
 
 internal fun MutDec.finalize(rounding: DecRounding, env: DecEnv): MutDec {
+    val qExp = this.qExp
+    val eExp = this.eExp
+    val digitLen = this.digitLen
     return when {
         qExp >= MIN_SPECIAL_VALUE -> this
         digitLen == 0 -> finalizeZero(env)
