@@ -403,6 +403,8 @@ class TestDectest {
             "rounding" -> {
                 require (value in validRoundingStrings)
                 rounding = value
+                if (verbose)
+                    println("rounding:$value")
             }
             "maxexponent" -> {
                 val e = value.toInt()
