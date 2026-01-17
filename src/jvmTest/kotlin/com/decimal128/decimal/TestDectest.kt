@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqToIntegral.decTest",
+        "dqSameQuantum.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -70,6 +70,7 @@ class TestDectest {
         "dqQuantize.decTest",
         "dqReduce.decTest",
         "dqSubtract.decTest",
+        "dqToIntegral.decTest",
 
         //"dqRemainder.decTest",
     )
@@ -579,6 +580,7 @@ class TestDectest {
                 "nextplus" -> MutDec().setNextUp(op1, env)
                 "quantize" -> MutDec().setQuantize(op1, op2, env)
                 "reduce" -> MutDec().setStripTrailingZeros(op1, env)
+                "samequantum" -> MutDec().set(if (op1.sameQuantum(op2)) 1 else 0)
                 "tointegralx" -> MutDec().setRoundToInteger(op1, env)
                 else -> return
             }

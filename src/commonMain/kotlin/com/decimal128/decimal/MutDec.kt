@@ -1354,7 +1354,9 @@ class MutDec() : C256() {
         throw RuntimeException("not impl")
     }
     // 5.7.3 Decimal operation
-    fun sameQuantum(x: MutDec) = (this.qExp == x.qExp)
+    fun sameQuantum(x: MutDec): Boolean =
+        (this.qExp == x.qExp) ||
+                (this.qExp >= NON_FINITE_QNAN && x.qExp >= NON_FINITE_QNAN)
 
     // FIXME ... implement this so that there are fewer memory allocations
     override fun toString(): String = toString(toEngineeringExp = false)
