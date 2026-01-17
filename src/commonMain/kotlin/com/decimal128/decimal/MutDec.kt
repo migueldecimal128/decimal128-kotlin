@@ -2,7 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
@@ -233,6 +232,13 @@ class MutDec() : C256() {
     fun setZero(sign: Boolean = false, qExp: Int = 0, env: DecEnv): MutDec {
         c256SetZero()
         this.qExp = max(min(qExp, env.qMax), env.qTiny)
+        this.sign = sign
+        return this
+    }
+
+    fun setOne(sign: Boolean = false): MutDec {
+        c256SetOne()
+        this.qExp = 0
         this.sign = sign
         return this
     }
@@ -827,7 +833,6 @@ class MutDec() : C256() {
 
 
     fun mutateRoundToIntegral(x: MutDec, rounding: DecRounding, env: DecEnv): MutDec {
-        //FIXME - deal with special values
         if (qExp < 0) {
             val residue = this.c256SetScaleDownPow10(x, -qExp)
             qExp = 0
@@ -1189,6 +1194,39 @@ class MutDec() : C256() {
             }
         }
         return setNaNOperand(x, y, env)
+    }
+
+    fun setRoundToInteger(x: MutDec, env: DecEnv) =
+        setRoundToInteger(x, env.decRounding, env)
+
+    fun setRoundToInteger(x: MutDec, rounding: DecRounding, env: DecEnv): MutDec {
+        if (x.qExp >= 0) // this handles all special values as well
+            return set(x, env)
+        val xSign = x.sign
+        if (x.c256IsZero())
+            return setZero(xSign)
+        val fracDigitLen = -x.qExp
+        if (fracDigitLen >= x.digitLen) {
+            // all fractional digits
+            val residue: Residue
+            if (fracDigitLen > x.digitLen)
+                residue = Residue.LT_HALF
+            else {
+                residue = Residue.residueFrom(x)
+                check(residue != Residue.EXACT)
+            }
+            val roundUp = residue.ulpRoundUp(rounding.negate(xSign), 0L)
+            if (! roundUp)
+                setZero(xSign)
+            else
+                setOne(xSign)
+            return env.signalInexact(this)
+        }
+        // integral and fractional digits
+        val residue = c256SetScaleDownPow10(x, fracDigitLen)
+        qExp = 0
+        sign = xSign
+        return roundAndFinalize(residue, rounding, env)
     }
 
 

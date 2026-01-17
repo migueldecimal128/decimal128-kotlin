@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqReduce.decTest",
+        "dqToIntegral.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -68,14 +68,13 @@ class TestDectest {
         "dqNextMinus.decTest",
         "dqNextPlus.decTest",
         "dqQuantize.decTest",
-
+        "dqReduce.decTest",
         "dqSubtract.decTest",
 
         //"dqRemainder.decTest",
     )
 
     val ignoredCases = arrayOf(
-
         "dqabs900 abs  # -> NaN Invalid_operation", // IEEE says to ignore abs sign change
 
         "dqabs526 abs  -NaN22  -> -NaN22",
@@ -271,6 +270,9 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqintx033 tointegralx     -0.1   -> -0  Inexact Rounded",
+        "dqintx003 tointegralx      0.1   ->  0  Inexact Rounded",
+
         "dqred152 reduce  9.999999999999999999999999000000000E+6140   -> 9.99999999999999999999999900000E+6140",
 
         "dqqua003 quantize 0.1    1e+2   -> 0E+2 Inexact Rounded",
@@ -575,6 +577,7 @@ class TestDectest {
                 "nextplus" -> MutDec().setNextUp(op1, env)
                 "quantize" -> MutDec().setQuantize(op1, op2, env)
                 "reduce" -> MutDec().setStripTrailingZeros(op1, env)
+                "tointegralx" -> MutDec().setRoundToInteger(op1, env)
                 else -> return
             }
             if (verbose)
