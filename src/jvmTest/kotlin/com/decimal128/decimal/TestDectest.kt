@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqRemainderNear.decTest",
+        "dqDivideInt.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -69,12 +69,11 @@ class TestDectest {
         "dqNextPlus.decTest",
         "dqQuantize.decTest",
         "dqReduce.decTest",
+        "dqRemainderNear.decTest",
         "dqSameQuantum.decTest",
         "dqScaleB.decTest",
         "dqSubtract.decTest",
         "dqToIntegral.decTest",
-
-        //"dqRemainder.decTest",
     )
 
     val ignoredCases = arrayOf(
@@ -269,6 +268,25 @@ class TestDectest {
 
         "dqrmn1000 remaindernear 10  # -> NaN Invalid_operation",
         "dqrmn1001 remaindernear  # 10 -> NaN Invalid_operation",
+
+        "dqdvi274 divideint 9e384    1       -> NaN Division_impossible",
+        "dqdvi275 divideint 9.9e384  1       -> NaN Division_impossible",
+        "dqdvi276 divideint 9.99e384 1       -> NaN Division_impossible",
+        "dqdvi277 divideint 9.999999999999999e384 1 -> NaN Division_impossible",
+
+        "dqdvi280 divideint 0.1 9e-383       -> NaN Division_impossible",
+        "dqdvi281 divideint 0.1 99e-383      -> NaN Division_impossible",
+        "dqdvi282 divideint 0.1 999e-383     -> NaN Division_impossible",
+        "dqdvi283 divideint 0.1 9e-382       -> NaN Division_impossible",
+        "dqdvi284 divideint 0.1 99e-382      -> NaN Division_impossible",
+        "dqdvi332  divideint  1234567987654321987654321890123456   0.1  ->  NaN Division_impossible",
+        "dqdvi333  divideint  1234567987654321987654321890123456   0.01 ->  NaN Division_impossible",
+        "dqdvi1051 divideint  1e+277  1e-311 ->  NaN Division_impossible",
+        "dqdvi1052 divideint  1e+277 -1e-311 ->  NaN Division_impossible",
+        "dqdvi1053 divideint -1e+277  1e-311 ->  NaN Division_impossible",
+        "dqdvi1054 divideint -1e+277 -1e-311 ->  NaN Division_impossible",
+        "dqdvi900 divideint  10  # -> NaN Invalid_operation",
+        "dqdvi901 divideint   # 10 -> NaN Invalid_operation",
         )
 
     // Colishaw GDAS says that NaN triggers INVALID
@@ -331,6 +349,9 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqdvi531 divideint 5.00 1E-3    -> 5000",
+        "dqdvi093 divideint  0.00E+9       1    ->  0",
+
         "dqrmn1105  remaindernear  1234567890123456789012345678901234  4.000000000000000000000000000000001  ->   1.691358027469135802746913580274692",
         "dqrmn1101  remaindernear  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  -0.234567890123456789012345678901233",
         "dqrmn772  remaindernear  1234500000000000000000067890123456   0.1  ->  NaN Division_impossible",
@@ -641,6 +662,7 @@ class TestDectest {
                 "copyabs" -> MutDec().setAbs(op1)
                 "copynegate" -> MutDec().setNegate(op1)
                 "copysign" -> MutDec().set(op1, op2.sign)
+                "divideint", -> MutDec().setDivInt(op1, op2, env)
                 "apply" -> MutDec().set(op1)
                 "logb" -> MutDec().setLogB(op1, env)
                 "max" -> MutDec().setMaximumNumber(op1, op2, env)

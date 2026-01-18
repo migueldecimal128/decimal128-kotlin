@@ -315,7 +315,7 @@ class MutDec() : C256() {
         qExp = NON_FINITE_SNAN
     }
 
-    fun setInfinite(sign: Boolean = false) {
+    fun setInfinite(sign: Boolean = false): MutDec {
         // NOTE miguel 2025-09-30
         //  Infinity must have coefficient zero (not one) because that is
         //  what is required for BID and DPD encoding.
@@ -324,6 +324,7 @@ class MutDec() : C256() {
         this.c256SetZero()
         this.qExp = NON_FINITE_INF
         this.sign = sign
+        return this
     }
 
     fun set(n: Int): MutDec = set(n.toLong())
@@ -361,12 +362,14 @@ class MutDec() : C256() {
     }
 
     fun set(x: MutDec, env: DecEnv): MutDec {
-        c256Set(x)
-        this.qExp = x.qExp
-        this.sign = x.sign
-        if (qExp == NON_FINITE_SNAN) {
-            qExp = NON_FINITE_QNAN
-            env.signalInvalid(this)
+        if (this !== x) {
+            c256Set(x)
+            this.qExp = x.qExp
+            this.sign = x.sign
+            if (qExp == NON_FINITE_SNAN) {
+                qExp = NON_FINITE_QNAN
+                env.signalInvalid(this)
+            }
         }
         return this
     }
@@ -642,6 +645,59 @@ class MutDec() : C256() {
             else -> setNaNOperand(x, y, env)
         }
         return this
+    }
+
+    fun setDivInt(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        val qX = x.qExp
+        val qY = y.qExp
+
+        when {
+            qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
+                val tempEnv = DecEnv.INTERNAL_TMP_ENV
+
+                this.setDiv(x, y, tempEnv)
+                this.setRoundToInteger(this, DecRounding.ROUND_TOWARD_ZERO, tempEnv)
+
+                // Normalize integer toward qExp = 0 using available precision
+                if (this.qExp > 0) {
+                    if (!this.isZero()) {
+                        val headroom = env.precision - this.digitLen
+                        val scaleAmount = min(this.qExp, headroom)
+                        if (scaleAmount > 0) {
+                            this.c256SetScaleUpPow10(this, scaleAmount)
+                            this.qExp -= scaleAmount
+                        }
+                    } else {
+                        qExp = 0
+                    }
+                }
+                return this
+            }
+
+            qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN ->
+                return setNaNOperand(x, y, env)
+
+            (x.isZero() && y.isZero()) ||
+                    (qX == NON_FINITE_INF && qY == NON_FINITE_INF) ->
+                return env.signalInvalid(setNaN())
+
+            y.isZero() -> {
+                setInfinite(x.sign xor y.sign)
+                if (qX < NON_FINITE_INF)
+                    env.signalDivByZero(this)
+                return this
+            }
+
+
+            qX == NON_FINITE_INF ->
+                return setInfinite(x.sign xor y.sign)
+
+            else -> {
+                check(qY == NON_FINITE_INF)
+                return setZero(x.sign xor y.sign)
+            }
+
+        }
     }
 
     fun setReciprocal(x: MutDec, env: DecEnv): MutDec {
