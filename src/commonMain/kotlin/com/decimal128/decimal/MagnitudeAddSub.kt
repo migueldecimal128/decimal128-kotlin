@@ -90,7 +90,11 @@ object MagnitudeAddSub {
 
         if (x.qExp > y.qExp) {
             val gap = x.qExp - y.qExp
-            val headroomWithGuard = 1 + env.precision - x.digitLen
+            val headroomWithGuard = if (y.digitLen > env.precision) {
+                y.digitLen - x.digitLen  // Just make room for all of y
+            } else {
+                1 + env.precision - x.digitLen  // Standard with guard
+            }
             val shiftLeft = if (headroomWithGuard > 0) {
                 min(gap, headroomWithGuard)
             } else {

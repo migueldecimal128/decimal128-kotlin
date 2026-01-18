@@ -50,10 +50,9 @@ object U256Sub {
     fun u256SubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
         check(scaleDelta > 0)
         check(scaleDelta <= 40)
-        check(x.digitLen + scaleDelta < 79)
+        check(x.digitLen + scaleDelta <= 77)
 
         check((x.dw3 or x.dw2) == 0L)
-        check((y.dw3 or y.dw2) == 0L)
         check(x.c256HasValidLengths())
         check(y.c256HasValidLengths())
         check(z.c256HasValidLengths())

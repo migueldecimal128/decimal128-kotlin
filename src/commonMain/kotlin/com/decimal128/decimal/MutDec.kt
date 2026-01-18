@@ -37,7 +37,7 @@ class MutDec() : C256() {
     companion object {
 
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecEnv): MutDec {
-            //check (x.digitLen <= 38) // x is allowed more digits because of FMA
+            check (x.digitLen <= 76) // x is allowed more digits because of FMA
             check(y.digitLen <= 38)
             val qMax = max(x.qExp, y.qExp)
             when {
@@ -1230,6 +1230,43 @@ class MutDec() : C256() {
         sign = xSign
         return roundAndFinalize(residue, rounding, env)
     }
+
+    fun setRemainder(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        val qX = x.qExp
+        val qY = y.qExp
+        when {
+            qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
+                // Compute n = nearest integer to x/y (ties to even)
+                // setRemainder is an EXACT operation, so we will use a temp
+                // environment so that INEXACT flag/trap does not get signaled.
+                // use INTERNAL_TMP_ENV so that flag-setting
+                val n = env.decTemps.mdecArg1.setDiv(x, y, DecEnv.INTERNAL_TMP_ENV)
+                n.setRoundToInteger(n, DecRounding.ROUND_TIES_TO_EVEN, DecEnv.INTERNAL_TMP_ENV)
+
+                // save xSign ... in case of aliasing this === x
+                val xSign = x.sign
+                // Compute r = x - n*y
+                // (-n) * y + x
+                n.sign = !n.sign // negate n
+                this.setFma(n, y, x, DecEnv.INTERNAL_TMP_ENV)
+
+                if (this.c256IsZero()) {
+                    this.qExp = min(qX, qY)
+                    this.sign = xSign
+                }
+                return this
+            }
+            qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN ->
+                return setNaNOperand(x, y, env)
+            qX == NON_FINITE_INF || y.isZero() ->
+                return env.signalInvalid(setNaN())
+            else -> { // qY == NON_FINITE_INF ->
+                check(qY == NON_FINITE_INF)
+                return set(x)
+            }
+        }
+    }
+
 
 
     fun compareQuiet754(other: MutDec, env: DecEnv): Compare754Result =

@@ -253,16 +253,34 @@ object U256Fms {
 
         val pp00Hi = unsignedMulHi(y0, p0)
         val pp00Lo = y0 * p0
+
+        val pp10Hi = unsignedMulHi(y1, p0)
         val pp10Lo = y1 * p0
+
+        val pp01Hi = unsignedMulHi(y0, p1)
         val pp01Lo = y0 * p1
 
+        val pp11Hi = unsignedMulHi(y1, p1)  // NEW!
+        val pp11Lo = y1 * p1                // NEW!
+
+// Accumulate properly across all 4 limbs
         val f0 = pp00Lo
-        val f1 = pp00Hi + pp10Lo + pp01Lo
+        val (carry1a, sum1a) = sumU64(pp00Hi, pp10Lo)
+        val (carry1b, f1) = sumU64(sum1a, pp01Lo)
+        val carry1 = carry1a + carry1b
+
+        val (carry2a, sum2a) = sumU64(pp10Hi, pp01Hi, carry1)
+        val (carry2b, f2) = sumU64(sum2a, pp11Lo)
+        val carry2 = carry2a + carry2b
+
+        val f3 = carry2 + pp11Hi
+
+// Now subtract from x
         val (borrow0, d0) = diffU64(x.dw0, f0)
         val (borrow1, d1) = diffU64withBorrow(x.dw1, f1, borrow0)
-        val (borrow2, d2) = diffU64(x.dw2, borrow1)
-        val (borrow3, d3) = diffU64(x.dw3, borrow2)
-        check (d3 == 0L)
+        val (borrow2, d2) = diffU64withBorrow(x.dw2, f2, borrow1)
+        val (borrow3, d3) = diffU64withBorrow(x.dw3, f3, borrow2)
+
         z.c256Set256(d3, d2, d1, d0)
     }
 

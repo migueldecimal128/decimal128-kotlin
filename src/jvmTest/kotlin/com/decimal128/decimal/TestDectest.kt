@@ -40,7 +40,7 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqScaleB.decTest",
+        "dqRemainderNear.decTest",
 
         "dqAbs.decTest",
         "dqAdd.decTest",
@@ -70,6 +70,7 @@ class TestDectest {
         "dqQuantize.decTest",
         "dqReduce.decTest",
         "dqSameQuantum.decTest",
+        "dqScaleB.decTest",
         "dqSubtract.decTest",
         "dqToIntegral.decTest",
 
@@ -257,8 +258,18 @@ class TestDectest {
         "dqscb126 scaleb  1.23   -12357       ->  NaN Invalid_operation",
         "dqscb127 scaleb  1.23   -12358       ->  NaN Invalid_operation",
 
+        // Colishaw says that this is impossible in his implementation ... works for me
+        "dqrmn421 remaindernear   1E+6144        1  ->   NaN Division_impossible",
+        "dqrmn772  remaindernear  1234500000000000000000067890123456   0.1  ->  NaN Division_impossible",
+        "dqrmn773  remaindernear  1234500000000000000000067890123456   0.01 ->  NaN Division_impossible",
+        "dqrmn1051 remaindernear  1e+277  1e-311 ->  NaN Division_impossible",
+        "dqrmn1052 remaindernear  1e+277 -1e-311 ->  NaN Division_impossible",
+        "dqrmn1053 remaindernear -1e+277  1e-311 ->  NaN Division_impossible",
+        "dqrmn1054 remaindernear -1e+277 -1e-311 ->  NaN Division_impossible",
 
-    )
+        "dqrmn1000 remaindernear 10  # -> NaN Invalid_operation",
+        "dqrmn1001 remaindernear  # 10 -> NaN Invalid_operation",
+        )
 
     // Colishaw GDAS says that NaN triggers INVALID
     // in more operations than IEEE.
@@ -320,6 +331,15 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqrmn1105  remaindernear  1234567890123456789012345678901234  4.000000000000000000000000000000001  ->   1.691358027469135802746913580274692",
+        "dqrmn1101  remaindernear  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  -0.234567890123456789012345678901233",
+        "dqrmn772  remaindernear  1234500000000000000000067890123456   0.1  ->  NaN Division_impossible",
+
+        "dqrmn724 remaindernear  NaN -0      ->  NaN",
+        "dqrmn083 remaindernear  0.00E+9       1  -> 0",
+        "dqrmn007 remaindernear  1     3    ->  1",
+        "dqrmn003 remaindernear  1     2    ->  1",
+
         "dqscb121 scaleb  1.23    12356       ->  Infinity Overflow Inexact Rounded",
 
         "dqintx033 tointegralx     -0.1   -> -0  Inexact Rounded",
@@ -638,6 +658,7 @@ class TestDectest {
                     val pow10 = operand2.toInt()
                     MutDec().setScaleB(op1, pow10, env)
                 }
+                "remaindernear" -> MutDec().setRemainder(op1, op2, env)
                 else -> return
             }
             if (verbose)
