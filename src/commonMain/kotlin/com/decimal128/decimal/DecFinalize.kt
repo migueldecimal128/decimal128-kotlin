@@ -23,14 +23,14 @@ private fun MutDec.roundAndFinalizeSubnormalUnderflowBoundary(inboundResidue: Re
 private fun MutDec.roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
     // non-zero subnormal
     val truncationNeeded = env.qTiny - qExp
-    check (truncationNeeded < digitLen)
+    verify { truncationNeeded < digitLen }
     var totalResidue = inboundResidue
     if (truncationNeeded > 0) {
         val scaleResidue = U256ScalePow10.u256ScaleDownPow10(this, this, truncationNeeded)
         qExp += truncationNeeded
-        check(digitLen > 0)
-        check(digitLen < env.precision)
-        check(qExp == env.qTiny)
+        verify { digitLen > 0 }
+        verify { digitLen < env.precision }
+        verify { qExp == env.qTiny }
         totalResidue = scaleResidue.merge(inboundResidue)
     }
     if (totalResidue == EXACT) {
@@ -43,11 +43,11 @@ private fun MutDec.roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: 
     if (roundUp) {
         c256MutateIncrement()
         if (digitLen > env.precision) {
-            check(digitLen == env.precision + 1)
+            verify { digitLen == env.precision + 1 }
             // if we rolled into another digit because of roundup
             // then the result is definitely divisible by 10
             val residueExact = U256ScalePow10.u256ScaleDownPow10(this, this, 1)
-            check(residueExact == Residue.EXACT)
+            verify { residueExact == EXACT }
             ++qExp
         }
     }
@@ -56,7 +56,7 @@ private fun MutDec.roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: 
 
 private fun MutDec.roundAndFinalizeZero(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
     // since the coefficient == 0 the inboundResidue must be EXACT
-    check (inboundResidue == EXACT)
+    verify { inboundResidue == EXACT }
     qExp = max(min(qExp, env.qMax), env.qTiny)
     return this
 }
@@ -87,7 +87,7 @@ private fun MutDec.finalizeZero(env: DecEnv): MutDec {
 
 private fun MutDec.finalizeFnzLongCoeff(rounding: DecRounding, env: DecEnv): MutDec {
     val excessDigitCount = digitLen - env.precision
-    check (excessDigitCount > 0)
+    verify { excessDigitCount > 0 }
     val residue = U256ScalePow10.u256ScaleDownPow10(this, this, excessDigitCount)
     qExp += excessDigitCount
     return roundAndFinalize(residue, rounding, env)
@@ -105,8 +105,8 @@ private fun MutDec.finalizeOverflow(rounding: DecRounding, env: DecEnv): MutDec 
 
 private fun MutDec.roundAndFinalizeTiny(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
     // 7.5.1: subnormal rounding (tiny result stays nonzero)
-    check (eExp < env.eMin)
-    check(digitLen <= env.precision)
+    verify { eExp < env.eMin }
+    verify { digitLen <= env.precision }
     val truncationNeeded = env.qTiny - qExp
     return when {
         truncationNeeded < 0 && inboundResidue == EXACT -> finalizeFnzSubnormal(env)
@@ -119,12 +119,12 @@ private fun MutDec.roundAndFinalizeTiny(inboundResidue: Residue, rounding: DecRo
 
 private fun MutDec.finalizeFnzClampHighExp(env: DecEnv): MutDec {
     // clamp/fold-over
-    check (eExp <= env.eMax && qExp >= env.qMax)
+    verify { eExp <= env.eMax && qExp >= env.qMax }
     val qExcess = qExp - env.qMax
     U256ScalePow10.u256ScaleUpPow10(this, this, qExcess)
-    check (digitLen <= env.precision)
+    verify { digitLen <= env.precision }
     qExp -= qExcess
-    check (qExp == env.qMax)
+    verify { qExp == env.qMax }
     return this
 }
 
@@ -154,20 +154,20 @@ internal fun MutDec.roundAndFinalize2(residue: Residue, rounding: DecRounding, e
 }
 
 private fun MutDec.roundAndFinalizeFnzLongCoeff(inboundResidue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
-    check (inboundResidue != EXACT)
+    verify { inboundResidue != EXACT }
     val excessDigitCount = digitLen - env.precision
-    check (excessDigitCount > 0)
+    verify { excessDigitCount > 0 }
     val newResidue = U256ScalePow10.u256ScaleDownPow10(this, this, excessDigitCount)
     val totalResidue = newResidue.merge(inboundResidue)
-    check (totalResidue != EXACT)
-    check (digitLen == env.precision)
+    verify { totalResidue != EXACT }
+    verify { digitLen == env.precision }
     qExp += excessDigitCount
     return roundAndFinalizeFnzValidCoeff(totalResidue, rounding, env)
 }
 
 private fun MutDec.roundAndFinalizeFnzValidCoeff(residue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
-    check (residue != EXACT)
-    check (digitLen == env.precision)
+    verify { residue != EXACT }
+    verify { digitLen == env.precision }
     if (qExp < env.qTiny)
         return roundAndFinalizeTiny(residue, rounding, env)
     val roundUp = residue.ulpRoundUp(rounding.negate(sign), dw0)
@@ -183,7 +183,7 @@ private fun MutDec.roundAndFinalizeFnzValidCoeff(residue: Residue, rounding: Dec
             ++qExp
         }
     }
-    check (digitLen == env.precision)
+    verify { digitLen == env.precision }
     return when {
         // these checks can be done with qExp instead of eExp because digitLen == env.precision
         qExp > env.qMax -> finalizeOverflow(rounding, env)
@@ -193,9 +193,9 @@ private fun MutDec.roundAndFinalizeFnzValidCoeff(residue: Residue, rounding: Dec
 }
 
 internal fun MutDec.roundAndFinalizeShortCoeff(residue: Residue, rounding: DecRounding, env: DecEnv): MutDec {
-    check (residue != EXACT)
-    check (digitLen < env.precision)
-    check (qExp <= env.qMax && qExp >= env.qTiny)
+    verify { residue != EXACT }
+    verify { digitLen < env.precision }
+    verify { qExp <= env.qMax && qExp >= env.qTiny }
     val roundUp = residue.ulpRoundUp(rounding.negate(sign), dw0)
     if (roundUp)
         c256MutateIncrement()

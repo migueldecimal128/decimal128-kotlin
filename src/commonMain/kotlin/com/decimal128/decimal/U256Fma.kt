@@ -8,16 +8,16 @@ import com.decimal128.decimal.U256Pow10.POW10
 object U256Fma {
 
     fun u256Fma(z: C256, x: C256, y: C256, a: C256) {
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(a.c256HasValidLengths())
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { a.c256HasValidLengths() }
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
         val mBitLen = m.bitLen
         val nBitLen = n.bitLen
-        check(mBitLen >= nBitLen)
+        verify { mBitLen >= nBitLen }
         val aBitLen = a.bitLen
         val m0 = m.dw0
         val m1 = m.dw1
@@ -72,6 +72,7 @@ object U256Fma {
                         n1, n0,
                         a.dw3, a.dw2, a1, a0
                     )
+
                 (mBitLen <= 192) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -79,7 +80,8 @@ object U256Fma {
                         n1, n0,
                         a.dw3, a.dw2, a1, a0
                     )
-                else ->  throw RuntimeException("coeff overflow")
+
+                else -> throw RuntimeException("coeff overflow")
             }
             return
         }
@@ -87,10 +89,10 @@ object U256Fma {
     }
 
     fun u256FmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
-        check(pow10 >= 0)
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(a.c256HasValidLengths())
+        verify { pow10 >= 0 }
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { a.c256HasValidLengths() }
         val xBitLen = x.bitLen
         val aBitLen = a.bitLen
         val p10BitLen = pow10BitLen(pow10)
@@ -111,28 +113,36 @@ object U256Fma {
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64 && aBitLen <= 128) ->
-                    _fma1x1x2(z, maxFusedBitLen,
+                    _fma1x1x2(
+                        z, maxFusedBitLen,
                         x0,
                         p0,
                         a1, a0
                     )
+
                 (xBitLen <= 128 && aBitLen <= 192) ->
-                    _fma2x1x3(z, maxFusedBitLen,
+                    _fma2x1x3(
+                        z, maxFusedBitLen,
                         x1, x0,
                         p0,
                         a.dw2, a1, a0
                     )
+
                 (xBitLen <= 192) ->
-                    _fma3x1x4(z, maxFusedBitLen,
+                    _fma3x1x4(
+                        z, maxFusedBitLen,
                         x.dw2, x1, x0,
                         p0,
                         a.dw3, a.dw2, a1, a0
                     )
+
                 else ->
-                    _fma4x1x4(z, maxFusedBitLen,
+                    _fma4x1x4(
+                        z, maxFusedBitLen,
                         x.dw3, x.dw2, x1, x0,
                         p0,
-                        a.dw3, a.dw2, a1, a0)
+                        a.dw3, a.dw2, a1, a0
+                    )
             }
             return
         }
@@ -145,6 +155,7 @@ object U256Fma {
                         x0,
                         a.dw2, a1, a0
                     )
+
                 (xBitLen <= 128) ->
                     _fma2x2x4(
                         z, maxFusedBitLen,
@@ -152,6 +163,7 @@ object U256Fma {
                         p1, p0,
                         a.dw3, a.dw2, a1, a0
                     )
+
                 (xBitLen <= 192) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -159,7 +171,8 @@ object U256Fma {
                         p1, p0,
                         a.dw3, a.dw2, a1, a0
                     )
-                else ->  throw RuntimeException("coeff overflow")
+
+                else -> throw RuntimeException("coeff overflow")
             }
             return
         }
@@ -173,6 +186,7 @@ object U256Fma {
                         x0,
                         a.dw3, a.dw2, a1, a0
                     )
+
                 (xBitLen <= 128) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -180,6 +194,7 @@ object U256Fma {
                         x1, x0,
                         a.dw3, a.dw2, a1, a0
                     )
+
                 else -> throw RuntimeException("coeff overflow")
             }
             return
@@ -199,9 +214,9 @@ object U256Fma {
     }
 
     fun u256FmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
-        check(pow10 >= 0)
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
+        verify { pow10 >= 0 }
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
         val xBitLen = x.bitLen
         val aBitLen = (
                 if (a1 == 0L)
@@ -225,28 +240,36 @@ object U256Fma {
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64) ->
-                    _fma1x1x2(z, maxFusedBitLen,
+                    _fma1x1x2(
+                        z, maxFusedBitLen,
                         x0,
                         p0,
                         a1, a0
                     )
+
                 (xBitLen <= 128) ->
-                    _fma2x1x3(z, maxFusedBitLen,
+                    _fma2x1x3(
+                        z, maxFusedBitLen,
                         x1, x0,
                         p0,
                         0L, a1, a0
                     )
+
                 (xBitLen <= 192) ->
-                    _fma3x1x4(z, maxFusedBitLen,
+                    _fma3x1x4(
+                        z, maxFusedBitLen,
                         x.dw2, x1, x0,
                         p0,
                         0L, 0L, a1, a0
                     )
+
                 else ->
-                    _fma4x1x4(z, maxFusedBitLen,
+                    _fma4x1x4(
+                        z, maxFusedBitLen,
                         x.dw3, x.dw2, x1, x0,
                         p0,
-                        0L, 0L, a1, a0)
+                        0L, 0L, a1, a0
+                    )
             }
             return
         }
@@ -259,6 +282,7 @@ object U256Fma {
                         x0,
                         0L, a1, a0
                     )
+
                 (xBitLen <= 128) ->
                     _fma2x2x4(
                         z, maxFusedBitLen,
@@ -266,6 +290,7 @@ object U256Fma {
                         p1, p0,
                         0L, 0L, a1, a0
                     )
+
                 (xBitLen <= 192) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -273,7 +298,8 @@ object U256Fma {
                         p1, p0,
                         0L, 0L, a1, a0
                     )
-                else ->  throw RuntimeException("coeff overflow")
+
+                else -> throw RuntimeException("coeff overflow")
             }
             return
         }
@@ -287,6 +313,7 @@ object U256Fma {
                         x0,
                         0L, 0L, a1, a0
                     )
+
                 (xBitLen <= 128) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -294,6 +321,7 @@ object U256Fma {
                         x1, x0,
                         0L, 0L, a1, a0
                     )
+
                 else -> throw RuntimeException("coeff overflow")
             }
             return
@@ -313,9 +341,9 @@ object U256Fma {
     }
 
     fun u256FmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
-        check(pow10 >= 0)
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
+        verify { pow10 >= 0 }
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
         val xBitLen = x.bitLen
         if (xBitLen == 0) {
             z.c256Set64(a0)
@@ -338,28 +366,36 @@ object U256Fma {
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64) ->
-                    _fma1x1x2(z, maxFusedBitLen,
+                    _fma1x1x2(
+                        z, maxFusedBitLen,
                         x0,
                         p0,
                         0L, a0
                     )
+
                 (xBitLen <= 128) ->
-                    _fma2x1x3(z, maxFusedBitLen,
+                    _fma2x1x3(
+                        z, maxFusedBitLen,
                         x1, x0,
                         p0,
                         0L, 0L, a0
                     )
+
                 (xBitLen <= 192) ->
-                    _fma3x1x4(z, maxFusedBitLen,
+                    _fma3x1x4(
+                        z, maxFusedBitLen,
                         x.dw2, x1, x0,
                         p0,
                         0L, 0L, 0L, a0
                     )
+
                 else ->
-                    _fma4x1x4(z, maxFusedBitLen,
+                    _fma4x1x4(
+                        z, maxFusedBitLen,
                         x.dw3, x.dw2, x1, x0,
                         p0,
-                        0L, 0L, 0L, a0)
+                        0L, 0L, 0L, a0
+                    )
             }
             return
         }
@@ -372,6 +408,7 @@ object U256Fma {
                         x0,
                         0L, 0L, a0
                     )
+
                 (xBitLen <= 128) ->
                     _fma2x2x4(
                         z, maxFusedBitLen,
@@ -379,6 +416,7 @@ object U256Fma {
                         p1, p0,
                         0L, 0L, 0L, a0
                     )
+
                 (xBitLen <= 192) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -386,7 +424,8 @@ object U256Fma {
                         p1, p0,
                         0L, 0L, 0L, a0
                     )
-                else ->  throw RuntimeException("coeff overflow")
+
+                else -> throw RuntimeException("coeff overflow")
             }
             return
         }
@@ -400,6 +439,7 @@ object U256Fma {
                         x0,
                         0L, 0L, 0L, a0
                     )
+
                 (xBitLen <= 128) ->
                     _fma3x2x4(
                         z, maxFusedBitLen,
@@ -407,6 +447,7 @@ object U256Fma {
                         x1, x0,
                         0L, 0L, 0L, a0
                     )
+
                 else -> throw RuntimeException("coeff overflow")
             }
             return
@@ -481,7 +522,7 @@ object U256Fma {
         val pp22Lo = x2 * y2
         val (carry4, f4) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         if ((carry4 or f4) == 0L) {
-            check(maxFusedBitLen in 257..258)
+            verify { maxFusedBitLen in 257..258 }
             f.c256Set256(f3, f2, f1, f0)
             return
         }
@@ -530,7 +571,7 @@ object U256Fma {
         val (carry3, f3) = sumU64(carry2, pp20Hi, pp30Lo, a3)
         val (carry4, f4) = sumU64(carry3, pp30Hi)
         if ((carry4 or f4) == 0L) {
-            check(maxFusedBitLen in 257..258)
+            verify { maxFusedBitLen in 257..258 }
             f.c256Set256(f3, f2, f1, f0)
             return
         }
@@ -583,7 +624,7 @@ object U256Fma {
         val (carry3, f3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo, a3)
         val (carry4, f4) = sumU64(carry3, pp21Hi)
         if ((carry4 or f4) == 0L) {
-            check(maxFusedBitLen in 257..258)
+            verify { maxFusedBitLen in 257..258 }
             f.c256Set256(f3, f2, f1, f0)
             return
         }
@@ -629,7 +670,7 @@ object U256Fma {
         }
         val (carry3, f3) = sumU64(carry2, pp20Hi, a3)
         if (carry3 == 0L) {
-            check(maxFusedBitLen in 257..258)
+            verify { maxFusedBitLen in 257..258 }
             f.c256Set256(f3, f2, f1, f0)
             return
         }
@@ -677,7 +718,7 @@ object U256Fma {
         }
         val (carry3, f3) = sumU64(carry2, pp11Hi, a3)
         if (carry3 == 0L) {
-            check(maxFusedBitLen in 257..258)
+            verify { maxFusedBitLen in 257..258 }
             f.c256Set256(f3, f2, f1, f0)
             return
         }

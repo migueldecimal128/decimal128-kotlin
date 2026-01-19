@@ -157,7 +157,7 @@ inline fun sumU64(dwA:ULong, dwB:ULong) :Pair<ULong, ULong> {
 
 
 /*inline*/ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
-    check(borrowIn in 0..1)
+    verify { borrowIn in 0..1 }
     // First subtract b from a:
     val diffAB = dwA - dwB
     val borrow1 = if (unsignedLT(dwA, dwB)) 1L else 0L
@@ -593,10 +593,10 @@ inline fun ucmp128(x1: ULong, x0:ULong, y1: ULong, y0: ULong): Int {
 }
 
 fun ucmp128ScalePow10(x1: ULong, x0: ULong, y1: ULong, y0: ULong, pow10: Int): Int {
-    check (pow10 in 1..<MIN_POW10_DIGIT_LEN_192)
+    verify { pow10 in 1..<MIN_POW10_DIGIT_LEN_192 }
     if (pow10 < MIN_POW10_DIGIT_LEN_128)
         return ucmp128_128x64(x1, x0, y1, y0, POW10[pow10].toULong())
-    check (y1 == 0uL)
+    verify { y1 == 0uL }
     val pow10Offset = U256Pow10.pow10Offset(pow10)
     val p0 = POW10[pow10Offset].toULong()
     val p1 = POW10[pow10Offset + 1].toULong()

@@ -53,7 +53,7 @@ object SerDeBid128 {
             qExp < MIN_SPECIAL_VALUE -> {
                 require(qExp in decimal128.qTiny..decimal128.qMax)
                 val biasedQExp = qExp - decimal128.qTiny // remember qTiny is negative
-                check((biasedQExp and 0x3000) != 0x3000)
+                verify { (biasedQExp and 0x3000) != 0x3000 }
                 if ((mostSigBits4 and 0x08) == 0)
                     (biasedQExp shl 3) or mostSigBits4
                 else

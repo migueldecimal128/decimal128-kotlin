@@ -174,7 +174,7 @@ object DecSerdeBid128 {
             qExp < MIN_SPECIAL_VALUE -> {
                 require(qExp in QTINY_Neg6176..QMAX_6111)
                 val biasedQExp = qExp - QTINY_Neg6176 // remember qTiny is negative
-                check((biasedQExp and 0x3000) != 0x3000)
+                verify { (biasedQExp and 0x3000) != 0x3000 }
                 if ((mostSigBits4 and 0x08) == 0)
                     (biasedQExp shl 3) or mostSigBits4
                 else
@@ -306,7 +306,7 @@ object DecSerdeBid128 {
         val bias = 6176
         val w5 = 17 // w+5, combination field width in bits
         val t = 110 // trailing significand field width in bits
-        check (1 + w5 + t == k)
+        verify { 1 + w5 + t == k }
         val coeffMaxHi: ULong
         val coeffMaxLo: ULong
         val payloadMaxHi: ULong
@@ -351,6 +351,7 @@ object DecSerdeBid128 {
                 // coeff/significant is 3 + 50 == 53 ... but that's not all ... see below
                 coeffHi = (combination and 0x07).toULong()
             }
+
             combination shr (w5 - 4) != 0b1111 -> {
                 // IEEE754-2019 3.5.2 c) 2) ii) -- p 21
                 //  If G0 and G1 together are 11 and G2 and G3 together are one
@@ -366,7 +367,7 @@ object DecSerdeBid128 {
             }
             // if the top 5 bits are 0b11110 then Infinity
             (combination shr (w5 - 5)) == 0b11110 -> {
-                if (! allowNonCanonical)
+                if (!allowNonCanonical)
                     return Decimal.infinity(sign)
                 val remaining58Hi = (bid128Hi shl 6) shr 6
                 return Decimal.infinityNonCanonical(sign, remaining58Hi, bid128Lo)
@@ -383,6 +384,7 @@ object DecSerdeBid128 {
                 }
                 return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo, allowNonCanonical)
             }
+
             else -> {
                 // all possible cases were covered above
                 throw IllegalStateException()
@@ -406,7 +408,7 @@ object DecSerdeBid128 {
         val bias = 398
         val w5 = 13 // w+5, combination field width in bits
         val t = 50 // trailing significand field width in bits
-        check (1 + w5 + t == k)
+        verify { 1 + w5 + t == k }
         val coeffMax: ULong
         val payloadMax: ULong
         val infPayload: ULong
@@ -438,7 +440,7 @@ object DecSerdeBid128 {
         val bias = 101
         val w5 = 11 // w+5, combination field width in bits
         val t = 20 // trailing significand field width in bits
-        check (1 + w5 + t == k)
+        verify { 1 + w5 + t == k }
         val coeffMax: ULong
         val payloadMax: ULong
         val infPayload: ULong

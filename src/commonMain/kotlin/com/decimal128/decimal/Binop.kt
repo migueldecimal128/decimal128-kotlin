@@ -12,7 +12,7 @@ abstract class Binop {
             if (x.qExp <= otherExp)
                 return x
             val delta = x.qExp - otherExp
-            check(delta > 0)
+            verify { delta > 0 }
             val headroom = env.precision - x.digitLen
             if (headroom == 0)
                 return x

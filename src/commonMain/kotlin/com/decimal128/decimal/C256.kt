@@ -172,7 +172,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline operator fun set(index: Int, value: Long) {
         //check(packedLengths.toInt() == -1)
-        check (bitLen == -1)
+        verify { bitLen == -1 }
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -190,7 +190,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256DisableIndexSetAndUpdateLengths() {
         //check(packedLengths.toInt() == -1)
-        check(bitLen == -1)
+        verify { bitLen == -1 }
         updateDigitLenBitLen()
     }
 

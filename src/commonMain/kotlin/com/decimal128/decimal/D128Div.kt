@@ -32,7 +32,7 @@ object D128Div {
     }
 
     private fun finiteDivImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
-        check (x.isFinite() && y.isFinite())
+        verify { x.isFinite() && y.isFinite() }
         return when {
             y.packedLengths > 0 -> {
                 if (x.packedLengths.toInt() == 0)
@@ -40,11 +40,13 @@ object D128Div {
                 else
                     finiteDivNonZero(x, y, env)
             }
+
             x.packedLengths > 0 -> {
                 // finite division by zero
                 val sign = x.sign xor y.sign
                 env.signalDivByZero(sign)
             }
+
             else -> {
                 // zero divided by zero
                 val inf = if (x.sign xor y.sign) NEG_INFINITY else POS_INFINITY

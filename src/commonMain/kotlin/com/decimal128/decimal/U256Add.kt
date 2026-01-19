@@ -6,8 +6,8 @@ import kotlin.math.max
 object U256Add {
 
     fun u256Add(z: C256, x: C256, scaleDelta: Int, y: C256) {
-        check (x.bitLen < 128)
-        check (y.bitLen < 128)
+        verify { x.bitLen < 128 }
+        verify { y.bitLen < 128 }
         when {
             scaleDelta == 0 -> u256AddUnscaled(z, x, y)
             scaleDelta > 0 -> u256AddScaled(z, x, scaleDelta, y)
@@ -31,19 +31,19 @@ object U256Add {
         val (carry1, p1) = sumU64(x.dw1, y.dw1, carry0)
         val (carry2, p2) = sumU64(x.dw2, y.dw2, carry1)
         val (carry3, p3) = sumU64(x.dw3, y.dw3, carry2)
-        check(carry3 == 0L)
+        verify { carry3 == 0L }
         z.c256Set256(p3, p2, p1, p0)
     }
 
     fun u256AddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
-        check(scaleDelta > 0)
-        check(scaleDelta < PRECISION_34)
+        verify { scaleDelta > 0 }
+        verify { scaleDelta < PRECISION_34 }
 
 //        check((x.dw3 or x.dw2) == 0L)
 //        check((y.dw3 or y.dw2) == 0L)
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(z.c256HasValidLengths())
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { z.c256HasValidLengths() }
 
         u256ScaleFmaPow10(z, x, scaleDelta, y)
     }

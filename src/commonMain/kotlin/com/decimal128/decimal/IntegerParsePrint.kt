@@ -184,13 +184,13 @@ internal object IntegerParsePrint {
             hexitsRemaining -= thisHexitCount
             ich += thisHexitCount
         }
-        check(hexitsRemaining == 0)
-        check(ich == utf8.size)
+        verify { hexitsRemaining == 0 }
+        verify { ich == utf8.size }
     }
 
     fun u64ToHexUtf8(dw: Long, hexitCount: Int, utf8: ByteArray, off: Int) {
         var t = dw
-        check(hexitCount in 1..16)
+        verify { hexitCount in 1..16 }
         for (i in hexitCount - 1 downTo 0) {
             val h = (t and 0x0FL).toInt()
             val ch = if (h < 10) '0' + h else 'A' - 10 + h

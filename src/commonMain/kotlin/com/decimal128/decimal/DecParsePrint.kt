@@ -436,7 +436,7 @@ object DecParsePrint {
         utf8[iE] = 'E'.code.toByte()
         utf8[iE + 1] = expSignByte
         val j = Magia.renderTailDigitsBeforeIndex(eExpAbs.toUInt(), utf8, utf8.size)
-        check (j == expDigitLen)
+        verify { j == expDigitLen }
         return utf8.decodeToString()
     }
 

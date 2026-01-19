@@ -120,7 +120,7 @@ class BinopAddSub : Binop() {
             val m = if (flip) x else y
             val n = if (flip) y else x
             val qDelta = m.qExp - n.qExp
-            check (qDelta >= 0)
+            verify { qDelta >= 0 }
             val headroom = env.precision - m.digitLen
             return if (qDelta <= headroom) {
                 // we can resolve this in our D128 world
@@ -143,15 +143,15 @@ class BinopAddSub : Binop() {
 
         private fun subScaledMagnitudes(sign: Boolean, m: DecOld, s: DecOld, env: DecEnv): DecOld {
             // non-zero with different signs ... subtract magnitudes
-            check (m.magnitudeCompareTo(s) > 0)
-            check (s.isNotZero())
-            check (m.qExp != s.qExp)
+            verify { m.magnitudeCompareTo(s) > 0 }
+            verify { s.isNotZero() }
+            verify { m.qExp != s.qExp }
             if (m.qExp < s.qExp) {
                 // TC("22E1", "-2E2"),
                 // signs opposite, |m| > |s|, but m.qExp < s.qExp
                 // scale s before subtraction
                 val qDelta = s.qExp - m.qExp
-                check (qDelta < PRECISION_34)
+                verify { qDelta < PRECISION_34 }
                 return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
             } else {
                 // |m| > |s| && m.qExp > s.qExp

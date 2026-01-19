@@ -97,7 +97,7 @@ object U256Compare {
                         pow10BitLen <= 128 ->
                             _cmp192x128x64(x2, x1, x0, p1, p0, y0)  // 128×64
                         else -> {
-                            check(pow10BitLen <= 192)
+                            verify { pow10BitLen <= 192 }
                             _cmp192x192x64(x2, x1, x0, p2, p1, p0, y0)  // 192×64
                         }
                     }
@@ -110,7 +110,7 @@ object U256Compare {
                         pow10BitLen <= 128 ->
                             _cmp256x128x128(0L, x2, x1, x0, y1, y0, p1, p0)  // 128×128
                         else -> {
-                            check(pow10BitLen <= 192)
+                            verify { pow10BitLen <= 192 }
                             _cmp256x192x128(0L, x2, x1, x0, p2, p1, p0, y1, y0)  // 128×192
                         }
                     }
@@ -120,14 +120,16 @@ object U256Compare {
         val x3 = x.dw3
         val p3 = POW10[(pow10Offset + 3) and 0x3F]
         if (x.bitLen <= 256) {
-            check(pow10BitLen > 64)
+            verify { pow10BitLen > 64 }
             val ret = when {
                 pow10BitLen <= 128 ->
                     _cmp256x128x128(x3, x2, x1, x0, y1, y0, p1, p0)
+
                 pow10BitLen <= 192 ->
                     _cmp256x192x128(x3, x2, x1, x0, p2, p1, p0, y1, y0)
+
                 else -> { // pow10BitLen <= 256
-                    check(yBitLen <= 64)
+                    verify { yBitLen <= 64 }
                     _cmp256x256x64(x3, x2, x1, x0, p3, p2, p1, p0, y0)
                 }
             }

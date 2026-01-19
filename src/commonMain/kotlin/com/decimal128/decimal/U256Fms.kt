@@ -8,16 +8,16 @@ import com.decimal128.decimal.U256Pow10.POW10
 object U256Fms {
 
     fun u256Fms(z: C256, x: C256, y: C256, s: C256) {
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(s.c256HasValidLengths())
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { s.c256HasValidLengths() }
         val flipFlop = x.bitLen >= y.bitLen
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
         val mBitLen = m.bitLen
         val nBitLen = n.bitLen
-        check(mBitLen >= nBitLen)
+        verify { mBitLen >= nBitLen }
         val m0 = m.dw0
         val m1 = m.dw1
         val n0 = n.dw0
@@ -70,6 +70,7 @@ object U256Fms {
                         n1, n0,
                         s.dw3, s.dw2, s.dw1, s.dw0
                     )
+
                 (mBitLen <= 192) ->
                     _fms3x2x4(
                         z, maxFusedBitLen,
@@ -77,7 +78,8 @@ object U256Fms {
                         n1, n0,
                         s.dw3, s.dw2, s.dw1, s.dw0
                     )
-                else ->  throw RuntimeException("U256 overflow")
+
+                else -> throw RuntimeException("U256 overflow")
             }
             return
         }
@@ -87,11 +89,11 @@ object U256Fms {
 
 
     fun u256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
-        check(pow10 > 0)
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(y.c256ScaledCompareTo(x, pow10) <= 0)
+        verify { pow10 > 0 }
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { y.c256ScaledCompareTo(x, pow10) <= 0 }
         val xBitLen = x.bitLen
         val x0 = x.dw0
         val x1 = x.dw1
@@ -113,25 +115,32 @@ object U256Fms {
         if (p10BitLen <= 64) {
             when {
                 (xBitLen <= 64 && yBitLen <= 128) ->
-                    _fms1x1x2(z, maxFusedBitLen,
+                    _fms1x1x2(
+                        z, maxFusedBitLen,
                         x0,
                         p0,
                         y.dw1, y.dw0
                     )
+
                 (xBitLen <= 128 && yBitLen <= 192) ->
-                    _fms2x1x3(z, maxFusedBitLen,
+                    _fms2x1x3(
+                        z, maxFusedBitLen,
                         x1, x0,
                         p0,
                         y.dw2, y.dw1, y.dw0
                     )
+
                 (xBitLen <= 192) ->
-                    _fms3x1x4(z, maxFusedBitLen,
+                    _fms3x1x4(
+                        z, maxFusedBitLen,
                         x.dw2, x1, x0,
                         p0,
                         y.dw3, y.dw2, y.dw1, y.dw0
                     )
+
                 else ->
-                    _fms4x1x4(z, maxFusedBitLen,
+                    _fms4x1x4(
+                        z, maxFusedBitLen,
                         x.dw3, x.dw2, x1, x0,
                         p0,
                         y.dw3, y.dw2, y.dw1, y.dw0
@@ -148,6 +157,7 @@ object U256Fms {
                         x0,
                         y.dw2, y.dw1, y.dw0
                     )
+
                 (xBitLen <= 128) ->
                     _fms2x2x4(
                         z, maxFusedBitLen,
@@ -155,6 +165,7 @@ object U256Fms {
                         p1, p0,
                         y.dw3, y.dw2, y.dw1, y.dw0
                     )
+
                 (xBitLen <= 192) ->
                     _fms3x2x4(
                         z, maxFusedBitLen,
@@ -162,7 +173,8 @@ object U256Fms {
                         p1, p0,
                         y.dw3, y.dw2, y.dw1, y.dw0
                     )
-                else ->  throw RuntimeException("coeff overflow")
+
+                else -> throw RuntimeException("coeff overflow")
             }
             return
         }
@@ -176,6 +188,7 @@ object U256Fms {
                         x0,
                         y.dw3, y.dw2, y.dw1, y.dw0
                     )
+
                 (xBitLen <= 128) ->
                     _fms3x2x4(
                         z, maxFusedBitLen,
@@ -183,6 +196,7 @@ object U256Fms {
                         x1, x0,
                         y.dw3, y.dw2, y.dw1, y.dw0
                     )
+
                 else -> throw RuntimeException("coeff overflow")
             }
             return
@@ -205,14 +219,14 @@ object U256Fms {
         u256FmsPow10_x256(z, x, y, pow10)
 
     fun u256FmsPow10_x128(z: C256, x: C256, y: C256, pow10: Int) {
-        check(pow10 > 0)
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
+        verify { pow10 > 0 }
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
         // FIXME I am removing this because of FMA ... but it seems dangerous
         //  ... and indeed it *was* dangerous ... because it failed
-        check(x.bitLen <= 128)
-        check(x.c256ScaledCompareTo(y, pow10) >= 0)
+        verify { x.bitLen <= 128 }
+        verify { x.c256ScaledCompareTo(y, pow10) >= 0 }
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
         val p10BitLen = pow10BitLen(pow10)
@@ -237,11 +251,11 @@ object U256Fms {
     }
 
     fun u256FmsPow10_x256(z: C256, x: C256, y: C256, pow10: Int) {
-        check(pow10 > 0)
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(x.c256ScaledCompareTo(y, pow10) >= 0)
+        verify { pow10 > 0 }
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { x.c256ScaledCompareTo(y, pow10) >= 0 }
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen
         val p10BitLen = pow10BitLen(pow10)

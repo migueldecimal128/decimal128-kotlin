@@ -58,7 +58,7 @@ object D128AddSub {
     }
 
     private fun unscaledFiniteAddZero(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
-        check(x.isZero() || y.isZero())
+        verify { x.isZero() || y.isZero() }
         return when {
             // Case 1: Only one operand is zero.
             !x.isZero() -> x
@@ -75,7 +75,7 @@ object D128AddSub {
     }
 
     private fun scaledFiniteAddZero(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
-        check(x.isZero() || y.isZero())
+        verify { x.isZero() || y.isZero() }
         val minExp = min(x.qExp, y.qExp)
         return when {
             !x.isZero() -> scaleToMinExp(x, minExp, env.decFormat.precision)
@@ -86,11 +86,11 @@ object D128AddSub {
     }
 
     private fun scaleToMinExp(x: DecOld, minExp: Int, precision: Int): DecOld {
-        check(x.qExp >= minExp)
+        verify { x.qExp >= minExp }
         if (x.qExp == minExp)
             return x
         val delta = x.qExp - minExp
-        check(delta > 0)
+        verify { delta > 0 }
         val headroom = precision - x.digitLen
         if (headroom == 0)
             return x
@@ -120,7 +120,7 @@ object D128AddSub {
 
 
     private fun scaledFiniteAdd(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
-        check(max(x.qExp, y.qExp) < MIN_SPECIAL_VALUE)
+        verify { max(x.qExp, y.qExp) < MIN_SPECIAL_VALUE }
         when {
             x.isZero() or y.isZero() ->
                 return scaledFiniteAddZero(x, ySign, y, env)
@@ -138,15 +138,15 @@ object D128AddSub {
 
     private fun scaledFiniteSubMagnitudes(resultSign: Boolean, m: DecOld, n: DecOld, env: DecEnv): DecOld {
         // non-zero with different signs ... subtract magnitudes
-        check (m.magnitudeCompareTo(n) > 0)
-        check (n.isNotZero())
-        check (m.qExp != n.qExp)
+        verify { m.magnitudeCompareTo(n) > 0 }
+        verify { n.isNotZero() }
+        verify { m.qExp != n.qExp }
         if (m.qExp < n.qExp) {
             // TC("22E1", "-2E2"),
             // signs opposite, |m| > |n|, but m.qExp < n.qExp
             // scale n before subtraction
             val qDelta = n.qExp - m.qExp
-            check (qDelta < PRECISION_34)
+            verify { qDelta < PRECISION_34 }
             return D128Pow10.fusedSubtractMulPow10(resultSign, m, n, qDelta)
         } else {
             // |m| > |n| && m.qExp > n.qExp
@@ -176,7 +176,7 @@ object D128AddSub {
         val m = if (flip) x else y
         val n = if (flip) y else x
         val qDelta = m.qExp - n.qExp
-        check (qDelta >= 0)
+        verify { qDelta >= 0 }
         val headroom = env.precision - m.digitLen
         return if (qDelta <= headroom) {
             // we can resolve in our D128 world
@@ -200,7 +200,7 @@ object D128AddSub {
     private fun infiniteAddImpl(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
         val qX = x.qExp
         val qY = y.qExp
-        check (qX == NON_FINITE_INF || qY == NON_FINITE_INF)
+        verify { qX == NON_FINITE_INF || qY == NON_FINITE_INF }
         return when {
             qX == qY && x.sign != ySign -> {
                 if (env.hasTrapHandler(INVALID_OPERATION)) {
@@ -214,6 +214,7 @@ object D128AddSub {
                     DecOld.NaN
                 }
             }
+
             qX == NON_FINITE_INF -> x
             ySign -> DecOld.NEG_INFINITY
             else -> DecOld.POS_INFINITY

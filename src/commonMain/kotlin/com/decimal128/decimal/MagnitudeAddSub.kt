@@ -12,7 +12,7 @@ import kotlin.math.min
 object MagnitudeAddSub {
 
     fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
-        check(x.qExp != y.qExp) // the unscaled case should have been caught earlier
+        verify { x.qExp != y.qExp } // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
         //    u256AddUnscaled(z, x, y)
@@ -21,7 +21,7 @@ object MagnitudeAddSub {
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
-        check(m.qExp > n.qExp)
+        verify { m.qExp > n.qExp }
         val qDelta = m.qExp - n.qExp
         val headroom = env.precision - m.digitLen
         val shiftLeft = min(max(headroom, 0), qDelta)
@@ -31,9 +31,9 @@ object MagnitudeAddSub {
                 val shiftRight = qAlign - n.qExp
                 val residue = when {
                     shiftRight == 0 -> {
-                        check(shiftLeft > 0)
+                        verify { shiftLeft > 0 }
                         u256AddScaled(z, m, shiftLeft, n)
-                        Residue.EXACT
+                        EXACT
                     }
 
                     shiftRight >= n.digitLen -> {
@@ -68,14 +68,14 @@ object MagnitudeAddSub {
             (m.bitLen > 0) -> {
                 z.qExp = qAlign
                 u256ScaleUpPow10(z, m, shiftLeft)
-                return Residue.EXACT
+                return EXACT
             }
 
             else -> {
                 // if m == 0 then return n ... n != 0 and n == 0
                 z.c256Set(n)
                 z.qExp = n.qExp
-                return Residue.EXACT
+                return EXACT
             }
         }
     }
@@ -83,10 +83,10 @@ object MagnitudeAddSub {
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
     fun magScaledSub(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
-        check(!x.isZero())
-        check(!y.isZero())
-        check(x.magnitudeCompareTo(y) > 0)
-        check(x.qExp != y.qExp)
+        verify { !x.isZero() }
+        verify { !y.isZero() }
+        verify { x.magnitudeCompareTo(y) > 0 }
+        verify { x.qExp != y.qExp }
 
         if (x.qExp > y.qExp) {
             val gap = x.qExp - y.qExp
@@ -105,9 +105,9 @@ object MagnitudeAddSub {
 
             val residue = when {
                 shiftRight == 0 -> {
-                    check(shiftLeft > 0)
+                    verify { shiftLeft > 0 }
                     u256SubScaled(z, x, shiftLeft, y)
-                    Residue.EXACT
+                    EXACT
                 }
 
                 shiftRight >= y.digitLen -> {
@@ -120,7 +120,7 @@ object MagnitudeAddSub {
                     } else {
                         z.c256Set(x)
                     }
-                    check(residueT != Residue.EXACT)
+                    verify { residueT != EXACT }
                     // decrement and let the residue possibly round it back up
                     z.c256MutateDecrement()
                     residueT
@@ -155,9 +155,9 @@ object MagnitudeAddSub {
 
             val residue = when {
                 shiftRight == 0 -> {
-                    check(shiftLeft > 0) // because x.qExp != y.qExp
+                    verify { shiftLeft > 0 } // because x.qExp != y.qExp
                     u256SubScaled(z, x, y, shiftLeft)   // (x * 10^shiftLeft) - y
-                    Residue.EXACT
+                    EXACT
                 }
 
                 shiftRight >= y.digitLen -> {
@@ -187,7 +187,7 @@ object MagnitudeAddSub {
                         r.subtractionInverse()
                     } else {
                         z.c256SetSub(x, tempY)  // z = x - tempY
-                        Residue.EXACT
+                        EXACT
                     }
                 }
             }
@@ -197,10 +197,10 @@ object MagnitudeAddSub {
     }
 
     fun magScaledSub_2(z: MutDec, x: MutDec, y: MutDec, env: DecEnv): Residue {
-        check(!x.isZero())
-        check(!y.isZero())
-        check(x.magnitudeCompareTo(y) > 0)
-        check(x.qExp != y.qExp)
+        verify { !x.isZero() }
+        verify { !y.isZero() }
+        verify { x.magnitudeCompareTo(y) > 0 }
+        verify { x.qExp != y.qExp }
 
         val qMax = max(x.qExp, y.qExp)
         val qMin = min(x.qExp, y.qExp)
@@ -242,7 +242,7 @@ object MagnitudeAddSub {
             residue = if (shiftDown == 0) {
                 // y stays, x scales up
                 u256SubScaled(z, x, shiftUp, y)
-                Residue.EXACT
+                EXACT
             } else {
                 // y scales down, x may scale up
                 val tempY = MutDec()
@@ -273,7 +273,7 @@ object MagnitudeAddSub {
                 } else {
                     z.c256SetSub(x, tempY)
                 }
-                Residue.EXACT
+                EXACT
             } else {
                 // x scales down, y may scale up
                 val tempX = MutDec()

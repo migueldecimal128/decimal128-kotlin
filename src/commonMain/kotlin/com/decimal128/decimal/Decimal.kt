@@ -63,10 +63,10 @@ class Decimal private constructor(
                                      digitLen: Int, bitLen: Int,
                                      dw1: ULong, dw0: ULong,
                                      allowNonCanonical: Boolean = false): Decimal {
-            check (bitLen == calcBitLen128(dw1, dw0))
-            check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
-            check (digitLen <= 38)
-            check (digitLen <= 34 || allowNonCanonical)
+            verify { bitLen == calcBitLen128(dw1, dw0) }
+            verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
+            verify { digitLen <= 38 }
+            verify { digitLen <= 34 || allowNonCanonical }
             return Decimal(Seal(sign, qExp, digitLen, bitLen), dw1, dw0)
         }
 
@@ -544,8 +544,8 @@ class Decimal private constructor(
      * - NaN: payload digits > 33
      */
     fun isCanonical(): Boolean {
-        check (bitLen == calcBitLen128(dw1, dw0))
-        check (digitLen == calcDigitLen128(bitLen, dw1, dw0))
+        verify { bitLen == calcBitLen128(dw1, dw0) }
+        verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
         return (qExp in -6176..6111 && digitLen <= 34) ||
                 (qExp == NON_FINITE_INF && bitLen == 0) ||
                 (qExp > NON_FINITE_INF && digitLen <= 33)
@@ -723,7 +723,7 @@ class Decimal private constructor(
                     r0 = t0
                     rQExp += ntzd
                     if (ntzd > maxNtzdClamp) {
-                        check (rQExp > DECIMAL128_QMAX_6111)
+                        verify { rQExp > DECIMAL128_QMAX_6111 }
                         // oops ... we removed too many trailing zeros and pushed qExp too hi
                         // give back some zeros to bring down qExp
                         val giveBack = ntzd - maxNtzdClamp

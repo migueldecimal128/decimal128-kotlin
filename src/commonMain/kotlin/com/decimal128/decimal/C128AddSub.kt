@@ -3,8 +3,8 @@ package com.decimal128.decimal
 object C128AddSub {
 
     fun c128UnscaledAdd(x: DecOld, y: DecOld): DecOld {
-        check(x.validate())
-        check(y.validate())
+        verify { x.validate() }
+        verify { y.validate() }
         val x0 = x.dw0
         val y0 = y.dw0
         val s0 = x0 + y0
@@ -17,9 +17,9 @@ object C128AddSub {
     }
 
     fun c128UnscaledSub(sign: Boolean, x: DecOld, y: DecOld): DecOld {
-        check(x.validate())
-        check(y.validate())
-        check(x.bitLen >= y.bitLen)
+        verify { x.validate() }
+        verify { y.validate() }
+        verify { x.bitLen >= y.bitLen }
 
         val d0 = x.dw0 - y.dw0
         val carry0 = if (unsignedCmp(d0, x.dw0) > 0) 1L else 0L

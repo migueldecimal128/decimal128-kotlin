@@ -205,8 +205,8 @@ object DivRangeRecipMulPow10 {
     // more calculation to find the offsetIndex, esp because
     // of the upper triangle vs the lower rectangle
     private fun offsetIndex(digitCount: Int, pow10: Int): Int {
-        check(digitCount in Q_MIN..<Q_MAXX)
-        check(pow10 in K_MIN..<K_MAXX)
+        verify { digitCount in Q_MIN..<Q_MAXX }
+        verify { pow10 in K_MIN..<K_MAXX }
         val index = (digitCount - Q_MIN) * ROW_SIZE + (pow10 - K_MIN)
         return index
     }
@@ -287,7 +287,7 @@ object DivRangeRecipMulPow10 {
     }
 
     fun rangeDivPow10(z: C256, x: C256, pow10: Int): Residue {
-        check(pow10 >= K_MIN)
+        verify { pow10 >= K_MIN }
         initialize()
         return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
     }
@@ -302,15 +302,15 @@ object DivRangeRecipMulPow10 {
 
         val paramsIndex = OFFSETS[offsetIndex(qDigitCount, kPow10)].toInt()
         val descriptor = RANGE_RECIP_PARAMS[paramsIndex]
-        check(qDigitCount in unpackQMin(descriptor)..unpackQMax(descriptor))
-        check(kPow10 == unpackK(descriptor))
+        verify { qDigitCount in unpackQMin(descriptor)..unpackQMax(descriptor) }
+        verify { kPow10 == unpackK(descriptor) }
         val prodDwordLen = unpackProdDwordLen(descriptor)
         val mDwordCount = unpackMDwordLen(descriptor)
         val shift = unpackS(descriptor)
         val fractionBitLen = shift + 1
 
         val dividendShiftRight = kPow10 - 1
-        check(dividendShiftRight in 1..<64)
+        verify { dividendShiftRight in 1..<64 }
         // We divide by 2**(kPow10-1) by shifting right.
         // This reduces the size of the dividend.
         // The lo bits that get shifted out are part of

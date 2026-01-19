@@ -143,7 +143,7 @@ object SerDeDpd128 {
     }
 
     private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, bytes: ByteArray?) {
-        check (d.digitLen <= 34)
+        verify { d.digitLen <= 34 }
         var mostSigBcd4 = 0
         var declets5Hi = 0L
         var binLo = d.dw0
@@ -155,9 +155,9 @@ object SerDeDpd128 {
             if (q.digitLen > 15) {
                 binHi = q.dw0 % TEN_POW_15
                 mostSigBcd4 = (q.dw0 / TEN_POW_15).toInt()
-                check(mostSigBcd4 in 0..9)
+                verify { mostSigBcd4 in 0..9 }
             }
-            check(binHi in 0L..<TEN_POW_15)
+            verify { binHi in 0L..<TEN_POW_15 }
             declets5Hi = declets6FromBin(binHi)
         }
         val declets6Lo = declets6FromBin(binLo)
@@ -191,7 +191,7 @@ object SerDeDpd128 {
                 val biasedQExp = qExp - decimal128.qTiny // remember qTiny is negative
                 val biasedQExpLo12 = biasedQExp and 0xFFF
                 val biasedQExpHi2 = biasedQExp ushr 12
-                check (biasedQExpHi2 in 0..2)
+                verify { biasedQExpHi2 in 0..2 }
                 (if (mostSigBcd4 >= 0x08)
                     (0b11 shl 15) or (biasedQExpHi2 shl 13) or ((mostSigBcd4 and 1) shl 12)
                 else

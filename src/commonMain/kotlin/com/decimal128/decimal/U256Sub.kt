@@ -4,12 +4,12 @@ package com.decimal128.decimal
 object U256Sub {
 
     fun u256SubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtrahend
-        check(z.c256HasValidLengths())
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(x.c256UnscaledCompareTo(y) >= 0)
+        verify { z.c256HasValidLengths() }
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { x.c256UnscaledCompareTo(y) >= 0 }
         val xBitLen = x.bitLen
-        check(xBitLen >= y.bitLen)
+        verify { xBitLen >= y.bitLen }
 
         val d0 = x.dw0 - y.dw0
         if (xBitLen <= 64) {
@@ -42,38 +42,38 @@ object U256Sub {
         val carry3a = if (unsignedCmp(d3a, x.dw3) > 0) 1L else 0L
         val d3 = d3a - carry2
         val carry3 = if (unsignedCmp(d3, d3a) > 0) 1L else carry3a
-        check(carry3 == 0L)
+        verify { carry3 == 0L }
 
         z.c256Set256(d3, d2, d1, d0)
     }
 
     fun u256SubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
-        check(scaleDelta > 0)
-        check(scaleDelta <= 40)
-        check(x.digitLen + scaleDelta <= 77)
+        verify { scaleDelta > 0 }
+        verify { scaleDelta <= 40 }
+        verify { x.digitLen + scaleDelta <= 77 }
 
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(z.c256HasValidLengths())
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { z.c256HasValidLengths() }
 
-        check(y.c256ScaledCompareTo(x, scaleDelta) <= 0)
+        verify { y.c256ScaledCompareTo(x, scaleDelta) <= 0 }
 
         U256Fms.u256FmsPow10(z, x, scaleDelta, y)
     }
 
     fun u256SubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
-        check(!x.c256IsZero())
-        check(!y.c256IsZero())
-        check(scaleDelta > 0)
-        check(scaleDelta < 34)
+        verify { !x.c256IsZero() }
+        verify { !y.c256IsZero() }
+        verify { scaleDelta > 0 }
+        verify { scaleDelta < 34 }
 
         //check((x.dw3 or x.dw2) == 0L) allow longer because of FMA
         //check((y.dw3 or y.dw2) == 0L)
-        check(x.c256HasValidLengths())
-        check(y.c256HasValidLengths())
-        check(z.c256HasValidLengths())
+        verify { x.c256HasValidLengths() }
+        verify { y.c256HasValidLengths() }
+        verify { z.c256HasValidLengths() }
 
-        check(x.c256ScaledCompareTo(y, scaleDelta) >= 0)
+        verify { x.c256ScaledCompareTo(y, scaleDelta) >= 0 }
 
         U256Fms.u256FmsPow10(z, x, y, scaleDelta)
     }

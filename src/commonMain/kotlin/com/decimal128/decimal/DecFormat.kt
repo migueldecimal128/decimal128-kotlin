@@ -18,11 +18,17 @@ data class DecFormat(val precision: Int,
 
     companion object {
         val DECIMAL_64 = DecFormat(16, 384)
-        init { check(DECIMAL_64.maxBitLen == 54)}
+        init {
+            verify { DECIMAL_64.maxBitLen == 54 }
+        }
         val DECIMAL_128 = DecFormat(34, 6144)
-        init { check(DECIMAL_128.maxBitLen == 113)}
+        init {
+            verify { DECIMAL_128.maxBitLen == 113 }
+        }
         val DECIMAL_128_EXTENDED = DecFormat(38, 6144)
-        init { check(DECIMAL_128_EXTENDED.maxBitLen == 127)}
+        init {
+            verify { DECIMAL_128_EXTENDED.maxBitLen == 127 }
+        }
     }
 
     val qMax: Int = eMax - (precision - 1)

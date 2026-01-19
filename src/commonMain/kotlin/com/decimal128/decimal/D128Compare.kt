@@ -66,7 +66,7 @@ object D128Compare {
     }
 
     private fun magnitudeCompareInfinite(x: DecOld, y: DecOld) : Int {
-        check (max(x.qExp, y.qExp) == NON_FINITE_INF)
+        verify { max(x.qExp, y.qExp) == NON_FINITE_INF }
         val minExp = min(x.qExp, y.qExp)
         return when {
             minExp == NON_FINITE_INF -> 0

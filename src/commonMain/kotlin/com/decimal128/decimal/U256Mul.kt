@@ -28,7 +28,7 @@ internal object U256Mul {
     }
 
     fun u256Mul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long) {
-        check(yBitLen in 65..128)
+        verify { yBitLen in 65..128 }
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -37,13 +37,14 @@ internal object U256Mul {
                 (xBitLen == 1) -> z.c256Set128(y1, y0)
                 else -> z.c256SetZero()
             }
+
             (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0)
             else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
         }
     }
 
     fun u256Mul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: Long) {
-        check(yBitLen in 129..192)
+        verify { yBitLen in 129..192 }
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -52,13 +53,14 @@ internal object U256Mul {
                 (xBitLen == 1) -> z.c256Set192(y2, y1, y0)
                 else -> z.c256SetZero()
             }
+
             (xBitLen <= 128) -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0)
             else -> throw RuntimeException("coeff overflow")
         }
     }
 
     fun u256Mul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
-        check(yBitLen in 193..256)
+        verify { yBitLen in 193..256 }
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -67,6 +69,7 @@ internal object U256Mul {
                 (xBitLen == 1) -> z.c256Set256(y3, y2, y1, y0)
                 else -> z.c256SetZero()
             }
+
             else -> throw RuntimeException("coeff overflow")
         }
     }
@@ -125,7 +128,7 @@ internal object U256Mul {
         val pp22Lo = x2 * y2
         val (carry4, p4) = sumU64(carry3, pp12Hi, pp21Hi, pp03Hi, pp30Hi, pp22Lo)
         if ((carry4 or p4) == 0L) {
-            check(maxBitLen == 257)
+            verify { maxBitLen == 257 }
             p.c256Set256(p3, p2, p1, p0)
             return
         }
@@ -171,7 +174,7 @@ internal object U256Mul {
         }
         val (carry3, p3) = sumU64(carry2, pp20Hi, pp30Lo)
         if (carry3 == 0L) {
-            check(maxBitLen == 257)
+            verify { maxBitLen == 257 }
             p.c256Set256(p3, p2, p1, p0)
             return
         }
@@ -221,7 +224,7 @@ internal object U256Mul {
         }
         val (carry3, p3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo)
         if (carry3 == 0L) {
-            check(maxBitLen == 257)
+            verify { maxBitLen == 257 }
             p.c256Set256(p3, p2, p1, p0)
             return
         }

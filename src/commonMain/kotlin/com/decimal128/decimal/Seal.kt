@@ -49,15 +49,17 @@ value class Seal private constructor(val seal: Int) {
 
         /** Builds a S-E-A-L word after validating all fields and packing them into 32 bits. */
         internal operator fun invoke(signBit: Int, qExp: Int, digitLen: Int, bitLen: Int): Seal {
-            check (signBit in 0..1)
-            check (qExp in -6176..6111 || qExp in NON_FINITE_INF..NON_FINITE_SNAN)
+            verify { signBit in 0..1 }
+            verify { qExp in -6176..6111 || qExp in NON_FINITE_INF..NON_FINITE_SNAN }
             // allow 38 digits for DECIMAL128_EXTENDED precision
-            check (digitLen in 0..39)
-            check (bitLen in 0..128)
-            return Seal((signBit shl 31) or
-                    ((qExp and 0x7FFF) shl 16) or
-                    (digitLen shl 9) or
-                    bitLen)
+            verify { digitLen in 0..39 }
+            verify { bitLen in 0..128 }
+            return Seal(
+                (signBit shl 31) or
+                        ((qExp and 0x7FFF) shl 16) or
+                        (digitLen shl 9) or
+                        bitLen
+            )
         }
 
         /** Boolean-sign overload delegating to the raw `signBit` constructor. */

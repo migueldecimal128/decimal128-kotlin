@@ -16,8 +16,8 @@ object DivKnuth {
     private val un = IntArray(9)
 
     fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
-        check(u256GTOne(y))
-        check(x.c256UnscaledCompareTo(y) > 0)
+        verify { u256GTOne(y) }
+        verify { x.c256UnscaledCompareTo(y) > 0 }
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()
@@ -46,7 +46,7 @@ object DivKnuth {
         val s = vnNonZeroVal.countLeadingZeroBits()
 
         if (s != 0) {
-            Magia.mutateShiftLeft(un, m+1, s)
+            Magia.mutateShiftLeft(un, m + 1, s)
             Magia.mutateShiftLeft(vn, n, s)
         }
 
@@ -96,7 +96,7 @@ object DivKnuth {
                     }
                 }
                 if (isZero == 0) {
-                    Residue.EXACT
+                    EXACT
                 } else {
                     // note that this compare is reversed ... y compare 2*remainder
                     val cmp = u256UnscaledCompare(y, un)
@@ -113,8 +113,8 @@ object DivKnuth {
     }
 
     fun knuthDivModX64(quot: C256?, x: C256, y0: Long): Long {
-        check((y0 ushr 32) != 0L)
-        check(x.bitLen > 64)
+        verify { (y0 ushr 32) != 0L }
+        verify { x.bitLen > 64 }
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()

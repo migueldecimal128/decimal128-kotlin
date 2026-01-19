@@ -93,19 +93,21 @@ private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, 
 
     // 1) Overflow => +/- Infinity
     if (eExp > eMax) {
-        check (!isTiny)
+        verify { !isTiny }
         // overflow IEEE754-2008 7.4 Overflow page 37
         return finalizeOverflow(sign, decRounding, env)
     }
 
     // 7.5.1: subnormal rounding (tiny result stays nonzero)
-    check(isTiny)
+    verify { isTiny }
     val myQMin = env.qTiny - digitLen           // threshold for subnormal cohort
     val overlap = qExp - myQMin
     if (overlap >= 0) {
         val excessTail = digitLen - overlap
-        return finalizeFnzSubnormalExcessTail(sign, dw1, dw0, qExp,
-            inboundResidue, decRounding, excessTail, env)
+        return finalizeFnzSubnormalExcessTail(
+            sign, dw1, dw0, qExp,
+            inboundResidue, decRounding, excessTail, env
+        )
     }
     return finalizeUnderflow(sign, decRounding, env)
 }
@@ -117,19 +119,19 @@ private fun finalizeFnzClampHighExp(sign: Boolean, dw1: Long, dw0: Long, qExp: I
     val (dw1Scaled, dw0Scaled) = C128ScalePow10.c128ScaleUpPow10(dw1, dw0, qExcess)
     val bitLen = calcBitLen128(dw1Scaled, dw0Scaled)
     val digitLen = calcDigitLen128(bitLen, dw1Scaled, dw0Scaled)
-    check (digitLen <= env.precision)
+    verify { digitLen <= env.precision }
     val qExpScaled = qExp - qExcess
-    check (residue == EXACT)
+    verify { residue == EXACT }
     val ret = DecOld.from(dw1Scaled, dw0Scaled, packLengths(digitLen, bitLen), packSignExp(sign, qExpScaled))
-    check (ret.digitLen <= env.precision)
-    check (ret.qExp == env.qMax)
+    verify { ret.digitLen <= env.precision }
+    verify { ret.qExp == env.qMax }
     return ret
 }
 
 private fun finalizeFnzInexactNoExcess(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
                                        residue: Residue, decRounding: DecRounding, isTiny: Boolean, env: DecEnv): DecOld {
-    check (residue != EXACT) // inexact
-    check (calcDigitLen128(dw1, dw0) <= env.precision) // no excess
+    verify { residue != EXACT } // inexact
+    verify { calcDigitLen128(dw1, dw0) <= env.precision } // no excess
 
     val roundUp = residue.ulpRoundUp(decRounding.negate(sign), dw0)
     val dw0Rounded = dw0 + if (roundUp) 1 else 0
@@ -138,17 +140,19 @@ private fun finalizeFnzInexactNoExcess(sign: Boolean, dw1: Long, dw0: Long, qExp
         val ret = DecOld.from(sign, dw1Rounded, dw0Rounded, qExp)
         return if (isTiny) env.signalInexactUnderflow(ret) else env.signalInexact(ret)
     }
-    check (calcDigitLen128(dw1Rounded, dw0Rounded) == env.precision + 1)
+    verify { calcDigitLen128(dw1Rounded, dw0Rounded) == env.precision + 1 }
     // we rolled over into another digit because of roundup
     // this is 10**precision ... so of course it is exactly divisible by 10
     // we have pre-calculated dw1 and dw0 for this case in decFormat.dw*AfterOverflow
     val qExpAfterRollover = qExp + 1
     val eExpAfterRollover = qExpAfterRollover + env.precision - 1
     if (eExpAfterRollover <= env.eMax) {
-        val ret = DecOld.from(env.decFormat.dw1AfterRollover,
+        val ret = DecOld.from(
+            env.decFormat.dw1AfterRollover,
             env.decFormat.dw0AfterRollover,
             env.decFormat.packedLengthsAfterOverflow,
-            packSignExp(sign, qExpAfterRollover))
+            packSignExp(sign, qExpAfterRollover)
+        )
         return env.signalInexact(ret)
     }
     // rounding caused overflow
@@ -192,8 +196,8 @@ private fun finalizeFnzSubnormalExcessTail(sign: Boolean, dw1: Long, dw0: Long, 
                                            inboundResidue: Residue, decRounding: DecRounding,
                                            excessTail: Int, env: DecEnv): DecOld {
     val (dw1Scaled, dw0Scaled, residueScaled) = C128ScalePow10.c128ScaleDownPow10(dw1, dw0, excessTail)
-    check (qExp + excessTail == env.qTiny)
-    check (calcDigitLen128(dw1, dw0) <= env.precision)
+    verify { qExp + excessTail == env.qTiny }
+    verify { calcDigitLen128(dw1, dw0) <= env.precision }
 
     val totalResidue = residueScaled.merge(inboundResidue)
     if (totalResidue == EXACT) {
@@ -243,26 +247,30 @@ private fun finalizeExactFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
                 DecOld.from(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
 
             else ->
-                finalizeFnzWithExcess(sign, dw1, dw0, qExp,
-                    EXACT, decRounding, isTiny, excess, env)
+                finalizeFnzWithExcess(
+                    sign, dw1, dw0, qExp,
+                    EXACT, decRounding, isTiny, excess, env
+                )
         }
     }
 
     // 1) Overflow => +/- Infinity
     if (eExp > env.eMax) {
-        check (!isTiny)
+        verify { !isTiny }
         // overflow IEEE754-2008 7.4 Overflow page 37
         return finalizeOverflow(sign, decRounding, env)
     }
 
     // 7.5.1: subnormal rounding (tiny result stays nonzero)
-    check(isTiny)
+    verify { isTiny }
     val myQMin = env.qTiny - digitLen           // threshold for subnormal cohort
     val overlap = qExp - myQMin
     if (overlap >= 0) {
         val excessTail = digitLen - overlap
-        return finalizeFnzSubnormalExcessTail(sign, dw1, dw0, qExp,
-            EXACT, decRounding, excessTail, env)
+        return finalizeFnzSubnormalExcessTail(
+            sign, dw1, dw0, qExp,
+            EXACT, decRounding, excessTail, env
+        )
     }
     return finalizeUnderflow(sign, decRounding, env)
 }
@@ -273,10 +281,10 @@ private fun finalizeExactFnzClampExp(sign: Boolean, dw1: Long, dw0: Long, qExp: 
     val (dw1Scaled, dw0Scaled) = C128ScalePow10.c128ScaleUpPow10(dw1, dw0, qExcess)
     val bitLen = calcBitLen128(dw1Scaled, dw0Scaled)
     val digitLen = calcDigitLen128(bitLen, dw1Scaled, dw0Scaled)
-    check (digitLen <= env.precision)
+    verify { digitLen <= env.precision }
     val qExpScaled = qExp - qExcess
     val ret = DecOld.from(dw1Scaled, dw0Scaled, packLengths(digitLen, bitLen), packSignExp(sign, qExpScaled))
-    check (ret.digitLen <= env.precision)
-    check (ret.qExp == env.qMax)
+    verify { ret.digitLen <= env.precision }
+    verify { ret.qExp == env.qMax }
     return ret
 }

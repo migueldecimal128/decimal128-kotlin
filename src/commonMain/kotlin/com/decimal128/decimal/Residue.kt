@@ -60,7 +60,7 @@ value class Residue private constructor(val value:Int) {
                 }
             if (residueX != residueY)
                 println("residueX:$residueX residueY:$residueY")
-            check(residueX == residueY)
+            verify { residueX == residueY }
             return residueX
         }
 
@@ -68,8 +68,8 @@ value class Residue private constructor(val value:Int) {
             residueFrom(roundBit, stickyBit or stickyBitPow2)
 
         fun residueFrom(roundBit: Int, stickyBit: Int) : Residue {
-            check(roundBit in 0..1)
-            check(stickyBit in 0..1)
+            verify { roundBit in 0..1 }
+            verify { stickyBit in 0..1 }
             val residueValue = (roundBit shl 1) or stickyBit
             val residueX = RESIDUE_MAP[residueValue and 0x03]
             return residueX

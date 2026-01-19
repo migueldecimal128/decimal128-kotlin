@@ -5,7 +5,7 @@ import com.decimal128.decimal.U256Pow10.POW10
 object D128Pow10 {
 
     fun scaleCoeffUpPow10(x: DecOld, pow10: Int): DecOld {
-        check (pow10 > 0)
+        verify { pow10 > 0 }
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         val pow10Offset = U256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
@@ -16,7 +16,7 @@ object D128Pow10 {
     }
 
     fun fmaCoeffPow10(x: DecOld, pow10: Int, y: DecOld): DecOld {
-        check (pow10 > 0)
+        verify { pow10 > 0 }
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         val pow10Offset = U256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
@@ -36,7 +36,7 @@ object D128Pow10 {
      * Guaranteed that y less than the scaled product.
      */
     fun fusedMulPow10Subtract(sign: Boolean, x: DecOld, pow10: Int, y: DecOld): DecOld {
-        check (pow10 > 0)
+        verify { pow10 > 0 }
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         val pow10Offset = U256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
@@ -56,7 +56,7 @@ object D128Pow10 {
      * Guaranteed that y less than the scaled product.
      */
     fun fusedSubtractMulPow10(sign: Boolean, m: DecOld, n: DecOld, pow10: Int): DecOld {
-        check (pow10 > 0)
+        verify { pow10 > 0 }
         val pow10BitLen = U256Pow10.pow10BitLen(pow10)
         val pow10Offset = U256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]

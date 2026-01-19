@@ -87,7 +87,7 @@ object DecNtzd {
                     ntzd += 9
                 } while (tmpLen > 2)
                 t0 = (tmp[1].toULong() shl 32) or (tmp[0].toUInt().toULong())
-                check(ntzd == 9 || ntzd == 18)
+                verify { ntzd == 9 || ntzd == 18 }
             }
             // arrive here when the high word is zero
             // either because it started off zero .OR.

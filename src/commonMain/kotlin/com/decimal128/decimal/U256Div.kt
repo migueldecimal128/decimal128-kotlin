@@ -103,7 +103,7 @@ object U256Div {
                 return EXACT
             }
         }
-        check(bitLenDelta >= 0)
+        verify { bitLenDelta >= 0 }
         //TODO at this point I know that x.bitLen >= y.bitLen and x > y
         // if (bitLenDelta < some-small-number) then I should use repeated subtraction
         return DivKnuth.knuthDivideWrapper(quot, rem, x, y)
