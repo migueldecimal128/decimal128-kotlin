@@ -94,6 +94,15 @@ value class Seal private constructor(val seal: Int) {
     internal val signMask: Int
         get() = seal shr 31
 
+    fun updateDigitLenBitLen(digitLen: Int, bitLen: Int): Seal =
+        Seal((this.seal and 0xFFFF_0000.toInt()) or ((digitLen and 0x7F) shl 9) or (bitLen and 0x1FF))
+
+    fun updateSignExp(signBit: Int, exp: Int): Seal =
+        Seal((signBit shl 31) or ((exp and 0x7FFF) shl 16) or (this.seal and 0xFFFF))
+
+    fun updateSignExp(sign: Boolean, exp: Int): Seal =
+        Seal((if (sign) Int.MIN_VALUE else 0) or ((exp and 0x7FFF) shl 16) or (this.seal and 0xFFFF))
+
     /**
      * The unbiased **q-exponent** extracted from the SEAL word.
      *

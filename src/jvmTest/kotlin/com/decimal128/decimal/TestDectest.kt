@@ -7,8 +7,8 @@ import kotlin.test.assertEquals
 
 class TestDectest {
 
-    private val veryVerbose = true
-    private val verbose = true
+    private val veryVerbose = false
+    private val verbose = false
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
