@@ -653,10 +653,9 @@ class MutDec() : C256() {
 
         when {
             qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
-                val tempEnv = DecEnv.INTERNAL_TMP_ENV
 
-                this.setDiv(x, y, tempEnv)
-                this.setRoundToInteger(this, DecRounding.ROUND_TOWARD_ZERO, tempEnv)
+                this.setDiv(x, y, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)
+                this.setRoundToInteger(this, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)
 
                 // Normalize integer toward qExp = 0 using available precision
                 if (this.qExp > 0) {
@@ -887,7 +886,6 @@ class MutDec() : C256() {
         }
         return bothAreZero
     }
-
 
     fun mutateRoundToIntegral(x: MutDec, rounding: DecRounding, env: DecEnv): MutDec {
         if (qExp < 0) {
@@ -1287,40 +1285,69 @@ class MutDec() : C256() {
         return roundAndFinalize(residue, rounding, env)
     }
 
-    fun setRemainder(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+    fun setRemainderNear(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        // avoid aliasing issues
+        val yT = if (this !== y) y else env.decTemps.mdecArg2.set(y)
+        val truncIsOdd: Boolean = setRemTruncImpl(x, yT, env)
+        if (!isZero() && isFinite()) {
+            val rem2 = if (sign) {
+                env.decTemps.mdecArg1.setAdd(this, yT, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
+            } else {
+                env.decTemps.mdecArg1.setSub(this, yT, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
+            }
+            val cmp = magnitudeCompareTo(rem2)
+             if (cmp > 0 || (cmp == 0) && truncIsOdd)
+                this.set(rem2)
+        }
+        return this
+    }
+
+    fun setRemainderTruncate(x: MutDec, y: MutDec, env: DecEnv): MutDec {
+        setRemTruncImpl(x, y, env)
+        return this
+    }
+
+    fun setRemTruncImpl(x: MutDec, y: MutDec, env: DecEnv): Boolean {
         val qX = x.qExp
         val qY = y.qExp
+        var quotientIsOdd = false
         when {
             qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
                 // Compute n = nearest integer to x/y (ties to even)
                 // setRemainder is an EXACT operation, so we will use a temp
                 // environment so that INEXACT flag/trap does not get signaled.
                 // use INTERNAL_TMP_ENV so that flag-setting
-                val n = env.decTemps.mdecArg1.setDiv(x, y, DecEnv.INTERNAL_TMP_ENV)
-                n.setRoundToInteger(n, DecRounding.ROUND_TIES_TO_EVEN, DecEnv.INTERNAL_TMP_ENV)
+                val n = env.decTemps.mdecArg1.setDiv(x, y, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)
+                if (n.qExp < 0)
+                    n.setRoundToInteger(n, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)
 
                 // save xSign ... in case of aliasing this === x
                 val xSign = x.sign
                 // Compute r = x - n*y
                 // (-n) * y + x
                 n.sign = !n.sign // negate n
-                this.setFma(n, y, x, DecEnv.INTERNAL_TMP_ENV)
+                quotientIsOdd = (n.dw0.toInt() and 1) != 0
+                this.setFma(n, y, x, DecEnv.TMP_ENV_ROUND_TOWARD_ZERO)
 
                 if (this.c256IsZero()) {
                     this.qExp = min(qX, qY)
                     this.sign = xSign
                 }
-                return this
             }
-            qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN ->
-                return setNaNOperand(x, y, env)
-            qX == NON_FINITE_INF || y.isZero() ->
-                return env.signalInvalid(setNaN())
+            qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN -> {
+                setNaNOperand(x, y, env)
+                return false
+            }
+            qX == NON_FINITE_INF || y.isZero() -> {
+                env.signalInvalid(setNaN())
+                return false
+            }
             else -> { // qY == NON_FINITE_INF ->
                 check(qY == NON_FINITE_INF)
-                return set(x)
+                set(x)
             }
         }
+        return quotientIsOdd
     }
 
 

@@ -40,8 +40,6 @@ class TestDectest {
     )
 
     private val dectestFiles = arrayOf(
-        "dqDivideInt.decTest",
-
         "dqAbs.decTest",
         "dqAdd.decTest",
         "dqBase.decTest",
@@ -55,7 +53,7 @@ class TestDectest {
         "dqCopyNegate.decTest",
         "dqCopySign.decTest",
         "dqDivide.decTest",
-        // dqDivideInt.decTest is not supported
+        "dqDivideInt.decTest",
         "dqEncode.decTest",
         "dqFMA.decTest",
         "dqLogB.decTest",
@@ -69,6 +67,7 @@ class TestDectest {
         "dqNextPlus.decTest",
         "dqQuantize.decTest",
         "dqReduce.decTest",
+        "dqRemainder.decTest",
         "dqRemainderNear.decTest",
         "dqSameQuantum.decTest",
         "dqScaleB.decTest",
@@ -287,7 +286,19 @@ class TestDectest {
         "dqdvi1054 divideint -1e+277 -1e-311 ->  NaN Division_impossible",
         "dqdvi900 divideint  10  # -> NaN Invalid_operation",
         "dqdvi901 divideint   # 10 -> NaN Invalid_operation",
-        )
+
+        "dqrem421 remainder   1E+6144        1  ->   NaN Division_impossible",
+        "dqrem772  remainder  1234568888888887777777777890123456   0.1  ->  NaN Division_impossible",
+        "dqrem773  remainder  1234568888888887777777777890123456   0.01 ->  NaN Division_impossible",
+        "dqrem1051 remainder  1e+277  1e-311 ->  NaN Division_impossible",
+        "dqrem1052 remainder  1e+277 -1e-311 ->  NaN Division_impossible",
+        "dqrem1053 remainder -1e+277  1e-311 ->  NaN Division_impossible",
+        "dqrem1054 remainder -1e+277 -1e-311 ->  NaN Division_impossible",
+
+        "dqrem1000 remainder 10  # -> NaN Invalid_operation",
+        "dqrem1001 remainder  # 10 -> NaN Invalid_operation",
+
+    )
 
     // Colishaw GDAS says that NaN triggers INVALID
     // in more operations than IEEE.
@@ -349,6 +360,15 @@ class TestDectest {
     }
 
     val tcs = arrayOf(
+        "dqrmn003 remaindernear  1     2    ->  1",
+        "dqrmn008 remaindernear  2     3    -> -1",
+
+        "dqrem1120  remainder  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  0.765432109876543210987654321098768",
+        "dqfma0229  fma        2539892357016099706.4126      -996142232667504817717435       53682082598315949425.937  ->  -2.530094043253148806272276368579143E+42 Inexact Rounded",
+        "dqrmn1101  remaindernear  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  -0.234567890123456789012345678901233",
+
+        "dqrem008 remainder  2     3    ->  2",
+
         "dqdvi531 divideint 5.00 1E-3    -> 5000",
         "dqdvi093 divideint  0.00E+9       1    ->  0",
 
@@ -680,7 +700,8 @@ class TestDectest {
                     val pow10 = operand2.toInt()
                     MutDec().setScaleB(op1, pow10, env)
                 }
-                "remaindernear" -> MutDec().setRemainder(op1, op2, env)
+                "remaindernear" -> MutDec().setRemainderNear(op1, op2, env)
+                "remainder" -> MutDec().setRemainderTruncate(op1, op2, env)
                 else -> return
             }
             if (verbose)

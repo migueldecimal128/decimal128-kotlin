@@ -52,7 +52,6 @@ object U256Sub {
         check(scaleDelta <= 40)
         check(x.digitLen + scaleDelta <= 77)
 
-        check((x.dw3 or x.dw2) == 0L)
         check(x.c256HasValidLengths())
         check(y.c256HasValidLengths())
         check(z.c256HasValidLengths())
