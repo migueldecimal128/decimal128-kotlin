@@ -2,7 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Bits.calcBitLen128
 import kotlin.math.min
 
 /**

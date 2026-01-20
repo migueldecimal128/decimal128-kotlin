@@ -9,7 +9,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
-import com.decimal128.decimal.C256Compare.c256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
 import com.decimal128.decimal.C256Pow10.POW10
@@ -876,7 +875,7 @@ class MutDec() : C256() {
             this.qExp == NON_FINITE_QNAN && other.qExp == NON_FINITE_SNAN -> 1   // qNaN > sNaN
 
             // Both same NaN type - compare payloads
-            else -> C256Compare.c256UnscaledCompare(this, other)
+            else -> c256UnscaledCompare(this, other)
         }
     }
 

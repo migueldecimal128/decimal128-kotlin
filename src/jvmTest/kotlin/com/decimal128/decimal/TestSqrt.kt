@@ -139,7 +139,7 @@ class TestSqrt{
             guess0Squared.c256SetMul(guess0Coeff, guess0Coeff)
         }
         val residual0 = C256()
-        C256Sub.c256SubUnscaled(residual0, radicandScaled, guess0Squared)
+        c256SetSubUnscaled(residual0, radicandScaled, guess0Squared)
         if (verbose)
             println(" --> residual0:$residual0")
 
@@ -171,7 +171,7 @@ class TestSqrt{
             guess1Squared.c256SetMul(guess1Coeff, guess1Coeff)
         }
         val residual1 = C256()
-        C256Sub.c256SubUnscaled(residual1, radicandScaled, guess1Squared)
+        c256SetSubUnscaled(residual1, radicandScaled, guess1Squared)
         if (verbose)
             println(" --> residual1:$residual1")
 
@@ -188,7 +188,7 @@ class TestSqrt{
         val guess2Squared = C256()
         guess2Squared.c256SetSqr(guess2)
         val residual2 = C256()
-        C256Sub.c256SubUnscaled(residual2, radicandScaled, guess2Squared)
+        c256SetSubUnscaled(residual2, radicandScaled, guess2Squared)
         if (verbose)
             println(" --> residual2:$residual2")
 

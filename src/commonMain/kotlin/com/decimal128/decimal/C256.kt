@@ -2,10 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Bits.calcBitLen64
-import com.decimal128.decimal.C256Bits.calcBitLen128
-import com.decimal128.decimal.C256Bits.calcBitLen192
-import com.decimal128.decimal.C256Bits.calcBitLen256
 import com.decimal128.decimal.C256Pow10.calcDigitLen256
 import com.decimal128.decimal.C256Pow10.pow10BitLen
 import com.decimal128.decimal.C256Pow10.pow10Offset
@@ -66,7 +62,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256IsZero() = bitLen == 0
 
-    internal inline fun c256IsMultipleOf5() = C256Bits.c256IsMultipleOf5(this)
+    internal inline fun c256IsMultipleOf5() = c256IsMultipleOf5(this)
 
     internal inline fun c256IsMultipleOf10(): Boolean {
         if (bitLen < 4 || (dw0 and 1) != 0L)
@@ -112,23 +108,23 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         return true
     }
 
-    internal inline fun c256UnscaledCompareTo(other: C256) = C256Compare.c256UnscaledCompare(this, other)
+    internal inline fun c256UnscaledCompareTo(other: C256) = c256UnscaledCompare(this, other)
 
-    internal inline fun c256UnscaledEQ(other: C256) = C256Compare.u256UnscaledEQ(this, other)
+    internal inline fun c256UnscaledEQ(other: C256) = u256UnscaledEQ(this, other)
 
-    internal inline fun c256ScaledCompareTo(other: C256, scaleDelta: Int)  = C256Compare.c256ScaledCompare(this, other, scaleDelta)
+    internal inline fun c256ScaledCompareTo(other: C256, scaleDelta: Int)  = c256ScaledCompare(this, other, scaleDelta)
 
-    internal inline fun c256ScaledEQ(other: C256, scaleDelta: Int) = C256Compare.c256ScaledEQ(this, other, scaleDelta)
+    internal inline fun c256ScaledEQ(other: C256, scaleDelta: Int) = c256ScaledEQ(this, other, scaleDelta)
 
-    internal inline fun c256SetPow2(pow2: Int) = C256Bits.c256SetPow2(this, pow2)
+    internal inline fun c256SetPow2(pow2: Int) = c256SetPow2(this, pow2)
 
     internal inline fun c256SetPow10(pow10: Int) = C256Pow10.coeffSetPow10(this, pow10)
 
-    internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = C256Add.c256SetAdd(this, x, scaleDelta, y)
+    internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = c256SetAdd(this, x, scaleDelta, y)
 
-    internal inline fun c256SetAdd(x: C256, y: C256) = C256Add.c256SetAddUnscaled(this, x, y)
+    internal inline fun c256SetAdd(x: C256, y: C256) = c256SetAddUnscaled(this, x, y)
 
-    internal inline fun c256SetSub(x: C256, y: C256) = C256Sub.c256SubUnscaled(this, x, y)
+    internal inline fun c256SetSub(x: C256, y: C256) = c256SetSubUnscaled(this, x, y)
 
     internal inline fun c256SetMul(x: C256, y: C256) = C256Mul.c256SetMul(this, x, y)
 
@@ -146,15 +142,15 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetFms(x: C256, y: C256, subtrahend: C256) = C256Fms.c256SetFms(this, x, y, subtrahend)
 
-    internal inline fun c256SetDiv(x: C256, y: C256) = U256Div.c256Div(this, x, y)
+    internal inline fun c256SetDiv(x: C256, y: C256) = c256SetDiv(this, x, y)
 
-    internal inline fun c256SetDivX64(x: C256, y0: Long) = U256Div.c256DivX64(this, x, y0)
+    internal inline fun c256SetDivX64(x: C256, y0: Long) = c256SetDivX64(this, x, y0)
 
-    internal inline fun c256SetDivModX64(x: C256, y0: Long) = U256Div.c256DivModX64(this, x, y0)
+    internal inline fun c256SetDivModX64(x: C256, y0: Long) = c256SetDivRemX64(this, x, y0)
 
-    internal inline fun c256SetMod(x: C256, y: C256) = U256Div.c256Mod(this, x, y)
+    internal inline fun c256SetRem(x: C256, y: C256) = c256SetRem(this, x, y)
 
-    internal inline fun c256SetDivMod(rem: C256, x: C256, y: C256) = U256Div.c256DivMod(this, rem, x, y)
+    internal inline fun c256SetDivRem(rem: C256, x: C256, y: C256) = c256SetDivRem(this, rem, x, y)
 
     internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = C256ScalePow10.c256SetScaleUpPow10(this, x, pow10)
 
@@ -247,28 +243,28 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     internal inline fun c256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
         C256Set.c256SetShiftRight(this, x, xOff, xLen, bitCount)
 
-    internal inline fun getDwordAtBitIndex(bitIndex: Int): Long = C256Bits.getDwordAtBitIndex(this, bitIndex)
+    internal inline fun getDwordAtBitIndex(bitIndex: Int): Long = getDwordAtBitIndex(this, bitIndex)
 
-    internal inline fun c256ToFloorDouble() = C256Bits.c256ToFloorDouble(this)
+    internal inline fun c256ToFloorDouble() = c256ToFloorDouble(this)
 
-    internal inline fun c256Set(d: Double) = C256Bits.c256Set(this, d)
+    internal inline fun c256Set(d: Double) = c256Set(this, d)
 
-    internal inline fun c256ToNewDoubleDouble() = C256Bits.c256ToNewDoubleDouble(this)
+    internal inline fun c256ToNewDoubleDouble() = c256ToNewDoubleDouble(this)
 
-    internal inline fun c256Set(dd: DoubleDouble) = C256Bits.c256Set(this, dd)
+    internal inline fun c256Set(dd: DoubleDouble) = c256Set(this, dd)
 
     internal inline fun c256MutateIncrement(doRoundUp: Boolean) {
         if (doRoundUp)
-            C256Add.c256MutateIncrement(this)
+            c256MutateIncrement(this)
     }
 
-    internal inline fun c256MutateIncrement() = C256Add.c256MutateIncrement(this)
+    internal inline fun c256MutateIncrement() = c256MutateIncrement(this)
 
-    internal inline fun c256MutateDecrement() = C256Add.c256MutateDecrement(this)
+    internal inline fun c256MutateDecrement() = c256MutateDecrement(this)
 
-    internal inline fun c256NumberTrailingZeros() = C256Bits.c256Ctz(this)
+    internal inline fun c256NumberTrailingZeros() = c256Ctz(this)
 
-    internal inline fun c256DwordAtBitIndex(bitIndex: Int) = C256Bits.getDwordAtBitIndex(this, bitIndex)
+    internal inline fun c256DwordAtBitIndex(bitIndex: Int) = getDwordAtBitIndex(this, bitIndex)
 
     open fun toHexString() = IntegerParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
@@ -279,6 +275,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
             IntegerParsePrint.int256ToString(false, this)
     fun u256ToUtf8(bytes: ByteArray, off: Int) = IntegerParsePrint.int256ToUtf8(false, this, bytes, off)
 
-    override fun equals(other: Any?) = other is C256 && C256Compare.u256UnscaledEQ(this, other)
+    override fun equals(other: Any?) = other is C256 && u256UnscaledEQ(this, other)
 
 }

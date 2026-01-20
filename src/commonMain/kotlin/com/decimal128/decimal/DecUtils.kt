@@ -1,8 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
 package com.decimal128.decimal
-import com.decimal128.decimal.C256Bits.calcBitLen64
-import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.C256Pow10.calcDigitLen128
 import kotlin.math.max

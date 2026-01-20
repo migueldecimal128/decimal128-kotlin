@@ -2,7 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.decimal.C256Pow10.calcDigitLen128
 import com.decimal128.decimal.C256Pow10.pow10BitLen
 import com.decimal128.decimal.C256Pow10.pow10Offset
