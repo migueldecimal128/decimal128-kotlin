@@ -42,7 +42,7 @@ internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
     verify { y.c256HasValidLengths() }
     verify { z.c256HasValidLengths() }
 
-    C256Fma.c256SetFmaPow10(z, x, scaleDelta, y)
+    c256SetFmaPow10(z, x, scaleDelta, y)
 }
 
 internal fun c256MutateIncrement(z: C256) {

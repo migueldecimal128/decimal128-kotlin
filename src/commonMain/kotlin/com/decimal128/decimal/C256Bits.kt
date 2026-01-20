@@ -193,7 +193,7 @@ fun c256Set(z: C256, d: Double) {
     }
     val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
     z.c256Set64(significand)
-    C256Set.c256SetShiftLeft(z, z, exp - 52)
+    c256SetShiftLeft(z, z, exp - 52)
 }
 
 fun c256ToNewDoubleDouble(x: C256): DoubleDouble {

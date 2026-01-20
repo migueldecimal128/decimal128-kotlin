@@ -56,7 +56,7 @@ internal fun c256SetSubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
 
     verify { y.c256ScaledCompareTo(x, scaleDelta) <= 0 }
 
-    C256Fms.c256FmsPow10(z, x, scaleDelta, y)
+    c256FmsPow10(z, x, scaleDelta, y)
 }
 
 internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
@@ -73,5 +73,5 @@ internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
 
     verify { x.c256ScaledCompareTo(y, scaleDelta) >= 0 }
 
-    C256Fms.c256FmsPow10(z, x, y, scaleDelta)
+    c256FmsPow10(z, x, y, scaleDelta)
 }

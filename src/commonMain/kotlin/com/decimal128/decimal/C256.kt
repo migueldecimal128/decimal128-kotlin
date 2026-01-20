@@ -130,17 +130,17 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetSqr(x: C256) = C256Sqr.c256Sqr(this, x)
 
-    internal inline fun c256SetFma(x: C256, y: C256, a: C256) = C256Fma.c256SetFma(this, x, y, a)
+    internal inline fun c256SetFma(x: C256, y: C256, a: C256) = c256SetFma(this, x, y, a)
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a: C256) = C256Fma.c256SetFmaPow10(this, x, pow10, a)
+    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a: C256) = c256SetFmaPow10(this, x, pow10, a)
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a0: Long) = C256Fma.c256SetFmaPow10(this, x, pow10, a0)
+    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a0: Long) = c256SetFmaPow10(this, x, pow10, a0)
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a1: Long, a0: Long) = C256Fma.c256SetFmaPow10(this, x, pow10, a1, a0)
+    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a1: Long, a0: Long) = c256SetFmaPow10(this, x, pow10, a1, a0)
 
-    internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = C256Fma.c256SetFmaPow10(this, this, pow10, a)
+    internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = c256SetFmaPow10(this, this, pow10, a)
 
-    internal inline fun c256SetFms(x: C256, y: C256, subtrahend: C256) = C256Fms.c256SetFms(this, x, y, subtrahend)
+    internal inline fun c256SetFms(x: C256, y: C256, subtrahend: C256) = c256SetFms(this, x, y, subtrahend)
 
     internal inline fun c256SetDiv(x: C256, y: C256) = c256SetDiv(this, x, y)
 
@@ -228,20 +228,20 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256Set(str: String) = IntegerParsePrint.u256FromString(this, false, str)
 
-    internal inline fun c256SetShiftRight(x: C256, bitShift: Int) = C256Set.c256SetShiftRight(this, x, bitShift)
+    internal inline fun c256SetShiftRight(x: C256, bitShift: Int) = c256SetShiftRight(this, x, bitShift)
 
-    internal inline fun c256SetShiftLeft(x: C256, bitShift: Int) = C256Set.c256SetShiftLeftOr(this, x, bitShift, 0L)
+    internal inline fun c256SetShiftLeft(x: C256, bitShift: Int) = c256SetShiftLeftOr(this, x, bitShift, 0L)
 
-    internal inline fun c256MutateShiftLeft(bitShift: Int) = C256Set.c256SetShiftLeftOr(this, this, bitShift, 0L)
+    internal inline fun c256MutateShiftLeft(bitShift: Int) = c256SetShiftLeftOr(this, this, bitShift, 0L)
 
-    internal inline fun c256MutateShiftLeftOr(bitShift: Int, d0: Long) = C256Set.c256SetShiftLeftOr(this, this, bitShift, d0)
+    internal inline fun c256MutateShiftLeftOr(bitShift: Int, d0: Long) = c256SetShiftLeftOr(this, this, bitShift, d0)
 
-    internal inline fun c256Set(x: LongArray, xOff: Int, xLen: Int) = C256Set.c256Set(this, x, xOff, xLen)
+    internal inline fun c256Set(x: LongArray, xOff: Int, xLen: Int) = c256Set(this, x, xOff, xLen)
 
-    internal inline fun c256Set(x: IntArray, xLen: Int) = C256Set.c256Set(this, x, xLen)
+    internal inline fun c256Set(x: IntArray, xLen: Int) = c256Set(this, x, xLen)
 
     internal inline fun c256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
-        C256Set.c256SetShiftRight(this, x, xOff, xLen, bitCount)
+        c256SetShiftRight(this, x, xOff, xLen, bitCount)
 
     internal inline fun getDwordAtBitIndex(bitIndex: Int): Long = getDwordAtBitIndex(this, bitIndex)
 

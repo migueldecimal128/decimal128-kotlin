@@ -56,7 +56,7 @@ internal object C256ScalePow10 {
                 z.c256SetZero()
                 return residue
             }
-            return C256DivPow10.c256SetDivPow10(z, x, pow10)
+            return c256SetDivPow10(z, x, pow10)
         }
         z.c256Set(x)
         return EXACT
