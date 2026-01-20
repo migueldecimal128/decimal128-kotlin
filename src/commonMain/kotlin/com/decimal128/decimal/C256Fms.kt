@@ -1,13 +1,13 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Pow10.pow10BitLen
-import com.decimal128.decimal.U256Pow10.pow10Offset
+import com.decimal128.decimal.C256Pow10.pow10BitLen
+import com.decimal128.decimal.C256Pow10.pow10Offset
 import kotlin.math.max
-import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.POW10
 
-object U256Fms {
+object C256Fms {
 
-    fun u256Fms(z: C256, x: C256, y: C256, s: C256) {
+    fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }
         verify { y.c256HasValidLengths() }
@@ -88,7 +88,7 @@ object U256Fms {
 
 
 
-    fun u256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
+    fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
         verify { pow10 > 0 }
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }
@@ -215,42 +215,7 @@ object U256Fms {
         }
     }
 
-    fun u256FmsPow10(z: C256, x: C256, y: C256, pow10: Int) =
-        u256FmsPow10_x256(z, x, y, pow10)
-
-    fun u256FmsPow10_x128(z: C256, x: C256, y: C256, pow10: Int) {
-        verify { pow10 > 0 }
-        verify { z.c256HasValidLengths() }
-        verify { x.c256HasValidLengths() }
-        verify { y.c256HasValidLengths() }
-        // FIXME I am removing this because of FMA ... but it seems dangerous
-        //  ... and indeed it *was* dangerous ... because it failed
-        verify { x.bitLen <= 128 }
-        verify { x.c256ScaledCompareTo(y, pow10) >= 0 }
-        val xBitLen = x.bitLen
-        val yBitLen = y.bitLen
-        val p10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
-        val x0 = x.dw0
-        val x1 = x.dw1
-        val y0 = y.dw0
-        val y1 = y.dw1
-        val p0 = POW10[pow10Offset + 0]
-        val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
-
-        val pp00Hi = unsignedMulHi(y0, p0)
-        val pp00Lo = y0 * p0
-        val pp10Lo = y1 * p0
-        val pp01Lo = y0 * p1
-
-        val f0 = pp00Lo
-        val f1 = pp00Hi + pp10Lo + pp01Lo
-        val (borrow0, d0) = diffU64(x0, f0)
-        val d1 = x1 - f1 - borrow0
-        z.c256Set128(d1, d0)
-    }
-
-    fun u256FmsPow10_x256(z: C256, x: C256, y: C256, pow10: Int) {
+    fun c256FmsPow10(z: C256, x: C256, y: C256, pow10: Int) {
         verify { pow10 > 0 }
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }

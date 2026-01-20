@@ -3,11 +3,11 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.BigInt
-import com.decimal128.decimal.U256Pow10.BARRETT_POW10_MAXX
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul256
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul192
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul128
-import com.decimal128.decimal.U256RecipMulPow5.u256RecipMul64
+import com.decimal128.decimal.C256Pow10.BARRETT_POW10_MAXX
+import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul256
+import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul192
+import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul128
+import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul64
 import kotlin.math.min
 
 const val Q_MIN = POW10_64_COUNT
@@ -325,25 +325,25 @@ object DivRangeRecipMulPow10 {
 
         val residue = when {
             (d3 != 0L) ->
-                u256RecipMul256(
+                c256RecipMul256(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d3, d2, d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d2 != 0L) ->
-                u256RecipMul192(
+                c256RecipMul192(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d2, d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d1 != 0L) ->
-                u256RecipMul128(
+                c256RecipMul128(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d1, d0, fractionBitLen, stickyBitsPow2
                 )
 
             (d0 != 0L) ->
-                u256RecipMul64(
+                c256RecipMul64(
                     z, RANGE_RECIP_PARAMS, paramsIndex + 1, mDwordCount,
                     d0, fractionBitLen, stickyBitsPow2
                 )

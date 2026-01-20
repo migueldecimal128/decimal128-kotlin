@@ -5,11 +5,11 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_1
-import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_2
-import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_3
-import com.decimal128.decimal.U256Pow10.compareWithHalfPow10_4
-import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.compareWithHalfPow10_1
+import com.decimal128.decimal.C256Pow10.compareWithHalfPow10_2
+import com.decimal128.decimal.C256Pow10.compareWithHalfPow10_3
+import com.decimal128.decimal.C256Pow10.compareWithHalfPow10_4
+import com.decimal128.decimal.C256Pow10.POW10
 
 private const val RESIDUE_IS_VALUE_CLASS = true
 @JvmInline

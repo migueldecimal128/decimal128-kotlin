@@ -12,8 +12,8 @@ import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import com.decimal128.decimal.C256Compare.c256UnscaledCompare
 import kotlin.math.max
 import kotlin.math.min
-import com.decimal128.decimal.U256Pow10.POW10
-import com.decimal128.decimal.U256ScalePow10.u256ScaleUpPow10
+import com.decimal128.decimal.C256Pow10.POW10
+import com.decimal128.decimal.C256ScalePow10.c256SetScaleUpPow10
 
 internal const val MIN_SPECIAL_VALUE = 16381
 internal const val NON_FINITE_INF = 16381
@@ -66,7 +66,7 @@ class MutDec() : C256() {
                             val shiftLeft = max(0, min(headroom, gap))
                             z.qExp = x.qExp - shiftLeft
                             z.sign = x.sign
-                            u256ScaleUpPow10(z, x, shiftLeft)
+                            c256SetScaleUpPow10(z, x, shiftLeft)
                             // we could be here because of FMA, so need to finalize
                             z.finalize(env)
                         }
@@ -82,7 +82,7 @@ class MutDec() : C256() {
                             val shiftLeft = min(headroom, gap)
                             z.qExp = y.qExp - shiftLeft
                             z.sign = ySign
-                            u256ScaleUpPow10(z, y, shiftLeft)
+                            c256SetScaleUpPow10(z, y, shiftLeft)
                         }
 
                         x.qExp == y.qExp -> unscaledFiniteNonZeroAddImpl(z, x, ySign, y, env)
@@ -416,7 +416,7 @@ class MutDec() : C256() {
         qExp = env.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
-        val offset = U256Pow10.pow10Offset(env.precision)
+        val offset = C256Pow10.pow10Offset(env.precision)
         if (env.precision < MIN_POW10_DIGIT_LEN_128) {
             super.c256Set64(POW10[offset] - 1)
         } else if (env.precision < MIN_POW10_DIGIT_LEN_192) {
@@ -1534,7 +1534,7 @@ class MutDec() : C256() {
         val printedDigitLen = max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val expDigitLen = max(C256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
         var i = IntegerParsePrint.int256ToUtf8(sign, this, utf8, 0)
@@ -1562,7 +1562,7 @@ class MutDec() : C256() {
             if (digitLen == 0) 0 else max(0, 1 + expAdjustment - digitLen)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val expDigitLen = max(C256Pow10.calcDigitLen64(Math.abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
                 printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
@@ -1633,7 +1633,7 @@ class MutDec() : C256() {
         val coeffLen = max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (qExp < 0) 1 else 0
-        val expDigitLen = max(U256Pow10.calcDigitLen64(Math.abs(qExp).toLong()), 1)
+        val expDigitLen = max(C256Pow10.calcDigitLen64(Math.abs(qExp).toLong()), 1)
         return signLen + coeffLen + expELen + expSignLen + expDigitLen
     }
 

@@ -3,9 +3,9 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.C256Bits.calcBitLen128
-import com.decimal128.decimal.U256Pow10.POW10
-import com.decimal128.decimal.U256Pow10.calcDigitLen128
-import com.decimal128.decimal.U256Pow10.calcDigitLen64
+import com.decimal128.decimal.C256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.calcDigitLen128
+import com.decimal128.decimal.C256Pow10.calcDigitLen64
 import com.decimal128.bigint.Magia
 import kotlin.math.max
 import kotlin.math.min

@@ -1,15 +1,15 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Mul.u256Mul
-import com.decimal128.decimal.U256Pow10.pow10BitLen
-import com.decimal128.decimal.U256Pow10.pow10Offset
+import com.decimal128.decimal.C256Mul.c256SetMul
+import com.decimal128.decimal.C256Pow10.pow10BitLen
+import com.decimal128.decimal.C256Pow10.pow10Offset
 import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.POW10
 
 
-internal object U256ScalePow10 {
+internal object C256ScalePow10 {
 
-    fun u256ScaleUpPow10(z: C256, x: C256, pow10: Int) {
+    fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int) {
         when {
             pow10 > 0 -> {
                 val pow10BitLen = pow10BitLen(pow10)
@@ -24,7 +24,7 @@ internal object U256ScalePow10 {
                             z.c256Set192(p2, p1, p0)
                             return
                         }
-                        u256Mul(z, x, pow10BitLen, pow10dw0)
+                        c256SetMul(z, x, pow10BitLen, pow10dw0)
                     }
                     (pow10BitLen <= 128) -> {
                         if (maxBitLen <= 192) {
@@ -32,13 +32,13 @@ internal object U256ScalePow10 {
                             z.c256Set192(p2, p1, p0)
                             return
                         }
-                        u256Mul(z, x, pow10BitLen, pow10dw1, pow10dw0)
+                        c256SetMul(z, x, pow10BitLen, pow10dw1, pow10dw0)
                     }
                     (pow10BitLen <= 192) -> {
-                        u256Mul(z, x, pow10BitLen, POW10[pow10Offset + 2], pow10dw1, pow10dw0)
+                        c256SetMul(z, x, pow10BitLen, POW10[pow10Offset + 2], pow10dw1, pow10dw0)
                     }
                     (pow10BitLen <= 256) -> {
-                        u256Mul(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], pow10dw1, pow10dw0)
+                        c256SetMul(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], pow10dw1, pow10dw0)
                     }
                     else -> throw RuntimeException()
                 }
@@ -48,7 +48,7 @@ internal object U256ScalePow10 {
         }
     }
 
-    fun u256ScaleDownPow10(z: C256, x: C256, pow10: Int): Residue {
+    fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int): Residue {
         if (x.bitLen > 0 && pow10 > 0) {
             val productDigitCount = x.digitLen - pow10
             if (productDigitCount <= 0) {
@@ -60,10 +60,6 @@ internal object U256ScalePow10 {
         }
         z.c256Set(x)
         return EXACT
-    }
-
-    fun u256ScaleFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
-        U256Fma.u256FmaPow10(z, x, pow10, a)
     }
 
 }

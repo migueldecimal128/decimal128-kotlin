@@ -49,7 +49,7 @@ class TestC256ScaleDownPerf {
         for (i in mdValues.indices) {
             val md = mdValues[i]
             val pow10 = scaleValues[i]
-//            val residue = U256ScalePow10.u256ScaleDownPow10(mdT, md, pow10)
+//            val residue = C256ScalePow10.u256ScaleDownPow10(mdT, md, pow10)
             val residue = DivRangeRecipMulPow10.rangeDivPow10(mdT, md, pow10)
         }
     }

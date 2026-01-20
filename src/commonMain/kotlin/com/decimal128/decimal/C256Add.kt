@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256ScalePow10.u256ScaleFmaPow10
 import kotlin.math.max
 
 object C256Add {
@@ -45,7 +44,7 @@ object C256Add {
         verify { y.c256HasValidLengths() }
         verify { z.c256HasValidLengths() }
 
-        u256ScaleFmaPow10(z, x, scaleDelta, y)
+        C256Fma.c256SetFmaPow10(z, x, scaleDelta, y)
     }
 
     fun c256MutateIncrement(z: C256) {

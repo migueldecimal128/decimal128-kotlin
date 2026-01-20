@@ -1,9 +1,9 @@
 package com.decimal128.decimal
 
 
-internal object U256Mul {
+internal object C256Mul {
 
-    fun u256Mul(z: C256, x: C256, y: C256) {
+    fun c256SetMul(z: C256, x: C256, y: C256) {
         if ((x.bitLen < 128) and (y.bitLen < 128)) {
             val maxProdBitLen = x.bitLen + y.bitLen
             _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0)
@@ -12,7 +12,7 @@ internal object U256Mul {
             throw IllegalArgumentException("mul arg >=128 bits ... overflow")
     }
 
-    fun u256Mul(z: C256, x: C256, yBitLen: Int, y0: Long) {
+    fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long) {
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
         when {
@@ -27,7 +27,7 @@ internal object U256Mul {
         }
     }
 
-    fun u256Mul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long) {
+    fun c256SetMul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long) {
         verify { yBitLen in 65..128 }
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
@@ -43,7 +43,7 @@ internal object U256Mul {
         }
     }
 
-    fun u256Mul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: Long) {
+    fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: Long) {
         verify { yBitLen in 129..192 }
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen
@@ -59,7 +59,7 @@ internal object U256Mul {
         }
     }
 
-    fun u256Mul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
+    fun c256SetMul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long) {
         verify { yBitLen in 193..256 }
         val xBitLen = x.bitLen
         val maxBitLen = xBitLen + yBitLen

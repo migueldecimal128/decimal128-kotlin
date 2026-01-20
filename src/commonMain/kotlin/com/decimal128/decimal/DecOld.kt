@@ -176,7 +176,7 @@ class DecOld private constructor(
     internal fun validate(): Boolean {
         if (bitLen != calcBitLen128(dw1, dw0))
             return false
-        if (digitLen != U256Pow10.calcDigitLen128(bitLen, dw1, dw0))
+        if (digitLen != C256Pow10.calcDigitLen128(bitLen, dw1, dw0))
             return false;
         return true
     }

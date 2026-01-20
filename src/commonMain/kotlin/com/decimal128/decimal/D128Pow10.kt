@@ -1,13 +1,13 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.POW10
 
 object D128Pow10 {
 
     fun scaleCoeffUpPow10(x: DecOld, pow10: Int): DecOld {
         verify { pow10 > 0 }
-        val pow10BitLen = U256Pow10.pow10BitLen(pow10)
-        val pow10Offset = U256Pow10.pow10Offset(pow10)
+        val pow10BitLen = C256Pow10.pow10BitLen(pow10)
+        val pow10Offset = C256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p0 = x.dw0 * dw0Pow10
@@ -17,8 +17,8 @@ object D128Pow10 {
 
     fun fmaCoeffPow10(x: DecOld, pow10: Int, y: DecOld): DecOld {
         verify { pow10 > 0 }
-        val pow10BitLen = U256Pow10.pow10BitLen(pow10)
-        val pow10Offset = U256Pow10.pow10Offset(pow10)
+        val pow10BitLen = C256Pow10.pow10BitLen(pow10)
+        val pow10Offset = C256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p0 = x.dw0 * dw0Pow10
@@ -37,8 +37,8 @@ object D128Pow10 {
      */
     fun fusedMulPow10Subtract(sign: Boolean, x: DecOld, pow10: Int, y: DecOld): DecOld {
         verify { pow10 > 0 }
-        val pow10BitLen = U256Pow10.pow10BitLen(pow10)
-        val pow10Offset = U256Pow10.pow10Offset(pow10)
+        val pow10BitLen = C256Pow10.pow10BitLen(pow10)
+        val pow10Offset = C256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p0 = x.dw0 * dw0Pow10
@@ -57,8 +57,8 @@ object D128Pow10 {
      */
     fun fusedSubtractMulPow10(sign: Boolean, m: DecOld, n: DecOld, pow10: Int): DecOld {
         verify { pow10 > 0 }
-        val pow10BitLen = U256Pow10.pow10BitLen(pow10)
-        val pow10Offset = U256Pow10.pow10Offset(pow10)
+        val pow10BitLen = C256Pow10.pow10BitLen(pow10)
+        val pow10Offset = C256Pow10.pow10Offset(pow10)
         val dw0Pow10 = POW10[pow10Offset + 0]
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p0 = n.dw0 * dw0Pow10

@@ -4,7 +4,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.C256Bits.calcBitLen64
 import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.U256Pow10.calcDigitLen128
+import com.decimal128.decimal.C256Pow10.calcDigitLen128
 import kotlin.math.max
 import kotlin.math.min
 
@@ -23,7 +23,7 @@ internal inline fun unpackExp(signExp: Short) = (signExp.toInt() shl 1) shr 1
 
 internal inline fun calcPackedLengths(dw0: Long): Short {
     val bitLen = calcBitLen64(dw0)
-    val digitLen = U256Pow10.calcDigitLen64(bitLen, dw0)
+    val digitLen = C256Pow10.calcDigitLen64(bitLen, dw0)
     val packed = packLengths(digitLen, bitLen)
     return packed
 }

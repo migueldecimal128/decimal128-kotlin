@@ -6,10 +6,10 @@ import com.decimal128.decimal.C256Bits.calcBitLen64
 import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.decimal.C256Bits.calcBitLen192
 import com.decimal128.decimal.C256Bits.calcBitLen256
-import com.decimal128.decimal.U256Pow10.calcDigitLen256
-import com.decimal128.decimal.U256Pow10.pow10BitLen
-import com.decimal128.decimal.U256Pow10.pow10Offset
-import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.calcDigitLen256
+import com.decimal128.decimal.C256Pow10.pow10BitLen
+import com.decimal128.decimal.C256Pow10.pow10Offset
+import com.decimal128.decimal.C256Pow10.POW10
 
 const val PRECISION_34 = 34
 
@@ -74,7 +74,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         return c256IsMultipleOf5()
     }
 
-    internal inline fun c256IsPowerOf10() = U256Pow10.coeffIsPow10(this)
+    internal inline fun c256IsPowerOf10() = C256Pow10.coeffIsPow10(this)
 
     internal inline fun c256IsAllNines(nineCount: Int) : Boolean  {
         val pow10BitLen = pow10BitLen(nineCount)
@@ -122,7 +122,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetPow2(pow2: Int) = C256Bits.c256SetPow2(this, pow2)
 
-    internal inline fun c256SetPow10(pow10: Int) = U256Pow10.coeffSetPow10(this, pow10)
+    internal inline fun c256SetPow10(pow10: Int) = C256Pow10.coeffSetPow10(this, pow10)
 
     internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = C256Add.c256Add(this, x, scaleDelta, y)
 
@@ -130,21 +130,21 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetSub(x: C256, y: C256) = C256Sub.c256SubUnscaled(this, x, y)
 
-    internal inline fun c256SetMul(x: C256, y: C256) = U256Mul.u256Mul(this, x, y)
+    internal inline fun c256SetMul(x: C256, y: C256) = C256Mul.c256SetMul(this, x, y)
 
     internal inline fun c256SetSqr(x: C256) = C256Sqr.c256Sqr(this, x)
 
-    internal inline fun c256SetFma(x: C256, y: C256, a: C256) = U256Fma.u256Fma(this, x, y, a)
+    internal inline fun c256SetFma(x: C256, y: C256, a: C256) = C256Fma.c256SetFma(this, x, y, a)
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a: C256) = U256Fma.u256FmaPow10(this, x, pow10, a)
+    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a: C256) = C256Fma.c256SetFmaPow10(this, x, pow10, a)
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a0: Long) = U256Fma.u256FmaPow10(this, x, pow10, a0)
+    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a0: Long) = C256Fma.c256SetFmaPow10(this, x, pow10, a0)
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a1: Long, a0: Long) = U256Fma.u256FmaPow10(this, x, pow10, a1, a0)
+    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a1: Long, a0: Long) = C256Fma.c256SetFmaPow10(this, x, pow10, a1, a0)
 
-    internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = U256Fma.u256FmaPow10(this, this, pow10, a)
+    internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = C256Fma.c256SetFmaPow10(this, this, pow10, a)
 
-    internal inline fun c256SetFms(x: C256, y: C256, subtrahend: C256) = U256Fms.u256Fms(this, x, y, subtrahend)
+    internal inline fun c256SetFms(x: C256, y: C256, subtrahend: C256) = C256Fms.c256SetFms(this, x, y, subtrahend)
 
     internal inline fun c256SetDiv(x: C256, y: C256) = U256Div.c256Div(this, x, y)
 
@@ -156,9 +156,9 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetDivMod(rem: C256, x: C256, y: C256) = U256Div.c256DivMod(this, rem, x, y)
 
-    internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = U256ScalePow10.u256ScaleUpPow10(this, x, pow10)
+    internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = C256ScalePow10.c256SetScaleUpPow10(this, x, pow10)
 
-    internal inline fun c256SetScaleDownPow10(x: C256, pow10: Int) = U256ScalePow10.u256ScaleDownPow10(this, x, pow10)
+    internal inline fun c256SetScaleDownPow10(x: C256, pow10: Int) = C256ScalePow10.c256SetScaleDownPow10(this, x, pow10)
 
     internal inline operator fun get(index: Int): Long {
         return when (index) {
@@ -198,21 +198,21 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
         bitLen = calcBitLen64(d0)
-        digitLen = U256Pow10.calcDigitLen64(bitLen, d0)
+        digitLen = C256Pow10.calcDigitLen64(bitLen, d0)
     }
 
     internal inline fun c256Set128(d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen128(d1, d0)
-        digitLen = U256Pow10.calcDigitLen128(bitLen, d1, d0)
+        digitLen = C256Pow10.calcDigitLen128(bitLen, d1, d0)
     }
 
     internal inline fun c256Set192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen192(d2, d1, d0)
-        digitLen = U256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
+        digitLen = C256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
     }
 
     internal inline fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long) {

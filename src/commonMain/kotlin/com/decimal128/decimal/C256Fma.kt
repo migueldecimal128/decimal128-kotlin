@@ -1,13 +1,13 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Pow10.pow10BitLen
-import com.decimal128.decimal.U256Pow10.pow10Offset
+import com.decimal128.decimal.C256Pow10.pow10BitLen
+import com.decimal128.decimal.C256Pow10.pow10Offset
 import kotlin.math.max
-import com.decimal128.decimal.U256Pow10.POW10
+import com.decimal128.decimal.C256Pow10.POW10
 
-object U256Fma {
+object C256Fma {
 
-    fun u256Fma(z: C256, x: C256, y: C256, a: C256) {
+    fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }
         verify { y.c256HasValidLengths() }
@@ -88,7 +88,7 @@ object U256Fma {
         throw RuntimeException("coeff overflow")
     }
 
-    fun u256FmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
+    fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
         verify { pow10 >= 0 }
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }
@@ -213,7 +213,7 @@ object U256Fma {
         }
     }
 
-    fun u256FmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
+    fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
         verify { pow10 >= 0 }
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }
@@ -340,7 +340,7 @@ object U256Fma {
         }
     }
 
-    fun u256FmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
+    fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
         verify { pow10 >= 0 }
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }

@@ -257,7 +257,7 @@ object DecSerdeBid128 {
                 val dw1 = mostSignificant3 or coefficientMid46
                 val dw0 = bid128Lo
                 val bitLen = calcBitLen128(dw1, dw0)
-                val digitLen = U256Pow10.calcDigitLen128(bitLen, dw1, dw0)
+                val digitLen = C256Pow10.calcDigitLen128(bitLen, dw1, dw0)
                 // IEEE754-2019 3.5.2 p21
                 //  If the value exceeds the maximum, the significand c is
                 //  non-canonical and the value used for c is zero.

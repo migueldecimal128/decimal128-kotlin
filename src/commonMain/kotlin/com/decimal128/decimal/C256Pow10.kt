@@ -6,7 +6,7 @@ import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.bigint.BigInt
 import kotlin.math.max
 
-internal object U256Pow10 {
+internal object C256Pow10 {
     private const val POW10_DWORD_COUNT =
         POW10_64_COUNT + 2*POW10_128_COUNT+3*POW10_192_COUNT+4*POW10_256_COUNT
 

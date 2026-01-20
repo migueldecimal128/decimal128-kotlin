@@ -58,7 +58,7 @@ object C256Sub {
 
         verify { y.c256ScaledCompareTo(x, scaleDelta) <= 0 }
 
-        U256Fms.u256FmsPow10(z, x, scaleDelta, y)
+        C256Fms.c256FmsPow10(z, x, scaleDelta, y)
     }
 
     fun c256SubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
@@ -75,7 +75,7 @@ object C256Sub {
 
         verify { x.c256ScaledCompareTo(y, scaleDelta) >= 0 }
 
-        U256Fms.u256FmsPow10(z, x, y, scaleDelta)
+        C256Fms.c256FmsPow10(z, x, y, scaleDelta)
     }
 
 }
