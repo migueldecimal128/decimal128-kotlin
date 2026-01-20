@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Bits.calcBitLen128
+import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import kotlin.math.max
 import kotlin.math.min

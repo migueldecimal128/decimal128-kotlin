@@ -1,9 +1,9 @@
 package com.decimal128.decimal
 
 
-object U256Sub {
+object C256Sub {
 
-    fun u256SubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtrahend
+    fun c256SubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtrahend
         verify { z.c256HasValidLengths() }
         verify { x.c256HasValidLengths() }
         verify { y.c256HasValidLengths() }
@@ -47,7 +47,7 @@ object U256Sub {
         z.c256Set256(d3, d2, d1, d0)
     }
 
-    fun u256SubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
+    fun c256SubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
         verify { scaleDelta > 0 }
         verify { scaleDelta <= 40 }
         verify { x.digitLen + scaleDelta <= 77 }
@@ -61,7 +61,7 @@ object U256Sub {
         U256Fms.u256FmsPow10(z, x, scaleDelta, y)
     }
 
-    fun u256SubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
+    fun c256SubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
         verify { !x.c256IsZero() }
         verify { !y.c256IsZero() }
         verify { scaleDelta > 0 }

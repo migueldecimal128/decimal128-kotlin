@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
-internal object U256Sqr {
+internal object C256Sqr {
 
-    fun u256Sqr(z: C256, x: C256) {
+    fun c256Sqr(z: C256, x: C256) {
         val xBitLen = x.bitLen
         when {
             (xBitLen <= 64) -> {
@@ -16,13 +16,13 @@ internal object U256Sqr {
                 z.c256Set192(p2, p1, p0)
             }
             (xBitLen <= 128) -> {
-                _sqrU256_2to4(z, x.dw1, x.dw0)
+                _sqrC256_2to4(z, x.dw1, x.dw0)
             }
             else -> throw RuntimeException("coeff mul overflow")
         }
     }
 
-    private fun _sqrU256_2to4(
+    private fun _sqrC256_2to4(
         p: C256,
         x1: Long, x0: Long
     ) {

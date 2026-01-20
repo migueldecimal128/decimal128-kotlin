@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.Magia
-import com.decimal128.decimal.U256Compare.u256UnscaledCompare
-import com.decimal128.decimal.U256Compare.u256GTOne
+import com.decimal128.decimal.C256Compare.c256UnscaledCompare
+import com.decimal128.decimal.C256Compare.c256GTOne
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.LT_HALF
 import com.decimal128.decimal.Residue.Companion.HALF
@@ -16,7 +16,7 @@ object DivKnuth {
     private val un = IntArray(9)
 
     fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
-        verify { u256GTOne(y) }
+        verify { c256GTOne(y) }
         verify { x.c256UnscaledCompareTo(y) > 0 }
 
         un[0] = x.dw0.toInt()
@@ -99,7 +99,7 @@ object DivKnuth {
                     EXACT
                 } else {
                     // note that this compare is reversed ... y compare 2*remainder
-                    val cmp = u256UnscaledCompare(y, un)
+                    val cmp = c256UnscaledCompare(y, un)
                     if (cmp > 0)
                         LT_HALF
                     else if (cmp < 0)

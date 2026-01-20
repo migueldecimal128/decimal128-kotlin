@@ -4,9 +4,9 @@ import com.decimal128.decimal.U256Pow10.BARRETT_POW10_MAXX
 import com.decimal128.decimal.U256Pow10.MAGIC_POW10_MAXX
 import kotlin.math.max
 
-object U256DivPow10 {
+object C256DivPow10 {
 
-    fun divPow10(z: C256, x: C256, pow10: Int): Residue {
+    fun c256SetDivPow10(z: C256, x: C256, pow10: Int): Residue {
         verify { pow10 >= 0 }
         val xBitLen = x.bitLen
         if (pow10 < MAGIC_POW10_MAXX) {
@@ -35,7 +35,7 @@ object U256DivPow10 {
         val step2 = max(step2a, BARRETT_POW10_MAXX - 1)
         val step1 = pow10 - step2
         val residue1 = DivRangeRecipMulPow10.rangeDivPow10(z, x, step1)
-        val residue2 = divPow10(z, z, step2)
+        val residue2 = c256SetDivPow10(z, z, step2)
         val residue = residue2.merge(residue1)
         return residue
     }

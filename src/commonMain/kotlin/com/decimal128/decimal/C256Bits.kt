@@ -5,7 +5,7 @@ package com.decimal128.decimal
 import kotlin.math.min
 import kotlin.math.max
 
-object U256Bits {
+object C256Bits {
 
     inline fun calcBitLen64(dw0: ULong): Int = calcBitLen64(dw0.toLong())
 
@@ -58,7 +58,7 @@ object U256Bits {
     private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
     private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
-    fun ntz(x: C256): Int {
+    fun c256Ctz(x: C256): Int {
         val ntz0 = x.dw0.countTrailingZeroBits()
         val ntz1 = 64 + x.dw1.countTrailingZeroBits()
         val ntz2 = 128 + x.dw2.countTrailingZeroBits()
@@ -150,7 +150,7 @@ object U256Bits {
         return ret
     }
 
-    fun u256IsMultipleOf5(x: C256): Boolean {
+    fun c256IsMultipleOf5(x: C256): Boolean {
         val bitLen = x.bitLen
         return when {
             bitLen <=  64 -> isMultipleOfFive64(x.dw0)
@@ -160,7 +160,7 @@ object U256Bits {
         }
     }
 
-    fun u256SetPow2(z: C256, pow2: Int) {
+    fun c256SetPow2(z: C256, pow2: Int) {
         if (pow2 !in 0..255)
             throw IllegalArgumentException()
         val shifted = 1L shl pow2
@@ -175,7 +175,7 @@ object U256Bits {
         z.updateDigitLenBitLen(digitLen, bitLen)
     }
 
-    fun u256ToFloorDouble(x: C256): Double {
+    fun c256ToFloorDouble(x: C256): Double {
         val hiBitLen = min(53, x.bitLen)
         val hiBitIndex = x.bitLen - hiBitLen
         val hiBits = getDwordAtBitIndex(x, hiBitIndex)
@@ -183,7 +183,7 @@ object U256Bits {
         return dHiBits
     }
 
-    fun u256Set(z: C256, d: Double) {
+    fun c256Set(z: C256, d: Double) {
         val dRaw = d.toRawBits()
         val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
         if (exp <= 63) {
@@ -195,10 +195,10 @@ object U256Bits {
         }
         val significand = ((dRaw and ((1L shl 52) - 1)) or (1L shl 52))
         z.c256Set64(significand)
-        U256Set.u256SetShiftLeft(z, z, exp - 52)
+        C256Set.c256SetShiftLeft(z, z, exp - 52)
     }
 
-    fun u256ToNewDoubleDouble(x: C256): DoubleDouble {
+    fun c256ToNewDoubleDouble(x: C256): DoubleDouble {
         val hiBitsLen = min(53, x.bitLen)
         val hiBitsIndex = x.bitLen - hiBitsLen
         val hiBits = getDwordAtBitIndex(x, hiBitsIndex)
@@ -224,16 +224,16 @@ object U256Bits {
         return DoubleDouble(dHiBits, dLoBits)
     }
 
-    fun u256Set(z: C256, dd: DoubleDouble) {
-        u256Set(z, dd.hi)
+    fun c256Set(z: C256, dd: DoubleDouble) {
+        c256Set(z, dd.hi)
         if (dd.lo == 0.0)
             return
         val uLo = C256()
         uLo.c256Set(dd.lo)
         if (dd.lo > 0)
-            U256Add.u256AddUnscaled(z, z, uLo)
+            C256Add.c256AddUnscaled(z, z, uLo)
         else
-            U256Sub.u256SubUnscaled(z, z, uLo)
+            C256Sub.c256SubUnscaled(z, z, uLo)
     }
 
 }

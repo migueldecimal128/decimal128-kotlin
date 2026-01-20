@@ -12,7 +12,7 @@ import com.decimal128.decimal.Ieee754Class.positiveSubnormal
 import com.decimal128.decimal.Ieee754Class.positiveZero
 import com.decimal128.decimal.Ieee754Class.quietNaN
 import com.decimal128.decimal.Ieee754Class.signalingNaN
-import com.decimal128.decimal.U256Bits.calcBitLen128
+import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.decimal.U256Pow10.calcDigitLen128
 import kotlin.math.max
 import kotlin.math.min

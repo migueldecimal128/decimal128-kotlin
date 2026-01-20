@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
-import com.decimal128.decimal.U256Bits.calcBitLen64
+import com.decimal128.decimal.C256Bits.calcBitLen64
 import com.decimal128.bigint.Latin1Iterator
 import com.decimal128.bigint.StringLatin1Iterator
 import kotlin.math.abs

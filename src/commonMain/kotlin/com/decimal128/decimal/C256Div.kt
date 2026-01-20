@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Compare.u256UnscaledCompare
+import com.decimal128.decimal.C256Compare.c256UnscaledCompare
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.GT_HALF
 import com.decimal128.decimal.Residue.Companion.LT_HALF
@@ -16,13 +16,13 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
 
 object U256Div {
 
-    fun u256DivX64(z: C256, x: C256, y0: Long): Residue {
-        val rem = u256DivModX64(z, x, y0)
+    fun c256DivX64(z: C256, x: C256, y0: Long): Residue {
+        val rem = c256DivModX64(z, x, y0)
         val residue = Residue.residueFromRemainderDivisor(rem, y0)
         return residue
     }
 
-    fun u256DivModX64(z: C256?, x: C256, y0: Long): Long {
+    fun c256DivModX64(z: C256?, x: C256, y0: Long): Long {
         if ((y0 shr 1) == 0L) {
             if (y0 == 0L)
                 throw RuntimeException("div by zero")
@@ -53,14 +53,14 @@ object U256Div {
         return DivKnuth.knuthDivModX64(z, x, y0)
     }
 
-    fun u256Div(z: C256, x: C256, y: C256) = u256DivMod(z, null, x, y)
+    fun c256Div(z: C256, x: C256, y: C256) = c256DivMod(z, null, x, y)
 
-    fun u256Mod(z: C256, x: C256, y: C256) = u256DivMod(null, z, x, y)
+    fun c256Mod(z: C256, x: C256, y: C256) = c256DivMod(null, z, x, y)
 
-    fun u256DivMod(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
+    fun c256DivMod(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
         if (y.bitLen <= 64) {
             val y0 = y.dw0
-            val r0 = u256DivModX64(quot, x, y0)
+            val r0 = c256DivModX64(quot, x, y0)
             if (rem != null) {
                 rem.c256Set64(r0)
                 return EXACT
@@ -80,7 +80,7 @@ object U256Div {
             return residue
         }
         if (bitLenDelta == 0) {
-            val cmp = u256UnscaledCompare(x, y)
+            val cmp = c256UnscaledCompare(x, y)
             if (cmp < 0) {
                 rem?.c256Set(x)
                 val residue = if (rem != null) EXACT else GT_HALF

@@ -1,9 +1,9 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Bits.calcBitLen64
-import com.decimal128.decimal.U256Bits.calcBitLen128
-import com.decimal128.decimal.U256Bits.calcBitLen192
-import com.decimal128.decimal.U256Bits.calcBitLen256
+import com.decimal128.decimal.C256Bits.calcBitLen64
+import com.decimal128.decimal.C256Bits.calcBitLen128
+import com.decimal128.decimal.C256Bits.calcBitLen192
+import com.decimal128.decimal.C256Bits.calcBitLen256
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigInteger

@@ -2,7 +2,7 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Bits.calcBitLen128
+import com.decimal128.decimal.C256Bits.calcBitLen128
 import com.decimal128.bigint.BigInt
 import kotlin.math.max
 

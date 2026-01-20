@@ -1,10 +1,10 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.U256Add.u256AddScaled
-import com.decimal128.decimal.U256Add.u256AddUnscaled
+import com.decimal128.decimal.C256Add.c256AddScaled
+import com.decimal128.decimal.C256Add.c256AddUnscaled
 import com.decimal128.decimal.U256ScalePow10.u256ScaleDownPow10
 import com.decimal128.decimal.U256ScalePow10.u256ScaleUpPow10
-import com.decimal128.decimal.U256Sub.u256SubScaled
+import com.decimal128.decimal.C256Sub.c256SubScaled
 import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
@@ -32,7 +32,7 @@ object MagnitudeAddSub {
                 val residue = when {
                     shiftRight == 0 -> {
                         verify { shiftLeft > 0 }
-                        u256AddScaled(z, m, shiftLeft, n)
+                        c256AddScaled(z, m, shiftLeft, n)
                         EXACT
                     }
 
@@ -54,9 +54,9 @@ object MagnitudeAddSub {
                         val t = if (m === z) MutDec() else z
                         val residue = u256ScaleDownPow10(t, n, shiftRight)
                         if (shiftLeft > 0)
-                            u256AddScaled(z, m, shiftLeft, t)
+                            c256AddScaled(z, m, shiftLeft, t)
                         else
-                            u256AddUnscaled(z, m, t)
+                            c256AddUnscaled(z, m, t)
                         residue
                     }
                 }
@@ -106,7 +106,7 @@ object MagnitudeAddSub {
             val residue = when {
                 shiftRight == 0 -> {
                     verify { shiftLeft > 0 }
-                    u256SubScaled(z, x, shiftLeft, y)
+                    c256SubScaled(z, x, shiftLeft, y)
                     EXACT
                 }
 
@@ -130,7 +130,7 @@ object MagnitudeAddSub {
                     val tempY = MutDec()
                     val residue = u256ScaleDownPow10(tempY, y, shiftRight)
                     if (shiftLeft > 0) {
-                        u256SubScaled(z, x, shiftLeft, tempY)
+                        c256SubScaled(z, x, shiftLeft, tempY)
                         if (residue != EXACT)
                             z.c256MutateDecrement()
                     } else {
@@ -156,7 +156,7 @@ object MagnitudeAddSub {
             val residue = when {
                 shiftRight == 0 -> {
                     verify { shiftLeft > 0 } // because x.qExp != y.qExp
-                    u256SubScaled(z, x, y, shiftLeft)   // (x * 10^shiftLeft) - y
+                    c256SubScaled(z, x, y, shiftLeft)   // (x * 10^shiftLeft) - y
                     EXACT
                 }
 
@@ -241,7 +241,7 @@ object MagnitudeAddSub {
             // Compute: (x scaled up) - (y scaled down)
             residue = if (shiftDown == 0) {
                 // y stays, x scales up
-                u256SubScaled(z, x, shiftUp, y)
+                c256SubScaled(z, x, shiftUp, y)
                 EXACT
             } else {
                 // y scales down, x may scale up
@@ -249,7 +249,7 @@ object MagnitudeAddSub {
                 val res = u256ScaleDownPow10(tempY, y, shiftDown)
 
                 if (shiftUp > 0) {
-                    u256SubScaled(z, x, shiftUp, tempY)
+                    c256SubScaled(z, x, shiftUp, tempY)
                     if (res != EXACT)
                         z.c256MutateDecrement()
                 } else {

@@ -79,7 +79,7 @@ object MagnitudeSqrt {
         //}
 
         val coeffResidual1 = C256()
-        U256Sub.u256SubUnscaled(coeffResidual1, coeffRadicandScaled, coeffGuess1Squared)
+        C256Sub.c256SubUnscaled(coeffResidual1, coeffRadicandScaled, coeffGuess1Squared)
         if (verbose)
             println(" --> residual1:$coeffResidual1")
 

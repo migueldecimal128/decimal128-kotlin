@@ -3,19 +3,19 @@ package com.decimal128.decimal
 import com.decimal128.decimal.U256ScalePow10.u256ScaleFmaPow10
 import kotlin.math.max
 
-object U256Add {
+object C256Add {
 
-    fun u256Add(z: C256, x: C256, scaleDelta: Int, y: C256) {
+    fun c256Add(z: C256, x: C256, scaleDelta: Int, y: C256) {
         verify { x.bitLen < 128 }
         verify { y.bitLen < 128 }
         when {
-            scaleDelta == 0 -> u256AddUnscaled(z, x, y)
-            scaleDelta > 0 -> u256AddScaled(z, x, scaleDelta, y)
-            else -> u256AddScaled(z, y, -scaleDelta, x)
+            scaleDelta == 0 -> c256AddUnscaled(z, x, y)
+            scaleDelta > 0 -> c256AddScaled(z, x, scaleDelta, y)
+            else -> c256AddScaled(z, y, -scaleDelta, x)
         }
     }
 
-    fun u256AddUnscaled(z: C256, x: C256, y: C256) {
+    fun c256AddUnscaled(z: C256, x: C256, y: C256) {
         val maxBitLen = max(x.bitLen, y.bitLen) + 1
 
         if (maxBitLen < 64) {
@@ -35,7 +35,7 @@ object U256Add {
         z.c256Set256(p3, p2, p1, p0)
     }
 
-    fun u256AddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
+    fun c256AddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
         verify { scaleDelta > 0 }
         verify { scaleDelta < PRECISION_34 }
 
@@ -48,7 +48,7 @@ object U256Add {
         u256ScaleFmaPow10(z, x, scaleDelta, y)
     }
 
-    fun u256MutateIncrement(z: C256) {
+    fun c256MutateIncrement(z: C256) {
         ++z.dw0
         if (z.dw0 == 0L) {
             ++z.dw1
@@ -66,7 +66,7 @@ object U256Add {
             z.updateDigitLenBitLen()
     }
 
-    fun u256MutateDecrement(z: C256) {
+    fun c256MutateDecrement(z: C256) {
         --z.dw0
         if (z.dw0 == -1L) {
             --z.dw1

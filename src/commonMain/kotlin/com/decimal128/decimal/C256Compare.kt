@@ -4,21 +4,9 @@ import com.decimal128.decimal.U256Pow10.pow10BitLen
 import com.decimal128.decimal.U256Pow10.pow10Offset
 import com.decimal128.decimal.U256Pow10.POW10
 
-object U256Compare {
+object C256Compare {
 
-    fun u256IsZero(x: C256): Boolean {
-        return x.bitLen == 0
-    }
-
-    fun u256IsNotZero(x: C256): Boolean {
-        return x.bitLen != 0
-    }
-
-    fun u256IsOne(x: C256): Boolean {
-        return x.bitLen == 1
-    }
-
-    fun u256UnscaledCompare(x:C256, y:C256) : Int {
+    fun c256UnscaledCompare(x:C256, y:C256) : Int {
         if (x.bitLen != y.bitLen)
             return x.bitLen.compareTo(y.bitLen)
         val cmp0 = unsignedCmp(x.dw0, y.dw0)
@@ -33,7 +21,7 @@ object U256Compare {
         return cmp3210
     }
 
-    fun u256UnscaledCompare(x: C256, y: IntArray): Int {
+    fun c256UnscaledCompare(x: C256, y: IntArray): Int {
         require(y.size >= 8)
         val y3 = (y[7].toLong() shl 32) or (y[6].toLong() and MASK32)
         if (x.dw3 != y3)
@@ -54,9 +42,9 @@ object U256Compare {
                 (x.dw2 - y.dw2) or (x.dw3 - y.dw3)) == 0L
     }
 
-    fun u256GTOne(x: C256) = x.bitLen > 1
+    fun c256GTOne(x: C256) = x.bitLen > 1
 
-    fun u256ScaledCompare(x:C256, y:C256, pow10Delta: Int) : Int {
+    fun c256ScaledCompare(x:C256, y:C256, pow10Delta: Int) : Int {
         val pow10BitLen = pow10BitLen(pow10Delta)
         val yBitLen = y.bitLen
         require(yBitLen <= 128)
@@ -375,7 +363,7 @@ object U256Compare {
         }
     }
 
-    fun u256ScaledEQ(x:C256, y:C256, pow10Delta: Int) : Boolean {
+    fun c256ScaledEQ(x:C256, y:C256, pow10Delta: Int) : Boolean {
         val pow10BitLen = pow10BitLen(pow10Delta)
         val minYBitLen = y.bitLen + pow10BitLen - 1
         val maxYBitLen = y.bitLen + pow10BitLen(pow10Delta + 1)
