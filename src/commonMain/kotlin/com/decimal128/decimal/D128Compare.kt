@@ -2,7 +2,6 @@ package com.decimal128.decimal
 
 import kotlin.math.max
 import kotlin.math.min
-import com.decimal128.decimal.C256Pow10.POW10
 
 object D128Compare {
 
@@ -47,8 +46,8 @@ object D128Compare {
             return cmpSci
         val qDelta = x.qExp - y.qExp
         val qDeltaAbs = kotlin.math.abs(qDelta)
-        val pow10BitLen = C256Pow10.pow10BitLen(qDeltaAbs)
-        val pow10Offset = C256Pow10.pow10Offset(qDeltaAbs)
+        val pow10BitLen = pow10BitLen(qDeltaAbs)
+        val pow10Offset = pow10Offset(qDeltaAbs)
         val dw0Pow10 = POW10[pow10Offset]
         val dw1Pow10 = POW10[pow10Offset + 1]
         if (qDelta > 0) {

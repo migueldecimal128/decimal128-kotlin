@@ -83,7 +83,7 @@ internal object IntegerParsePrint {
         val dwAbs = ((n xor (n shr 31)) - (n shr 31)).toUInt().toULong()
         val sign01 = n ushr 31
         utf8[off] = '-'.code.toByte()
-        val digitLen = C256Pow10.calcDigitLen64(dwAbs)
+        val digitLen = calcDigitLen64(dwAbs)
         val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
         u64ToUtf8(digitPrintCount, dwAbs, utf8, off + sign01)
         return sign01 + digitPrintCount
@@ -97,7 +97,7 @@ internal object IntegerParsePrint {
     }
 
     internal fun u64ToUtf8(dw0: ULong, utf8: ByteArray, off: Int): Int =
-        u64ToUtf8(max(C256Pow10.calcDigitLen64(dw0), 1), dw0, utf8, off)
+        u64ToUtf8(max(calcDigitLen64(dw0), 1), dw0, utf8, off)
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: ULong, utf8: ByteArray, off: Int): Int {
         when {

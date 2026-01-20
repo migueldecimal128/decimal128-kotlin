@@ -1,9 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Pow10.pow10BitLen
-import com.decimal128.decimal.C256Pow10.pow10Offset
-import com.decimal128.decimal.C256Pow10.POW10
-
 internal fun c256UnscaledCompare(x: C256, y: C256): Int {
     if (x.bitLen != y.bitLen)
         return x.bitLen.compareTo(y.bitLen)

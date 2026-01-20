@@ -3,7 +3,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.BigInt
-import com.decimal128.decimal.C256Pow10.BARRETT_POW10_MAXX
 import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul256
 import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul192
 import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul128

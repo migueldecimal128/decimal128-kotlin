@@ -1,7 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Pow10.BARRETT_POW10_MAXX
-import com.decimal128.decimal.C256Pow10.MAGIC_POW10_MAXX
 import kotlin.math.max
 
 internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int): Residue {
@@ -13,7 +11,7 @@ internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int): Residue {
         if (pow10 < BARRETT_POW10_MAXX)
             return DivBarrett.barrettDivPow10(z, x, pow10)
     }
-    val pow10BitLen = C256Pow10.pow10BitLen(pow10)
+    val pow10BitLen = pow10BitLen(pow10)
     if (xBitLen < pow10BitLen) {
         z.c256SetZero()
         val halfPow10BitLen = pow10BitLen - 1

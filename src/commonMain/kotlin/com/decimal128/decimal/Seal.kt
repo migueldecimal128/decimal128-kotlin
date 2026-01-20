@@ -2,8 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Pow10.calcDigitLen128
-
 /**
  * Compact **S-E-A-L** encoding for a Decimal128 value.
  *

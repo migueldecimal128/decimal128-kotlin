@@ -2,11 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Pow10.calcDigitLen256
-import com.decimal128.decimal.C256Pow10.pow10BitLen
-import com.decimal128.decimal.C256Pow10.pow10Offset
-import com.decimal128.decimal.C256Pow10.POW10
-
 const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
@@ -70,7 +65,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         return c256IsMultipleOf5()
     }
 
-    internal inline fun c256IsPowerOf10() = C256Pow10.coeffIsPow10(this)
+    internal inline fun c256IsPowerOf10() = coeffIsPow10(this)
 
     internal inline fun c256IsAllNines(nineCount: Int) : Boolean  {
         val pow10BitLen = pow10BitLen(nineCount)
@@ -118,7 +113,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetPow2(pow2: Int) = c256SetPow2(this, pow2)
 
-    internal inline fun c256SetPow10(pow10: Int) = C256Pow10.coeffSetPow10(this, pow10)
+    internal inline fun c256SetPow10(pow10: Int) = coeffSetPow10(this, pow10)
 
     internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = c256SetAdd(this, x, scaleDelta, y)
 
@@ -126,7 +121,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetSub(x: C256, y: C256) = c256SetSubUnscaled(this, x, y)
 
-    internal inline fun c256SetMul(x: C256, y: C256) = C256Mul.c256SetMul(this, x, y)
+    internal inline fun c256SetMul(x: C256, y: C256) = c256SetMul(this, x, y)
 
     internal inline fun c256SetSqr(x: C256) = C256Sqr.c256Sqr(this, x)
 
@@ -194,21 +189,21 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
         bitLen = calcBitLen64(d0)
-        digitLen = C256Pow10.calcDigitLen64(bitLen, d0)
+        digitLen = calcDigitLen64(bitLen, d0)
     }
 
     internal inline fun c256Set128(d1: Long, d0: Long) {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen128(d1, d0)
-        digitLen = C256Pow10.calcDigitLen128(bitLen, d1, d0)
+        digitLen = calcDigitLen128(bitLen, d1, d0)
     }
 
     internal inline fun c256Set192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen192(d2, d1, d0)
-        digitLen = C256Pow10.calcDigitLen192(bitLen, d2, d1, d0)
+        digitLen = calcDigitLen192(bitLen, d2, d1, d0)
     }
 
     internal inline fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long) {

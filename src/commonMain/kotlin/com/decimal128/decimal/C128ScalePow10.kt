@@ -2,11 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Pow10.calcDigitLen128
-import com.decimal128.decimal.C256Pow10.pow10BitLen
-import com.decimal128.decimal.C256Pow10.pow10Offset
-import com.decimal128.decimal.C256Pow10.POW10
-
 internal object C128ScalePow10 {
 
     fun c128ScaleUpPow10(x: DecOld, pow10: Int, signExp: Short): DecOld {

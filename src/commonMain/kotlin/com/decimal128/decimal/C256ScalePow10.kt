@@ -1,10 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Mul.c256SetMul
-import com.decimal128.decimal.C256Pow10.pow10BitLen
-import com.decimal128.decimal.C256Pow10.pow10Offset
 import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.C256Pow10.POW10
 
 
 internal object C256ScalePow10 {
