@@ -26,7 +26,7 @@ private fun MutDec.roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: 
     verify { truncationNeeded < digitLen }
     var totalResidue = inboundResidue
     if (truncationNeeded > 0) {
-        val scaleResidue = C256ScalePow10.c256SetScaleDownPow10(this, this, truncationNeeded)
+        val scaleResidue = c256SetScaleDownPow10(this, this, truncationNeeded)
         qExp += truncationNeeded
         verify { digitLen > 0 }
         verify { digitLen < env.precision }
@@ -46,7 +46,7 @@ private fun MutDec.roundAndFinalizeSubnormal(inboundResidue: Residue, rounding: 
             verify { digitLen == env.precision + 1 }
             // if we rolled into another digit because of roundup
             // then the result is definitely divisible by 10
-            val residueExact = C256ScalePow10.c256SetScaleDownPow10(this, this, 1)
+            val residueExact = c256SetScaleDownPow10(this, this, 1)
             verify { residueExact == EXACT }
             ++qExp
         }
@@ -88,7 +88,7 @@ private fun MutDec.finalizeZero(env: DecEnv): MutDec {
 private fun MutDec.finalizeFnzLongCoeff(rounding: DecRounding, env: DecEnv): MutDec {
     val excessDigitCount = digitLen - env.precision
     verify { excessDigitCount > 0 }
-    val residue = C256ScalePow10.c256SetScaleDownPow10(this, this, excessDigitCount)
+    val residue = c256SetScaleDownPow10(this, this, excessDigitCount)
     qExp += excessDigitCount
     return roundAndFinalize(residue, rounding, env)
 }
@@ -121,7 +121,7 @@ private fun MutDec.finalizeFnzClampHighExp(env: DecEnv): MutDec {
     // clamp/fold-over
     verify { eExp <= env.eMax && qExp >= env.qMax }
     val qExcess = qExp - env.qMax
-    C256ScalePow10.c256SetScaleUpPow10(this, this, qExcess)
+    c256SetScaleUpPow10(this, this, qExcess)
     verify { digitLen <= env.precision }
     qExp -= qExcess
     verify { qExp == env.qMax }
@@ -157,7 +157,7 @@ private fun MutDec.roundAndFinalizeFnzLongCoeff(inboundResidue: Residue, roundin
     verify { inboundResidue != EXACT }
     val excessDigitCount = digitLen - env.precision
     verify { excessDigitCount > 0 }
-    val newResidue = C256ScalePow10.c256SetScaleDownPow10(this, this, excessDigitCount)
+    val newResidue = c256SetScaleDownPow10(this, this, excessDigitCount)
     val totalResidue = newResidue.merge(inboundResidue)
     verify { totalResidue != EXACT }
     verify { digitLen == env.precision }

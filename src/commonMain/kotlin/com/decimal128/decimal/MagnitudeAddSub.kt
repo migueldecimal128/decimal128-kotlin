@@ -1,7 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256ScalePow10.c256SetScaleDownPow10
-import com.decimal128.decimal.C256ScalePow10.c256SetScaleUpPow10
 import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min

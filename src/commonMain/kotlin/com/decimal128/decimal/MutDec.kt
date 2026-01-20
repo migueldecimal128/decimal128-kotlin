@@ -11,7 +11,6 @@ import com.decimal128.decimal.Ieee754Class.*
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
 import kotlin.math.max
 import kotlin.math.min
-import com.decimal128.decimal.C256ScalePow10.c256SetScaleUpPow10
 
 internal const val MIN_SPECIAL_VALUE = 16381
 internal const val NON_FINITE_INF = 16381

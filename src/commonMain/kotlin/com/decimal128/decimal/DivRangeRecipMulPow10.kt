@@ -3,10 +3,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.BigInt
-import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul256
-import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul192
-import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul128
-import com.decimal128.decimal.C256RecipMulPow5.c256RecipMul64
 import kotlin.math.min
 
 const val Q_MIN = POW10_64_COUNT

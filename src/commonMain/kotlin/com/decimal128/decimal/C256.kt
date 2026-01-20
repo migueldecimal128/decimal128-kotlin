@@ -123,7 +123,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetMul(x: C256, y: C256) = c256SetMul(this, x, y)
 
-    internal inline fun c256SetSqr(x: C256) = C256Sqr.c256Sqr(this, x)
+    internal inline fun c256SetSqr(x: C256) = c256SetSqr(this, x)
 
     internal inline fun c256SetFma(x: C256, y: C256, a: C256) = c256SetFma(this, x, y, a)
 
@@ -147,9 +147,9 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetDivRem(rem: C256, x: C256, y: C256) = c256SetDivRem(this, rem, x, y)
 
-    internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = C256ScalePow10.c256SetScaleUpPow10(this, x, pow10)
+    internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = c256SetScaleUpPow10(this, x, pow10)
 
-    internal inline fun c256SetScaleDownPow10(x: C256, pow10: Int) = C256ScalePow10.c256SetScaleDownPow10(this, x, pow10)
+    internal inline fun c256SetScaleDownPow10(x: C256, pow10: Int) = c256SetScaleDownPow10(this, x, pow10)
 
     internal inline operator fun get(index: Int): Long {
         return when (index) {
