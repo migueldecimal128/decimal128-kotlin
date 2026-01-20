@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C256Add.c256AddScaled
-import com.decimal128.decimal.C256Add.c256AddUnscaled
+import com.decimal128.decimal.C256Add.c256SetAddScaled
+import com.decimal128.decimal.C256Add.c256SetAddUnscaled
 import com.decimal128.decimal.C256ScalePow10.c256SetScaleDownPow10
 import com.decimal128.decimal.C256ScalePow10.c256SetScaleUpPow10
 import com.decimal128.decimal.C256Sub.c256SubScaled
@@ -32,7 +32,7 @@ object MagnitudeAddSub {
                 val residue = when {
                     shiftRight == 0 -> {
                         verify { shiftLeft > 0 }
-                        c256AddScaled(z, m, shiftLeft, n)
+                        c256SetAddScaled(z, m, shiftLeft, n)
                         EXACT
                     }
 
@@ -54,9 +54,9 @@ object MagnitudeAddSub {
                         val t = if (m === z) MutDec() else z
                         val residue = c256SetScaleDownPow10(t, n, shiftRight)
                         if (shiftLeft > 0)
-                            c256AddScaled(z, m, shiftLeft, t)
+                            c256SetAddScaled(z, m, shiftLeft, t)
                         else
-                            c256AddUnscaled(z, m, t)
+                            c256SetAddUnscaled(z, m, t)
                         residue
                     }
                 }

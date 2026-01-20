@@ -4,17 +4,17 @@ import kotlin.math.max
 
 object C256Add {
 
-    fun c256Add(z: C256, x: C256, scaleDelta: Int, y: C256) {
+    fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256) {
         verify { x.bitLen < 128 }
         verify { y.bitLen < 128 }
         when {
-            scaleDelta == 0 -> c256AddUnscaled(z, x, y)
-            scaleDelta > 0 -> c256AddScaled(z, x, scaleDelta, y)
-            else -> c256AddScaled(z, y, -scaleDelta, x)
+            scaleDelta == 0 -> c256SetAddUnscaled(z, x, y)
+            scaleDelta > 0 -> c256SetAddScaled(z, x, scaleDelta, y)
+            else -> c256SetAddScaled(z, y, -scaleDelta, x)
         }
     }
 
-    fun c256AddUnscaled(z: C256, x: C256, y: C256) {
+    fun c256SetAddUnscaled(z: C256, x: C256, y: C256) {
         val maxBitLen = max(x.bitLen, y.bitLen) + 1
 
         if (maxBitLen < 64) {
@@ -34,7 +34,7 @@ object C256Add {
         z.c256Set256(p3, p2, p1, p0)
     }
 
-    fun c256AddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
+    fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
         verify { scaleDelta > 0 }
         verify { scaleDelta < PRECISION_34 }
 

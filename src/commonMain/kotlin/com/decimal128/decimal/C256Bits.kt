@@ -231,7 +231,7 @@ object C256Bits {
         val uLo = C256()
         uLo.c256Set(dd.lo)
         if (dd.lo > 0)
-            C256Add.c256AddUnscaled(z, z, uLo)
+            C256Add.c256SetAddUnscaled(z, z, uLo)
         else
             C256Sub.c256SubUnscaled(z, z, uLo)
     }

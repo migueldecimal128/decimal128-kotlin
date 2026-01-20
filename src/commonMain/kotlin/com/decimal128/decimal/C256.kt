@@ -124,9 +124,9 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetPow10(pow10: Int) = C256Pow10.coeffSetPow10(this, pow10)
 
-    internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = C256Add.c256Add(this, x, scaleDelta, y)
+    internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = C256Add.c256SetAdd(this, x, scaleDelta, y)
 
-    internal inline fun c256SetAdd(x: C256, y: C256) = C256Add.c256AddUnscaled(this, x, y)
+    internal inline fun c256SetAdd(x: C256, y: C256) = C256Add.c256SetAddUnscaled(this, x, y)
 
     internal inline fun c256SetSub(x: C256, y: C256) = C256Sub.c256SubUnscaled(this, x, y)
 
