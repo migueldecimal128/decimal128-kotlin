@@ -251,8 +251,8 @@ object DecParsePrint {
             ch = str[ich++]
         }
         var fractionalDigitCount = 0
-        var accum19a = 0uL
-        var accum19b = 0uL
+        var accum19a = 0L
+        var accum19b = 0L
         var exp = 0
 
         while (ch in '0'..'9' || ch == '.' || ch == '_') {
@@ -262,14 +262,14 @@ object DecParsePrint {
                     hasCoefficientDigit = true
                     significantDigitCount += (-(significantDigitCount or d)) ushr 31
                     when {
-                        significantDigitCount <= 19 -> accum19a = (accum19a * 10uL) + d.toULong()
+                        significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
                         significantDigitCount > 34 && !allowOversizeCoefficient ->
                             return "more than decimal128 34 significant digits"
 
                         significantDigitCount > 38 ->
                             return "oversize coefficient exceeds decimal128_extended 38 digits"
 
-                        else -> accum19b = (accum19b * 10uL) + d.toULong()
+                        else -> accum19b = (accum19b * 10L) + d.toLong()
                     }
                     if (hasDot)
                         ++fractionalDigitCount
@@ -327,13 +327,13 @@ object DecParsePrint {
             return "invalid"
         // we have at least one digit
         var dw0T = accum19a
-        var dw1T = 0uL
+        var dw1T = 0L
         if (significantDigitCount > 19) {
-            val p10 = POW10[significantDigitCount - 19].toULong()
+            val p10 = POW10[significantDigitCount - 19]
             dw0T = accum19a * p10
             dw1T = unsignedMulHi(accum19a, p10)
             dw0T += accum19b
-            dw1T += if (dw0T < accum19b) 1uL else 0uL
+            dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
         }
         val signedExp = if (expSign) -exp else exp
         var qExp = signedExp - fractionalDigitCount
@@ -422,7 +422,7 @@ object DecParsePrint {
         val expELen = 1
         val expSignLen = 1
         val expSignByte = (if (eExp < 0) '-' else '+').code.toByte()
-        val expDigitLen = max(calcDigitLen64(eExpAbs.toULong()), 1)
+        val expDigitLen = max(calcDigitLen64(eExpAbs.toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
         utf8[0] = '-'.code.toByte() // overwritten if non-negative
@@ -434,7 +434,7 @@ object DecParsePrint {
         val iE = signLen + decimalPointLen + printedDigitLen
         utf8[iE] = 'E'.code.toByte()
         utf8[iE + 1] = expSignByte
-        val j = Magia.renderTailDigitsBeforeIndex(eExpAbs.toUInt().toLong(), utf8, utf8.size)
+        val j = Magia.renderTailDigitsBeforeIndex(eExpAbs.toLong(), utf8, utf8.size)
         verify { j == expDigitLen }
         return utf8.decodeToString()
     }
