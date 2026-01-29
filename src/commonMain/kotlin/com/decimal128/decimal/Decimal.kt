@@ -42,6 +42,20 @@ class Decimal private constructor(
             this(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, qExp))
 
     companion object {
+
+        internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     digitLen: Int, bitLen: Int,
+                                     dw1: Long, dw0: Long,
+                                     allowNonCanonical: Boolean = false): Decimal {
+            verify { bitLen == calcBitLen128(dw1, dw0) }
+            verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
+            verify { digitLen <= 38 }
+            verify { digitLen <= 34 || allowNonCanonical }
+            return Decimal(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
+        }
+
+
+
         val POS_ZERO = Decimal(0L, 0L, 0, 0)
         val NEG_ZERO = Decimal(0L, 0L, 0, Short.MIN_VALUE)
         val ZERO = POS_ZERO
@@ -72,6 +86,16 @@ class Decimal private constructor(
         private const val HASH_CODE_POS_INFINITY = 52593608
         private const val HASH_CODE_NEG_INFINITY = 52414862
         private const val HASH_CODE_NAN = 52594569
+
+        private const val NINES_33_HI = 0x044B82FA09B5A53FL
+        private const val NINES_33_LO = Long.MIN_VALUE or 0x06C2ABFAFF7FFFFFL
+        private const val NINES_33_BITLEN = 112
+
+        private const val NINES_38_HI = 0x4B3B4CA85A86C47AL
+        private const val NINES_38_LO = 0x098A223FFFFFFFFFL
+        private const val NINES_38_BITLEN = 127
+
+
 
 
 
@@ -316,6 +340,73 @@ class Decimal private constructor(
                 else -> Decimal(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, NON_FINITE_SNAN))
             }
         }
+
+        fun NaN(sign: Boolean, signaling: Boolean = false): Decimal {
+            return when {
+                !signaling && !sign -> POS_QNAN
+                !signaling && sign -> NEG_QNAN
+                sign -> NEG_SNAN
+                else -> POS_SNAN
+            }
+        }
+
+        /**
+         * Constructs a quiet or signaling NaN with an optional diagnostic payload.
+         *
+         * The payload is provided as a full 128-bit unsigned integer, split into a
+         * high 64-bit word (`payloadDw1`) and a low 64-bit word (`payloadDw0`). If the
+         * payload is zero, the canonical quiet NaN or signaling NaN (with no payload)
+         * is returned.
+         *
+         * Decimal128 NaN payloads have a canonical limit of **33 decimal digits**.
+         * If `allowOversizePayload` is `false` and the supplied payload exceeds this
+         * limit, the payload is clamped to the maximal canonical value of
+         * 33 nines.
+         *
+         * If `allowOversizePayload` is `true`, oversized payloads are accepted
+         * verbatim, up to the full 128-bit range, and no clamping is performed.
+         *
+         * The `signaling` flag selects between quiet NaN (`qNaN`) and signaling NaN
+         * (`sNaN`); the sign bit is preserved as provided, although it has no numeric
+         * meaning.
+         *
+         * @param sign whether the NaN has its sign bit set
+         * @param signaling whether to construct an `sNaN` instead of a `qNaN`
+         * @param payloadDw1 the high 64 bits of the diagnostic payload
+         * @param payloadDw0 the low 64 bits of the diagnostic payload
+         * @param allowOversizePayload whether payloads longer than the canonical
+         *        33-digit limit should be accepted verbatim rather than clamped
+         *
+         * @return a `Decimal2` representing a quiet or signaling NaN
+         */
+        fun NaN(
+            sign: Boolean = false, signaling: Boolean = false,
+            payloadDw1: Long, payloadDw0: Long = 0L, allowOversizePayload: Boolean = false
+        ): Decimal {
+            if ((payloadDw1 or payloadDw0) == 0L)
+                return NaN(sign, signaling)
+            val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
+            var p0 = payloadDw0
+            var p1 = payloadDw1
+            var bitLen = calcBitLen128(payloadDw1, payloadDw0)
+            var digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
+            if (digitLen > 33) {
+                if (! allowOversizePayload) {
+                    p1 = NINES_33_HI
+                    p0 = NINES_33_LO
+                    bitLen = NINES_33_BITLEN
+                    digitLen = 33
+                } else if (digitLen > 38) {
+                    p1 = NINES_38_HI
+                    p0 = NINES_38_LO
+                    bitLen = NINES_38_BITLEN
+                    digitLen = 38
+                }
+            }
+            return Decimal(sign, qExp, digitLen, bitLen, p1, p0, allowOversizePayload)
+        }
+
+
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
