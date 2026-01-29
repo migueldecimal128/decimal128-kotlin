@@ -101,7 +101,7 @@ class Binop128cmp : Binop() {
         private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal) : Int {
             if (x.qExp == y.qExp)
                 return ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
-            val cmpSci = x.sciExp.compareTo(y.sciExp)
+            val cmpSci = x.eExp.compareTo(y.eExp)
             if (cmpSci != 0)
                 return cmpSci
             val qDelta = x.qExp - y.qExp

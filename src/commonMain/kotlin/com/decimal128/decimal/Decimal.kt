@@ -1,6 +1,16 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+import com.decimal128.decimal.Ieee754Class.negativeInfinity
+import com.decimal128.decimal.Ieee754Class.negativeNormal
+import com.decimal128.decimal.Ieee754Class.negativeSubnormal
+import com.decimal128.decimal.Ieee754Class.negativeZero
+import com.decimal128.decimal.Ieee754Class.positiveInfinity
+import com.decimal128.decimal.Ieee754Class.positiveNormal
+import com.decimal128.decimal.Ieee754Class.positiveSubnormal
+import com.decimal128.decimal.Ieee754Class.positiveZero
+import com.decimal128.decimal.Ieee754Class.quietNaN
+import com.decimal128.decimal.Ieee754Class.signalingNaN
 import kotlin.math.max
 import kotlin.math.min
 
@@ -8,7 +18,7 @@ class Decimal private constructor(
     @field: JvmField internal val dw1: Long,
     @field: JvmField internal val dw0: Long,
     @field: JvmField internal val packedLengths: Short,
-    @field: JvmField internal val signExp: Short) {
+    @field: JvmField internal val signExp: Short): Comparable<Decimal> {
 
     internal val bitLen: Int
         get() = packedLengths.toInt() and 0x1FF
@@ -23,7 +33,7 @@ class Decimal private constructor(
         get() = signExp.toInt() shr 31
     internal val qExp: Int
         get() = (signExp.toInt() shl 17) shr 17
-    internal val sciExp: Int
+    internal val eExp: Int
         get() = qExp + (digitLen - (-digitLen ushr 31))
 
     // the lower/upper bound of the normalized binary exponent interval
@@ -412,26 +422,189 @@ class Decimal private constructor(
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
             max(x.qExp, y.qExp) >= NON_FINITE_QNAN
 
+        internal fun neitherIsNaN(x: Decimal, y: Decimal) =
+            x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
+
     }
 
-    fun isZero() = this.packedLengths.toInt() == 0 && this.qExp < MIN_SPECIAL_VALUE
     fun isNotZero() = !isZero()
     fun isPosZero() = isZero() && !sign
     fun isNegZero() = isZero() && sign
     fun isOne() = this.packedLengths.toInt() == (1 shl 9) or 1
-    fun isNaN() = this.qExp >= NON_FINITE_QNAN
-    fun isFinite() = this.qExp < NON_FINITE_INF
 
-    // 5.7.3 Decimal2 operation
-    fun sameQuantum(other: Decimal) = (this.qExp == other.qExp)
+    // IEEE754-2019 5.7.2
+
+    /**
+     * Returns the IEEE-754-2019 *class* of this decimal128 value.
+     *
+     * This implements the classification defined in IEEE-754-2019 §7.5.2
+     * (“General operations”), which specifies a 10-way partition of all
+     * floating-point values into NaNs, infinities, zeros, subnormals,
+     * and normals, each distinguished by sign and (for NaNs) signaling
+     * behavior.
+     *
+     * The returned value is one of:
+     *
+     *  * **quietNaN** – a non-finite datum encoded as a quiet NaN
+     *  * **signalingNaN** – a non-finite datum encoded as a signaling NaN
+     *  * **positiveInfinity / negativeInfinity** – signed infinities
+     *  * **positiveZero / negativeZero** – signed zeros
+     *  * **positiveSubnormal / negativeSubnormal** – finite values whose
+     *    *derived scientific exponent* `eExp` is below the minimum normal exponent
+     *  * **positiveNormal / negativeNormal** – all other finite, non-zero decimals
+     *
+     * Classification is determined using the value’s encoded sign,
+     * coefficient bit-length, quantum exponent (`qExp`), and its
+     * derived adjusted/scientific exponent (`eExp`).
+     * NaNs are identified first from the non-finite `qExp` range; zeros
+     * are detected via a zero coefficient; and subnormals are identified
+     * by comparing `eExp` with the minimum normal exponent for decimal128 (–6143).
+     *
+     * This routine performs no rounding, signaling, or exception
+     * processing; it only inspects the encoding to produce the IEEE-754
+     * class of the operand for decimal128
+     *
+     * @return the IEEE-754 class of this decimal128 value, in accordance
+     *         with IEEE-754-2019 §7.5.2.
+     */
+    fun ieeeClass(): Ieee754Class {
+        return when {
+            qExp >= NON_FINITE_INF -> when {
+                qExp == NON_FINITE_QNAN -> quietNaN
+                qExp > NON_FINITE_QNAN -> signalingNaN
+                sign -> negativeInfinity
+                else -> positiveInfinity
+            }
+            bitLen == 0 && sign -> negativeZero
+            bitLen == 0 -> positiveZero
+            eExp < -6143 && sign -> negativeSubnormal
+            eExp < -6143 -> positiveSubnormal
+            sign -> negativeNormal
+            else -> positiveNormal
+        }
+    }
+
+    /**
+     * isSignMinus(x) is true if and only if x has negative sign. isSignMinus applies to zeros and NaNs
+     * as well.
+     */
+    fun isSignMinus(): Boolean = sign // IEEE754 5.7.2
+    fun isNegative(): Boolean = sign
+
+    /**
+     * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
+     * In this implementation, the check for subnormal is hardwired to the
+     * decimal128 `eExp` adjusted (scientific) exponent -6143 and 34 digits.
+     */
+    fun isNormal(): Boolean =
+        qExp < NON_FINITE_INF &&
+                digitLen <= 34 &&
+                bitLen > 0 &&
+                eExp >= -6143
+
+    /**
+     * isSubnormal(x) is true if and only if x is subnormal
+     * (not zero, normal, infinite, or NaN).
+     * In this implementation, the check for subnormal is hardwired to the
+     * decimal128 `eExp` adjusted (scientific) exponent -6143.
+     *
+     * This last test is the same as: `qExp == -6176 && digitLen < 34`
+     */
+    fun isSubnormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp < -6143
+
+    /**
+     * isFinite(x) is true if and only if x is zero, normal, or subnormal
+     * (not infinite or NaN).
+     */
+    fun isFinite(): Boolean = qExp < NON_FINITE_INF
+
+    /**
+     * isFiniteNonZero(x) is true if and only if x is normal or subnormal
+     * (not zero, infinite, or NaN).
+     */
+    fun isFiniteNonZero(): Boolean = qExp < NON_FINITE_INF && bitLen > 0
+
+    /**
+     * isZero(x) is true if and only if x is ±0.
+     *
+     * Recall that in the decimal floating point world, the zero cohort
+     * consists of all valid exponents with the zero coefficient.
+     *
+     * This version tests for Zero, even on oversized coefficients.
+     */
+    fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+
+    /**
+     * isCanonicalZero(x) is true if x is ±0 and the coefficient
+     * digit length <= 34.
+     *
+     * IEEE rules state that nonCanonical coefficients must be treated
+     * as zero. Therefore, more than 34 digits == 0
+     */
+    fun isCanonicalZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+
+    /**
+     * isInfinite(x) is true if and only if x is infinite.
+     *
+     * This includes positiveInfinity and negativeInfinity.
+     */
+    fun isInfinite(): Boolean = qExp == NON_FINITE_INF
+
+    /**
+     * isNaN(x) is true if and only if x is a NaN.
+     *
+     * NaN Not A Number values may be quiet or signaling.
+     */
+    fun isNaN(): Boolean = qExp >= NON_FINITE_QNAN
+
+    /**
+     * isSignaling(x) is true if and only if x is a signaling NaN.
+     *
+     * Generally, when sNaN signaling NaN values are encountered during
+     * operations an environment flag is set and trapping to an
+     * optional exception handler may take place.
+     */
+    fun isSignaling(): Boolean = qExp == NON_FINITE_SNAN
+
+    /**
+     * In the context of Decimal128 BID encoding, the only
+     * non-canonical encodings are coeff
+     * - finite: digits > 34
+     * - infinite: non-zero payload/coeff
+     * - NaN: payload digits > 33
+     */
+    fun isCanonical(): Boolean {
+        verify { bitLen == calcBitLen128(dw1, dw0) }
+        verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
+        return (qExp in -6176..6111 && digitLen <= 34) ||
+                (qExp == NON_FINITE_INF && bitLen == 0) ||
+                (qExp > NON_FINITE_INF && digitLen <= 33)
+    }
+
+    // 5.7.3 Decimal operation
+    /**
+     * Returns `true` if this value and [other] have the **same quantum**, i.e.,
+     * if they use the **same encoded exponent (qExp)**,
+     * following IEEE 754-2019 §5.7.3 Decimal2 Operation.
+     *
+     * In IEEE 754-2019 terminology, two decimal numbers have the *same quantum*
+     * when their exponents are identical after encoding. This is a structural
+     * property of the representation, not of numerical value. For example,
+     * `1.230 × 10⁻²` and `12.30 × 10⁻³` are numerically equal but **do not**
+     * have the same quantum because their exponents differ.
+     *
+     * This method performs no normalization or coefficient adjustments; it
+     * simply compares the raw `qExp` fields.
+     */
+    fun sameQuantum(other: Decimal) =
+        (this.qExp == other.qExp) || (this.qExp >= NON_FINITE_QNAN && other.qExp >= NON_FINITE_QNAN)
 
     fun abs() = if (sign) negate() else this
 
     fun negate(): Decimal {
         return when {
             qExp < NON_FINITE_INF -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
-            qExp == NON_FINITE_INF -> infinity(sign)
-            packedLengths.toInt() != 0 -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
+            qExp == NON_FINITE_INF -> if (sign) POS_INFINITY else NEG_INFINITY
             qExp == NON_FINITE_QNAN -> qNaN(! sign)
             else -> sNaN(! sign)
         }
@@ -445,18 +618,218 @@ class Decimal private constructor(
         return true
     }
 
+    /**
+     * Compares this decimal128 value with [other] using the IEEE-754
+     * *totalOrder* relation.
+     *
+     * This operation follows the ordering referenced in
+     * IEEE-754-2019 **§5.7.2 General operations** and defined in
+     * **§5.10 Details of totalOrder predicate**, which specifies a *total*
+     * ordering over all floating-point values, including NaNs, signed zeros,
+     * subnormals, infinities, and normal numbers.
+     *
+     * Unlike the usual <, ≤, >, and ≥ comparisons, the `totalOrder`
+     * relation produces a complete ordering for **all** values, including:
+     *
+     *  • members of the same *cohort* that represent the same numeric value
+     *  • signaling and quiet NaNs, which are generally unordered
+     *
+     * Ordering is determined by IEEE-754 rules based on:
+     *
+     *  • **sign**
+     *  • **magnitude**, using canonical comparison of exponents and
+     *    coefficients
+     *  • **NaN category**, where signaling NaNs precede quiet NaNs, and
+     *    NaNs are ordered by their payloads
+     *
+     * The return value uses the comparison convention:
+     *
+     *  • **−1** → `this` is less than `other`
+     *  • **0**  → `this` and `other` are equal in totalOrder
+     *  • **+1** → `this` is greater than `other`
+     *
+     * No rounding, exceptions, or signaling behavior are produced.
+     *
+     * @return −1, 0, or +1 indicating the total-order relationship between
+     *         this value and [other].
+     */
+
+    fun compareTotalOrderTo(other: Decimal) = DecCompare1.cmpTotalOrder(this, other)
+
+    fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
+
+    /**
+     * Compares the *magnitudes* of two decimal128 values according to the
+     * IEEE-754-2019 totalOrder rules (see §§5.10 and 5.7.2).
+     *
+     * This handles ordering among zeros, finite non-zero values, infinities,
+     * and NaNs. Sign is *not* considered here.
+     *
+     * @return −1, 0, or +1 describing the total-order magnitude relation.
+     */
+    fun compareTotalOrderMagTo(other: Decimal) = DecCompare1.cmpTotalOrderMag(this, other)
+
+    fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
+
+    /**
+     * Compares this decimal128 value with [other] using **Java-style numeric
+     * comparison** semantics.
+     *
+     * This follows the ordering defined by Java’s `Double.compare` and
+     * `BigDecimal.compareTo`:
+     *
+     *  • All **finite non-zero** cohort members (different encodings of the
+     *    same numerical value) compare as **equal**.
+     *
+     *  • **−0** compares less than **+0**, matching Java’s tie-break rule
+     *    on the sign bit of zero.
+     *
+     *  • All **NaNs** compare greater than any non-NaN, and all NaNs are
+     *    considered **equal**, ignoring sign, payload and signaling/quiet
+     *    distinction.
+     *
+     *  • **−∞ < -normal < -0 < +0 < +normal < +∞ < NaN**
+     *
+     * No IEEE-754 flags are set, and signaling NaNs do not trigger
+     * exceptions; they are treated as ordinary NaNs in the Java-style
+     * sense.
+     *
+     * The return value uses the Kotlin/Java comparison convention:
+     *
+     *  • **−1** → `this` is less than [other]
+     *  • **0**  → `this` and [other] are equal under Java-style rules
+     *  • **+1** → `this` is greater than [other]
+     *
+     * @return −1, 0, or +1 describing the Java-style ordering of this
+     *         value relative to [other].
+     */
+    fun compareJavaStyleTo(other: Decimal): Int = DecCompare1.cmpJavaStyle(this, other)
+
+    fun equalsJavaStyle(other: Decimal): Boolean = DecCompare1.eqJavaStyle(this, other)
+
+    /**
+     * Compares this decimal128 value with [other] using **Java-style numeric
+     * comparison** semantics. This is the default comparison used by the
+     * Kotlin `Comparable` interface.
+     *
+     * The ordering matches Java’s `Double.compare` / `BigDecimal.compareTo`
+     * behavior:
+     *
+     *  • All **finite non-zero** cohort members compare as **equal**
+     *    (encoding differences such as trailing zeros are ignored).
+     *
+     *  • **−0 < +0**, matching Java’s signed-zero tie-break rule.
+     *
+     *  • Any finite value is less than **+∞**, and greater than **−∞**.
+     *
+     *  • **NaN** compares greater than all non-NaN values, and all NaNs
+     *    compare equal to each other (payload and sNaN/qNaN differences
+     *    are ignored).
+     *
+     * This comparison performs **no IEEE-754 signaling**, and does not
+     * examine **NaN signs** or **NaN payloads**. It is a pure, deterministic,
+     * context-free ordering suitable for sorting, sets, and all Kotlin/Java
+     * comparison operations.
+     *
+     * For IEEE-754–compliant comparisons (quiet/signaling, ordered/unordered,
+     * totalOrder, etc.), use the operations provided by `DecEnv`.
+     *
+     * @return −1, 0, or +1 according to Java-style numeric ordering.
+     */
+    override fun compareTo(other: Decimal): Int = compareJavaStyleTo(other)
+
+    /**
+     * Java-style equality: compares numerical value only.
+     * Signed zeros compare as equal, and all NaNs compare equal to each other.
+     */
+    override fun equals(other: Any?): Boolean =
+        other is Decimal && equalsJavaStyle(other)
+
+    /**
+     * Returns `true` if and only if this `Decimal2` value has the exact same
+     * internal bitwise representation as [other].
+     *
+     * This performs a strict, field-by-field comparison of the underlying
+     * 128-bit Decimal128 value, including:
+     *
+     *  * the sign bit
+     *  * the exponent field (including the encoded NaN/sNaN pattern)
+     *  * the coefficient field (including any NaN payload bits)
+     *
+     * No numeric interpretation is applied. This is therefore stricter than
+     * IEEE 754 *numeric equality*. In particular:
+     *
+     *  * `+0` and `-0` are **not** equal
+     *  * all NaNs are unequal unless every representation bit matches
+     *  * canonical vs non-canonical encodings would differ (although this
+     *    implementation produces only canonical encodings)
+     *
+     * This operator is intended for conformance and regression testing, where
+     * the produced Decimal128 representation must match the expected value
+     * exactly.
+     *
+     * Example:
+     *
+     * ```
+     * assertTrue(observed bitwiseEQ expected)
+     * ```
+     */
+    infix fun bitwiseEQ(other: Decimal): Boolean =
+        this.packedLengths == other.packedLengths &&
+                this.signExp == other.signExp &&
+                this.dw1 == other.dw1 && this.dw0 == other.dw0
+
     fun add(other: Decimal): Decimal = D128AddSub.addImpl(this, other.sign, other, DECIMAL128)
     fun mul(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
     fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
 
-    fun compareTo(other: Decimal): Int = D128Compare.compare(this, other)
     fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
+
+    // this is only provided for IEEE754-2019 completeness.
+    // in an immutable world it serves no purpose
+    fun copy(): Decimal = Decimal(dw1, dw0, packedLengths, signExp)
+
+    override fun hashCode(): Int {
+        return when {
+            isFiniteNonZero() -> {
+                var r1 = dw1
+                var r0 = dw0
+                var rQExp = qExp
+                if (qExp < DECIMAL128_QMAX_6111) {
+                    val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
+                    val (t1, t0, ntzd) = DecNtzd.ntzdU128(r1, r0)
+                    r1 = t1
+                    r0 = t0
+                    rQExp += ntzd
+                    if (ntzd > maxNtzdClamp) {
+                        verify { rQExp > DECIMAL128_QMAX_6111 }
+                        // oops ... we removed too many trailing zeros and pushed qExp too hi
+                        // give back some zeros to bring down qExp
+                        val giveBack = ntzd - maxNtzdClamp
+                        val (t1, t0) = DecPow10.umul128Pow10(r1, r0, giveBack)
+                        r1 = t1
+                        r0 = t0
+                        rQExp = DECIMAL128_QMAX_6111
+                    }
+                }
+                val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
+                val hcQExp = rQExp * 31 * 31
+                val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
+                val hcDw0 = (r0 xor (r0 shr 32)).toInt()
+                hcSign + hcQExp + hcDw1 + hcDw0
+            }
+            isNegative() && isZero() -> HASH_CODE_NEG_ZERO
+            isZero() -> HASH_CODE_POS_ZERO
+            isNegative() && isInfinite() -> HASH_CODE_NEG_INFINITY
+            isInfinite() -> HASH_CODE_POS_INFINITY
+            else -> HASH_CODE_NAN
+        }
+    }
 
     override fun toString(): String {
         val mutDec = MutDec()
         mutDec.set(this)
         return mutDec.toString()
     }
-
 
 }

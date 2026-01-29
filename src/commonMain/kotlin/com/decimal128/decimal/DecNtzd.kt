@@ -61,6 +61,11 @@ object DecNtzd {
         return Pair(t, ntzd)
     }
 
+    fun ntzdU128(dw1: Long, dw0: Long): Triple<Long, Long, Int> {
+        val (r1, r0, ntzd) = ntzdU128(dw1.toULong(), dw0.toULong())
+        return Triple(r1.toLong(), r0.toLong(), ntzd)
+    }
+
     fun ntzdU128(d1: ULong, d0: ULong): Triple<ULong, ULong, Int> {
         var t1 = d1
         var t0 = d0
