@@ -6,9 +6,9 @@ import kotlin.math.min
 
 /**
  * Serialization helpers for IEEE-754 Decimal128 values using the
- * **Binary Integer Decimal (BID)** encoding format.
+ * **Binary Integer Decimal2 (BID)** encoding format.
  *
- * This object provides low-level routines for converting a [`Decimal`]
+ * This object provides low-level routines for converting a [`Decimal2`]
  * instance to and from its canonical **128-bit BID representation**.
  * Two output forms are supported:
  *
@@ -50,7 +50,7 @@ object DecSerdeBid128 {
      * @param offset index of the first word to write
      * @param isLittleEndian if true, writes [lo, hi]; otherwise writes [hi, lo]
      */
-    fun encodeBid128(d: Decimal, longs: LongArray, offset: Int = 0,
+    fun encodeBid128(d: Decimal2, longs: LongArray, offset: Int = 0,
                      isLittleEndian: Boolean = false) {
         require (offset >= 0 && offset + 1 < longs.size)
 
@@ -72,7 +72,7 @@ object DecSerdeBid128 {
      * @param offset starting index for the encoded bytes
      * @param isLittleEndian if true, writes least-significant byte first; otherwise big-endian
      */
-    fun encodeBid128(d: Decimal, bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) {
+    fun encodeBid128(d: Decimal2, bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) {
         require (offset >= 0 && offset + 15 < bytes.size)
 
         val bid128Hi = encodeBid128Hi(d)
@@ -95,12 +95,12 @@ object DecSerdeBid128 {
      * @param longs source array containing the encoded words
      * @param offset index of the first word to read
      * @param isLittleEndian if true, reads [lo, hi]; otherwise reads [hi, lo]
-     * @return the decoded `Decimal` value
+     * @return the decoded `Decimal2` value
      */
     fun decodeBid128(longs: LongArray, offset: Int = 0,
                      isLittleEndian: Boolean = false,
                      allowOversizeCoefficient: Boolean = false,
-                     ): Decimal {
+                     ): Decimal2 {
         require (offset >= 0 && offset + 1 < longs.size)
 
         val iLS = offset + if (isLittleEndian) 0 else 1
@@ -118,12 +118,12 @@ object DecSerdeBid128 {
      * @param bytes source byte array containing the encoded value
      * @param offset starting index of the 16-byte BID128 sequence
      * @param isLittleEndian if true, reads least-significant byte first; otherwise big-endian
-     * @return the decoded `Decimal` value
+     * @return the decoded `Decimal2` value
      */
     fun decodeBid128(bytes: ByteArray, offset: Int = 0,
                      isLittleEndian: Boolean = false,
                      allowOversizeCoefficient: Boolean = false
-                     ): Decimal {
+                     ): Decimal2 {
         require (offset >= 0 && offset + 15 < bytes.size)
 
         var lo = 0uL
@@ -198,7 +198,7 @@ object DecSerdeBid128 {
      * @param d the decimal value to encode
      * @return the fully assembled high 64-bit BID128 word
      */
-    private fun encodeBid128Hi(d: Decimal): ULong {
+    private fun encodeBid128Hi(d: Decimal2): ULong {
         // Don't be confused by the fact that this is 3 bits
         // but below you will see 4 bits.
         // The format allows 4 bits, but only 3 are used.
@@ -215,7 +215,7 @@ object DecSerdeBid128 {
      * This extracts the sign, the 17-bit G-combination field, and the upper
      * 46 coefficient bits from `bid128Hi`, combines them with the remaining
      * 64 coefficient bits in `bid128Lo`, and reconstructs the corresponding
-     * `Decimal` value. Finite numbers, infinities, quiet NaNs, and signaling
+     * `Decimal2` value. Finite numbers, infinities, quiet NaNs, and signaling
      * NaNs are handled per IEEE 754-2019 rules.
      *
      *  - For **finite values**, coefficients with more than 34 decimal digits
@@ -227,9 +227,9 @@ object DecSerdeBid128 {
      *
      * @param bid128Hi the high 64 bits of the BID128 encoding
      * @param bid128Lo the low 64 bits of the BID128 encoding
-     * @return the decoded `Decimal` value
+     * @return the decoded `Decimal2` value
      */
-    fun decodeBid128_old(bid128Hi: ULong, bid128Lo: ULong, allowOversizeCoefficient: Boolean = false): Decimal {
+    fun decodeBid128_old(bid128Hi: ULong, bid128Lo: ULong, allowOversizeCoefficient: Boolean = false): Decimal2 {
         // 1 + 17 + 46 == 64
         // 1 bit for the sign
         val sign = bid128Hi.toLong() < 0L
@@ -261,17 +261,17 @@ object DecSerdeBid128 {
                 //  If the value exceeds the maximum, the significand c is
                 //  non-canonical and the value used for c is zero.
                 if (digitLen > 34)
-                    return Decimal.zero(sign, qExp)
-                return Decimal(sign, qExp, digitLen, bitLen, dw1, dw0)
+                    return Decimal2.zero(sign, qExp)
+                return Decimal2(sign, qExp, digitLen, bitLen, dw1, dw0)
             }
             // otherwise, the top two bits are 0b11
             // if the top 5 bits are 0x11110 then Infinity
-            (combination and 0x1F000) == 0x1E000 -> return Decimal.infinity(sign)
+            (combination and 0x1F000) == 0x1E000 -> return Decimal2.infinity(sign)
             // if the top 5 bits are 0x11111 then NaN
             (combination and 0x1F000) == 0x1F000 -> {
                 // with the next bit determining signaling NaN
                 val isSignaling = (combination and 0x1F800) == 0x1F800
-                return Decimal.NaN(sign, isSignaling, coefficientMid46.toLong(), bid128Lo.toLong())
+                return Decimal2.NaN(sign, isSignaling, coefficientMid46.toLong(), bid128Lo.toLong())
             }
             // otherwise, top 4 bits were 0x1100 0x1101 0x1110
             else -> {
@@ -292,13 +292,13 @@ object DecSerdeBid128 {
                 // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
                 val E = (combination ushr 1) and 0x3FFF   // 14 bits
                 val qExp = E + QTINY_Neg6176              // preserve exponent
-                return Decimal.zero(sign, qExp)
+                return Decimal2.zero(sign, qExp)
             }
         }
     }
 
-    fun decodeBid128(bid128Hi: ULong, bid128Lo: ULong, allowNonCanonical: Boolean = false): Decimal {
-        // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
+    fun decodeBid128(bid128Hi: ULong, bid128Lo: ULong, allowNonCanonical: Boolean = false): Decimal2 {
+        // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 128 // storage width in bits
         val p = 34 // precision in digits
         val emax = 6144
@@ -367,9 +367,9 @@ object DecSerdeBid128 {
             // if the top 5 bits are 0b11110 then Infinity
             (combination shr (w5 - 5)) == 0b11110 -> {
                 if (!allowNonCanonical)
-                    return Decimal.infinity(sign)
+                    return Decimal2.infinity(sign)
                 val remaining58Hi = (bid128Hi shl 6) shr 6
-                return Decimal.infinityNonCanonical(sign, remaining58Hi, bid128Lo)
+                return Decimal2.infinityNonCanonical(sign, remaining58Hi, bid128Lo)
             }
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
@@ -381,7 +381,7 @@ object DecSerdeBid128 {
                     payloadHi = payloadMaxHi
                     payloadLo = payloadMaxLo
                 }
-                return Decimal.NaN(sign, isSignaling, payloadHi.toLong(), payloadLo.toLong(), allowNonCanonical)
+                return Decimal2.NaN(sign, isSignaling, payloadHi.toLong(), payloadLo.toLong(), allowNonCanonical)
             }
 
             else -> {
@@ -395,12 +395,12 @@ object DecSerdeBid128 {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if (dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
-            return Decimal.zero(sign, qExp)
-        return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
+            return Decimal2.zero(sign, qExp)
+        return Decimal2(sign, qExp, dw1, dw0, allowNonCanonical)
     }
 
-    fun decodeBid64(bid64: ULong, allowNonCanonical: Boolean = false): Decimal {
-        // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
+    fun decodeBid64(bid64: ULong, allowNonCanonical: Boolean = false): Decimal2 {
+        // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 64 // storage width in bits
         val p = 16 // precision in digits
         val emax = 384
@@ -431,8 +431,8 @@ object DecSerdeBid128 {
         return decodeBidHelper(w5, bias, t, sign, combination, coeffT, coeffMax, payloadMax, infPayload)
     }
 
-    fun decodeBid32(bid32: UInt, allowNonCanonical: Boolean = false): Decimal {
-        // IEEE754-2019 Table 3.6-Decimal Interchange format parameters -- p 23
+    fun decodeBid32(bid32: UInt, allowNonCanonical: Boolean = false): Decimal2 {
+        // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 32 // storage width in bits
         val p = 7 // precision in digits
         val emax = 96
@@ -465,7 +465,7 @@ object DecSerdeBid128 {
 
     private fun decodeBidHelper(w5: Int, bias: Int, t: Int,
                                 sign: Boolean, combination: Int, coeffT: ULong,
-                                coeffMax: ULong, payloadMax: ULong, infPayload: ULong): Decimal {
+                                coeffMax: ULong, payloadMax: ULong, infPayload: ULong): Decimal2 {
         val coeffHi: ULong
         val qExp: Int
         when {
@@ -499,13 +499,13 @@ object DecSerdeBid128 {
             }
             // if the top 5 bits are 0b11110 then Infinity
             (combination shr (w5 - 5)) == 0b11110 ->
-                return Decimal.infinityNonCanonical(sign, 0uL,  infPayload)
+                return Decimal2.infinityNonCanonical(sign, 0uL,  infPayload)
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
                 val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
                 val payload = min(coeffT, payloadMax)
-                return Decimal.NaN(sign, isSignaling, payload)
+                return Decimal2.NaN(sign, isSignaling, payload)
             }
             else -> {
                 // all possible cases were covered above
@@ -517,8 +517,8 @@ object DecSerdeBid128 {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if (dw0 > coeffMax)
-            return Decimal.zero(sign, qExp)
-        return Decimal(sign, qExp, 0uL, dw0)
+            return Decimal2.zero(sign, qExp)
+        return Decimal2(sign, qExp, 0uL, dw0)
     }
 
 

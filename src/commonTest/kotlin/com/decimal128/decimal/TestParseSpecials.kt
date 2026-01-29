@@ -9,17 +9,17 @@ class TestParseSpecials {
 
     @Test
     fun testParseInfinity() {
-        val x = Decimal.from(1234567890)
+        val x = Decimal2.from(1234567890)
         println("x:$x")
 
         val infinity = DecParsePrint.parseInfinityText("infinity")
-        assertEquals(Decimal.POS_INFINITY, infinity)
+        assertEquals(Decimal2.POS_INFINITY, infinity)
         val inf = DecParsePrint.parseInfinityText("inf")
-        assertEquals(Decimal.POS_INFINITY, inf)
+        assertEquals(Decimal2.POS_INFINITY, inf)
         val plusINF = DecParsePrint.parseInfinityText("+INF")
-        assertEquals(Decimal.POS_INFINITY, plusINF)
+        assertEquals(Decimal2.POS_INFINITY, plusINF)
         val negInfinity = DecParsePrint.parseInfinityText("-Infinity")
-        assertEquals(Decimal.NEG_INFINITY, negInfinity)
+        assertEquals(Decimal2.NEG_INFINITY, negInfinity)
         val null1 = DecParsePrint.parseInfinityText("x")
         assertEquals(null, null1)
         val null2 = DecParsePrint.parseInfinityText("+Infin")
@@ -30,19 +30,19 @@ class TestParseSpecials {
     @Test
     fun testParseNanText() {
         val nan = DecParsePrint.parseNanText("nan")
-        assertEquals(Decimal.POS_QNAN, nan)
+        assertEquals(Decimal2.POS_QNAN, nan)
         val plusNAN = DecParsePrint.parseNanText("+NAN")
-        assertEquals(Decimal.POS_QNAN, plusNAN)
+        assertEquals(Decimal2.POS_QNAN, plusNAN)
         val negNaN = DecParsePrint.parseNanText("-NaN")
-        assertEquals(Decimal.NEG_QNAN, negNaN)
+        assertEquals(Decimal2.NEG_QNAN, negNaN)
         val negSnan = DecParsePrint.parseNanText("-Snan")
-        assertEquals(Decimal.NEG_SNAN, negSnan)
+        assertEquals(Decimal2.NEG_SNAN, negSnan)
         val null1 = DecParsePrint.parseNanText("NaN ")
         assertEquals("NaN", null1.toString())
         val plussNaN = DecParsePrint.parseNanText("+sNaN")
-        assertEquals(Decimal.POS_SNAN, plussNaN)
+        assertEquals(Decimal2.POS_SNAN, plussNaN)
         val NaN0 = DecParsePrint.parseNanText("NaN0")
-        assertEquals(Decimal.POS_QNAN, NaN0)
+        assertEquals(Decimal2.POS_QNAN, NaN0)
 
         val nanPlus1 = DecParsePrint.parseNanText("NaN+1")
         val nanPlus1Str = nanPlus1.toString()

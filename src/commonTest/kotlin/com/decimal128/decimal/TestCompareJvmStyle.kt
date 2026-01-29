@@ -11,8 +11,8 @@ class TestCompareJvmStyle {
 
     @Test
     fun testZeroVsZero() {
-        val nz = Decimal.from("-0")
-        val pz = Decimal.from("+0")
+        val nz = Decimal2.from("-0")
+        val pz = Decimal2.from("+0")
         assertTrue(nz < pz)
         assertFalse(pz < nz)
         assertEquals(nz, nz)
@@ -21,69 +21,69 @@ class TestCompareJvmStyle {
 
     @Test
     fun testFinitePositive() {
-        assertTrue(Decimal.from("1") < Decimal.from("2"))
-        assertTrue(Decimal.from("1.23") == Decimal.from("123e-2"))
-        assertTrue(Decimal.from("1000") > Decimal.from("999"))
+        assertTrue(Decimal2.from("1") < Decimal2.from("2"))
+        assertTrue(Decimal2.from("1.23") == Decimal2.from("123e-2"))
+        assertTrue(Decimal2.from("1000") > Decimal2.from("999"))
     }
 
     @Test
     fun testFiniteNegative() {
-        assertTrue(Decimal.from("-5") < Decimal.from("-1"))
-        assertEquals(Decimal.from("-1.23"), Decimal.from("-123e-2"))
+        assertTrue(Decimal2.from("-5") < Decimal2.from("-1"))
+        assertEquals(Decimal2.from("-1.23"), Decimal2.from("-123e-2"))
     }
 
     @Test
     fun testMixedSigns() {
-        assertTrue(Decimal.from("-1") < Decimal.from("0"))
-        assertTrue(Decimal.from("-1") < Decimal.from("1"))
-        assertTrue(Decimal.from("0") < Decimal.from("1"))
+        assertTrue(Decimal2.from("-1") < Decimal2.from("0"))
+        assertTrue(Decimal2.from("-1") < Decimal2.from("1"))
+        assertTrue(Decimal2.from("0") < Decimal2.from("1"))
     }
 
     @Test
     fun testInfinity() {
-        val negInf = Decimal.NEG_INFINITY
-        val posInf = Decimal.from("+INF")
+        val negInf = Decimal2.NEG_INFINITY
+        val posInf = Decimal2.from("+INF")
         assertTrue(negInf < posInf)
-        assertTrue(negInf < Decimal.NEG_ZEROe0)
-        assertTrue(posInf > Decimal.from(999999999))
+        assertTrue(negInf < Decimal2.NEG_ZEROe0)
+        assertTrue(posInf > Decimal2.from(999999999))
     }
 
     @Test
     fun testNaNOrdering() {
         // All NaNs compare equal and greater than everything else
-        assertTrue(Decimal.from("NaN") > Decimal.from("+Infinity"))
-        assertEquals(Decimal.from("NaN"), Decimal.from("sNaN"))
-        assertEquals(Decimal.POS_QNAN, Decimal.NEG_SNAN)
-        assertEquals(Decimal.from("NaN123"), Decimal.from("sNaN(456)"))
+        assertTrue(Decimal2.from("NaN") > Decimal2.from("+Infinity"))
+        assertEquals(Decimal2.from("NaN"), Decimal2.from("sNaN"))
+        assertEquals(Decimal2.POS_QNAN, Decimal2.NEG_SNAN)
+        assertEquals(Decimal2.from("NaN123"), Decimal2.from("sNaN(456)"))
     }
 
     @Test
     fun testCohortEquality() {
-        assertEquals(Decimal.POS_ZEROe0, Decimal.NEG_ZEROe0)
-        assertEquals(Decimal.from("0e10"), Decimal.from("0e-10"))
-        assertEquals(Decimal.from("1"), Decimal.from("1.0"))
-        assertEquals(Decimal.from("1"), Decimal.from("100e-2"))
-        assertEquals(Decimal.from("123e3"), Decimal.from("123000"))
+        assertEquals(Decimal2.POS_ZEROe0, Decimal2.NEG_ZEROe0)
+        assertEquals(Decimal2.from("0e10"), Decimal2.from("0e-10"))
+        assertEquals(Decimal2.from("1"), Decimal2.from("1.0"))
+        assertEquals(Decimal2.from("1"), Decimal2.from("100e-2"))
+        assertEquals(Decimal2.from("123e3"), Decimal2.from("123000"))
     }
 
     @Test
     fun testReferentialEquality() {
-        assertSame(Decimal.POS_ZEROe0, Decimal.from("0"))
-        assertSame(Decimal.POS_ZEROe0, Decimal.from("+0"))
-        assertSame(Decimal.POS_ZEROe0, Decimal.from("000"))
+        assertSame(Decimal2.POS_ZEROe0, Decimal2.from("0"))
+        assertSame(Decimal2.POS_ZEROe0, Decimal2.from("+0"))
+        assertSame(Decimal2.POS_ZEROe0, Decimal2.from("000"))
 
-        assertSame(Decimal.NEG_ZEROe0, Decimal.from("-0"))
-        assertSame(Decimal.NEG_ZEROe0, Decimal.from("-000"))
+        assertSame(Decimal2.NEG_ZEROe0, Decimal2.from("-0"))
+        assertSame(Decimal2.NEG_ZEROe0, Decimal2.from("-000"))
 
-        assertNotSame(Decimal.POS_ZEROe0, Decimal.from("0.0"))
+        assertNotSame(Decimal2.POS_ZEROe0, Decimal2.from("0.0"))
 
-        assertSame(Decimal.POS_QNAN, Decimal.from("NaN"))
-        assertSame(Decimal.POS_QNAN, Decimal.from("+NaN0000"))
-        assertSame(Decimal.NEG_QNAN, Decimal.from("-nan"))
+        assertSame(Decimal2.POS_QNAN, Decimal2.from("NaN"))
+        assertSame(Decimal2.POS_QNAN, Decimal2.from("+NaN0000"))
+        assertSame(Decimal2.NEG_QNAN, Decimal2.from("-nan"))
 
-        assertSame(Decimal.POS_INFINITY, Decimal.from("+inF"))
-        assertSame(Decimal.POS_INFINITY, Decimal.from("infinity"))
+        assertSame(Decimal2.POS_INFINITY, Decimal2.from("+inF"))
+        assertSame(Decimal2.POS_INFINITY, Decimal2.from("infinity"))
 
-        assertSame(Decimal.NEG_INFINITY, Decimal.from("-INF"))
+        assertSame(Decimal2.NEG_INFINITY, Decimal2.from("-INF"))
     }
 }

@@ -86,7 +86,7 @@ class TestParseSimple {
     fun test1(parse: String, expected: String = parse) {
         if (verbose)
             println("parse:$parse expected:$expected")
-        val d = Decimal.from(parse)
+        val d = Decimal2.from(parse)
         val render = d.toString()
         assertEquals(expected, render)
     }

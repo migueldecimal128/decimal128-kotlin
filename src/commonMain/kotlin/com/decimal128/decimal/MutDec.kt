@@ -388,7 +388,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun set(x: DecOld): MutDec {
+    fun set(x: Decimal): MutDec {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
         this.bitLen = x.bitLen
@@ -1484,7 +1484,7 @@ class MutDec() : C256() {
         throw RuntimeException("not impl")
     }
 
-    // 5.7.3 Decimal operation
+    // 5.7.3 Decimal2 operation
     fun sameQuantum(x: MutDec): Boolean =
         (this.qExp == x.qExp) ||
                 (this.qExp >= NON_FINITE_QNAN && x.qExp >= NON_FINITE_QNAN)

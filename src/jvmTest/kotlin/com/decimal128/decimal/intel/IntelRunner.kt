@@ -1,16 +1,14 @@
 package com.decimal128.decimal.intel
 
-import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.Ieee754Class
+import com.decimal128.decimal.Decimal2
 import org.junit.jupiter.api.Assertions.assertEquals
-import kotlin.test.Test
 import kotlin.test.assertTrue
 
 object IntelRunner {
 
     fun runUnaryDecimalOp(fileName: String,
                           funcStr: String,
-                          unaryDecimalOp: Decimal.() -> Decimal,
+                          unaryDecimalOp: Decimal2.() -> Decimal2,
                           verbose: Boolean = false,
                           skip: Boolean = true,
                           skipCases: Array<String> = emptyArray() ) {
@@ -21,7 +19,7 @@ object IntelRunner {
     }
 
     fun runUnaryDecimalOp(cases: List<IntelCase>,
-                          unaryDecimalOp: Decimal.() -> Decimal,
+                          unaryDecimalOp: Decimal2.() -> Decimal2,
                           verbose: Boolean = false ) {
         cases.forEach { tc ->
             if (verbose)
@@ -36,7 +34,7 @@ object IntelRunner {
 
     fun runUnaryBooleanOp(fileName: String,
                           funcStr: String,
-                          unaryBooleanOp: Decimal.() -> Boolean,
+                          unaryBooleanOp: Decimal2.() -> Boolean,
                           verbose: Boolean = false,
                           skip: Boolean = true,
                           skipCases: Array<String> = emptyArray() ) {
@@ -48,7 +46,7 @@ object IntelRunner {
 
     fun runUnaryBooleanOp(cases: List<IntelCase>,
                           funcStr: String,
-                          unaryBooleanOp: Decimal.() -> Boolean,
+                          unaryBooleanOp: Decimal2.() -> Boolean,
                           verbose: Boolean = false,
                           skip: Boolean = true,
                           skipCases: Array<String> = emptyArray() ) {
@@ -57,13 +55,13 @@ object IntelRunner {
         runUnaryBooleanOp(filtered, unaryBooleanOp, verbose)
     }
 
-    fun runUnaryBooleanOp(unaryBooleanOp: Decimal.() -> Boolean,
+    fun runUnaryBooleanOp(unaryBooleanOp: Decimal2.() -> Boolean,
                           verbose: Boolean = false,
                           cases: Array<String> ) =
         runUnaryBooleanOp(IntelParser.parseCases(cases), unaryBooleanOp, verbose)
 
     fun runUnaryBooleanOp(cases: List<IntelCase>,
-                          unaryBooleanOp: Decimal.() -> Boolean,
+                          unaryBooleanOp: Decimal2.() -> Boolean,
                           verbose: Boolean = false ) {
         cases.forEach { tc ->
             if (verbose) {

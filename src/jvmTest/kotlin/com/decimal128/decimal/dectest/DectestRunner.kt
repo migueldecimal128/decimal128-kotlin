@@ -1,13 +1,13 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.Decimal2
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 object DectestRunner {
 
     fun runUnaryDecimalOp(fileName: String,
-                          unaryDecimalOp: Decimal.() -> Decimal,
+                          unaryDecimalOp: Decimal2.() -> Decimal2,
                           verbose: Boolean = true,
                           skip: Boolean = true,
                           skipCases: Array<String> = arrayOf(),
@@ -17,7 +17,7 @@ object DectestRunner {
         runUnaryDecimalOp(allTests, unaryDecimalOp, skip, skipCases, verbose)
     }
 
-    fun runUnaryDecimalOp(unaryDecimalOp: Decimal.() -> Decimal,
+    fun runUnaryDecimalOp(unaryDecimalOp: Decimal2.() -> Decimal2,
                           verbose: Boolean = true,
                           cases: Array<String> = emptyArray(),
                           ) {
@@ -26,7 +26,7 @@ object DectestRunner {
     }
 
     fun runUnaryDecimalOp(cases: List<DectestCase>,
-                          unaryDecimalOp: Decimal.() -> Decimal,
+                          unaryDecimalOp: Decimal2.() -> Decimal2,
                           skip: Boolean = true,
                           skipCases: Array<String> = arrayOf(),
                           verbose: Boolean = true,
@@ -47,7 +47,7 @@ object DectestRunner {
     }
 
     fun runUnaryIntOp(fileName: String,
-                      unaryIntOp: Decimal.() -> Int,
+                      unaryIntOp: Decimal2.() -> Int,
                       verbose: Boolean = true,
                       skip: Boolean = true,
                       skipCases: Array<String> = arrayOf(),
@@ -57,7 +57,7 @@ object DectestRunner {
         runUnaryIntOp(allTests, unaryIntOp, skip, skipCases, verbose)
     }
 
-    fun runUnaryIntOp(unaryIntOp: Decimal.() -> Int,
+    fun runUnaryIntOp(unaryIntOp: Decimal2.() -> Int,
                       verbose: Boolean = true,
                       cases: Array<String> = emptyArray(),
     ) {
@@ -66,7 +66,7 @@ object DectestRunner {
     }
 
     fun runUnaryIntOp(cases: List<DectestCase>,
-                      unaryIntOp: Decimal.() -> Int,
+                      unaryIntOp: Decimal2.() -> Int,
                       skip: Boolean = true,
                       skipCases: Array<String> = arrayOf(),
                       verbose: Boolean = true,
@@ -85,7 +85,7 @@ object DectestRunner {
     }
 
     fun runBinaryDecimalOp(fileName: String,
-                           binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+                           binaryDecimalOp: Decimal2.(Decimal2) -> Decimal2,
                            verbose: Boolean = true,
                            skip: Boolean = true,
                            skipCases: Array<String> = arrayOf(),
@@ -95,7 +95,7 @@ object DectestRunner {
         runBinaryDecimalOp(allTests, binaryDecimalOp, skip, skipCases, verbose)
     }
 
-    fun runBinaryDecimalOp(binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+    fun runBinaryDecimalOp(binaryDecimalOp: Decimal2.(Decimal2) -> Decimal2,
                            verbose: Boolean = true,
                            cases: Array<String> = emptyArray(),
     ) {
@@ -104,7 +104,7 @@ object DectestRunner {
     }
 
     fun runBinaryDecimalOp(cases: List<DectestCase>,
-                           binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+                           binaryDecimalOp: Decimal2.(Decimal2) -> Decimal2,
                            skip: Boolean = true,
                            skipCases: Array<String> = arrayOf(),
                            verbose: Boolean = true,
@@ -126,7 +126,7 @@ object DectestRunner {
     }
 
     fun runBinaryIntOp(fileName: String,
-                       binaryIntOp: Decimal.(Decimal) -> Int,
+                       binaryIntOp: Decimal2.(Decimal2) -> Int,
                        verbose: Boolean = true,
                        skip: Boolean = true,
                        skipCases: Array<String> = arrayOf(),
@@ -136,7 +136,7 @@ object DectestRunner {
         runBinaryIntOp(allTests, binaryIntOp, skip, skipCases, verbose)
     }
 
-    fun runBinaryIntOp(binaryIntOp: Decimal.(Decimal) -> Int,
+    fun runBinaryIntOp(binaryIntOp: Decimal2.(Decimal2) -> Int,
                        verbose: Boolean = true,
                        cases: Array<String> = emptyArray(),
     ) {
@@ -145,7 +145,7 @@ object DectestRunner {
     }
 
     fun runBinaryIntOp(cases: List<DectestCase>,
-                       binaryIntOp: Decimal.(Decimal) -> Int,
+                       binaryIntOp: Decimal2.(Decimal2) -> Int,
                        skip: Boolean = true,
                        skipCases: Array<String> = arrayOf(),
                        verbose: Boolean = true,
@@ -165,7 +165,7 @@ object DectestRunner {
     }
 
     fun runBinaryBooleanOp(fileName: String,
-                           binaryBooleanOp: Decimal.(Decimal) -> Boolean,
+                           binaryBooleanOp: Decimal2.(Decimal2) -> Boolean,
                            verbose: Boolean = true,
                            skip: Boolean = true,
                            skipCases: Array<String> = arrayOf(),
@@ -175,7 +175,7 @@ object DectestRunner {
         runBinaryBooleanOp(allTests, binaryBooleanOp, skip, skipCases, verbose)
     }
 
-    fun runBinaryBooleanOp(binaryBooleanOp: Decimal.(Decimal) -> Boolean,
+    fun runBinaryBooleanOp(binaryBooleanOp: Decimal2.(Decimal2) -> Boolean,
                            verbose: Boolean = true,
                            cases: Array<String> = emptyArray(),
     ) {
@@ -184,7 +184,7 @@ object DectestRunner {
     }
 
     fun runBinaryBooleanOp(cases: List<DectestCase>,
-                           binaryBooleanOp: Decimal.(Decimal) -> Boolean,
+                           binaryBooleanOp: Decimal2.(Decimal2) -> Boolean,
                            skip: Boolean = true,
                            skipCases: Array<String> = arrayOf(),
                            verbose: Boolean = true,

@@ -1,6 +1,6 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.Decimal2
 import com.decimal128.decimal.dectest.DectestRunner.runBinaryBooleanOp
 import com.decimal128.decimal.dectest.DectestRunner.runBinaryIntOp
 import org.junit.jupiter.api.Test
@@ -13,7 +13,7 @@ class TestDectestNoncomputational {
     @Test
     fun testAbs() = runUnaryDecimalOp(
         "dqAbs.dectest",
-        Decimal::abs,
+        Decimal2::abs,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -29,7 +29,7 @@ class TestDectestNoncomputational {
 
     @Test
     fun testAbsCases() = runUnaryDecimalOp(
-        Decimal::abs,
+        Decimal2::abs,
         verbose = verbose,
         cases = arrayOf(
             "dqabs121 abs   2682682682682682682682682682682682    ->  2682682682682682682682682682682682",
@@ -40,7 +40,7 @@ class TestDectestNoncomputational {
     @Test
     fun testMinus() = runUnaryDecimalOp(
         "dqMinus.dectest",
-        Decimal::negate,
+        Decimal2::negate,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -66,14 +66,14 @@ class TestDectestNoncomputational {
     @Test
     fun testCopy() = runUnaryDecimalOp(
         "dqCopy.dectest",
-        Decimal::copy,
+        Decimal2::copy,
         verbose = verbose,
     )
 
     @Test
     fun testTotalOrder() = runBinaryIntOp(
         "dqCompareTotal.dectest",
-        Decimal::compareTotalOrderTo,
+        Decimal2::compareTotalOrderTo,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -85,7 +85,7 @@ class TestDectestNoncomputational {
     @Test
     fun testTotalOrderMag() = runBinaryIntOp(
         "dqCompareTotalMag.dectest",
-        Decimal::compareTotalOrderMagTo,
+        Decimal2::compareTotalOrderMagTo,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -97,7 +97,7 @@ class TestDectestNoncomputational {
     @Test
     fun testSameQuantum() = runBinaryBooleanOp(
         "dqSameQuantum.dectest",
-        Decimal::sameQuantum,
+        Decimal2::sameQuantum,
         verbose = verbose
     )
 

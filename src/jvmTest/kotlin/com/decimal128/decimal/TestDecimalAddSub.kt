@@ -93,8 +93,8 @@ class TestDecimalAddSub {
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
         env.context {
 
-            val decimalA = DecOld.from(bdA.toString())
-            val decimalB = DecOld.from(bdB.toString())
+            val decimalA = Decimal.from(bdA.toString())
+            val decimalB = Decimal.from(bdB.toString())
             val decimalS = decimalA + decimalB
             if (verbose)
                 println("decimalS:$decimalS")

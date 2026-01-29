@@ -12,7 +12,7 @@ import com.decimal128.decimal.BinopSignature.NAN_FOUND
 import com.decimal128.decimal.BinopSignature.ZER_FNZ
 import com.decimal128.decimal.BinopSignature.ZER_INF
 import com.decimal128.decimal.BinopSignature.ZER_ZER
-import com.decimal128.decimal.Decimal.Companion.bothFnz
+import com.decimal128.decimal.Decimal2.Companion.bothFnz
 
 object DecCompare {
 
@@ -55,7 +55,7 @@ object DecCompare {
      *
      * @return −1, 0, or +1 indicating the total-order relationship of `x` and `y`.
      */
-    fun cmpTotalOrder(x: Decimal, y: Decimal): Int {
+    fun cmpTotalOrder(x: Decimal2, y: Decimal2): Int {
         val xSign = x.sign0Neg1 // 0 or -1 (0xFFFF_FFFF)
         if ((xSign xor y.sign0Neg1) != 0)
             return (xSign shl 1) + 1 // return -1 or 1
@@ -77,7 +77,7 @@ object DecCompare {
      *
      * @return −1, 0, or +1 describing the total-order magnitude relation.
      */
-    fun cmpTotalOrderMag(x: Decimal, y: Decimal): Int {
+    fun cmpTotalOrderMag(x: Decimal2, y: Decimal2): Int {
         val cmp =
             if (bothFnz(x, y))
                 cmpTotalOrderMagFnzFnz(x, y)
@@ -124,7 +124,7 @@ object DecCompare {
      * @return −1, 0, or +1 describing the total-order magnitude relation
      *         between the two finite, non-zero values.
      */
-    private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
+    private inline fun cmpTotalOrderMagFnzFnz(x: Decimal2, y: Decimal2): Int {
         val cmpMag = cmpMagFnzFnz(x, y)
 
         // If x and y represent the same floating-point datum:
@@ -141,7 +141,7 @@ object DecCompare {
         return cmp
     }
 
-    private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
+    private fun cmpMagFnzFnz(x: Decimal2, y: Decimal2): Int {
         val cmpMag = when {
             x.eExp > y.eExp -> 1
             x.eExp < y.eExp -> -1
@@ -155,7 +155,7 @@ object DecCompare {
         return cmpMag
     }
 
-    private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
+    private fun cmpTotalOrderMagnitudeNanFound(x: Decimal2, y: Decimal2): Int {
         return when {
             x.qExp < NON_FINITE_QNAN -> -1
             y.qExp < NON_FINITE_QNAN -> 1
@@ -201,8 +201,8 @@ object DecCompare {
      *
      * @return −1, 0, or +1 describing the Java-style ordering between `x` and `y`.
      */
-    fun cmpJavaStyle(x: Decimal, y: Decimal): Int {
-        if (Decimal.neitherIsNaN(x, y)) {
+    fun cmpJavaStyle(x: Decimal2, y: Decimal2): Int {
+        if (Decimal2.neitherIsNaN(x, y)) {
             val xSign = x.sign0Neg1 // 0 or -1 (0xFFFF_FFFF)
             if ((xSign xor y.sign0Neg1) != 0)
                 return (xSign shl 1) + 1 // return -1 or 1
@@ -244,7 +244,7 @@ object DecCompare {
      * @return `true` if `x` and `y` are equal under Java-style rules;
      *         `false` otherwise.
      */
-    fun eqJavaStyle(x: Decimal, y: Decimal): Boolean {
+    fun eqJavaStyle(x: Decimal2, y: Decimal2): Boolean {
         return when (BinopSignature.of(x, y)) {
             ZER_ZER -> true
             ZER_FNZ -> false
@@ -289,7 +289,7 @@ object DecCompare {
      *
      * @return −1 if `|x| < |y|`, 0 if `|x| == |y|`, or +1 if `|x| > |y|`.
      */
-    private fun cmpJavaStyleMagnitude(x: Decimal, y: Decimal): Int {
+    private fun cmpJavaStyleMagnitude(x: Decimal2, y: Decimal2): Int {
         val cmpMag =
             if (bothFnz(x, y))
                 cmpMagFnzFnz(x, y)

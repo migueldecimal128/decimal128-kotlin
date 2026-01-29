@@ -673,7 +673,7 @@ class TestDectest {
                     val parseResult = parseOperand(operand1, env)
                     parseResult
                 }
-                //"remainder" -> Decimal.newMod(op1, op2, ctx)
+                //"remainder" -> Decimal2.newMod(op1, op2, ctx)
                 "compare" -> op1.partialCompareTo(op2, env)
                 "comparesig" -> op1.partialCompareTo(op2, env)
                 "comparetotal" -> MutDec().set(op1.totalCompareTo(op2))

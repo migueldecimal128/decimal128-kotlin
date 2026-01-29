@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 object D128Pow10 {
 
-    fun scaleCoeffUpPow10(x: DecOld, pow10: Int): DecOld {
+    fun scaleCoeffUpPow10(x: Decimal, pow10: Int): Decimal {
         verify { pow10 > 0 }
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -10,10 +10,10 @@ object D128Pow10 {
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p0 = x.dw0 * dw0Pow10
         val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
-        return DecOld(x.sign, p1, p0, x.qExp - pow10)
+        return Decimal(x.sign, p1, p0, x.qExp - pow10)
     }
 
-    fun fmaCoeffPow10(x: DecOld, pow10: Int, y: DecOld): DecOld {
+    fun fmaCoeffPow10(x: Decimal, pow10: Int, y: Decimal): Decimal {
         verify { pow10 > 0 }
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -25,7 +25,7 @@ object D128Pow10 {
         val s0 = p0 + y.dw0
         val carry0 = if (unsignedLT(s0, p0)) 1L else 0L
         val s1 = p1 + y.dw1 + carry0
-        return DecOld(x.sign, s1, s0, y.qExp)
+        return Decimal(x.sign, s1, s0, y.qExp)
     }
 
     /**
@@ -33,7 +33,7 @@ object D128Pow10 {
      * Guaranteed that the multiply will not exceed 128 bits.
      * Guaranteed that y less than the scaled product.
      */
-    fun fusedMulPow10Subtract(sign: Boolean, x: DecOld, pow10: Int, y: DecOld): DecOld {
+    fun fusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
         verify { pow10 > 0 }
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -45,7 +45,7 @@ object D128Pow10 {
         val d0 = p0 - y.dw0
         val borrow0 = if (unsignedLT(p0, d0)) 1L else 0L
         val d1 = p1 - y.dw1 - borrow0
-        return DecOld(sign, d1, d0, y.qExp)
+        return Decimal(sign, d1, d0, y.qExp)
     }
 
     /**
@@ -53,7 +53,7 @@ object D128Pow10 {
      * Guaranteed that the multiply will not exceed 128 bits.
      * Guaranteed that y less than the scaled product.
      */
-    fun fusedSubtractMulPow10(sign: Boolean, m: DecOld, n: DecOld, pow10: Int): DecOld {
+    fun fusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, pow10: Int): Decimal {
         verify { pow10 > 0 }
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -65,6 +65,6 @@ object D128Pow10 {
         val d0 = m.dw0 - p0
         val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
         val d1 = m.dw1 - p1 - borrow0
-        return DecOld(sign, d1, d0, m.qExp)
+        return Decimal(sign, d1, d0, m.qExp)
     }
 }

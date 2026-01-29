@@ -7,7 +7,7 @@ class DecTraps internal constructor(
 
     fun hasTrapHandler(decException: DecException) = trapHandlers[decException.ordinal] != null
 
-    fun signal(decExceptionContext: DecExceptionContext): DecOld {
+    fun signal(decExceptionContext: DecExceptionContext): Decimal {
         val exception = decExceptionContext.exception
         val trapHandler = trapHandlers[exception.ordinal]
         require (trapHandler != null)

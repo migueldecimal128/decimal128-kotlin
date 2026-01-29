@@ -1,6 +1,6 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.Decimal2
 
 data class DectestCase(
     val text: String,
@@ -14,17 +14,17 @@ data class DectestCase(
     val env: DectestEnv,
 ) {
 
-    val operand1: Decimal
+    val operand1: Decimal2
         get() = parseDpd128(operand1Str)
 
-    val operand2: Decimal
+    val operand2: Decimal2
         get() {
             if (operand2Str == null)
                 throw IllegalArgumentException()
             return parseDpd128(operand2Str)
         }
 
-    val result: Decimal
+    val result: Decimal2
         get() = parseDpd128(resultStr)
 
     val resultInt: Int
@@ -183,8 +183,8 @@ data class DectestCase(
             return result
         }
 
-        fun parseDpd128(str: String): Decimal {
-            return Decimal.from(str)
+        fun parseDpd128(str: String): Decimal2 {
+            return Decimal2.from(str)
         }
     }
 

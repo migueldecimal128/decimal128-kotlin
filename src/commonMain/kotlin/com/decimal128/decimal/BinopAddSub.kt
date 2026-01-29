@@ -2,13 +2,13 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.C128Compare.c128UnscaledCompare
-import com.decimal128.decimal.DecOld.Companion.bothFnz
+import com.decimal128.decimal.Decimal.Companion.bothFnz
 import kotlin.math.min
 
 class BinopAddSub : Binop() {
     companion object {
 
-        fun addImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
+        fun addImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, y.sign, y, env)
             } else when (BinopSignature.of(x, y)) {
@@ -28,7 +28,7 @@ class BinopAddSub : Binop() {
             }
         }
 
-        fun subImpl(x: DecOld, y: DecOld, env: DecEnv): DecOld {
+        fun subImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, !y.sign, y, env)
             } else when (BinopSignature.of(x, y)) {
@@ -48,7 +48,7 @@ class BinopAddSub : Binop() {
             }
         }
 
-        private fun addZeroZero(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
+        private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
             // Both operands are zero. This is where the special rules apply.
             return if (x.sign == ySign) {
                 // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
@@ -56,34 +56,34 @@ class BinopAddSub : Binop() {
             } else {
                 // Rule: (+0) + (-0). The signs are different.
                 // Result is +0 unless rounding is roundTowardNegative.
-                DecOld.newZero(env.isRoundTowardNegative(), min(x.qExp, y.qExp), env)
+                Decimal.newZero(env.isRoundTowardNegative(), min(x.qExp, y.qExp), env)
             }
         }
 
-        private fun addInfInf(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld =
+        private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal =
             if (x.sign == ySign)
                 x
             else
                 env.signal(DecExceptionReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 
-        private fun addFnzFnz(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv) =
+        private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv) =
             if (x.qExp == y.qExp)
                 addFnzFnzUnscaled(x, ySign, y, env)
             else
                 addFnzFnzScaled(x, ySign, y, env)
 
-        private fun addFnzFnzUnscaled(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
+        private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
             if (x.sign == ySign)
                 return addUnscaledMagnitudes(x, y, env)
             val cmp = c128UnscaledCompare(x, y)
             return when {
                 (cmp > 0) -> C128AddSub.c128UnscaledSub(x.sign, x, y)
                 (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
-                else -> DecOld.newZero(env.isRoundTowardNegative(), x.qExp, env)
+                else -> Decimal.newZero(env.isRoundTowardNegative(), x.qExp, env)
             }
         }
 
-        private fun addUnscaledMagnitudes(x: DecOld, y: DecOld, env: DecEnv): DecOld {
+        private fun addUnscaledMagnitudes(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             val sumBitLen = x.bitLen + y.bitLen + 1
             val sum = if (sumBitLen < env.decFormat.maxBitLen) {
                 val x0 = x.dw0
@@ -93,17 +93,17 @@ class BinopAddSub : Binop() {
                 val x1 = x.dw1
                 val y1 = y.dw1
                 val s1 = x1 + y1 + carry0
-                DecOld.from(s1, s0, x.signExp)
+                Decimal.from(s1, s0, x.signExp)
             } else {
                 val arg1 = env.decTemps.mdecArg1.set(x)
                 val arg2 = env.decTemps.mdecArg2.set(y)
                 val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
-                DecOld.from(mdecSum)
+                Decimal.from(mdecSum)
             }
             return sum
         }
 
-        private fun addFnzFnzScaled(x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
+        private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
             if (x.sign == y.sign)
                 return addScaledMagnitudes(x, y, env)
             // signs differ ... subtract scaled magnitudes
@@ -111,11 +111,11 @@ class BinopAddSub : Binop() {
             return when {
                 cmpMag > 0 -> subScaledMagnitudes(x.sign, x, y, env)
                 cmpMag < 0 -> subScaledMagnitudes(ySign, y, x, env)
-                else -> DecOld.newZero(x.sign && ySign, min(x.qExp, y.qExp), env)
+                else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp), env)
             }
         }
 
-        private fun addScaledMagnitudes(x: DecOld, y: DecOld, env: DecEnv): DecOld {
+        private fun addScaledMagnitudes(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             val flip = x.qExp > y.qExp
             val m = if (flip) x else y
             val n = if (flip) y else x
@@ -131,17 +131,17 @@ class BinopAddSub : Binop() {
             }
         }
 
-        private fun fullWidthAdd(xSign: Boolean, x: DecOld, ySign: Boolean, y: DecOld, env: DecEnv): DecOld {
+        private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
             val arg1 = env.decTemps.mdecArg1.set(x)
             arg1.sign = xSign
             val arg2 = env.decTemps.mdecArg2.set(y)
             arg2.sign = ySign
             val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
-            val sum = DecOld.from(mdecSum)
+            val sum = Decimal.from(mdecSum)
             return sum
         }
 
-        private fun subScaledMagnitudes(sign: Boolean, m: DecOld, s: DecOld, env: DecEnv): DecOld {
+        private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, env: DecEnv): Decimal {
             // non-zero with different signs ... subtract magnitudes
             verify { m.magnitudeCompareTo(s) > 0 }
             verify { s.isNotZero() }

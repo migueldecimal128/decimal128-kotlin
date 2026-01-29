@@ -142,9 +142,9 @@ class TestHashCode {
     }
 
     fun testPair(expectEqual: Boolean, x: String, y: String) =
-        testPair(expectEqual, Decimal.from(x), Decimal.from(y))
+        testPair(expectEqual, Decimal2.from(x), Decimal2.from(y))
 
-    fun testPair(expectEqual: Boolean, x: Decimal, y: Decimal) {
+    fun testPair(expectEqual: Boolean, x: Decimal2, y: Decimal2) {
         val hcX = x.hashCode()
         val hcY = y.hashCode()
         if (expectEqual)

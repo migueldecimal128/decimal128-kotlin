@@ -180,7 +180,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          *
          * Supports the same syntax rules as the full-string overload:
          * - Optional sign (`'+'` or `'-'`)
-         * - Decimal or `0x`/`0X` hexadecimal digits
+         * - Decimal2 or `0x`/`0X` hexadecimal digits
          * - Optional underscores as digit separators
          * - No fractional or scientific notation
          *
@@ -214,7 +214,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          *
          * Accepts the same syntax as the full-sequence overload:
          * - Optional leading `'+'` or `'-'`
-         * - Decimal or `0x`/`0X` hexadecimal digits
+         * - Decimal2 or `0x`/`0X` hexadecimal digits
          * - Optional underscores as separators
          *
          * @param csq the source character sequence.
@@ -230,7 +230,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          * Parses a [CharArray] representation of an integer into a [BigInt].
          *
          * Supported syntax:
-         * - Decimal or `0x`/`0X` hexadecimal notation
+         * - Decimal2 or `0x`/`0X` hexadecimal notation
          * - Optional `'+'` or `'-'` sign at the start
          * - Optional underscores as separators
          * - No scientific or fractional forms
@@ -247,7 +247,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          *
          * Uses the same syntax rules as other text-based overloads:
          * - Optional leading `'+'` or `'-'`
-         * - Decimal or hexadecimal digits
+         * - Decimal2 or hexadecimal digits
          * - Underscores allowed between digits
          *
          * @param chars the source array.
@@ -263,7 +263,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          * Parses an ASCII/Latin-1/UTF-8 encoded [ByteArray] into a [BigInt].
          *
          * Supported syntax:
-         * - Decimal or `0x`/`0X` hexadecimal digits
+         * - Decimal2 or `0x`/`0X` hexadecimal digits
          * - Optional `'+'` or `'-'` sign at the start
          * - Optional underscores between digits
          *
@@ -282,7 +282,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          *
          * Uses the same syntax rules as the full-array overload:
          * - Optional `'+'` or `'-'` sign
-         * - Decimal or hexadecimal digits (`0x`/`0X`)
+         * - Decimal2 or hexadecimal digits (`0x`/`0X`)
          * - Optional underscores as separators
          *
          * Only ASCII characters are supported.

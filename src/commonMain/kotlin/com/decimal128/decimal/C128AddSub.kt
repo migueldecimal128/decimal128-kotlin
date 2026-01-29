@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 object C128AddSub {
 
-    fun c128UnscaledAdd(x: DecOld, y: DecOld): DecOld {
+    fun c128UnscaledAdd(x: Decimal, y: Decimal): Decimal {
         verify { x.validate() }
         verify { y.validate() }
         val x0 = x.dw0
@@ -12,11 +12,11 @@ object C128AddSub {
         val x1 = x.dw1
         val y1 = y.dw1
         val s1 = x1 + y1 + carry0
-        val sum = DecOld.from(s1, s0, x.signExp)
+        val sum = Decimal.from(s1, s0, x.signExp)
         return sum
     }
 
-    fun c128UnscaledSub(sign: Boolean, x: DecOld, y: DecOld): DecOld {
+    fun c128UnscaledSub(sign: Boolean, x: Decimal, y: Decimal): Decimal {
         verify { x.validate() }
         verify { y.validate() }
         verify { x.bitLen >= y.bitLen }
@@ -24,7 +24,7 @@ object C128AddSub {
         val d0 = x.dw0 - y.dw0
         val carry0 = if (unsignedCmp(d0, x.dw0) > 0) 1L else 0L
         val d1 = x.dw1 - y.dw1 - carry0
-        val diff = DecOld.from(sign, d1, d0, x.qExp)
+        val diff = Decimal.from(sign, d1, d0, x.qExp)
         return diff
     }
 

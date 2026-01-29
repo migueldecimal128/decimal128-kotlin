@@ -21,22 +21,22 @@ object DecParsePrint {
     private const val DECIMAL128_QMAX_6111 = 6111
 
     /**
-     * Parses a decimal string into a `Decimal` (decimal128).
+     * Parses a decimal string into a `Decimal2` (decimal128).
      *
      * Accepts the same finite-value syntax as `parseFiniteValueText`:
      * optional sign, digits with optional decimal point, optional `e`/`E`
      * exponent (with optional sign), and only ASCII/Basic-Latin characters.
      *
-     * If the input is valid, a `Decimal` is returned. Otherwise an
+     * If the input is valid, a `Decimal2` is returned. Otherwise an
      * `IllegalArgumentException` is thrown containing the diagnostic text
      * produced by `parseDecimalOrErrorString`.
      *
      * @throws IllegalArgumentException if the input is not a valid finite
      *         decimal128 text form or would require rounding.
      */
-    fun parseDecimal(str: String, allowOversizeCoefficient: Boolean = false): Decimal {
+    fun parseDecimal(str: String, allowOversizeCoefficient: Boolean = false): Decimal2 {
         val decOrErrStr = parseDecimalOrErrorString(str, allowOversizeCoefficient)
-        if (decOrErrStr is Decimal)
+        if (decOrErrStr is Decimal2)
             return decOrErrStr
         val msg = decOrErrStr ?: ""
         throw IllegalArgumentException("invalid decimal format:$msg:'$str'")
@@ -51,7 +51,7 @@ object DecParsePrint {
      *  3. `parseNanText`
      *
      * Returns the first non-null result, which may be:
-     *  * a `Decimal` for a successful parse, or
+     *  * a `Decimal2` for a successful parse, or
      *  * a `String` describing an error.
      *
      * Error messages are returned as `String` constant values
@@ -59,17 +59,17 @@ object DecParsePrint {
      */
     fun parseDecimalOrErrorString(str: String, allowOversizeCoefficient: Boolean): Any? {
         var d: Any? = parseFiniteValueText(str, allowOversizeCoefficient)
-        if (d is Decimal || d is String)
+        if (d is Decimal2 || d is String)
             return d
         d = parseInfinityText(str)
-        if (d is Decimal)
+        if (d is Decimal2)
             return d
         d = parseNanText(str, allowOversizeCoefficient)
         return d
     }
 
     /**
-     * Parses a textual infinity representation into a [`Decimal`] value.
+     * Parses a textual infinity representation into a [`Decimal2`] value.
      *
      * Accepted forms are case-insensitive:
      *
@@ -81,7 +81,7 @@ object DecParsePrint {
      *
      * @return the parsed positive or negative infinity, or `null` if not matched.
      */
-    fun parseInfinityText(str: String): Decimal? {
+    fun parseInfinityText(str: String): Decimal2? {
         if (str.length < 3)
             return null
         var ch = str[0].code
@@ -99,7 +99,7 @@ object DecParsePrint {
         }
         if (ich != str.length || (ch != 'f'.code && ch != 'y'.code))
             return null
-        return Decimal.infinity(sign)
+        return Decimal2.infinity(sign)
     }
 
     private const val MAX128_HI19 = 3402823669209384634L // hi 19 digits of 2**128-1
@@ -115,7 +115,7 @@ object DecParsePrint {
     private const val NINES_14 = 99_999_999_999_999L
 
     /**
-     * Parses a textual NaN representation into a [`Decimal`] value.
+     * Parses a textual NaN representation into a [`Decimal2`] value.
      *
      * Accepted forms (case-insensitive):
      *
@@ -151,7 +151,7 @@ object DecParsePrint {
      *
      * @return the parsed NaN value, or `null` if the string is not a NaN form.
      */
-    fun parseNanText(str: String, allowOversizePayload: Boolean = false): Decimal? {
+    fun parseNanText(str: String, allowOversizePayload: Boolean = false): Decimal2? {
         if (str.length < 3)
             return null
         var ch = str[0].code
@@ -211,11 +211,11 @@ object DecParsePrint {
             payloadDw0 += accum19b
             payloadDw1 += if (unsignedLT(payloadDw0, accum19b)) 1L else 0L
         }
-        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0, allowOversizePayload)
+        return Decimal2.NaN(sign, hasS, payloadDw1, payloadDw0, allowOversizePayload)
     }
 
     /**
-     * Parses a finite decimal value into a [`Decimal`] (decimal128) with **no rounding**.
+     * Parses a finite decimal value into a [`Decimal2`] (decimal128) with **no rounding**.
      *
      * This is a simple numeric parser that accepts only standard finite forms:
      *
@@ -228,7 +228,7 @@ object DecParsePrint {
      * If the input requires rounding, contains invalid syntax, or exceeds the
      * exact range of decimal128 finite values, this method returns `null`.
      *
-     * @return the parsed finite `Decimal` value, or `null` if not a valid finite
+     * @return the parsed finite `Decimal2` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
     fun parseFiniteValueText(str: String, allowOversizeCoefficient: Boolean = false): Any? {
@@ -358,11 +358,11 @@ object DecParsePrint {
             digitLen += overage
         }
         if ((qExp or bitLen) != 0)
-            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
+            return Decimal2(sign, qExp, digitLen, bitLen, dw1T, dw0T)
+        return if (sign) Decimal2.NEG_ZEROe0 else Decimal2.POS_ZEROe0
     }
 
-    fun toString(dec: Decimal): String {
+    fun toString(dec: Decimal2): String {
         return when {
             dec.qExp == 0 -> toIntegerString(dec)
             dec.qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString(dec)
@@ -371,7 +371,7 @@ object DecParsePrint {
         }
     }
 
-    private fun toSpecialValueString(dec: Decimal): String {
+    private fun toSpecialValueString(dec: Decimal2): String {
         if (dec.qExp < NON_FINITE_QNAN)
             return SPECIAL_VALUE_STRINGS[dec.sign01]
         val nanIndex = (if (dec.qExp == NON_FINITE_QNAN) 2 else 4) + dec.sign01
@@ -385,7 +385,7 @@ object DecParsePrint {
         return String(utf8)
     }
 
-    private fun toIntegerString(dec: Decimal): String {
+    private fun toIntegerString(dec: Decimal2): String {
         if (dec.bitLen < 4) {
             val i = ((16 and dec.sign0Neg1) + dec.dw0.toInt()) and 0x1F // bounds-check-elimination
             return SMALL_INTEGER_STRINGS[i]
@@ -396,7 +396,7 @@ object DecParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toDecimalPointString(dec: Decimal): String {
+    private fun toDecimalPointString(dec: Decimal2): String {
         val digitsRightOfDecimal = -dec.qExp
         val leadingZeroCount = max(1 + digitsRightOfDecimal - dec.digitLen, 0)
         val signLen = dec.sign01
@@ -413,7 +413,7 @@ object DecParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toNormalizedScientificString(dec: Decimal): String {
+    private fun toNormalizedScientificString(dec: Decimal2): String {
         val eExp = dec.eExp
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
         val signLen = dec.sign01

@@ -4,11 +4,11 @@ import kotlin.math.min
 
 abstract class Binop {
     companion object {
-        fun nanFound(x: DecOld, y: DecOld, env: DecEnv): DecOld {
+        fun nanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
             TODO()
         }
 
-        internal fun scaleToMinExp(x: DecOld, otherExp: Int, env: DecEnv): DecOld {
+        internal fun scaleToMinExp(x: Decimal, otherExp: Int, env: DecEnv): Decimal {
             if (x.qExp <= otherExp)
                 return x
             val delta = x.qExp - otherExp

@@ -4,8 +4,7 @@ import com.decimal128.decimal.DecParsePrint
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecSerdeBid128
-import com.decimal128.decimal.Decimal
-import kotlin.test.Test
+import com.decimal128.decimal.Decimal2
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
 // readtest.c - read tests from stdin
@@ -63,24 +62,24 @@ class IntelCase private constructor (
     val attrs: Map<String, String>
 ) {
 
-    val op1Bid128: Decimal
+    val op1Bid128: Decimal2
         get() = parseBid128(op1Str, allowOversizeCoefficient = true)
 
-    val op2Bid128: Decimal
+    val op2Bid128: Decimal2
         get() {
             if (op2Str == null)
                 throw IllegalStateException("op2 is null:$text")
             return parseBid128(op2Str, allowOversizeCoefficient = true)
         }
 
-    val op3Bid128: Decimal
+    val op3Bid128: Decimal2
         get() {
             if (op3Str == null)
                 throw IllegalStateException("op3 is null:$text")
             return parseBid128(op3Str, allowOversizeCoefficient = true)
         }
 
-    val resBid128: Decimal
+    val resBid128: Decimal2
         get() = parseBid128(resStr, allowOversizeCoefficient = true)
 
     val resInt: Int
@@ -174,7 +173,7 @@ class IntelCase private constructor (
         val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
         val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
 
-        fun parseBid128(str: String, allowOversizeCoefficient: Boolean = false): Decimal {
+        fun parseBid128(str: String, allowOversizeCoefficient: Boolean = false): Decimal2 {
             if (str.startsWith('[')) {
                 if (regexHex64.matches(str) || regexHex32.matches(str))
                     throw IllegalArgumentException("not bid128:$str")
