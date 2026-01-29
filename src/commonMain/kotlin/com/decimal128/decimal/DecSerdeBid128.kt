@@ -271,7 +271,7 @@ object DecSerdeBid128 {
             (combination and 0x1F000) == 0x1F000 -> {
                 // with the next bit determining signaling NaN
                 val isSignaling = (combination and 0x1F800) == 0x1F800
-                return Decimal.NaN(sign, isSignaling, coefficientMid46, bid128Lo)
+                return Decimal.NaN(sign, isSignaling, coefficientMid46.toLong(), bid128Lo.toLong())
             }
             // otherwise, top 4 bits were 0x1100 0x1101 0x1110
             else -> {
@@ -381,7 +381,7 @@ object DecSerdeBid128 {
                     payloadHi = payloadMaxHi
                     payloadLo = payloadMaxLo
                 }
-                return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo, allowNonCanonical)
+                return Decimal.NaN(sign, isSignaling, payloadHi.toLong(), payloadLo.toLong(), allowNonCanonical)
             }
 
             else -> {
@@ -505,7 +505,7 @@ object DecSerdeBid128 {
                 // with the next bit determining signaling NaN
                 val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
                 val payload = min(coeffT, payloadMax)
-                return Decimal.NaN(sign, isSignaling, 0uL, payload)
+                return Decimal.NaN(sign, isSignaling, payload)
             }
             else -> {
                 // all possible cases were covered above

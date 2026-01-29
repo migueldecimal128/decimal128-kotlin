@@ -102,14 +102,17 @@ object DecParsePrint {
         return Decimal.infinity(sign)
     }
 
-    private const val MAX128_HI19 = 3402823669209384634uL // hi 19 digits of 2**128-1
-    private const val MAX128_LO20 = 72997609508796735uL   // lo 20 digits of 2**128-1
+    private const val MAX128_HI19 = 3402823669209384634L // hi 19 digits of 2**128-1
+    private const val MAX128_LO20 = 72997609508796735L   // lo 20 digits of 2**128-1
 
-    private const val NINES_33_HI = 0x0000314DC6448D93uL
-    private const val NINES_33_LO = 0x38C15B09FFFFFFFFuL
+    private const val NINES_33_HI = 0x0000314DC6448D93L
+    private const val NINES_33_LO = 0x38C15B09FFFFFFFFL
 
-    private const val NINES_38_HI = 0x04B3B4CA85A86C47uL
-    private const val NINES_38_LO = 0xA098A223FFFFFFFFuL
+    private const val NINES_38_HI = 0x04B3B4CA85A86C47L
+    private const val NINES_38_LO = Long.MIN_VALUE or 0x2098A223FFFFFFFFL
+
+    private const val NINES_19 = (999_999_999_999_999_999L * 10L) + 9L
+    private const val NINES_14 = 99_999_999_999_999L
 
     /**
      * Parses a textual NaN representation into a [`Decimal`] value.
@@ -168,8 +171,8 @@ object DecParsePrint {
             return null
         ich += 2
         var accumDigitCount = 0
-        var accum19a = 0uL
-        var accum19b = 0uL
+        var accum19a = 0L
+        var accum19b = 0L
         while (ich < str.length) {
             val chDigit = str[ich++]
             // be very lenient when parsing NaN payload
@@ -181,32 +184,32 @@ object DecParsePrint {
             // flush leading zeros from payload ... don't increment
             accumDigitCount += (-(accumDigitCount or d)) ushr 31
             when {
-                accumDigitCount <= 19 -> accum19a = (accum19a * 10uL) + d.toULong()
+                accumDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
                 accumDigitCount > 33 && !allowOversizePayload -> {
-                    accum19a = 999_9999_9999_9999_9999uL
-                    accum19b = 99_9999_9999_9999uL
+                    accum19a = NINES_19
+                    accum19b = NINES_14
                     accumDigitCount = 33
                     break;
                 }
                 accumDigitCount > 38 -> {
-                    accum19a = 999_9999_9999_9999_9999uL
-                    accum19b = 999_9999_9999_9999_9999uL
+                    accum19a = NINES_19
+                    accum19b = NINES_19
                     accumDigitCount = 38
                     break;
                 }
                 else -> {
-                    accum19b = (accum19b * 10uL) + d.toULong()
+                    accum19b = (accum19b * 10L) + d.toLong()
                 }
             }
         }
         var payloadDw0 = accum19a
-        var payloadDw1 = 0uL
+        var payloadDw1 = 0L
         if (accumDigitCount > 19) {
-            val p10 = POW10[accumDigitCount - 19].toULong()
+            val p10 = POW10[accumDigitCount - 19]
             payloadDw0 = accum19a * p10
             payloadDw1 = unsignedMulHi(accum19a, p10)
             payloadDw0 += accum19b
-            payloadDw1 += if (payloadDw0 < accum19b) 1uL else 0uL
+            payloadDw1 += if (unsignedLT(payloadDw0, accum19b)) 1L else 0L
         }
         return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0, allowOversizePayload)
     }

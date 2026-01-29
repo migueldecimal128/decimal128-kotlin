@@ -50,6 +50,25 @@ class Decimal private constructor(
     companion object {
 
         internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     dw1: Long, dw0: Long,
+                                     allowNonCanonical: Boolean = false): Decimal {
+            val bitLen = calcBitLen128(dw1, dw0)
+            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+            return Decimal(sign, qExp, digitLen, bitLen, dw1, dw0, allowNonCanonical)
+        }
+
+        internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     digitLen: Int, bitLen: Int,
+                                     dw1: Long, dw0: Long,
+                                     allowNonCanonical: Boolean = false): Decimal {
+            verify { bitLen == calcBitLen128(dw1, dw0) }
+            verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
+            verify { digitLen <= 38 }
+            verify { digitLen <= 34 || allowNonCanonical }
+            return Decimal(Seal(sign, qExp, digitLen, bitLen), dw1.toULong(), dw0.toULong())
+        }
+
+        internal operator fun invoke(sign: Boolean, qExp: Int,
                                      dw1: ULong, dw0: ULong,
                                      allowNonCanonical: Boolean = false): Decimal {
             val bitLen = calcBitLen128(dw1, dw0)
@@ -316,14 +335,17 @@ class Decimal private constructor(
         }
 
         fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: ULong = 0uL): Decimal =
-            NaN(sign, signaling, 0uL, payloadDw0)
+            NaN(sign, signaling, 0L, payloadDw0.toLong())
 
-        private const val NINES_33_HI = 0x044B82FA09B5A53FuL
-        private const val NINES_33_LO = 0x86C2ABFAFF7FFFFFuL
+        fun NaN(sign: Boolean = false, signaling: Boolean = false, payloadDw0: Long = 0L): Decimal =
+            NaN(sign, signaling, 0L, payloadDw0)
+
+        private const val NINES_33_HI = 0x044B82FA09B5A53FL
+        private const val NINES_33_LO = Long.MIN_VALUE or 0x06C2ABFAFF7FFFFFL
         private const val NINES_33_BITLEN = 112
 
-        private const val NINES_38_HI = 0x4B3B4CA85A86C47AuL
-        private const val NINES_38_LO = 0x098A223FFFFFFFFFuL
+        private const val NINES_38_HI = 0x4B3B4CA85A86C47AL
+        private const val NINES_38_LO = 0x098A223FFFFFFFFFL
         private const val NINES_38_BITLEN = 127
 
         /**
@@ -357,9 +379,9 @@ class Decimal private constructor(
          */
         fun NaN(
             sign: Boolean = false, signaling: Boolean = false,
-            payloadDw1: ULong, payloadDw0: ULong = 0uL, allowOversizePayload: Boolean = false
+            payloadDw1: Long, payloadDw0: Long = 0L, allowOversizePayload: Boolean = false
         ): Decimal {
-            if ((payloadDw1 or payloadDw0) == 0uL)
+            if ((payloadDw1 or payloadDw0) == 0L)
                 return NaN(sign, signaling)
             val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
             var p0 = payloadDw0
