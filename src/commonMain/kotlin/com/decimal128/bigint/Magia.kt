@@ -5,27 +5,28 @@
 package com.decimal128.bigint
 
 import com.decimal128.bigint.intrinsic.unsignedMulHi
+import com.decimal128.decimal.unsignedLT
 import kotlin.math.min
 import kotlin.math.max
 
 
 // magia == MAGnitude IntArray ... it's magic!
 
-private const val BARRETT_MU_1E9: ULong = 0x44B82FA09uL       // floor(2^64 / 1e9)
-private const val ONE_E_9: ULong = 1_000_000_000uL
+private const val BARRETT_MU_1E9: Long = 0x44B82FA09L       // floor(2^64 / 1e9)
+private const val ONE_E_9: Long = 1_000_000_000L
 
-private const val M_U32_DIV_1E1 = 0xCCCCCCCDuL
+private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
 private const val S_U32_DIV_1E1 = 35
 
-private const val M_U32_DIV_1E2 = 0x51EB851FuL
+private const val M_U32_DIV_1E2 = 0x51EB851FL
 private const val S_U32_DIV_1E2 = 37
 
-private const val M_U64_DIV_1E4 = 0x346DC5D63886594BuL
+private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
 private const val S_U64_DIV_1E4 = 11 // + 64 high
 
 // these magic reciprocal constants only work for values up to
 // 10**9 / 10**4
-private const val M_1E9_DIV_1E4 = 879_609_303uL
+private const val M_1E9_DIV_1E4 = 879_609_303L
 private const val S_1E9_DIV_1E4 = 43
 
 private const val LOG2_10_CEIL_32 = 14_267_572_565uL
@@ -2032,12 +2033,12 @@ object Magia {
             var limbsRemaining = tmpLen
             while (limbsRemaining > 1) {
                 val newLenAndRemainder = mutateBarrettDivBy1e9(tmp, limbsRemaining)
-                val chunk = newLenAndRemainder and 0xFFFF_FFFFuL
+                val chunk = newLenAndRemainder and 0xFFFF_FFFFL
                 render9DigitsBeforeIndex(chunk, utf8, ib)
                 limbsRemaining = (newLenAndRemainder shr 32).toInt()
                 ib -= 9
             }
-            ib -= renderTailDigitsBeforeIndex(tmp[0].toUInt(), utf8, ib)
+            ib -= renderTailDigitsBeforeIndex(tmp[0].toUInt().toLong(), utf8, ib)
             if (isNegative)
                 utf8[--ib] = '-'.code.toByte()
             val len = utf8.size - ib
@@ -2063,19 +2064,19 @@ object Magia {
      *                digits are written backward from `offMaxx - 1`.
      * @return the number of bytes/digits written.
      */
-    fun renderTailDigitsBeforeIndex(w: UInt, utf8: ByteArray, offMaxx: Int): Int {
-        var t = w.toULong()
+    fun renderTailDigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int): Int {
+        var t = dw
         var ib = offMaxx
-        while (t >= 1000uL) {
-            val t0 = unsignedMulHi(t, M_U64_DIV_1E4) shr S_U64_DIV_1E4
-            val abcd = t - (t0 * 10000uL)
+        while (t >= 1000L) {
+            val t0 = unsignedMulHi(t, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+            val abcd = t - (t0 * 10000L)
             t = t0
-            val ab = (abcd * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-            val cd = abcd - (ab * 100uL)
-            val a = (ab * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-            val b = ab - (a * 10uL)
-            val c = (cd * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-            val d = cd - (c * 10uL)
+            val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+            val cd = abcd - (ab * 100L)
+            val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+            val b = ab - (a * 10L)
+            val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+            val d = cd - (c * 10L)
             if (ib - 4 >= 0 && ib <= utf8.size) {
                 utf8[ib - 4] = (a.toInt() + '0'.code).toByte()
                 utf8[ib - 3] = (b.toInt() + '0'.code).toByte()
@@ -2086,13 +2087,13 @@ object Magia {
                 IllegalArgumentException()
             }
         }
-        if (t != 0uL || w == 0u) {
+        if (t != 0L || dw == 0L) {
             do {
-                val divTen = (t * 0xCCCCCCCDuL) shr 35
-                val digit = (t - (divTen * 10uL)).toInt()
+                val divTen = (t * 0xCCCCCCCDL) ushr 35
+                val digit = (t - (divTen * 10L)).toInt()
                 utf8[--ib] = ('0'.code + digit).toByte()
                 t = divTen
-            } while (t != 0uL)
+            } while (t != 0L)
         }
 
         return offMaxx - ib
@@ -2115,32 +2116,32 @@ object Magia {
      * @param offMaxx the maximum exclusive offset within [utf8];
      * digits occupy the range `offMaxx - 9 .. offMaxx - 1`.
      */
-    fun render9DigitsBeforeIndex(dw: ULong, utf8: ByteArray, offMaxx: Int) {
-        check (dw < 1_000_000_000uL)
+    fun render9DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
+        check (unsignedLT(dw, 1_000_000_000L))
         //val abcde = unsignedMulHi(dw, M_U64_DIV_1E4) shr S_U64_DIV_1E4
-        val abcde = (dw * M_1E9_DIV_1E4) shr S_1E9_DIV_1E4
-        val fghi  = dw - (abcde * 10000uL)
+        val abcde = (dw * M_1E9_DIV_1E4) ushr S_1E9_DIV_1E4
+        val fghi  = dw - (abcde * 10000L)
 
         val abc = (abcde * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-        val de = abcde - (abc * 100uL)
+        val de = abcde - (abc * 100L)
 
         val fg = (fghi * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-        val hi = fghi - (fg * 100uL)
+        val hi = fghi - (fg * 100L)
 
         val a = (abc * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-        val bc = abc - (a * 100uL)
+        val bc = abc - (a * 100L)
 
         val b = (bc * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val c = bc - (b * 10uL)
+        val c = bc - (b * 10L)
 
         val d = (de * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val e = de - (d * 10uL)
+        val e = de - (d * 10L)
 
         val f = (fg * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val g = fg - (f * 10uL)
+        val g = fg - (f * 10L)
 
         val h = (hi * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val i = hi - (h * 10uL)
+        val i = hi - (h * 10L)
 
         // Explicit bounds check to enable elimination of individual checks
         val offMin = offMaxx - 9
@@ -2191,11 +2192,11 @@ object Magia {
      * **Note:** The correction is a 0-or-1 adjustment; `qHat` never decreases.
      * **Correctness:** Guarantees that after each limb, `0 ≤ rHat < 1e9`.
      */
-    fun mutateBarrettDivBy1e9(magia: IntArray, len: Int): ULong {
-        var rem = 0uL
+    fun mutateBarrettDivBy1e9(magia: IntArray, len: Int): Long {
+        var rem = 0L
         check(magia[len - 1] != 0)
         for (i in len - 1 downTo 0) {
-            val limb = magia[i].toUInt().toULong()
+            val limb = magia[i].toUInt().toLong()
             val combined = (rem shl 32) or limb
 
             // approximate quotient using Barrett reciprocal
@@ -2208,7 +2209,7 @@ object Magia {
             // use signed shr to propagate the sign bit
             // adjustMask will have value 0 or -1 (aka 0xFF...FF)
             // if (rHat < ONE_E_9) 0uL else -1uL
-            val adjustMask = ((rHat - ONE_E_9).toLong() shr 63).toULong().inv()
+            val adjustMask = ((rHat - ONE_E_9) shr 63).inv()
             qHat -= adjustMask
             rHat -= ONE_E_9 and adjustMask
 
@@ -2220,7 +2221,7 @@ object Magia {
         val newLen = len - 1 + mostSignificantLimbNonZero
 
         // pack new length and remainder into a single Long
-        return (newLen.toULong() shl 32) or (rem and 0xFFFF_FFFFuL)
+        return (newLen.toLong() shl 32) or (rem and 0xFFFF_FFFFL)
     }
 
     /**

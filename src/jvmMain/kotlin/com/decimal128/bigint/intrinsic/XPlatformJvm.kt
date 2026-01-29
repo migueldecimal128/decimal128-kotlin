@@ -4,6 +4,9 @@
 
 package com.decimal128.bigint.intrinsic
 
+actual inline fun unsignedMulHi(x: Long, y:Long): Long =
+    Math.unsignedMultiplyHigh(x, y)
+
 actual inline fun unsignedMulHi(x: ULong, y: ULong): ULong =
     Math.unsignedMultiplyHigh(x.toLong(), y.toLong()).toULong()
 
