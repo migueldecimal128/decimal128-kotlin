@@ -358,8 +358,8 @@ object Dec1ParsePrint {
             digitLen += overage
         }
         if ((qExp or bitLen) != 0)
-            return Decimal2(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Decimal2.NEG_ZEROe0 else Decimal2.POS_ZEROe0
+            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
+        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
     }
 
     fun toString(dec: Decimal2): String {
