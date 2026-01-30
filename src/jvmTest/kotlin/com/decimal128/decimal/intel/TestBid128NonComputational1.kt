@@ -1,9 +1,9 @@
 package com.decimal128.decimal.intel
 
-import com.decimal128.decimal.Decimal2
+import com.decimal128.decimal.Decimal
 import kotlin.test.Test
 
-class TestBid128NonComputational {
+class TestBid128NonComputational1 {
 
     val verbose = false
 
@@ -31,24 +31,24 @@ class TestBid128NonComputational {
      ****************************************************************************/
 
     @Test
-    fun testIsSigned() = IntelRunner.runUnaryBooleanOp(
+    fun testIsSigned() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isSigned",
-        Decimal2::isNegative,
+        Decimal::isNegative,
         verbose = verbose
     )
 
     @Test
-    fun testIsNormal() = IntelRunner.runUnaryBooleanOp(
+    fun testIsNormal() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isNormal",
-        Decimal2::isNormal,
+        Decimal::isNormal,
         verbose = verbose
     )
 
     @Test
-    fun testIsNormalCases() = IntelRunner.runUnaryBooleanOp(
-        Decimal2::isNormal,
+    fun testIsNormalCases() = IntelRunner1.runUnaryBooleanOp(
+        Decimal::isNormal,
         verbose = verbose,
         cases = arrayOf(
             "bid128_isNormal 0 [0001ed09bead87c0378d8e64ffffffff] 0 00",
@@ -57,32 +57,32 @@ class TestBid128NonComputational {
 
 
     @Test
-    fun testIsSubnormal() = IntelRunner.runUnaryBooleanOp(
+    fun testIsSubnormal() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isSubnormal",
-        Decimal2::isSubnormal,
+        Decimal::isSubnormal,
         verbose = verbose
     )
 
     @Test
-    fun testIsFinite() = IntelRunner.runUnaryBooleanOp(
+    fun testIsFinite() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isFinite",
-        Decimal2::isFinite,
+        Decimal::isFinite,
         verbose = verbose
     )
 
     @Test
-    fun testIsZero() = IntelRunner.runUnaryBooleanOp(
+    fun testIsZero() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isZero",
-        Decimal2::isCanonicalZero,
+        Decimal::isCanonicalZero,
         verbose = verbose
     )
 
     @Test
-    fun testIsZeroCases() = IntelRunner.runUnaryBooleanOp(
-        Decimal2::isCanonicalZero,
+    fun testIsZeroCases() = IntelRunner1.runUnaryBooleanOp(
+        Decimal::isCanonicalZero,
         verbose = verbose,
         cases = arrayOf(
             "bid128_isZero 0 [789b88be70d10384,ffffffffffffffff] 0 00"
@@ -90,34 +90,34 @@ class TestBid128NonComputational {
     )
 
     @Test
-    fun testIsInf() = IntelRunner.runUnaryBooleanOp(
+    fun testIsInf() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isInf",
-        Decimal2::isInfinite,
+        Decimal::isInfinite,
         verbose = verbose
     )
 
     @Test
-    fun testIsSignaling() = IntelRunner.runUnaryBooleanOp(
+    fun testIsSignaling() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isSignaling",
-        Decimal2::isSignaling,
+        Decimal::isSignaling,
         verbose = verbose
     )
 
     @Test
-    fun testIsCanonical() = IntelRunner.runUnaryBooleanOp(
+    fun testIsCanonical() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isCanonical",
-        Decimal2::isCanonical,
+        Decimal::isCanonical,
         verbose = verbose
     )
 
 
     @Test
-    fun testIsCanonicalCases() = IntelRunner.runUnaryBooleanOp(
-        Decimal2::isCanonical,
-        verbose = true,
+    fun testIsCanonicalCases() = IntelRunner1.runUnaryBooleanOp(
+        Decimal::isCanonical,
+        verbose = verbose,
         cases = arrayOf(
             "bid128_isCanonical 0 [fa79d291c68723e9,bf36ffd4dbefc63f] 0 00",
             "bid128_isCanonical 0 [f800000001000000,0000000000000000] 0 00",
@@ -127,18 +127,18 @@ class TestBid128NonComputational {
     )
 
     @Test
-    fun testIsNaN() = IntelRunner.runUnaryBooleanOp(
+    fun testIsNaN() = IntelRunner1.runUnaryBooleanOp(
         "/intel/readtest.in",
         "bid128_isNaN",
-        Decimal2::isNaN,
+        Decimal::isNaN,
         verbose = verbose
     )
 
     @Test
-    fun testAbs() = IntelRunner.runUnaryDecimalOp(
+    fun testAbs() = IntelRunner1.runUnaryDecimalOp(
         "/intel/readtest.in",
         "bid128_abs",
-        Decimal2::abs,
+        Decimal::abs,
         verbose = verbose
     )
 

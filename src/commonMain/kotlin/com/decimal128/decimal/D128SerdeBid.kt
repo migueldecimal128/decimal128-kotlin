@@ -368,7 +368,7 @@ object D128SerdeBid {
             (combination shr (w5 - 5)) == 0b11110 -> {
                 if (!allowNonCanonical)
                     return Decimal.infinity(sign)
-                val remaining58Hi = (bid128Hi shl 6) shr 6
+                val remaining58Hi = (bid128Hi shl 6) ushr 6
                 return Decimal.infinityNonCanonical(sign, remaining58Hi, bid128Lo)
             }
             // if the top 5 bits are 0x11111 then NaN

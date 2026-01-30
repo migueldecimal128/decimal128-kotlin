@@ -69,6 +69,8 @@ class Decimal private constructor(
                                      allowNonCanonical: Boolean = false): Decimal {
             val bitLen = calcBitLen128(dw1, dw0)
             val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+            if (digitLen > 38)
+                println("kilroy was here!")
             verify { digitLen <= 38 }
             verify { digitLen <= 34 || allowNonCanonical }
             return Decimal(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
