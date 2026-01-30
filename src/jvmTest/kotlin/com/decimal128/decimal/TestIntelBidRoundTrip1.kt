@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TestIntelBidRoundTrip {
+class TestIntelBidRoundTrip1 {
 
     val verbose = true
 
@@ -31,15 +31,15 @@ class TestIntelBidRoundTrip {
     fun test1(tc: String) {
         if (verbose)
             println("tc:$tc")
-        val (isValid, dw1, dw0) = DecSerdeBid128.parseIntelBidHex(tc)
+        val (isValid, dw1, dw0) = D128SerdeBid.parseIntelBidHex(tc)
         assertTrue(isValid)
-        val decimal = DecSerdeBid128.decodeBid128(dw1, dw0)
+        val decimal = D128SerdeBid.decodeBid128(dw1, dw0)
         val roundTrip = LongArray(2)
-        DecSerdeBid128.encodeBid128(decimal, roundTrip, isLittleEndian = false)
-        assertEquals(dw1, roundTrip[0].toULong())
-        assertEquals(dw0, roundTrip[1].toULong())
-        DecSerdeBid128.encodeBid128(decimal, roundTrip, isLittleEndian = true)
-        assertEquals(dw0, roundTrip[0].toULong())
-        assertEquals(dw1, roundTrip[1].toULong())
+        D128SerdeBid.encodeBid128(decimal, roundTrip, isLittleEndian = false)
+        assertEquals(dw1, roundTrip[0])
+        assertEquals(dw0, roundTrip[1])
+        D128SerdeBid.encodeBid128(decimal, roundTrip, isLittleEndian = true)
+        assertEquals(dw0, roundTrip[0])
+        assertEquals(dw1, roundTrip[1])
     }
 }

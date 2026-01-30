@@ -153,7 +153,32 @@ class Decimal private constructor(
             }
         }
 
-        fun from(str: String) = Decimal.from(DECIMAL128.decTemps.mutDecResult.set(str))
+        /**
+         * Parses a decimal128 value from its textual representation.
+         *
+         * This is a strict, context-free parser for the **decimal128** interchange
+         * format. It accepts only valid decimal128 encodings:
+         *
+         *  • up to 34 decimal digits in the coefficient
+         *  • exponent within the decimal128 range (−6143 to +6144)
+         *  • optional leading sign
+         *  • no rounding is performed; the input must fit exactly
+         *
+         * The parser produces a fully-formed `Decimal2` value using only the
+         * decimal128 rules. More flexible or environment-dependent parsing
+         * (including rounding, alternate syntaxes, or extended formats) should
+         * be performed via `DecEnv.parse()`.
+         *
+         * Any malformed input results in:
+         *  ```
+         *  IllegalArgumentException("invalid decimal format")
+         *  ```
+         *
+         * @param str a textual representation of a decimal128 value
+         * @return the parsed `Decimal2` value
+         * @throws IllegalArgumentException if the text does not encode a valid decimal128
+         */
+        fun from(str: String) = D128ParsePrint.parseDecimal(str)
 
         fun from(mutDec: MutDec): Decimal {
             require(mutDec.digitLen <= 34)
@@ -851,10 +876,19 @@ class Decimal private constructor(
         }
     }
 
-    override fun toString(): String {
-        val mutDec = MutDec()
-        mutDec.set(this)
-        return mutDec.toString()
-    }
+    /**
+     * Returns the canonical text form of this value.
+     *
+     * Formatting is compatible with Java’s `BigDecimal.toString()`,
+     * including the use of an uppercase **'E'** for scientific notation.
+     *
+     * The exact formatting rules (plain decimal vs scientific notation)
+     * follow the same general conventions as `BigDecimal`: values with
+     * very large or very small exponents may be rendered using an
+     * `E`-notation exponent; others appear as a decimal-point string.
+     *
+     * @return a canonical decimal128 textual representation of this value
+     */
+    override fun toString(): String = D128ParsePrint.toString(this)
 
 }

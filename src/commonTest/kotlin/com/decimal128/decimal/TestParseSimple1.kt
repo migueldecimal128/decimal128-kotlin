@@ -4,7 +4,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TestParseSimple {
+class TestParseSimple1 {
 
     val verbose = true
 
@@ -86,7 +86,7 @@ class TestParseSimple {
     fun test1(parse: String, expected: String = parse) {
         if (verbose)
             println("parse:$parse expected:$expected")
-        val d = Decimal2.from(parse)
+        val d = Decimal.from(parse)
         val render = d.toString()
         assertEquals(expected, render)
     }

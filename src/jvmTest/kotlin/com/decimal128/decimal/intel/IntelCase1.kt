@@ -2,12 +2,9 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.D128ParsePrint
 import com.decimal128.decimal.D128SerdeBid
-import com.decimal128.decimal.DecParsePrint
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.DecSerdeBid128
 import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.Decimal2
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
 // readtest.c - read tests from stdin

@@ -3,19 +3,21 @@ package com.decimal128.decimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.math.ceil
+import kotlin.math.floor
 
-class TestBExpMinMax {
+class TestBExpMinMax1 {
 
     private fun trueBExpMin(bitLen: Int, qExp: Int): Int {
         if (bitLen == 0) return 0
         val x = (bitLen - 1).toDouble() + qExp.toDouble() * LOG2_10_DOUBLE
-        return kotlin.math.floor(x).toInt()
+        return floor(x).toInt()
     }
 
     private fun trueBExpMax(bitLen: Int, qExp: Int): Int {
         if (bitLen == 0) return 0
         val x = bitLen.toDouble() + qExp.toDouble() * LOG2_10_DOUBLE
-        return kotlin.math.ceil(x).toInt() - 1
+        return ceil(x).toInt() - 1
     }
 
     private val LOG2_10_DOUBLE = 3.32192809488736234787
@@ -28,9 +30,9 @@ class TestBExpMinMax {
         var deltaOneCount = 0
         for (bitLen in 0..255) {
             for (qExp in -7000..7000) {
-                val min1 = Decimal2.calcBExpMin(bitLen, qExp)
+                val min1 = Decimal.calcBExpMin(bitLen, qExp)
                 val min2 = trueBExpMin(bitLen, qExp)
-                val max1 = Decimal2.calcBExpMax(bitLen, qExp)
+                val max1 = Decimal.calcBExpMax(bitLen, qExp)
                 val max2 = trueBExpMax(bitLen, qExp)
 
                 assertEquals(min2, min1, "bExpMin mismatch at bitLen=$bitLen qExp=$qExp")
