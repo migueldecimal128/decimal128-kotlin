@@ -27,7 +27,7 @@ object Dec1ParsePrint {
      * optional sign, digits with optional decimal point, optional `e`/`E`
      * exponent (with optional sign), and only ASCII/Basic-Latin characters.
      *
-     * If the input is valid, a `Decimal2` is returned. Otherwise an
+     * If the input is valid, a `Decimal` is returned. Otherwise an
      * `IllegalArgumentException` is thrown containing the diagnostic text
      * produced by `parseDecimalOrErrorString`.
      *
@@ -69,7 +69,7 @@ object Dec1ParsePrint {
     }
 
     /**
-     * Parses a textual infinity representation into a [`Decimal2`] value.
+     * Parses a textual infinity representation into a [`Decimal`] value.
      *
      * Accepted forms are case-insensitive:
      *
@@ -115,7 +115,7 @@ object Dec1ParsePrint {
     private const val NINES_14 = 99_999_999_999_999L
 
     /**
-     * Parses a textual NaN representation into a [`Decimal2`] value.
+     * Parses a textual NaN representation into a [`Decimal`] value.
      *
      * Accepted forms (case-insensitive):
      *
@@ -215,7 +215,7 @@ object Dec1ParsePrint {
     }
 
     /**
-     * Parses a finite decimal value into a [`Decimal2`] (decimal128) with **no rounding**.
+     * Parses a finite decimal value into a [`Decimal`] (decimal128) with **no rounding**.
      *
      * This is a simple numeric parser that accepts only standard finite forms:
      *
@@ -228,7 +228,7 @@ object Dec1ParsePrint {
      * If the input requires rounding, contains invalid syntax, or exceeds the
      * exact range of decimal128 finite values, this method returns `null`.
      *
-     * @return the parsed finite `Decimal2` value, or `null` if not a valid finite
+     * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
     fun parseFiniteValueText(str: String, allowOversizeCoefficient: Boolean = false): Any? {
@@ -362,7 +362,7 @@ object Dec1ParsePrint {
         return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
     }
 
-    fun toString(dec: Decimal2): String {
+    fun toString(dec: Decimal): String {
         return when {
             dec.qExp == 0 -> toIntegerString(dec)
             dec.qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString(dec)
@@ -371,12 +371,12 @@ object Dec1ParsePrint {
         }
     }
 
-    private fun toSpecialValueString(dec: Decimal2): String {
+    private fun toSpecialValueString(dec: Decimal): String {
         if (dec.qExp < NON_FINITE_QNAN)
             return SPECIAL_VALUE_STRINGS[dec.sign01]
         val nanIndex = (if (dec.qExp == NON_FINITE_QNAN) 2 else 4) + dec.sign01
         val nanStr = SPECIAL_VALUE_STRINGS[nanIndex]
-        if ((dec.dw1 or dec.dw0) == 0uL)
+        if ((dec.dw1 or dec.dw0) == 0L)
             return nanStr
         val utf8 = ByteArray(nanStr.length + dec.digitLen)
         for (i in nanStr.indices)
@@ -385,7 +385,7 @@ object Dec1ParsePrint {
         return String(utf8)
     }
 
-    private fun toIntegerString(dec: Decimal2): String {
+    private fun toIntegerString(dec: Decimal): String {
         if (dec.bitLen < 4) {
             val i = ((16 and dec.sign0Neg1) + dec.dw0.toInt()) and 0x1F // bounds-check-elimination
             return SMALL_INTEGER_STRINGS[i]
@@ -396,7 +396,7 @@ object Dec1ParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toDecimalPointString(dec: Decimal2): String {
+    private fun toDecimalPointString(dec: Decimal): String {
         val digitsRightOfDecimal = -dec.qExp
         val leadingZeroCount = max(1 + digitsRightOfDecimal - dec.digitLen, 0)
         val signLen = dec.sign01
@@ -413,7 +413,7 @@ object Dec1ParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toNormalizedScientificString(dec: Decimal2): String {
+    private fun toNormalizedScientificString(dec: Decimal): String {
         val eExp = dec.eExp
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
         val signLen = dec.sign01
