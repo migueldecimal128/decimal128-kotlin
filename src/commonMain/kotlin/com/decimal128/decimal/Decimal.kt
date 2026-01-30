@@ -45,8 +45,8 @@ class Decimal private constructor(
         get() = calcBExpMax(bitLen, qExp)
 
 
-    constructor(sign: Boolean, dw1: Long, dw0: Long, bitLen: Int, digitLen: Int, qExp: Int) :
-            this(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
+//    constructor(sign: Boolean, dw1: Long, dw0: Long, bitLen: Int, digitLen: Int, qExp: Int) :
+//            this(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
 
     constructor(sign: Boolean, dw1: Long, dw0: Long, qExp: Int) :
             this(dw1, dw0, calcPackedLengths(dw1, dw0), packSignExp(sign, qExp))
@@ -64,11 +64,19 @@ class Decimal private constructor(
             return Decimal(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
         }
 
+        internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     dw1: Long, dw0: Long,
+                                     allowNonCanonical: Boolean = false): Decimal {
+            val bitLen = calcBitLen128(dw1, dw0)
+            val digitLen = calcDigitLen128(bitLen, dw1, dw0)
+            verify { digitLen <= 38 }
+            verify { digitLen <= 34 || allowNonCanonical }
+            return Decimal(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
+        }
 
-
-        val POS_ZERO = Decimal(0L, 0L, 0, 0)
-        val NEG_ZERO = Decimal(0L, 0L, 0, Short.MIN_VALUE)
-        val ZERO = POS_ZERO
+        val POS_ZEROe0 = Decimal(0L, 0L, 0, 0)
+        val NEG_ZEROe0 = Decimal(0L, 0L, 0, Short.MIN_VALUE)
+        val ZERO = POS_ZEROe0
         val POS_ONE = Decimal(0L, 1L, 1, 0)
         val NEG_ONE = Decimal(0L, 1L, 1, 0x8000.toShort())
         val ONE = POS_ONE
@@ -111,7 +119,7 @@ class Decimal private constructor(
 
         fun newZero(sign: Boolean, qExp: Int, env: DecEnv): Decimal {
             if (qExp == 0)
-                return if (sign) NEG_ZERO else ZERO
+                return if (sign) NEG_ZEROe0 else ZERO
             val finalExp = max(min(qExp, env.qMax), env.qTiny)
             val signExp = packSignExp(sign, finalExp)
             val zero = Decimal(0L, 0L, 0, signExp)
@@ -120,8 +128,8 @@ class Decimal private constructor(
 
         fun newZero(signExp: Short, env: DecEnv): Decimal {
             return when {
-                signExp.toInt() == 0 -> POS_ZERO
-                signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZERO
+                signExp.toInt() == 0 -> POS_ZEROe0
+                signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZEROe0
                 else -> {
                     val finalExp = max(min(unpackExp(signExp), env.qMax), env.qTiny)
                     val finalSignExp =
@@ -148,7 +156,7 @@ class Decimal private constructor(
         fun from(mutDec: MutDec): Decimal {
             require(mutDec.digitLen <= 34)
             require(mutDec.qExp <= DecFormat.DECIMAL_128.qMax || mutDec.qExp >= MIN_SPECIAL_VALUE)
-            val dec = Decimal(mutDec.sign, mutDec.dw1, mutDec.dw0, mutDec.bitLen, mutDec.digitLen, mutDec.qExp)
+            val dec = Decimal(mutDec.sign, mutDec.dw1, mutDec.dw0, mutDec.qExp)
             return dec
         }
 
@@ -418,6 +426,21 @@ class Decimal private constructor(
 
 
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
+
+        fun infinityNonCanonical(sign: Boolean, dw1: Long, dw0: Long): Decimal =
+            if ((dw1 or dw0) == 0L)
+                infinity(sign)
+            else
+                Decimal(sign, NON_FINITE_INF, dw1, dw0, allowNonCanonical = true)
+
+        fun zero(sign: Boolean = false, qExp: Int): Decimal {
+            if (qExp == 0)
+                return if (sign) NEG_ZEROe0 else POS_ZEROe0
+            val clampedQExp =
+                max(min(qExp, DECIMAL128_QMAX_6111), DECIMAL128_QTINY_Neg6176)
+            val zero = Decimal(0L, 0L, 0, packSignExp(sign, clampedQExp))
+            return zero
+        }
 
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
             max(x.qExp, y.qExp) >= NON_FINITE_QNAN

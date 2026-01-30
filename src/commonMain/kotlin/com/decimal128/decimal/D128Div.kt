@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.DecException.INVALID_OPERATION
 import com.decimal128.decimal.DecExceptionReason.*
 import com.decimal128.decimal.Decimal.Companion.NEG_INFINITY
-import com.decimal128.decimal.Decimal.Companion.NEG_ZERO
+import com.decimal128.decimal.Decimal.Companion.NEG_ZEROe0
 import com.decimal128.decimal.Decimal.Companion.POS_INFINITY
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import kotlin.math.max
@@ -71,7 +71,7 @@ object D128Div {
             x.qExp == NON_FINITE_INF ->
                 if (quotSign) NEG_INFINITY else POS_INFINITY
             y.qExp == NON_FINITE_INF ->
-                if (quotSign) NEG_ZERO else ZERO
+                if (quotSign) NEG_ZEROe0 else ZERO
             else -> throw IllegalArgumentException()
         }
     }
