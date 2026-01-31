@@ -132,7 +132,7 @@ class TestFptestRead {
         "d128+ =0 xu +0e-4290 +6e-6176 -> +6e3040 u",
     )
 
-    fun isBadCase(fptest: Fptest, env: DecEnv): Boolean {
+    fun isBadCase(fptest: Fptest, env: DecContext): Boolean {
         if (badCases.contains(fptest.fptestStr))
             return true
         val result = fptest.result()
@@ -260,8 +260,8 @@ class TestFptestRead {
             if (result == "#")
                 return null
             val dec = MutDec()
-            //val ctx = DecimalContext()
-            val env = DecEnv()
+            //val ctx = DecContext()
+            val env = DecContext()
             when (result) {
                 "Q" -> dec.setNaN(env)
                 "S" -> dec.setSNaN(env)
@@ -272,8 +272,8 @@ class TestFptestRead {
 
         fun decOperands(): ArrayList<MutDec> {
             val ret = ArrayList<MutDec>(operands.size)
-            //val ctx = DecimalContext()
-            val env = DecEnv()
+            //val ctx = DecContext()
+            val env = DecContext()
             for (t in operands) {
                 val d = MutDec()
                 when (t) {
@@ -315,8 +315,8 @@ class TestFptestRead {
         val format = fptest.format
         val operands = fptest.decOperands()
         val env = when {
-            format == "d128" -> DecEnv(DecFormat.DECIMAL_128, fptest.roundingDirection())
-            format == "d64" -> DecEnv(DecFormat.DECIMAL_64, fptest.roundingDirection())
+            format == "d128" -> DecContext(DecFormat.DECIMAL_128, fptest.roundingDirection())
+            format == "d64" -> DecContext(DecFormat.DECIMAL_64, fptest.roundingDirection())
             else -> throw IllegalStateException()
         }
         val observed = MutDec()

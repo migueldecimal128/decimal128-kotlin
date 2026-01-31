@@ -51,24 +51,24 @@ fun Decimal.coeffToBigInteger(): BigInteger {
     return bi
 }
 
-fun newMutDec(bd: BigDecimal): MutDec = newMutDec(bd, DecEnv())
+fun newMutDec(bd: BigDecimal): MutDec = newMutDec(bd, DecContext())
 
-fun newMutDec(bd: BigDecimal, env: DecEnv): MutDec {
+fun newMutDec(bd: BigDecimal, env: DecContext): MutDec {
     val mutdec = MutDec()
     mutdec.set(bd, env)
     return mutdec
 }
 
-fun MutDec.set(bd: BigDecimal) = this.set(bd, DecEnv())
+fun MutDec.set(bd: BigDecimal) = this.set(bd, DecContext())
 
-fun MutDec.set(bd: BigDecimal, env: DecEnv) {
+fun MutDec.set(bd: BigDecimal, env: DecContext) {
     this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
     this.finalize(env)
 }
 
-fun MutDec.set(bi: BigInteger, env: DecEnv) {
+fun MutDec.set(bi: BigInteger, env: DecContext) {
     if (bi.bitLength() <= 256) {
         this.qExp = 0
         val sign = bi.signum() < 0
@@ -81,7 +81,7 @@ fun MutDec.set(bi: BigInteger, env: DecEnv) {
         c256Set256(d3, d2, d1, d0)
     }
     val bd = BigDecimal(bi, MathContext(70, RoundingMode.HALF_EVEN))
-    set(bd, DecEnv())
+    set(bd, DecContext())
 }
 
 fun newDoubleDoubleFromBigInteger(bi: BigInteger): DoubleDouble {

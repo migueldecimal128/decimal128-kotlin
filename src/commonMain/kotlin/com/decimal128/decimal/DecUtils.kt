@@ -36,7 +36,7 @@ internal inline fun capExponentRange(e: Int): Int {
     return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
 }
 
-internal fun roundAndFinalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, inboundResidue: Residue, decRounding: DecRounding, env: DecEnv): Decimal {
+internal fun roundAndFinalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, inboundResidue: Residue, decRounding: DecRounding, env: DecContext): Decimal {
     return when {
         qExp < MIN_SPECIAL_VALUE && (dw1 or dw0) != 0L ->
             roundAndFinalizeFnz(sign, dw1, dw0, qExp, inboundResidue, decRounding, env)
@@ -50,7 +50,7 @@ internal fun roundAndFinalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, in
 }
 
 private fun roundAndFinalizeZero(sign: Boolean, qExp: Int, residue: Residue,
-                                 decRounding: DecRounding, env: DecEnv): Decimal {
+                                 decRounding: DecRounding, env: DecContext): Decimal {
     // if the coefficient is zero, then it must be the case that
     // residue == EXACT
     require (residue == EXACT) { "cannot have zero coefficient with inEXACT residue" }
@@ -58,7 +58,7 @@ private fun roundAndFinalizeZero(sign: Boolean, qExp: Int, residue: Residue,
 }
 
 private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, inboundResidue: Residue,
-                                decRounding: DecRounding, env: DecEnv): Decimal {
+                                decRounding: DecRounding, env: DecContext): Decimal {
     val eMax = env.eMax
     val precision = env.precision
     val bitLen = calcBitLen128(dw1, dw0)
@@ -110,7 +110,7 @@ private fun roundAndFinalizeFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, 
 }
 
 private fun finalizeFnzClampHighExp(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
-                                    residue: Residue, env: DecEnv): Decimal {
+                                    residue: Residue, env: DecContext): Decimal {
     // clamp/fold-over
     val qExcess = qExp - env.qMax
     val (dw1Scaled, dw0Scaled) = C128ScalePow10.c128ScaleUpPow10(dw1, dw0, qExcess)
@@ -126,7 +126,7 @@ private fun finalizeFnzClampHighExp(sign: Boolean, dw1: Long, dw0: Long, qExp: I
 }
 
 private fun finalizeFnzInexactNoExcess(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
-                                       residue: Residue, decRounding: DecRounding, isTiny: Boolean, env: DecEnv): Decimal {
+                                       residue: Residue, decRounding: DecRounding, isTiny: Boolean, env: DecContext): Decimal {
     verify { residue != EXACT } // inexact
     verify { calcDigitLen128(dw1, dw0) <= env.precision } // no excess
 
@@ -156,7 +156,7 @@ private fun finalizeFnzInexactNoExcess(sign: Boolean, dw1: Long, dw0: Long, qExp
     return finalizeOverflow(sign, decRounding, env)
 }
 
-private fun finalizeOverflow(sign: Boolean, decRounding: DecRounding, env: DecEnv): Decimal {
+private fun finalizeOverflow(sign: Boolean, decRounding: DecRounding, env: DecContext): Decimal {
     val ret = if (decRounding.overflowsToInfinity(sign)) {
         Decimal.infinity(sign)
     } else {
@@ -171,7 +171,7 @@ private fun finalizeOverflow(sign: Boolean, decRounding: DecRounding, env: DecEn
     return env.signalInexactOverflow(ret)
 }
 
-private fun finalizeUnderflow(sign: Boolean, decRounding: DecRounding, env: DecEnv): Decimal {
+private fun finalizeUnderflow(sign: Boolean, decRounding: DecRounding, env: DecContext): Decimal {
     // underflow ... swamped non-zero value
     val ret = if (decRounding.underflowsToZero(sign)) {
         Decimal.newZero(sign, env.qTiny, env)
@@ -185,13 +185,13 @@ private fun finalizeUnderflow(sign: Boolean, decRounding: DecRounding, env: DecE
     return env.signalInexactUnderflow(ret)
 }
 
-private fun finalizeFnzWithExcess(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, inboundResidue: Residue, decRounding: DecRounding, tiny: Boolean, excess: Int, env: DecEnv): Decimal {
+private fun finalizeFnzWithExcess(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, inboundResidue: Residue, decRounding: DecRounding, tiny: Boolean, excess: Int, env: DecContext): Decimal {
     TODO()
 }
 
 private fun finalizeFnzSubnormalExcessTail(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
                                            inboundResidue: Residue, decRounding: DecRounding,
-                                           excessTail: Int, env: DecEnv): Decimal {
+                                           excessTail: Int, env: DecContext): Decimal {
     val (dw1Scaled, dw0Scaled, residueScaled) = C128ScalePow10.c128ScaleDownPow10(dw1, dw0, excessTail)
     verify { qExp + excessTail == env.qTiny }
     verify { calcDigitLen128(dw1, dw0) <= env.precision }
@@ -208,7 +208,7 @@ private fun finalizeFnzSubnormalExcessTail(sign: Boolean, dw1: Long, dw0: Long, 
 
 
 internal fun finalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
-                      decRounding: DecRounding, env: DecEnv): Decimal {
+                      decRounding: DecRounding, env: DecContext): Decimal {
     // decRounding is needed because we might overflow/underflow
     // to infinity or min/max value, depending upon decRounding
     return when {
@@ -224,7 +224,7 @@ internal fun finalize(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
 }
 
 private fun finalizeExactFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
-                             decRounding: DecRounding, env: DecEnv): Decimal {
+                             decRounding: DecRounding, env: DecContext): Decimal {
     val bitLen = calcBitLen128(dw1, dw0)
     val digitLen = calcDigitLen128(bitLen, dw1, dw0)
     val eExp = qExp + (digitLen - 1)
@@ -272,7 +272,7 @@ private fun finalizeExactFnz(sign: Boolean, dw1: Long, dw0: Long, qExp: Int,
     return finalizeUnderflow(sign, decRounding, env)
 }
 
-private fun finalizeExactFnzClampExp(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, env: DecEnv): Decimal {
+private fun finalizeExactFnzClampExp(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, env: DecContext): Decimal {
     // clamp/fold-over
     val qExcess = qExp - env.qMax
     val (dw1Scaled, dw0Scaled) = C128ScalePow10.c128ScaleUpPow10(dw1, dw0, qExcess)

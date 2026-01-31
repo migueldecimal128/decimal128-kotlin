@@ -39,7 +39,7 @@ class Binop128cmp : Binop() {
 
          */
 
-        fun cmpImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun cmpImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
             if (hasNaN(x, y))
                 return cmpNanFound(x, y, env)
             val binopSig = BinopSignature.of(x, y)
@@ -70,7 +70,7 @@ class Binop128cmp : Binop() {
             return mapToDecimal[t + 1]
         }
 
-        fun cmpMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        fun cmpMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
             val cmp =  if (bothFnz(x, y)) {
                 cmpMagnitudeFnzFnz(x, y)
             } else when (BinopSignature.of(x, y)) {
@@ -124,22 +124,22 @@ class Binop128cmp : Binop() {
             }
         }
 
-        private fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, env: DecContext): Decimal {
             TODO()
         }
 
-        private fun cmpNanFound(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+        private fun cmpNanFound(x: Decimal, y: Decimal, env: DecContext): Decimal {
             TODO()
         }
 
-        fun cmpTotalOrderImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
+        fun cmpTotalOrderImpl(x: Decimal, y: Decimal, env: DecContext): Int {
             if (x.sign != y.sign)
                 return if (x.sign) -1 else 1
             val negateMask = -x.sign01 // 0 or -1
             return (cmpTotalOrderMagnitudeImpl(x, y, env) xor negateMask) - negateMask
         }
 
-        private fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecEnv): Int {
+        private fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Int {
             return if (bothFnz(x, y)) {
                 cmpTotalOrderMagnitudeFnzFnz(x, y)
             } else when (BinopSignature.of(x, y)) {

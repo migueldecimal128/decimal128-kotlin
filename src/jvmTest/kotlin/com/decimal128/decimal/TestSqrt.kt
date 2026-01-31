@@ -243,7 +243,7 @@ class TestSqrt{
             }
         }
         sqrt.qExp = qZ
-        sqrt.roundAndFinalize(residue2, DecEnv())
+        sqrt.roundAndFinalize(residue2, DecContext())
 
         if (verbose)
             println(" --> sqrt:$sqrt")

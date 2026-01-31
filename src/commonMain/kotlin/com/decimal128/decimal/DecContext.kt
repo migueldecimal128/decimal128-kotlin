@@ -7,7 +7,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import kotlin.math.max
 import kotlin.math.min
 
-data class DecEnv(
+data class DecContext(
     val decFormat: DecFormat = DecFormat.DECIMAL_128,
     val decRounding: DecRounding = DecRounding.ROUND_TIES_TO_EVEN,
     val decPrefs: DecPrefs = DecPrefs.DEFAULT,
@@ -31,9 +31,9 @@ data class DecEnv(
         get() = decFlags.isSet(OVERFLOW)
 
     companion object {
-        val DECIMAL64 = DecEnv(DecFormat.DECIMAL_64)
-        val DECIMAL128 = DecEnv(DecFormat.DECIMAL_128)
-        val DECIMAL128_EXTENDED = DecEnv(DecFormat.DECIMAL_128_EXTENDED)
+        val DECIMAL64 = DecContext(DecFormat.DECIMAL_64)
+        val DECIMAL128 = DecContext(DecFormat.DECIMAL_128)
+        val DECIMAL128_EXTENDED = DecContext(DecFormat.DECIMAL_128_EXTENDED)
 
         val DECIMAL128_ZERO_NAN_PAYLOAD = DECIMAL128.with(DECIMAL128.decPrefs.copy(parseDiscardNanPayload = true))
 
@@ -41,20 +41,20 @@ data class DecEnv(
     }
 
     fun with(newDecFormat: DecFormat) =
-        DecEnv(newDecFormat, decRounding, decPrefs, decTraps, decFlags, decTemps)
+        DecContext(newDecFormat, decRounding, decPrefs, decTraps, decFlags, decTemps)
 
     fun with(newDecRounding: DecRounding) =
-        DecEnv(decFormat, newDecRounding, decPrefs, decTraps, decFlags, decTemps)
+        DecContext(decFormat, newDecRounding, decPrefs, decTraps, decFlags, decTemps)
 
     fun with(newDecPrefs: DecPrefs) =
-        DecEnv(decFormat, decRounding, newDecPrefs, decTraps, decFlags, decTemps)
+        DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags, decTemps)
 
-    fun deepCopy() = DecEnv(decFormat, decRounding, decPrefs, decTraps)
+    fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTraps)
 
     inline fun <T> compute(block: () -> T ): T = block()
 
     inline fun <T> computeDelayedTrap(block: () -> T): T {
-        val blockEnv = DecEnv(decFormat, decRounding, decPrefs, null, DecFlags(), decTemps)
+        val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags(), decTemps)
         val blockVal = blockEnv.compute(block)
         decTraps?.delayedTrap(blockEnv)
         return blockVal
@@ -198,15 +198,10 @@ data class DecEnv(
 
     fun getFptestExceptionsString() = decFlags.getFptestExceptionsString()
 
-    fun <T> context(block: DecEnv.() -> T): T {
+    fun <T> context(block: DecContext.() -> T): T {
         val result = this.block()
         return result
     }
-
-    // Member-extension operator overloads:
-    operator fun Decimal.plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other, this@DecEnv)
-    operator fun Decimal.minus(other: Decimal): Decimal = BinopAddSub.subImpl(this, other, this@DecEnv)
-    operator fun Decimal.times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, this@DecEnv)
 
     fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 

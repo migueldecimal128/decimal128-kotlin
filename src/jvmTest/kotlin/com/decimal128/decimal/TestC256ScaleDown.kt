@@ -203,7 +203,7 @@ class TestC256ScaleDown {
         val coeffA = newCoeff(case.biA)
         val coeffObserved = C256()
         val pow10 = case.pow10
-        val env = DecEnv().with(case.decRounding)
+        val env = DecContext().with(case.decRounding)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.decRounding} expected:$expected")
         coeffObserved.c256SetScaleDownPow10(coeffA, pow10)

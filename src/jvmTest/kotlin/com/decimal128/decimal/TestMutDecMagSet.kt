@@ -12,10 +12,10 @@ class TestMutDecMagSet {
 
     val verbose = false
 
-    class TC(val bdA: BigDecimal, val env: DecEnv) {
-        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), DecEnv().with(rd))
-        constructor(str: String) : this(BigDecimal(str), DecEnv())
-        constructor(bdA: BigDecimal) : this(bdA, DecEnv())
+    class TC(val bdA: BigDecimal, val env: DecContext) {
+        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), DecContext().with(rd))
+        constructor(str: String) : this(BigDecimal(str), DecContext())
+        constructor(bdA: BigDecimal) : this(bdA, DecContext())
         val biA = bdA.unscaledValue()
         val expA = -bdA.scale()
         val bdRounded = bdToIeeeDecimal128(bdA, env.decRounding.mapToRoundingMode())
@@ -113,9 +113,9 @@ class TestMutDecMagSet {
         return bd
     }
 
-    fun randDecimal128Context(): DecEnv {
+    fun randDecimal128Context(): DecContext {
         val i = random.nextInt(4)
-        val env = DecEnv().with(DecRounding.fromValue(i))
+        val env = DecContext().with(DecRounding.fromValue(i))
         return env
     }
 

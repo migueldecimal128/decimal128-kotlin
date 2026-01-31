@@ -57,7 +57,7 @@ private const val BYTE_MINUS = '-'.code.toByte()
 
 object DecimalParsePrint {
 
-    fun decToString(x: MutDec, env: DecEnv? = null) : String {
+    fun decToString(x: MutDec, env: DecContext? = null) : String {
         val prefs = env?.decPrefs ?: DecPrefs.DEFAULT
         val printLen = calcPrintLen(x, prefs)
         val bytes = env?.decTemps?.bytesPrint ?: ByteArray(MAX_DEC38_CHAR_LEN)
@@ -332,10 +332,10 @@ object DecimalParsePrint {
         return ib - off
     }
 
-    fun decFromString(x: MutDec, str: String, env: DecEnv) =
+    fun decFromString(x: MutDec, str: String, env: DecContext) =
         decFromText(x, StringLatin1Iterator(str), env)
 
-    private fun decFromText(x: MutDec, src: Latin1Iterator, env: DecEnv) {
+    private fun decFromText(x: MutDec, src: Latin1Iterator, env: DecContext) {
         val maxPayloadDigitLen = env.precision - 1
         when {
             isFiniteValueText(x, src, env) -> return
@@ -347,7 +347,7 @@ object DecimalParsePrint {
         }
     }
 
-    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: DecEnv): Boolean {
+    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: DecContext): Boolean {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var leadingFractionalZeroCount = 0  // NEW: track leading zeros after decimal

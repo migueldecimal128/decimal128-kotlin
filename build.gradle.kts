@@ -74,6 +74,9 @@ kotlin {
     }
 
     sourceSets {
+        all {
+            languageSettings.enableLanguageFeature("ContextParameters")
+        }
 	    val commonMain by getting
 	    val commonTest by getting
 		val jvmMain   by getting

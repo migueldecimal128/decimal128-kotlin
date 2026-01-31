@@ -750,7 +750,7 @@ class TestDectest {
         return hex.toULong(16).toLong()
     }
 
-    fun parseOperand(str: String, env: DecEnv): MutDec {
+    fun parseOperand(str: String, env: DecContext): MutDec {
         if (str.length == 0)
             return MY_NAN
         var t = str
@@ -771,14 +771,14 @@ class TestDectest {
         return d
     }
 
-    fun buildenv(): DecEnv? {
+    fun buildenv(): DecContext? {
         // relax this requirement
         // require (minExponent == -(maxExponent - 1))
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
         val fmt = DecFormat(precision, maxExponent)
-        val env = DecEnv().with(fmt).with(decRoundings[roundingIndex])
+        val env = DecContext().with(fmt).with(decRoundings[roundingIndex])
         return env
     }
 

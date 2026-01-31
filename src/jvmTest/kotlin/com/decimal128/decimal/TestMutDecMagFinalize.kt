@@ -9,10 +9,10 @@ class TestMutDecMagFinalize {
 
     val verbose = false
 
-    class TC(val bdA: BigDecimal, val env: DecEnv) {
-        constructor(str: String, env: DecEnv) : this(BigDecimal(str), env)
-        constructor(str: String) : this(str, DecEnv())
-        constructor(bdA: BigDecimal) : this(bdA, DecEnv())
+    class TC(val bdA: BigDecimal, val env: DecContext) {
+        constructor(str: String, env: DecContext) : this(BigDecimal(str), env)
+        constructor(str: String) : this(str, DecContext())
+        constructor(bdA: BigDecimal) : this(bdA, DecContext())
     }
 
     val cases = arrayOf(

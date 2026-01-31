@@ -7,9 +7,9 @@ class TestMutDecQuantize {
 
     val verbose = false
 
-    class TC(val bdX: BigDecimal, val bdY: BigDecimal, val env: DecEnv) {
+    class TC(val bdX: BigDecimal, val bdY: BigDecimal, val env: DecContext) {
         constructor(strX: String, strY: String) :
-                this(BigDecimal(strX), BigDecimal(strY), DecEnv())
+                this(BigDecimal(strX), BigDecimal(strY), DecContext())
         val targetScale = bdY.scale()
         val targetQ = -targetScale
         val expected =

@@ -11,7 +11,7 @@ import kotlin.math.min
 
 object D128Div {
 
-    fun divImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    fun divImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         val qMax = max(x.qExp, y.qExp)
         return when {
             qMax < MIN_SPECIAL_VALUE ->
@@ -31,7 +31,7 @@ object D128Div {
 
     }
 
-    private fun finiteDivImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun finiteDivImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         verify { x.isFinite() && y.isFinite() }
         return when {
             y.packedLengths > 0 -> {
@@ -55,14 +55,14 @@ object D128Div {
         }
     }
 
-    private fun finiteDivNonZero(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun finiteDivNonZero(x: Decimal, y: Decimal, env: DecContext): Decimal {
         val dividend = env.decTemps.mdecArg1.set(x)
         val divisor = env.decTemps.mdecArg2.set(y)
         val quotient = env.decTemps.mutDecResult.setDiv(dividend, divisor, env)
         return Decimal.from(quotient)
     }
 
-    private fun infiniteDivImpl(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun infiniteDivImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         val minExp = min(x.qExp, y.qExp)
         val quotSign = x.sign xor y.sign
         return when {

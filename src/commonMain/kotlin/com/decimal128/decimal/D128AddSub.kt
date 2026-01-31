@@ -8,7 +8,7 @@ import kotlin.math.min
 
 object D128AddSub {
 
-    fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    fun addImpl(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         val qMax = max(x.qExp, y.qExp)
         return when {
             (qMax < MIN_SPECIAL_VALUE) and (x.qExp == y.qExp) ->
@@ -39,7 +39,7 @@ object D128AddSub {
     // However, under all rounding-direction attributes,
     // when x is zero, x + x and x − (−x) have the sign of x.
 
-    private fun unscaledFiniteAddImpl(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    private fun unscaledFiniteAddImpl(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         val xIsZero = x.isZero()
         val yIsZero = y.isZero()
 
@@ -57,7 +57,7 @@ object D128AddSub {
         }
     }
 
-    private fun unscaledFiniteAddZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    private fun unscaledFiniteAddZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         verify { x.isZero() || y.isZero() }
         return when {
             // Case 1: Only one operand is zero.
@@ -74,7 +74,7 @@ object D128AddSub {
         }
     }
 
-    private fun scaledFiniteAddZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    private fun scaledFiniteAddZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         verify { x.isZero() || y.isZero() }
         val minExp = min(x.qExp, y.qExp)
         return when {
@@ -98,7 +98,7 @@ object D128AddSub {
         return D128Pow10.scaleCoeffUpPow10(x, shiftLeft)
     }
 
-    private fun unscaledFiniteAddMagnitudes(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun unscaledFiniteAddMagnitudes(x: Decimal, y: Decimal, env: DecContext): Decimal {
         val sumBitLen = x.bitLen + y.bitLen + 1
         val sum = if (sumBitLen < env.decFormat.maxBitLen) {
             val x0 = x.dw0
@@ -119,7 +119,7 @@ object D128AddSub {
     }
 
 
-    private fun scaledFiniteAdd(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    private fun scaledFiniteAdd(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         verify { max(x.qExp, y.qExp) < MIN_SPECIAL_VALUE }
         when {
             x.isZero() or y.isZero() ->
@@ -136,7 +136,7 @@ object D128AddSub {
         }
     }
 
-    private fun scaledFiniteSubMagnitudes(resultSign: Boolean, m: Decimal, n: Decimal, env: DecEnv): Decimal {
+    private fun scaledFiniteSubMagnitudes(resultSign: Boolean, m: Decimal, n: Decimal, env: DecContext): Decimal {
         // non-zero with different signs ... subtract magnitudes
         verify { m.magnitudeCompareTo(n) > 0 }
         verify { n.isNotZero() }
@@ -171,7 +171,7 @@ object D128AddSub {
         return fullWidthAdd(resultSign, m, !resultSign, n, env)
     }
 
-    private fun scaledFiniteAddMagnitudes(x: Decimal, y: Decimal, env: DecEnv): Decimal {
+    private fun scaledFiniteAddMagnitudes(x: Decimal, y: Decimal, env: DecContext): Decimal {
         val flip = x.qExp > y.qExp
         val m = if (flip) x else y
         val n = if (flip) y else x
@@ -187,7 +187,7 @@ object D128AddSub {
         }
     }
 
-    private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         val arg1 = env.decTemps.mdecArg1.set(x)
         arg1.sign = xSign
         val arg2 = env.decTemps.mdecArg2.set(y)
@@ -197,7 +197,7 @@ object D128AddSub {
         return sum
     }
 
-    private fun infiniteAddImpl(x: Decimal, ySign: Boolean, y: Decimal, env: DecEnv): Decimal {
+    private fun infiniteAddImpl(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
         val qX = x.qExp
         val qY = y.qExp
         verify { qX == NON_FINITE_INF || qY == NON_FINITE_INF }

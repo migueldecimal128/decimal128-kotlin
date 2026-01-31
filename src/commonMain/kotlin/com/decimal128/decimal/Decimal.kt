@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecEnv.Companion.DECIMAL128
+import com.decimal128.decimal.DecContext.Companion.DECIMAL128
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
 import com.decimal128.decimal.Ieee754Class.negativeNormal
 import com.decimal128.decimal.Ieee754Class.negativeSubnormal
@@ -119,7 +119,7 @@ class Decimal private constructor(
 
 
 
-        fun newZero(sign: Boolean, qExp: Int, env: DecEnv): Decimal {
+        fun newZero(sign: Boolean, qExp: Int, env: DecContext): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else ZERO
             val finalExp = max(min(qExp, env.qMax), env.qTiny)
@@ -128,7 +128,7 @@ class Decimal private constructor(
             return zero
         }
 
-        fun newZero(signExp: Short, env: DecEnv): Decimal {
+        fun newZero(signExp: Short, env: DecContext): Decimal {
             return when {
                 signExp.toInt() == 0 -> POS_ZEROe0
                 signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZEROe0
@@ -167,7 +167,7 @@ class Decimal private constructor(
          * The parser produces a fully-formed `Decimal2` value using only the
          * decimal128 rules. More flexible or environment-dependent parsing
          * (including rounding, alternate syntaxes, or extended formats) should
-         * be performed via `DecEnv.parse()`.
+         * be performed via `DecContext.parse()`.
          *
          * Any malformed input results in:
          *  ```
@@ -782,7 +782,7 @@ class Decimal private constructor(
      * comparison operations.
      *
      * For IEEE-754–compliant comparisons (quiet/signaling, ordered/unordered,
-     * totalOrder, etc.), use the operations provided by `DecEnv`.
+     * totalOrder, etc.), use the operations provided by `DecContext`.
      *
      * @return −1, 0, or +1 according to Java-style numeric ordering.
      */
@@ -890,5 +890,14 @@ class Decimal private constructor(
      * @return a canonical decimal128 textual representation of this value
      */
     override fun toString(): String = D128ParsePrint.toString(this)
+
+
+    context(decContext: DecContext)
+    operator fun plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other, decContext)
+    context(decContext: DecContext)
+    operator fun minus(other: Decimal): Decimal = BinopAddSub.subImpl(this, other, decContext)
+    context(decContext: DecContext)
+    operator fun times(other: Decimal): Decimal = D128Mul.mulImpl(this, other, decContext)
+
 
 }
