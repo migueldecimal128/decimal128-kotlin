@@ -8,6 +8,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
+import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.mulImpl
 import com.decimal128.decimal.subImpl
 
@@ -71,6 +72,27 @@ class TestDectestBasicArithmetic {
             "dqmul008 multiply -1.20  0 -> -0.00",
         )
     )
+
+    @Test
+    fun testDivide() = runBinaryDecimalCtxOp(
+        "dqDivide.dectest",
+        "divide",
+        ::divImpl,
+        verbose = verbose
+    )
+
+    @Test
+    fun testDivideCases() = runBinaryDecimalCtxOp(
+        ::divImpl,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqdiv791 divide -0     Inf   -> -0E-6176 Clamped",
+            "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
+            "dqdiv783 divide  Inf  -0     -> -Infinity",
+            "dqdiv781 divide  Inf  -1000  -> -Infinity",
+        )
+    )
+
 
 }
 

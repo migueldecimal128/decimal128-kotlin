@@ -13,14 +13,14 @@ internal fun divImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> divZeroZero(x, y, env)
         ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp, env)
-        ZER_INF -> newZero(x.sign xor y.sign, env.eMin, env)
+        ZER_INF -> newZero(x.sign xor y.sign, env.qTiny, env)
 
         FNZ_ZER -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
         FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> newZero(x.sign xor y.sign, env.eMin, env)
+        FNZ_INF -> newZero(x.sign xor y.sign, env.qTiny, env)
 
-        INF_ZER -> newZero(x.sign xor y.sign, env.eMax, env)
-        INF_FNZ -> newZero(x.sign xor y.sign, env.eMax, env)
+        INF_ZER -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
+        INF_FNZ -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
         INF_INF -> divInfInf(x, y, env)
 
         NAN_FOUND -> nanOperandFound(x, y, env)
