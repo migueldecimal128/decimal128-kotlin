@@ -4,10 +4,10 @@ import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.bothFnz
 import kotlin.math.min
 
-fun mulImpl(x: Decimal, y: Decimal): Decimal =
+internal fun mulImpl(x: Decimal, y: Decimal): Decimal =
     mulImpl(x, y, DecContext.current())
 
-fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         mulFnzFnz(x, y, env)
     } else when (BinopSignature.of(x, y)) {

@@ -829,9 +829,6 @@ class Decimal private constructor(
                 this.signExp == other.signExp &&
                 this.dw1 == other.dw1 && this.dw0 == other.dw0
 
-    fun add(other: Decimal): Decimal = D128AddSub.addImpl(this, other.sign, other, DECIMAL128)
-    fun mul(other: Decimal): Decimal = D128Mul.mulImpl(this, other, DECIMAL128)
-    fun div(other: Decimal): Decimal = D128Div.divImpl(this, other, DECIMAL128)
 
     fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
 
@@ -894,6 +891,7 @@ class Decimal private constructor(
     operator fun plus(other: Decimal): Decimal = addImpl(this, other)
     operator fun minus(other: Decimal): Decimal = subImpl(this, other)
     operator fun times(other: Decimal): Decimal = mulImpl(this, other)
+    operator fun div(other: Decimal): Decimal = divImpl(this, other)
 
     context(decContext: DecContext)
     operator fun plus(other: Decimal): Decimal = addImpl(this, other, decContext)
@@ -901,6 +899,9 @@ class Decimal private constructor(
     operator fun minus(other: Decimal): Decimal = subImpl(this, other, decContext)
     context(decContext: DecContext)
     operator fun times(other: Decimal): Decimal = mulImpl(this, other, decContext)
+    context(decContext: DecContext)
+    operator fun div(other: Decimal): Decimal = divImpl(this, other, decContext)
+
 
 
 }

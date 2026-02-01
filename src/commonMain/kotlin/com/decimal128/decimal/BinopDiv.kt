@@ -4,7 +4,10 @@ import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.bothFnz
 import com.decimal128.decimal.Decimal.Companion.newZero
 
-fun divImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun divImpl(x: Decimal, y: Decimal): Decimal =
+    divImpl(x, y, DecContext.current())
+
+internal fun divImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         divFnzFnz(x, y, env)
     } else when (BinopSignature.of(x, y)) {

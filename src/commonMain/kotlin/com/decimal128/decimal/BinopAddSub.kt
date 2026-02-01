@@ -5,10 +5,10 @@ import com.decimal128.decimal.C128Compare.c128UnscaledCompare
 import com.decimal128.decimal.Decimal.Companion.bothFnz
 import kotlin.math.min
 
-fun addImpl(x: Decimal, y: Decimal): Decimal =
+internal fun addImpl(x: Decimal, y: Decimal): Decimal =
     addImpl(x, y, DecContext.current())
 
-fun addImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun addImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         addFnzFnz(x, y.sign, y, env)
     } else when (BinopSignature.of(x, y)) {
@@ -28,10 +28,10 @@ fun addImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     }
 }
 
-fun subImpl(x: Decimal, y: Decimal): Decimal =
+internal fun subImpl(x: Decimal, y: Decimal): Decimal =
     subImpl(x, y, DecContext.current())
 
-fun subImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun subImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         addFnzFnz(x, !y.sign, y, env)
     } else when (BinopSignature.of(x, y)) {
