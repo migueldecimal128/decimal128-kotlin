@@ -8,6 +8,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
+import com.decimal128.decimal.mulImpl
 import com.decimal128.decimal.subImpl
 
 class TestDectestBasicArithmetic {
@@ -49,6 +50,25 @@ class TestDectestBasicArithmetic {
             "dqsub463 subtract '1.111'  '-1E+12'  -> '1000000000001.111'",
             "dqsub372 subtract 1  .0 -> 1.0",
             "dqsub040 subtract '5.75' '3.3'  -> '2.45'",
+        )
+    )
+
+    @Test
+    fun testMultiply() = runBinaryDecimalCtxOp(
+        "dqMultiply.dectest",
+        "multiply",
+        ::mulImpl,
+        verbose = verbose
+    )
+
+    @Test
+    fun testMultiplyCases() = runBinaryDecimalCtxOp(
+        ::mulImpl,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqmul580 multiply  Inf  -Inf   -> -Infinity",
+            "dqmul025 multiply -0.0   -0.0   ->  0.00",
+            "dqmul008 multiply -1.20  0 -> -0.00",
         )
     )
 

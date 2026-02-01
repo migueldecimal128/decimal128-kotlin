@@ -28,13 +28,13 @@ internal fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
 }
 
 private fun mulZero(x: Decimal, y: Decimal, env: DecContext): Decimal =
-    Decimal.newZero(false, min(x.qExp, y.qExp), env)
+    Decimal.newZero(x.sign xor y.sign, x.qExp + y.qExp, env)
 
 private fun mulInfZero(x: Decimal, y: Decimal, env: DecContext): Decimal =
     env.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
 
 private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecContext): Decimal =
-    if (x.sign xor y.sign) Decimal.POS_INFINITY else Decimal.NEG_INFINITY
+    if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
 
 // fast-path iff ...
 //  product bitLen strictly less than decFormat.maxBitLen
