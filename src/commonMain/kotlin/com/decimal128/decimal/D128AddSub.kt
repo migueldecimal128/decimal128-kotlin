@@ -112,7 +112,7 @@ object D128AddSub {
         } else {
             val arg1 = env.decTemps.mdecArg1.set(x)
             val arg2 = env.decTemps.mdecArg2.set(y)
-            val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
+            val mdecSum = env.decTemps.mdecResult.setAdd(arg1, arg2, env)
             Decimal.from(mdecSum)
         }
         return sum
@@ -192,7 +192,7 @@ object D128AddSub {
         arg1.sign = xSign
         val arg2 = env.decTemps.mdecArg2.set(y)
         arg2.sign = ySign
-        val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
+        val mdecSum = env.decTemps.mdecResult.setAdd(arg1, arg2, env)
         val sum = Decimal.from(mdecSum)
         return sum
     }

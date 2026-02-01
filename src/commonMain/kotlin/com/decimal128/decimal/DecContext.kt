@@ -37,6 +37,10 @@ data class DecContext(
 
         val DECIMAL128_ZERO_NAN_PAYLOAD = DECIMAL128.with(DECIMAL128.decPrefs.copy(parseDiscardNanPayload = true))
 
+        val threadLocal = ThreadLocal.withInitial { DecContext(DecFormat.DECIMAL_128) }
+        fun current(): DecContext = threadLocal.get()
+
+
         internal val TMP_ENV_ROUND_TOWARD_ZERO = DECIMAL128.with(DecRounding.ROUND_TOWARD_ZERO)
     }
 

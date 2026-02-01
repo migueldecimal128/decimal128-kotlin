@@ -891,6 +891,9 @@ class Decimal private constructor(
      */
     override fun toString(): String = D128ParsePrint.toString(this)
 
+    operator fun plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other)
+    operator fun minus(other: Decimal): Decimal = BinopAddSub.subImpl(this, other)
+    operator fun times(other: Decimal): Decimal = BinopMul.mulImpl(this, other)
 
     context(decContext: DecContext)
     operator fun plus(other: Decimal): Decimal = BinopAddSub.addImpl(this, other, decContext)

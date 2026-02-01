@@ -36,7 +36,7 @@ class BinopDiv : Binop() {
         private fun divFnzFnz(x: Decimal, y: Decimal, env: DecContext): Decimal {
             val dividend = env.decTemps.mdecArg1.set(x)
             val divisor = env.decTemps.mdecArg2.set(y)
-            val quotient = env.decTemps.mutDecResult.setDiv(dividend, divisor, env)
+            val quotient = env.decTemps.mdecResult.setDiv(dividend, divisor, env)
             return Decimal.from(quotient)
         }
     }

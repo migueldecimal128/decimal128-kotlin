@@ -7,6 +7,9 @@ import kotlin.math.min
 class BinopMul : Binop() {
     companion object {
 
+        fun mulImpl(x: Decimal, y: Decimal): Decimal =
+            mulImpl(x, y, DecContext.current())
+
         fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
             return if (bothFnz(x, y)) {
                 mulFnzFnz(x, y, env)
@@ -58,9 +61,9 @@ class BinopMul : Binop() {
         }
 
         private fun mulFnzFnz256(x: Decimal, y: Decimal, env: DecContext): Decimal {
-            val p = env.decTemps.mdecArg1.set(x)
+            val m = env.decTemps.mdecArg1.set(x)
             val n = env.decTemps.mdecArg2.set(y)
-            p.setMul(p, n, env)
+            val p = env.decTemps.mdecResult.setMul(m, n, env)
             val d = Decimal.from(p)
             return d
         }

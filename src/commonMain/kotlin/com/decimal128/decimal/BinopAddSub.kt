@@ -8,6 +8,9 @@ import kotlin.math.min
 class BinopAddSub : Binop() {
     companion object {
 
+        fun addImpl(x: Decimal, y: Decimal): Decimal =
+            addImpl(x, y, DecContext.current())
+
         fun addImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
             return if (bothFnz(x, y)) {
                 addFnzFnz(x, y.sign, y, env)
@@ -27,6 +30,9 @@ class BinopAddSub : Binop() {
                 NAN_FOUND -> nanFound(x, y, env)
             }
         }
+
+        fun subImpl(x: Decimal, y: Decimal): Decimal =
+            subImpl(x, y, DecContext.current())
 
         fun subImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
             return if (bothFnz(x, y)) {
@@ -104,9 +110,9 @@ class BinopAddSub : Binop() {
                 val s1 = x1 + y1 + carry0
                 Decimal.from(s1, s0, x.signExp)
             } else {
-                val arg1 = env.decTemps.mdecArg1.set(x)
-                val arg2 = env.decTemps.mdecArg2.set(y)
-                val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
+                val m = env.decTemps.mdecArg1.set(x)
+                val n = env.decTemps.mdecArg2.set(y)
+                val mdecSum = env.decTemps.mdecResult.setAdd(m, n, env)
                 Decimal.from(mdecSum)
             }
             return sum
@@ -145,7 +151,7 @@ class BinopAddSub : Binop() {
             arg1.sign = xSign
             val arg2 = env.decTemps.mdecArg2.set(y)
             arg2.sign = ySign
-            val mdecSum = env.decTemps.mutDecResult.setAdd(arg1, arg2, env)
+            val mdecSum = env.decTemps.mdecResult.setAdd(arg1, arg2, env)
             val sum = Decimal.from(mdecSum)
             return sum
         }

@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 class DecTemps {
-    val mutDecResult = MutDec()
+    val mdecResult = MutDec()
     val mdecArg1 = MutDec()
     val mdecArg2 = MutDec()
     val c256Print = C256()
