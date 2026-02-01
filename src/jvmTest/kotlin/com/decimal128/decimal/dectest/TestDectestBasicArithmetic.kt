@@ -8,6 +8,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
+import com.decimal128.decimal.subImpl
 
 class TestDectestBasicArithmetic {
 
@@ -28,6 +29,26 @@ class TestDectestBasicArithmetic {
         cases = arrayOf(
             "rounding: half_up",
             "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded"
+        )
+    )
+
+    @Test
+    fun testSubtract() = runBinaryDecimalCtxOp(
+        "dqSubtract.dectest",
+        "subtract",
+        ::subImpl,
+        verbose = verbose
+    )
+
+    @Test
+    fun testSubtractCases() = runBinaryDecimalCtxOp(
+        ::subImpl,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqsub470 subtract '0.4444444444444444444444444444444444'  '-0.5555555555555555555555555555555563' -> '1.000000000000000000000000000000001' Inexact Rounded",
+            "dqsub463 subtract '1.111'  '-1E+12'  -> '1000000000001.111'",
+            "dqsub372 subtract 1  .0 -> 1.0",
+            "dqsub040 subtract '5.75' '3.3'  -> '2.45'",
         )
     )
 

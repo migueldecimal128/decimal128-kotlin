@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 object D128Pow10 {
 
-    fun scaleCoeffUpPow10(x: Decimal, pow10: Int): Decimal {
+    fun scaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negate: Boolean = false): Decimal {
         verify { pow10 > 0 }
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -10,10 +10,10 @@ object D128Pow10 {
         val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p0 = x.dw0 * dw0Pow10
         val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
-        return Decimal(x.sign, p1, p0, x.qExp - pow10)
+        return Decimal(xSign, p1, p0, x.qExp - pow10)
     }
 
-    fun fmaCoeffPow10(x: Decimal, pow10: Int, y: Decimal): Decimal {
+    fun fmaCoeffPow10(xSign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
         verify { pow10 > 0 }
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10)
@@ -25,7 +25,7 @@ object D128Pow10 {
         val s0 = p0 + y.dw0
         val carry0 = if (unsignedLT(s0, p0)) 1L else 0L
         val s1 = p1 + y.dw1 + carry0
-        return Decimal(x.sign, s1, s0, y.qExp)
+        return Decimal(xSign, s1, s0, y.qExp)
     }
 
     /**

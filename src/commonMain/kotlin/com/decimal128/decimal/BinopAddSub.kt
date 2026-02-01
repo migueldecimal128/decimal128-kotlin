@@ -3,6 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.C128Compare.c128UnscaledCompare
 import com.decimal128.decimal.Decimal.Companion.bothFnz
+import kotlin.math.max
 import kotlin.math.min
 
 internal fun addImpl(x: Decimal, y: Decimal): Decimal =
@@ -13,10 +14,10 @@ internal fun addImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         addFnzFnz(x, y.sign, y, env)
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> addZeroZero(x, y.sign, y, env)
-        ZER_FNZ -> scaleToMinExp(y, x.qExp, env)
+        ZER_FNZ -> scaleToMinExp(y.sign, y, x.qExp, env)
         ZER_INF -> y
 
-        FNZ_ZER -> scaleToMinExp(x, y.qExp, env)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, env)
         FNZ_FNZ -> throw IllegalStateException()
         FNZ_INF -> y
 
@@ -36,10 +37,10 @@ internal fun subImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         addFnzFnz(x, !y.sign, y, env)
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> addZeroZero(x, !y.sign, y, env)
-        ZER_FNZ -> y.negate()
+        ZER_FNZ -> scaleToMinExp(!y.sign, y, x.qExp, env)
         ZER_INF -> y.negate()
 
-        FNZ_ZER -> x
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, env)
         FNZ_FNZ -> throw IllegalStateException()
         FNZ_INF -> y.negate()
 
@@ -86,7 +87,7 @@ private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext) =
 
 private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
     if (x.sign == ySign)
-        return addUnscaledMagnitudes(x, y, env)
+        return addUnscaledMagnitudes(ySign, x, y, env)
     val cmp = c128UnscaledCompare(x, y)
     return when {
         (cmp > 0) -> C128AddSub.c128UnscaledSub(x.sign, x, y)
@@ -95,8 +96,8 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecCo
     }
 }
 
-private fun addUnscaledMagnitudes(x: Decimal, y: Decimal, env: DecContext): Decimal {
-    val sumBitLen = x.bitLen + y.bitLen + 1
+private fun addUnscaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, env: DecContext): Decimal {
+    val sumBitLen = max(x.bitLen, y.bitLen) + 1
     val sum = if (sumBitLen < env.decFormat.maxBitLen) {
         val x0 = x.dw0
         val y0 = y.dw0
@@ -105,10 +106,12 @@ private fun addUnscaledMagnitudes(x: Decimal, y: Decimal, env: DecContext): Deci
         val x1 = x.dw1
         val y1 = y.dw1
         val s1 = x1 + y1 + carry0
-        Decimal.from(s1, s0, x.signExp)
+        Decimal.from(resultSign, s1, s0, x.qExp)
     } else {
         val m = env.decTemps.mdecArg1.set(x)
+        m.sign = resultSign
         val n = env.decTemps.mdecArg2.set(y)
+        n.sign = resultSign
         val mdecSum = env.decTemps.mdecResult.setAdd(m, n, env)
         Decimal.from(mdecSum)
     }
@@ -116,8 +119,8 @@ private fun addUnscaledMagnitudes(x: Decimal, y: Decimal, env: DecContext): Deci
 }
 
 private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
-    if (x.sign == y.sign)
-        return addScaledMagnitudes(x, y, env)
+    if (x.sign == ySign)
+        return addScaledMagnitudes(ySign, x, y, env)
     // signs differ ... subtract scaled magnitudes
     val cmpMag = x.magnitudeCompareTo(y)
     return when {
@@ -127,7 +130,7 @@ private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecCont
     }
 }
 
-private fun addScaledMagnitudes(x: Decimal, y: Decimal, env: DecContext): Decimal {
+private fun addScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, env: DecContext): Decimal {
     val flip = x.qExp > y.qExp
     val m = if (flip) x else y
     val n = if (flip) y else x
@@ -137,9 +140,9 @@ private fun addScaledMagnitudes(x: Decimal, y: Decimal, env: DecContext): Decima
     return if (qDelta <= headroom) {
         // we can resolve this in our D128 world
         val shiftLeft = min(qDelta, headroom)
-        D128Pow10.fmaCoeffPow10(m, shiftLeft, n)
+        D128Pow10.fmaCoeffPow10(resultSign, m, shiftLeft, n)
     } else {
-        fullWidthAdd(x.sign, x, y.sign, y, env)
+        fullWidthAdd(resultSign, x, resultSign, y, env)
     }
 }
 

@@ -15,14 +15,14 @@ internal fun nanOperandFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return ctx.signalInvalid(quietedNaN)
 }
 
-internal fun scaleToMinExp(x: Decimal, otherExp: Int, env: DecContext): Decimal {
+internal fun scaleToMinExp(xSign: Boolean, x: Decimal, otherExp: Int, env: DecContext): Decimal {
     if (x.qExp <= otherExp)
-        return x
+        return if (x.sign == xSign) x else x.negate()
     val delta = x.qExp - otherExp
     verify { delta > 0 }
     val headroom = env.precision - x.digitLen
     if (headroom == 0)
         return x
     val shiftLeft = min(headroom, delta)
-    return D128Pow10.scaleCoeffUpPow10(x, shiftLeft)
+    return D128Pow10.scaleCoeffUpPow10(xSign, x, shiftLeft)
 }
