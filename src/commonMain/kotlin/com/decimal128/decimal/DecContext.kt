@@ -113,6 +113,14 @@ data class DecContext(
         return signal(INVALID_OPERATION, OTHER, "whatever", mutDec)
     }
 
+    fun signalInvalid(dec: Decimal): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+            decFlags.set(INVALID_OPERATION)
+            return dec
+        }
+        return signal(INVALID_OPERATION, OTHER, "whatever", dec)
+    }
+
     fun signalDivByZero(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
             decFlags.set(DIV_BY_ZERO)

@@ -23,7 +23,7 @@ internal fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         INF_FNZ -> mulInfNonzero(x, y, env)
         INF_INF -> mulInfNonzero(x, y, env)
 
-        NAN_FOUND -> nanFound(x, y, env)
+        NAN_FOUND -> nanOperandFound(x, y, env)
     }
 }
 

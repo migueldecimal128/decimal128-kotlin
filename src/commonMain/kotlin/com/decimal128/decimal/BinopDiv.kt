@@ -23,7 +23,7 @@ internal fun divImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
         INF_FNZ -> newZero(x.sign xor y.sign, env.eMax, env)
         INF_INF -> divInfInf(x, y, env)
 
-        NAN_FOUND -> nanFound(x, y, env)
+        NAN_FOUND -> nanOperandFound(x, y, env)
     }
 }
 

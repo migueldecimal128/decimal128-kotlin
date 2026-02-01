@@ -1,5 +1,6 @@
 package com.decimal128.decimal.dectest
 
+import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 
 data class DectestCase1(
@@ -36,6 +37,16 @@ data class DectestCase1(
             "1" -> true
             else -> throw IllegalArgumentException("expected 0/1 boolean:$resultStr")
         }
+
+    val decContext: DecContext
+        get() {
+            require(env.precision == 34)
+            require(env.maxExp == 6144)
+            require(env.minExp == -6143)
+            require(env.rounding != null)
+            return DecContext.DECIMAL128.with(env.rounding)
+        }
+
 
     companion object {
 

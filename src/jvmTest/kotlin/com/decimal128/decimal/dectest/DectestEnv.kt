@@ -15,4 +15,10 @@ data class DectestEnv(
         get() = maxExp - (precision - 1)
     val qExpTiny: Int
         get() = minExp - (precision - 1)
+
+    fun isValid(): Boolean {
+        if (rounding == null) return false
+        // other validity tests go here
+        return true
+    }
 }

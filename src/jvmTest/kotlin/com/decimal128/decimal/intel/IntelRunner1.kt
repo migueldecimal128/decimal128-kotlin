@@ -74,4 +74,31 @@ object IntelRunner1 {
         }
     }
 
+    fun runBinaryDecimalOp(fileName: String,
+                           funcStr: String,
+                           binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+                           verbose: Boolean = false,
+                           skip: Boolean = true,
+                           skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runBinaryDecimalOp(filtered, binaryDecimalOp, verbose)
+    }
+
+    fun runBinaryDecimalOp(cases: List<IntelCase1>,
+                           binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+                           verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose)
+                println(tc.text)
+            val observed = tc.op1Bid128.binaryDecimalOp(tc.op2Bid128)
+            val expected = tc.resBid128
+            assertTrue(expected bitwiseEQ observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+        }
+    }
+
+
 }

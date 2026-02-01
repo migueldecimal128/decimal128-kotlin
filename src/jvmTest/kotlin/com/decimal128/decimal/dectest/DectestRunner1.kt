@@ -1,5 +1,6 @@
 package com.decimal128.decimal.dectest
 
+import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -203,5 +204,47 @@ object DectestRunner1 {
         }
     }
 
+    fun runBinaryDecimalCtxOp(fileName: String,
+                              opName: String,
+                              binaryDecimalCtxOp: (Decimal, Decimal, DecContext) -> Decimal,
+                              verbose: Boolean = true,
+                              skip: Boolean = true,
+                              skipCases: Array<String> = arrayOf(),
+    ) {
+        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val allTests = DectestParser1.parse(fileText, opName)
+        runBinaryDecimalCtxOp(allTests, binaryDecimalCtxOp, skip, skipCases, verbose)
+    }
+
+    fun runBinaryDecimalCtxOp(binaryDecimalCtxOp: (Decimal, Decimal, DecContext) -> Decimal,
+                              verbose: Boolean = true,
+                              cases: Array<String> = emptyArray(),
+    ) {
+        val cases2 = DectestParser1.parse(cases)
+        runBinaryDecimalCtxOp(cases2, binaryDecimalCtxOp, verbose = verbose)
+    }
+
+    fun runBinaryDecimalCtxOp(cases: List<DectestCase1>,
+                              binaryDecimalCtxOp: (Decimal, Decimal, DecContext) -> Decimal,
+                              skip: Boolean = true,
+                              skipCases: Array<String> = arrayOf(),
+                              verbose: Boolean = true,
+    ) {
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        cases.forEach { tc ->
+            if (skipSet.contains(tc.text))
+                return@forEach
+            if (verbose)
+                println(tc.text)
+            val operand1 = tc.operand1
+            val operand2 = tc.operand2
+            val decCtx = tc.decContext
+            val observed = binaryDecimalCtxOp(operand1, operand2, decCtx)
+            val expected = tc.result
+            assertTrue(expected bitwiseEQ observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+        }
+    }
 
 }

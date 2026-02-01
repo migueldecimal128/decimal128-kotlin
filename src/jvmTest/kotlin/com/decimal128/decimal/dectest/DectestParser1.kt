@@ -4,13 +4,13 @@ import com.decimal128.decimal.DecRounding
 
 object DectestParser1 {
 
-    fun parse(input: String): List<DectestCase1> =
-        parseLines(input.lineSequence())
+    fun parse(input: String, opName: String = ""): List<DectestCase1> =
+        parseLines(input.lineSequence(), opName)
 
-    fun parse(lines: Array<String>): List<DectestCase1> =
-        parseLines(lines.asSequence())
+    fun parse(lines: Array<String>, opName: String = ""): List<DectestCase1> =
+        parseLines(lines.asSequence(), opName)
 
-    fun parseLines(lines: Sequence<String>): List<DectestCase1> {
+    fun parseLines(lines: Sequence<String>, opName: String = ""): List<DectestCase1> {
         var env = DectestEnv()
         val out = ArrayList<DectestCase1>()
 
@@ -24,10 +24,17 @@ object DectestParser1 {
                 continue
             }
 
-            // Test case
-            if ("->" in raw) {
-                out += DectestCase1.parseDectestCase(raw, env)
-                continue
+            if (env.isValid()) {
+                // Test case
+                if ("->" in raw) {
+                    val case = DectestCase1.parseDectestCase(raw, env)
+                    if (case.operand1Str != "#" && case.operand2Str != "#" && case.operand3Str != "#") {
+                        if (opName == "" || case.operation == opName) {
+                            out += case
+                            continue
+                        }
+                    }
+                }
             }
 
             // Ignore anything else
@@ -61,6 +68,7 @@ object DectestParser1 {
             "floor"     -> DecRounding.ROUND_TOWARD_NEGATIVE
             "down"      -> DecRounding.ROUND_TOWARD_ZERO
             "05up"      -> null
+            "half_down" -> null
 
             else -> error("Unsupported decTest rounding mode: '$name'")
         }
