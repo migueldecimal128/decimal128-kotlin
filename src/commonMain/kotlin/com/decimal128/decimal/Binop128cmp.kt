@@ -11,60 +11,6 @@ import com.decimal128.decimal.Decimal.Companion.hasNaN
 private val mapToDecimal: Array<Decimal> =
     arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
 
-/*
-fun cmpImpl(x: Decimal2, y: Decimal2, env: env): Int {
-    return if (bothFnz(x, y)) {
-        cmpFnzFnz(x, y, env)
-    } else when (BinopSignature.enumOf(x, y)) {
-        ZER_ZER -> cmpZerZer(x, y, env)
-        ZER_FNZ -> cmpZerFnz(x, y, env)
-        ZER_INF -> cmpZerInf(x, y, env)
-
-        FNZ_ZER -> cmpFnzZer(x, y, env)
-        FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> cmpFnzInf(x, y, env)
-
-        INF_ZER -> cmpInfZer(x, y, env)
-        INF_FNZ -> cmpInfFnz(x, y, env)
-        INF_INF -> cmpInfInf(x, y, env)
-
-        NAN_FOUND -> cmpNanFound(x, y, env)
-    }
-}
-
- */
-
-fun cmpImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
-    if (hasNaN(x, y))
-        return cmpNanFound(x, y, env)
-    val binopSig = BinopSignature.of(x, y)
-    if (binopSig == ZER_ZER)
-        return ZERO
-    if (x.sign != y.sign)
-        return if (x.sign) NEG_ONE else POS_ONE
-    val cmpMag =
-        if (bothFnz(x, y)) {
-            cmpFnzFnz(x, y)
-        } else when (binopSig) {
-            ZER_ZER -> throw IllegalStateException()
-            ZER_FNZ -> -1
-            ZER_INF -> -1
-
-            FNZ_ZER -> 1
-            FNZ_FNZ -> throw IllegalStateException()
-            FNZ_INF -> -1
-
-            INF_ZER -> 1
-            INF_FNZ -> 1
-            INF_INF -> 0
-
-            NAN_FOUND -> throw IllegalStateException()
-        }
-    val negateMask = x.sign0Neg1
-    val t = (cmpMag xor negateMask) - negateMask
-    return mapToDecimal[t + 1]
-}
-
 fun cmpMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
     val cmp = if (bothFnz(x, y)) {
         cmpMagnitudeFnzFnz(x, y)

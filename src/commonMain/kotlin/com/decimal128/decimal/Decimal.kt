@@ -79,8 +79,8 @@ class Decimal private constructor(
         val POS_ZEROe0 = Decimal(0L, 0L, 0, 0)
         val NEG_ZEROe0 = Decimal(0L, 0L, 0, Short.MIN_VALUE)
         val ZERO = POS_ZEROe0
-        val POS_ONE = Decimal(0L, 1L, 1, 0)
-        val NEG_ONE = Decimal(0L, 1L, 1, 0x8000.toShort())
+        val POS_ONE = Decimal(0L, 1L, packLengths(1, 1), 0)
+        val NEG_ONE = Decimal(0L, 1L, packLengths(1, 1), 0x8000.toShort())
         val ONE = POS_ONE
         val POS_INFINITY = Decimal(0L, 0L, 0, NON_FINITE_INF.toShort())
         val NEG_INFINITY = Decimal(0L, 0L, 0, packSignExp(true, NON_FINITE_INF))
