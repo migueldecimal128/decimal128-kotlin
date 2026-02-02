@@ -1,6 +1,8 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.DecContext
+import com.decimal128.decimal.DecException
+import com.decimal128.decimal.DecFlags
 import com.decimal128.decimal.Decimal
 
 data class DectestCase1(
@@ -14,6 +16,8 @@ data class DectestCase1(
     val conditions: List<String>,
     val env: DectestEnv,
 ) {
+
+    val decFlags: DecFlags = conditionsToDecFlags(conditions)
 
     val operand1: Decimal
         get() = parseDpd128(operand1Str)
@@ -77,6 +81,14 @@ data class DectestCase1(
             "rounded",
             "subnormal",
             "underflow"
+        )
+
+        private val mapConditionDecException: Map<String, DecException> = mapOf(
+            "invalid_operation" to DecException.INVALID_OPERATION,
+            "division_by_zero" to DecException.DIV_BY_ZERO,
+            "overflow" to DecException.OVERFLOW,
+            "underflow" to DecException.UNDERFLOW,
+            "inexact" to DecException.INEXACT,
         )
 
 
@@ -204,6 +216,16 @@ data class DectestCase1(
 
         fun parseDpd128(str: String): Decimal {
             return Decimal.from(str)
+        }
+
+        fun conditionsToDecFlags(conditions: List<String>): DecFlags {
+            val decFlags = DecFlags()
+            for (condition in conditions) {
+                val decException = mapConditionDecException[condition]
+                if (decException != null)
+                    decFlags.set(decException)
+            }
+            return decFlags
         }
     }
 

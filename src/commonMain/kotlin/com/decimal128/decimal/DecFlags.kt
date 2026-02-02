@@ -66,6 +66,9 @@ class DecFlags {
         return DecException.entries.filter { isSet(it) }.toSet()
     }
 
+    override fun equals(other: Any?) =
+        other is DecFlags && flags == other.flags
+
     override fun toString(): String {
         val setExceptions = getSetExceptions()
         return when {

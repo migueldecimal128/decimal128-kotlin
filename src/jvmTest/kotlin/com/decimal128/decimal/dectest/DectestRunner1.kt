@@ -244,6 +244,8 @@ object DectestRunner1 {
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )
+//            assertEquals(decCtx.decFlags, tc.decFlags,
+//                "flags mismatch expected=${tc.decFlags} observed=${decCtx.decFlags}")
         }
     }
 
