@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.maxImpl
+import com.decimal128.decimal.maxNumImpl
+import com.decimal128.decimal.minImpl
+import com.decimal128.decimal.minNumImpl
 import com.decimal128.decimal.mulImpl
 import com.decimal128.decimal.subImpl
 
@@ -57,6 +60,80 @@ class TestDectestMinMax {
         verbose = verbose,
         cases = arrayOf(
             "dqmax407 max  0.10   0       ->  0.10",
+        )
+    )
+
+    @Test
+    fun testMaxNumber() = runBinaryDecimalCtxOp(
+        "dqMax.dectest",
+        "max",
+        ::maxNumImpl,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testMaxNumCases() = runBinaryDecimalCtxOp(
+        ::maxNumImpl,
+        verbose = verbose,
+        cases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testMin() = runBinaryDecimalCtxOp(
+        "dqMin.dectest",
+        "min",
+        ::minImpl,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            "dqmin141 min  NaN -Inf    ->  -Infinity",
+            "dqmin142 min  NaN -1000   ->  -1000",
+            "dqmin143 min  NaN -1      ->  -1",
+            "dqmin144 min  NaN -0      ->  -0",
+            "dqmin145 min  NaN  0      ->  0",
+            "dqmin146 min  NaN  1      ->  1",
+            "dqmin147 min  NaN  1000   ->  1000",
+            "dqmin148 min  NaN  Inf    ->  Infinity",
+            "dqmin150 min -Inf  NaN    -> -Infinity",
+            "dqmin151 min -1000 NaN    -> -1000",
+            "dqmin152 min -1   -NaN    -> -1",
+            "dqmin153 min -0    NaN    -> -0",
+            "dqmin154 min  0   -NaN    ->  0",
+            "dqmin155 min  1    NaN    ->  1",
+            "dqmin156 min  1000 NaN    ->  1000",
+            "dqmin157 min  Inf  NaN    ->  Infinity",
+            "dqmin181 min  NaN9   -Inf   -> -Infinity",
+            "dqmin182 min -NaN8    9990  ->  9990",
+            "dqmin183 min  NaN71   Inf   ->  Infinity",
+            "dqmin188 min -Inf     NaN41 -> -Infinity",
+            "dqmin189 min -9999   -NaN33 -> -9999",
+            "dqmin190 min  Inf     NaN2  ->  Infinity",
+            "dqmin284 min '7' 'NaN'  ->  '7'",
+        )
+    )
+
+    @Test
+    fun testMinCases() = runBinaryDecimalCtxOp(
+        ::minImpl,
+        verbose = verbose,
+        cases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testMinNumber() = runBinaryDecimalCtxOp(
+        "dqMin.dectest",
+        "min",
+        ::minNumImpl,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testMinNumCases() = runBinaryDecimalCtxOp(
+        ::minNumImpl,
+        verbose = verbose,
+        cases = arrayOf(
         )
     )
 
