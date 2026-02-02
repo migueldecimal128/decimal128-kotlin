@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecContext.Companion.DECIMAL128
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
 import com.decimal128.decimal.Ieee754Class.negativeNormal
 import com.decimal128.decimal.Ieee754Class.negativeSubnormal
@@ -119,21 +118,21 @@ class Decimal private constructor(
 
 
 
-        fun newZero(sign: Boolean, qExp: Int, env: DecContext): Decimal {
+        fun newZero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else ZERO
-            val finalExp = max(min(qExp, env.qMax), env.qTiny)
+            val finalExp = max(min(qExp, ctx.qMax), ctx.qTiny)
             val signExp = packSignExp(sign, finalExp)
             val zero = Decimal(0L, 0L, 0, signExp)
             return zero
         }
 
-        fun newZero(signExp: Short, env: DecContext): Decimal {
+        fun newZero(signExp: Short, ctx: DecContext): Decimal {
             return when {
                 signExp.toInt() == 0 -> POS_ZEROe0
                 signExp.toInt() == Short.MIN_VALUE.toInt() -> NEG_ZEROe0
                 else -> {
-                    val finalExp = max(min(unpackExp(signExp), env.qMax), env.qTiny)
+                    val finalExp = max(min(unpackExp(signExp), ctx.qMax), ctx.qTiny)
                     val finalSignExp =
                         (finalExp or (signExp.toInt() and Short.MIN_VALUE.toInt())).toShort()
                     val zero = Decimal(0L, 0L, 0, finalSignExp)

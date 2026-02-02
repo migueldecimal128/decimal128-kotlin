@@ -33,7 +33,7 @@ class MutDec() : C256() {
 
     companion object {
 
-        private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecContext): MutDec {
+        private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
             verify { x.digitLen <= 76 } // x is allowed more digits because of FMA
             verify { y.digitLen <= 38 }
             val qMax = max(x.qExp, y.qExp)
@@ -46,26 +46,26 @@ class MutDec() : C256() {
                             val sign = if (x.sign == ySign) {
                                 ySign  // Both same sign → use that sign
                             } else {
-                                env.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
+                                ctx.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
                             }
-                            z.setZero(sign, qMin, env)
+                            z.setZero(sign, qMin, ctx)
                         }
 
                         y.bitLen == 0 && x.qExp == qMin -> {
                             z.set(x)
-                            z.finalize(env)
+                            z.finalize(ctx)
                         }
 
                         y.bitLen == 0 -> {
                             val gap = x.qExp - y.qExp
-                            val headroom = env.precision - x.digitLen
+                            val headroom = ctx.precision - x.digitLen
                             // FMA adding 0 will lead to -headroom
                             val shiftLeft = max(0, min(headroom, gap))
                             z.qExp = x.qExp - shiftLeft
                             z.sign = x.sign
                             c256SetScaleUpPow10(z, x, shiftLeft)
                             // we could be here because of FMA, so need to finalize
-                            z.finalize(env)
+                            z.finalize(ctx)
                         }
 
                         x.bitLen == 0 && y.qExp == qMin -> {
@@ -75,25 +75,25 @@ class MutDec() : C256() {
 
                         x.bitLen == 0 -> {
                             val gap = y.qExp - x.qExp
-                            val headroom = env.precision - y.digitLen
+                            val headroom = ctx.precision - y.digitLen
                             val shiftLeft = min(headroom, gap)
                             z.qExp = y.qExp - shiftLeft
                             z.sign = ySign
                             c256SetScaleUpPow10(z, y, shiftLeft)
                         }
 
-                        x.qExp == y.qExp -> unscaledFiniteNonZeroAddImpl(z, x, ySign, y, env)
-                        else -> scaledFiniteNonZeroAddImpl(z, x, ySign, y, env)
+                        x.qExp == y.qExp -> unscaledFiniteNonZeroAddImpl(z, x, ySign, y, ctx)
+                        else -> scaledFiniteNonZeroAddImpl(z, x, ySign, y, ctx)
                     }
                 }
 
-                qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, env)
-                else -> z.setNaNOperand(x, y, env)
+                qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, ctx)
+                else -> z.setNaNOperand(x, y, ctx)
             }
             return z
         }
 
-        private fun unscaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecContext): MutDec {
+        private fun unscaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
             verify { x.bitLen > 0 && y.bitLen > 0 }  // Optional: could remove in production
             verify { x.qExp == y.qExp }
             val xSign = x.sign
@@ -105,7 +105,7 @@ class MutDec() : C256() {
             // shall be +0 under all rounding-direction attributes except
             // roundTowardNegative; under that attribute, the sign of an
             // exact zero sum (or difference) shall be −0.
-            val isRoundTowardNegative = env.isRoundTowardNegative()
+            val isRoundTowardNegative = ctx.isRoundTowardNegative()
             if (xSign == ySign) {
                 z.c256SetAdd(x, y)
                 z.sign = xSign
@@ -128,7 +128,7 @@ class MutDec() : C256() {
                     }
                 }
             }
-            return z.finalize(env)
+            return z.finalize(ctx)
         }
 
         private fun scaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecContext): MutDec {

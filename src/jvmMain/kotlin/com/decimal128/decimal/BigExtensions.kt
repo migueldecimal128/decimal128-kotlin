@@ -53,9 +53,9 @@ fun Decimal.coeffToBigInteger(): BigInteger {
 
 fun newMutDec(bd: BigDecimal): MutDec = newMutDec(bd, DecContext())
 
-fun newMutDec(bd: BigDecimal, env: DecContext): MutDec {
+fun newMutDec(bd: BigDecimal, ctx: DecContext): MutDec {
     val mutdec = MutDec()
-    mutdec.set(bd, env)
+    mutdec.set(bd, ctx)
     return mutdec
 }
 

@@ -96,7 +96,7 @@ class TestInvDoubleDouble{
         //TODO get setInv() to work using Newton-Raphson
     }
 
-    fun setInv(inv: MutDec, divisor: MutDec, env: DecContext) {
+    fun setInv(inv: MutDec, divisor: MutDec, ctx: DecContext) {
         if (divisor.bitLen <= 1) {
             if (divisor.bitLen == 0) {
                 inv.setInfinite(divisor.sign)

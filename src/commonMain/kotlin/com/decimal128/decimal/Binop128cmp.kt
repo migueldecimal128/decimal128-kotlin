@@ -6,12 +6,11 @@ import com.decimal128.decimal.Decimal.Companion.NaN
 import com.decimal128.decimal.Decimal.Companion.POS_ONE
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import com.decimal128.decimal.Decimal.Companion.bothFnz
-import com.decimal128.decimal.Decimal.Companion.hasNaN
 
 private val mapToDecimal: Array<Decimal> =
     arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
 
-fun cmpMagnitudeImpl_X(x: Decimal, y: Decimal, env: DecContext): Decimal {
+fun cmpMagnitudeImpl_X(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val cmp = if (bothFnz(x, y)) {
         cmpMagnitudeFnzFnz(x, y)
     } else when (BinopSignature.of(x, y)) {
@@ -27,7 +26,7 @@ fun cmpMagnitudeImpl_X(x: Decimal, y: Decimal, env: DecContext): Decimal {
         INF_FNZ -> 1
         INF_INF -> 0
 
-        NAN_FOUND -> return cmpMagnitudeNanFound(x, y, env)
+        NAN_FOUND -> return cmpMagnitudeNanFound(x, y, ctx)
     }
     return mapToDecimal[cmp + 1]
 }

@@ -6,7 +6,7 @@ import kotlin.math.min
 
 object MagnitudeAddSub {
 
-    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, env: DecContext): Residue {
+    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Residue {
         verify { x.qExp != y.qExp } // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
@@ -18,7 +18,7 @@ object MagnitudeAddSub {
         val n = if (flipFlop) y else x
         verify { m.qExp > n.qExp }
         val qDelta = m.qExp - n.qExp
-        val headroom = env.precision - m.digitLen
+        val headroom = ctx.precision - m.digitLen
         val shiftLeft = min(max(headroom, 0), qDelta)
         val qAlign = m.qExp - shiftLeft
         when {

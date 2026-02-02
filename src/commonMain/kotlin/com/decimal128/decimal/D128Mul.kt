@@ -8,15 +8,15 @@ import kotlin.math.max
 
 object D128Mul {
 
-    fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+    fun mulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         val qMax = max(x.qExp, y.qExp)
         return when {
             qMax < MIN_SPECIAL_VALUE ->
-                finiteMul(x, y, env)
+                finiteMul(x, y, ctx)
             qMax == NON_FINITE_INF ->
                 infiniteMul(x, y)
             qMax == NON_FINITE_SNAN ->
-                env.signal(
+                ctx.signal(
                     INVALID_OPERATION,
                     SIGNALING_NAN_OPERAND,
                     "mul",

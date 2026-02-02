@@ -9,46 +9,46 @@ import kotlin.math.min
 internal fun addImpl(x: Decimal, y: Decimal): Decimal =
     addImpl(x, y, DecContext.current())
 
-internal fun addImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun addImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
-        addFnzFnz(x, y.sign, y, env)
+        addFnzFnz(x, y.sign, y, ctx)
     } else when (BinopSignature.of(x, y)) {
-        ZER_ZER -> addZeroZero(x, y.sign, y, env)
-        ZER_FNZ -> scaleToMinExp(y.sign, y, x.qExp, env)
+        ZER_ZER -> addZeroZero(x, y.sign, y, ctx)
+        ZER_FNZ -> scaleToMinExp(y.sign, y, x.qExp, ctx)
         ZER_INF -> y
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, env)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
         FNZ_FNZ -> throw IllegalStateException()
         FNZ_INF -> y
 
         INF_ZER -> x
         INF_FNZ -> x
-        INF_INF -> addInfInf(x, y.sign, y, env)
+        INF_INF -> addInfInf(x, y.sign, y, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, env)
+        NAN_FOUND -> nanOperandFound(x, y, ctx)
     }
 }
 
 internal fun subImpl(x: Decimal, y: Decimal): Decimal =
     subImpl(x, y, DecContext.current())
 
-internal fun subImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun subImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
-        addFnzFnz(x, !y.sign, y, env)
+        addFnzFnz(x, !y.sign, y, ctx)
     } else when (BinopSignature.of(x, y)) {
-        ZER_ZER -> addZeroZero(x, !y.sign, y, env)
-        ZER_FNZ -> scaleToMinExp(!y.sign, y, x.qExp, env)
+        ZER_ZER -> addZeroZero(x, !y.sign, y, ctx)
+        ZER_FNZ -> scaleToMinExp(!y.sign, y, x.qExp, ctx)
         ZER_INF -> y.negate()
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, env)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
         FNZ_FNZ -> throw IllegalStateException()
         FNZ_INF -> y.negate()
 
         INF_ZER -> x
         INF_FNZ -> x
-        INF_INF -> addInfInf(x, !y.sign, y, env)
+        INF_INF -> addInfInf(x, !y.sign, y, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, env)
+        NAN_FOUND -> nanOperandFound(x, y, ctx)
     }
 }
 

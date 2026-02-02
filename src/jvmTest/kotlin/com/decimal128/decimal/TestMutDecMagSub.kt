@@ -13,7 +13,7 @@ class TestMutDecMagSub {
 
     val verbose = false
 
-    class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val env: DecContext) {
+    class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: DecContext) {
         constructor(strA: String, strB: String, rd: DecRounding) :
                 this(BigDecimal(strA), BigDecimal(strB), DecContext().with(rd))
         constructor(strA: String, strB: String) :
@@ -21,7 +21,7 @@ class TestMutDecMagSub {
         constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext())
 
         val flipFlop = bdXraw.compareTo(bdYraw) >= 0
-        val rm = env.decRounding.mapToRoundingMode()
+        val rm = ctx.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(if (flipFlop) bdXraw else bdYraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(if (flipFlop) bdYraw else bdXraw, rm)
@@ -161,7 +161,7 @@ class TestMutDecMagSub {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val env = tc.env
+        val env = tc.ctx
         val rm = env.decRounding.mapToRoundingMode()
 
         if (verbose)
