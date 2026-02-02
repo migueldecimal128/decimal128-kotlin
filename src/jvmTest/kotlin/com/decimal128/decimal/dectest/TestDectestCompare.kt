@@ -22,7 +22,7 @@ import com.decimal128.decimal.subImpl
 
 class TestDectestCompare {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testCompare() = runBinaryDecimalCtxOp(

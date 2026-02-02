@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
 
-    val verbose = true
+    val verbose = false
 
     /*****************************************************************************
      *

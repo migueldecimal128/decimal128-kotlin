@@ -16,7 +16,7 @@ import com.decimal128.decimal.subImpl
 
 class TestDectestFma {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testFma() = runTernaryDecimalCtxOp(

@@ -18,7 +18,7 @@ import com.decimal128.decimal.subImpl
 
 class TestDectestMinMax {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testMax() = runBinaryDecimalCtxOp(

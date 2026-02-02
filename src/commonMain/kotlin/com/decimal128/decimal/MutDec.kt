@@ -1075,7 +1075,7 @@ class MutDec() : C256() {
                 qExp = qY
                 sign = x.sign
                 if (residue != Residue.EXACT)
-                    roundAndFinalizeShortCoeff(residue, env.decRounding, env)
+                    roundAndFinalize(residue, env.decRounding, env)
                 return this
             }
 
