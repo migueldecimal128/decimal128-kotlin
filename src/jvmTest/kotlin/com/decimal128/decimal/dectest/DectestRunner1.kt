@@ -291,4 +291,49 @@ object DectestRunner1 {
         }
     }
 
+    fun runTernaryDecimalCtxOp(fileName: String,
+                               opName: String,
+                               ternaryDecimalCtxOp: (Decimal, Decimal, Decimal, DecContext) -> Decimal,
+                               verbose: Boolean = true,
+                               skip: Boolean = true,
+                               skipCases: Array<String> = arrayOf(),
+    ) {
+        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val allTests = DectestParser1.parse(fileText, opName)
+        runTernaryDecimalCtxOp(allTests, ternaryDecimalCtxOp, skip, skipCases, verbose)
+    }
+
+    fun runTernaryDecimalCtxOp(ternaryDecimalCtxOp: (Decimal, Decimal, Decimal, DecContext) -> Decimal,
+                               verbose: Boolean = true,
+                               cases: Array<String> = emptyArray(),
+    ) {
+        val cases2 = DectestParser1.parse(cases)
+        runTernaryDecimalCtxOp(cases2, ternaryDecimalCtxOp, verbose = verbose)
+    }
+
+    fun runTernaryDecimalCtxOp(cases: List<DectestCase1>,
+                               ternaryDecimalCtxOp: (Decimal, Decimal, Decimal, DecContext) -> Decimal,
+                               skip: Boolean = true,
+                               skipCases: Array<String> = arrayOf(),
+                               verbose: Boolean = true,
+    ) {
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        cases.forEach { tc ->
+            if (skipSet.contains(tc.text))
+                return@forEach
+            if (verbose)
+                println(tc.text)
+            val operand1 = tc.operand1
+            val operand2 = tc.operand2
+            val operand3 = tc.operand3
+            val decCtx = tc.decContext
+            val observed = ternaryDecimalCtxOp(operand1, operand2, operand3, decCtx)
+            val expected = tc.result
+            assertTrue(expected bitwiseEQ observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+        }
+    }
+
+
 }

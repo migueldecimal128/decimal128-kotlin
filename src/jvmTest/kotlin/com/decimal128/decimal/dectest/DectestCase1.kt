@@ -25,6 +25,14 @@ data class DectestCase1(
             return parseDpd128(operand2Str)
         }
 
+    val operand3: Decimal
+        get() {
+            if (operand3Str == null)
+                throw IllegalArgumentException()
+            return parseDpd128(operand3Str)
+        }
+
+
     val result: Decimal
         get() = parseDpd128(resultStr)
 
