@@ -11,7 +11,7 @@ import com.decimal128.decimal.Decimal.Companion.hasNaN
 private val mapToDecimal: Array<Decimal> =
     arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
 
-fun cmpMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+fun cmpMagnitudeImpl_X(x: Decimal, y: Decimal, env: DecContext): Decimal {
     val cmp = if (bothFnz(x, y)) {
         cmpMagnitudeFnzFnz(x, y)
     } else when (BinopSignature.of(x, y)) {
@@ -73,14 +73,14 @@ private fun cmpNanFound(x: Decimal, y: Decimal, env: DecContext): Decimal {
     TODO()
 }
 
-fun cmpTotalOrderImpl(x: Decimal, y: Decimal, env: DecContext): Int {
+fun cmpTotalOrderImpl_x(x: Decimal, y: Decimal, env: DecContext): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
     val negateMask = -x.sign01 // 0 or -1
-    return (cmpTotalOrderMagnitudeImpl(x, y, env) xor negateMask) - negateMask
+    return (cmpTotalOrderMagnitudeImpl_x(x, y, env) xor negateMask) - negateMask
 }
 
-private fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Int {
+private fun cmpTotalOrderMagnitudeImpl_x(x: Decimal, y: Decimal, env: DecContext): Int {
     return if (bothFnz(x, y)) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
     } else when (BinopSignature.of(x, y)) {

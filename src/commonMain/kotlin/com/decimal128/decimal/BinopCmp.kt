@@ -86,3 +86,75 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     }
 }
 
+internal fun cmpMagnitudeImpl(x: Decimal, y: Decimal): Decimal =
+    cmpMagnitudeImpl(x, y, DecContext.current())
+
+fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val cmp = if (bothFnz(x, y)) {
+        cmpMagnitudeFnzFnz(x, y)
+    } else when (BinopSignature.of(x, y)) {
+        ZER_ZER -> 0
+        ZER_FNZ -> -1
+        ZER_INF -> -1
+
+        FNZ_ZER -> 1
+        FNZ_FNZ -> throw IllegalStateException()
+        FNZ_INF -> -1
+
+        INF_ZER -> 1
+        INF_FNZ -> 1
+        INF_INF -> 0
+
+        NAN_FOUND -> return nanOperandFound(x, y, ctx)
+    }
+    return mapToDecimal[(cmp + 1) and 0x03]
+}
+
+internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, env: DecContext): Int {
+    if (x.sign != y.sign)
+        return if (x.sign) -1 else 1
+    val negateMask = -x.sign01 // 0 or -1
+    return (cmpTotalOrderMagnitudeImpl(x, y, env) xor negateMask) - negateMask
+}
+
+fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Int {
+    return if (bothFnz(x, y)) {
+        cmpTotalOrderMagnitudeFnzFnz(x, y)
+    } else when (BinopSignature.of(x, y)) {
+        ZER_ZER -> x.qExp.compareTo(y.qExp)
+        ZER_FNZ -> -1
+        ZER_INF -> -1
+
+        FNZ_ZER -> 1
+        FNZ_FNZ -> throw IllegalStateException()
+        FNZ_INF -> -1
+
+        INF_ZER -> 1
+        INF_FNZ -> 1
+        INF_INF -> 0
+        NAN_FOUND -> cmpTotalOrderMagnitudeNanFound(x, y)
+    }
+}
+
+private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
+    val cmp = cmpMagnitudeFnzFnz(x, y)
+    if (cmp != 0)
+        return cmp
+    // If x and y represent the same floating-point datum:
+    //  i) If x and y have negative sign,
+    //    totalOrder(x, y) is true if and only if the exponent of x ≥ the exponent of y
+    //  ii) otherwise,
+    //    totalOrder(x, y) is true if and only if the exponent of x ≤ the exponent of y.
+    return x.qExp.compareTo(y.qExp)
+}
+
+private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
+    return when {
+        x.qExp < NON_FINITE_QNAN -> -1
+        y.qExp < NON_FINITE_QNAN -> 1
+        // if both are the same NaN, then compare payloads
+        x.qExp == y.qExp -> ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
+        x.qExp == NON_FINITE_QNAN -> 1
+        else -> -1
+    }
+}

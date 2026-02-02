@@ -247,4 +247,48 @@ object DectestRunner1 {
         }
     }
 
+    fun runBinaryIntCtxOp(fileName: String,
+                          opName: String,
+                          binaryIntCtxOp: (Decimal, Decimal, DecContext) -> Int,
+                          verbose: Boolean = true,
+                          skip: Boolean = true,
+                          skipCases: Array<String> = arrayOf(),
+    ) {
+        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val allTests = DectestParser1.parse(fileText, opName)
+        runBinaryIntCtxOp(allTests, binaryIntCtxOp, skip, skipCases, verbose)
+    }
+
+    fun runBinaryIntCtxOp(binaryDecimalCtxOp: (Decimal, Decimal, DecContext) -> Int,
+                          verbose: Boolean = true,
+                          cases: Array<String> = emptyArray(),
+    ) {
+        val cases2 = DectestParser1.parse(cases)
+        runBinaryIntCtxOp(cases2, binaryDecimalCtxOp, verbose = verbose)
+    }
+
+
+    fun runBinaryIntCtxOp(cases: List<DectestCase1>,
+                          binaryIntCtxOp: (Decimal, Decimal, DecContext) -> Int,
+                          skip: Boolean = true,
+                          skipCases: Array<String> = arrayOf(),
+                          verbose: Boolean = true,
+    ) {
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        cases.forEach { tc ->
+            if (skipSet.contains(tc.text))
+                return@forEach
+            if (verbose)
+                println(tc.text)
+            val operand1 = tc.operand1
+            val operand2 = tc.operand2
+            val decCtx = tc.decContext
+            val observed = binaryIntCtxOp(operand1, operand2, decCtx)
+            val expected = tc.resultInt
+            assertEquals(expected, observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+        }
+    }
+
 }
