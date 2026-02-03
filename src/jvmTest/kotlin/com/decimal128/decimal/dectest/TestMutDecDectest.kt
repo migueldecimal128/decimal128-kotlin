@@ -1,11 +1,16 @@
-package com.decimal128.decimal
+package com.decimal128.decimal.dectest
 
+import com.decimal128.decimal.DecContext
+import com.decimal128.decimal.DecException
+import com.decimal128.decimal.DecFormat
+import com.decimal128.decimal.DecRounding
+import com.decimal128.decimal.MutDec
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.EnumSet
 import kotlin.test.assertEquals
 
-class TestDectest {
+class TestMutDecDectest {
 
     private val veryVerbose = true
     private val verbose = true
@@ -32,11 +37,11 @@ class TestDectest {
     )
 
     private val decRoundings = arrayOf(
-        DecRounding.ROUND_TIES_TO_EVEN,
-        DecRounding.ROUND_TIES_TO_AWAY,
-        DecRounding.ROUND_TOWARD_ZERO,
-        DecRounding.ROUND_TOWARD_POSITIVE,
-        DecRounding.ROUND_TOWARD_NEGATIVE,
+        DecRounding.Companion.ROUND_TIES_TO_EVEN,
+        DecRounding.Companion.ROUND_TIES_TO_AWAY,
+        DecRounding.Companion.ROUND_TOWARD_ZERO,
+        DecRounding.Companion.ROUND_TOWARD_POSITIVE,
+        DecRounding.Companion.ROUND_TOWARD_NEGATIVE,
     )
 
     private val dectestFiles = arrayOf(

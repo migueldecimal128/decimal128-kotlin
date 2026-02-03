@@ -1,20 +1,10 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.addImpl
-import com.decimal128.decimal.dectest.DectestRunner1.runBinaryBooleanOp
-import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
-import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
-import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import com.decimal128.decimal.dectest.DectestRunner1.runTernaryDecimalCtxOp
 import org.junit.jupiter.api.Test
-import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
-import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.fmaImpl
-import com.decimal128.decimal.mulImpl
-import com.decimal128.decimal.subImpl
 
-class TestDectestFma {
+class TestDecFma {
 
     val verbose = false
 

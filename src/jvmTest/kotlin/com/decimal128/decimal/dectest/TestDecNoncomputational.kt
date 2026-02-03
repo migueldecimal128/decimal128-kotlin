@@ -6,7 +6,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 
-class TestDectestNoncomputational1 {
+class TestDecNoncomputational {
 
     val verbose = false
 
