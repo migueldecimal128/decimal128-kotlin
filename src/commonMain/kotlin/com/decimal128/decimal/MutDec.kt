@@ -668,14 +668,11 @@ class MutDec() : C256() {
                 if (this.qExp > 0) {
                     if (!this.isZero()) {
                         val headroom = env.precision - this.digitLen
-                        val scaleAmount = min(this.qExp, headroom)
-                        if (scaleAmount > 0) {
-                            this.c256SetScaleUpPow10(this, scaleAmount)
-                            this.qExp -= scaleAmount
-                        }
-                    } else {
-                        qExp = 0
+                        if (headroom < this.qExp)
+                            return env.signalInvalid(setNaN())
+                        this.c256SetScaleUpPow10(this, this.qExp)
                     }
+                    qExp = 0
                 }
                 return this
             }

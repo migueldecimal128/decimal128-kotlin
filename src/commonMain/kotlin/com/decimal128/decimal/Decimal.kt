@@ -115,8 +115,7 @@ class Decimal private constructor(
         private const val NINES_38_BITLEN = 127
 
 
-
-
+        fun zero(sign: Boolean): Decimal = if (sign) NEG_ZEROe0 else POS_ZEROe0
 
         fun newZero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
             if (qExp == 0)

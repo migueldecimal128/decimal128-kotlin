@@ -82,6 +82,7 @@ data class DectestCase1(
             "inexact" to DecException.INEXACT,
 
             "division_undefined" to DecException.INVALID_OPERATION,
+            "division_impossible" to DecException.INVALID_OPERATION,
         )
 
         private fun allocDecContext(dectestEnv: DectestEnv): DecContext {

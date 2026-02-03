@@ -4,6 +4,7 @@ import com.decimal128.decimal.addImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.divImpl
+import com.decimal128.decimal.divIntImpl
 import com.decimal128.decimal.mulImpl
 import com.decimal128.decimal.subImpl
 
@@ -92,6 +93,26 @@ class TestDecBasicArithmetic {
             "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
             "dqdiv783 divide  Inf  -0     -> -Infinity",
             "dqdiv781 divide  Inf  -1000  -> -Infinity",
+        )
+    )
+
+    @Test
+    fun testDivideInt() = runBinaryDecimalCtxOp(
+        "dqDivideInt.dectest",
+        "divideint",
+        ::divIntImpl,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testDivideIntCases() = runBinaryDecimalCtxOp(
+        ::divIntImpl,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqdvi274 divideint 9e384    1       -> NaN Division_impossible",
         )
     )
 

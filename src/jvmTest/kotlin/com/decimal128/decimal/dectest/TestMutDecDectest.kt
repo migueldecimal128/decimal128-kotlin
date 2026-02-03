@@ -273,22 +273,6 @@ class TestMutDecDectest {
         "dqrmn1000 remaindernear 10  # -> NaN Invalid_operation",
         "dqrmn1001 remaindernear  # 10 -> NaN Invalid_operation",
 
-        "dqdvi274 divideint 9e384    1       -> NaN Division_impossible",
-        "dqdvi275 divideint 9.9e384  1       -> NaN Division_impossible",
-        "dqdvi276 divideint 9.99e384 1       -> NaN Division_impossible",
-        "dqdvi277 divideint 9.999999999999999e384 1 -> NaN Division_impossible",
-
-        "dqdvi280 divideint 0.1 9e-383       -> NaN Division_impossible",
-        "dqdvi281 divideint 0.1 99e-383      -> NaN Division_impossible",
-        "dqdvi282 divideint 0.1 999e-383     -> NaN Division_impossible",
-        "dqdvi283 divideint 0.1 9e-382       -> NaN Division_impossible",
-        "dqdvi284 divideint 0.1 99e-382      -> NaN Division_impossible",
-        "dqdvi332  divideint  1234567987654321987654321890123456   0.1  ->  NaN Division_impossible",
-        "dqdvi333  divideint  1234567987654321987654321890123456   0.01 ->  NaN Division_impossible",
-        "dqdvi1051 divideint  1e+277  1e-311 ->  NaN Division_impossible",
-        "dqdvi1052 divideint  1e+277 -1e-311 ->  NaN Division_impossible",
-        "dqdvi1053 divideint -1e+277  1e-311 ->  NaN Division_impossible",
-        "dqdvi1054 divideint -1e+277 -1e-311 ->  NaN Division_impossible",
         "dqdvi900 divideint  10  # -> NaN Invalid_operation",
         "dqdvi901 divideint   # 10 -> NaN Invalid_operation",
 

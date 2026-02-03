@@ -19,8 +19,8 @@ internal fun divImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         FNZ_FNZ -> throw IllegalStateException()
         FNZ_INF -> newZero(x.sign xor y.sign, ctx.qTiny, ctx)
 
-        INF_ZER -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
-        INF_FNZ -> if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
+        INF_ZER -> Decimal.infinity(x.sign xor y.sign)
+        INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
         INF_INF -> divInfInf(x, y, ctx)
 
         NAN_FOUND -> nanOperandFound(x, y, ctx)
@@ -44,3 +44,35 @@ private fun divFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val quotient = ctx.decTemps.mdecResult.setDiv(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
+
+internal fun divIntImpl(x: Decimal, y: Decimal): Decimal =
+    divIntImpl(x, y, DecContext.current())
+
+internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    return if (bothFnz(x, y)) {
+        divIntFnzFnz(x, y, ctx)
+    } else when (BinopSignature.of(x, y)) {
+        ZER_ZER -> divZeroZero(x, y, ctx)
+        ZER_FNZ -> Decimal.zero(x.sign xor y.sign)
+        ZER_INF -> Decimal.zero(x.sign xor y.sign)
+
+        FNZ_ZER -> divFnzZero(x, y, ctx)
+        FNZ_FNZ -> throw IllegalStateException()
+        FNZ_INF -> Decimal.zero(x.sign xor y.sign)
+
+        INF_ZER -> Decimal.infinity(x.sign xor y.sign)
+        INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
+        INF_INF -> divInfInf(x, y, ctx)
+
+        NAN_FOUND -> nanOperandFound(x, y, ctx)
+    }
+    // otherwise, divInt() == div()
+}
+
+private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val dividend = ctx.decTemps.mdecArg1.set(x)
+    val divisor = ctx.decTemps.mdecArg2.set(y)
+    val quotient = ctx.decTemps.mdecResult.setDivInt(dividend, divisor, ctx)
+    return Decimal.from(quotient)
+}
+
