@@ -1,13 +1,11 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.copySignImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryBooleanOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
-import com.decimal128.decimal.intel.IntelRunner1.runBinaryDecimalOp
 
 class TestDecNoncomputational {
 
@@ -16,6 +14,7 @@ class TestDecNoncomputational {
     @Test
     fun testAbs() = runUnaryDecimalOp(
         "dqAbs.dectest",
+        "abs",
         Decimal::abs,
         verbose = verbose,
         skip = true,
@@ -43,6 +42,7 @@ class TestDecNoncomputational {
     @Test
     fun testMinus() = runUnaryDecimalOp(
         "dqMinus.dectest",
+        "minus",
         Decimal::negate,
         verbose = verbose,
         skip = true,
@@ -69,6 +69,7 @@ class TestDecNoncomputational {
     @Test
     fun testCopyNegate() = runUnaryDecimalOp(
         "dqCopyNegate.dectest",
+        "copynegate",
         Decimal::negate,
         verbose = verbose,
         skip = true,
@@ -79,6 +80,7 @@ class TestDecNoncomputational {
     @Test
     fun testCopySign() = runBinaryDecimalOp(
         "dqCopySign.dectest",
+        "copysign",
         Decimal::copySign,
         verbose = verbose,
         skip = true,
@@ -89,6 +91,7 @@ class TestDecNoncomputational {
     @Test
     fun testCopy() = runUnaryDecimalOp(
         "dqCopy.dectest",
+        "copy",
         Decimal::copy,
         verbose = verbose,
     )
@@ -96,6 +99,7 @@ class TestDecNoncomputational {
     @Test
     fun testTotalOrder() = runBinaryIntOp(
         "dqCompareTotal.dectest",
+        "comparetotal",
         Decimal::compareTotalOrderTo,
         verbose = verbose,
         skip = true,
@@ -108,6 +112,7 @@ class TestDecNoncomputational {
     @Test
     fun testTotalOrderMag() = runBinaryIntOp(
         "dqCompareTotalMag.dectest",
+        "comparetotalMag",
         Decimal::compareTotalOrderMagTo,
         verbose = verbose,
         skip = true,
@@ -120,9 +125,17 @@ class TestDecNoncomputational {
     @Test
     fun testSameQuantum() = runBinaryBooleanOp(
         "dqSameQuantum.dectest",
+        "samequantum",
         Decimal::sameQuantum,
         verbose = verbose
     )
 
+    @Test
+    fun testEncode() = runUnaryDecimalOp(
+        "dqEncode.dectest",
+        "apply",
+        Decimal::copy,
+        verbose = verbose,
+    )
 }
 

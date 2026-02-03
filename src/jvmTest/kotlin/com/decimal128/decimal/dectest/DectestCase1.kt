@@ -4,6 +4,7 @@ import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecFlags
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.MutDec
 
 data class DectestCase1(
     val text: String,
@@ -219,7 +220,19 @@ data class DectestCase1(
         }
 
         fun parseDpd128(str: String): Decimal {
+            if (str.startsWith('#')) {
+                require(str.length == 33)
+                val hi = hexStringToLong(str.substring(1, 17))
+                val lo = hexStringToLong(str.substring(17, 33))
+                val dpd = MutDec().setDpd128(hi, lo)
+                return Decimal.from(dpd)
+            }
             return Decimal.from(str)
+        }
+
+        fun hexStringToLong(hex: String): Long {
+            require(hex.length == 16)
+            return hex.toULong(16).toLong()
         }
 
         fun conditionsToDecFlags(conditions: List<String>): DecFlags {
