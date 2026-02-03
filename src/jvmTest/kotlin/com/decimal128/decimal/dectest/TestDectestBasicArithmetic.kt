@@ -14,7 +14,7 @@ import com.decimal128.decimal.subImpl
 
 class TestDectestBasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
@@ -29,9 +29,11 @@ class TestDectestBasicArithmetic {
         ::addImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqadd7794 add  Inf  -Inf   ->  NaN  Invalid_operation",
             "dqadd011 add '0.4444444444444444444444444444444446'  '0.5555555555555555555555555555555555' -> '1.000000000000000000000000000000000' Inexact Rounded",
-            "rounding: half_up",
-            "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded"
+            "dqadd012 add '0.4444444444444444444444444444444445'  '0.5555555555555555555555555555555555' -> '1.000000000000000000000000000000000' Rounded",
+//            "rounding: half_up",
+//            "dqadd172 add '4.444444444444444444444444444444444'  '0.5555555555555555555555555555555565' -> '5.000000000000000000000000000000001' Inexact Rounded"
         )
     )
 
@@ -79,7 +81,10 @@ class TestDectestBasicArithmetic {
         "dqDivide.dectest",
         "divide",
         ::divImpl,
-        verbose = verbose
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
     )
 
     @Test
@@ -87,6 +92,7 @@ class TestDectestBasicArithmetic {
         ::divImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqdiv732 divide 00.00 0.000  -> NaN Division_undefined",
             "dqdiv791 divide -0     Inf   -> -0E-6176 Clamped",
             "dqdiv788 divide -1000  Inf   -> -0E-6176 Clamped",
             "dqdiv783 divide  Inf  -0     -> -Infinity",

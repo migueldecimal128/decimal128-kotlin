@@ -31,7 +31,7 @@ private fun mulZero(x: Decimal, y: Decimal, env: DecContext): Decimal =
     Decimal.newZero(x.sign xor y.sign, x.qExp + y.qExp, env)
 
 private fun mulInfZero(x: Decimal, y: Decimal, env: DecContext): Decimal =
-    env.signal(DecExceptionReason.MULTIPLICATION_OF_ZERO_BY_INFINITY)
+    env.signalInvalid(Decimal.NaN)
 
 private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecContext): Decimal =
     if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY

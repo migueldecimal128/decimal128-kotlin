@@ -52,7 +52,7 @@ internal fun subImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     }
 }
 
-private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
+private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
     // Both operands are zero. This is where the special rules apply.
     if (x.sign == ySign) {
         // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
@@ -60,7 +60,7 @@ private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext)
     }
     // Rule: (+0) + (-0). The signs are different.
     // Result is +0 unless rounding is roundTowardNegative.
-    val isRoundTowardNegative = env.isRoundTowardNegative()
+    val isRoundTowardNegative = ctx.isRoundTowardNegative()
     var qMin = x.qExp
     if (x.qExp <= y.qExp) {
         if (x.sign == isRoundTowardNegative)
@@ -70,35 +70,35 @@ private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext)
             return y
         qMin = y.qExp
     }
-    return Decimal.newZero(env.isRoundTowardNegative(), qMin, env)
+    return Decimal.newZero(ctx.isRoundTowardNegative(), qMin, ctx)
 }
 
-private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal =
+private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal =
     if (x.sign == ySign)
         x
     else
-        env.signal(DecExceptionReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
+        ctx.signalInvalid(Decimal.NaN)
 
-private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext) =
+private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext) =
     if (x.qExp == y.qExp)
-        addFnzFnzUnscaled(x, ySign, y, env)
+        addFnzFnzUnscaled(x, ySign, y, ctx)
     else
-        addFnzFnzScaled(x, ySign, y, env)
+        addFnzFnzScaled(x, ySign, y, ctx)
 
-private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
+private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
     if (x.sign == ySign)
-        return addUnscaledMagnitudes(ySign, x, y, env)
+        return addUnscaledMagnitudes(ySign, x, y, ctx)
     val cmp = c128UnscaledCompare(x, y)
     return when {
         (cmp > 0) -> C128AddSub.c128UnscaledSub(x.sign, x, y)
         (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
-        else -> Decimal.newZero(env.isRoundTowardNegative(), x.qExp, env)
+        else -> Decimal.newZero(ctx.isRoundTowardNegative(), x.qExp, ctx)
     }
 }
 
-private fun addUnscaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, env: DecContext): Decimal {
+private fun addUnscaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val sumBitLen = max(x.bitLen, y.bitLen) + 1
-    val sum = if (sumBitLen < env.decFormat.maxBitLen) {
+    val sum = if (sumBitLen < ctx.decFormat.maxBitLen) {
         val x0 = x.dw0
         val y0 = y.dw0
         val s0 = x0 + y0
@@ -108,55 +108,55 @@ private fun addUnscaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, e
         val s1 = x1 + y1 + carry0
         Decimal.from(resultSign, s1, s0, x.qExp)
     } else {
-        val m = env.decTemps.mdecArg1.set(x)
+        val m = ctx.decTemps.mdecArg1.set(x)
         m.sign = resultSign
-        val n = env.decTemps.mdecArg2.set(y)
+        val n = ctx.decTemps.mdecArg2.set(y)
         n.sign = resultSign
-        val mdecSum = env.decTemps.mdecResult.setAdd(m, n, env)
+        val mdecSum = ctx.decTemps.mdecResult.setAdd(m, n, ctx)
         Decimal.from(mdecSum)
     }
     return sum
 }
 
-private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
+private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
     if (x.sign == ySign)
-        return addScaledMagnitudes(ySign, x, y, env)
+        return addScaledMagnitudes(ySign, x, y, ctx)
     // signs differ ... subtract scaled magnitudes
     val cmpMag = x.magnitudeCompareTo(y)
     return when {
-        cmpMag > 0 -> subScaledMagnitudes(x.sign, x, y, env)
-        cmpMag < 0 -> subScaledMagnitudes(ySign, y, x, env)
-        else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp), env)
+        cmpMag > 0 -> subScaledMagnitudes(x.sign, x, y, ctx)
+        cmpMag < 0 -> subScaledMagnitudes(ySign, y, x, ctx)
+        else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp), ctx)
     }
 }
 
-private fun addScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, env: DecContext): Decimal {
+private fun addScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val flip = x.qExp > y.qExp
     val m = if (flip) x else y
     val n = if (flip) y else x
     val qDelta = m.qExp - n.qExp
     verify { qDelta >= 0 }
-    val headroom = env.precision - m.digitLen
+    val headroom = ctx.precision - m.digitLen
     return if (qDelta <= headroom) {
         // we can resolve this in our D128 world
         val shiftLeft = min(qDelta, headroom)
         D128Pow10.fmaCoeffPow10(resultSign, m, shiftLeft, n)
     } else {
-        fullWidthAdd(resultSign, x, resultSign, y, env)
+        fullWidthAdd(resultSign, x, resultSign, y, ctx)
     }
 }
 
-private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, env: DecContext): Decimal {
-    val arg1 = env.decTemps.mdecArg1.set(x)
+private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
+    val arg1 = ctx.decTemps.mdecArg1.set(x)
     arg1.sign = xSign
-    val arg2 = env.decTemps.mdecArg2.set(y)
+    val arg2 = ctx.decTemps.mdecArg2.set(y)
     arg2.sign = ySign
-    val mdecSum = env.decTemps.mdecResult.setAdd(arg1, arg2, env)
+    val mdecSum = ctx.decTemps.mdecResult.setAdd(arg1, arg2, ctx)
     val sum = Decimal.from(mdecSum)
     return sum
 }
 
-private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, env: DecContext): Decimal {
+private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
     // non-zero with different signs ... subtract magnitudes
     verify { m.magnitudeCompareTo(s) > 0 }
     verify { s.isNotZero() }
@@ -170,7 +170,7 @@ private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, env: DecC
         return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
     } else {
         // |m| > |s| && m.qExp > s.qExp
-        val headroom = env.precision - m.digitLen
+        val headroom = ctx.precision - m.digitLen
         val qDelta = m.qExp - s.qExp
         if (headroom >= qDelta) {
             // 12E3, -4
@@ -188,6 +188,6 @@ private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, env: DecC
         }
 
     }
-    return fullWidthAdd(sign, m, !sign, s, env)
+    return fullWidthAdd(sign, m, !sign, s, ctx)
 }
 

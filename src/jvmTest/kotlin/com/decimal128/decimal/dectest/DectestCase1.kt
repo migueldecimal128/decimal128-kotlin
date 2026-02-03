@@ -14,10 +14,11 @@ data class DectestCase1(
     val operand3Str: String?,
     val resultStr: String,
     val conditions: List<String>,
-    val env: DectestEnv,
+    val dectestEnv: DectestEnv,
+    val expectedDecFlags: DecFlags,
+    val decContext: DecContext,
 ) {
 
-    val decFlags: DecFlags = conditionsToDecFlags(conditions)
 
     val operand1: Decimal
         get() = parseDpd128(operand1Str)
@@ -50,16 +51,6 @@ data class DectestCase1(
             else -> throw IllegalArgumentException("expected 0/1 boolean:$resultStr")
         }
 
-    val decContext: DecContext
-        get() {
-            require(env.precision == 34)
-            require(env.maxExp == 6144)
-            require(env.minExp == -6143)
-            require(env.rounding != null)
-            return DecContext.DECIMAL128.with(env.rounding)
-        }
-
-
     companion object {
 
         // --- Precompiled regexes for efficiency ---
@@ -89,8 +80,18 @@ data class DectestCase1(
             "overflow" to DecException.OVERFLOW,
             "underflow" to DecException.UNDERFLOW,
             "inexact" to DecException.INEXACT,
+
+            "division_undefined" to DecException.INVALID_OPERATION,
         )
 
+        private fun allocDecContext(dectestEnv: DectestEnv): DecContext {
+            require(dectestEnv.precision == 34)
+            require(dectestEnv.maxExp == 6144)
+            require(dectestEnv.minExp == -6143)
+            require(dectestEnv.rounding != null)
+            val decContext = DecContext(decRounding = dectestEnv.rounding)
+            return decContext
+        }
 
         /**
          * Parse a single decTest test case line into a DectestCase object.
@@ -125,7 +126,7 @@ data class DectestCase1(
 
             val conditions =
                 rhs.split(Regex("""\s+"""))
-                    .filter { it in CONDITION_SET }
+                    .filter { it.lowercase() in CONDITION_SET }
 
             return DectestCase1(
                 text = text,
@@ -136,7 +137,9 @@ data class DectestCase1(
                 operand3Str = operand3,
                 resultStr = result,
                 conditions = conditions,
-                env = env
+                dectestEnv = env,
+                expectedDecFlags = conditionsToDecFlags(conditions),
+                decContext = allocDecContext(env)
             )
         }
 
@@ -221,7 +224,7 @@ data class DectestCase1(
         fun conditionsToDecFlags(conditions: List<String>): DecFlags {
             val decFlags = DecFlags()
             for (condition in conditions) {
-                val decException = mapConditionDecException[condition]
+                val decException = mapConditionDecException[condition.lowercase()]
                 if (decException != null)
                     decFlags.set(decException)
             }

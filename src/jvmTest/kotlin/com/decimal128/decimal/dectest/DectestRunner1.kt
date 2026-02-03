@@ -244,8 +244,8 @@ object DectestRunner1 {
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )
-//            assertEquals(decCtx.decFlags, tc.decFlags,
-//                "flags mismatch expected=${tc.decFlags} observed=${decCtx.decFlags}")
+            assertEquals(tc.expectedDecFlags, decCtx.decFlags,
+                "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}")
         }
     }
 
@@ -290,6 +290,8 @@ object DectestRunner1 {
             assertEquals(expected, observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )
+            assertEquals(tc.expectedDecFlags, decCtx.decFlags,
+                "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}")
         }
     }
 
@@ -334,8 +336,9 @@ object DectestRunner1 {
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )
+            assertEquals(tc.expectedDecFlags, decCtx.decFlags,
+                "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}")
         }
     }
-
 
 }

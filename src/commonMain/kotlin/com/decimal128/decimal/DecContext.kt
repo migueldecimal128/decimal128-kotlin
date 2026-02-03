@@ -90,6 +90,15 @@ data class DecContext(
         return mutDec.set(decTraps.signal(trapContext))
     }
 
+    fun signal(decException: DecException, decExceptionReason: DecExceptionReason): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
+            decFlags.set(decException)
+            return Decimal.NaN
+        }
+        val trapContext = DecExceptionContext(decException, decExceptionReason, "filler", this)
+        return decTraps.signal(trapContext)
+    }
+
     fun signal(decExceptionReason: DecExceptionReason): Decimal {
         // TODO
         return Decimal.NaN
@@ -127,6 +136,14 @@ data class DecContext(
             return mutDec
         }
         return signal(DIV_BY_ZERO, OTHER, "whatever", mutDec)
+    }
+
+    fun signalDivByZero(dec: Decimal): Decimal {
+        if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
+            decFlags.set(DIV_BY_ZERO)
+            return dec
+        }
+        return signal(DIV_BY_ZERO, OTHER, "whatever", dec)
     }
 
     fun signalDivByZero(sign: Boolean): Decimal {
