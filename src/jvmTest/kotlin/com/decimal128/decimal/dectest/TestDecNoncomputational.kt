@@ -1,10 +1,13 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.copySignImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryBooleanOp
+import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
+import com.decimal128.decimal.intel.IntelRunner1.runBinaryDecimalOp
 
 class TestDecNoncomputational {
 
@@ -60,6 +63,26 @@ class TestDecNoncomputational {
             "dqmns113 minus       0E+4   -> 0E+4",
             "dqmns115 minus     0.0000   -> 0.0000",
             "dqmns117 minus      0E-141  -> 0E-141",
+        )
+    )
+
+    @Test
+    fun testCopyNegate() = runUnaryDecimalOp(
+        "dqCopyNegate.dectest",
+        Decimal::negate,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testCopySign() = runBinaryDecimalOp(
+        "dqCopySign.dectest",
+        Decimal::copySign,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
         )
     )
 

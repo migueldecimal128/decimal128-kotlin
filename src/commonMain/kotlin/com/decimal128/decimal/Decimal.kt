@@ -653,10 +653,13 @@ class Decimal private constructor(
         return when {
             qExp < NON_FINITE_INF -> Decimal(dw1, dw0, packedLengths, (signExp.toInt() xor 0x8000).toShort())
             qExp == NON_FINITE_INF -> if (sign) POS_INFINITY else NEG_INFINITY
-            qExp == NON_FINITE_QNAN -> qNaN(! sign)
-            else -> sNaN(! sign)
+            qExp == NON_FINITE_QNAN -> qNaN(! sign, dw1, dw0)
+            else -> sNaN(! sign, dw1, dw0)
         }
     }
+
+    fun copySign(signDonor: Decimal): Decimal =
+        if (this.sign == signDonor.sign) this else this.negate()
 
     internal fun validate(): Boolean {
         if (bitLen != calcBitLen128(dw1, dw0))
