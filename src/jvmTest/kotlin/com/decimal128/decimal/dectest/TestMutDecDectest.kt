@@ -12,8 +12,8 @@ import kotlin.test.assertEquals
 
 class TestMutDecDectest {
 
-    private val veryVerbose = true
-    private val verbose = true
+    private val veryVerbose = false
+    private val verbose = false
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -81,8 +81,6 @@ class TestMutDecDectest {
     )
 
     val ignoredCases = arrayOf(
-        "dqabs900 abs  # -> NaN Invalid_operation", // IEEE says to ignore abs sign change
-
         "dqabs526 abs  -NaN22  -> -NaN22",
         "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
         "dqabs523 abs  sNaN    ->  NaN   Invalid_operation",
@@ -103,13 +101,7 @@ class TestMutDecDectest {
         "dqmns113 minus       0E+4   -> 0E+4",
         "dqmns115 minus     0.0000   -> 0.0000",
         "dqmns117 minus      0E-141  -> 0E-141",
-        "dqcot9990 comparetotal 10  # -> NaN Invalid_operation",
-        "dqcot9991 comparetotal  # 10 -> NaN Invalid_operation",
-        "dqctm9990 comparetotmag 10  # -> NaN Invalid_operation",
-        "dqctm9991 comparetotmag  # 10 -> NaN Invalid_operation",
-        "dqfma2990 fma  10  #   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
-        "dqfma2991 fma   # 10   0e+6144  -> NaN Invalid_operation",// # is null ... so Invalid
-        "dqlogb900  logb #   -> NaN Invalid_operation",
+
         // dectest was done before ieee754-2019, which redefined this
         // note that Colishaw decTest is using "max" for "maximumNumber"
         "dqmax161 max  sNaN -Inf   ->  NaN  Invalid_operation",
@@ -132,8 +124,6 @@ class TestMutDecDectest {
         "dqmax196 max -Inf    sNaN92  ->  NaN92 Invalid_operation",
         "dqmax197 max  0      sNaN91  ->  NaN91 Invalid_operation",
         "dqmax198 max  Inf   -sNaN90  -> -NaN90 Invalid_operation",
-        "dqmax900 max 10  #  -> NaN Invalid_operation",
-        "dqmax901 max  # 10  -> NaN Invalid_operation",
 
         "dqmxg161 maxmag  sNaN -Inf   ->  NaN  Invalid_operation",
         "dqmxg162 maxmag  sNaN -1000  ->  NaN  Invalid_operation",
@@ -157,9 +147,6 @@ class TestMutDecDectest {
         "dqmxg197 maxmag  0      sNaN91  ->  NaN91 Invalid_operation",
         "dqmxg198 maxmag  Inf   -sNaN90  -> -NaN90 Invalid_operation",
 
-        "dqmxg900 maxmag 10  #  -> NaN Invalid_operation",
-        "dqmxg901 maxmag  # 10  -> NaN Invalid_operation",
-
         "dqmin161 min  sNaN -Inf   ->  NaN  Invalid_operation",
         "dqmin162 min  sNaN -1000  ->  NaN  Invalid_operation",
         "dqmin163 min  sNaN -1     ->  NaN  Invalid_operation",
@@ -182,9 +169,6 @@ class TestMutDecDectest {
         "dqmin197 min  088    sNaN91  ->  NaN91 Invalid_operation",
         "dqmin198 min  Inf   -sNaN90  -> -NaN90 Invalid_operation",
 
-        "dqmin900 min 10  # -> NaN Invalid_operation",
-        "dqmin901 min  # 10 -> NaN Invalid_operation",
-
         "dqmng161 minmag  sNaN -Inf   ->  NaN  Invalid_operation",
         "dqmng162 minmag  sNaN -1000  ->  NaN  Invalid_operation",
         "dqmng163 minmag  sNaN -1     ->  NaN  Invalid_operation",
@@ -206,13 +190,6 @@ class TestMutDecDectest {
         "dqmng196 minmag -Inf    sNaN92  ->  NaN92 Invalid_operation",
         "dqmng197 minmag  088    sNaN91  ->  NaN91 Invalid_operation",
         "dqmng198 minmag  Inf   -sNaN90  -> -NaN90 Invalid_operation",
-
-        "dqmng900 minmag 10  # -> NaN Invalid_operation",
-        "dqmng901 minmag  # 10 -> NaN Invalid_operation",
-
-        "dqnextm900 nextminus  # -> NaN Invalid_operation",
-
-        "dqnextp900 nextplus  # -> NaN Invalid_operation",
 
         "dqscb018 scaleb  10  Infinity -> NaN Invalid_operation",
         "dqscb019 scaleb  10 -Infinity -> NaN Invalid_operation",
@@ -270,12 +247,6 @@ class TestMutDecDectest {
         "dqrmn1053 remaindernear -1e+277  1e-311 ->  NaN Division_impossible",
         "dqrmn1054 remaindernear -1e+277 -1e-311 ->  NaN Division_impossible",
 
-        "dqrmn1000 remaindernear 10  # -> NaN Invalid_operation",
-        "dqrmn1001 remaindernear  # 10 -> NaN Invalid_operation",
-
-        "dqdvi900 divideint  10  # -> NaN Invalid_operation",
-        "dqdvi901 divideint   # 10 -> NaN Invalid_operation",
-
         "dqrem421 remainder   1E+6144        1  ->   NaN Division_impossible",
         "dqrem772  remainder  1234568888888887777777777890123456   0.1  ->  NaN Division_impossible",
         "dqrem773  remainder  1234568888888887777777777890123456   0.01 ->  NaN Division_impossible",
@@ -283,9 +254,6 @@ class TestMutDecDectest {
         "dqrem1052 remainder  1e+277 -1e-311 ->  NaN Division_impossible",
         "dqrem1053 remainder -1e+277  1e-311 ->  NaN Division_impossible",
         "dqrem1054 remainder -1e+277 -1e-311 ->  NaN Division_impossible",
-
-        "dqrem1000 remainder 10  # -> NaN Invalid_operation",
-        "dqrem1001 remainder  # 10 -> NaN Invalid_operation",
 
     )
 
@@ -585,6 +553,9 @@ class TestMutDecDectest {
         val operand1 = lhsTokens.getOrElse(2) { "" }
         val operand2 = lhsTokens.getOrElse(3) { "" }
         val operand3 = lhsTokens.getOrElse(4) { "" }
+
+        if (operand1 == "#" || operand2 == "#" || operand3 == "#")
+            return false // these are null pointer references in the Colishaw world
 
         val result = rhsTokens.getOrElse(0) { "" }
         val conditions = rhsTokens.drop(1).toTypedArray()
