@@ -23,7 +23,7 @@ private val mapToDecimal: Array<Decimal> =
 internal fun cmpImpl(x: Decimal, y: Decimal): Decimal =
     cmpImpl(x, y, DecContext.current())
 
-fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (hasNaN(x, y))
         return nanOperandFound(x, y, ctx)
     if (x.isZero() && y.isZero())
@@ -84,6 +84,15 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
             return ucmp128_128x64(x.dw1, x.dw0, y.dw1, y.dw0, dw0Pow10)
         return ucmp128_128x64(x.dw1, x.dw0, dw1Pow10, dw0Pow10, y.dw0)
     }
+}
+
+internal fun cmpSignalingImpl(x: Decimal, y: Decimal): Decimal =
+    cmpSignalingImpl(x, y, DecContext.current())
+
+internal fun cmpSignalingImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    if (hasNaN(x, y))
+        return nanOperandFoundSignaling(x, y, ctx)
+    return cmpImpl(x, y, ctx)
 }
 
 internal fun cmpMagnitudeImpl(x: Decimal, y: Decimal): Decimal =
