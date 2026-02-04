@@ -350,7 +350,7 @@ object D128ParsePrint {
                 return "out of decimal128 range"
             else if (allowOversizeCoefficient && overage > 38 - digitLen)
                 return "out of decimal128_extended range"
-            val (t1, t0) = DecPow10.umul128Pow10(dw1T, dw0T, overage)
+            val (t1, t0) = umul128xPow10to128(dw1T, dw0T, overage)
             dw1T = t1
             dw0T = t0
             qExp = DECIMAL128_QMAX_6111

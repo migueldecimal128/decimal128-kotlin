@@ -906,7 +906,7 @@ class Decimal private constructor(
                         // oops ... we removed too many trailing zeros and pushed qExp too hi
                         // give back some zeros to bring down qExp
                         val giveBack = ntzd - maxNtzdClamp
-                        val (t1, t0) = DecPow10.umul128Pow10(r1, r0, giveBack)
+                        val (t1, t0) = umul128xPow10to128(r1, r0, giveBack)
                         r1 = t1
                         r0 = t0
                         rQExp = DECIMAL128_QMAX_6111
