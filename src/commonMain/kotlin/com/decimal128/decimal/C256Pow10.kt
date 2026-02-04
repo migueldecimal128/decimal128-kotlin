@@ -226,6 +226,7 @@ internal fun pow10_128(pow10: Int): Pair<Long, Long> {
     return POW10[MIN_POW10_DIGIT_LEN_128 + 2*t + 1] to POW10[MIN_POW10_DIGIT_LEN_128 + 2*t]
 }
 
+
 internal fun getPow10Info128(pow10: Int): Triple<Int, Long, Long> {
     val pow10BitLen = pow10BitLen(pow10)
     val pow10Offset = pow10Offset(pow10)

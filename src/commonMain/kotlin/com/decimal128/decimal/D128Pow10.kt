@@ -4,10 +4,7 @@ object D128Pow10 {
 
     fun scaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negate: Boolean = false): Decimal {
         verify { pow10 > 0 }
-        val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
-        val dw0Pow10 = POW10[pow10Offset + 0]
-        val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
+        val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
         val p0 = x.dw0 * dw0Pow10
         val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
         return Decimal(xSign, p1, p0, x.qExp - pow10)
@@ -15,10 +12,7 @@ object D128Pow10 {
 
     fun fmaCoeffPow10(xSign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
         verify { pow10 > 0 }
-        val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
-        val dw0Pow10 = POW10[pow10Offset + 0]
-        val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
+        val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
         val p0 = x.dw0 * dw0Pow10
         val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
 
@@ -35,10 +29,7 @@ object D128Pow10 {
      */
     fun fusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
         verify { pow10 > 0 }
-        val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
-        val dw0Pow10 = POW10[pow10Offset + 0]
-        val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
+        val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
         val p0 = x.dw0 * dw0Pow10
         val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
 
@@ -55,10 +46,7 @@ object D128Pow10 {
      */
     fun fusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, pow10: Int): Decimal {
         verify { pow10 > 0 }
-        val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10)
-        val dw0Pow10 = POW10[pow10Offset + 0]
-        val dw1Pow10 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
+        val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
         val p0 = n.dw0 * dw0Pow10
         val p1 = unsignedMulHi(n.dw0, dw0Pow10) + (n.dw0 * dw1Pow10) + (n.dw1 * dw0Pow10)
 
