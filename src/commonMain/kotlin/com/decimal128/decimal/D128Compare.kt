@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -45,11 +46,9 @@ object D128Compare {
         if (cmpSci != 0)
             return cmpSci
         val qDelta = x.qExp - y.qExp
-        val qDeltaAbs = kotlin.math.abs(qDelta)
+        val qDeltaAbs = abs(qDelta)
         val pow10BitLen = pow10BitLen(qDeltaAbs)
-        val pow10Offset = pow10Offset(qDeltaAbs)
-        val dw0Pow10 = POW10[pow10Offset]
-        val dw1Pow10 = POW10[pow10Offset + 1]
+        val (dw1Pow10, dw0Pow10) = pow10_128(qDeltaAbs)
         if (qDelta > 0) {
             // x.qExp is larger
             // scale up x.coefficient

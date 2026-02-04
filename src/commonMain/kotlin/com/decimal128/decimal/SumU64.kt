@@ -606,9 +606,7 @@ fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int): Int {
     if (pow10 < MIN_POW10_DIGIT_LEN_128)
         return ucmp128_128x64(x1, x0, y1, y0, POW10[pow10])
     verify { y1 == 0L }
-    val pow10Offset = pow10Offset(pow10)
-    val p0 = POW10[pow10Offset]
-    val p1 = POW10[pow10Offset + 1]
+    val (p1, p0) = pow10_128(pow10)
     return ucmp128_128x64(x1, x0, p1, p0, y0)
 }
 

@@ -213,6 +213,19 @@ internal fun getPow10Dw0(pow10: Int): Long = POW10[pow10Offset(pow10)]
 internal fun getPow10Dw1(pow10: Int): Long =
     if (pow10 < MIN_POW10_DIGIT_LEN_128) 0L else POW10[pow10Offset(pow10) + 1]
 
+internal fun pow10_64(pow10: Int): Long {
+    verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
+    return POW10[pow10]
+}
+
+internal fun pow10_128(pow10: Int): Pair<Long, Long> {
+    verify { pow10 < MIN_POW10_DIGIT_LEN_192 }
+    val t = pow10 - MIN_POW10_DIGIT_LEN_128
+    if (t < 0)
+        return 0L to POW10[pow10]
+    return POW10[MIN_POW10_DIGIT_LEN_128 + 2*t + 1] to POW10[MIN_POW10_DIGIT_LEN_128 + 2*t]
+}
+
 internal fun getPow10Info128(pow10: Int): Triple<Int, Long, Long> {
     val pow10BitLen = pow10BitLen(pow10)
     val pow10Offset = pow10Offset(pow10)
@@ -352,9 +365,7 @@ internal fun compareWithHalfPow10_1(dw0: Long, pow10: Int): Int {
 
 internal fun compareWithHalfPow10_2(dw1: Long, dw0: Long, pow10: Int): Int {
     verify { pow10 >= MIN_POW10_DIGIT_LEN_128 && pow10 < MIN_POW10_DIGIT_LEN_192 }
-    val pow10Offset = pow10Offset(pow10)
-    val pow10Dw0 = POW10[pow10Offset + 0]
-    val pow10Dw1 = POW10[pow10Offset + 1]
+    val (pow10Dw1, pow10Dw0) = pow10_128(pow10)
     val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
     val halfPow10Dw1 = pow10Dw1 ushr 1
     val cmp0 = unsignedCmp(dw0, halfPow10Dw0)

@@ -371,9 +371,7 @@ internal fun c256ScaledEQ(x: C256, y: C256, pow10Delta: Int): Boolean {
     val x1 = x.dw1
     val y0 = y.dw0
     val y1 = y.dw1
-    val pow10Offset = pow10Offset(pow10Delta)
-    val pow10dw0 = POW10[(pow10Offset + 0) and 0x3F]
-    val pow10dw1 = POW10[(pow10Offset + 1) and 0x3F]
+    val (pow10dw1, pow10dw0) = pow10_128(pow10Delta)
     if (x.bitLen <= 128) {
         val ret = when {
             y.bitLen <= 64 && pow10BitLen <= 64 ->

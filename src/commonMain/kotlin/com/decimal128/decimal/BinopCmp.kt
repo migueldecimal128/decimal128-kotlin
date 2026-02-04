@@ -16,6 +16,7 @@ import com.decimal128.decimal.Decimal.Companion.POS_ONE
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import com.decimal128.decimal.Decimal.Companion.bothFnz
 import com.decimal128.decimal.Decimal.Companion.hasNaN
+import kotlin.math.abs
 
 private val mapToDecimal: Array<Decimal> =
     arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
@@ -67,11 +68,9 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     if (cmpSci != 0)
         return cmpSci
     val qDelta = x.qExp - y.qExp
-    val qDeltaAbs = kotlin.math.abs(qDelta)
+    val qDeltaAbs = abs(qDelta)
     val pow10BitLen = pow10BitLen(qDeltaAbs)
-    val pow10Offset = pow10Offset(qDeltaAbs)
-    val dw0Pow10 = POW10[pow10Offset]
-    val dw1Pow10 = POW10[pow10Offset + 1]
+    val (dw1Pow10, dw0Pow10) = pow10_128(qDeltaAbs)
     if (qDelta > 0) {
         // x.qExp is larger
         // scale up x.coefficient
