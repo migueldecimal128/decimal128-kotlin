@@ -223,14 +223,6 @@ internal fun pow10_128(pow10: Int): Pair<Long, Long> {
 }
 
 
-internal fun getPow10Info128(pow10: Int): Triple<Int, Long, Long> {
-    val pow10BitLen = pow10BitLen(pow10)
-    val pow10Offset = pow10Offset(pow10)
-    val pow10dw0 = POW10[pow10Offset + 0]
-    val pow10dw1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
-    return Triple(pow10BitLen, pow10dw1, pow10dw0)
-}
-
 internal fun calcMinDigitLenForBitLen(bitLen: Int): Int {
     return (((bitLen - 1) * 1233) ushr 12) + 1
 }
