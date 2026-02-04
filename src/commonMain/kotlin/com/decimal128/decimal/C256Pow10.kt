@@ -209,10 +209,6 @@ internal fun pow10Offset(pow10: Int): Int {
     return offset and mask
 }
 
-internal fun getPow10Dw0(pow10: Int): Long = POW10[pow10Offset(pow10)]
-internal fun getPow10Dw1(pow10: Int): Long =
-    if (pow10 < MIN_POW10_DIGIT_LEN_128) 0L else POW10[pow10Offset(pow10) + 1]
-
 internal fun pow10_64(pow10: Int): Long {
     verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
     return POW10[pow10]
