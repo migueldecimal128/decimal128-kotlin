@@ -984,7 +984,7 @@ class MutDec() : C256() {
 
     private fun mutateNextAwayFromZero(env: DecContext) {
         val headroom = min(env.precision - digitLen, qExp - env.qTiny)
-        if (headroom > 0 && !c256IsAllNines(env.precision-1)) {
+        if (headroom > 0) {
             this.c256SetScaleUpPow10(this, headroom)
             this.qExp -= headroom
         }
