@@ -5,8 +5,12 @@ package com.decimal128.decimal
 import com.decimal128.bigint.BigInt
 import kotlin.math.max
 
-private const val POW10_DWORD_COUNT =
-    POW10_64_COUNT + 2 * POW10_128_COUNT + 3 * POW10_192_COUNT + 4 * POW10_256_COUNT
+private const val BASE_POW10_64 = 0
+private const val BASE_POW10_128 = BASE_POW10_64 + POW10_64_COUNT * 1
+private const val BASE_POW10_192 = BASE_POW10_128 + POW10_128_COUNT * 2
+private const val BASE_POW10_256 = BASE_POW10_192 + POW10_192_COUNT * 3
+
+private const val POW10_DWORD_COUNT = BASE_POW10_256 + POW10_256_COUNT * 4
 
 internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
 internal const val BARRETT_POW10_MAXX = 10
@@ -201,12 +205,20 @@ internal fun pow10PackedLengths(pow10: Int): Short {
 }
 
 internal fun pow10Offset(pow10: Int): Int {
+    /*
     val p = pow10 - 1
     val t = (p * 431) ushr 13
     val i = p - 19 * t
     val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
     val mask = -pow10 shr 31
     return offset and mask
+     */
+    return when {
+        pow10 < MIN_POW10_DIGIT_LEN_128 -> BASE_POW10_64 + pow10
+        pow10 < MIN_POW10_DIGIT_LEN_192 -> BASE_POW10_128 + 2 * (pow10 - MIN_POW10_DIGIT_LEN_128)
+        pow10 < MIN_POW10_DIGIT_LEN_256 -> BASE_POW10_192 + 3 * (pow10 - MIN_POW10_DIGIT_LEN_192)
+        else -> BASE_POW10_256 + 4 * (pow10 - MIN_POW10_DIGIT_LEN_256)
+    }
 }
 
 internal fun pow10_64(pow10: Int): Long {
