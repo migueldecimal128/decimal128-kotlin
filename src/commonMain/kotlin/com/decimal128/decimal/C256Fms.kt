@@ -215,14 +215,9 @@ internal fun c256FmsPow10(z: C256, x: C256, y: C256, pow10: Int) {
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
     verify { x.c256ScaledCompareTo(y, pow10) >= 0 }
-    val xBitLen = x.bitLen
-    val yBitLen = y.bitLen
-    val p10BitLen = pow10BitLen(pow10)
-    val pow10Offset = pow10Offset(pow10)
     val y0 = y.dw0
     val y1 = y.dw1
-    val p0 = POW10[pow10Offset + 0]
-    val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
+    val (p1, p0) = pow10_128(pow10)
 
     val pp00Hi = unsignedMulHi(y0, p0)
     val pp00Lo = y0 * p0
