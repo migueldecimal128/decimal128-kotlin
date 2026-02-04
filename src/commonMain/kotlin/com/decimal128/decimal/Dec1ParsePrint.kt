@@ -3,7 +3,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.Magia
-import com.decimal128.decimal.DecPow10.umul128Pow10
 import kotlin.math.max
 import kotlin.math.min
 
