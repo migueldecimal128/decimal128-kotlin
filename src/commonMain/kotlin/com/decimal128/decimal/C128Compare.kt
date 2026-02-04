@@ -100,5 +100,18 @@ object C128Compare {
 
      */
 
+    fun c128IsAllNines(x: Decimal, nineCount: Int): Boolean {
+        if (x.qExp >= MIN_SPECIAL_VALUE || x.digitLen != nineCount)
+            return false
+        val pow10BitLen = pow10BitLen(nineCount)
+        if (x.bitLen != pow10BitLen)
+            return false
+        val offset = pow10Offset(nineCount)
+        if (x.dw0 != POW10[offset] - 1)
+            return false
+        if (nineCount >= MIN_POW10_DIGIT_LEN_128 && x.dw1 != POW10[offset])
+            return false
+        return true
+    }
 
 }

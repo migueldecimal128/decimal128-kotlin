@@ -18,20 +18,21 @@ class TestDecMisc {
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
-            // This test case is wrong
-            // under roundTowardPositive the result is MIN_FINITE, not -Infinity
-            //"rounding:    up",
-            "dqadd371674 fma -9E6144 10   1     -> -Infinity Overflow Inexact Rounded",
-            )
-    )
-
-    @Test
-    fun testFmaCases() = runUnaryDecimalCtxOp(
-        Decimal::logB,
-        verbose = verbose,
-        cases = arrayOf(
         )
     )
+
+    // not fully implemented
+    // @Test
+    fun testNextUp() = runUnaryDecimalCtxOp(
+        "dqNextPlus.dectest",
+        "nextplus",
+        Decimal::nextUp,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
+    )
+
 
 }
 

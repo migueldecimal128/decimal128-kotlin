@@ -74,7 +74,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         val offset = pow10Offset(nineCount)
         if (dw0 != POW10[offset] - 1)
             return false
-        if (nineCount < MIN_POW10_DIGIT_LEN_128 || dw1 != POW10[offset])
+        if (nineCount >= MIN_POW10_DIGIT_LEN_128 && dw1 != POW10[offset])
             return false
         return true
     }
