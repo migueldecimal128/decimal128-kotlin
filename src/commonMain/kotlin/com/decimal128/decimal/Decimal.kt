@@ -151,6 +151,10 @@ class Decimal private constructor(
             }
         }
 
+        fun fromDPD(dwHi: Long, dwLo: Long) {
+
+        }
+
         /**
          * Parses a decimal128 value from its textual representation.
          *
@@ -667,6 +671,17 @@ class Decimal private constructor(
         if (digitLen != calcDigitLen128(bitLen, dw1, dw0))
             return false;
         return true
+    }
+
+    // IEEE754-2008 5.3.3
+    fun logB(ctx: DecContext): Decimal {
+        val q = this.qExp
+        when {
+            isZero() -> return ctx.signalDivByZero(NEG_INFINITY)
+            q < NON_FINITE_INF -> return from(eExp)
+            q == NON_FINITE_INF -> return POS_INFINITY
+            else -> return nanOperandFound(this, ctx)
+        }
     }
 
     /**

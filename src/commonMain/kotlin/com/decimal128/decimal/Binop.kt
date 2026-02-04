@@ -26,6 +26,16 @@ internal fun nanOperandFoundSignaling(x: Decimal, y: Decimal, ctx: DecContext): 
     return ctx.signalInvalid(theNaN)
 }
 
+
+internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
+    val qX = x.qExp
+    verify { qX >= NON_FINITE_QNAN }
+    if (qX == NON_FINITE_QNAN)
+        return x
+    val quietedNaN = Decimal.qNaN(x.sign, x.dw1, x.dw0)
+    return ctx.signalInvalid(quietedNaN)
+}
+
 internal fun scaleToMinExp(xSign: Boolean, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {
     if (x.qExp <= otherExp)
         return if (x.sign == xSign) x else x.negate()
