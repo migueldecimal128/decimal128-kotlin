@@ -592,21 +592,19 @@ inline fun ucmp128(x1: ULong, x0:ULong, y1: ULong, y0: ULong): Int {
 
 fun ucmp128ScalePow10(x1: ULong, x0: ULong, y1: ULong, y0: ULong, pow10: Int): Int {
     verify { pow10 in 1..<MIN_POW10_DIGIT_LEN_192 }
+    val (p1, p0) = pow10_128(pow10)
     if (pow10 < MIN_POW10_DIGIT_LEN_128)
-        return ucmp128_128x64(x1, x0, y1, y0, POW10[pow10].toULong())
+        return ucmp128_128x64(x1, x0, y1, y0, p0.toULong())
     verify { y1 == 0uL }
-    val pow10Offset = pow10Offset(pow10)
-    val p0 = POW10[pow10Offset].toULong()
-    val p1 = POW10[pow10Offset + 1].toULong()
-    return ucmp128_128x64(x1, x0, p1, p0, y0)
+    return ucmp128_128x64(x1, x0, p1.toULong(), p0.toULong(), y0)
 }
 
 fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int): Int {
     verify { pow10 in 1..<MIN_POW10_DIGIT_LEN_192 }
-    if (pow10 < MIN_POW10_DIGIT_LEN_128)
-        return ucmp128_128x64(x1, x0, y1, y0, POW10[pow10])
-    verify { y1 == 0L }
     val (p1, p0) = pow10_128(pow10)
+    if (pow10 < MIN_POW10_DIGIT_LEN_128)
+        return ucmp128_128x64(x1, x0, y1, y0, p0)
+    verify { y1 == 0L }
     return ucmp128_128x64(x1, x0, p1, p0, y0)
 }
 

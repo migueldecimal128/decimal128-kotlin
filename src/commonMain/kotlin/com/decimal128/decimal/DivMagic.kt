@@ -135,7 +135,7 @@ object DivMagic {
             pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
                 val m = POW10[MAGIC_POW10_M_OFFSET + pow10].toULong()
                 val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
-                val denom = POW10[pow10].toULong()
+                val denom = pow10_64(pow10).toULong()
                 val s = flagAndShift and 0x3F
                 val correctionMask = (flagAndShift shr 31).toLong().toULong()
 
@@ -159,7 +159,7 @@ object DivMagic {
             pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
                 val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
                 val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
-                val denom = POW10[pow10]
+                val denom = pow10_64(pow10)
                 val s = flagAndShift and 0x3F
                 val correctionMask = (flagAndShift shr 31).toLong()
 

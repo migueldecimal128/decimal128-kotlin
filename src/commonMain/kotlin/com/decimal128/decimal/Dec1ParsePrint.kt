@@ -205,7 +205,7 @@ object Dec1ParsePrint {
         var payloadDw0 = accum19a
         var payloadDw1 = 0L
         if (accumDigitCount > 19) {
-            val p10 = POW10[accumDigitCount - 19]
+            val p10 = pow10_64(accumDigitCount - 19)
             payloadDw0 = accum19a * p10
             payloadDw1 = unsignedMulHi(accum19a, p10)
             payloadDw0 += accum19b
@@ -329,7 +329,7 @@ object Dec1ParsePrint {
         var dw0T = accum19a
         var dw1T = 0L
         if (significantDigitCount > 19) {
-            val p10 = POW10[significantDigitCount - 19]
+            val p10 = pow10_64(significantDigitCount - 19)
             dw0T = accum19a * p10
             dw1T = unsignedMulHi(accum19a, p10)
             dw0T += accum19b

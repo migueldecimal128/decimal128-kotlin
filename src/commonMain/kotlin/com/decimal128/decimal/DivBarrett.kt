@@ -13,7 +13,7 @@ object DivBarrett {
     fun barrettDivModPow10(z: C256, x: C256, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < BARRETT_POW10_MAXX -> {
-                val denom = POW10[pow10]
+                val denom = pow10_64(pow10)
                 val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
                 val xBitLen = x.bitLen
                 val remainder = when {
@@ -445,7 +445,7 @@ object DivBarrett {
         if (pow10 < 1 || pow10 >= BARRETT_POW10_MAXX)
             throw IllegalArgumentException()
 
-        val denom = POW10[pow10].toULong()
+        val denom = pow10_64(pow10).toULong()
         val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10].toULong()
 
         val dwA = dw0 and 0xFFFF_FFFFuL

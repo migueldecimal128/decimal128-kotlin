@@ -108,12 +108,8 @@ object C128Compare {
         val pow10BitLen = pow10BitLen(nineCount)
         if (x.bitLen != pow10BitLen)
             return false
-        val offset = pow10Offset(nineCount)
-        if (x.dw0 != POW10[offset] - 1)
-            return false
-        if (nineCount >= MIN_POW10_DIGIT_LEN_128 && x.dw1 != POW10[offset])
-            return false
-        return true
+        val (pow10dw1, pow10dw0) = pow10_128(nineCount)
+        return (x.dw0 == pow10dw0 - 1 && x.dw1 == pow10dw1)
     }
 
 }

@@ -357,7 +357,7 @@ internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: 
 
 internal fun compareWithHalfPow10_1(dw0: Long, pow10: Int): Int {
     verify { pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_128 }
-    val pow10Dw0 = POW10[pow10]
+    val pow10Dw0 = pow10_64(pow10)
     val halfPow10Dw0 = pow10Dw0 ushr 1
     val cmp0 = unsignedCmp(dw0, halfPow10Dw0)
     return cmp0
