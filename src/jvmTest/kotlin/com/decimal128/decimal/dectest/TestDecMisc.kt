@@ -13,7 +13,7 @@ class TestDecMisc {
 
     @Test
     fun testLogB() = runUnaryDecimalCtxOp(
-        "dqLogB.dectest",
+        "dqLogB.decTest",
         "logb",
         Decimal::logB,
         verbose = verbose,
@@ -24,7 +24,7 @@ class TestDecMisc {
 
     @Test
     fun testNextUp() = runUnaryDecimalCtxOp(
-        "dqNextPlus.dectest",
+        "dqNextPlus.decTest",
         "nextplus",
         Decimal::nextUp,
         verbose = verbose,
@@ -46,9 +46,20 @@ class TestDecMisc {
 
     @Test
     fun testNextDown() = runUnaryDecimalCtxOp(
-        "dqNextMinus.dectest",
+        "dqNextMinus.decTest",
         "nextminus",
         Decimal::nextDown,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testReduce() = runUnaryDecimalCtxOp(
+        "dqReduce.decTest",
+        "reduce",
+        Decimal::stripTrailingZeros,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(

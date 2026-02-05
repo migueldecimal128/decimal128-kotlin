@@ -14,7 +14,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
-        "dqAdd.dectest",
+        "dqAdd.decTest",
         "add",
         ::addImpl,
         verbose = verbose
@@ -35,7 +35,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testSubtract() = runBinaryDecimalCtxOp(
-        "dqSubtract.dectest",
+        "dqSubtract.decTest",
         "subtract",
         ::subImpl,
         verbose = verbose
@@ -55,7 +55,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testMultiply() = runBinaryDecimalCtxOp(
-        "dqMultiply.dectest",
+        "dqMultiply.decTest",
         "multiply",
         ::mulImpl,
         verbose = verbose
@@ -74,7 +74,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testDivide() = runBinaryDecimalCtxOp(
-        "dqDivide.dectest",
+        "dqDivide.decTest",
         "divide",
         ::divImpl,
         verbose = verbose,
@@ -98,7 +98,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testDivideInt() = runBinaryDecimalCtxOp(
-        "dqDivideInt.dectest",
+        "dqDivideInt.decTest",
         "divideint",
         ::divIntImpl,
         verbose = verbose,

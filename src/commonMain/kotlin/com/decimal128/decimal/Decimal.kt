@@ -688,6 +688,8 @@ class Decimal private constructor(
 
     fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
 
+    fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZeros(this, ctx)
+
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
      * *totalOrder* relation.

@@ -11,7 +11,7 @@ class TestDecToString {
     /*
     @Test
     fun testToSci() = runUnaryStringCtxOp(
-        "dqBase.dectest",
+        "dqBase.decTest",
         "toSci",
         ::fmaImpl,
         verbose = verbose,

@@ -13,7 +13,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testAbs() = runUnaryDecimalOp(
-        "dqAbs.dectest",
+        "dqAbs.decTest",
         "abs",
         Decimal::abs,
         verbose = verbose,
@@ -41,7 +41,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testMinus() = runUnaryDecimalOp(
-        "dqMinus.dectest",
+        "dqMinus.decTest",
         "minus",
         Decimal::negate,
         verbose = verbose,
@@ -68,7 +68,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testCopyNegate() = runUnaryDecimalOp(
-        "dqCopyNegate.dectest",
+        "dqCopyNegate.decTest",
         "copynegate",
         Decimal::negate,
         verbose = verbose,
@@ -79,7 +79,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testCopySign() = runBinaryDecimalOp(
-        "dqCopySign.dectest",
+        "dqCopySign.decTest",
         "copysign",
         Decimal::copySign,
         verbose = verbose,
@@ -90,7 +90,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testCopy() = runUnaryDecimalOp(
-        "dqCopy.dectest",
+        "dqCopy.decTest",
         "copy",
         Decimal::copy,
         verbose = verbose,
@@ -98,7 +98,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testTotalOrder() = runBinaryIntOp(
-        "dqCompareTotal.dectest",
+        "dqCompareTotal.decTest",
         "comparetotal",
         Decimal::compareTotalOrderTo,
         verbose = verbose,
@@ -111,7 +111,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testTotalOrderMag() = runBinaryIntOp(
-        "dqCompareTotalMag.dectest",
+        "dqCompareTotalMag.decTest",
         "comparetotalMag",
         Decimal::compareTotalOrderMagTo,
         verbose = verbose,
@@ -124,7 +124,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testSameQuantum() = runBinaryBooleanOp(
-        "dqSameQuantum.dectest",
+        "dqSameQuantum.decTest",
         "samequantum",
         Decimal::sameQuantum,
         verbose = verbose
@@ -132,7 +132,7 @@ class TestDecNoncomputational {
 
     @Test
     fun testEncode() = runUnaryDecimalOp(
-        "dqEncode.dectest",
+        "dqEncode.decTest",
         "apply",
         Decimal::copy,
         verbose = verbose,

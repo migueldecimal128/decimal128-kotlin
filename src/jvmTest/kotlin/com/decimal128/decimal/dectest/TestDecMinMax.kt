@@ -13,7 +13,7 @@ class TestDecMinMax {
 
     @Test
     fun testMax() = runBinaryDecimalCtxOp(
-        "dqMax.dectest",
+        "dqMax.decTest",
         "max",
         ::maxImpl,
         verbose = verbose,
@@ -56,7 +56,7 @@ class TestDecMinMax {
 
     @Test
     fun testMaxNumber() = runBinaryDecimalCtxOp(
-        "dqMax.dectest",
+        "dqMax.decTest",
         "max",
         ::maxNumImpl,
         verbose = verbose,
@@ -72,7 +72,7 @@ class TestDecMinMax {
 
     @Test
     fun testMin() = runBinaryDecimalCtxOp(
-        "dqMin.dectest",
+        "dqMin.decTest",
         "min",
         ::minImpl,
         verbose = verbose,
@@ -114,7 +114,7 @@ class TestDecMinMax {
 
     @Test
     fun testMinNumber() = runBinaryDecimalCtxOp(
-        "dqMin.dectest",
+        "dqMin.decTest",
         "min",
         ::minNumImpl,
         verbose = verbose,

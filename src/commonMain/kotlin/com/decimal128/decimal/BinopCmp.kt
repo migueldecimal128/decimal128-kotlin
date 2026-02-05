@@ -21,6 +21,10 @@ import kotlin.math.abs
 private val mapToDecimal: Array<Decimal> =
     arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
 
+// TODO - in MutDec I combined the different types of comparisons
+//  into a common routine. Consider doing that for Decimal in order
+//  to reduce code size and redundancy.
+
 internal fun cmpImpl(x: Decimal, y: Decimal): Decimal =
     cmpImpl(x, y, DecContext.current())
 

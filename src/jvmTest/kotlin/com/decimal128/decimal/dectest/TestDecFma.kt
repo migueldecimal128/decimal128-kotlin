@@ -10,7 +10,7 @@ class TestDecFma {
 
     @Test
     fun testFma() = runTernaryDecimalCtxOp(
-        "dqFMA.dectest",
+        "dqFMA.decTest",
         "fma",
         ::fmaImpl,
         verbose = verbose,

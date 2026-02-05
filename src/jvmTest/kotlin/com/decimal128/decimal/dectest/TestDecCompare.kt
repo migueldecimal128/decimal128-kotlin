@@ -14,7 +14,7 @@ class TestDecCompare {
 
     @Test
     fun testCompare() = runBinaryDecimalCtxOp(
-        "dqCompare.dectest",
+        "dqCompare.decTest",
         "compare",
         ::cmpImpl,
         verbose = verbose,
@@ -35,7 +35,7 @@ class TestDecCompare {
 
     @Test
     fun testCompareSignaling() = runBinaryDecimalCtxOp(
-        "dqCompareSig.dectest",
+        "dqCompareSig.decTest",
         "comparesig",
         ::cmpSignalingImpl,
         verbose = verbose,
@@ -54,7 +54,7 @@ class TestDecCompare {
 
     @Test
     fun testCompareTotalOrder() = runBinaryIntCtxOp(
-        "dqCompareTotal.dectest",
+        "dqCompareTotal.decTest",
         "comparetotal",
         ::cmpTotalOrderImpl,
         verbose = verbose,
@@ -74,7 +74,7 @@ class TestDecCompare {
 
     @Test
     fun testCompareTotalOrderMagnitude() = runBinaryIntCtxOp(
-        "dqCompareTotalMag.dectest",
+        "dqCompareTotalMag.decTest",
         "comparetotmag",
         ::cmpTotalOrderMagnitudeImpl,
         verbose = verbose,
