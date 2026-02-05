@@ -1153,7 +1153,7 @@ class MutDec() : C256() {
                     t0 = t
                     ctzd += 9
                 }
-                ctzd += ctzd32(m.toInt())
+                ctzd += countTrailingZeroDigits32(m.toInt())
                 // cap when qExp gets clamped
                 ctzd = min(ctzd, env.qMax - qX)
                 if (ctzd == 0)
@@ -1165,41 +1165,6 @@ class MutDec() : C256() {
             }
             else -> return set(x, env)
         }
-    }
-
-    fun ctzd32(n: Int): Int {
-        verify { n > 0 }
-        var d = n.toLong()
-        var ntzd = 0
-
-        var q: Long
-        var r: Long
-        var mask: Long
-
-        q = (d * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-        r = d - (q * 1_0000)
-        mask = ((d - 10000) or (-r)) shr 63
-        d = (d and mask) or (q and mask.inv())
-        ntzd += 4 and (mask.inv()).toInt()
-
-        q = (d * M_U32_DIV_1E4) ushr S_U32_DIV_1E4
-        r = d - (q * 1_0000)
-        mask = ((d - 10000) or (-r)) shr 63
-        d = (d and mask) or (q and mask.inv())
-        ntzd += 4 and (mask.inv()).toInt()
-
-        q = (d * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-        r = d - (q * 100)
-        mask = ((d - 100) or (-r)) shr 63
-        d = (d and mask) or (q and mask.inv())
-        ntzd += 2 and (mask.inv()).toInt()
-
-        q = (d * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        r = d - (q * 10)
-        mask = ((d - 10) or (-r)) shr 63
-        ntzd += 1 and (mask.inv()).toInt()
-
-        return ntzd
     }
 
     fun setMinimum(x: MutDec, y: MutDec, env: DecContext): MutDec =
