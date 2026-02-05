@@ -30,16 +30,10 @@ data class DecFormat(val precision: Int,
     val qMax: Int = eMax - (precision - 1)
     val qTiny: Int = eMin - (precision - 1)
     val maxBitLen: Int = pow10BitLen(precision)
-    val maxxPair = pow10_128(precision)
-    val dw0Maxx: Long
-        get() = maxxPair.second
-    val dw1Maxx: Long
-        get() = maxxPair.first
-    val afterRolloverPair = pow10_128(precision - 1)
-    val dw0AfterRollover:Long
-        get() = afterRolloverPair.second
-    val dw1AfterRollover:Long
-        get() = afterRolloverPair.first
+    val dw0MaxxCoeff: Long = pow10_128_dw0(precision)
+    val dw1MaxxCoeff: Long = pow10_128_dw1(precision)
+    val dw0MinFullPrecisionCoeff:Long = pow10_128_dw0(precision - 1)
+    val dw1MinFullPrecisionCoeff:Long = pow10_128_dw1(precision - 1)
     val packedLengthsAfterOverflow = pow10PackedLengths(precision - 1)
 
     fun isC128AddSafe(xBitLen: Int, yBitLen: Int): Boolean {

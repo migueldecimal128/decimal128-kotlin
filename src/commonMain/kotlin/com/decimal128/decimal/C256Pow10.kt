@@ -226,6 +226,14 @@ internal fun pow10_64(pow10: Int): Long {
     return POW10[2*pow10]
 }
 
+internal fun pow10_128_dw0(pow10: Int): Long {
+    return POW10[2*pow10]
+}
+
+internal fun pow10_128_dw1(pow10: Int): Long {
+    return POW10[2*pow10 + 1]
+}
+
 internal fun pow10_128(pow10: Int): Pair<Long, Long> {
     verify { pow10 < MIN_POW10_DIGIT_LEN_192 }
     return POW10[2*pow10 + 1] to POW10[2*pow10]

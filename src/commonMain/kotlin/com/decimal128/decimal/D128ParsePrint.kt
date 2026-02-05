@@ -308,8 +308,11 @@ object D128ParsePrint {
                     val eDigit = ch - '0'
                     expSignificantDigitCount +=
                         (-(expSignificantDigitCount or eDigit)) ushr 31
-                    if (expSignificantDigitCount > 4)
+                    // if the coefficient is 0 then we will be much more lenient on qExp
+                    if (expSignificantDigitCount > 9 ||
+                        expSignificantDigitCount > 4 && (accum19a or accum19b) != 0L) {
                         return "exponent out of decimal128 range"
+                    }
                     exp = exp * 10 + (ch - '0')
                 } else {
                     if (! hasExpDigit)

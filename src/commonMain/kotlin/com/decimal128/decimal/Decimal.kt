@@ -477,20 +477,6 @@ class Decimal private constructor(
         internal fun neitherIsNaN(x: Decimal, y: Decimal) =
             x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
 
-        fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
-            val qExp = ctx.qMax
-            val offset = pow10Offset(ctx.precision)
-            val dwHi = if (ctx.precision >= MIN_POW10_DIGIT_LEN_128)
-                POW10[offset + 1]
-            else
-                0L
-            val dwLo = POW10[offset] - 1
-            return Decimal(sign, qExp, dwHi, dwLo)
-        }
-
-        fun minFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal =
-            Decimal(sign, ctx.qTiny, 0L, 1L)
-
     }
 
     fun isNotZero() = !isZero()
@@ -698,28 +684,9 @@ class Decimal private constructor(
         }
     }
 
-    fun nextUp(ctx: DecContext): Decimal {
-        when {
-            qExp == NON_FINITE_SNAN ->
-                return ctx.signalInvalid(Decimal.qNaN(sign, dw1, dw0))
-            qExp == NON_FINITE_QNAN -> return this
-            qExp == NON_FINITE_INF && sign -> return maxFiniteMagnitude(true, ctx)
-            qExp == NON_FINITE_INF -> return this
-            isZero() -> return minFiniteMagnitude(false, ctx)
-            sign == false -> {
-                // check out MutDec
-                // sign is positive
-                // increase magnitude
-                TODO()
-            }
-            else -> {
-                // sign is negative
-                // decrease magnitude
-                TODO()
-            }
-        }
-    }
+    fun nextUp(ctx: DecContext): Decimal = nextUpOrDown(isUp = true, this, ctx)
 
+    fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
 
     /**
      * Compares this decimal128 value with [other] using the IEEE-754

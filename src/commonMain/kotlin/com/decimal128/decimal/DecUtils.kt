@@ -133,7 +133,7 @@ private fun finalizeFnzInexactNoExcess(sign: Boolean, dw1: Long, dw0: Long, qExp
     val roundUp = residue.ulpRoundUp(decRounding.negate(sign), dw0)
     val dw0Rounded = dw0 + if (roundUp) 1 else 0
     val dw1Rounded = dw1 + if (roundUp && dw0Rounded == 0L) 1 else 0
-    if (!roundUp || dw0Rounded != env.decFormat.dw0Maxx || dw1Rounded != env.decFormat.dw1Maxx) {
+    if (!roundUp || dw0Rounded != env.decFormat.dw0MaxxCoeff || dw1Rounded != env.decFormat.dw1MaxxCoeff) {
         val ret = Decimal.from(sign, dw1Rounded, dw0Rounded, qExp)
         return if (isTiny) env.signalInexactUnderflow(ret) else env.signalInexact(ret)
     }
@@ -145,8 +145,8 @@ private fun finalizeFnzInexactNoExcess(sign: Boolean, dw1: Long, dw0: Long, qExp
     val eExpAfterRollover = qExpAfterRollover + env.precision - 1
     if (eExpAfterRollover <= env.eMax) {
         val ret = Decimal.from(
-            env.decFormat.dw1AfterRollover,
-            env.decFormat.dw0AfterRollover,
+            env.decFormat.dw1MinFullPrecisionCoeff,
+            env.decFormat.dw0MinFullPrecisionCoeff,
             env.decFormat.packedLengthsAfterOverflow,
             packSignExp(sign, qExpAfterRollover)
         )
@@ -160,8 +160,8 @@ private fun finalizeOverflow(sign: Boolean, decRounding: DecRounding, env: DecCo
     val ret = if (decRounding.overflowsToInfinity(sign)) {
         Decimal.infinity(sign)
     } else {
-        val dw1MaxFinite = env.decFormat.dw1Maxx
-        val dw0MaxFinite = env.decFormat.dw0Maxx - 1 // won't ever have a borrow
+        val dw1MaxFinite = env.decFormat.dw1MaxxCoeff
+        val dw0MaxFinite = env.decFormat.dw0MaxxCoeff - 1 // won't ever have a borrow
         val bitLen = env.decFormat.maxBitLen
         val digitLen = env.decFormat.precision
         val packedLengths = packLengths(digitLen, bitLen)
