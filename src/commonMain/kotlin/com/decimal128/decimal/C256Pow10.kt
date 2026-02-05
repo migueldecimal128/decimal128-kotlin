@@ -5,15 +5,13 @@ package com.decimal128.decimal
 import com.decimal128.bigint.BigInt
 import kotlin.math.max
 
-private const val BASE_POW10 = 0
-private const val BASE_POW10_64 = BASE_POW10
-private const val BASE_POW10_128 = BASE_POW10_64 + POW10_64_COUNT * 2
-private const val BASE_POW10_192 = BASE_POW10_128 + POW10_128_COUNT * 2
+
+private const val BASE_POW10_192 = (POW10_64_COUNT + POW10_128_COUNT) * 2
 private const val BASE_POW10_256 = BASE_POW10_192 + POW10_192_COUNT * 3
 
-private const val POW10_DWORD_COUNT = (BASE_POW10_256 + POW10_256_COUNT * 4) - BASE_POW10
+private const val POW10_DWORD_COUNT = (BASE_POW10_256 + POW10_256_COUNT * 4)
 
-internal const val BARRETT_POW10_MU_OFFSET = BASE_POW10 + POW10_DWORD_COUNT
+internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
 internal const val BARRETT_POW10_MAXX = 10
 
 internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAXX
@@ -162,7 +160,7 @@ private fun initTables() {
     for (i in 0..<MAXX_DIGIT_LEN) {
         POW10_BIT_LEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
         for (dw in hiPow10.magnitudeToLittleEndianLongArray())
-            POW10[BASE_POW10_64 + j++] = dw
+            POW10[j++] = dw
         if (i < MIN_POW10_DIGIT_LEN_128)
             ++j
         hiPow10 *= 10
@@ -217,8 +215,7 @@ internal fun pow10Offset(pow10: Int): Int {
     return offset and mask
      */
     return when {
-        pow10 < MIN_POW10_DIGIT_LEN_128 -> BASE_POW10_64 + 2 * pow10
-        pow10 < MIN_POW10_DIGIT_LEN_192 -> BASE_POW10_128 + 2 * (pow10 - MIN_POW10_DIGIT_LEN_128)
+        pow10 < MIN_POW10_DIGIT_LEN_192 -> 2 * pow10
         pow10 < MIN_POW10_DIGIT_LEN_256 -> BASE_POW10_192 + 3 * (pow10 - MIN_POW10_DIGIT_LEN_192)
         else -> BASE_POW10_256 + 4 * (pow10 - MIN_POW10_DIGIT_LEN_256)
     }
@@ -226,15 +223,12 @@ internal fun pow10Offset(pow10: Int): Int {
 
 internal fun pow10_64(pow10: Int): Long {
     verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
-    return POW10[BASE_POW10_64 + 2*pow10]
+    return POW10[2*pow10]
 }
 
 internal fun pow10_128(pow10: Int): Pair<Long, Long> {
     verify { pow10 < MIN_POW10_DIGIT_LEN_192 }
-    val t = pow10 - MIN_POW10_DIGIT_LEN_128
-    if (t < 0)
-        return 0L to POW10[BASE_POW10_64 + 2*pow10]
-    return POW10[BASE_POW10_128 + 2*t + 1] to POW10[BASE_POW10_128 + 2*t]
+    return POW10[2*pow10 + 1] to POW10[2*pow10]
 }
 
 
