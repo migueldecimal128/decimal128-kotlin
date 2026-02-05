@@ -125,7 +125,7 @@ value class Residue private constructor(val value:Int) {
 
         fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue {
             val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
-            val pow10div2 = POW10[pow10] ushr 1
+            val pow10div2 = pow10_64(pow10) ushr 1
             val cmp = unsignedCmp(remainder, pow10div2)
             val index = ((cmp + 2) and nonZeroMask) and 0x03
             //val residue = RESIDUE_MAP[index and 0x03]

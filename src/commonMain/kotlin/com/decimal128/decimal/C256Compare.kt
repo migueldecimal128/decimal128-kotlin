@@ -54,8 +54,8 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
     val y0 = y.dw0
     val y1 = y.dw1
     val pow10Offset = pow10Offset(pow10Delta)
-    val p0 = POW10[(pow10Offset + 0) and 0x3F]
-    val p1 = POW10[(pow10Offset + 1) and 0x3F]
+    val p0 = POW10[pow10Offset + 0]
+    val p1 = POW10[pow10Offset + 1]
     if (xBitLen <= 128) {
         val ret = when {
             yBitLen <= 64 && pow10BitLen <= 64 ->
@@ -72,7 +72,7 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
         return ret
     }
     val x2 = x.dw2
-    val p2 = POW10[(pow10Offset + 2) and 0x3F]
+    val p2 = POW10[pow10Offset + 2]
     if (x.bitLen <= 192) {
         return when {
             yBitLen <= 64 -> {
@@ -104,7 +104,7 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
         }
     }
     val x3 = x.dw3
-    val p3 = POW10[(pow10Offset + 3) and 0x3F]
+    val p3 = POW10[pow10Offset + 3]
     if (x.bitLen <= 256) {
         verify { pow10BitLen > 64 }
         val ret = when {

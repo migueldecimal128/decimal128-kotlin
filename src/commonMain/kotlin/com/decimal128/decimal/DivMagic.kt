@@ -94,7 +94,7 @@ object DivMagic {
         POW10[MAGIC_POW10_M_OFFSET + 0] = 1
         MAGIC_FLAG_AND_SHIFT_POW10[0] = Byte.MIN_VALUE
         for (k in 1..<MAGIC_POW10_MAXX) {
-            val d     = POW10[k]
+            val d     = pow10_64(k)
             val magic = magicu64(d)
             POW10[MAGIC_POW10_M_OFFSET + k]   = magic.m
             MAGIC_FLAG_AND_SHIFT_POW10[k] =
