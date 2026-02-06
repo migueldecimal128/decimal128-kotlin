@@ -690,6 +690,7 @@ class Decimal private constructor(
 
     fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZeros(this, ctx)
 
+    fun withScale(decimalScale: Int, ctx: DecContext): Decimal = withScale(this, decimalScale, ctx)
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
      * *totalOrder* relation.

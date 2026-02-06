@@ -9,7 +9,7 @@ import com.decimal128.decimal.fmaImpl
 
 class TestDecMisc {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testLogB() = runUnaryDecimalCtxOp(

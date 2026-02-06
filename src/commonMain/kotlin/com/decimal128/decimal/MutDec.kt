@@ -1137,23 +1137,35 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setStripTrailingZeros(x: MutDec, env: DecContext): MutDec {
+    fun setStripTrailingZeros(x: MutDec, env: DecContext): MutDec =
+        setStripTrailingZeros(x, env, maxToStrip = 99)
+
+    fun setStripTrailingZeros(x: MutDec, env: DecContext, maxToStrip: Int): MutDec {
         val qX = x.qExp
         when {
             x.isZero() -> return setZero(x.sign)
+            maxToStrip <= 0 -> return set(x)
             qX < NON_FINITE_INF -> {
                 var ctzd = 0
+                var remaining = maxToStrip
                 val t = env.decTemps.mdecArg1
                 var t0 = x
-                var m: Long
-                while (true) {
-                    m = DivDirect.divModX32(t, t0, 1_000_000_000L)
+                var m: Long = 0L
+                while (remaining > 0) {
+                    val divPow10 = min(9, remaining)
+                    val divisor = pow10_64(divPow10)
+                    m = DivDirect.divModX32(t, t0, divisor)
                     if (m != 0L)
                         break
                     t0 = t
-                    ctzd += 9
+                    ctzd += divPow10
+                    remaining -= divPow10
+                    if (remaining == 0) {
+                        t0.qExp = qX + maxToStrip
+                        return set(t0)
+                    }
                 }
-                ctzd += countTrailingZeroDigits32(m.toInt())
+                ctzd += min(countTrailingZeroDigits32(m.toInt()), remaining)
                 // cap when qExp gets clamped
                 ctzd = min(ctzd, env.qMax - qX)
                 if (ctzd == 0)
