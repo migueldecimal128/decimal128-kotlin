@@ -77,12 +77,21 @@ private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return Decimal.from(quotient)
 }
 
-internal fun remImpl(x: Decimal, y: Decimal): Decimal =
-    remImpl(x, y, DecContext.current())
+internal fun remTruncImpl(x: Decimal, y: Decimal): Decimal =
+    remImpl(isTrunc = true, x, y, DecContext.current())
 
-internal fun remImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun remTruncImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+    remImpl(isTrunc = true, x, y, ctx)
+
+internal fun remNearImpl(x: Decimal, y: Decimal): Decimal =
+    remImpl(isTrunc = false, x, y, DecContext.current())
+
+internal fun remNearImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+    remImpl(isTrunc = false, x, y, ctx)
+
+internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
-        remFnzFnz(x, y, ctx)
+        remFnzFnz(isTrunc, x, y, ctx)
     } else when (BinopSignature.of(x, y)) {
         ZER_FNZ -> newZero(x.sign, min(x.qExp, y.qExp), ctx)
         FNZ_INF,
@@ -99,10 +108,13 @@ internal fun remImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     }
 }
 
-private fun remFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+private fun remFnzFnz(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.decTemps.mdecArg2.set(x)
     val divisor = ctx.decTemps.mdecArg3.set(y)
-    val quotient = ctx.decTemps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)
+    val quotient =
+        if (isTrunc)
+            ctx.decTemps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)
+        else
+            ctx.decTemps.mdecResult.setRemainderNear(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
-

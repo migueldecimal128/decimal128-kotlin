@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
@@ -916,18 +919,23 @@ class Decimal private constructor(
     operator fun plus(other: Decimal): Decimal = addImpl(this, other, decContext)
 
     operator fun minus(other: Decimal): Decimal = subImpl(this, other)
-    operator fun times(other: Decimal): Decimal = mulImpl(this, other)
-    operator fun div(other: Decimal): Decimal = divImpl(this, other)
-
-    operator fun rem(other: Decimal): Decimal = remImpl(this, other)
-
     context(decContext: DecContext)
     operator fun minus(other: Decimal): Decimal = subImpl(this, other, decContext)
+
+    operator fun times(other: Decimal): Decimal = mulImpl(this, other)
     context(decContext: DecContext)
     operator fun times(other: Decimal): Decimal = mulImpl(this, other, decContext)
+
+    operator fun div(other: Decimal): Decimal = divImpl(this, other)
     context(decContext: DecContext)
     operator fun div(other: Decimal): Decimal = divImpl(this, other, decContext)
 
+    operator fun rem(other: Decimal): Decimal = remTruncImpl(this, other)
+    context(decContext: DecContext)
+    operator fun rem(other: Decimal): Decimal = remTruncImpl(this, other, decContext)
+
+    inline fun remainderTruncate(other: Decimal): Decimal = rem(other)
+    fun remainderNear(other: Decimal): Decimal = rem(other)
 
 
 }

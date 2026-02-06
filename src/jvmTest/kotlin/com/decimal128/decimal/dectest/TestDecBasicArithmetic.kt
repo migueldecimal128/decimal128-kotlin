@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test
 import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.divIntImpl
 import com.decimal128.decimal.mulImpl
-import com.decimal128.decimal.remImpl
+import com.decimal128.decimal.remNearImpl
+import com.decimal128.decimal.remTruncImpl
 import com.decimal128.decimal.subImpl
 
 class TestDecBasicArithmetic {
@@ -121,7 +122,7 @@ class TestDecBasicArithmetic {
     fun testRemainder() = runBinaryDecimalCtxOp(
         "dqRemainder.decTest",
         "remainder",
-        ::remImpl,
+        ::remTruncImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -137,7 +138,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testRemainderCases() = runBinaryDecimalCtxOp(
-        ::remImpl,
+        ::remTruncImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqrem131 remainder  0     -1   ->  0",
@@ -146,6 +147,31 @@ class TestDecBasicArithmetic {
         )
     )
 
+    @Test
+    fun testRemainderNear() = runBinaryDecimalCtxOp(
+        "dqRemainderNear.decTest",
+        "remaindernear",
+        ::remNearImpl,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            "dqrmn421 remaindernear   1E+6144        1  ->   NaN Division_impossible",
+            "dqrmn772  remaindernear  1234500000000000000000067890123456   0.1  ->  NaN Division_impossible",
+            "dqrmn773  remaindernear  1234500000000000000000067890123456   0.01 ->  NaN Division_impossible",
+            "dqrmn1051 remaindernear  1e+277  1e-311 ->  NaN Division_impossible",
+            "dqrmn1052 remaindernear  1e+277 -1e-311 ->  NaN Division_impossible",
+            "dqrmn1053 remaindernear -1e+277  1e-311 ->  NaN Division_impossible",
+            "dqrmn1054 remaindernear -1e+277 -1e-311 ->  NaN Division_impossible",
+        )
+    )
+
+    @Test
+    fun testRemainderNearCases() = runBinaryDecimalCtxOp(
+        ::remNearImpl,
+        verbose = verbose,
+        cases = arrayOf(
+        )
+    )
 
 }
 
