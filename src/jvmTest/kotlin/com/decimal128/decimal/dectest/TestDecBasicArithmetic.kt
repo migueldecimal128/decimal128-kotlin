@@ -6,11 +6,12 @@ import org.junit.jupiter.api.Test
 import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.divIntImpl
 import com.decimal128.decimal.mulImpl
+import com.decimal128.decimal.remImpl
 import com.decimal128.decimal.subImpl
 
 class TestDecBasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
@@ -113,6 +114,35 @@ class TestDecBasicArithmetic {
         verbose = verbose,
         cases = arrayOf(
             "dqdvi274 divideint 9e384    1       -> NaN Division_impossible",
+        )
+    )
+
+    @Test
+    fun testRemainder() = runBinaryDecimalCtxOp(
+        "dqRemainder.decTest",
+        "remainder",
+        ::remImpl,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            "dqrem421 remainder   1E+6144        1  ->   NaN Division_impossible",
+            "dqrem772  remainder  1234568888888887777777777890123456   0.1  ->  NaN Division_impossible",
+            "dqrem773  remainder  1234568888888887777777777890123456   0.01 ->  NaN Division_impossible",
+            "dqrem1051 remainder  1e+277  1e-311 ->  NaN Division_impossible",
+            "dqrem1052 remainder  1e+277 -1e-311 ->  NaN Division_impossible",
+            "dqrem1053 remainder -1e+277  1e-311 ->  NaN Division_impossible",
+            "dqrem1054 remainder -1e+277 -1e-311 ->  NaN Division_impossible",
+        )
+    )
+
+    @Test
+    fun testRemainderCases() = runBinaryDecimalCtxOp(
+        ::remImpl,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqrem131 remainder  0     -1   ->  0",
+            "dqrem107 remainder  0.0001  0   -> NaN Invalid_operation",
+            "dqrem083 remainder  0.00E+9       1  -> 0",
         )
     )
 

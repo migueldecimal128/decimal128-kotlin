@@ -3,6 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.bothFnz
 import com.decimal128.decimal.Decimal.Companion.newZero
+import kotlin.math.min
 
 internal fun divImpl(x: Decimal, y: Decimal): Decimal =
     divImpl(x, y, DecContext.current())
@@ -13,13 +14,13 @@ internal fun divImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> divZeroZero(x, y, ctx)
         ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp, ctx)
-        ZER_INF -> newZero(x.sign xor y.sign, ctx.qTiny, ctx)
+        ZER_INF,
+        FNZ_INF -> newZero(x.sign xor y.sign, ctx.qTiny, ctx)
 
         FNZ_ZER -> divFnzZero(x, y, ctx)
         FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> newZero(x.sign xor y.sign, ctx.qTiny, ctx)
 
-        INF_ZER -> Decimal.infinity(x.sign xor y.sign)
+        INF_ZER,
         INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
         INF_INF -> divInfInf(x, y, ctx)
 
@@ -53,14 +54,14 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         divIntFnzFnz(x, y, ctx)
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> divZeroZero(x, y, ctx)
-        ZER_FNZ -> Decimal.zero(x.sign xor y.sign)
-        ZER_INF -> Decimal.zero(x.sign xor y.sign)
+        ZER_FNZ,
+        ZER_INF,
+        FNZ_INF -> Decimal.zero(x.sign xor y.sign)
 
         FNZ_ZER -> divFnzZero(x, y, ctx)
         FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> Decimal.zero(x.sign xor y.sign)
 
-        INF_ZER -> Decimal.infinity(x.sign xor y.sign)
+        INF_ZER,
         INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
         INF_INF -> divInfInf(x, y, ctx)
 
@@ -73,6 +74,35 @@ private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.decTemps.mdecArg1.set(x)
     val divisor = ctx.decTemps.mdecArg2.set(y)
     val quotient = ctx.decTemps.mdecResult.setDivInt(dividend, divisor, ctx)
+    return Decimal.from(quotient)
+}
+
+internal fun remImpl(x: Decimal, y: Decimal): Decimal =
+    remImpl(x, y, DecContext.current())
+
+internal fun remImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    return if (bothFnz(x, y)) {
+        remFnzFnz(x, y, ctx)
+    } else when (BinopSignature.of(x, y)) {
+        ZER_FNZ -> newZero(x.sign, min(x.qExp, y.qExp), ctx)
+        FNZ_INF,
+        ZER_INF -> x
+
+        FNZ_FNZ, // Illegal state, we checked above
+        ZER_ZER,
+        FNZ_ZER,
+        INF_ZER,
+        INF_FNZ,
+        INF_INF -> ctx.signalInvalid(Decimal.NaN)
+
+        NAN_FOUND -> nanOperandFound(x, y, ctx)
+    }
+}
+
+private fun remFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val dividend = ctx.decTemps.mdecArg2.set(x)
+    val divisor = ctx.decTemps.mdecArg3.set(y)
+    val quotient = ctx.decTemps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
 

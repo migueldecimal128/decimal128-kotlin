@@ -919,6 +919,8 @@ class Decimal private constructor(
     operator fun times(other: Decimal): Decimal = mulImpl(this, other)
     operator fun div(other: Decimal): Decimal = divImpl(this, other)
 
+    operator fun rem(other: Decimal): Decimal = remImpl(this, other)
+
     context(decContext: DecContext)
     operator fun minus(other: Decimal): Decimal = subImpl(this, other, decContext)
     context(decContext: DecContext)
