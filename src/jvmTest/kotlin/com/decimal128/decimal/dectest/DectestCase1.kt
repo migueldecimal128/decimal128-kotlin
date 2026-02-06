@@ -23,6 +23,9 @@ data class DectestCase1(
 
     val operand1: Decimal
         get() = parseDpd128(operand1Str)
+    val operand1Int: Int
+        get() = operand1Str.toInt()
+
 
     val operand2: Decimal
         get() {
@@ -30,6 +33,13 @@ data class DectestCase1(
                 throw IllegalArgumentException()
             return parseDpd128(operand2Str)
         }
+    val operand2Int: Int
+        get() {
+            if (operand2Str == null)
+                throw IllegalArgumentException()
+            return operand2Str.toInt()
+        }
+
 
     val operand3: Decimal
         get() {

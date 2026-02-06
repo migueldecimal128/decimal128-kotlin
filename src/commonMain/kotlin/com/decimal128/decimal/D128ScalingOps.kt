@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 import kotlin.math.min
 
-internal fun stripTrailingZeros(x: Decimal, ctx: DecContext): Decimal {
+internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int = 99): Decimal {
     val qX = x.qExp
     return when {
         qX < NON_FINITE_INF -> {
@@ -12,7 +12,7 @@ internal fun stripTrailingZeros(x: Decimal, ctx: DecContext): Decimal {
             //  I guess I need a more general solution ...
             //  like having a set of tmps reserved for each layer?
             val t = ctx.decTemps.mdecArg2.set(x)
-            val r = ctx.decTemps.mdecResult.setStripTrailingZeros(t, ctx)
+            val r = ctx.decTemps.mdecResult.setStripTrailingZeros(t, ctx, maxToStrip)
             Decimal.from(r)
         }
         qX == NON_FINITE_INF -> x

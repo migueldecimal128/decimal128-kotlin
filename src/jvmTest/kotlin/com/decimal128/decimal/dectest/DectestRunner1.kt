@@ -209,11 +209,11 @@ object DectestRunner1 {
     }
 
     fun runUnaryDecimalCtxOp(fileName: String,
-                            opName: String,
-                            unaryStringCtxOp: Decimal.(DecContext) -> Decimal,
-                            verbose: Boolean = true,
-                            skip: Boolean = true,
-                            skipCases: Array<String> = arrayOf(),
+                             opName: String,
+                             unaryStringCtxOp: Decimal.(DecContext) -> Decimal,
+                             verbose: Boolean = true,
+                             skip: Boolean = true,
+                             skipCases: Array<String> = arrayOf(),
     ) {
         val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
         val allTests = DectestParser1.parse(fileText, opName)
@@ -221,8 +221,8 @@ object DectestRunner1 {
     }
 
     fun runUnaryDecimalCtxOp(unaryStringCtxOp: Decimal.(DecContext) -> Decimal,
-                            verbose: Boolean = true,
-                            cases: Array<String> = emptyArray(),
+                             verbose: Boolean = true,
+                             cases: Array<String> = emptyArray(),
     ) {
         val cases2 = DectestParser1.parse(cases)
         runUnaryDecimalCtxOp(cases2, unaryStringCtxOp, verbose = verbose)
@@ -435,5 +435,52 @@ object DectestRunner1 {
                 "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}")
         }
     }
+
+    fun runMethod_IntCtx_Decimal(fileName: String,
+                             opName: String,
+                             method: Decimal.(Int, DecContext) -> Decimal,
+                             verbose: Boolean = true,
+                             skip: Boolean = true,
+                             skipCases: Array<String> = arrayOf(),
+    ) {
+        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val allTests = DectestParser1.parse(fileText, opName)
+        runMethod_IntCtx_Decimal(allTests, method, skip, skipCases, verbose)
+    }
+
+    fun runMethod_IntCtx_Decimal(method: Decimal.(Int, DecContext) -> Decimal,
+                             verbose: Boolean = true,
+                             cases: Array<String> = emptyArray(),
+    ) {
+        val cases2 = DectestParser1.parse(cases)
+        runMethod_IntCtx_Decimal(cases2, method, verbose = verbose)
+    }
+
+
+    fun runMethod_IntCtx_Decimal(cases: List<DectestCase1>,
+                             method: Decimal.(Int, DecContext) -> Decimal,
+                             skip: Boolean = true,
+                             skipCases: Array<String> = arrayOf(),
+                             verbose: Boolean = true,
+    ) {
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        cases.forEach { tc ->
+            if (skipSet.contains(tc.text))
+                return@forEach
+            if (verbose)
+                println(tc.text)
+            val operand1 = tc.operand1
+            val operand2 = tc.operand2Int
+            val decCtx = tc.decContext
+            val observed = operand1.method(operand2, decCtx)
+            val expected = tc.result
+            assertTrue(expected bitwiseEQ observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+            assertEquals(tc.expectedDecFlags, decCtx.decFlags,
+                "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}")
+        }
+    }
+
 
 }

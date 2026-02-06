@@ -687,11 +687,49 @@ class Decimal private constructor(
         }
     }
 
+    fun scaleB(pow10Delta: Int, ctx: DecContext): Decimal {
+        val sign = this.sign
+        val qExp = this.qExp
+        val qTiny = ctx.qTiny
+        val qMax = ctx.qMax
+        when {
+            qExp < NON_FINITE_INF -> {
+                val pow10DeltaCapped = max(min(pow10Delta, 1_000_000), -1_000_000)
+                val qNew = qExp + pow10DeltaCapped
+                if (qNew > qMax) {
+                    // before overflow, attempt scaling coeff up
+                    val targetZeroAdd = qNew - qMax
+                    val headroom = ctx.precision - this.digitLen
+                    if (headroom >= targetZeroAdd) {
+                        val (dw1, dw0) = umul128xPow10to128(this.dw1, this.dw0, targetZeroAdd)
+                        return Decimal(sign, qMax, dw1, dw0)
+                    }
+                    return ctx.signalInexactOverflow(infinity(sign))
+                }
+                if (qNew < qTiny) {
+                    // before underflow, attempt trailing zero removal
+                    val targetZeroRemoval = qTiny - qNew
+                    if (targetZeroRemoval < digitLen) {
+                        val stripped = stripTrailingZerosImpl(this, ctx, maxToStrip = targetZeroRemoval)
+                        if (this.digitLen - stripped.digitLen == targetZeroRemoval) {
+                            // FIXME - just mutate qExp here
+                            return Decimal(sign, qTiny, stripped.dw1, stripped.dw0)
+                        }
+                    }
+                    return ctx.signalInexactUnderflow(newZero(sign, qTiny, ctx))
+                }
+                return Decimal(sign, qNew, this.dw1, this.dw0)
+            }
+            qExp == NON_FINITE_INF -> return this
+            else -> return nanOperandFound(this, ctx)
+        }
+    }
+
     fun nextUp(ctx: DecContext): Decimal = nextUpOrDown(isUp = true, this, ctx)
 
     fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
 
-    fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZeros(this, ctx)
+    fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZerosImpl(this, ctx)
 
     fun withScale(decimalScale: Int, ctx: DecContext): Decimal = withScale(this, decimalScale, ctx)
     /**
