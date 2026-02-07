@@ -21,7 +21,7 @@ object D128Div {
             qMax == NON_FINITE_SNAN ->
                 env.signal(
                     INVALID_OPERATION,
-                    SIGNALING_NAN_OPERAND,
+                    SNAN_OPERAND,
                     "div",
                     Decimal.NaN)
             x.qExp == NON_FINITE_QNAN -> x

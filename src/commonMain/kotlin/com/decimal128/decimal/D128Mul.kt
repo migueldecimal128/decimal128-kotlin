@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecException.INVALID_OPERATION
-import com.decimal128.decimal.DecExceptionReason.SIGNALING_NAN_OPERAND
+import com.decimal128.decimal.DecExceptionReason.SNAN_OPERAND
 import com.decimal128.decimal.Decimal.Companion.NEG_INFINITY
 import com.decimal128.decimal.Decimal.Companion.POS_INFINITY
 import kotlin.math.max
@@ -18,7 +18,7 @@ object D128Mul {
             qMax == NON_FINITE_SNAN ->
                 ctx.signal(
                     INVALID_OPERATION,
-                    SIGNALING_NAN_OPERAND,
+                    SNAN_OPERAND,
                     "mul",
                     Decimal.NaN)
             x.qExp == NON_FINITE_QNAN -> x

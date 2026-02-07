@@ -146,14 +146,19 @@ data class DecContext(
         return signal(DIV_BY_ZERO, OTHER, "whatever", dec)
     }
 
-    fun signalDivByZero(sign: Boolean): Decimal {
-        val inf = if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
-        if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
-            decFlags.set(DIV_BY_ZERO)
-            return inf
-        }
-        return signal(DIV_BY_ZERO, OTHER, "whatever", inf)
+    fun signalDivByZero(sign: Boolean): Decimal =
+        signalDivByZero(if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY)
+
+    fun signalParseMalformed(reason: DecExceptionReason): Decimal {
+        if (decPrefs.parseThrowOnMalformed)
+            throw NumberFormatException(reason.toString())
+        // FIXME - add a flag for parse malformed ?
+        //  might assist in debugging cause of a NaN
+        return signalInvalid(Decimal.NaN)
     }
+
+    fun signalParseBadUnderscore(): Decimal =
+        signalParseMalformed(DecExceptionReason.PARSE_BAD_UNDERSCORE)
 
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
