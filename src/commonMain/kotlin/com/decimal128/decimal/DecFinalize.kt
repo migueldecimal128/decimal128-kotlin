@@ -182,7 +182,7 @@ private fun MutDec.finalizeUnderflowBoundary(
     rounding: DecRounding,
     ctx: DecContext
 ): MutDec {
-    val scaleResidue = Residue.residueFrom(this)
+    val scaleResidue = Residue.fromValueDecade(this)
     val totalResidue = scaleResidue.merge(inboundResidue)
     val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
 

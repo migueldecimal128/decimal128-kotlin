@@ -9,9 +9,8 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 
-private const val RESIDUE_IS_VALUE_CLASS = true
 @JvmInline
-value class Residue private constructor(val value:Int) {
+value class Residue internal constructor(val value:Int) {
 
     companion object {
         val EXACT = Residue(0)
@@ -19,17 +18,19 @@ value class Residue private constructor(val value:Int) {
         val HALF = Residue(2)
         val GT_HALF = Residue(3)
 
+        operator fun invoke(res: Int) = Residue(res and 0x03)
+
         internal val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF)
 
         internal val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF")
 
         internal const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
 
-        fun fromDecimalDigit(digit: Int): Residue = Residue((DIGIT_MAP shr (digit shl 1)) and 0x03)
+        internal inline fun fromDecimalDigit(digit: Int): Residue = Residue((DIGIT_MAP shr (digit shl 1)) and 0x03)
 
         // FIXME - this method is fine, but it needs a better name
         //  ... and perhaps a better implementation
-        fun residueFrom(c:C256) :Residue {
+        fun fromValueDecade(c:C256) :Residue {
             val digitLen = c.digitLen
             if (digitLen == 0)
                 return EXACT
@@ -40,16 +41,16 @@ value class Residue private constructor(val value:Int) {
                 else -> compareWithHalfPow10_4(c.dw3, c.dw2, c.dw1, c.dw0, digitLen)
             }
             val residueValue = (cmp + 2) and 0x03
-            val residue = if (RESIDUE_IS_VALUE_CLASS) Residue(residueValue) else RESIDUE_MAP[residueValue]
+            val residue = Residue(residueValue)
             return residue
         }
 
 
-        fun residueFrom(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long) : Residue {
+        fun fromRoundBitStickyBitsStickyBits(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long) : Residue {
             val stickyBit = if (stickyBitsFracCompare >= 0 || stickyBitsPow2 != 0L) 1 else 0
             val roundBit = if (isolatedRoundBit == 0L) 0 else 1
             val residueValue = ((roundBit shl 1) or stickyBit) and 0x03
-            val residueX = if (RESIDUE_IS_VALUE_CLASS) Residue(residueValue) else RESIDUE_MAP[residueValue]
+            val residueX = Residue(residueValue)
             val residueY =
                 if (stickyBitsPow2 == 0L) {
                     if (stickyBitsFracCompare < 0) {
@@ -66,18 +67,15 @@ value class Residue private constructor(val value:Int) {
             return residueX
         }
 
-        fun residueFrom(roundBit: Int, stickyBit: Int, stickyBitPow2: Int) =
-            residueFrom(roundBit, stickyBit or stickyBitPow2)
-
-        fun residueFrom(roundBit: Int, stickyBit: Int) : Residue {
+        fun fromRoundBitStickBit(roundBit: Int, stickyBit: Int) : Residue {
             verify { roundBit in 0..1 }
             verify { stickyBit in 0..1 }
             val residueValue = (roundBit shl 1) or stickyBit
-            val residueX = RESIDUE_MAP[residueValue and 0x03]
+            val residueX = Residue(residueValue)
             return residueX
         }
 
-        fun residueFromRemainderDivisor(r: C256, d: C256): Residue {
+        fun fromRemainderDivisor(r: C256, d: C256): Residue {
             if (r.dw3 < 0L) {
                 // high bit of residue is set
                 // doubling is certainly larger
@@ -106,7 +104,7 @@ value class Residue private constructor(val value:Int) {
             return EXACT
         }
 
-        fun residueFromRemainderDivisor(remainder: Long, divisor: Long): Residue {
+        fun fromRemainderDivisor(remainder: Long, divisor: Long): Residue {
             val residue = when {
                 remainder == 0L -> EXACT
                 remainder < 0L -> GT_HALF // hi bit set .. so doubling would be 65 bits ... GT y0
@@ -117,7 +115,7 @@ value class Residue private constructor(val value:Int) {
             return residue
         }
 
-        fun residueFromRemainderDivisor(remainder: BigInt, divisor: BigInt): Residue {
+        fun fromRemainderDivisor(remainder: BigInt, divisor: BigInt): Residue {
             if (remainder.isZero())
                 return EXACT
             val remainderDoubled = remainder shl 1
@@ -136,7 +134,7 @@ value class Residue private constructor(val value:Int) {
             val cmp = unsignedCmp(remainder, pow10div2)
             val index = ((cmp + 2) and nonZeroMask) and 0x03
             //val residue = RESIDUE_MAP[index and 0x03]
-            val residue = if (RESIDUE_IS_VALUE_CLASS) Residue(index) else RESIDUE_MAP[index]
+            val residue = Residue(index)
             return residue
         }
 
@@ -226,7 +224,7 @@ value class Residue private constructor(val value:Int) {
          */
         val s = (stickyResidue.value and 1) or (stickyResidue.value ushr 1)
         val r = (this.value or s) and 0x03
-        val mergedResidue = if (RESIDUE_IS_VALUE_CLASS) Residue(r) else RESIDUE_MAP[r]
+        val mergedResidue = Residue(r)
         return mergedResidue
     }
 

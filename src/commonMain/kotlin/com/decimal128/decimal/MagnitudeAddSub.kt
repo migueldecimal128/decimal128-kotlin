@@ -36,7 +36,7 @@ object MagnitudeAddSub {
                         val residueT = if (shiftRight > n.digitLen)
                             Residue.LT_HALF
                         else
-                            Residue.residueFrom(n)
+                            Residue.fromValueDecade(n)
                         c256SetScaleUpPow10(z, m, shiftLeft)
                         residueT
                     }
@@ -109,7 +109,7 @@ object MagnitudeAddSub {
                     val residueT = if (shiftRight > y.digitLen)
                         Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
                     else
-                        Residue.residueFrom(y).subtractionInverse()
+                        Residue.fromValueDecade(y).subtractionInverse()
                     if (shiftLeft > 0) {
                         c256SetScaleUpPow10(z, x, shiftLeft)
                     } else {
@@ -159,7 +159,7 @@ object MagnitudeAddSub {
                     // y becomes "all dropped" at this alignment
                     val residueT =
                         if (shiftRight > y.digitLen) Residue.GT_HALF
-                        else Residue.residueFrom(y)
+                        else Residue.fromValueDecade(y)
 
                     if (shiftLeft > 0) c256SetScaleUpPow10(z, x, shiftLeft) else z.c256Set(x)
 

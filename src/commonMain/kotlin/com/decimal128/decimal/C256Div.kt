@@ -15,7 +15,7 @@ private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
 
 internal fun c256SetDivX64(z: C256, x: C256, y0: Long): Residue {
     val rem = c256SetDivRemX64(z, x, y0)
-    val residue = Residue.residueFromRemainderDivisor(rem, y0)
+    val residue = Residue.fromRemainderDivisor(rem, y0)
     return residue
 }
 
@@ -62,7 +62,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
             rem.c256Set64(r0)
             return EXACT
         }
-        val residue = Residue.residueFromRemainderDivisor(r0, y0)
+        val residue = Residue.fromRemainderDivisor(r0, y0)
         return residue
     }
     val bitLenDelta = x.bitLen - y.bitLen
@@ -71,7 +71,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
         val residue = when {
             rem != null || x.bitLen == 0 -> EXACT
             bitLenDelta <= -2 -> LT_HALF
-            else -> Residue.residueFromRemainderDivisor(x, y)
+            else -> Residue.fromRemainderDivisor(x, y)
         }
         quot?.c256SetZero()
         return residue
@@ -90,7 +90,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
                 else -> C256()
             }
             t.c256SetSub(x, y)
-            val residue = Residue.residueFromRemainderDivisor(t, y)
+            val residue = Residue.fromRemainderDivisor(t, y)
             rem?.c256Set(t)
             quot?.c256SetOne()
             return residue

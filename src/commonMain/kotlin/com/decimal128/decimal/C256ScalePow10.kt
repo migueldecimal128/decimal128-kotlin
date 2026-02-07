@@ -51,7 +51,7 @@ internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int): Residue {
     if (x.bitLen > 0 && pow10 > 0) {
         val productDigitCount = x.digitLen - pow10
         if (productDigitCount <= 0) {
-            val residue = if (productDigitCount == 0) Residue.residueFrom(x) else Residue.LT_HALF
+            val residue = if (productDigitCount == 0) Residue.fromValueDecade(x) else Residue.LT_HALF
             z.c256SetZero()
             return residue
         }

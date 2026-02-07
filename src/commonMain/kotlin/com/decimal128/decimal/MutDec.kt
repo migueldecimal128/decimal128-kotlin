@@ -1251,7 +1251,7 @@ class MutDec() : C256() {
             if (fracDigitLen > x.digitLen)
                 residue = Residue.LT_HALF
             else {
-                residue = Residue.residueFrom(x)
+                residue = Residue.fromValueDecade(x)
                 verify { residue != Residue.EXACT }
             }
             val roundUp = residue.ulpRoundUp(rounding.negate(xSign), 0L)

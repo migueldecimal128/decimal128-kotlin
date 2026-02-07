@@ -146,7 +146,7 @@ object DivRangeRecipMulPow10 {
         //val (expectedQuot, expectedRem) = dividend.divMod(tenPowK)
         val expectedQuot = dividend / tenPowK
         val expectedRem = dividend % tenPowK
-        val expectedResidue = Residue.residueFromRemainderDivisor(expectedRem, tenPowK)
+        val expectedResidue = Residue.fromRemainderDivisor(expectedRem, tenPowK)
 
         val dividendAlfa = dividend shr (k - 1)
         val maskAlfa = BigInt.withBitMask(k - 1)

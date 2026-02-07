@@ -186,7 +186,7 @@ internal fun c256RecipMul256(
     if (q4 != 0L)
         quotient[quotientIndex] = q4
 
-    val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
+    val residue = Residue.fromRoundBitStickyBitsStickyBits(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
     return residue
 }
 
@@ -334,7 +334,7 @@ internal fun c256RecipMul192(
     if (q3 != 0L)
         quotient[quotientIndex] = q3
 
-    val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
+    val residue = Residue.fromRoundBitStickyBitsStickyBits(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
     return residue
 }
 
@@ -448,7 +448,7 @@ internal fun c256RecipMul128(
     if (q2 != 0L)
         quotient[quotientIndex] = q2
 
-    val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
+    val residue = Residue.fromRoundBitStickyBitsStickyBits(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
     return residue
 }
 
@@ -532,6 +532,6 @@ internal fun c256RecipMul64(
     if (q1 != 0L)
         quotient[quotientIndex] = q1
 
-    val residue = Residue.residueFrom(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
+    val residue = Residue.fromRoundBitStickyBitsStickyBits(isolatedRoundBit, stickyBitsFracCompare, stickyBitsPow2)
     return residue
 }
