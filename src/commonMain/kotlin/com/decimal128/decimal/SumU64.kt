@@ -684,6 +684,14 @@ private const val M_U32_DIV_1E4 = 0x346DC5D7L
 private const val S_U32_DIV_1E4 = 43
 
 
+// FIXME
+//  A binary int with z lo zero bits can have no more than z
+//  trailing Zeros.
+//  The cost of a short division DivDirect.divModX32 is the
+//  same, regardless  of divisor size.
+//  Consider whether or not this should be used to short-circuit
+//  ... messing up the pipeline.
+
 fun countTrailingZeroDigits32(n: Int): Int {
     verify { n > 0 }
     var d = n.toLong()

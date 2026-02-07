@@ -21,13 +21,13 @@ object D128ParsePrint {
     private const val DECIMAL128_QMAX_6111 = 6111
 
     /**
-     * Parses a decimal string into a `Decimal2` (decimal128).
+     * Parses a decimal string into a `Decimal` (decimal128).
      *
      * Accepts the same finite-value syntax as `parseFiniteValueText`:
      * optional sign, digits with optional decimal point, optional `e`/`E`
      * exponent (with optional sign), and only ASCII/Basic-Latin characters.
      *
-     * If the input is valid, a `Decimal2` is returned. Otherwise an
+     * If the input is valid, a `Decimal` is returned. Otherwise an
      * `IllegalArgumentException` is thrown containing the diagnostic text
      * produced by `parseDecimalOrErrorString`.
      *
@@ -51,7 +51,7 @@ object D128ParsePrint {
      *  3. `parseNanText`
      *
      * Returns the first non-null result, which may be:
-     *  * a `Decimal2` for a successful parse, or
+     *  * a `Decimal` for a successful parse, or
      *  * a `String` describing an error.
      *
      * Error messages are returned as `String` constant values
@@ -69,7 +69,7 @@ object D128ParsePrint {
     }
 
     /**
-     * Parses a textual infinity representation into a [`Decimal2`] value.
+     * Parses a textual infinity representation into a [`Decimal`] value.
      *
      * Accepted forms are case-insensitive:
      *
@@ -115,7 +115,7 @@ object D128ParsePrint {
     private const val NINES_14 = 99_999_999_999_999L
 
     /**
-     * Parses a textual NaN representation into a [`Decimal2`] value.
+     * Parses a textual NaN representation into a [`Decimal`] value.
      *
      * Accepted forms (case-insensitive):
      *
@@ -215,7 +215,7 @@ object D128ParsePrint {
     }
 
     /**
-     * Parses a finite decimal value into a [`Decimal2`] (decimal128) with **no rounding**.
+     * Parses a finite decimal value into a [`Decimal`] (decimal128) with **no rounding**.
      *
      * This is a simple numeric parser that accepts only standard finite forms:
      *
@@ -228,7 +228,7 @@ object D128ParsePrint {
      * If the input requires rounding, contains invalid syntax, or exceeds the
      * exact range of decimal128 finite values, this method returns `null`.
      *
-     * @return the parsed finite `Decimal2` value, or `null` if not a valid finite
+     * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
     fun parseFiniteValueText(str: String, allowOversizeCoefficient: Boolean = false): Any? {
@@ -236,7 +236,6 @@ object D128ParsePrint {
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
         var expSign = false
-        var expSignificantDigitCount = 0
 
         if (str.length == 0)
             return "empty string"
@@ -292,7 +291,6 @@ object D128ParsePrint {
             return null // try other options Infinity, NaN
         // this path has at least one digit
         if (ch == 'E' || ch == 'e') {
-            var hasExpDigit = false
             if (chLast == '_')
                 return "invalid _ placement"
             ch = if (ich < str.length) str[ich++] else '\u0000'
@@ -302,17 +300,14 @@ object D128ParsePrint {
                 expSign = ch == '-'
                 ch = if (ich < str.length) str[ich++] else '\u0000'
             }
+            var hasExpDigit = false
+            var expSignificantDigitCount = 0
             while (ch in '0'..'9' || ch == '_') {
                 if (ch != '_') {
                     hasExpDigit = true
                     val eDigit = ch - '0'
-                    expSignificantDigitCount +=
+                    expSignificantDigitCount += // flush leading zeros
                         (-(expSignificantDigitCount or eDigit)) ushr 31
-                    // if the coefficient is 0 then we will be much more lenient on qExp
-                    if (expSignificantDigitCount > 9 ||
-                        expSignificantDigitCount > 4 && (accum19a or accum19b) != 0L) {
-                        return "exponent out of decimal128 range"
-                    }
                     exp = exp * 10 + (ch - '0')
                 } else {
                     if (! hasExpDigit)
@@ -323,6 +318,9 @@ object D128ParsePrint {
             }
             if (! hasExpDigit)
                 return "E with no exponent digits"
+            // clamp exp to 9999 once after the loop
+            if (expSignificantDigitCount > 4)
+                exp = 9999
         }
         if (chLast == '_')
             return "invalid _ placement"
