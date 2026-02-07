@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import kotlin.math.max
@@ -40,4 +43,16 @@ data class DecFormat(val precision: Int,
         val sumBitLen = max(xBitLen, yBitLen) + 1
         return sumBitLen < maxBitLen
     }
+
+    internal inline fun coeffFits(dw1: Long, dw0: Long): Boolean =
+        unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)
+
+    internal inline fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean =
+        (unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)) &&
+                (qExp >= qTiny && qExp <= qMax)
+
+    internal inline fun coeffIsMaxx(dw1: Long, dw0: Long): Boolean =
+        dw1 == this.dw1MaxxCoeff && dw0 == this.dw0MaxxCoeff
+
+
 }
