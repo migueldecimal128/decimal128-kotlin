@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 @file:Suppress("NOTHING_TO_INLINE")
 
 package com.decimal128.decimal
@@ -232,6 +233,11 @@ object D128ParsePrint {
      *         decimal128 text form without rounding.
      */
     fun parseFiniteValueText(str: String, allowOversizeCoefficient: Boolean = false): Any? {
+        val precision = if (allowOversizeCoefficient) 38 else 34
+        var residue: Residue = Residue.EXACT
+        val qTiny = -6176
+        val qMax = 6111
+
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var hasDot = false
@@ -259,16 +265,15 @@ object D128ParsePrint {
                 in '0'..'9' -> {
                     val d = ch - '0'
                     hasCoefficientDigit = true
+                    // count while flushing leading zeros
                     significantDigitCount += (-(significantDigitCount or d)) ushr 31
                     when {
                         significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
-                        significantDigitCount > 34 && !allowOversizeCoefficient ->
-                            return "more than decimal128 34 significant digits"
-
-                        significantDigitCount > 38 ->
-                            return "oversize coefficient exceeds decimal128_extended 38 digits"
-
-                        else -> accum19b = (accum19b * 10L) + d.toLong()
+                        significantDigitCount <= precision -> accum19b = (accum19b * 10L) + d.toLong()
+                        significantDigitCount == precision + 1 ->
+                            residue = Residue.fromDecimalDigit(d)
+                        else ->
+                            residue = residue.merge(Residue.fromDecimalDigit(d))
                     }
                     if (hasDot)
                         ++fractionalDigitCount
@@ -306,9 +311,10 @@ object D128ParsePrint {
                 if (ch != '_') {
                     hasExpDigit = true
                     val eDigit = ch - '0'
-                    expSignificantDigitCount += // flush leading zeros
+                    // count while flushing leading zeros
+                    expSignificantDigitCount +=
                         (-(expSignificantDigitCount or eDigit)) ushr 31
-                    exp = exp * 10 + (ch - '0')
+                    exp = exp * 10 + eDigit
                 } else {
                     if (! hasExpDigit)
                         return "invalid _ placement"
@@ -336,25 +342,32 @@ object D128ParsePrint {
             dw0T += accum19b
             dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
         }
+        // temporary scaffolding ... fail if they sent too many digits in coeff
+        if (significantDigitCount > precision)
+            return "coefficient out of decimal128 range"
+        // at this point, our coeff <= precision digits
+        // but we need to deal with residue and rounding
+        // rounding rollover could affect the exponent
+        //
+        // when we accept oversize coefficients, then whether the excess
+        // digits are to the right or left of the exponent will affect
+        // the qExp ...
         val signedExp = if (expSign) -exp else exp
         var qExp = signedExp - fractionalDigitCount
         var bitLen = calcBitLen128(dw1T, dw0T)
         var digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
-        if (digitLen == 0)
-            qExp = min(max(qExp, -6176), 6111)
-        if (qExp < -6176)
+        if (digitLen == 0) // allow any exponent with Zero
+            qExp = min(max(qExp, qTiny), qMax)
+        if (qExp < qTiny)
             return "exponent out of decimal128 range"
-        if (qExp > DECIMAL128_QMAX_6111) {
-            val overage = qExp - DECIMAL128_QMAX_6111
-            //println("parseFiniteValueText => str:$str overage:$overage")
-            if (!allowOversizeCoefficient && overage > 34 - digitLen)
-                return "out of decimal128 range"
-            else if (allowOversizeCoefficient && overage > 38 - digitLen)
-                return "out of decimal128_extended range"
+        if (qExp > qMax) {
+            val overage = qExp - qMax
+            if (overage > precision - digitLen)
+                return "value out of decimal128 range"
             val (t1, t0) = umul128xPow10to128(dw1T, dw0T, overage)
             dw1T = t1
             dw0T = t0
-            qExp = DECIMAL128_QMAX_6111
+            qExp = qMax
             bitLen = calcBitLen128(dw1T, dw0T)
             digitLen += overage
         }

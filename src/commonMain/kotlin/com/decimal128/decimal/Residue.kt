@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.bigint.BigInt
@@ -16,9 +19,13 @@ value class Residue private constructor(val value:Int) {
         val HALF = Residue(2)
         val GT_HALF = Residue(3)
 
-        val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF)
+        internal val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF)
 
-        val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF")
+        internal val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF")
+
+        internal const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
+
+        fun fromDecimalDigit(digit: Int): Residue = Residue((DIGIT_MAP shr (digit shl 1)) and 0x03)
 
         // FIXME - this method is fine, but it needs a better name
         //  ... and perhaps a better implementation
@@ -202,6 +209,10 @@ value class Residue private constructor(val value:Int) {
 
      */
 
+    /**
+     * Merges previous residue with new stickResidue in left-to-right fashion ...
+     * as though parsing digits left to right.
+     */
     fun merge(stickyResidue: Residue): Residue {
         /*
         val mergedResidue = when (this.value) {
