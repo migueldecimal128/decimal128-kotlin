@@ -4,8 +4,10 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
+internal fun MutDec.finalize(env: DecContext) = roundAndFinalize(Residue.EXACT, env.decRounding, env)
+
 internal fun MutDec.roundAndFinalize(inboundResidue: Residue, ctx: DecContext) =
-    roundAndFinalize(inboundResidue, ctx.decRounding, ctx)
+    roundAndFinalizeDAG(inboundResidue, ctx.decRounding, ctx)
 
 internal fun MutDec.roundAndFinalize(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext) =
     roundAndFinalizeDAG(inboundResidue, rounding, ctx)
@@ -19,16 +21,24 @@ internal fun MutDec.roundAndFinalize(inboundResidue: Residue, rounding: DecRound
  * 5. Signal once with all flags
  */
 private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
-    // Handle special values immediately
+    // Step 1. Handle special values immediately
     if (qExp >= MIN_SPECIAL_VALUE)
         return this
 
-    // Handle zero coefficient
+    // Step 2. Handle zero coefficient
     if (digitLen == 0)
         return finalizeZero(inboundResidue, rounding, ctx)
 
-    // Step 1: Normalize coefficient length to <= precision
-    // This accumulates any residue from truncation
+    // Step 3: Handle underflow region
+// Only divert if range truncation exceeds precision truncation,
+// meaning the normal path can't bring qExp into range on its own
+    val rangeTruncationNeeded = ctx.qTiny - qExp
+    val precisionTruncationNeeded = max(0, digitLen - ctx.precision)
+    if (rangeTruncationNeeded > precisionTruncationNeeded) {
+        return finalizeUnderflow(inboundResidue, rounding, ctx)
+    }
+
+    // Step 4: Normalize coefficient length to <= precision, accumulating residue
     var totalResidue = inboundResidue
     if (digitLen > ctx.precision) {
         val excessDigitCount = digitLen - ctx.precision
@@ -38,48 +48,37 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
         verify { digitLen == ctx.precision }
     }
 
-    // Step 1.5: Check if we're in the underflow region BEFORE applying rounding
-    // This matches the old code's behavior in roundAndFinalizeFnzValidCoeff
-    if (digitLen == ctx.precision && qExp < ctx.qTiny) {
-        return finalizeUnderflow(totalResidue, rounding, ctx)
-    }
+    // Step 5: Apply rounding ... might increment coefficient
+    val applyRounding = totalResidue != EXACT
+    if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
+        // Step 5.1: increment
+        c256MutateIncrement()
 
-    // Step 2: Apply rounding (may increment coefficient)
-    val shouldRound = totalResidue != EXACT
-    if (shouldRound) {
-        val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), dw0)
-        if (roundUp) {
-            c256MutateIncrement()
-
-            // Step 3: Handle rollover if increment caused overflow to new digit
-            if (digitLen > ctx.precision) {
-                verify { digitLen == ctx.precision + 1 }
-                // Rolling over means the result is divisible by 10, so no residue
-                val rolloverResidue = c256SetScaleDownPow10(this, this, 1)
-                verify { rolloverResidue == EXACT }
-                ++qExp
-                verify { digitLen == ctx.precision }
-            }
+        // Step 5.2: Handle rollover if increment caused overflow to new digit
+        if (digitLen > ctx.precision) {
+            verify { digitLen == ctx.precision + 1 }
+            // Rolling over means the result is divisible by 10, so no residue
+            val rolloverResidue = c256SetScaleDownPow10(this, this, 1)
+            verify { rolloverResidue == EXACT }
+            ++qExp
+            verify { digitLen == ctx.precision }
         }
     }
 
-    // Step 4: Check final bounds and determine which flags to signal
-    // Note: For short coefficients (digitLen < precision), we still might overflow/underflow
-    // after rounding changes the exponent
+    // Step 6: Check final bounds
+    // qExp >= qTiny is guaranteed by steps 3/4/5
+    // digitLen <= precision is guaranteed by steps 4/5
+    verify { qExp >= ctx.qTiny }
+    verify { digitLen <= ctx.precision }
     return when {
-        eExp > ctx.eMax -> finalizeOverflow(rounding, ctx)
-        eExp < ctx.eMin -> {
-            // In the tiny range - distinguish valid subnormal from true underflow
-            if (qExp >= ctx.qTiny) {
-                // Valid subnormal at the requested scale - just signal inexact if needed
-                if (shouldRound) ctx.signalInexact(this) else this
-            } else {
-                // Truly underflowed - needs special handling
-                finalizeUnderflow(totalResidue, rounding, ctx)
-            }
+        qExp > ctx.qMax -> {
+            val qExcess = qExp - ctx.qMax
+            if (digitLen + qExcess <= ctx.precision)
+                finalizeClamping(ctx)
+            else
+                finalizeOverflow(rounding, ctx)
         }
-        qExp > ctx.qMax -> finalizeClamping(ctx)
-        shouldRound -> ctx.signalInexact(this)
+        applyRounding -> ctx.signalInexact(this)
         else -> this
     }
 }
@@ -145,8 +144,7 @@ private fun MutDec.finalizeUnderflow(
     ctx: DecContext
 ): MutDec {
     // IEEE 754 7.5 Underflow - handle subnormal region
-    verify { eExp < ctx.eMin }
-    verify { digitLen <= ctx.precision }
+    verify { qExp < ctx.qTiny }
 
     val truncationNeeded = ctx.qTiny - qExp
 
@@ -243,30 +241,4 @@ private fun MutDec.finalizeClamping(ctx: DecContext): MutDec {
     verify { qExp == ctx.qMax }
 
     return this
-}
-
-// Old functions retained for compatibility during transition
-internal fun MutDec.finalize(env: DecContext) = finalize(env.decRounding, env)
-
-internal fun MutDec.finalize(rounding: DecRounding, env: DecContext): MutDec {
-    val qExp = this.qExp
-    val eExp = this.eExp
-    val digitLen = this.digitLen
-    return when {
-        qExp >= MIN_SPECIAL_VALUE -> this
-        digitLen == 0 -> finalizeZero(Residue.EXACT, rounding, env)
-        digitLen > env.precision -> finalizeFnzLongCoeff(rounding, env)
-        eExp > env.eMax -> finalizeOverflow(rounding, env)
-        eExp < env.eMin -> finalizeUnderflow(Residue.EXACT, rounding, env)
-        qExp > env.qMax -> finalizeClamping(env)
-        else -> this
-    }
-}
-
-private fun MutDec.finalizeFnzLongCoeff(rounding: DecRounding, env: DecContext): MutDec {
-    val excessDigitCount = digitLen - env.precision
-    verify { excessDigitCount > 0 }
-    val residue = c256SetScaleDownPow10(this, this, excessDigitCount)
-    qExp += excessDigitCount
-    return roundAndFinalizeDAG(residue, rounding, env)
 }
