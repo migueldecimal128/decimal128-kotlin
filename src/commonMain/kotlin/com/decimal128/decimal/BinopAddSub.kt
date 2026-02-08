@@ -96,26 +96,16 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCo
     }
 }
 
-private fun addUnscaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val sumBitLen = max(x.bitLen, y.bitLen) + 1
-    val sum = if (sumBitLen < ctx.decFormat.maxBitLen) {
-        val x0 = x.dw0
-        val y0 = y.dw0
-        val s0 = x0 + y0
-        val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
-        val x1 = x.dw1
-        val y1 = y.dw1
-        val s1 = x1 + y1 + carry0
-        Decimal.from(resultSign, s1, s0, x.qExp)
-    } else {
-        val m = ctx.decTemps.mdecArg1.set(x)
-        m.sign = resultSign
-        val n = ctx.decTemps.mdecArg2.set(y)
-        n.sign = resultSign
-        val mdecSum = ctx.decTemps.mdecResult.setAdd(m, n, ctx)
-        Decimal.from(mdecSum)
-    }
-    return sum
+private fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    verify { max(x.bitLen, y.bitLen) + 1 <= 128 }
+    val x0 = x.dw0
+    val y0 = y.dw0
+    val s0 = x0 + y0
+    val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
+    val x1 = x.dw1
+    val y1 = y.dw1
+    val s1 = x1 + y1 + carry0
+    return decFinalizeFinite(sign, s1, s0, x.qExp, ctx)
 }
 
 private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {

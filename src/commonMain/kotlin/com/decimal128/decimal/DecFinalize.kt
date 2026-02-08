@@ -1,81 +1,93 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Residue.Companion.EXACT
 
+internal inline fun decFinalizeFinite(sign: Boolean,
+                                      dw1: Long, dw0: Long,
+                                      qExp: Int,
+                                      ctx: DecContext): Decimal =
+    decRoundAndFinalizeFinite(sign, dw1, dw0, EXACT, qExp, ctx.decRounding, ctx)
+
 internal fun decRoundAndFinalizeFinite(sign: Boolean,
-                                       dw1: Long, dw0: Long, inboundResidue: Residue,
-                                       qExp: Int,
+                                       dw1In: Long, dw0In: Long, inboundResidue: Residue,
+                                       qExpIn: Int,
                                        rounding: DecRounding, ctx: DecContext): Decimal {
     // Step 1: Fast path: already in valid decimal128 range
     val decFormat = ctx.decFormat
-    val qTiny = decFormat.qTiny
-    val qMax = decFormat.qMax
-    val precision = decFormat.precision
-    if (inboundResidue == EXACT && decFormat.coeffQexpFit(dw1, dw0, qExp))
-        return Decimal(sign, dw1, dw0, qExp)
+    if (inboundResidue == EXACT && decFormat.coeffQexpFit(dw1In, dw0In, qExpIn))
+        return Decimal(sign, dw1In, dw0In, qExpIn)
 
     // Step 2: special values
+    /* NOT APPLICABLE because we are only dealing with Finite
     if (qExp >= MIN_SPECIAL_VALUE) {
         return if (qExp ==NON_FINITE_INF)
             Decimal.infinity(sign)
         else
             Decimal.NaN(sign, qExp == NON_FINITE_SNAN, dw1, dw0)
     }
+     */
 
     // Step 3: zero coefficient
-    if ((dw1 or dw0) == 0L)
-        return decFinalizeZero(sign, inboundResidue, qExp, rounding, ctx)
+    if ((dw1In or dw0In) == 0L)
+        return decFinalizeZero(sign, inboundResidue, qExpIn, rounding, ctx)
+
+    val qTiny = decFormat.qTiny
+    val qMax = decFormat.qMax
+    val precision = decFormat.precision
 
     // Step 4: underflow
     // divert iff range truncation exceeds precision truncation
-    val rangeTruncationNeeded = qTiny - qExp
+    val rangeTruncationNeeded = qTiny - qExpIn
     val precisionTruncationNeeded =
-        if (decFormat.coeffFits(dw1, dw0)) 0
-        else calcDigitLen128(dw1, dw0) - precision
+        if (decFormat.coeffFits(dw1In, dw0In)) 0
+        else calcDigitLen128(dw1In, dw0In) - precision
     if (rangeTruncationNeeded > precisionTruncationNeeded)
-        return decFinalizeUnderflowRegion(sign, dw1, dw0,inboundResidue, qExp, rounding, ctx)
+        return decFinalizeUnderflowRegion(sign, dw1In, dw0In,inboundResidue, qExpIn, rounding, ctx)
 
     // Step 5: normalize to <= precision, accumulating residue
     var totalResidue = inboundResidue
-    var dw1T = dw1
-    var dw0T = dw0
-    var qExpT = qExp
+    var dw1 = dw1In
+    var dw0 = dw0In
+    var qExp = qExpIn
     if (precisionTruncationNeeded > 0) {
         val (dw1S, dw0S, truncationResidue) =
-            C128ScalePow10.c128ScaleDownPow10(dw1T, dw0T, precisionTruncationNeeded)
-        dw1T = dw1S
-        dw0T = dw0S
+            C128ScalePow10.c128ScaleDownPow10(dw1, dw0, precisionTruncationNeeded)
+        dw1 = dw1S
+        dw0 = dw0S
         totalResidue = truncationResidue.merge(totalResidue)
-        qExpT += precisionTruncationNeeded
-        verify { calcDigitLen128(dw1T, dw0T) == precision }
+        qExp += precisionTruncationNeeded
+        verify { calcDigitLen128(dw1, dw0) == precision }
     }
 
     // step 6: rounding
     val applyRounding = totalResidue != EXACT
     if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
         // step 6.1: increment
-        ++dw0T
-        dw1T += if (dw0T == 0L) 1L else 0L
+        ++dw0
+        dw1 += if (dw0 == 0L) 1L else 0L
 
         // step 6.2: rollover
-        if (decFormat.coeffIsMaxx(dw1T, dw1T)) {
-            dw1T = decFormat.dw1MinFullPrecisionCoeff
-            dw0T = decFormat.dw0MinFullPrecisionCoeff
-            ++qExpT
+        if (decFormat.coeffIsMaxx(dw1, dw1)) {
+            dw1 = decFormat.dw1MinFullPrecisionCoeff
+            dw0 = decFormat.dw0MinFullPrecisionCoeff
+            ++qExp
         }
     }
 
     // step 7: check final bounds
-    verify { qExp >= qTiny }
-    verify {calcDigitLen128(dw1T, dw0T) <= precision }
+    verify { qExpIn >= qTiny }
+    verify {calcDigitLen128(dw1, dw0) <= precision }
     if (qExp > qMax) {
         val qExcess = qExp - qMax
-        return if (calcDigitLen128(dw1T, dw0T) + qExcess <= precision)
-            decFinalizeClamping(sign, dw1T, dw0T, qExpT, ctx)
+        return if (calcDigitLen128(dw1, dw0) + qExcess <= precision)
+            decFinalizeClamping(sign, dw1, dw0, qExp, ctx)
         else
             decFinalizeOverflow(sign, rounding, ctx)
     }
-    val ret = Decimal(sign, dw1T, dw0T, qExpT)
+    val ret = Decimal(sign, dw1, dw0, qExp)
     return if (applyRounding) ctx.signalInexact(ret) else ret
 }
 

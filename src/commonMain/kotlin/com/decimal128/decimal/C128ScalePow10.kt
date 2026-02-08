@@ -26,8 +26,13 @@ internal object C128ScalePow10 {
         return umul128x128to128(dw1, dw0, pow10dw1, pow10dw0)
     }
 
-    inline fun c128ScaleDownPow10(dw1: Long, dw0: Long, pow10: Int): Triple<Long, Long, Residue> {
-        TODO()
+    fun c128ScaleDownPow10(dw1: Long, dw0: Long, pow10: Int): Triple<Long, Long, Residue> {
+        // FIXME!
+        val t = C256()
+        t.c256Set128(dw1, dw0)
+        val s = C256()
+        val residue = c256SetScaleDownPow10(s, t, pow10)
+        return Triple(s.dw1, s.dw0, residue)
     }
 
 }
