@@ -70,29 +70,45 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
         return if (calcDigitLen128(dw1T, dw0T) + qExcess <= ctx.precision)
             decFinalizeClamping(sign, dw1T, dw0T, qExpT, ctx)
         else
-            decFinalizeOverflow(rounding, ctx)
+            decFinalizeOverflow(sign, rounding, ctx)
     }
     val ret = Decimal(sign, dw1T, dw0T, qExpT)
     return if (applyRounding) ctx.signalInexact(ret) else ret
 }
 
-private fun decFinalizeZero(sign: Boolean, residue: Residue, qExpIn: Int, rounding: DecRounding, ctx: DecContext): Decimal {
-    if (residue != EXACT && residue.ulpRoundUp(rounding.negate(sign), 0L)) {
-        TODO()
-
+private fun decFinalizeZero(sign: Boolean, residue: Residue, qExp: Int, rounding: DecRounding, ctx: DecContext): Decimal {
+    if (residue != EXACT && residue.ulpRoundUp(rounding.negate(sign), lsdwIsOdd = 0L)) {
+        return when {
+            qExp > ctx.qMax -> decFinalizeOverflow(sign, rounding, ctx)
+            qExp < ctx.qTiny -> decFinalizeUnderflow(sign, dw1 = 0L, dw0 = 1L, residue, qExp, rounding, ctx)
+            else -> ctx.signalInexact(Decimal.from(sign, dw1 = 0L, dw0 = 1L, qExp))
+        }
     }
-    val z = Decimal.newZero(sign, qExpIn, ctx)
+    val z = Decimal.newZero(sign, qExp, ctx)
     return if (residue == EXACT) z else ctx.signalInexact(z)
 }
 
-private fun decFinalizeUnderflow(sign: Boolean, dw1: Long, dw0: Long, residue: Residue, qExp: Int, rounding: DecRounding, ctx: DecContext): Decimal {
+private fun decFinalizeUnderflow(sign: Boolean,
+                                 dw1: Long, dw0: Long, residue: Residue,
+                                 qExp: Int, rounding: DecRounding, ctx: DecContext): Decimal {
     TODO()
 }
 
-private fun decFinalizeClamping(sign: Boolean, dw1: Long, dw0: Long, qExpIn: Int, ctx: DecContext): Decimal {
-    TODO()
+private fun decFinalizeClamping(sign: Boolean,
+                                dw1: Long, dw0: Long, qExp: Int, ctx: DecContext): Decimal {
+    val qExcess = qExp - ctx.qMax
+    verify { qExcess > 0 && qExcess <= ctx.precision - calcDigitLen128(dw1, dw0) }
+    val (dw1S, dw0S) = umul128xPow10to128(dw1, dw0, qExcess)
+    verify { ctx.decFormat.coeffFits(dw1S, dw0S) }
+    // successful clamping does not signal because
+    // the returned value is numerically equal
+    return Decimal.from(sign, dw1S, dw0S, ctx.qMax)
 }
 
-private fun decFinalizeOverflow(rounding: DecRounding, ctx: DecContext): Decimal {
-    TODO()
+private fun decFinalizeOverflow(sign: Boolean, rounding: DecRounding, ctx: DecContext): Decimal {
+    // IEEE 754 7.4 Overflow - always inexact
+    val z =
+        if (rounding.overflowsToInfinity(sign)) Decimal.infinity(sign)
+        else maxFiniteMagnitude(sign, ctx)
+    return ctx.signalInexactOverflow(z)
 }

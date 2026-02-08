@@ -121,7 +121,7 @@ private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, 
 
 private fun MutDec.finalizeOverflow(rounding: DecRounding, ctx: DecContext): MutDec {
     // IEEE 754 7.4 Overflow - always inexact
-    verify { eExp > ctx.eMax }
+    verify { qExp > ctx.qMax }
     verify { digitLen <= ctx.precision }
     if (rounding.overflowsToInfinity(sign)) {
         setInfinite(sign)
@@ -224,12 +224,10 @@ private fun MutDec.finalizeSubnormal(
 }
 
 private fun MutDec.finalizeClamping(ctx: DecContext): MutDec {
-    // Clamp/fold-over for high exponent
-    verify { eExp <= ctx.eMax && qExp > ctx.qMax }
-
     val qExcess = qExp - ctx.qMax
+    verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
+
     c256SetScaleUpPow10(this, this, qExcess)
-    verify { digitLen <= ctx.precision }
     qExp -= qExcess
     verify { qExp == ctx.qMax }
 
