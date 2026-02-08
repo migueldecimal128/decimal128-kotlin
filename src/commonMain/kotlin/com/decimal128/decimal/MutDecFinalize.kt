@@ -43,7 +43,7 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
     val rangeTruncationNeeded = ctx.qTiny - qExp
     val precisionTruncationNeeded = max(0, digitLen - ctx.precision)
     if (rangeTruncationNeeded > precisionTruncationNeeded) {
-        return finalizeUnderflow(inboundResidue, rounding, ctx)
+        return finalizeUnderflowRegion(inboundResidue, rounding, ctx)
     }
 
     // Step 5: Normalize coefficient length to <= precision, accumulating residue
@@ -104,7 +104,7 @@ private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, 
             c256SetOne()
             return when {
                 qExp > qMax -> finalizeOverflow(rounding, ctx)
-                qExp < qTiny -> finalizeUnderflow(inboundResidue, rounding, ctx)
+                qExp < qTiny -> finalizeUnderflowRegion(inboundResidue, rounding, ctx)
                 else -> ctx.signalInexact(this)
             }
         }
@@ -131,7 +131,7 @@ private fun MutDec.finalizeOverflow(rounding: DecRounding, ctx: DecContext): Mut
     return ctx.signalInexactOverflow(this)
 }
 
-private fun MutDec.finalizeUnderflow(
+private fun MutDec.finalizeUnderflowRegion(
     residue: Residue,
     rounding: DecRounding,
     ctx: DecContext
@@ -142,23 +142,16 @@ private fun MutDec.finalizeUnderflow(
     val truncationNeeded = ctx.qTiny - qExp
 
     return when {
-        truncationNeeded <= 0 -> {
-            // Already in valid subnormal range
-            // IEEE 754 7.5: If the rounded result is exact, no underflow flag is raised
-            if (residue != EXACT) ctx.signalInexactUnderflow(this) else this
+        truncationNeeded > digitLen -> {
+            // Result is swamped - becomes zero or min finite
+            // This is always inexact
+            ctx.signalInexactUnderflow(
+                if (rounding.underflowsToZero(sign)) setMinZeroMagnitude(ctx)
+                else setMinFiniteMagnitude(ctx))
         }
         truncationNeeded == digitLen -> {
             // Exactly on the underflow boundary - round to decide
             finalizeUnderflowBoundary(residue, rounding, ctx)
-        }
-        truncationNeeded > digitLen -> {
-            // Result is swamped - becomes zero or min finite
-            // This is always inexact
-            if (rounding.underflowsToZero(sign)) {
-                ctx.signalInexactUnderflow(setMinZeroMagnitude(ctx))
-            } else {
-                ctx.signalInexactUnderflow(setMinFiniteMagnitude(ctx))
-            }
         }
         else -> {
             // truncationNeeded < digitLen (and > 0)
@@ -173,6 +166,7 @@ private fun MutDec.finalizeUnderflowBoundary(
     rounding: DecRounding,
     ctx: DecContext
 ): MutDec {
+    // no value params ... nothing to verify
     val scaleResidue = Residue.fromValueDecade(this)
     val totalResidue = scaleResidue.merge(inboundResidue)
     val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
