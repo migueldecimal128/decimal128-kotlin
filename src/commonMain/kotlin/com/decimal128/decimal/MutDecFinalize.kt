@@ -48,10 +48,9 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
 
     // Step 5: Normalize coefficient length to <= precision, accumulating residue
     var totalResidue = inboundResidue
-    if (digitLen > ctx.precision) {
-        val excessDigitCount = digitLen - ctx.precision
-        val truncationResidue = c256SetScaleDownPow10(this, this, excessDigitCount)
-        qExp += excessDigitCount
+    if (precisionTruncationNeeded > 0) {
+        val truncationResidue = c256SetScaleDownPow10(this, this, precisionTruncationNeeded)
+        qExp += precisionTruncationNeeded
         totalResidue = truncationResidue.merge(inboundResidue)
         verify { digitLen == ctx.precision }
     }

@@ -123,8 +123,8 @@ class Decimal private constructor(
         fun newZero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else ZERO
-            val finalExp = max(min(qExp, ctx.qMax), ctx.qTiny)
-            val signExp = packSignExp(sign, finalExp)
+            val qClamped = max(min(qExp, ctx.qMax), ctx.qTiny)
+            val signExp = packSignExp(sign, qClamped)
             val zero = Decimal(0L, 0L, 0, signExp)
             return zero
         }
