@@ -2,12 +2,15 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.Residue.Companion.EXACT
 
-internal fun decFinalizeFinite(sign: Boolean,
+internal fun decRoundAndFinalizeFinite(sign: Boolean,
                               dw1: Long, dw0: Long, residue: Residue,
                               qExp: Int,
                               rounding: DecRounding, ctx: DecContext): Decimal {
+    // Step 2: zero coefficient
     if ((dw1 or dw0) == 0L)
         return decFinalizeZero(sign, residue, qExp, rounding, ctx)
+
+    val rangeTruncationNeeded = ctx.qTiny - qExp
 
     val decFormat = ctx.decFormat
     if (residue == EXACT && decFormat.coeffQexpFit(dw1, dw0, qExp))

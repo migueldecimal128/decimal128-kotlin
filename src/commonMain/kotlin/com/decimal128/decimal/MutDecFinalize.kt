@@ -21,24 +21,32 @@ internal fun MutDec.roundAndFinalize(inboundResidue: Residue, rounding: DecRound
  * 5. Signal once with all flags
  */
 private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
-    // Step 1. Handle special values immediately
+
+    // Step 1: Fast path: already in valid decimal128 range
+    if (digitLen <= ctx.precision &&
+        qExp >= ctx.qTiny && qExp <= ctx.qMax &&
+        inboundResidue == EXACT) {
+        return this
+    }
+
+    // Step 2: special values
     if (qExp >= MIN_SPECIAL_VALUE)
         return this
 
-    // Step 2. Handle zero coefficient
+    // Step 3: Zero coefficient
     if (digitLen == 0)
         return finalizeZero(inboundResidue, rounding, ctx)
 
-    // Step 3: Handle underflow region
-// Only divert if range truncation exceeds precision truncation,
-// meaning the normal path can't bring qExp into range on its own
+    // Step 4: Handle underflow
+    // Only divert if range truncation exceeds precision truncation,
+    // meaning the normal path can't bring qExp into range on its own
     val rangeTruncationNeeded = ctx.qTiny - qExp
     val precisionTruncationNeeded = max(0, digitLen - ctx.precision)
     if (rangeTruncationNeeded > precisionTruncationNeeded) {
         return finalizeUnderflow(inboundResidue, rounding, ctx)
     }
 
-    // Step 4: Normalize coefficient length to <= precision, accumulating residue
+    // Step 5: Normalize coefficient length to <= precision, accumulating residue
     var totalResidue = inboundResidue
     if (digitLen > ctx.precision) {
         val excessDigitCount = digitLen - ctx.precision
@@ -48,13 +56,13 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
         verify { digitLen == ctx.precision }
     }
 
-    // Step 5: Apply rounding ... might increment coefficient
+    // Step 6: Apply rounding ... might increment coefficient
     val applyRounding = totalResidue != EXACT
     if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
-        // Step 5.1: increment
+        // Step 6.1: increment
         c256MutateIncrement()
 
-        // Step 5.2: Handle rollover if increment caused overflow to new digit
+        // Step 6.2: Handle rollover if increment caused overflow to new digit
         if (digitLen > ctx.precision) {
             verify { digitLen == ctx.precision + 1 }
             // Rolling over means the result is divisible by 10, so no residue
@@ -65,7 +73,7 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
         }
     }
 
-    // Step 6: Check final bounds
+    // Step 7: Check final bounds
     // qExp >= qTiny is guaranteed by steps 3/4/5
     // digitLen <= precision is guaranteed by steps 4/5
     verify { qExp >= ctx.qTiny }
