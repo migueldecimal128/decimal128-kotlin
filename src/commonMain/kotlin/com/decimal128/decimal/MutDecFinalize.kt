@@ -92,6 +92,8 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
 
 private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
     verify { digitLen == 0 }
+    val qMax = ctx.qMax
+    val qTiny = ctx.qTiny
 
     // If we had a non-zero residue, the result is inexact
     // This can happen in quantize operations where a non-zero value rounds to zero
@@ -99,37 +101,21 @@ private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, 
         // Check if rounding would produce a non-zero result
         val roundUp = inboundResidue.ulpRoundUp(rounding.negate(sign), 0L)
         if (roundUp) {
-            // Rounding says we should round up from zero to 1 at the current exponent
-            // Don't clamp the exponent yet - respect the requested scale
-            dw0 = 1L
-            dw1 = 0L
-            dw2 = 0L
-            dw3 = 0L
-            updateDigitLenBitLen()
-            // Now check if this result fits in the valid range
+            c256SetOne()
             return when {
-                eExp > ctx.eMax -> finalizeOverflow(rounding, ctx)
-                eExp < ctx.eMin -> {
-                    // In subnormal/underflow range - need to handle carefully
-                    // If qExp >= qTiny, this is a valid subnormal, just signal inexact
-                    if (qExp >= ctx.qTiny) {
-                        ctx.signalInexact(this)
-                    } else {
-                        // Truly underflowed - need subnormal handling
-                        finalizeUnderflow(inboundResidue, rounding, ctx)
-                    }
-                }
+                qExp > qMax -> finalizeOverflow(rounding, ctx)
+                qExp < qTiny -> finalizeUnderflow(inboundResidue, rounding, ctx)
                 else -> ctx.signalInexact(this)
             }
         }
         // Rounding confirms zero, but it's still inexact
         // Now clamp the exponent
-        qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
+        qExp = max(min(qExp, qMax), qTiny)
         return ctx.signalInexact(this)
     }
 
     // Exact zero - clamp exponent
-    qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
+    qExp = max(min(qExp, qMax), qTiny)
     return this
 }
 
