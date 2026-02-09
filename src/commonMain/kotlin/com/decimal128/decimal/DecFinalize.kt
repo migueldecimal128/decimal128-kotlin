@@ -12,6 +12,12 @@ internal inline fun decFinalizeFinite(sign: Boolean,
     decRoundAndFinalizeFinite(sign, dw1, dw0, EXACT, qExp, ctx.decRounding, ctx)
 
 internal fun decRoundAndFinalizeFinite(sign: Boolean,
+                                       dw1: Long, dw0: Long, residue: Residue,
+                                       qExp: Int,
+                                       ctx: DecContext): Decimal =
+    decRoundAndFinalizeFinite(sign, dw1, dw0, residue, qExp, ctx.decRounding, ctx)
+
+internal fun decRoundAndFinalizeFinite(sign: Boolean,
                                        dw1In: Long, dw0In: Long, inboundResidue: Residue,
                                        qExpIn: Int,
                                        rounding: DecRounding, ctx: DecContext): Decimal {
@@ -70,7 +76,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
         dw1 += if (dw0 == 0L) 1L else 0L
 
         // step 6.2: rollover
-        if (decFormat.coeffIsMaxx(dw1, dw1)) {
+        if (decFormat.coeffIsMaxx(dw1, dw0)) {
             dw1 = decFormat.dw1MinFullPrecisionCoeff
             dw0 = decFormat.dw0MinFullPrecisionCoeff
             ++qExp
@@ -138,11 +144,7 @@ private fun decFinalizeUnderflowBoundary(sign: Boolean,
                                          rounding: DecRounding, ctx: DecContext): Decimal {
     // no value params ... nothing to verify
     val digitLen = calcDigitLen128(dw1, dw0)
-    val (dw1P, dw0P) = pow10_128(digitLen)
-    val dw1H = dw1P ushr 1
-    val dw0H = (dw1P shl 63) or (dw0P ushr 1)
-    val cmp = ucmp128(dw1, dw0, dw1H, dw0H)
-    val scaleResidue = Residue(cmp + 2)
+    val scaleResidue = Residue.fromValuePow10(dw1, dw0, digitLen)
     val totalResidue = scaleResidue.merge(residue)
     return ctx.signalInexactUnderflow(
         if (totalResidue.ulpRoundUp(rounding.negate(sign), 0L)) minFiniteMagnitude(sign, ctx)

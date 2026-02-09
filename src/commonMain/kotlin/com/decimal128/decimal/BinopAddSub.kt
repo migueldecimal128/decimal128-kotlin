@@ -110,7 +110,7 @@ private fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: De
 
 private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
     if (x.sign == ySign)
-        return addScaledMagnitudes(ySign, x, y, ctx)
+        return addFnzScaledMagnitudes(ySign, x, y, ctx)
     // signs differ ... subtract scaled magnitudes
     val cmpMag = x.magnitudeCompareTo(y)
     return when {
@@ -120,20 +120,46 @@ private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCont
     }
 }
 
-private fun addScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val flip = x.qExp > y.qExp
     val m = if (flip) x else y
     val n = if (flip) y else x
     val qDelta = m.qExp - n.qExp
     verify { qDelta >= 0 }
     val headroom = ctx.precision - m.digitLen
-    return if (qDelta <= headroom) {
-        // we can resolve this in our D128 world
-        val shiftLeft = min(qDelta, headroom)
-        D128Pow10.fmaCoeffPow10(resultSign, m, shiftLeft, n)
-    } else {
-        fullWidthAdd(resultSign, x, resultSign, y, ctx)
+    var dw1Sum = m.dw1
+    var dw0Sum = m.dw0
+    val shiftLeft = min(headroom, qDelta)
+    if (shiftLeft > 0) {
+        val (dw1T, dw0T) = umul128xPow10to128(dw1Sum, dw0Sum, shiftLeft)
+        dw1Sum = dw1T
+        dw0Sum = dw0T
     }
+    val qAlign = m.qExp - shiftLeft
+    val shiftRight = qAlign - n.qExp
+    val residue: Residue
+    when {
+        shiftRight == 0 -> {
+            verify { shiftLeft > 0 }
+            dw0Sum += n.dw0
+            dw1Sum += n.dw1 + if (unsignedLT(dw0Sum, n.dw0)) 1L else 0L
+            residue = Residue.EXACT
+        }
+        shiftRight >= n.digitLen -> { // fully swamped
+            if (shiftRight > n.digitLen)
+                residue = Residue.LT_HALF
+            else
+                residue = Residue.fromValuePow10(n.dw1, n.dw0, n.digitLen)
+        }
+        else -> {
+            val (dw1Right, dw0Right, residueRight) =
+                C128ScalePow10.c128ScaleDownPow10(n.dw1, n.dw0, shiftRight)
+            dw0Sum += dw0Right
+            dw1Sum += dw1Right + if (unsignedLT(dw0Sum, dw0Right)) 1L else 0L
+            residue = residueRight
+        }
+    }
+    return decRoundAndFinalizeFinite(resultSign, dw1Sum, dw0Sum, residue, qAlign, ctx)
 }
 
 private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {

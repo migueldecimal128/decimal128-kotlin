@@ -30,7 +30,7 @@ value class Residue internal constructor(val value:Int) {
 
         // FIXME - this method is fine, but it needs a better name
         //  ... and perhaps a better implementation
-        fun fromValueDecade(c:C256) :Residue {
+        fun fromValueDecade(c:C256): Residue {
             val digitLen = c.digitLen
             if (digitLen == 0)
                 return EXACT
@@ -43,6 +43,14 @@ value class Residue internal constructor(val value:Int) {
             val residueValue = (cmp + 2) and 0x03
             val residue = Residue(residueValue)
             return residue
+        }
+
+        fun fromValuePow10(dw1: Long, dw0: Long, pow10: Int): Residue {
+            val (dw1P, dw0P) = pow10_128(pow10)
+            val dw1H = dw1P ushr 1
+            val dw0H = (dw1P shl 63) or (dw0P ushr 1)
+            val cmp = ucmp128(dw1, dw0, dw1H, dw0H)
+            return Residue(cmp + 2)
         }
 
 
