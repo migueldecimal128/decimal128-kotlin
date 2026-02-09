@@ -47,12 +47,11 @@ private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecContext): Decimal =
 private fun mulFnzFnz(x: Decimal, y: Decimal, env: DecContext): Decimal {
     val prodBitLen = x.bitLen + y.bitLen
     val prodExp = x.qExp + y.qExp
-    if (prodBitLen < env.maxBitLen && prodExp >= env.eMin && prodExp <= env.qMax) {
+    if (prodBitLen <= 128) {
         val p0 = x.dw0 * y.dw0
         val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
         val prodSign = x.sign xor y.sign
-        val d = Decimal(prodSign, p1, p0, prodExp)
-        return d
+        return decFinalizeFinite(prodSign, p1, p0, prodExp, env)
     }
     return mulFnzFnz256(x, y, env)
 }
