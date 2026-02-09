@@ -77,47 +77,48 @@ object MagnitudeAddSub {
 
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
-    fun magScaledSub(z: MutDec, x: MutDec, y: MutDec, env: DecContext): Residue {
-        verify { !x.isZero() }
-        verify { !y.isZero() }
-        verify { x.magnitudeCompareTo(y) > 0 }
-        verify { x.qExp != y.qExp }
+    // m == minuend  s == subtrahend
+    fun magScaledSub(z: MutDec, m: MutDec, s: MutDec, env: DecContext): Residue {
+        verify { !m.isZero() }
+        verify { !s.isZero() }
+        verify { m.magnitudeCompareTo(s) > 0 }
+        verify { m.qExp != s.qExp }
 
-        if (x.qExp > y.qExp) {
-            val gap = x.qExp - y.qExp
+        if (m.qExp > s.qExp) {
+            val gap = m.qExp - s.qExp
             val headroomWithGuard =
-                if (y.digitLen > env.precision) {
+                if (s.digitLen > env.precision) {
                     // It is possible for y.digitLen > precision because
                     // of intermediate result of a FMA operation.
                     // In this case we might have to scale x.coeff up to
                     // x.digitLen == y.digitLen
                     // This will not exceed our 256-bit ALU capacity
-                    y.digitLen - x.digitLen
+                    s.digitLen - m.digitLen
                 } else {
-                    1 + env.precision - x.digitLen  // Standard with guard
+                    1 + env.precision - m.digitLen  // Standard with guard
                 }
-            val shiftXLeft = min(gap, max(0, headroomWithGuard))
+            val shiftMLeft = min(gap, max(0, headroomWithGuard))
 
-            val qAlign = x.qExp - shiftXLeft
-            val shiftYRight = qAlign - y.qExp
-            verify { shiftYRight >= 0 }
+            val qAlign = m.qExp - shiftMLeft
+            val shiftSRight = qAlign - s.qExp
+            verify { shiftSRight >= 0 }
 
             val residue = when {
-                shiftYRight == 0 -> {
-                    verify { shiftXLeft > 0 }
-                    c256SetSubScaled(z, x, shiftXLeft, y) // z = (x * 10^shiftXLeft) - y
+                shiftSRight == 0 -> {
+                    verify { shiftMLeft > 0 }
+                    c256SetSubScaled(z, m, shiftMLeft, s) // z = (x * 10^shiftXLeft) - y
                     EXACT
                 }
 
-                shiftYRight >= y.digitLen -> {
-                    val residueT = if (shiftYRight > y.digitLen)
+                shiftSRight >= s.digitLen -> {
+                    val residueT = if (shiftSRight > s.digitLen)
                         Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
                     else
-                        Residue.fromValueDecade(y).subtractionInverse()
-                    if (shiftXLeft > 0) {
-                        c256SetScaleUpPow10(z, x, shiftXLeft)
+                        Residue.fromValueDecade(s).subtractionInverse()
+                    if (shiftMLeft > 0) {
+                        c256SetScaleUpPow10(z, m, shiftMLeft)
                     } else {
-                        z.c256Set(x)
+                        z.c256Set(m)
                     }
                     verify { residueT != EXACT }
                     // decrement and let the residue possibly round it back up
@@ -130,11 +131,11 @@ object MagnitudeAddSub {
                     // align x by shiftLeftX
                     //
                     val tmpY = MutDec()
-                    val residue = c256SetScaleDownPow10(tmpY, y, shiftYRight)
-                    if (shiftXLeft > 0)
-                        c256SetSubScaled(z, x, shiftXLeft, tmpY)
+                    val residue = c256SetScaleDownPow10(tmpY, s, shiftSRight)
+                    if (shiftMLeft > 0)
+                        c256SetSubScaled(z, m, shiftMLeft, tmpY)
                     else
-                        z.c256SetSub(x, tmpY)
+                        z.c256SetSub(m, tmpY)
                     if (residue != EXACT)
                         z.c256MutateDecrement()
                     residue.subtractionInverse()
@@ -151,9 +152,9 @@ object MagnitudeAddSub {
             // is larger than y
             // 99999e0 - 1e1
             // just adjust y's coefficient and subtract
-            val gap = y.qExp - x.qExp
-            c256FusedSubMulPow10(z, x, y, gap)
-            z.qExp = x.qExp
+            val gap = s.qExp - m.qExp
+            c256FusedSubMulPow10(z, m, s, gap)
+            z.qExp = m.qExp
             return EXACT
         }
     }
