@@ -85,33 +85,37 @@ object MagnitudeAddSub {
 
         if (x.qExp > y.qExp) {
             val gap = x.qExp - y.qExp
-            val headroomWithGuard = if (y.digitLen > env.precision) {
-                y.digitLen - x.digitLen  // Just make room for all of y
-            } else {
-                1 + env.precision - x.digitLen  // Standard with guard
-            }
-            val shiftLeft = if (headroomWithGuard > 0) {
-                min(gap, headroomWithGuard)
-            } else {
-                0
-            }
-            val qAlign = x.qExp - shiftLeft
-            val shiftRight = qAlign - y.qExp
+            val headroomWithGuard =
+                if (y.digitLen > env.precision) {
+                    // It is possible for y.digitLen > precision because
+                    // of intermediate result of a FMA operation.
+                    // In this case we might have to scale x.coeff up to
+                    // x.digitLen == y.digitLen
+                    // This will not exceed our 256-bit ALU capacity
+                    y.digitLen - x.digitLen
+                } else {
+                    1 + env.precision - x.digitLen  // Standard with guard
+                }
+            val shiftXLeft = min(gap, max(0, headroomWithGuard))
+
+            val qAlign = x.qExp - shiftXLeft
+            val shiftYRight = qAlign - y.qExp
+            verify { shiftYRight >= 0 }
 
             val residue = when {
-                shiftRight == 0 -> {
-                    verify { shiftLeft > 0 }
-                    c256SetSubScaled(z, x, shiftLeft, y) // z = (x * 10^shiftLeft) - y
+                shiftYRight == 0 -> {
+                    verify { shiftXLeft > 0 }
+                    c256SetSubScaled(z, x, shiftXLeft, y) // z = (x * 10^shiftXLeft) - y
                     EXACT
                 }
 
-                shiftRight >= y.digitLen -> {
-                    val residueT = if (shiftRight > y.digitLen)
+                shiftYRight >= y.digitLen -> {
+                    val residueT = if (shiftYRight > y.digitLen)
                         Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
                     else
                         Residue.fromValueDecade(y).subtractionInverse()
-                    if (shiftLeft > 0) {
-                        c256SetScaleUpPow10(z, x, shiftLeft)
+                    if (shiftXLeft > 0) {
+                        c256SetScaleUpPow10(z, x, shiftXLeft)
                     } else {
                         z.c256Set(x)
                     }
@@ -121,18 +125,18 @@ object MagnitudeAddSub {
                     residueT
                 }
 
-                else -> {
-                    val tempY = MutDec()
-                    val residue = c256SetScaleDownPow10(tempY, y, shiftRight)
-                    if (shiftLeft > 0) {
-                        c256SetSubScaled(z, x, shiftLeft, tempY)
-                        if (residue != EXACT)
-                            z.c256MutateDecrement()
-                    } else {
-                        z.c256SetSub(x, tempY)  // Now uses tempY instead of z
-                        if (residue != EXACT && z.bitLen > 0)
-                            z.c256MutateDecrement()
-                    }
+                else -> { // shiftYRight > 0
+                    // There is overlap and there will be residue.
+                    // align x by shiftLeftX
+                    //
+                    val tmpY = MutDec()
+                    val residue = c256SetScaleDownPow10(tmpY, y, shiftYRight)
+                    if (shiftXLeft > 0)
+                        c256SetSubScaled(z, x, shiftXLeft, tmpY)
+                    else
+                        z.c256SetSub(x, tmpY)
+                    if (residue != EXACT)
+                        z.c256MutateDecrement()
                     residue.subtractionInverse()
                 }
             }
@@ -153,122 +157,4 @@ object MagnitudeAddSub {
             return EXACT
         }
     }
-
-    fun magScaledSub_2(z: MutDec, x: MutDec, y: MutDec, env: DecContext): Residue {
-        verify { !x.isZero() }
-        verify { !y.isZero() }
-        verify { x.magnitudeCompareTo(y) > 0 }
-        verify { x.qExp != y.qExp }
-
-        val qMax = max(x.qExp, y.qExp)
-        val qMin = min(x.qExp, y.qExp)
-        val gap = qMax - qMin
-
-        // Determine which operand is at which exponent
-        val (hiExpOperand, loExpOperand) = if (x.qExp > y.qExp) {
-            Pair(x, y)
-        } else {
-            Pair(y, x)
-        }
-
-        // Calculate headroom for scaling UP the high-exp operand
-        val headroomWithGuard = if (loExpOperand.digitLen > env.precision) {
-            loExpOperand.digitLen - hiExpOperand.digitLen  // FMA case
-        } else {
-            1 + env.precision - hiExpOperand.digitLen  // Normal case
-        }
-
-        val shiftUp = if (headroomWithGuard > 0) {
-            min(gap, headroomWithGuard)
-        } else {
-            0
-        }
-
-        val shiftDown = gap - shiftUp
-
-        // Align to: qMax + shiftUp = qMin + gap + shiftUp = qMin + shiftDown + shiftUp
-        val qAlign = qMax + shiftUp
-
-        // Scale high-exp operand UP by shiftUp
-        // Scale low-exp operand DOWN by shiftDown (or keep if shiftDown == 0)
-
-        val residue: Residue
-
-        if (x.qExp > y.qExp) {
-            // x is high-exp, y is low-exp
-            // Compute: (x scaled up) - (y scaled down)
-            residue = if (shiftDown == 0) {
-                // y stays, x scales up
-                c256SetSubScaled(z, x, shiftUp, y)
-                EXACT
-            } else {
-                // y scales down, x may scale up
-                val tempY = MutDec()
-                val res = c256SetScaleDownPow10(tempY, y, shiftDown)
-
-                if (shiftUp > 0) {
-                    c256SetSubScaled(z, x, shiftUp, tempY)
-                    if (res != EXACT)
-                        z.c256MutateDecrement()
-                } else {
-                    z.c256SetSub(x, tempY)
-                    if (res != EXACT && z.bitLen > 0)
-                        z.c256MutateDecrement()
-                }
-                res.subtractionInverse()
-            }
-        } else {
-            // y is high-exp, x is low-exp
-            // Compute: (y scaled up) - (x scaled down)
-            residue = if (shiftDown == 0) {
-                // x stays, y scales up
-                val tempY = MutDec()
-                tempY.c256SetScaleUpPow10(y, shiftUp)
-
-                // Check coefficient order and subtract correctly
-                if (tempY.c256UnscaledCompareTo(x) >= 0) {
-                    z.c256SetSub(tempY, x)
-                } else {
-                    z.c256SetSub(x, tempY)
-                }
-                EXACT
-            } else {
-                // x scales down, y may scale up
-                val tempX = MutDec()
-                val res = c256SetScaleDownPow10(tempX, x, shiftDown)
-
-                if (shiftUp > 0) {
-                    val tempY = MutDec()
-                    tempY.c256SetScaleUpPow10(y, shiftUp)
-
-                    // Check coefficient order
-                    if (tempY.c256UnscaledCompareTo(tempX) >= 0) {
-                        z.c256SetSub(tempY, tempX)
-                    } else {
-                        z.c256SetSub(tempX, tempY)
-                        // Shouldn't happen!
-                        throw IllegalStateException("Coefficient order wrong")
-                    }
-                    if (res != EXACT)
-                        z.c256MutateDecrement()
-                } else {
-                    // Check coefficient order
-                    if (y.c256UnscaledCompareTo(tempX) >= 0) {
-                        z.c256SetSub(y, tempX)
-                    } else {
-                        z.c256SetSub(tempX, y)
-                        // Shouldn't happen!
-                        throw IllegalStateException("Coefficient order wrong")
-                    }
-                    if (res != EXACT && z.bitLen > 0)
-                        z.c256MutateDecrement()
-                }
-                res.subtractionInverse()
-            }
-        }
-
-        //z.qExp = qAlign
-        return residue
-    }
-
 }
