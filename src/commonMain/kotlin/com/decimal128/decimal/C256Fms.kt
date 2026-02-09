@@ -209,7 +209,7 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
     }
 }
 
-internal fun c256FmsPow10(z: C256, x: C256, y: C256, pow10: Int) {
+internal fun c256FusedSubMulPow10(z: C256, x: C256, y: C256, pow10: Int) {
     verify { pow10 > 0 }
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }

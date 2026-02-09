@@ -73,5 +73,5 @@ internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
 
     verify { x.c256ScaledCompareTo(y, scaleDelta) >= 0 }
 
-    c256FmsPow10(z, x, y, scaleDelta)
+    c256FusedSubMulPow10(z, x, y, scaleDelta)
 }

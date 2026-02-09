@@ -101,7 +101,7 @@ object MagnitudeAddSub {
             val residue = when {
                 shiftRight == 0 -> {
                     verify { shiftLeft > 0 }
-                    c256SetSubScaled(z, x, shiftLeft, y)
+                    c256SetSubScaled(z, x, shiftLeft, y) // z = (x * 10^shiftLeft) - y
                     EXACT
                 }
 
@@ -140,54 +140,17 @@ object MagnitudeAddSub {
             return residue
 
         } else {
+            // this branch is relatively simple
+            // abs(x) > abs(y)
             // x.qExp < y.qExp
+            // this can only happen if x's coefficient
+            // is larger than y
+            // 99999e0 - 1e1
+            // just adjust y's coefficient and subtract
             val gap = y.qExp - x.qExp
-
-            val headroom = 77 - y.digitLen
-            val shiftLeft = min(gap, headroom)
-            val qAlign = y.qExp - shiftLeft
-            val shiftRight = x.qExp - qAlign   // >= 0
-
-            val residue = when {
-                shiftRight == 0 -> {
-                    verify { shiftLeft > 0 } // because x.qExp != y.qExp
-                    c256SetSubScaled(z, x, y, shiftLeft)   // (x * 10^shiftLeft) - y
-                    EXACT
-                }
-
-                shiftRight >= y.digitLen -> {
-                    // y becomes "all dropped" at this alignment
-                    val residueT =
-                        if (shiftRight > y.digitLen) Residue.GT_HALF
-                        else Residue.fromValueDecade(y)
-
-                    if (shiftLeft > 0) c256SetScaleUpPow10(z, x, shiftLeft) else z.c256Set(x)
-
-                    // bias down by 1; residue will decide if it rounds back up
-                    z.c256MutateDecrement()
-
-                    // because the dropped part belonged to the SUBTRAHEND, keep your convention:
-                    residueT.subtractionInverse()
-                }
-
-                else -> {
-                    val tempY = MutDec().set(y)
-                    c256SetScaleUpPow10(tempY, y, shiftLeft) // y -> y * 10^shiftLeft (exact)
-                    tempY.qExp -= shiftLeft
-
-                    if (shiftRight > 0) {
-                        val r = c256SetScaleDownPow10(z, x, shiftRight)  // x -> trunc(x / 10^shiftRight), residue r
-                        z.c256SetSub(z, tempY)  // z = z - tempY
-                        if (r != EXACT && z.bitLen > 0) z.c256MutateDecrement()
-                        r.subtractionInverse()
-                    } else {
-                        z.c256SetSub(x, tempY)  // z = x - tempY
-                        EXACT
-                    }
-                }
-            }
-            z.qExp = qAlign
-            return residue
+            c256FusedSubMulPow10(z, x, y, gap)
+            z.qExp = x.qExp
+            return EXACT
         }
     }
 
