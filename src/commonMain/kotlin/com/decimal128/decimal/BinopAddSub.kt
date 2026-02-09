@@ -177,15 +177,22 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
     verify { m.magnitudeCompareTo(s) > 0 }
     verify { s.isNotZero() }
     verify { m.qExp != s.qExp }
+
+    // case 1: |m| > |s|, but m.qExp < s.qExp
     if (m.qExp < s.qExp) {
         // TC("22E1", "-2E2"),
         // signs opposite, |m| > |s|, but m.qExp < s.qExp
         // scale s before subtraction
+        // Worst case example is 999999999999999999999999999999999e0 - 1e33
+        // s.qExp cannot be larger because magnitude would have been
+        // larger than minuend.
+        // We scale ths subtrahend coefficient, staying within ctx.precision
         val qDelta = s.qExp - m.qExp
-        verify { qDelta < PRECISION_34 }
+        verify { qDelta < ctx.precision }
         return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
     }
-    // |m| > |s| && m.qExp > s.qExp
+
+    // case 2: |m| > |s| && m.qExp > s.qExp
     val headroom = ctx.precision - m.digitLen
     val qDelta = m.qExp - s.qExp
     if (headroom >= qDelta) {
@@ -193,14 +200,24 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
         // m has enough headroom to scale and align with s.qExp
         return D128Pow10.fusedMulPow10Subtract(sign, m, qDelta, s)
     }
+
+    // case 3: ??
     val qAlign = m.qExp - headroom
     val shiftRight = qAlign - s.qExp
     if (shiftRight >= s.digitLen) {
         // s is fully swamped
         // this becomes a rounding/residue problem
-        // FIXME
-        //  This requires residue and rounding in the D128 world
-        //  I'm not ready to tackle that yet
+        // Our technique is this ...
+        //  1. decrement the minuend
+        //  2. compute the inverse of the Residue
+        //  3. let normal rounding take care of it
+        val dw1T = m.dw1 - if (m.dw0 == 0L) 1L else 0L
+        val dw0T = m.dw0 - 1
+        val residueInverse =
+            if (shiftRight > s.digitLen) Residue.GT_HALF // LT_HALF.subtractionInverse()
+            else Residue.fromValuePow10(s.dw1, s.dw0, shiftRight).subtractionInverse()
+        //return decRoundAndFinalizeFinite(sign, dw1T, dw0T, )
+        // FIXME -- bail out and fall through for now
     }
     return fullWidthAdd(sign, m, !sign, s, ctx)
 }

@@ -46,6 +46,7 @@ object D128Pow10 {
      */
     fun fusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, pow10: Int): Decimal {
         verify { pow10 > 0 }
+        verify { n.bitLen + pow10BitLen(pow10) <= 128}
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
         val p0 = n.dw0 * dw0Pow10
         val p1 = unsignedMulHi(n.dw0, dw0Pow10) + (n.dw0 * dw1Pow10) + (n.dw1 * dw0Pow10)
