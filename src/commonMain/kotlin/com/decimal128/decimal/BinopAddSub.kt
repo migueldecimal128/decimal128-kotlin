@@ -114,8 +114,8 @@ private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCont
     // signs differ ... subtract scaled magnitudes
     val cmpMag = x.magnitudeCompareTo(y)
     return when {
-        cmpMag > 0 -> subScaledMagnitudes(x.sign, x, y, ctx)
-        cmpMag < 0 -> subScaledMagnitudes(ySign, y, x, ctx)
+        cmpMag > 0 -> subFnzScaledMagnitude(x.sign, x, y, ctx)
+        cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
         else -> Decimal.newZero(x.sign && ySign, min(x.qExp, y.qExp), ctx)
     }
 }
@@ -172,7 +172,7 @@ private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal,
     return sum
 }
 
-private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
+private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
     // non-zero with different signs ... subtract magnitudes
     verify { m.magnitudeCompareTo(s) > 0 }
     verify { s.isNotZero() }
@@ -184,25 +184,23 @@ private fun subScaledMagnitudes(sign: Boolean, m: Decimal, s: Decimal, ctx: DecC
         val qDelta = s.qExp - m.qExp
         verify { qDelta < PRECISION_34 }
         return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
-    } else {
-        // |m| > |s| && m.qExp > s.qExp
-        val headroom = ctx.precision - m.digitLen
-        val qDelta = m.qExp - s.qExp
-        if (headroom >= qDelta) {
-            // 12E3, -4
-            // m has enough headroom to scale and align with s.qExp
-            return D128Pow10.fusedMulPow10Subtract(sign, m, qDelta, s)
-        }
-        val qAlign = m.qExp - headroom
-        val shiftRight = qAlign - s.qExp
-        if (shiftRight >= s.digitLen) {
-            // s is fully swamped
-            // this becomes a rounding/residue problem
-            // FIXME
-            //  This requires residue and rounding in the D128 world
-            //  I'm not ready to tackle that yet
-        }
-
+    }
+    // |m| > |s| && m.qExp > s.qExp
+    val headroom = ctx.precision - m.digitLen
+    val qDelta = m.qExp - s.qExp
+    if (headroom >= qDelta) {
+        // 12E3, -4
+        // m has enough headroom to scale and align with s.qExp
+        return D128Pow10.fusedMulPow10Subtract(sign, m, qDelta, s)
+    }
+    val qAlign = m.qExp - headroom
+    val shiftRight = qAlign - s.qExp
+    if (shiftRight >= s.digitLen) {
+        // s is fully swamped
+        // this becomes a rounding/residue problem
+        // FIXME
+        //  This requires residue and rounding in the D128 world
+        //  I'm not ready to tackle that yet
     }
     return fullWidthAdd(sign, m, !sign, s, ctx)
 }
