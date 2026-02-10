@@ -181,9 +181,10 @@ private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal,
  *
  * We can handle the following cases in the 128-bit world
  * 1. m.qExp < s.qExp ... scale s.coefficient up by qDelta
- * 2. m.qExp > s.qExp ... some cases
- * 2a. sufficient headroom in 38 digits to completely cover the gap
- * 2b.
+ * 2. sufficient headroom in 38 digits to completely cover the gap
+ * 3. fully swamped
+ *
+ * Otherwise, use wide 256-bit ALU
  */
 private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
     verify { m.magnitudeCompareTo(s) > 0 }
@@ -200,27 +201,35 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
     // case 2: |m| > |s|, m.qExp > s.qExp
 
     verify { ctx.precision < 38 }
-    val headroom = 38 - m.digitLen
-    val gap = m.qExp - s.qExp
-    if (headroom >= gap) {
-        // case 2a
-        // m has enough headroom to scale and align with s.qExp
-        return D128Pow10.fusedMulPow10Subtract(sign, m, gap, s, ctx)
+    run {
+        val headroom = 38 - m.digitLen
+        val gap = m.qExp - s.qExp
+        if (headroom >= gap) {
+            // case 2a
+            // m has enough headroom to scale and align with s.qExp
+            return D128Pow10.fusedMulPow10Subtract(sign, m, gap, s, ctx)
+        }
     }
-    val qAlign = m.qExp - headroom
-    val shiftSRight = qAlign - s.qExp
-    if (shiftSRight >= s.digitLen) {
-        // case 2b
-        // s is fully swamped
-        // scale m.coeff up by all the headroom we have
-        val residueInverse =
-            if (shiftSRight > s.digitLen) Residue.GT_HALF
-            else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
-        verify { residueInverse != EXACT }
-        val (dw1S, dw0S) = umul128xPow10to128(m.dw1, m.dw0, headroom)
-        val dw1T = dw1S - if (dw0S == 0L) 1L else 0L
-        val dw0T = dw0S - 1
-        return decRoundAndFinalizeFinite(sign, dw1T, dw0T, residueInverse, qAlign, ctx)
+
+    // case 3: fully swamped
+    run {
+        // in this case, headroom and shift are based upon ctx.precision
+
+        val headroomP = 1 + ctx.precision - m.digitLen
+        if (headroomP < 1) return@run  // no room for guard digit, skip to fullWidthAdd
+        val qAlignP = m.qExp - headroomP
+        val shiftSRight = qAlignP - s.qExp
+        if (shiftSRight >= s.digitLen) {
+            val residueInverse =
+                if (shiftSRight > s.digitLen) Residue.GT_HALF
+                else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
+            verify { residueInverse != EXACT }
+            val (dw1S, dw0S) = umul128xPow10to128(m.dw1, m.dw0, headroomP)
+            val dw1T = dw1S - if (dw0S == 0L) 1L else 0L
+            val dw0T = dw0S - 1
+            return decRoundAndFinalizeFinite(sign, dw1T, dw0T, residueInverse, qAlignP, ctx)
+        }
     }
+    // fall back to wide 256-bit ALU
     return fullWidthAdd(sign, m, !sign, s, ctx)
 }
