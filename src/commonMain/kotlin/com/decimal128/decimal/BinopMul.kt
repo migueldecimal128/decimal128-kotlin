@@ -59,7 +59,11 @@ private fun mulFnzFnz(x: Decimal, y: Decimal, env: DecContext): Decimal {
 private fun mulFnzFnz256(x: Decimal, y: Decimal, env: DecContext): Decimal {
     val m = env.decTemps.mdecArg1.set(x)
     val n = env.decTemps.mdecArg2.set(y)
-    val p = env.decTemps.mdecResult.setMul(m, n, env)
+    val p = env.decTemps.mdecResult
+    c256SetMul(p, m, n)
+    p.qExp = x.qExp + y.qExp
+    p.sign = x.sign xor y.sign
+    p.finalize(env)
     val d = Decimal.from(p)
     return d
 }
