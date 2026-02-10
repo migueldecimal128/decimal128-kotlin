@@ -225,8 +225,8 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
 }
 
 private fun fullWidthSub(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
-    val arg1 = ctx.decTemps.mdecArg1.set(m)
-    val arg2 = ctx.decTemps.mdecArg2.set(s)
+    val arg1 = ctx.decTemps.mdecBridge1.set(m)
+    val arg2 = ctx.decTemps.mdecBridge2.set(s)
     val mdecDiff = ctx.decTemps.mdecResult
     val residue = MagnitudeAddSub.magScaledSub(mdecDiff, sign, arg1, arg2, ctx)
     mdecDiff.roundAndFinalize(residue, ctx)

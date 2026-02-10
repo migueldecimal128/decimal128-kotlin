@@ -2,7 +2,6 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.bothFnz
-import kotlin.math.min
 
 internal fun mulImpl(x: Decimal, y: Decimal): Decimal =
     mulImpl(x, y, DecContext.current())
@@ -57,8 +56,8 @@ private fun mulFnzFnz(x: Decimal, y: Decimal, env: DecContext): Decimal {
 }
 
 private fun mulFnzFnz256(x: Decimal, y: Decimal, env: DecContext): Decimal {
-    val m = env.decTemps.mdecArg1.set(x)
-    val n = env.decTemps.mdecArg2.set(y)
+    val m = env.decTemps.mdecBridge1.set(x)
+    val n = env.decTemps.mdecBridge2.set(y)
     val p = env.decTemps.mdecResult
     c256SetMul(p, m, n)
     p.qExp = x.qExp + y.qExp

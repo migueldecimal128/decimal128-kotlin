@@ -6,8 +6,7 @@ object MagnitudeDiv {
 
     fun magDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
         val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
-        val yBitLen = y.bitLen
-        val scaledNumerator = if (z === y && yBitLen > 64) C256() else z
+        val scaledNumerator = ctx.decTemps.mdecArg1
         scaledNumerator.c256SetScaleUpPow10(x, numeratorScale)
         val residue = when {
             (y.bitLen <= 64) -> z.c256SetDivX64(scaledNumerator, y.dw0)
@@ -23,14 +22,17 @@ object MagnitudeDiv {
                     val deltaQ = qPreferred - qZ
                     val chunk = min(min(9, deltaQ), ntz)
                     val chunkRemainder = DivBarrett.barrettDivModPow10(quot, z, chunk)
+                    // FIXME -- the stripTrailingZeros code uses a faster way to
+                    //  countTrailingZeroDigits
                     if (chunkRemainder > 0) {
                         var pow10Count = 0
                         var t = chunkRemainder
                         val M = 0xCCCCCCCCCCCCCCCDuL.toLong()
+                        val S = 3
                         while (true) {
                             // val q = t / 10
                             // val r = t % 10
-                            val q = unsignedMulHi(t, M) ushr 3
+                            val q = unsignedMulHi(t, M) ushr S
                             val r = t - (q * 10)
                             if (r != 0L)
                                 break
