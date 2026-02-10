@@ -3,6 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.C128Compare.c128UnscaledCompare
 import com.decimal128.decimal.Decimal.Companion.bothFnz
+import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
@@ -172,53 +173,54 @@ private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal,
     return sum
 }
 
+/**
+ * Scaled subtraction of FNZ finite non-zero values.
+ *
+ * m == minuend
+ * s == subtrahend
+ *
+ * We can handle the following cases in the 128-bit world
+ * 1. m.qExp < s.qExp ... scale s.coefficient up by qDelta
+ * 2. m.qExp > s.qExp ... some cases
+ * 2a. sufficient headroom in 38 digits to completely cover the gap
+ * 2b.
+ */
 private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
-    // non-zero with different signs ... subtract magnitudes
     verify { m.magnitudeCompareTo(s) > 0 }
     verify { s.isNotZero() }
     verify { m.qExp != s.qExp }
 
-    // case 1: |m| > |s|, but m.qExp < s.qExp
     if (m.qExp < s.qExp) {
-        // TC("22E1", "-2E2"),
-        // signs opposite, |m| > |s|, but m.qExp < s.qExp
-        // scale s before subtraction
-        // Worst case example is 999999999999999999999999999999999e0 - 1e33
-        // s.qExp cannot be larger because magnitude would have been
-        // larger than minuend.
-        // We scale ths subtrahend coefficient, staying within ctx.precision
+        // case 1: |m| > |s|, m.qExp < s.qExp
+        // simple case: scale s up and subtract, always exact
         val qDelta = s.qExp - m.qExp
         verify { qDelta < ctx.precision }
         return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
     }
+    // case 2: |m| > |s|, m.qExp > s.qExp
 
-    // case 2: |m| > |s| && m.qExp > s.qExp
-    val headroom = ctx.precision - m.digitLen
-    val qDelta = m.qExp - s.qExp
-    if (headroom >= qDelta) {
-        // 12E3, -4
+    verify { ctx.precision < 38 }
+    val headroom = 38 - m.digitLen
+    val gap = m.qExp - s.qExp
+    if (headroom >= gap) {
+        // case 2a
         // m has enough headroom to scale and align with s.qExp
-        return D128Pow10.fusedMulPow10Subtract(sign, m, qDelta, s)
+        return D128Pow10.fusedMulPow10Subtract(sign, m, gap, s, ctx)
     }
-
-    // case 3: ??
     val qAlign = m.qExp - headroom
-    val shiftRight = qAlign - s.qExp
-    if (shiftRight >= s.digitLen) {
+    val shiftSRight = qAlign - s.qExp
+    if (shiftSRight >= s.digitLen) {
+        // case 2b
         // s is fully swamped
-        // this becomes a rounding/residue problem
-        // Our technique is this ...
-        //  1. decrement the minuend
-        //  2. compute the inverse of the Residue
-        //  3. let normal rounding take care of it
-        val dw1T = m.dw1 - if (m.dw0 == 0L) 1L else 0L
-        val dw0T = m.dw0 - 1
+        // scale m.coeff up by all the headroom we have
         val residueInverse =
-            if (shiftRight > s.digitLen) Residue.GT_HALF // LT_HALF.subtractionInverse()
-            else Residue.fromValuePow10(s.dw1, s.dw0, shiftRight).subtractionInverse()
-        //return decRoundAndFinalizeFinite(sign, dw1T, dw0T, )
-        // FIXME -- bail out and fall through for now
+            if (shiftSRight > s.digitLen) Residue.GT_HALF
+            else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
+        verify { residueInverse != EXACT }
+        val (dw1S, dw0S) = umul128xPow10to128(m.dw1, m.dw0, headroom)
+        val dw1T = dw1S - if (dw0S == 0L) 1L else 0L
+        val dw0T = dw0S - 1
+        return decRoundAndFinalizeFinite(sign, dw1T, dw0T, residueInverse, qAlign, ctx)
     }
     return fullWidthAdd(sign, m, !sign, s, ctx)
 }
-
