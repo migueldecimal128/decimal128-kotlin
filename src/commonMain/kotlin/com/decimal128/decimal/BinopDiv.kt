@@ -80,7 +80,7 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.decTemps.mdecBridge1.set(x)
     val divisor = ctx.decTemps.mdecBridge2.set(y)
-    val quotient = ctx.decTemps.mdecResult.setDivInt(dividend, divisor, ctx)
+    val quotient = ctx.decTemps.mdecResult.setDivIntFnzFnz(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
 
@@ -116,8 +116,8 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
 }
 
 private fun remFnzFnz(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val dividend = ctx.decTemps.mdecArg2.set(x)
-    val divisor = ctx.decTemps.mdecArg3.set(y)
+    val dividend = ctx.decTemps.mdecBridge1.set(x)
+    val divisor = ctx.decTemps.mdecBridge2.set(y)
     val quotient =
         if (isTrunc)
             ctx.decTemps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)

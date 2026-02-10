@@ -6,12 +6,7 @@ internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int
     val qX = x.qExp
     return when {
         qX < NON_FINITE_INF -> {
-            // FIXME - I have a general aliasing problem
-            //  mdecArg1 is being used at a lower level for
-            //  MutDec.setStripTrailingZeros()
-            //  I guess I need a more general solution ...
-            //  like having a set of tmps reserved for each layer?
-            val t = ctx.decTemps.mdecArg2.set(x)
+            val t = ctx.decTemps.mdecBridge1.set(x)
             val r = ctx.decTemps.mdecResult.setStripTrailingZeros(t, ctx, maxToStrip)
             Decimal.from(r)
         }
@@ -37,8 +32,8 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
                     return ctx.signalInvalid(Decimal.NaN)
                 }
                 qDelta < 0 -> { // remove fractional zeros
-                    val t = ctx.decTemps.mdecArg2.set(x)
-                    val r = ctx.decTemps.mdecArg3.setStripTrailingZeros(t, ctx, -qDelta)
+                    val t = ctx.decTemps.mdecBridge1.set(x)
+                    val r = ctx.decTemps.mdecBridge2.setStripTrailingZeros(t, ctx, -qDelta)
                     if (r.qExp == -decimalScale)
                         return Decimal.from(r)
                     return ctx.signalInvalid(Decimal.NaN)
