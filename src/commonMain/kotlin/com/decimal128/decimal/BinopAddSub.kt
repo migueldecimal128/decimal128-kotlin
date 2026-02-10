@@ -163,16 +163,6 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
     return decRoundAndFinalizeFinite(resultSign, dw1Sum, dw0Sum, residue, qAlign, ctx)
 }
 
-private fun fullWidthAdd(xSign: Boolean, x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
-    val arg1 = ctx.decTemps.mdecArg1.set(x)
-    arg1.sign = xSign
-    val arg2 = ctx.decTemps.mdecArg2.set(y)
-    arg2.sign = ySign
-    val mdecSum = ctx.decTemps.mdecResult.setAdd(arg1, arg2, ctx)
-    val sum = Decimal.from(mdecSum)
-    return sum
-}
-
 /**
  * Scaled subtraction of FNZ finite non-zero values.
  *
