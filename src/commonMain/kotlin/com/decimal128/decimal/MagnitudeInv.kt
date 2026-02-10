@@ -4,9 +4,9 @@ object MagnitudeInv {
 
     private val ONE = MutDec().set(1)
 
-    fun magInv(z: MutDec, x: MutDec, env: DecContext): Residue {
+    fun magInv(z: MutDec, sign: Boolean, x: MutDec, env: DecContext): Residue {
         // TODO implement this as a Newton-Raphson
         //  Double -> DoubleDouble -> Decimal2
-        return MagnitudeDiv.magDiv(z, ONE, x, env)
+        return MagnitudeDiv.magDivFnzFnz(z, sign, ONE, x, env)
     }
 }

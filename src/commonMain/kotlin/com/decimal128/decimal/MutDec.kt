@@ -610,10 +610,14 @@ class MutDec() : C256() {
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
                 when {
-                    (y.bitLen > 0) -> {
-                        val residue = MagnitudeDiv.magDiv(this, x, y, env)
-                        this.sign = quotientSign
+                    (y.bitLen > 0) && (x.bitLen > 0) -> {
+                        val residue = MagnitudeDiv.magDivFnzFnz(this, quotientSign, x, y, env)
                         roundAndFinalize(residue, env)
+                    }
+                    (y.bitLen > 0) -> {
+                        // x is zero
+                        val qPreferred = x.qExp - y.qExp
+                        setZero(quotientSign, qPreferred, env)
                     }
                     (x.bitLen > 0) -> {
                         // finite division by zero
@@ -703,8 +707,7 @@ class MutDec() : C256() {
         val quotientSign = x.sign
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                val residue = MagnitudeInv.magInv(this, x, env)
-                this.sign = quotientSign
+                val residue = MagnitudeInv.magInv(this, quotientSign, x, env)
                 roundAndFinalize(residue, env)
             }
             qX == NON_FINITE_INF -> {

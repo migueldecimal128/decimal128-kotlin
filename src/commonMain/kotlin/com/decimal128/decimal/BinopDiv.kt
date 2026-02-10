@@ -40,9 +40,16 @@ private fun divFnzZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun divFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    // not much can be done here ... perhaps some
+    return divFnzFnz256(x, y, ctx)
+}
+
+private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.decTemps.mdecArg1.set(x)
     val divisor = ctx.decTemps.mdecArg2.set(y)
-    val quotient = ctx.decTemps.mdecResult.setDiv(dividend, divisor, ctx)
+    val quotient = ctx.decTemps.mdecResult
+    val residue = MagnitudeDiv.magDivFnzFnz(quotient, x.sign xor y.sign, dividend, divisor, ctx)
+    quotient.roundAndFinalize(residue, ctx)
     return Decimal.from(quotient)
 }
 
