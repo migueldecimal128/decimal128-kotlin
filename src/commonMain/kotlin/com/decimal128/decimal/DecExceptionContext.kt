@@ -4,5 +4,5 @@ data class DecExceptionContext(
     val exception: DecException,
     val exceptionReason: DecExceptionReason,
     val operation: String,
-    val env: DecContext) {
+    val ctx: DecContext) {
 }

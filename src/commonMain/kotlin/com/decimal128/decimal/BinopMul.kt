@@ -6,33 +6,33 @@ import com.decimal128.decimal.Decimal.Companion.bothFnz
 internal fun mulImpl(x: Decimal, y: Decimal): Decimal =
     mulImpl(x, y, DecContext.current())
 
-internal fun mulImpl(x: Decimal, y: Decimal, env: DecContext): Decimal {
+internal fun mulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
-        mulFnzFnz(x, y, env)
+        mulFnzFnz(x, y, ctx)
     } else when (BinopSignature.of(x, y)) {
-        ZER_ZER -> mulZero(x, y, env)
-        ZER_FNZ -> mulZero(x, y, env)
-        ZER_INF -> mulInfZero(x, y, env)
+        ZER_ZER -> mulZero(x, y, ctx)
+        ZER_FNZ -> mulZero(x, y, ctx)
+        ZER_INF -> mulInfZero(x, y, ctx)
 
-        FNZ_ZER -> mulZero(x, y, env)
-        FNZ_FNZ -> mulFnzFnz(x, y, env)
-        FNZ_INF -> mulInfNonzero(x, y, env)
+        FNZ_ZER -> mulZero(x, y, ctx)
+        FNZ_FNZ -> mulFnzFnz(x, y, ctx)
+        FNZ_INF -> mulInfNonzero(x, y)
 
-        INF_ZER -> mulInfZero(x, y, env)
-        INF_FNZ -> mulInfNonzero(x, y, env)
-        INF_INF -> mulInfNonzero(x, y, env)
+        INF_ZER -> mulInfZero(x, y, ctx)
+        INF_FNZ -> mulInfNonzero(x, y)
+        INF_INF -> mulInfNonzero(x, y)
 
-        NAN_FOUND -> nanOperandFound(x, y, env)
+        NAN_FOUND -> nanOperandFound(x, y, ctx)
     }
 }
 
-private fun mulZero(x: Decimal, y: Decimal, env: DecContext): Decimal =
-    Decimal.newZero(x.sign xor y.sign, x.qExp + y.qExp, env)
+private fun mulZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+    Decimal.newZero(x.sign xor y.sign, x.qExp + y.qExp, ctx)
 
-private fun mulInfZero(x: Decimal, y: Decimal, env: DecContext): Decimal =
-    env.signalInvalid(Decimal.NaN)
+private fun mulInfZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+    ctx.signalInvalid(Decimal.NaN)
 
-private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecContext): Decimal =
+private fun mulInfNonzero(x: Decimal, y: Decimal): Decimal =
     if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
 
 // fast-path iff ...
@@ -43,26 +43,26 @@ private fun mulInfNonzero(x: Decimal, y: Decimal, env: DecContext): Decimal =
 //  exponent on the low end must be >= eMin, not qTiny
 //  anything in the range [qTiny, eMin) is subnormal
 //  and must be scaled, so not on the fast-path
-private fun mulFnzFnz(x: Decimal, y: Decimal, env: DecContext): Decimal {
+private fun mulFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val prodBitLen = x.bitLen + y.bitLen
     val prodExp = x.qExp + y.qExp
     if (prodBitLen <= 128) {
         val p0 = x.dw0 * y.dw0
         val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
         val prodSign = x.sign xor y.sign
-        return decFinalizeFinite(prodSign, p1, p0, prodExp, env)
+        return decFinalizeFinite(prodSign, p1, p0, prodExp, ctx)
     }
-    return mulFnzFnz256(x, y, env)
+    return mulFnzFnz256(x, y, ctx)
 }
 
-private fun mulFnzFnz256(x: Decimal, y: Decimal, env: DecContext): Decimal {
-    val m = env.decTemps.mdecBridge1.set(x)
-    val n = env.decTemps.mdecBridge2.set(y)
-    val p = env.decTemps.mdecResult
+private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val m = ctx.decTemps.mdecBridge1.set(x)
+    val n = ctx.decTemps.mdecBridge2.set(y)
+    val p = ctx.decTemps.mdecResult
     c256SetMul(p, m, n)
     p.qExp = x.qExp + y.qExp
     p.sign = x.sign xor y.sign
-    p.finalize(env)
+    p.finalize(ctx)
     val d = Decimal.from(p)
     return d
 }

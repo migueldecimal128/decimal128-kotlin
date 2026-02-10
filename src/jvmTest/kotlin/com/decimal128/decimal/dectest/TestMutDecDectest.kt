@@ -714,7 +714,7 @@ class TestMutDecDectest {
         return hex.toULong(16).toLong()
     }
 
-    fun parseOperand(str: String, env: DecContext): MutDec {
+    fun parseOperand(str: String, ctx: DecContext): MutDec {
         if (str.length == 0)
             return MY_NAN
         var t = str
@@ -731,7 +731,7 @@ class TestMutDecDectest {
             println("octothorpe not fully implemented")
             return MY_NAN
         }
-        val d = MutDec().set(t, env)
+        val d = MutDec().set(t, ctx)
         return d
     }
 

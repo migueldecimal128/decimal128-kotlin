@@ -122,14 +122,14 @@ fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return mapToDecimal[(cmp + 1) and 0x03]
 }
 
-internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, env: DecContext): Int {
+internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
     val negateMask = -x.sign01 // 0 or -1
-    return (cmpTotalOrderMagnitudeImpl(x, y, env) xor negateMask) - negateMask
+    return (cmpTotalOrderMagnitudeImpl(x, y, ctx) xor negateMask) - negateMask
 }
 
-fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, env: DecContext): Int {
+fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     return if (bothFnz(x, y)) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
     } else when (BinopSignature.of(x, y)) {

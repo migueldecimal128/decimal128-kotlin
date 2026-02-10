@@ -8,7 +8,12 @@ import com.decimal128.decimal.Residue.Companion.GT_HALF
 
 object DivKnuth {
 
-    //FIXME - allocate temp space in a way that this thread-safe
+    // FIXME - allocate temp space in a way that is thread-safe
+    //  needs to come from DecContext ...
+    //  ... which is not currently passed in ... Yikes!
+    //  If I want this code to be independent, I could pass in
+    //  an instance of a dedicated DivisionTmps object, but I
+    //  don't currently see why that would be necessary.
     private val q = IntArray(8)
     private val vn = IntArray(9)
     private val un = IntArray(9)

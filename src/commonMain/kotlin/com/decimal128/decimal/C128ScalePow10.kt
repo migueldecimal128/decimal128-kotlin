@@ -13,7 +13,7 @@ internal object C128ScalePow10 {
         return Decimal.from(p1, p0, signExp)
     }
 
-    fun c128ScaleUpPow10(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, pow10: Int, env: DecContext): Decimal {
+    fun c128ScaleUpPow10(sign: Boolean, dw1: Long, dw0: Long, qExp: Int, pow10: Int, ctx: DecContext): Decimal {
         verify { pow10 > 0 }
         val (pow10dw1, pow10dw0) = pow10_128(pow10)
         val (p1, p0) = umul128x128to128(dw1, dw0, pow10dw1, pow10dw0)

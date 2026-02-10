@@ -4,7 +4,7 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun MutDec.finalize(env: DecContext) = roundAndFinalize(Residue.EXACT, env.decRounding, env)
+internal fun MutDec.finalize(ctx: DecContext) = roundAndFinalize(Residue.EXACT, ctx.decRounding, ctx)
 
 internal fun MutDec.roundAndFinalize(inboundResidue: Residue, ctx: DecContext) =
     roundAndFinalizeDAG(inboundResidue, ctx.decRounding, ctx)

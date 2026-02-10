@@ -132,7 +132,7 @@ class MutDec() : C256() {
             return z.finalize(ctx)
         }
 
-        private fun scaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecContext): MutDec {
+        private fun scaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             verify { qX != qY }
@@ -142,33 +142,33 @@ class MutDec() : C256() {
             verify { x.bitLen > 0 && y.bitLen > 0 }
             val residue: Residue
             if (xSign == ySign) {
-                residue = MagnitudeAddSub.magScaledAdd(z, xSign, x, y, env)
+                residue = MagnitudeAddSub.magScaledAdd(z, xSign, x, y, ctx)
             } else {
                 val cmp = x.magnitudeCompareTo(y)
                 when {
                     cmp > 0 ->
-                        residue = MagnitudeAddSub.magScaledSub(z, xSign, x, y, env)
+                        residue = MagnitudeAddSub.magScaledSub(z, xSign, x, y, ctx)
                     cmp < 0 ->
-                        residue = MagnitudeAddSub.magScaledSub(z, ySign, y, x, env)
+                        residue = MagnitudeAddSub.magScaledSub(z, ySign, y, x, ctx)
 
                     else -> {
                         // Magnitudes are equal and signs opposite → exact cancellation
                         // IEEE 754: sign is +0 except when rounding toward negative
-                        z.setZero(env.isRoundTowardNegative(), min(qX, qY), env)
+                        z.setZero(ctx.isRoundTowardNegative(), min(qX, qY), ctx)
                         return z // I don't think I need to finalize in this case
                     }
                 }
             }
-            return z.roundAndFinalize(residue, env)
+            return z.roundAndFinalize(residue, ctx)
         }
 
-        private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, env: DecContext): MutDec {
+        private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             verify { qX == NON_FINITE_INF || qY == NON_FINITE_INF }
             if (qX == qY && x.sign != ySign) {
-                z.setNaN(env)
-                return env.signalInvalid(z)
+                z.setNaN(ctx)
+                return ctx.signalInvalid(z)
             } else {
                 z.setInfinite(if (qX == NON_FINITE_INF) x.sign else ySign)
                 return z
@@ -231,9 +231,9 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setZero(sign: Boolean = false, qExp: Int = 0, env: DecContext): MutDec {
+    fun setZero(sign: Boolean = false, qExp: Int = 0, ctx: DecContext): MutDec {
         c256SetZero()
-        this.qExp = max(min(qExp, env.qMax), env.qTiny)
+        this.qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
         this.sign = sign
         return this
     }
@@ -245,17 +245,17 @@ class MutDec() : C256() {
         return this
     }
 
-    private fun setNaNOperand(x: MutDec, env: DecContext): MutDec {
+    private fun setNaNOperand(x: MutDec, ctx: DecContext): MutDec {
         val xQ = x.qExp
         verify { xQ >= NON_FINITE_QNAN }
         this.set(x)
         this.qExp = NON_FINITE_QNAN
         if (xQ == NON_FINITE_SNAN)
-            env.signalInvalid(this)
+            ctx.signalInvalid(this)
         return this
     }
 
-    private fun setNaNOperand(x: MutDec, y: MutDec, env: DecContext): MutDec {
+    private fun setNaNOperand(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         val xQ = x.qExp
         val yQ = y.qExp
         val maxQ = max(xQ, yQ)
@@ -263,7 +263,7 @@ class MutDec() : C256() {
         this.set(if (maxQ == xQ) x else y)
         this.qExp = NON_FINITE_QNAN
         if (maxQ == NON_FINITE_SNAN)
-            env.signalInvalid(this)
+            ctx.signalInvalid(this)
         return this
     }
 
@@ -271,7 +271,7 @@ class MutDec() : C256() {
         throw RuntimeException("sNaN operand")
     }
 
-    private fun setNaN(x: MutDec, env: DecContext) {
+    private fun setNaN(x: MutDec, ctx: DecContext) {
         val q = x.qExp
         verify { q >= NON_FINITE_QNAN }
         setZero()
@@ -279,15 +279,15 @@ class MutDec() : C256() {
         //FIXME - see IEEE754r 6.2
     }
 
-    internal fun setNaN(env: DecContext) {
+    internal fun setNaN(ctx: DecContext) {
         setZero()
         sign = false
         qExp = NON_FINITE_QNAN
     }
 
-    internal fun setNaNSignalInvalid(env: DecContext) {
-        setNaN(env)
-        env.signalInvalid(this)
+    internal fun setNaNSignalInvalid(ctx: DecContext) {
+        setNaN(ctx)
+        ctx.signalInvalid(this)
     }
 
     internal fun setNaN(payload: Int, env: DecContext) {

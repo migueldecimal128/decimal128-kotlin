@@ -63,22 +63,22 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     }
 }
 
-private fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, env: DecContext): Decimal {
+private fun cmpMagnitudeNanFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     TODO()
 }
 
-private fun cmpNanFound(x: Decimal, y: Decimal, env: DecContext): Decimal {
+private fun cmpNanFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     TODO()
 }
 
-fun cmpTotalOrderImpl_x(x: Decimal, y: Decimal, env: DecContext): Int {
+fun cmpTotalOrderImpl_x(x: Decimal, y: Decimal, ctx: DecContext): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
     val negateMask = -x.sign01 // 0 or -1
-    return (cmpTotalOrderMagnitudeImpl_x(x, y, env) xor negateMask) - negateMask
+    return (cmpTotalOrderMagnitudeImpl_x(x, y) xor negateMask) - negateMask
 }
 
-private fun cmpTotalOrderMagnitudeImpl_x(x: Decimal, y: Decimal, env: DecContext): Int {
+private fun cmpTotalOrderMagnitudeImpl_x(x: Decimal, y: Decimal): Int {
     return if (bothFnz(x, y)) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
     } else when (BinopSignature.of(x, y)) {

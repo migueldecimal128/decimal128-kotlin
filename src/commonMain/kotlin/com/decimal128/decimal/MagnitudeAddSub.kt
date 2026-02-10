@@ -81,7 +81,7 @@ object MagnitudeAddSub {
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
     // m == minuend  s == subtrahend
-    fun magScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, env: DecContext): Residue {
+    fun magScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, ctx: DecContext): Residue {
         verify { !m.isZero() }
         verify { !s.isZero() }
         verify { m.magnitudeCompareTo(s) > 0 }
@@ -90,7 +90,7 @@ object MagnitudeAddSub {
         if (m.qExp > s.qExp) {
             val gap = m.qExp - s.qExp
             val headroomWithGuard =
-                if (s.digitLen > env.precision) {
+                if (s.digitLen > ctx.precision) {
                     // It is possible for y.digitLen > precision because
                     // of intermediate result of a FMA operation.
                     // In this case we might have to scale x.coeff up to
@@ -98,7 +98,7 @@ object MagnitudeAddSub {
                     // This will not exceed our 256-bit ALU capacity
                     s.digitLen - m.digitLen
                 } else {
-                    1 + env.precision - m.digitLen  // Standard with guard
+                    1 + ctx.precision - m.digitLen  // Standard with guard
                 }
             val shiftMLeft = min(gap, max(0, headroomWithGuard))
 

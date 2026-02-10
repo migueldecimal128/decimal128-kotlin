@@ -61,14 +61,14 @@ fun newMutDec(bd: BigDecimal, ctx: DecContext): MutDec {
 
 fun MutDec.set(bd: BigDecimal) = this.set(bd, DecContext())
 
-fun MutDec.set(bd: BigDecimal, env: DecContext) {
+fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
     this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
     this.sign = bd.signum() < 0
-    this.finalize(env)
+    this.finalize(ctx)
 }
 
-fun MutDec.set(bi: BigInteger, env: DecContext) {
+fun MutDec.set(bi: BigInteger, ctx: DecContext) {
     if (bi.bitLength() <= 256) {
         this.qExp = 0
         val sign = bi.signum() < 0

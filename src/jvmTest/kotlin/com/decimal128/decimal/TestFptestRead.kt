@@ -132,14 +132,14 @@ class TestFptestRead {
         "d128+ =0 xu +0e-4290 +6e-6176 -> +6e3040 u",
     )
 
-    fun isBadCase(fptest: Fptest, env: DecContext): Boolean {
+    fun isBadCase(fptest: Fptest, ctx: DecContext): Boolean {
         if (badCases.contains(fptest.fptestStr))
             return true
         val result = fptest.result()
 
         if (result != null && result.qExp in -3104..-3000)
             return true
-        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && env.overflow)
+        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && ctx.overflow)
             return true
 
         val hasTrapU = fptest.hasTrap("u")

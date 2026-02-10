@@ -94,7 +94,7 @@ class TestMutDecReciprocal{
         //TODO get setInv() to work using Newton-Raphson
     }
 
-    fun setInv(inv: MutDec, divisor: MutDec, env: DecContext) {
+    fun setInv(inv: MutDec, divisor: MutDec, ctx: DecContext) {
         val scalePow10 = 36
         val scaleDouble = 1e36
 
