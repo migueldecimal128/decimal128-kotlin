@@ -142,20 +142,14 @@ class MutDec() : C256() {
             verify { x.bitLen > 0 && y.bitLen > 0 }
             val residue: Residue
             if (xSign == ySign) {
-                residue = MagnitudeAddSub.magScaledAdd(z, x, y, env)
-                z.sign = xSign
+                residue = MagnitudeAddSub.magScaledAdd(z, xSign, x, y, env)
             } else {
                 val cmp = x.magnitudeCompareTo(y)
                 when {
-                    cmp > 0 -> {
-                        residue = MagnitudeAddSub.magScaledSub(z, x, y, env)
-                        z.sign = xSign
-                    }
-
-                    cmp < 0 -> {
-                        residue = MagnitudeAddSub.magScaledSub(z, y, x, env)
-                        z.sign = ySign
-                    }
+                    cmp > 0 ->
+                        residue = MagnitudeAddSub.magScaledSub(z, xSign, x, y, env)
+                    cmp < 0 ->
+                        residue = MagnitudeAddSub.magScaledSub(z, ySign, y, x, env)
 
                     else -> {
                         // Magnitudes are equal and signs opposite → exact cancellation

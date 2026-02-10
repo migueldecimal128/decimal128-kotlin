@@ -6,7 +6,7 @@ import kotlin.math.min
 
 object MagnitudeAddSub {
 
-    fun magScaledAdd(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Residue {
+    fun magScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
         verify { x.qExp != y.qExp } // the unscaled case should have been caught earlier
         //if (x.qExp == y.qExp) {
         //    z.qExp = x.qExp
@@ -56,6 +56,7 @@ object MagnitudeAddSub {
                     }
                 }
                 z.qExp = qAlign
+                z.sign = sign
                 return residue
             }
             // one of the two is zero
@@ -63,6 +64,7 @@ object MagnitudeAddSub {
             (m.bitLen > 0) -> {
                 z.qExp = qAlign
                 c256SetScaleUpPow10(z, m, shiftLeft)
+                z.sign = sign
                 return EXACT
             }
 
@@ -70,6 +72,7 @@ object MagnitudeAddSub {
                 // if m == 0 then return n ... n != 0 and n == 0
                 z.c256Set(n)
                 z.qExp = n.qExp
+                z.sign = sign
                 return EXACT
             }
         }
@@ -78,7 +81,7 @@ object MagnitudeAddSub {
     // uses Guard digit
     // decrements when non-exact so that standard round and finalize routine can be called
     // m == minuend  s == subtrahend
-    fun magScaledSub(z: MutDec, m: MutDec, s: MutDec, env: DecContext): Residue {
+    fun magScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, env: DecContext): Residue {
         verify { !m.isZero() }
         verify { !s.isZero() }
         verify { m.magnitudeCompareTo(s) > 0 }
@@ -142,6 +145,7 @@ object MagnitudeAddSub {
                 }
             }
             z.qExp = qAlign
+            z.sign = mSign
             return residue
 
         } else {
@@ -155,6 +159,7 @@ object MagnitudeAddSub {
             val gap = s.qExp - m.qExp
             c256FusedSubMulPow10(z, m, s, gap)
             z.qExp = m.qExp
+            z.sign = mSign
             return EXACT
         }
     }

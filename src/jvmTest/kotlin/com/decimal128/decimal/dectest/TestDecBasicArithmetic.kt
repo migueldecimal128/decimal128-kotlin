@@ -27,6 +27,7 @@ class TestDecBasicArithmetic {
         ::addImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqadd71340 add 1E34  -5000000.000010001   ->  9999999999999999999999999995000000      Inexact Rounded",
             "dqadd7976 add      9999999999999999999999999999999999E+6111  9E+6110  -> Infinity Overflow Inexact Rounded",
             "dqadd7975 add      9999999999999999999999999999999999E+6111  1E+6111  -> Infinity Overflow Inexact Rounded",
             "dqadd011 add '0.4444444444444444444444444444444446'  '0.5555555555555555555555555555555555' -> '1.000000000000000000000000000000000' Inexact Rounded",
