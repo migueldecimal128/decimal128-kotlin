@@ -27,7 +27,21 @@ internal object C128ScalePow10 {
     }
 
     fun c128ScaleDownPow10(dw1: Long, dw0: Long, pow10: Int): Triple<Long, Long, Residue> {
-        // FIXME!
+        if (dw1 == 0L) {
+            verify { pow10 < MIN_POW10_DIGIT_LEN_128}
+            val denomPow10 = pow10_64(pow10)
+            val q: Long
+            val r: Long
+            if (dw0 > 0) {
+                q = dw0 / denomPow10
+                r = dw0 % denomPow10
+            } else {
+                q = unsignedDiv(dw0, denomPow10)
+                r = dw0 - (q * denomPow10)
+            }
+            val residue = Residue.fromRemainderDivisor(r, denomPow10)
+            return Triple(0L, q, residue)
+        }
         val t = C256()
         t.c256Set128(dw1, dw0)
         val s = C256()

@@ -154,6 +154,26 @@ object DivMagic {
         }
     }
 
+    fun magicDivPow10_64(x0: Long, pow10: Int): Long {
+        initializeMagicPow10_64()
+        verify { pow10 > 0 && pow10 < MAGIC_POW10_MAXX }
+        verify { initialized }
+        val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
+        val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
+        val denom = pow10_64(pow10)
+        val s = flagAndShift and 0x3F
+        val correctionMask = (flagAndShift shr 31).toLong()
+
+        val carryAmount = 1L shl -s // 1L shl (64 - s)
+        val pHiUncorrected = unsignedMulHi(x0, m)
+        val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
+        val carry = if (unsignedLT(pHiCorrected, pHiUncorrected)) carryAmount else 0L
+        val qHat = pHiCorrected shr s
+        val q0 = carry + qHat
+
+        return q0
+    }
+
     private fun magicDivModPow10_64(z: C256, x0: Long, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
