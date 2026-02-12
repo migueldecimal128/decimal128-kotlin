@@ -26,6 +26,11 @@ internal object C128ScalePow10 {
         return umul128x128to128(dw1, dw0, pow10dw1, pow10dw0)
     }
 
+    /*
+    FIXME
+     see if this can be done by making this thing inline and passing
+     in a lambda to complete the calculation.
+     */
     fun c128ScaleDownPow10(dw1: Long, dw0: Long, pow10: Int): Triple<Long, Long, Residue> {
         if (dw1 == 0L) {
             verify { pow10 < MIN_POW10_DIGIT_LEN_128}
@@ -42,6 +47,9 @@ internal object C128ScalePow10 {
             val residue = Residue.fromRemainderDivisor(r, denomPow10)
             return Triple(0L, q, residue)
         }
+        if (pow10 < BARRETT_POW10_MAXX)
+            return barrettDivPow10(dw1, dw0, pow10)
+
         val t = C256()
         t.c256Set128(dw1, dw0)
         val s = C256()
@@ -49,4 +57,41 @@ internal object C128ScalePow10 {
         return Triple(s.dw1, s.dw0, residue)
     }
 
+    private inline fun barrettDivPow10(dw1: Long, dw0: Long, pow10: Int):
+            Triple<Long, Long, Residue> {
+        val denom = pow10_64(pow10)
+        val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
+
+        val dwA = dw0 and 0xFFFF_FFFFL
+        val dwB = dw0 ushr 32
+        val dwG = dw1
+
+        val qHatG = unsignedMulHi(dwG, mu)
+        val rHatG = dwG - (qHatG * denom)
+        val adjustG = ((rHatG - denom) shr 63).inv()
+        val qG = qHatG - adjustG
+        val rG = rHatG - (adjustG and denom)
+
+        val ppB = (rG shl 32) or dwB
+        val qHatB = unsignedMulHi(ppB, mu)
+        val rHatB = ppB - (qHatB * denom)
+        val adjustB = ((rHatB - denom) shr 63).inv()
+        val qB = qHatB - adjustB
+        val rB = rHatB - (adjustB and denom)
+
+        val ppA = (rB shl 32) or dwA
+        val qHatA = unsignedMulHi(ppA, mu)
+        val rHatA = ppA - (qHatA * denom)
+        val adjustA = ((rHatA - denom) shr 63).inv()
+        val qA = qHatA - adjustA
+        val rA = rHatA - (adjustA and denom)
+
+        val remainder = rA
+
+        val dw1Ret = qG
+        val dw0Ret = (qB shl 32) or qA
+
+        val residue = Residue.fromRemainderDivisor(remainder, denom)
+        return Triple(dw1Ret, dw0Ret, residue)
+    }
 }
