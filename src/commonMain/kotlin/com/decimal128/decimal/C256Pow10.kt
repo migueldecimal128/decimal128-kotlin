@@ -258,13 +258,6 @@ internal fun calcDigitLen64(dw0: Long): Int {
     return calcDigitLen64(bitLen, dw0)
 }
 
-internal fun calcDigitLen64(dw0: ULong): Int {
-    val bitLen = 64 - dw0.countLeadingZeroBits()
-    return calcDigitLen64(bitLen, dw0)
-}
-
-internal fun calcDigitLen64(bitLen: Int, dw0: ULong): Int = calcDigitLen64(bitLen, dw0.toLong())
-
 internal fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
     // this formula of
     // ((bitLen * 1233) ushr 12)
@@ -273,16 +266,9 @@ internal fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
     // more importantly, it avoids boundary condition issues
     // for 128 and 192 bits where they cross from 2->3->4 limbs
     val loDigitCount = (bitLen * 1233) ushr 12
-    val hiDigitCount = loDigitCount + 1
-    val pow10Offset = pow10Offset(loDigitCount)
-    val p0 = POW10[pow10Offset + 0]
-    val cmp0 = unsignedCmp(dw0, p0)
-    val ret = if (cmp0 < 0) loDigitCount else hiDigitCount
-    return ret
+    val p0 = POW10[loDigitCount shl 1]
+    return loDigitCount + 1 - (unsignedCmp(dw0, p0) ushr 31)
 }
-
-internal fun calcDigitLen128(dw1: ULong, dw0: ULong): Int =
-    calcDigitLen128(dw1.toLong(), dw0.toLong())
 
 internal fun calcDigitLen128(dw1: Long, dw0: Long): Int {
     val bitLen = calcBitLen128(dw1, dw0)
@@ -297,7 +283,7 @@ internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
         bitLen > 64 -> {
             val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_128)
             val hiDigitCount = loDigitCount + 1
-            val pow10Offset = pow10Offset(loDigitCount)
+            val pow10Offset = loDigitCount shl 1
             val p1 = POW10[pow10Offset + 1]
             val p0 = POW10[pow10Offset + 0]
             val cmp1 = unsignedCmp(dw1, p1)

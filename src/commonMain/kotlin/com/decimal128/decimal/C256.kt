@@ -26,6 +26,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     internal var dw1: Long
     @JvmField
     internal var dw0: Long
+    @JvmField
     internal var bitLen: Int
     @JvmField
     internal var digitLen: Int

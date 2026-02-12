@@ -10,11 +10,15 @@ expect inline fun unsignedDiv(x: Long, y: Long): Long
 
 expect inline fun unsignedMod(x: Long, y: Long): Long
 
-inline fun unsignedCmp(x: Long, y: Long) = x.toULong().compareTo(y.toULong())
+expect inline fun unsignedCmp(x: Long, y: Long): Int
 
-inline fun unsignedCmp(x: Int, y: Int) = x.toUInt().compareTo(y.toUInt())
+expect inline fun unsignedCmp(x: Int, y: Int): Int
 
-inline fun unsignedLT(x: Long, y: Long) = x.toULong() < y.toULong()
+inline fun unsignedLT(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) < (y xor Long.MIN_VALUE)
+
+inline fun unsignedLT_option1(x: Long, y: Long): Boolean = unsignedCmp(x, y) < 0
+
+inline fun unsignedLT_option2(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) < (y xor Long.MIN_VALUE)
 
 expect inline fun scalb(d: Double, n: Int): Double
 

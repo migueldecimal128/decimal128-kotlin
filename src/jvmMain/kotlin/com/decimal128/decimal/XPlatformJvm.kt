@@ -8,6 +8,10 @@ actual inline fun unsignedDiv(x: Long, y: Long): Long = java.lang.Long.divideUns
 
 actual inline fun unsignedMod(x: Long, y: Long): Long = java.lang.Long.remainderUnsigned(x, y)
 
+actual inline fun unsignedCmp(x: Long, y: Long): Int = java.lang.Long.compareUnsigned(x, y)
+
+actual inline fun unsignedCmp(x: Int, y: Int): Int = java.lang.Integer.compareUnsigned(x, y)
+
 actual inline fun scalb(d: Double, n: Int): Double = java.lang.Math.scalb(d, n)
 
 actual inline fun arraycopy(src: IntArray, srcIndex: Int, dst: IntArray, dstIndex: Int, len: Int) =
