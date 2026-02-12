@@ -1151,7 +1151,7 @@ class MutDec() : C256() {
             qX < NON_FINITE_INF -> {
                 var ctzd = 0
                 var remaining = maxToStrip
-                val t = env.decTemps.mdecArg1
+                val t = env.decTmps.mdecArg1
                 var t0 = x
                 var m: Long = 0L
                 while (remaining > 0) {
@@ -1272,13 +1272,13 @@ class MutDec() : C256() {
 
     fun setRemainderNear(x: MutDec, y: MutDec, env: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else env.decTemps.mdecArg2.set(y)
+        val yT = if (this !== y) y else env.decTmps.mdecArg2.set(y)
         val truncIsOdd: Boolean = setRemTruncImpl(x, yT, env)
         if (!isZero() && isFinite()) {
             val rem2 = if (sign) {
-                env.decTemps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
+                env.decTmps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
             } else {
-                env.decTemps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
+                env.decTmps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
             }
             val cmp = magnitudeCompareTo(rem2)
              if (cmp > 0 || (cmp == 0) && truncIsOdd)
@@ -1302,7 +1302,7 @@ class MutDec() : C256() {
                 // setRemainder is an EXACT operation, so we will use a temp
                 // environment so that INEXACT flag/trap does not get signaled.
                 // use INTERNAL_TMP_ENV so that flag-setting
-                val n = env.decTemps.mdecArg1.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+                val n = env.decTmps.mdecArg1.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
                 if (n.qExp < 0)
                     n.setRoundToInteger(n, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
 

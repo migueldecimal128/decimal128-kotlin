@@ -60,9 +60,9 @@ object DecimalParsePrint {
     fun decToString(x: MutDec, ctx: DecContext? = null) : String {
         val prefs = ctx?.decPrefs ?: DecPrefs.DEFAULT
         val printLen = calcPrintLen(x, prefs)
-        val bytes = ctx?.decTemps?.bytesPrint ?: ByteArray(MAX_DEC38_CHAR_LEN)
+        val bytes = ctx?.decTmps?.bytesPrint ?: ByteArray(MAX_DEC38_CHAR_LEN)
         //val cb = decToUtf8(x, bytes, 0, MAX_DEC38_CHAR_LEN, prefs, env?.decTemps?.c256Print)
-        val cb = decToUtf8_2(x, bytes, 0, prefs, ctx?.decTemps?.c256Print)
+        val cb = decToUtf8_2(x, bytes, 0, prefs, ctx?.decTmps?.c256Print)
         // FIXME ... ok ... so this fails when we pass in a
         //  value that is too long ... exceeds 34 digits
         //  At a minimum it should work for 38 digits DECIMAL_128_EXTENDED

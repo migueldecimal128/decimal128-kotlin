@@ -42,10 +42,10 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
 }
 
 private fun fmaFnzFnzFinite(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-    val i = ctx.decTemps.mdecBridge1.set(x)
-    val j = ctx.decTemps.mdecBridge2.set(y)
-    val k = ctx.decTemps.mdecBridge3.set(a)
-    val result = ctx.decTemps.mdecResult.setFma(i, j, k, ctx)
+    val i = ctx.decTmps.mdecBridge1.set(x)
+    val j = ctx.decTmps.mdecBridge2.set(y)
+    val k = ctx.decTmps.mdecBridge3.set(a)
+    val result = ctx.decTmps.mdecResult.setFma(i, j, k, ctx)
     return Decimal.from(result)
 }
 
@@ -101,8 +101,8 @@ internal fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decim
     val qDelta = min(x.qExp - qNew, headroom)
     if (qDelta <= 0)
         return x
-    val t = ctx.decTemps.mdecBridge1.set(x)
-    val r = ctx.decTemps.mdecResult
+    val t = ctx.decTmps.mdecBridge1.set(x)
+    val r = ctx.decTmps.mdecResult
     c256SetScaleUpPow10(r, t, qDelta)
     r.qExp = x.qExp - qDelta
     r.sign = x.sign

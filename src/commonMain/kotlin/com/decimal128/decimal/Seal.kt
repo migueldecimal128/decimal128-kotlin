@@ -40,7 +40,8 @@ package com.decimal128.decimal
  *  * `negate()` returns a `Seal` with the sign bit flipped.
  *
  * This class is a `value class`; no heap allocation occurs at call sites.
- */@JvmInline
+ */
+@JvmInline
 value class Seal private constructor(val seal: Int) {
     companion object {
 

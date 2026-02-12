@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-class DecTemps {
+class DecTmps {
     val mdecResult = MutDec()
 
     // these tmps are for bridging from the 128-bit Decimal layer
@@ -13,6 +13,9 @@ class DecTemps {
     val mdecArg1 = MutDec()
     val mdecArg2 = MutDec()
     val mdecArg3 = MutDec()
+
+    //
+    val dwPair1 = DwPair()
 
 
     // printing must have dedicated tmps because toString()

@@ -6,8 +6,8 @@ internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int
     val qX = x.qExp
     return when {
         qX < NON_FINITE_INF -> {
-            val t = ctx.decTemps.mdecBridge1.set(x)
-            val r = ctx.decTemps.mdecResult.setStripTrailingZeros(t, ctx, maxToStrip)
+            val t = ctx.decTmps.mdecBridge1.set(x)
+            val r = ctx.decTmps.mdecResult.setStripTrailingZeros(t, ctx, maxToStrip)
             Decimal.from(r)
         }
         qX == NON_FINITE_INF -> x
@@ -32,8 +32,8 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
                     return ctx.signalInvalid(Decimal.NaN)
                 }
                 qDelta < 0 -> { // remove fractional zeros
-                    val t = ctx.decTemps.mdecBridge1.set(x)
-                    val r = ctx.decTemps.mdecBridge2.setStripTrailingZeros(t, ctx, -qDelta)
+                    val t = ctx.decTmps.mdecBridge1.set(x)
+                    val r = ctx.decTmps.mdecBridge2.setStripTrailingZeros(t, ctx, -qDelta)
                     if (r.qExp == -decimalScale)
                         return Decimal.from(r)
                     return ctx.signalInvalid(Decimal.NaN)

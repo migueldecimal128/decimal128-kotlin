@@ -56,9 +56,9 @@ private fun mulFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val m = ctx.decTemps.mdecBridge1.set(x)
-    val n = ctx.decTemps.mdecBridge2.set(y)
-    val p = ctx.decTemps.mdecResult
+    val m = ctx.decTmps.mdecBridge1.set(x)
+    val n = ctx.decTmps.mdecBridge2.set(y)
+    val p = ctx.decTmps.mdecResult
     c256SetMul(p, m, n)
     p.qExp = x.qExp + y.qExp
     p.sign = x.sign xor y.sign

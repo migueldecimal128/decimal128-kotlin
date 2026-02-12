@@ -13,7 +13,7 @@ data class DecContext(
     val decPrefs: DecPrefs = DecPrefs.DEFAULT,
     val decTraps: DecTraps? = null,
     val decFlags: DecFlags = DecFlags(),
-    val decTemps: DecTemps = DecTemps()
+    val decTmps: DecTmps = DecTmps()
 ) {
     val precision: Int
         get() = decFormat.precision
@@ -45,20 +45,20 @@ data class DecContext(
     }
 
     fun with(newDecFormat: DecFormat) =
-        DecContext(newDecFormat, decRounding, decPrefs, decTraps, decFlags, decTemps)
+        DecContext(newDecFormat, decRounding, decPrefs, decTraps, decFlags, decTmps)
 
     fun with(newDecRounding: DecRounding) =
-        DecContext(decFormat, newDecRounding, decPrefs, decTraps, decFlags, decTemps)
+        DecContext(decFormat, newDecRounding, decPrefs, decTraps, decFlags, decTmps)
 
     fun with(newDecPrefs: DecPrefs) =
-        DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags, decTemps)
+        DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags, decTmps)
 
     fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTraps)
 
     inline fun <T> compute(block: () -> T ): T = block()
 
     inline fun <T> computeDelayedTrap(block: () -> T): T {
-        val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags(), decTemps)
+        val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags(), decTmps)
         val blockVal = blockEnv.compute(block)
         decTraps?.delayedTrap(blockEnv)
         return blockVal

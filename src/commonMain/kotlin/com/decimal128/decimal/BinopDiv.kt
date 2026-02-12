@@ -45,9 +45,9 @@ private fun divFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val dividend = ctx.decTemps.mdecBridge1.set(x)
-    val divisor = ctx.decTemps.mdecBridge2.set(y)
-    val quotient = ctx.decTemps.mdecResult
+    val dividend = ctx.decTmps.mdecBridge1.set(x)
+    val divisor = ctx.decTmps.mdecBridge2.set(y)
+    val quotient = ctx.decTmps.mdecResult
     val residue = MagnitudeDiv.magDivFnzFnz(quotient, x.sign xor y.sign, dividend, divisor, ctx)
     quotient.roundAndFinalize(residue, ctx)
     return Decimal.from(quotient)
@@ -78,9 +78,9 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val dividend = ctx.decTemps.mdecBridge1.set(x)
-    val divisor = ctx.decTemps.mdecBridge2.set(y)
-    val quotient = ctx.decTemps.mdecResult.setDivIntFnzFnz(dividend, divisor, ctx)
+    val dividend = ctx.decTmps.mdecBridge1.set(x)
+    val divisor = ctx.decTmps.mdecBridge2.set(y)
+    val quotient = ctx.decTmps.mdecResult.setDivIntFnzFnz(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
 
@@ -116,12 +116,12 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
 }
 
 private fun remFnzFnz(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val dividend = ctx.decTemps.mdecBridge1.set(x)
-    val divisor = ctx.decTemps.mdecBridge2.set(y)
+    val dividend = ctx.decTmps.mdecBridge1.set(x)
+    val divisor = ctx.decTmps.mdecBridge2.set(y)
     val quotient =
         if (isTrunc)
-            ctx.decTemps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)
+            ctx.decTmps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)
         else
-            ctx.decTemps.mdecResult.setRemainderNear(dividend, divisor, ctx)
+            ctx.decTmps.mdecResult.setRemainderNear(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }

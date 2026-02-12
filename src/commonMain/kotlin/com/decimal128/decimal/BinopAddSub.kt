@@ -153,11 +153,10 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
                 residue = Residue.fromValuePow10(n.dw1, n.dw0, n.digitLen)
         }
         else -> {
-            val (dw1Right, dw0Right, residueRight) =
-                C128ScalePow10.c128ScaleDownPow10(n.dw1, n.dw0, shiftRight)
-            dw0Sum += dw0Right
-            dw1Sum += dw1Right + if (unsignedLT(dw0Sum, dw0Right)) 1L else 0L
-            residue = residueRight
+            val tmpPair = ctx.decTmps.dwPair1
+            residue = C128ScalePow10.c128ScaleDownPow10(tmpPair, n.dw1, n.dw0, shiftRight)
+            dw0Sum += tmpPair.dw0
+            dw1Sum += tmpPair.dw1 + if (unsignedLT(dw0Sum, tmpPair.dw0)) 1L else 0L
         }
     }
     return decRoundAndFinalizeFinite(resultSign, dw1Sum, dw0Sum, residue, qAlign, ctx)
@@ -225,9 +224,9 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
 }
 
 private fun fullWidthSub(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
-    val arg1 = ctx.decTemps.mdecBridge1.set(m)
-    val arg2 = ctx.decTemps.mdecBridge2.set(s)
-    val mdecDiff = ctx.decTemps.mdecResult
+    val arg1 = ctx.decTmps.mdecBridge1.set(m)
+    val arg2 = ctx.decTmps.mdecBridge2.set(s)
+    val mdecDiff = ctx.decTmps.mdecResult
     val residue = MagnitudeAddSub.magScaledSub(mdecDiff, sign, arg1, arg2, ctx)
     mdecDiff.roundAndFinalize(residue, ctx)
     val diff = Decimal.from(mdecDiff)

@@ -6,7 +6,7 @@ object MagnitudeDiv {
 
     fun magDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
         val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
-        val scaledNumerator = ctx.decTemps.mdecArg1
+        val scaledNumerator = ctx.decTmps.mdecArg1
         scaledNumerator.c256SetScaleUpPow10(x, numeratorScale)
         val residue = when {
             (y.bitLen <= 64) -> z.c256SetDivX64(scaledNumerator, y.dw0)

@@ -59,10 +59,11 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     var dw0 = dw0In
     var qExp = qExpIn
     if (precisionTruncationNeeded > 0) {
-        val (dw1S, dw0S, truncationResidue) =
-            C128ScalePow10.c128ScaleDownPow10(dw1, dw0, precisionTruncationNeeded)
-        dw1 = dw1S
-        dw0 = dw0S
+        val tmpPair = ctx.decTmps.dwPair1
+        val truncationResidue =
+            C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, precisionTruncationNeeded)
+        dw1 = tmpPair.dw1
+        dw0 = tmpPair.dw0
         totalResidue = truncationResidue.merge(totalResidue)
         qExp += precisionTruncationNeeded
         verify { calcDigitLen128(dw1, dw0) == precision }
@@ -161,10 +162,11 @@ private fun decFinalizeSubnormal(sign: Boolean,
     val truncationNeeded = qTiny - qExp
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
 
-    val (dw1S, dw0S, scaleResidue) = C128ScalePow10.c128ScaleDownPow10(dw1, dw0, truncationNeeded)
+    val tmpPair = ctx.decTmps.dwPair1
+    val scaleResidue = C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, truncationNeeded)
     val totalResidue = scaleResidue.merge(residue)
-    var dw1T = dw1S
-    var dw0T = dw0S
+    var dw1T = tmpPair.dw1
+    var dw0T = tmpPair.dw0
     var qExpT = qTiny
 
     if (totalResidue != EXACT && totalResidue.ulpRoundUp(rounding.negate(sign), dw0T)) {

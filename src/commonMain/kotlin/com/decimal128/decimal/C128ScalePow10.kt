@@ -26,12 +26,7 @@ internal object C128ScalePow10 {
         return umul128x128to128(dw1, dw0, pow10dw1, pow10dw0)
     }
 
-    /*
-    FIXME
-     see if this can be done by making this thing inline and passing
-     in a lambda to complete the calculation.
-     */
-    fun c128ScaleDownPow10(dw1: Long, dw0: Long, pow10: Int): Triple<Long, Long, Residue> {
+    fun c128ScaleDownPow10(result: DwPair, dw1: Long, dw0: Long, pow10: Int): Residue {
         if (dw1 == 0L) {
             verify { pow10 < MIN_POW10_DIGIT_LEN_128}
             val denomPow10 = pow10_64(pow10)
@@ -45,20 +40,23 @@ internal object C128ScalePow10 {
                 r = dw0 - (q * denomPow10)
             }
             val residue = Residue.fromRemainderDivisor(r, denomPow10)
-            return Triple(0L, q, residue)
+            result.dw1 = 0L
+            result.dw0 = q
+            return residue
         }
         if (pow10 < BARRETT_POW10_MAXX)
-            return barrettDivPow10(dw1, dw0, pow10)
+            return barrettDivPow10(result, dw1, dw0, pow10)
 
         val t = C256()
         t.c256Set128(dw1, dw0)
         val s = C256()
         val residue = c256SetScaleDownPow10(s, t, pow10)
-        return Triple(s.dw1, s.dw0, residue)
+        result.dw1 = s.dw1
+        result.dw0 = s.dw0
+        return residue
     }
 
-    private inline fun barrettDivPow10(dw1: Long, dw0: Long, pow10: Int):
-            Triple<Long, Long, Residue> {
+    fun barrettDivPow10(result: DwPair, dw1: Long, dw0: Long, pow10: Int): Residue {
         val denom = pow10_64(pow10)
         val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
 
@@ -88,10 +86,10 @@ internal object C128ScalePow10 {
 
         val remainder = rA
 
-        val dw1Ret = qG
-        val dw0Ret = (qB shl 32) or qA
+        result.dw1 = qG
+        result.dw0 = (qB shl 32) or qA
 
         val residue = Residue.fromRemainderDivisor(remainder, denom)
-        return Triple(dw1Ret, dw0Ret, residue)
+        return residue
     }
 }
