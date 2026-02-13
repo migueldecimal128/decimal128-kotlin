@@ -16,6 +16,8 @@ expect inline fun unsignedCmp(x: Int, y: Int): Int
 
 inline fun unsignedLT(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) < (y xor Long.MIN_VALUE)
 
+inline fun unsignedGE(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) >= (y xor Long.MIN_VALUE)
+
 inline fun unsignedLT_option1(x: Long, y: Long): Boolean = unsignedCmp(x, y) < 0
 
 inline fun unsignedLT_option2(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) < (y xor Long.MIN_VALUE)
