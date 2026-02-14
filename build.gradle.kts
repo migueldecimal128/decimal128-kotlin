@@ -112,3 +112,20 @@ tasks.withType<Test> {
         showStandardStreams = true
     }
 }
+/*
+
+afterEvaluate {
+    tasks.named<Test>("jvmTest") {
+        jvmArgs(
+            "-XX:+UnlockDiagnosticVMOptions",
+            "-XX:+PrintCompilation",
+            "-XX:+PrintAssembly",
+            "-XX:PrintAssemblyOptions=syntax=intel",
+            "-XX:CompileCommand=print,com.decimal128.decimal.DivBarrett::barrettDivModPow10"
+        )
+    }
+}
+
+ */
+
+
