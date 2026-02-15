@@ -76,15 +76,15 @@ class TestParseSpecials1 {
 
         // now, allow oversize payload
         val NAN34oversize = D128ParsePrint.parseNanText("+NAN1234567890123456789012345678901234",
-            allowOversizePayload = true)
+            DecContext.DECIMAL128_EXTENDED)
         assertEquals("NaN1234567890123456789012345678901234", NAN34oversize.toString())
 
         val NAN35ninesOversize = D128ParsePrint.parseNanText("+NAN99999999999999999999999999999999999",
-            allowOversizePayload = true)
+            DecContext.DECIMAL128_EXTENDED)
         assertEquals("NaN99999999999999999999999999999999999", NAN35ninesOversize.toString())
 
         val NAN128bitsOversize = D128ParsePrint.parseNanText("+NAN340282366920938463463374607431768211455",
-            allowOversizePayload = true)
+            DecContext.DECIMAL128_EXTENDED)
         // clamp at nines38
         assertEquals("NaN99999999999999999999999999999999999999", NAN128bitsOversize.toString())
 

@@ -67,6 +67,20 @@ class Decimal private constructor(
         }
 
         internal operator fun invoke(sign: Boolean, qExp: Int,
+                                     digitLen: Int, bitLen: Int,
+                                     dw1: Long, dw0: Long,
+                                     ctx: DecContext): Decimal {
+            verify { bitLen == calcBitLen128(dw1, dw0) }
+            verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
+            verify { when {
+                qExp < NON_FINITE_INF -> digitLen < ctx.precision
+                qExp == NON_FINITE_INF -> digitLen == 0
+                else -> digitLen <= ctx.decFormat.nanPayloadPrecision
+            } }
+            return Decimal(dw1, dw0, packLengths(digitLen, bitLen), packSignExp(sign, qExp))
+        }
+
+        internal operator fun invoke(sign: Boolean, qExp: Int,
                                      dw1: Long, dw0: Long,
                                      allowNonCanonical: Boolean = false): Decimal {
             val bitLen = calcBitLen128(dw1, dw0)
@@ -452,6 +466,27 @@ class Decimal private constructor(
                 }
             }
             return Decimal(sign, qExp, digitLen, bitLen, p1, p0, allowOversizePayload)
+        }
+
+        fun NaN(
+            sign: Boolean = false, signaling: Boolean = false,
+            payloadDw1: Long, payloadDw0: Long = 0L, ctx: DecContext
+        ): Decimal {
+            if ((payloadDw1 or payloadDw0) == 0L)
+                return NaN(sign, signaling)
+            val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
+            var p0 = payloadDw0
+            var p1 = payloadDw1
+            var bitLen = calcBitLen128(payloadDw1, payloadDw0)
+            var digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
+            val nanPayloadPrecision = ctx.decFormat.nanPayloadPrecision
+            if (digitLen > nanPayloadPrecision) {
+                p1 = pow10_128_dw1(nanPayloadPrecision)
+                p0 = pow10_128_dw0(nanPayloadPrecision) - 1
+                bitLen = pow10BitLen(nanPayloadPrecision)
+                digitLen = nanPayloadPrecision
+            }
+            return Decimal(sign, qExp, digitLen, bitLen, p1, p0, ctx)
         }
 
 
