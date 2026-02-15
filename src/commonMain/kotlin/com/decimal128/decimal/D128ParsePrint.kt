@@ -63,17 +63,6 @@ object D128ParsePrint {
      * Error messages are returned as `String` constant values
      * to reduce any performance overhead for failed parse attempts.
      */
-    fun parseDecimalOrErrorString(str: String, allowOversizeCoefficient: Boolean): Any? {
-        var d: Any? = parseFiniteValueText(str, allowOversizeCoefficient)
-        if (d is Decimal || d is String)
-            return d
-        d = parseInfinityText(str)
-        if (d is Decimal)
-            return d
-        d = parseNanText(str, allowOversizeCoefficient)
-        return d
-    }
-
     fun parseDecimalOrErrorString(txt: Latin1Iterator, allowOversizeCoefficient: Boolean): Any? {
         var d: Any? = parseFiniteValueText(txt, allowOversizeCoefficient)
         if (d is Decimal || d is String)
@@ -190,73 +179,12 @@ object D128ParsePrint {
      *
      * @return the parsed NaN value, or `null` if the string is not a NaN form.
      */
-    fun parseNanText(str: String, allowOversizePayload: Boolean = false): Decimal? {
-        if (str.length < 3)
-            return null
-        var ch = str[0].code
-        var ich = 1
-        val sign = ch == '-'.code
-        if (ch == '-'.code || ch == '+'.code)
-            ch = str[ich++].code
-        val hasS = (ch or 0x20) == 's'.code
-        val hasQ = (ch or 0x20) == 'q'.code
-        if (hasQ || hasS)
-            ch = str[ich++].code
-        if ((str.length - ich) < 2)
-            return null
-        if (((ch or 0x20) != 'n'.code) or
-            ((str[ich].code or 0x20) != 'a'.code) or
-            ((str[ich+1].code or 0x20) != 'n'.code))
-            return null
-        ich += 2
-        var accumDigitCount = 0
-        var accum19a = 0L
-        var accum19b = 0L
-        while (ich < str.length) {
-            val chDigit = str[ich++]
-            // be very lenient when parsing NaN payload
-            // IEEE754 says nothing about external text representation of NaN payload
-            // could have parens, brackets, etc.
-            if (chDigit !in '0'..'9')
-                continue
-            val d = chDigit - '0'
-            // flush leading zeros from payload ... don't increment
-            accumDigitCount += (-(accumDigitCount or d)) ushr 31
-            when {
-                accumDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
-                accumDigitCount > 33 && !allowOversizePayload -> {
-                    accum19a = NINES_19
-                    accum19b = NINES_14
-                    accumDigitCount = 33
-                    break;
-                }
-                accumDigitCount > 38 -> {
-                    accum19a = NINES_19
-                    accum19b = NINES_19
-                    accumDigitCount = 38
-                    break;
-                }
-                else -> {
-                    accum19b = (accum19b * 10L) + d.toLong()
-                }
-            }
-        }
-        var payloadDw0 = accum19a
-        var payloadDw1 = 0L
-        if (accumDigitCount > 19) {
-            val p10 = pow10_64(accumDigitCount - 19)
-            payloadDw0 = accum19a * p10
-            payloadDw1 = unsignedMulHi(accum19a, p10)
-            payloadDw0 += accum19b
-            payloadDw1 += if (unsignedLT(payloadDw0, accum19b)) 1L else 0L
-        }
-        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0, allowOversizePayload)
-    }
+    fun parseNanText(str: String, allowOversizePayload: Boolean = false): Decimal? =
+        parseNanText(StringLatin1Iterator(str), allowOversizePayload)
 
     fun parseNanText(txt: Latin1Iterator, allowOversizePayload: Boolean = false): Decimal? {
         txt.reset()
         var ch = txt.nextChar()
-        var ich = 1
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
             ch = txt.nextChar()
@@ -331,299 +259,8 @@ object D128ParsePrint {
      * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String, allowOversizeCoefficient: Boolean = false): Any? =
-        parseFiniteValueText_old(str, allowOversizeCoefficient)
-
-    fun parseFiniteValueText_old(str: String, allowOversizeCoefficient: Boolean = false): Any? {
-        val precision = if (allowOversizeCoefficient) 38 else 34
-        var residue: Residue = Residue.EXACT
-        val qTiny = -6176
-        val qMax = 6111
-
-        var hasCoefficientDigit = false
-        var significantDigitCount = 0 // does not count leading zeros
-        var hasDot = false
-        var expSign = false
-
-        if (str.length == 0)
-            return "empty string"
-        var ch = str[0]
-        var ich = 1
-        var chLast = '\u0000'
-
-        val sign = ch == '-'
-        if (ch == '-' || ch == '+') {
-            if (ich == str.length)
-                return "invalid"
-            ch = str[ich++]
-        }
-        var fractionalDigitCount = 0
-        var accum19a = 0L
-        var accum19b = 0L
-        var exp = 0
-
-        while (ch in '0'..'9' || ch == '.' || ch == '_') {
-            when (ch) {
-                in '0'..'9' -> {
-                    val d = ch - '0'
-                    hasCoefficientDigit = true
-                    // count while flushing leading zeros
-                    significantDigitCount += (-(significantDigitCount or d)) ushr 31
-                    when {
-                        significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
-                        significantDigitCount <= precision -> accum19b = (accum19b * 10L) + d.toLong()
-                        significantDigitCount == precision + 1 ->
-                            residue = Residue.fromDecimalDigit(d)
-                        else ->
-                            residue = residue.merge(Residue.fromDecimalDigit(d))
-                    }
-                    if (hasDot)
-                        ++fractionalDigitCount
-                }
-
-                '.' -> when {
-                    hasDot -> return "double decimal point"
-                    chLast == '_' -> return "invalid _ placement"
-                    else -> hasDot = true
-                }
-
-                '_' ->
-                    if (! hasCoefficientDigit || chLast == '.')
-                        return "invalid _ placement"
-            }
-            chLast = ch
-            ch = if (ich < str.length) str[ich++] else '\u0000'
-        }
-        if (! hasCoefficientDigit)
-            return null // try other options Infinity, NaN
-        // this path has at least one digit
-        if (ch == 'E' || ch == 'e') {
-            if (chLast == '_')
-                return "invalid _ placement"
-            ch = if (ich < str.length) str[ich++] else '\u0000'
-            if (ch == '_')
-                return "invalid _ placement"
-            if (ch == '+' || ch == '-') {
-                expSign = ch == '-'
-                ch = if (ich < str.length) str[ich++] else '\u0000'
-            }
-            var hasExpDigit = false
-            var expSignificantDigitCount = 0
-            while (ch in '0'..'9' || ch == '_') {
-                if (ch != '_') {
-                    hasExpDigit = true
-                    val eDigit = ch - '0'
-                    // count while flushing leading zeros
-                    expSignificantDigitCount +=
-                        (-(expSignificantDigitCount or eDigit)) ushr 31
-                    exp = exp * 10 + eDigit
-                } else {
-                    if (! hasExpDigit)
-                        return "invalid _ placement"
-                }
-                chLast = ch
-                ch = if (ich < str.length) str[ich++] else '\u0000'
-            }
-            if (! hasExpDigit)
-                return "E with no exponent digits"
-            // clamp exp to 9999 once after the loop
-            if (expSignificantDigitCount > 4)
-                exp = 9999
-        }
-        if (chLast == '_')
-            return "invalid _ placement"
-        if (ch != '\u0000')
-            return "invalid"
-        // we have at least one digit
-        var dw0T = accum19a
-        var dw1T = 0L
-        if (significantDigitCount > 19) {
-            val p10 = pow10_64(significantDigitCount - 19)
-            dw0T = accum19a * p10
-            dw1T = unsignedMulHi(accum19a, p10)
-            dw0T += accum19b
-            dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
-        }
-        // temporary scaffolding ... fail if they sent too many digits in coeff
-        if (significantDigitCount > precision)
-            return "coefficient out of decimal128 range"
-        // at this point, our coeff <= precision digits
-        // but we need to deal with residue and rounding
-        // rounding rollover could affect the exponent
-        //
-        // when we accept oversize coefficients, then whether the excess
-        // digits are to the right or left of the exponent will affect
-        // the qExp ...
-        val signedExp = if (expSign) -exp else exp
-        var qExp = signedExp - fractionalDigitCount
-        var bitLen = calcBitLen128(dw1T, dw0T)
-        var digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
-        if (digitLen == 0) // allow any exponent with Zero
-            qExp = min(max(qExp, qTiny), qMax)
-        if (qExp < qTiny)
-            return "exponent out of decimal128 range"
-        if (qExp > qMax) {
-            val overage = qExp - qMax
-            if (overage > precision - digitLen)
-                return "value out of decimal128 range"
-            val (t1, t0) = umul128xPow10to128(dw1T, dw0T, overage)
-            dw1T = t1
-            dw0T = t0
-            qExp = qMax
-            bitLen = calcBitLen128(dw1T, dw0T)
-            digitLen += overage
-        }
-        if ((qExp or bitLen) != 0)
-            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
-    }
-
-    fun parseFiniteValueText_new(str: String, allowOversizeCoefficient: Boolean = false): Any? {
-        val precision = if (allowOversizeCoefficient) 38 else 34
-        var residue: Residue = Residue.EXACT
-        val qTiny = -6176
-        val qMax = 6111
-
-        var hasCoefficientDigit = false
-        var significantDigitCount = 0 // does not count leading zeros
-        var hasDot = false
-        var expSign = false
-
-        if (str.length == 0)
-            return "empty string"
-        var ch = str[0]
-        var ich = 1
-        var chLast = '\u0000'
-
-        val sign = ch == '-'
-        if (ch == '-' || ch == '+') {
-            if (ich == str.length)
-                return "invalid"
-            ch = str[ich++]
-        }
-        var fractionalDigitCount = 0
-        var accum19a = 0L
-        var accum19b = 0L
-        var exp = 0
-
-        while (ch in '0'..'9' || ch == '.' || ch == '_') {
-            when (ch) {
-                in '0'..'9' -> {
-                    val d = ch - '0'
-                    hasCoefficientDigit = true
-                    // count while flushing leading zeros
-                    significantDigitCount += (-(significantDigitCount or d)) ushr 31
-                    when {
-                        significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
-                        significantDigitCount <= precision -> accum19b = (accum19b * 10L) + d.toLong()
-                        significantDigitCount == precision + 1 ->
-                            residue = Residue.fromDecimalDigit(d)
-                        else ->
-                            residue = residue.merge(Residue.fromDecimalDigit(d))
-                    }
-                    if (hasDot)
-                        ++fractionalDigitCount
-                }
-
-                '.' -> when {
-                    hasDot -> return "double decimal point"
-                    chLast == '_' -> return "invalid _ placement"
-                    else -> hasDot = true
-                }
-
-                '_' ->
-                    if (! hasCoefficientDigit || chLast == '.')
-                        return "invalid _ placement"
-            }
-            chLast = ch
-            ch = if (ich < str.length) str[ich++] else '\u0000'
-        }
-        if (! hasCoefficientDigit)
-            return null // try other options Infinity, NaN
-        // this path has at least one digit
-        if (ch == 'E' || ch == 'e') {
-            if (chLast == '_')
-                return "invalid _ placement"
-            ch = if (ich < str.length) str[ich++] else '\u0000'
-            if (ch == '_')
-                return "invalid _ placement"
-            if (ch == '+' || ch == '-') {
-                expSign = ch == '-'
-                ch = if (ich < str.length) str[ich++] else '\u0000'
-            }
-            var hasExpDigit = false
-            var expSignificantDigitCount = 0
-            while (ch in '0'..'9' || ch == '_') {
-                if (ch != '_') {
-                    hasExpDigit = true
-                    val eDigit = ch - '0'
-                    // count while flushing leading zeros
-                    expSignificantDigitCount +=
-                        (-(expSignificantDigitCount or eDigit)) ushr 31
-                    exp = exp * 10 + eDigit
-                } else {
-                    if (! hasExpDigit)
-                        return "invalid _ placement"
-                }
-                chLast = ch
-                ch = if (ich < str.length) str[ich++] else '\u0000'
-            }
-            if (! hasExpDigit)
-                return "E with no exponent digits"
-            // clamp exp to 9999 once after the loop
-            if (expSignificantDigitCount > 4)
-                exp = 9999
-        }
-        if (chLast == '_')
-            return "invalid _ placement"
-        if (ch != '\u0000')
-            return "invalid"
-        // we have at least one digit
-        var dw0T = accum19a
-        var dw1T = 0L
-        if (significantDigitCount > 19) {
-            val p10 = pow10_64(significantDigitCount - 19)
-            dw0T = accum19a * p10
-            dw1T = unsignedMulHi(accum19a, p10)
-            dw0T += accum19b
-            dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
-        }
-        // temporary scaffolding ... fail if they sent too many digits in coeff
-        // at this point, our coeff <= precision digits
-        // but we need to deal with residue and rounding
-        // rounding rollover could affect the exponent
-        //
-        // when we accept oversize coefficients, then whether the excess
-        // digits are to the right or left of the exponent will affect
-        // the qExp ...
-        val excessDigitCount = max(0, significantDigitCount - precision)
-        val signedExp = if (expSign) -exp else exp
-        var qExp = signedExp + fractionalDigitCount + excessDigitCount
-        // if excess digits apply rounding
-        if (excessDigitCount > 0 && residue != Residue.EXACT) {
-            TODO()
-        }
-        var bitLen = calcBitLen128(dw1T, dw0T)
-        var digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
-        if (digitLen == 0) // allow any exponent with Zero
-            qExp = min(max(qExp, qTiny), qMax)
-        if (qExp < qTiny)
-            return "exponent out of decimal128 range"
-        if (qExp > qMax) {
-            val overage = qExp - qMax
-            if (overage > precision - digitLen)
-                return "value out of decimal128 range"
-            val (t1, t0) = umul128xPow10to128(dw1T, dw0T, overage)
-            dw1T = t1
-            dw0T = t0
-            qExp = qMax
-            bitLen = calcBitLen128(dw1T, dw0T)
-            digitLen += overage
-        }
-        if ((qExp or bitLen) != 0)
-            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
-    }
+    fun parseFiniteValueText(str: String): Any? =
+        parseFiniteValueText(StringLatin1Iterator(str), false)
 
     fun parseFiniteValueText(txt: Latin1Iterator, allowOversizeCoefficient: Boolean = false): Any? {
         val precision = if (allowOversizeCoefficient) 38 else 34
@@ -640,7 +277,6 @@ object D128ParsePrint {
         var ch = txt.nextChar()
         if (ch.code == 0)
             return "empty string"
-        var ich = 1
         var chLast = '\u0000'
 
         val sign = ch == '-'
@@ -767,51 +403,6 @@ object D128ParsePrint {
         return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
     }
 
-    fun finalize(sign: Boolean, dw1: Long, dw0: Long, residue: Residue, qExp: Int, ctx: DecContext): Decimal {
-        TODO()
-        /*
-        var qT = qExp
-        var dw0T = dw0
-        var dw1T = dw1
-        // apply rounding
-        if (residue != Residue.EXACT) {
-            if (residue.ulpRoundUp(ctx.decRounding, dw0T)) {
-                ++dw0T
-                dw1T += if (dw0T == 0L) 1L else 0L
-                val decFormat = ctx.decFormat
-                if (dw0T == decFormat.dw0MaxxCoeff && dw1T == decFormat.dw1MaxxCoeff) {
-                    // round up a decade
-                    dw0T = decFormat.dw0MinFullPrecisionCoeff
-                    dw1T = decFormat.dw1MinFullPrecisionCoeff
-                    ++qT
-                }
-            }
-        }
-        val qMax = ctx.qMax
-        val qTiny = ctx.qTiny
-        if ((dw0T or dw1T) == 0L) // allow any exponent with Zero
-            qT = min(max(qExp, qTiny), qMax)
-        if (qT < qTiny) { // underflow ... depending upon rounding mode.
-        }
-        if (qExp > qMax) {
-            val overage = qExp - qMax
-            if (overage > precision - digitLen)
-                return "value out of decimal128 range"
-            val (t1, t0) = umul128xPow10to128(dw1T, dw0T, overage)
-            dw1T = t1
-            dw0T = t0
-            qExp = qMax
-            bitLen = calcBitLen128(dw1T, dw0T)
-            digitLen += overage
-        }
-        if ((qExp or bitLen) != 0)
-            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
-
-         */
-
-    }
-
     fun toString(dec: Decimal): String {
         return when {
             dec.qExp == 0 -> toIntegerString(dec)
@@ -888,7 +479,5 @@ object D128ParsePrint {
         verify { j == expDigitLen }
         return utf8.decodeToString()
     }
-
-
 
 }
