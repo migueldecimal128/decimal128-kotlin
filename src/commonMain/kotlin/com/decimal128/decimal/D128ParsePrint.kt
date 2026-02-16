@@ -45,7 +45,9 @@ object D128ParsePrint {
         if (decOrErrStr is Decimal)
             return decOrErrStr
         val msg = decOrErrStr ?: ""
-        throw IllegalArgumentException("invalid decimal format:$msg:'$str'")
+        if (ctx.decPrefs.parseThrowOnMalformed)
+            throw NumberFormatException("invalid decimal format:$msg:'$str'")
+        return Decimal.NaN
     }
 
     /**
@@ -254,13 +256,11 @@ object D128ParsePrint {
      * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String): Any? =
-        parseFiniteValueText(StringLatin1Iterator(str), DecContext.DECIMAL128)
+    fun parseFiniteValueText(str: String, ctx: DecContext = DecContext.DECIMAL128): Any? =
+        parseFiniteValueText(StringLatin1Iterator(str), ctx)
 
     fun parseFiniteValueText(txt: Latin1Iterator, ctx: DecContext): Any? {
         val precision = ctx.precision
-        val qTiny = ctx.qTiny
-        val qMax = ctx.qMax
         var residue: Residue = Residue.EXACT
 
         var hasCoefficientDigit = false
@@ -358,15 +358,15 @@ object D128ParsePrint {
         var dw0T = accum19a
         var dw1T = 0L
         if (significantDigitCount > 19) {
-            val p10 = pow10_64(significantDigitCount - 19)
+            val pow10b = min(precision, significantDigitCount) - 19
+            val p10 = pow10_64(pow10b)
             dw0T = accum19a * p10
             dw1T = unsignedMulHi(accum19a, p10)
             dw0T += accum19b
             dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
         }
-        // temporary scaffolding ... fail if they sent too many digits in coeff
-        if (significantDigitCount > precision)
-            return "coefficient out of decimal128 range"
+        if (significantDigitCount > precision && ctx.decPrefs.parseThrowOnDigitOverflow)
+            return "coefficient exceeds maximum precision"
         // at this point, our coeff <= precision digits
         // but we need to deal with residue and rounding
         // rounding rollover could affect the exponent
@@ -375,27 +375,13 @@ object D128ParsePrint {
         // digits are to the right or left of the exponent will affect
         // the qExp ...
         val signedExp = if (expSign) -exp else exp
-        var qExp = signedExp - fractionalDigitCount
-        var bitLen = calcBitLen128(dw1T, dw0T)
-        var digitLen = calcDigitLen128(bitLen, dw1T, dw0T)
-        if (digitLen == 0) // allow any exponent with Zero
-            qExp = min(max(qExp, qTiny), qMax)
-        if (qExp < qTiny)
-            return "exponent out of decimal128 range"
-        if (qExp > qMax) {
-            val overage = qExp - qMax
-            if (overage > precision - digitLen)
-                return "value out of decimal128 range"
-            val (t1, t0) = umul128xPow10to128(dw1T, dw0T, overage)
-            dw1T = t1
-            dw0T = t0
-            qExp = qMax
-            bitLen = calcBitLen128(dw1T, dw0T)
-            digitLen += overage
-        }
-        if ((qExp or bitLen) != 0)
-            return Decimal(sign, qExp, digitLen, bitLen, dw1T, dw0T)
-        return if (sign) Decimal.NEG_ZEROe0 else Decimal.POS_ZEROe0
+        val qExp = signedExp - fractionalDigitCount + max(0, significantDigitCount - precision)
+        if ((dw0T or dw1T) == 0L) // allow any exponent with Zero
+            return Decimal.newZero(sign, qExp, ctx)
+        val dec = decRoundAndFinalizeFinite(sign, dw1T, dw0T, residue, qExp, ctx)
+        if (!dec.isFiniteNonZero() && ctx.decPrefs.parseThrowOnOutOfRange)
+            return "value out of range"
+        return dec
     }
 
     fun toString(dec: Decimal): String {

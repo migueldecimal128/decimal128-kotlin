@@ -48,7 +48,7 @@ data class DecFormat(val precision: Int,
     internal inline fun coeffFits(dw1: Long, dw0: Long): Boolean =
         unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)
 
-    internal inline fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean =
+    internal /* inline */ fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean =
         (unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)) &&
                 (qExp >= qTiny && qExp <= qMax)
 

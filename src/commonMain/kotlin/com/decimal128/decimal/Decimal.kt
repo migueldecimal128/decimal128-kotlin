@@ -195,7 +195,8 @@ class Decimal private constructor(
          * @return the parsed `Decimal2` value
          * @throws IllegalArgumentException if the text does not encode a valid decimal128
          */
-        fun from(str: String) = D128ParsePrint.parseDecimal(str)
+        fun from(str: String, ctx: DecContext = DecContext.DECIMAL128) =
+            D128ParsePrint.parseDecimal(str, ctx)
 
         fun from(mutDec: MutDec): Decimal {
             require(mutDec.digitLen <= 34)

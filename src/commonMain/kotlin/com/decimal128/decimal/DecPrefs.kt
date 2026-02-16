@@ -19,6 +19,8 @@ data class DecPrefs(
     val parseCollapseSNaN: Boolean = false,
     val parseDiscardNanPayload: Boolean = false,
     val parseThrowOnMalformed: Boolean = true,
+    val parseThrowOnDigitOverflow: Boolean = false,
+    val parseThrowOnOutOfRange: Boolean = false,
 
     val printAutoMinNoExponent: Int = -6,
     val printStyle: PrintStyle = PrintStyle.AUTO

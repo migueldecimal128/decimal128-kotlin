@@ -1,11 +1,12 @@
 package com.decimal128.decimal
 
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestParseSpecials1 {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testParseInfinity() {
@@ -103,20 +104,24 @@ class TestParseSpecials1 {
         "123_456_789",
         "123__456__789",
     )
-    val tcsNull = arrayOf(
-        "", "0_", "+_1", "_-2",
-        "12345678901234567890123456789012345",
-        "6_.02E+23",
-        "9.999999999999999999999999999999999E+6145",
-    )
+
     @Test
-    fun testParseFiniteValueText() {
+    fun testParseFiniteValueText_good() {
         for (tc in tcsGood) {
             if (verbose)
                 println("tc:$tc")
             val v = D128ParsePrint.parseFiniteValueText(tc)
             assertEquals(tc.replace("_", ""), v.toString())
         }
+    }
+
+    val tcsNull = arrayOf(
+        "", "0_", "+_1", "_-2",
+        "6_.02E+23",
+    )
+
+    @Test
+    fun testParseFiniteValueText_bad_java() {
         for (tc in tcsNull) {
             if (verbose)
                 println("tc:$tc")
@@ -125,5 +130,25 @@ class TestParseSpecials1 {
                 println (" => $v")
             assert(v == null || v is String)
         }
+    }
+
+    @Test
+    fun testParseFiniteValueText_bad_ieee() {
+        val decPrefs = DecPrefs().copy(parseThrowOnMalformed = false,
+            parseThrowOnDigitOverflow = false, parseThrowOnOutOfRange = false)
+        val decContext = DecContext.DECIMAL128.with(decPrefs)
+        for (tc in tcsNull) {
+            if (verbose)
+                println("tc:$tc")
+            val v = Decimal.from(tc, decContext)
+            if (verbose)
+                println(" => $v")
+        }
+    }
+
+    @Test
+    fun testTooManyDigitsNative() {
+        // confirm that too many digits leads to NumberFormatException
+        assertThrows<NumberFormatException> { "12345678901234567890".toLong() }
     }
 }
