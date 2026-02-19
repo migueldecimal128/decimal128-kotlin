@@ -16,8 +16,8 @@ object MagnitudeAddSub {
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
-        verify { m.qExp > n.qExp }
         val qDelta = m.qExp - n.qExp
+        verify { qDelta > 0 }
         val headroom = ctx.precision - m.digitLen
         val shiftLeft = min(max(headroom, 0), qDelta)
         val qAlign = m.qExp - shiftLeft

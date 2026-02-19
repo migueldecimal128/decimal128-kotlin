@@ -49,7 +49,7 @@ private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val quotient = ctx.decTmps.mdecResult
     val residue = MagnitudeDiv.magDivFnzFnz(quotient, x.sign xor y.sign, dividend, divisor, ctx)
     quotient.roundAndFinalize(residue, ctx)
-    return Decimal.from(quotient)
+    return Decimal.from(quotient, ctx)
 }
 
 internal fun divIntImpl(x: Decimal, y: Decimal): Decimal =

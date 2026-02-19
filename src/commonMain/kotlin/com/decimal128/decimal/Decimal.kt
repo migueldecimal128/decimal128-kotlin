@@ -180,9 +180,9 @@ class Decimal private constructor(
         fun from(str: String, ctx: DecContext = DecContext.DECIMAL128) =
             D128ParsePrint.parseDecimal(str, ctx)
 
-        fun from(mutDec: MutDec): Decimal {
-            require(mutDec.digitLen <= 34)
-            require(mutDec.qExp <= DecFormat.DECIMAL_128.qMax || mutDec.qExp >= MIN_SPECIAL_VALUE)
+        fun from(mutDec: MutDec, ctx: DecContext = DecContext.DECIMAL128): Decimal {
+            require(mutDec.digitLen <= ctx.precision)
+            require(mutDec.qExp <= ctx.qMax || mutDec.qExp >= MIN_SPECIAL_VALUE)
             val dec = Decimal(mutDec.sign, mutDec.dw1, mutDec.dw0, mutDec.qExp)
             return dec
         }
@@ -343,6 +343,10 @@ class Decimal private constructor(
     fun isPosZero() = isZero() && !sign
     fun isNegZero() = isZero() && sign
     fun isOne() = this.packedLengths.toInt() == (1 shl 9) or 1
+
+    fun precision(): Int = if (qExp < NON_FINITE_INF) digitLen else -1
+    fun qExponent(): Int = if (qExp < NON_FINITE_INF) qExp else -1
+    fun eExponent(): Int = if (qExp < NON_FINITE_INF) eExp else -1
 
     // IEEE754-2019 5.7.2
 
@@ -834,3 +838,6 @@ class Decimal private constructor(
 
 
 }
+
+context(ctx: DecContext)
+fun String.toDecimal(): Decimal = Decimal.from(this, ctx)
