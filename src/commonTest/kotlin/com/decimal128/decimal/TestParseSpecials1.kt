@@ -63,17 +63,18 @@ class TestParseSpecials1 {
         assertEquals("NaN123456789012345678901", nan21.toString())
         val NAN33 = D128ParsePrint.parseNanText("+NAN123456789012345678901234567890123")
         assertEquals("NaN123456789012345678901234567890123", NAN33.toString())
-        // NANs that overflow canonical 33 nines get clamped
+        // NANs that overflow canonical 33 nines become zero ...
+        //  ... close reading of IEEE754-2019 3.5.2
         val NAN34 = D128ParsePrint.parseNanText("+NAN1234567890123456789012345678901234")
-        assertEquals("NaN999999999999999999999999999999999", NAN34.toString())
+        assertEquals("NaN", NAN34.toString())
         val NAN32nines = D128ParsePrint.parseNanText("+NAN99999999999999999999999999999999")
         assertEquals("NaN99999999999999999999999999999999", NAN32nines.toString())
         val NAN33nines = D128ParsePrint.parseNanText("+NAN999999999999999999999999999999999")
         assertEquals("NaN999999999999999999999999999999999", NAN33nines.toString())
         val NAN34nines = D128ParsePrint.parseNanText("+NAN9999999999999999999999999999999999")
-        assertEquals("NaN999999999999999999999999999999999", NAN34nines.toString())
+        assertEquals("NaN", NAN34nines.toString())
         val NAN35nines = D128ParsePrint.parseNanText("+NAN99999999999999999999999999999999999")
-        assertEquals("NaN999999999999999999999999999999999", NAN35nines.toString())
+        assertEquals("NaN", NAN35nines.toString())
 
         // now, allow oversize payload
         val NAN34oversize = D128ParsePrint.parseNanText("+NAN1234567890123456789012345678901234",
@@ -86,8 +87,8 @@ class TestParseSpecials1 {
 
         val NAN128bitsOversize = D128ParsePrint.parseNanText("+NAN340282366920938463463374607431768211455",
             DecContext.DECIMAL128_EXTENDED)
-        // clamp at nines38
-        assertEquals("NaN99999999999999999999999999999999999999", NAN128bitsOversize.toString())
+        // set payload to zero
+        assertEquals("NaN", NAN128bitsOversize.toString())
 
 
 

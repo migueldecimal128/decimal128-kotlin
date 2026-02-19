@@ -374,11 +374,11 @@ object D128SerdeBid {
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
                 val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
-                var payloadHi = coeffTHi
-                var payloadLo = bid128Lo
-                if (payloadHi > payloadMaxHi || payloadHi == payloadMaxHi && payloadLo > payloadMaxLo) {
-                    payloadHi = payloadMaxHi
-                    payloadLo = payloadMaxLo
+                val payloadHi = coeffTHi
+                val payloadLo = bid128Lo
+                if (payloadHi > payloadMaxHi || payloadHi == payloadMaxHi && unsignedGT(payloadLo, payloadMaxLo)) {
+                    if (! allowNonCanonical)
+                        return Decimal.NaN(sign, isSignaling)
                 }
                 return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo, allowNonCanonical)
             }

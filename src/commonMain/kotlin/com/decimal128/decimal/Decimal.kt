@@ -269,27 +269,16 @@ class Decimal private constructor(
             sign: Boolean = false, signaling: Boolean = false,
             payloadDw1: Long, payloadDw0: Long = 0L, allowOversizePayload: Boolean = false
         ): Decimal {
+            // FIXME - this routine is only used by Intel BID
+            //  should use the following with the ctx
             if ((payloadDw1 or payloadDw0) == 0L)
                 return NaN(sign, signaling)
             val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-            var p0 = payloadDw0
-            var p1 = payloadDw1
-            var bitLen = calcBitLen128(payloadDw1, payloadDw0)
-            var digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
-            if (digitLen > 33) {
-                if (! allowOversizePayload) {
-                    p1 = NINES_33_HI
-                    p0 = NINES_33_LO
-                    bitLen = NINES_33_BITLEN
-                    digitLen = 33
-                } else if (digitLen > 38) {
-                    p1 = NINES_38_HI
-                    p0 = NINES_38_LO
-                    bitLen = NINES_38_BITLEN
-                    digitLen = 38
-                }
-            }
-            return Decimal(sign, qExp, digitLen, bitLen, p1, p0, allowOversizePayload)
+            val bitLen = calcBitLen128(payloadDw1, payloadDw0)
+            val digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
+            if (digitLen > 33 && !allowOversizePayload)
+                return NaN(sign, signaling)
+            return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0, allowOversizePayload)
         }
 
         fun NaN(
@@ -299,18 +288,11 @@ class Decimal private constructor(
             if ((payloadDw1 or payloadDw0) == 0L)
                 return NaN(sign, signaling)
             val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-            var p0 = payloadDw0
-            var p1 = payloadDw1
-            var bitLen = calcBitLen128(payloadDw1, payloadDw0)
-            var digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
-            val nanPayloadPrecision = ctx.decFormat.nanPayloadPrecision
-            if (digitLen > nanPayloadPrecision) {
-                p1 = pow10_128_dw1(nanPayloadPrecision)
-                p0 = pow10_128_dw0(nanPayloadPrecision) - 1
-                bitLen = pow10BitLen(nanPayloadPrecision)
-                digitLen = nanPayloadPrecision
-            }
-            return Decimal(sign, qExp, digitLen, bitLen, p1, p0, ctx)
+            val bitLen = calcBitLen128(payloadDw1, payloadDw0)
+            val digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
+            if (digitLen > ctx.decFormat.nanPayloadPrecision)
+                return NaN(sign, signaling)
+            return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0, ctx)
         }
 
 
