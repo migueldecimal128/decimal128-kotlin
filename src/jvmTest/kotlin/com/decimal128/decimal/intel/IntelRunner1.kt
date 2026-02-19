@@ -86,12 +86,21 @@ object IntelRunner1 {
         runBinaryDecimalOp(filtered, binaryDecimalOp, verbose)
     }
 
-    fun runBinaryDecimalOp(cases: List<IntelCase1>,
+    fun runBinaryDecimalOp(caseStrings: Array<String>,
                            binaryDecimalOp: Decimal.(Decimal) -> Decimal,
                            verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        runBinaryDecimalOp(cases, binaryDecimalOp, verbose)
+    }
+
+
+    fun runBinaryDecimalOp(cases: List<IntelCase1>,
+    binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+    verbose: Boolean = false ) {
         cases.forEach { tc ->
-            if (verbose)
-                println(tc.text)
+            if (verbose) {
+                println("test:${tc.text}")
+            }
             val observed = tc.op1Bid128.binaryDecimalOp(tc.op2Bid128)
             val expected = tc.resBid128
             assertTrue(expected bitwiseEQ observed,

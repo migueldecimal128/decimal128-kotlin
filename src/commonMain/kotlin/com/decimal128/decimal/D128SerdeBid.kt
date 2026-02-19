@@ -329,7 +329,6 @@ object D128SerdeBid {
         val sign = bid128Hi.toLong() < 0L
         // w5 bit combination field ... for bid128 0x1FFFF
         val combination = (bid128Hi shr (t - 64)).toInt() and 0x1FFFF
-        // t bits for the coefficient
         val coeffTHi = bid128Hi and ((1L shl t) - 1L)
 
         val coeffHi: Long
