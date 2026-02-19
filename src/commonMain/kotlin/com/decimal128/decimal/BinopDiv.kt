@@ -1,7 +1,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.Decimal.Companion.bothFnz
 import com.decimal128.decimal.Decimal.Companion.newZero
 import kotlin.math.min
 

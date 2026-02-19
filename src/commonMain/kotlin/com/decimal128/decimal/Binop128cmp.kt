@@ -5,7 +5,6 @@ import com.decimal128.decimal.Decimal.Companion.NEG_ONE
 import com.decimal128.decimal.Decimal.Companion.NaN
 import com.decimal128.decimal.Decimal.Companion.POS_ONE
 import com.decimal128.decimal.Decimal.Companion.ZERO
-import com.decimal128.decimal.Decimal.Companion.bothFnz
 import kotlin.math.abs
 
 private val mapToDecimal: Array<Decimal> =

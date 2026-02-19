@@ -12,7 +12,6 @@ import com.decimal128.decimal.BinopSignature.NAN_FOUND
 import com.decimal128.decimal.BinopSignature.ZER_FNZ
 import com.decimal128.decimal.BinopSignature.ZER_INF
 import com.decimal128.decimal.BinopSignature.ZER_ZER
-import com.decimal128.decimal.Decimal.Companion.bothFnz
 
 object DecCompare1 {
 

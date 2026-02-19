@@ -2,7 +2,6 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.C128Compare.c128UnscaledCompare
-import com.decimal128.decimal.Decimal.Companion.bothFnz
 import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min

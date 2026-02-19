@@ -30,9 +30,9 @@ class TestBExpMinMax1 {
         var deltaOneCount = 0
         for (bitLen in 0..255) {
             for (qExp in -7000..7000) {
-                val min1 = Decimal.calcBExpMin(bitLen, qExp)
+                val min1 = calcBExpMin(bitLen, qExp)
                 val min2 = trueBExpMin(bitLen, qExp)
-                val max1 = Decimal.calcBExpMax(bitLen, qExp)
+                val max1 = calcBExpMax(bitLen, qExp)
                 val max2 = trueBExpMax(bitLen, qExp)
 
                 assertEquals(min2, min1, "bExpMin mismatch at bitLen=$bitLen qExp=$qExp")
