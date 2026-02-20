@@ -62,25 +62,23 @@ class IntelCase1 private constructor (
     val attrs: Map<String, String>
 ) {
 
-    val op1Bid128: Decimal
-        get() = parseBid128(op1Str, allowOversizeCoefficient = true)
+    fun op1Bid128(allowNonCanonical: Boolean): Decimal =
+         parseBid128(op1Str, allowNonCanonical)
 
-    val op2Bid128: Decimal
-        get() {
-            if (op2Str == null)
-                throw IllegalStateException("op2 is null:$text")
-            return parseBid128(op2Str, allowOversizeCoefficient = true)
-        }
+    fun op2Bid128(allowNonCanonical: Boolean): Decimal {
+        if (op2Str == null)
+            throw IllegalStateException("op2 is null:$text")
+        return parseBid128(op2Str, allowNonCanonical)
+    }
 
-    val op3Bid128: Decimal
-        get() {
-            if (op3Str == null)
-                throw IllegalStateException("op3 is null:$text")
-            return parseBid128(op3Str, allowOversizeCoefficient = true)
-        }
+    fun op3Bid128(allowNonCanonical: Boolean): Decimal {
+        if (op3Str == null)
+            throw IllegalStateException("op3 is null:$text")
+        return parseBid128(op3Str, allowNonCanonical)
+    }
 
-    val resBid128: Decimal
-        get() = parseBid128(resStr, allowOversizeCoefficient = true)
+    fun resBid128(allowNonCanonical: Boolean): Decimal =
+        parseBid128(resStr, allowNonCanonical)
 
     val resInt: Int
         get() = resStr.toInt()

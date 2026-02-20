@@ -9,23 +9,25 @@ object IntelRunner1 {
     fun runUnaryDecimalOp(fileName: String,
                           funcStr: String,
                           unaryDecimalOp: Decimal.() -> Decimal,
+                          allowNonCanonical: Boolean,
                           verbose: Boolean = false,
                           skip: Boolean = true,
                           skipCases: Array<String> = emptyArray() ) {
         val cases = IntelParser1.parseTestsInFile(fileName)
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
-        runUnaryDecimalOp(filtered, unaryDecimalOp, verbose)
+        runUnaryDecimalOp(filtered, unaryDecimalOp, allowNonCanonical, verbose)
     }
 
     fun runUnaryDecimalOp(cases: List<IntelCase1>,
                           unaryDecimalOp: Decimal.() -> Decimal,
+                          allowNonCanonical: Boolean = false,
                           verbose: Boolean = false ) {
         cases.forEach { tc ->
             if (verbose)
                 println(tc.text)
-            val observed = tc.op1Bid128.unaryDecimalOp()
-            val expected = tc.resBid128
+            val observed = tc.op1Bid128(allowNonCanonical).unaryDecimalOp()
+            val expected = tc.resBid128(allowNonCanonical)
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )
@@ -35,40 +37,45 @@ object IntelRunner1 {
     fun runUnaryBooleanOp(fileName: String,
                           funcStr: String,
                           unaryBooleanOp: Decimal.() -> Boolean,
+                          allowNonCanonical: Boolean,
                           verbose: Boolean = false,
                           skip: Boolean = true,
                           skipCases: Array<String> = emptyArray() ) {
         val cases = IntelParser1.parseTestsInFile(fileName)
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
-        runUnaryBooleanOp(filtered, unaryBooleanOp, verbose)
+        runUnaryBooleanOp(filtered, unaryBooleanOp, allowNonCanonical, verbose)
     }
 
     fun runUnaryBooleanOp(cases: List<IntelCase1>,
                           funcStr: String,
                           unaryBooleanOp: Decimal.() -> Boolean,
+                          allowNonCanonical: Boolean = false,
                           verbose: Boolean = false,
                           skip: Boolean = true,
                           skipCases: Array<String> = emptyArray() ) {
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
-        runUnaryBooleanOp(filtered, unaryBooleanOp, verbose)
+        runUnaryBooleanOp(filtered, unaryBooleanOp, allowNonCanonical, verbose)
     }
 
     fun runUnaryBooleanOp(unaryBooleanOp: Decimal.() -> Boolean,
+                          allowNonCanonical: Boolean,
                           verbose: Boolean = false,
                           cases: Array<String> ) =
-        runUnaryBooleanOp(IntelParser1.parseCases(cases), unaryBooleanOp, verbose)
+        runUnaryBooleanOp(IntelParser1.parseCases(cases), unaryBooleanOp, allowNonCanonical, verbose)
 
     fun runUnaryBooleanOp(cases: List<IntelCase1>,
                           unaryBooleanOp: Decimal.() -> Boolean,
+                          allowNonCanonical: Boolean,
                           verbose: Boolean = false ) {
         cases.forEach { tc ->
+            val op1 = tc.op1Bid128(allowNonCanonical)
             if (verbose) {
                 println(tc.text)
-                println("op1=${tc.op1Bid128}")
+                println("op1=$op1")
             }
-            val observed = tc.op1Bid128.unaryBooleanOp()
+            val observed = op1.unaryBooleanOp()
             val expected = tc.resBoolean
             assertEquals(expected, observed)
         }
@@ -95,14 +102,17 @@ object IntelRunner1 {
 
 
     fun runBinaryDecimalOp(cases: List<IntelCase1>,
-    binaryDecimalOp: Decimal.(Decimal) -> Decimal,
-    verbose: Boolean = false ) {
+                           binaryDecimalOp: Decimal.(Decimal) -> Decimal,
+                           allowNonCanonical: Boolean,
+                           verbose: Boolean = false ) {
         cases.forEach { tc ->
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val observed = tc.op1Bid128.binaryDecimalOp(tc.op2Bid128)
-            val expected = tc.resBid128
+            val op1 = tc.op1Bid128(allowNonCanonical)
+            val op2 = tc.op2Bid128(allowNonCanonical)
+            val observed = op1.binaryDecimalOp(op2)
+            val expected = tc.resBid128(allowNonCanonical)
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )

@@ -35,6 +35,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isSigned",
         Decimal::isNegative,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -43,12 +44,14 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isNormal",
         Decimal::isNormal,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
     @Test
     fun testIsNormalCases() = IntelRunner1.runUnaryBooleanOp(
         Decimal::isNormal,
+        allowNonCanonical = true,
         verbose = verbose,
         cases = arrayOf(
             "bid128_isNormal 0 [0001ed09bead87c0378d8e64ffffffff] 0 00",
@@ -61,6 +64,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isSubnormal",
         Decimal::isSubnormal,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -69,6 +73,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isFinite",
         Decimal::isFinite,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -77,12 +82,14 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isZero",
         Decimal::isCanonicalZero,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
     @Test
     fun testIsZeroCases() = IntelRunner1.runUnaryBooleanOp(
         Decimal::isCanonicalZero,
+        allowNonCanonical = true,
         verbose = verbose,
         cases = arrayOf(
             "bid128_isZero 0 [789b88be70d10384,ffffffffffffffff] 0 00"
@@ -94,6 +101,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isInf",
         Decimal::isInfinite,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -102,6 +110,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isSignaling",
         Decimal::isSignaling,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -110,6 +119,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isCanonical",
         Decimal::isCanonical,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -117,6 +127,7 @@ class TestBid128NonComputational1 {
     @Test
     fun testIsCanonicalCases() = IntelRunner1.runUnaryBooleanOp(
         Decimal::isCanonical,
+        allowNonCanonical = true,
         verbose = verbose,
         cases = arrayOf(
             "bid128_isCanonical 0 [7c003fffffffffff38c15b08ffffffff] 0 00",
@@ -132,6 +143,7 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_isNaN",
         Decimal::isNaN,
+        allowNonCanonical = true,
         verbose = verbose
     )
 
@@ -140,9 +152,8 @@ class TestBid128NonComputational1 {
         "/intel/readtest.in",
         "bid128_abs",
         Decimal::abs,
+        allowNonCanonical = true,
         verbose = verbose
     )
-
-
 
 }
