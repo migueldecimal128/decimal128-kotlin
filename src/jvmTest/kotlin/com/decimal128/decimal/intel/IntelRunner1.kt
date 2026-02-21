@@ -32,7 +32,7 @@ object IntelRunner1 {
             if (verbose)
                 println(tc.text)
             val decPrefs = DecPrefs().copy(decodeBidAllowNonCanonical = allowNonCanonical)
-            val ctx = DECIMAL128.with(decPrefs).withNewFlags()
+            val ctx = DECIMAL128.with(decPrefs).withNewFlags().with(tc.decRounding())
             val op1 = tc.op1Bid128(ctx)
             if (verbose)
                 println("op1:$op1 decFlags:${ctx.decFlags}")
@@ -127,19 +127,20 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            decContext.decFlags.clearAll()
+            val ctx = decContext.with(tc.decRounding())
+            ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(decContext)
             val op2 = tc.op2Bid128(decContext)
             if (verbose)
                 println("op1:$op1 op2:$op2 parsingFlags:${decContext.decFlags}")
-            decContext.decFlags.clearAll()
-            val observed = binaryDecimalOp(op1, op2, decContext)
-            val expected = tc.resBid128(decContext)
+            ctx.decFlags.clearAll()
+            val observed = binaryDecimalOp(op1, op2, ctx)
+            val expected = tc.resBid128(ctx)
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
             )
             val expectedFlags = tc.decFlags()
-            val observedFlags = decContext.decFlags
+            val observedFlags = ctx.decFlags
             assertEquals(expectedFlags.toString(), observedFlags.toString())
         }
     }

@@ -56,7 +56,7 @@ my guess is that "FE" => "Float Exception"
 class IntelCase1 private constructor (
     val text: String,
     val funcStr: String,
-    val rnd: Int,
+    val rounding: Int,
     val op1Str: String,
     val op2Str: String?,
     val op3Str: String?,
@@ -112,8 +112,11 @@ class IntelCase1 private constructor (
 
     companion object {
         val decRoundingMap = arrayOf(
-            ROUND_TIES_TO_EVEN, DecRounding.Companion.ROUND_TOWARD_NEGATIVE,
-            DecRounding.Companion.ROUND_TOWARD_POSITIVE, DecRounding.Companion.ROUND_TOWARD_ZERO, DecRounding.Companion.ROUND_TIES_TO_AWAY
+            ROUND_TIES_TO_EVEN,
+            DecRounding.ROUND_TOWARD_NEGATIVE,
+            DecRounding.ROUND_TOWARD_POSITIVE,
+            DecRounding.ROUND_TOWARD_ZERO,
+            DecRounding.ROUND_TIES_TO_AWAY
         )
 
         val allowedTailKeys = setOf(
@@ -177,12 +180,12 @@ class IntelCase1 private constructor (
             val chopped = baseTokens.dropLast(2)
 
             val funcStr = chopped[0]
-            val rnd = chopped[1].toInt()
+            val rounding = chopped[1].toInt()
             val op1 = chopped[2]
             val op2 = chopped.getOrNull(3)
             val op3 = chopped.getOrNull(4)
 
-            val intelCase = IntelCase1(text, funcStr, rnd, op1, op2, op3, res, status, tailAttrs)
+            val intelCase = IntelCase1(text, funcStr, rounding, op1, op2, op3, res, status, tailAttrs)
             return intelCase
         }
 
@@ -204,6 +207,5 @@ class IntelCase1 private constructor (
 
     }
 
-    val decRounding: DecRounding
-        get() = decRoundingMap[rnd]
+    fun decRounding(): DecRounding = decRoundingMap[rounding]
 }
