@@ -3,7 +3,8 @@ package com.decimal128.decimal
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun nanOperandFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun nanOperandFound(x: Decimal, y: Decimal,
+                             ctx: DecContext, alwaysSignal: Boolean = false): Decimal {
     val xQ = x.qExp
     val yQ = y.qExp
     val maxQ = max(xQ, yQ)
@@ -15,25 +16,13 @@ internal fun nanOperandFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
             if (xQ >= NON_FINITE_QNAN) x else y
         }
     verify { theNaN.qExp >= NON_FINITE_QNAN }
-    if (maxQ == NON_FINITE_QNAN)
+    if (!alwaysSignal && maxQ == NON_FINITE_QNAN)
         return theNaN
     if (theNaN.qExp == NON_FINITE_QNAN)
         return ctx.signalInvalid(theNaN)
     val quietedNaN = Decimal.qNaN(theNaN.sign, theNaN.dw1, theNaN.dw0)
     return ctx.signalInvalid(quietedNaN)
 }
-
-internal fun nanOperandFoundSignaling(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val xQ = x.qExp
-    val yQ = y.qExp
-    val maxQ = max(xQ, yQ)
-    verify { maxQ >= NON_FINITE_QNAN }
-    var theNaN = if (maxQ == xQ) x else y
-    if (maxQ == NON_FINITE_SNAN) // quiet the NaN
-        theNaN = Decimal.qNaN(theNaN.sign, theNaN.dw1, theNaN.dw0)
-    return ctx.signalInvalid(theNaN)
-}
-
 
 internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
     val qX = x.qExp

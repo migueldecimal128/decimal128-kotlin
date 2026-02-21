@@ -93,7 +93,7 @@ internal fun cmpSignalingImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun cmpSignalingImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (hasNaN(x, y))
-        return nanOperandFoundSignaling(x, y, ctx)
+        return nanOperandFound(x, y, ctx, alwaysSignal = true)
     return cmpImpl(x, y, ctx)
 }
 
