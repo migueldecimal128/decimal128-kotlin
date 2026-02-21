@@ -8,9 +8,17 @@ internal fun nanOperandFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val yQ = y.qExp
     val maxQ = max(xQ, yQ)
     verify { maxQ >= NON_FINITE_QNAN }
-    val theNaN = if (maxQ == xQ) x else y
+    val theNaN =
+        if (ctx.decPrefs.propagatePreferSnan) {
+            if (maxQ == xQ) x else y
+        } else {
+            if (xQ >= NON_FINITE_QNAN) x else y
+        }
+    verify { theNaN.qExp >= NON_FINITE_QNAN }
     if (maxQ == NON_FINITE_QNAN)
         return theNaN
+    if (theNaN.qExp == NON_FINITE_QNAN)
+        return ctx.signalInvalid(theNaN)
     val quietedNaN = Decimal.qNaN(theNaN.sign, theNaN.dw1, theNaN.dw0)
     return ctx.signalInvalid(quietedNaN)
 }

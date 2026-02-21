@@ -1,11 +1,17 @@
 package com.decimal128.decimal.intel
 
+import com.decimal128.decimal.DecContext
+import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.addImpl
 import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
 
     val verbose = true
+
+    val decPrefs = DecPrefs().copy(propagatePreferSnan = false)
+    val decContext = DecContext(decPrefs = decPrefs)
 
     /*****************************************************************************
      *
@@ -13,31 +19,29 @@ class TestBid128BasicArithmetic {
      *         - bid128_add
      ****************************************************************************/
 
-    //@Test
+    // @Test
     fun testAdd() = IntelRunner1.runBinaryDecimalOp(
         "/intel/readtest.in",
         "bid128_add",
-        Decimal::plus,
+        ::addImpl,
         skip = true,
         skipCases = arrayOf(
-            // oversized coefficient of 35 digits in operand2
-            // but my tests generally run with allowOversizedCoefficient = true
-            // in order to catch other non-canonical values
-            "bid128_add 0 [0000000000008000,004910c400000000] [5fe5f9ffd9ebcf7f,000404e2000600a0] [0000000000008000004910c400000000] 00",
-            "bid128_add 0 [0001ed09bead87c0378d8e62ffffffff] [0001ed09bead87c0378d8e64ffffffff] [0001ed09bead87c0378d8e62ffffffff] 00",
-            // oversize NaN payload
-            "bid128_add 0 [0001ed09bead87c0378d8e62ffffffff] [7c003fffffffffff38c15b08ffffffff] [7c000000000000000000000000000000] 00",
-            "bid128_add 0 [0001ed09bead87c0378d8e62ffffffff] [7c003fffffffffff38c15b0affffffff] [7c000000000000000000000000000000] 00",
         ),
+        decContext = decContext,
         verbose = verbose
     )
 
     @Test
     fun testAddCases() = IntelRunner1.runBinaryDecimalOp(
         arrayOf(
+            "bid128_add 0 -67742893945653349875463748543548.9E-6184 +1100.0100110001101010E-6045 [00ca363c140ab6aa266b6f4aea488000] 20",
+            "bid128_add 0 +101001100000101.000000E6138 -7695957767658598867966685688.99E6120 [7c000000000000000000000000000000] 01",
+            "bid128_add 0 [0001ed09bead87c0378d8e62ffffffff] [7c003fffffffffff38c15b08ffffffff] [7c000000000000000000000000000000] 00",
+            "bid128_add 0 [0000000000000000,5dfecf59bad3acaa] [4014d000d4008a04,ffffffddfdfdfeff] [4014d000d4008a04ffffffddfdfdfeff] 20",
         ),
-        Decimal::plus,
-        verbose = verbose
+        ::addImpl,
+        decContext = decContext,
+        verbose = verbose,
     )
 
 

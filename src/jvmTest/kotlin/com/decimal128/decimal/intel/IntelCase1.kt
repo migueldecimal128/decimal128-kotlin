@@ -2,6 +2,9 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.D128ParsePrint
 import com.decimal128.decimal.D128SerdeBid
+import com.decimal128.decimal.DecContext
+import com.decimal128.decimal.DecException
+import com.decimal128.decimal.DecFlags
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.Decimal
@@ -58,27 +61,27 @@ class IntelCase1 private constructor (
     val op2Str: String?,
     val op3Str: String?,
     val resStr: String,
-    val status: Int,
+    val flagRegister: Int,
     val attrs: Map<String, String>
 ) {
 
-    fun op1Bid128(allowNonCanonical: Boolean): Decimal =
-         parseBid128(op1Str, allowNonCanonical)
+    fun op1Bid128(ctx: DecContext): Decimal =
+         parseBid128(op1Str, ctx)
 
-    fun op2Bid128(allowNonCanonical: Boolean): Decimal {
+    fun op2Bid128(ctx: DecContext): Decimal {
         if (op2Str == null)
             throw IllegalStateException("op2 is null:$text")
-        return parseBid128(op2Str, allowNonCanonical)
+        return parseBid128(op2Str, ctx)
     }
 
-    fun op3Bid128(allowNonCanonical: Boolean): Decimal {
+    fun op3Bid128(ctx: DecContext): Decimal {
         if (op3Str == null)
             throw IllegalStateException("op3 is null:$text")
-        return parseBid128(op3Str, allowNonCanonical)
+        return parseBid128(op3Str, ctx)
     }
 
-    fun resBid128(allowNonCanonical: Boolean): Decimal =
-        parseBid128(resStr, allowNonCanonical)
+    fun resBid128(ctx: DecContext): Decimal =
+        parseBid128(resStr, ctx)
 
     val resInt: Int
         get() = resStr.toInt()
@@ -91,6 +94,21 @@ class IntelCase1 private constructor (
                 return true
             throw IllegalStateException("non-boolean 0/1 Intel test result")
         }
+
+    fun decFlags(): DecFlags {
+        val decFlags = DecFlags()
+        if ((flagRegister and 0x01) != 0)
+            decFlags.set(DecException.INVALID_OPERATION)
+        if ((flagRegister and 0x04) != 0)
+            decFlags.set(DecException.DIV_BY_ZERO)
+        if ((flagRegister and 0x08) != 0)
+            decFlags.set(DecException.OVERFLOW)
+        if ((flagRegister and 0x10) != 0)
+            decFlags.set(DecException.UNDERFLOW)
+        if ((flagRegister and 0x20) != 0)
+            decFlags.set(DecException.INEXACT)
+        return decFlags
+    }
 
     companion object {
         val decRoundingMap = arrayOf(
@@ -106,7 +124,7 @@ class IntelCase1 private constructor (
             "str_prefix",
         )
 
-        val statusRegex = Regex("""\s((?:0x)?[0-9A-Fa-f]{1,2})(?=\s|$)""")
+        val flagRegisterRegex = Regex("""\s((?:0x)?[0-9A-Fa-f]{1,2})(?=\s|$)""")
         val whitespaceRegex = Regex("\\s+")
         val strPrefixRegex = Regex("""str_prefix=\|(.*?)\|""")
 
@@ -114,7 +132,7 @@ class IntelCase1 private constructor (
             // strip trailing comments
             val noComments = text.substringBefore("--").trim()
 
-            val m = statusRegex.findAll(noComments).last()
+            val m = flagRegisterRegex.findAll(noComments).last()
             val end = m.range.first + m.value.length
 
             val head        = noComments.substring(0, end)
@@ -171,17 +189,17 @@ class IntelCase1 private constructor (
         val regexHex64 = Regex("""\[[0-9A-Fa-f]{16}\]""")
         val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
 
-        fun parseBid128(str: String, allowOversizeCoefficient: Boolean = false): Decimal {
+        fun parseBid128(str: String, ctx: DecContext): Decimal {
             if (str.startsWith('[')) {
                 if (regexHex64.matches(str) || regexHex32.matches(str))
                     throw IllegalArgumentException("not bid128:$str")
                 val (isValid, dw1, dw0) = D128SerdeBid.parseIntelBidHex(str)
                 if (! isValid)
                     throw IllegalArgumentException("something invalid with bid128:$str")
-                val decimal = D128SerdeBid.decodeBid128(dw1, dw0, allowOversizeCoefficient)
+                val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)
                 return decimal
             }
-            return D128ParsePrint.parseDecimal(str)
+            return D128ParsePrint.parseDecimal(str, ctx)
         }
 
     }

@@ -33,7 +33,9 @@ class TestIntelBidRoundTrip1 {
             println("tc:$tc")
         val (isValid, dw1, dw0) = D128SerdeBid.parseIntelBidHex(tc)
         assertTrue(isValid)
-        val decimal = D128SerdeBid.decodeBid128(dw1, dw0)
+        val ctx = DecContext.DECIMAL128
+        ctx.decFlags.clearAll()
+        val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)
         val roundTrip = LongArray(2)
         D128SerdeBid.encodeBid128(decimal, roundTrip, isLittleEndian = false)
         assertEquals(dw1, roundTrip[0])

@@ -99,7 +99,7 @@ object D128SerdeBid {
      */
     fun decodeBid128(longs: LongArray, offset: Int = 0,
                      isLittleEndian: Boolean = false,
-                     allowOversizeCoefficient: Boolean = false,
+                     ctx: DecContext,
                      ): Decimal {
         require (offset >= 0 && offset + 1 < longs.size)
 
@@ -108,7 +108,7 @@ object D128SerdeBid {
         val bid128Hi = longs[iMS]
         val bid128Lo = longs[iLS]
 
-        return decodeBid128(bid128Hi, bid128Lo, allowOversizeCoefficient)
+        return decodeBid128(bid128Hi, bid128Lo, ctx)
     }
 
     /**
@@ -122,7 +122,7 @@ object D128SerdeBid {
      */
     fun decodeBid128(bytes: ByteArray, offset: Int = 0,
                      isLittleEndian: Boolean = false,
-                     allowOversizeCoefficient: Boolean = false
+                     ctx: DecContext
                      ): Decimal {
         require (offset >= 0 && offset + 15 < bytes.size)
 
@@ -137,7 +137,7 @@ object D128SerdeBid {
         }
         val bid128Hi = if (isLittleEndian) hi else lo
         val bid128Lo = if (isLittleEndian) lo else hi
-        return decodeBid128(bid128Hi, bid128Lo, allowOversizeCoefficient)
+        return decodeBid128(bid128Hi, bid128Lo, ctx)
     }
 
     private const val QTINY_Neg6176 = -6176
@@ -297,7 +297,7 @@ object D128SerdeBid {
         }
     }
 
-    fun decodeBid128(bid128Hi: Long, bid128Lo: Long, allowNonCanonical: Boolean = false): Decimal {
+    fun decodeBid128(bid128Hi: Long, bid128Lo: Long, ctx: DecContext): Decimal {
         // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 128 // storage width in bits
         val p = 34 // precision in digits
@@ -310,6 +310,7 @@ object D128SerdeBid {
         val coeffMaxLo: Long
         val payloadMaxHi: Long
         val payloadMaxLo: Long
+        val allowNonCanonical = ctx.decPrefs.decodeBidAllowNonCanonical
         if (allowNonCanonical) {
             // (0b1001uL shl t) + ((1uL shl t) - 1uL)
             coeffMaxHi = 0x00027FFFFFFFFFFFL
@@ -326,7 +327,7 @@ object D128SerdeBid {
         }
         // 1 + 17 + 110 == 128
         // 1 bit for the sign
-        val sign = bid128Hi.toLong() < 0L
+        val sign = bid128Hi < 0L
         // w5 bit combination field ... for bid128 0x1FFFF
         val combination = (bid128Hi shr (t - 64)).toInt() and 0x1FFFF
         val coeffTHi = bid128Hi and ((1L shl t) - 1L)

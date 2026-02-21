@@ -23,7 +23,10 @@ data class DecPrefs(
     val parseThrowOnOutOfRange: Boolean = false,
 
     val printAutoMinNoExponent: Int = -6,
-    val printStyle: PrintStyle = PrintStyle.AUTO
+    val printStyle: PrintStyle = PrintStyle.AUTO,
+
+    val decodeBidAllowNonCanonical: Boolean = false,
+    val propagatePreferSnan: Boolean = true,
 ) {
     companion object {
         val DEFAULT = DecPrefs()

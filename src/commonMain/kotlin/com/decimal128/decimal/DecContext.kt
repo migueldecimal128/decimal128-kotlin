@@ -53,6 +53,9 @@ data class DecContext(
     fun with(newDecPrefs: DecPrefs) =
         DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags, decTmps)
 
+    fun withNewFlags() =
+        DecContext(decFormat, decRounding, decPrefs, decTraps, DecFlags(), DecTmps())
+
     fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTraps)
 
     inline fun <T> compute(block: () -> T ): T = block()
