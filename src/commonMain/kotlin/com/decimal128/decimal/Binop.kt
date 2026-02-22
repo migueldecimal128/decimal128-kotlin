@@ -40,7 +40,7 @@ internal fun scaleToMinExp(xSign: Boolean, x: Decimal, otherExp: Int, ctx: DecCo
     verify { delta > 0 }
     val headroom = ctx.precision - x.digitLen
     if (headroom == 0)
-        return x
+        return if (xSign == x.sign) x else x.negate()
     val shiftLeft = min(headroom, delta)
     return D128Pow10.scaleCoeffUpPow10(xSign, x, shiftLeft)
 }

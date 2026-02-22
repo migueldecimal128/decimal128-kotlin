@@ -4,6 +4,7 @@ import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.addImpl
+import com.decimal128.decimal.subImpl
 import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
@@ -41,6 +42,28 @@ class TestBid128BasicArithmetic {
             "bid128_add 0 [0000000000000000,5dfecf59bad3acaa] [4014d000d4008a04,ffffffddfdfdfeff] [4014d000d4008a04ffffffddfdfdfeff] 20",
         ),
         ::addImpl,
+        decContext = decContext,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testSub() = IntelRunner1.runBinaryDecimalOp(
+        "/intel/readtest.in",
+        "bid128_sub",
+        ::subImpl,
+        skip = true,
+        skipCases = arrayOf(
+        ),
+        decContext = decContext,
+        verbose = verbose
+    )
+
+    @Test
+    fun testSubCases() = IntelRunner1.runBinaryDecimalOp(
+        arrayOf(
+            "bid128_sub 0 +1000000010000010.0100000E-6192 +8998898888898999998899999999.988888889E-6026 [8121bbae128738e463d45adcde9f1499] 00",
+        ),
+        ::subImpl,
         decContext = decContext,
         verbose = verbose,
     )
