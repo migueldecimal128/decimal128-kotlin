@@ -233,6 +233,51 @@ object IntelRunner1 {
         }
     }
 
+    fun runDecimalIntMethodOp(fileName: String,
+                              funcStr: String,
+                              decimalIntMethodOp: Decimal.(Int, DecContext) -> Decimal,
+                              verbose: Boolean = false,
+                              skip: Boolean = true,
+                              skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runDecimalIntMethodOp(filtered, decimalIntMethodOp, verbose)
+    }
+
+    fun runDecimalIntMethodOp(caseStrings: Array<String>,
+                              decimalIntMethodOp: Decimal.(Int, DecContext) -> Decimal,
+                              verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        runDecimalIntMethodOp(cases, decimalIntMethodOp, verbose)
+    }
+
+
+    fun runDecimalIntMethodOp(cases: List<IntelCase1>,
+                              decimalIntMethodOp: Decimal.(Int, DecContext) -> Decimal,
+                              verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
+            ctx.decFlags.clearAll()
+            val op1 = tc.op1Bid128(ctx)
+            val op2 = tc.op2Int()
+            if (verbose)
+                println("op1:$op1 op2:$op2 parsingFlags:${ctx.decFlags}")
+            ctx.decFlags.clearAll()
+            val observed = op1.decimalIntMethodOp(op2, ctx)
+            val expected = tc.resBid128(ctx)
+            assertTrue(expected bitwiseEQ observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+            val expectedFlags = tc.decFlags()
+            val observedFlags = ctx.decFlags
+            assertEquals(expectedFlags.toString(), observedFlags.toString())
+        }
+    }
+
     fun runBinaryBooleanMethodOp(fileName: String,
                                  funcStr: String,
                                  binaryBooleanMethodOp: Decimal.(Decimal) -> Boolean,
@@ -260,7 +305,7 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val ctx = DECIMAL128
+            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
             ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(ctx)
             val op2 = tc.op2Bid128(ctx)

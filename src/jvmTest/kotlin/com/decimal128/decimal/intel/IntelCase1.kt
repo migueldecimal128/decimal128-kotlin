@@ -74,6 +74,12 @@ class IntelCase1 private constructor (
         return parseBid128(op2Str, ctx)
     }
 
+    fun op2Int(): Int {
+        if (op2Str == null)
+            throw IllegalStateException("op2 is null:$text")
+        return op2Str.toInt()
+    }
+
     fun op3Bid128(ctx: DecContext): Decimal {
         if (op3Str == null)
             throw IllegalStateException("op3 is null:$text")
