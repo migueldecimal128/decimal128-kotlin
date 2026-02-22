@@ -126,7 +126,7 @@ class TestDecNoncomputational {
     fun testSameQuantum() = runBinaryBooleanOp(
         "dqSameQuantum.decTest",
         "samequantum",
-        Decimal::sameQuantum,
+        Decimal::isSameQuantum,
         verbose = verbose
     )
 

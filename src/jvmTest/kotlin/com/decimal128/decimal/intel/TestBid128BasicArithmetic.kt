@@ -2,13 +2,10 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
-import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.addImpl
 import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.mulImpl
-import com.decimal128.decimal.remImpl
 import com.decimal128.decimal.remNearImpl
-import com.decimal128.decimal.remTruncImpl
 import com.decimal128.decimal.subImpl
 import kotlin.test.Test
 
@@ -26,7 +23,7 @@ class TestBid128BasicArithmetic {
      ****************************************************************************/
 
     @Test
-    fun testAdd() = IntelRunner1.runBinaryDecimalOp(
+    fun testAdd() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_add",
         ::addImpl,
@@ -38,7 +35,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testAddCases() = IntelRunner1.runBinaryDecimalOp(
+    fun testAddCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
             "bid128_add 1 [0001ed09bead87c0378d8e62ffffffff] [0001ed09bead87c0378d8e62ffffffff] [0002629b8c891b267182b613cccccccc] 20",
             "bid128_add 0 -67742893945653349875463748543548.9E-6184 +1100.0100110001101010E-6045 [00ca363c140ab6aa266b6f4aea488000] 20",
@@ -52,7 +49,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testSub() = IntelRunner1.runBinaryDecimalOp(
+    fun testSub() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_sub",
         ::subImpl,
@@ -64,7 +61,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testSubCases() = IntelRunner1.runBinaryDecimalOp(
+    fun testSubCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
             "bid128_sub 0 +1000000010000010.0100000E-6192 +8998898888898999998899999999.988888889E-6026 [8121bbae128738e463d45adcde9f1499] 00",
         ),
@@ -74,7 +71,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testMul() = IntelRunner1.runBinaryDecimalOp(
+    fun testMul() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_mul",
         ::mulImpl,
@@ -86,7 +83,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testMulCases() = IntelRunner1.runBinaryDecimalOp(
+    fun testMulCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
         ),
         ::mulImpl,
@@ -95,7 +92,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testDiv() = IntelRunner1.runBinaryDecimalOp(
+    fun testDiv() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_div",
         ::divImpl,
@@ -107,7 +104,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testDivCases() = IntelRunner1.runBinaryDecimalOp(
+    fun testDivCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
         ),
         ::divImpl,
@@ -116,7 +113,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testRemNear() = IntelRunner1.runBinaryDecimalOp(
+    fun testRemNear() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_rem",
         ::remNearImpl,
@@ -140,7 +137,7 @@ class TestBid128BasicArithmetic {
     )
 
     @Test
-    fun testRemNearCases() = IntelRunner1.runBinaryDecimalOp(
+    fun testRemNearCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
             // FIXME - the case of large qDelta must be handled differently
             // "bid128_rem 0 [26741c0590811072,ffffffff6ef7ffff] [0000000000000000,0300040220100840] [8000000000000000015515ab6c6033c0] 00",

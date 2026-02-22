@@ -156,4 +156,36 @@ class TestBid128NonComputational1 {
         verbose = verbose
     )
 
+    @Test
+    fun testCopySign() = IntelRunner1.runBinaryDecimalMethodOp(
+        "/intel/readtest.in",
+        "bid128_copySign",
+        Decimal::copySign,
+        verbose = verbose
+    )
+
+    @Test
+    fun testTotalOrder() = IntelRunner1.runBinaryBooleanMethodOp(
+        "/intel/readtest.in",
+        "bid128_totalOrder",
+        Decimal::isTotalOrder,
+        verbose = verbose
+    )
+
+    @Test
+    fun testTotalOrderMag() = IntelRunner1.runBinaryBooleanMethodOp(
+        "/intel/readtest.in",
+        "bid128_totalOrderMag",
+        Decimal::isTotalOrderMag,
+        verbose = verbose
+    )
+
+    @Test
+    fun testSameQuantum() = IntelRunner1.runBinaryBooleanMethodOp(
+        "/intel/readtest.in",
+        "bid128_sameQuantum",
+        Decimal::isSameQuantum,
+        verbose = verbose
+    )
+
 }

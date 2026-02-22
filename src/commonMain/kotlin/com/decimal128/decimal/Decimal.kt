@@ -494,7 +494,7 @@ class Decimal private constructor(
      * This method performs no normalization or coefficient adjustments; it
      * simply compares the raw `qExp` fields.
      */
-    fun sameQuantum(other: Decimal) =
+    fun isSameQuantum(other: Decimal) =
         (this.qExp == other.qExp) || (this.qExp >= NON_FINITE_QNAN && other.qExp >= NON_FINITE_QNAN)
 
     fun abs() = if (sign) negate() else this
