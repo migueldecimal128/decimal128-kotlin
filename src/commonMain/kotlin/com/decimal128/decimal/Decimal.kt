@@ -796,6 +796,29 @@ class Decimal private constructor(
     inline fun remainderTruncate(other: Decimal): Decimal = rem(other)
     fun remainderNear(other: Decimal): Decimal = rem(other)
 
+    fun roundToIntegralTiesToEven(ctx: DecContext) =
+        roundToIntegral(DecRounding.ROUND_TIES_TO_EVEN, ctx)
+
+    fun roundToIntegralTiesToAway(ctx: DecContext) =
+        roundToIntegral(DecRounding.ROUND_TIES_TO_AWAY, ctx)
+
+    fun roundToIntegralTowardZero(ctx: DecContext) =
+        roundToIntegral(DecRounding.ROUND_TOWARD_ZERO, ctx)
+
+    fun roundToIntegralTowardPositive(ctx: DecContext) =
+        roundToIntegral(DecRounding.ROUND_TOWARD_POSITIVE, ctx)
+
+    fun roundToIntegralTowardNegative(ctx: DecContext) =
+        roundToIntegral(DecRounding.ROUND_TOWARD_NEGATIVE, ctx)
+
+    fun roundToIntegral(rounding: DecRounding, ctx: DecContext): Decimal {
+        if (qExp >= 0)
+            return this
+        val tmpPair = ctx.decTmps.dwPair1
+        val residue = C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, -qExp)
+        return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0, residue, 0, rounding, ctx)
+    }
+
 
 }
 
