@@ -797,21 +797,24 @@ class Decimal private constructor(
     fun remainderNear(other: Decimal): Decimal = rem(other)
 
     fun roundToIntegralTiesToEven(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TIES_TO_EVEN, ctx)
+        roundToIntegral(DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
 
     fun roundToIntegralTiesToAway(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TIES_TO_AWAY, ctx)
+        roundToIntegral(DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
 
     fun roundToIntegralTowardZero(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TOWARD_ZERO, ctx)
+        roundToIntegral(DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
 
     fun roundToIntegralTowardPositive(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TOWARD_POSITIVE, ctx)
+        roundToIntegral(DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
 
     fun roundToIntegralTowardNegative(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TOWARD_NEGATIVE, ctx)
+        roundToIntegral(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
 
-    fun roundToIntegral(rounding: DecRounding, ctx: DecContext): Decimal {
+    fun roundToIntegralExact(ctx: DecContext) =
+        roundToIntegral(ctx.decRounding, ctx, beQuiet = false)
+
+    fun roundToIntegral(rounding: DecRounding, ctx: DecContext, beQuiet: Boolean): Decimal {
         if (qExp >= 0) {
             if (qExp < NON_FINITE_SNAN)
                 return this
@@ -830,7 +833,7 @@ class Decimal private constructor(
             else -> C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
         }
         return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0,
-            residue, 0, rounding, ctx, beQuiet = true)
+            residue, 0, rounding, ctx, beQuiet)
     }
 
 

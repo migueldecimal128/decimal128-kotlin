@@ -75,5 +75,14 @@ class TestBid128Arith2 {
         verbose = verbose,
     )
 
+    @Test
+    fun testRoundToIntegralExact(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_round_integral_exact",
+        Decimal::roundToIntegralExact,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
 
 }
