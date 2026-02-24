@@ -3,6 +3,8 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecCompare1.compareQuiet754
+import com.decimal128.decimal.DecCompare1.compareSignaling754
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
 import com.decimal128.decimal.Ieee754Class.negativeNormal
 import com.decimal128.decimal.Ieee754Class.negativeSubnormal
@@ -723,6 +725,91 @@ class Decimal private constructor(
 
 
     fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
+
+    // IEEE754-2019 5.6.1 Comparisons
+
+    fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) == IEEE754_EQ
+
+    fun compareQuietNotEqual(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) != IEEE754_EQ
+
+    fun compareSignalingEqual(other: Decimal, ctx: DecContext): Boolean =
+        compareSignaling754(this, other, ctx) == IEEE754_EQ
+
+    fun compareSignalingGreater(other: Decimal, ctx: DecContext): Boolean =
+        compareSignaling754(this, other, ctx) == IEEE754_GT
+
+    fun compareSignalingGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
+    }
+
+    fun compareSignalingLess(other: Decimal, ctx: DecContext): Boolean =
+        compareSignaling754(this, other, ctx) == IEEE754_LT
+
+    fun compareSignalingLessEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
+    }
+
+    fun compareSignalingNotEqual(other: Decimal, ctx: DecContext): Boolean =
+        compareSignaling754(this, other, ctx) != IEEE754_EQ
+
+    fun compareSignalingNotGreater(other: Decimal, ctx: DecContext): Boolean =
+        compareSignaling754(this, other, ctx) != IEEE754_GT
+
+    fun compareSignalingLessUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    fun compareSignalingNotLess(other: Decimal, ctx: DecContext): Boolean =
+        compareSignaling754(this, other, ctx) != IEEE754_LT
+
+    fun compareSignalingGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    fun compareQuietGreater(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) == IEEE754_GT
+
+    fun compareQuietGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
+    }
+
+    fun compareQuietLess(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) == IEEE754_LT
+
+    fun compareQuietLessEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
+    }
+
+    fun compareQuietUnordered(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) == IEEE754_UNORDERED
+
+    fun compareQuietNotGreater(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) != IEEE754_GT
+
+    fun compareQuietLessUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    fun compareQuietNotLess(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) != IEEE754_LT
+
+    fun compareQuietGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = compareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    fun compareQuietOrdered(other: Decimal, ctx: DecContext): Boolean =
+        compareQuiet754(this, other, ctx) != IEEE754_UNORDERED
+
 
     // this is only provided for IEEE754-2019 completeness.
     // in an immutable world it serves no purpose

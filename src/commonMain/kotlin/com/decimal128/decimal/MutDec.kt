@@ -1360,7 +1360,7 @@ class MutDec() : C256() {
 
                 else -> {
                     val cmp = magnitudeCompareTo(other)
-                    Compare754Result(cmp + 1)
+                    Compare754Result(cmp)
                 }
             }
 
