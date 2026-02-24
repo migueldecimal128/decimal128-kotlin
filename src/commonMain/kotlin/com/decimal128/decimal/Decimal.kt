@@ -812,11 +812,25 @@ class Decimal private constructor(
         roundToIntegral(DecRounding.ROUND_TOWARD_NEGATIVE, ctx)
 
     fun roundToIntegral(rounding: DecRounding, ctx: DecContext): Decimal {
-        if (qExp >= 0)
-            return this
+        if (qExp >= 0) {
+            if (qExp < NON_FINITE_SNAN)
+                return this
+            return nanOperandFound(this, ctx)
+        }
+        if (isZero())
+            return zero(sign)
+        val pow10 = -qExp
         val tmpPair = ctx.decTmps.dwPair1
-        val residue = C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, -qExp)
-        return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0, residue, 0, rounding, ctx)
+        tmpPair.dw0 = 0L
+        tmpPair.dw1 = 0L
+        val digitLen = this.digitLen
+        val residue: Residue = when {
+            pow10 > digitLen -> Residue.LT_HALF
+            pow10 == digitLen -> Residue.fromValuePow10(dw1, dw0, digitLen)
+            else -> C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
+        }
+        return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0,
+            residue, 0, rounding, ctx, beQuiet = true)
     }
 
 

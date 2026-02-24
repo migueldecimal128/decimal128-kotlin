@@ -1,7 +1,9 @@
 package com.decimal128.decimal.intel
 
+import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.runDecimalIntMethodOp
+import com.decimal128.decimal.intel.IntelRunner1.runUnaryDecimalCtxMethodOp
 import org.junit.jupiter.api.Test
 
 class TestBid128Arith2 {
@@ -25,6 +27,51 @@ class TestBid128Arith2 {
             "bid128_scalbn 0 [00000000000000000000000000000000] -1 [00000000000000000000000000000000] 00",
         ),
         Decimal::scaleB,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testRoundToIntegralTiesToEven(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_round_integral_nearest_even",
+        Decimal::roundToIntegralTiesToEven,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testRoundToIntegralTiesToAway(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_round_integral_nearest_away",
+        Decimal::roundToIntegralTiesToAway,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testRoundToIntegralTowardNegative(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_round_integral_negative",
+        Decimal::roundToIntegralTowardNegative,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testRoundToIntegralTowardPositive(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_round_integral_positive",
+        Decimal::roundToIntegralTowardPositive,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testRoundToIntegralTowardZero(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_round_integral_zero",
+        Decimal::roundToIntegralTowardZero,
+        DecContext.DECIMAL128,
         verbose = verbose,
     )
 
