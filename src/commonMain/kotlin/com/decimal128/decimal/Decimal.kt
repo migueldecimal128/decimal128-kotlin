@@ -546,6 +546,13 @@ class Decimal private constructor(
         }
     }
 
+    fun quantumExponent(ctx: DecContext): Int {
+        if (isFinite())
+            return qExp
+        ctx.signalInvalid()
+        return Int.MIN_VALUE
+    }
+
     fun nextUp(ctx: DecContext): Decimal = nextUpOrDown(isUp = true, this, ctx)
 
     fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)

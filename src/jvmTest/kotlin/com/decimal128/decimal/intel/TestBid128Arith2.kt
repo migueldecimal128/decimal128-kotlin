@@ -3,6 +3,7 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.runDecimalIntMethodOp
+import com.decimal128.decimal.intel.IntelRunner1.runIntMethodOp
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryDecimalCtxMethodOp
 import org.junit.jupiter.api.Test
 
@@ -81,6 +82,32 @@ class TestBid128Arith2 {
         "bid128_round_integral_exact",
         Decimal::roundToIntegralExact,
         DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testNextUp(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_nextup",
+        Decimal::nextUp,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testNextDown(): Unit = runUnaryDecimalCtxMethodOp(
+        "/intel/readtest.in",
+        "bid128_nextdown",
+        Decimal::nextDown,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testQuantumExponent(): Unit = runIntMethodOp(
+        "/intel/readtest.in",
+        "bid128_quantexp",
+        Decimal::quantumExponent,
         verbose = verbose,
     )
 

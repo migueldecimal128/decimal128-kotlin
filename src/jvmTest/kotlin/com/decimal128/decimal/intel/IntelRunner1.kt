@@ -325,6 +325,50 @@ object IntelRunner1 {
         }
     }
 
+    fun runIntMethodOp(fileName: String,
+                       funcStr: String,
+                       intMethodOp: Decimal.(DecContext) -> Int,
+                       verbose: Boolean = false,
+                       skip: Boolean = true,
+                       skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runIntMethodOp(filtered, intMethodOp, verbose)
+    }
+
+    fun runIntMethodOp(caseStrings: Array<String>,
+                       intMethodOp: Decimal.(DecContext) -> Int,
+                       verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        runIntMethodOp(cases, intMethodOp, verbose)
+    }
+
+
+    fun runIntMethodOp(cases: List<IntelCase1>,
+                       intMethodOp: Decimal.(DecContext) -> Int,
+                       verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
+            ctx.decFlags.clearAll()
+            val op1 = tc.op1Bid128(ctx)
+            if (verbose)
+                println("op1:$op1 parsingFlags:${ctx.decFlags}")
+            ctx.decFlags.clearAll()
+            val observed = op1.intMethodOp(ctx)
+            val expected = tc.resInt
+            assertEquals(expected, observed,
+                "mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+            val expectedFlags = tc.decFlags()
+            val observedFlags = ctx.decFlags
+            assertEquals(expectedFlags.toString(), observedFlags.toString())
+        }
+    }
+
     fun runBinaryBooleanMethodOp(fileName: String,
                                  funcStr: String,
                                  binaryBooleanMethodOp: Decimal.(Decimal) -> Boolean,
