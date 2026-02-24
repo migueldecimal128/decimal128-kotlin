@@ -64,9 +64,9 @@ object DectestParser1 {
             "half_even" -> DecRounding.ROUND_TIES_TO_EVEN
             "half_up"   -> DecRounding.ROUND_TIES_TO_AWAY
             "ceiling"   -> DecRounding.ROUND_TOWARD_POSITIVE
-            "up"        -> DecRounding.ROUND_TOWARD_POSITIVE
             "floor"     -> DecRounding.ROUND_TOWARD_NEGATIVE
             "down"      -> DecRounding.ROUND_TOWARD_ZERO
+            "up"        -> null
             "05up"      -> null
             "half_down" -> null
 

@@ -31,6 +31,7 @@ class TestMutDecDectest {
         "down",
         "ceiling",
         "floor",
+        // unsupported under IEEE754 ... unsupported by me
         "up",
         "05up",
         "half_down",

@@ -11,7 +11,7 @@ import com.decimal128.decimal.fmaImpl
 
 class TestDecMisc {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testLogB() = runUnaryDecimalCtxOp(
@@ -120,6 +120,36 @@ class TestDecMisc {
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testToIntegralExact() = runUnaryDecimalCtxOp(
+        "dqToIntegral.decTest",
+        "tointegralx",
+        Decimal::roundToIntegralExact,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testToIntegralExact2() = runUnaryDecimalCtxOp(
+        "dqCanonical.decTest",
+        "tointegralx",
+        Decimal::roundToIntegralExact,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testToIntegralExactCases(): Unit = runUnaryDecimalCtxOp(
+        Decimal::roundToIntegralExact,
+        verbose = verbose,
+        cases = arrayOf(
         )
     )
 
