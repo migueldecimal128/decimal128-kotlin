@@ -2,6 +2,7 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.GT_HALF
+import com.decimal128.decimal.Residue.Companion.HALF
 import com.decimal128.decimal.Residue.Companion.LT_HALF
 
 @Suppress("NOTHING_TO_INLINE")
@@ -104,4 +105,22 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
     //TODO at this point I know that x.bitLen >= y.bitLen and x > y
     // if (bitLenDelta < some-small-number) then I should use repeated subtraction
     return DivKnuth.knuthDivideWrapper(quot, rem, x, y)
+}
+
+internal fun c256DivNearestX64(z: C256, x: C256, y: Long) {
+    val residue = c256SetDivX64(z, x, y)
+    when (residue) {
+        GT_HALF -> z.c256MutateIncrement()
+        HALF -> if (z.dw0 and 1L == 1L) z.c256MutateIncrement()
+        EXACT, LT_HALF -> {}
+    }
+}
+
+internal fun c256DivNearest(z: C256, x: C256, y: C256) {
+    val residue = c256SetDivRem(z, null, x, y)
+    when (residue) {
+        GT_HALF -> z.c256MutateIncrement()
+        HALF -> if (z.dw0 and 1L == 1L) z.c256MutateIncrement()
+        EXACT, LT_HALF -> {}
+    }
 }
