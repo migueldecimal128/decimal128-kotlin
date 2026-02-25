@@ -7,44 +7,15 @@ import com.decimal128.decimal.Decimal.Companion.POS_ONE
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import kotlin.math.abs
 
-private val mapToDecimal: Array<Decimal> =
-    arrayOf(NEG_ONE, ZERO, POS_ONE, NaN)
-
-fun cmpMagnitudeImpl_X(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val cmp = if (bothFnz(x, y)) {
-        cmpMagnitudeFnzFnz(x, y)
-    } else when (BinopSignature.of(x, y)) {
-        ZER_ZER -> 0
-        ZER_FNZ -> -1
-        ZER_INF -> -1
-
-        FNZ_ZER -> 1
-        FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> -1
-
-        INF_ZER -> 1
-        INF_FNZ -> 1
-        INF_INF -> 0
-
-        NAN_FOUND -> return cmpMagnitudeNanFound(x, y, ctx)
-    }
-    return mapToDecimal[cmp + 1]
-}
-
-private fun cmpFnzFnz(x: Decimal, y: Decimal): Int {
-    if (x.sign != y.sign)
-        return if (x.sign) -1 else 1
-    val negateMask = x.sign0Neg1 // 0 or -1
-    return (cmpMagnitudeFnzFnz(x, y) xor negateMask) - negateMask
-}
-
 private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
-    if (x.qExp == y.qExp)
-        return ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
+    val x1 = x.dw1; val x0 = x.dw0; val xQ = x.qExp
+    val y1 = y.dw1; val y0 = y.dw0; val yQ = y.qExp
+    if (xQ == yQ)
+        return ucmp128(x1, x0, y1, y0)
     val cmpSci = x.eExp.compareTo(y.eExp)
     if (cmpSci != 0)
         return cmpSci
-    val qDelta = x.qExp - y.qExp
+    val qDelta = xQ - yQ
     val qDeltaAbs = abs(qDelta)
     val pow10BitLen = pow10BitLen(qDeltaAbs)
     val (dw1Pow10, dw0Pow10) = pow10_128(qDeltaAbs)
@@ -52,13 +23,13 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
         // x.qExp is larger
         // scale up x.coefficient
         if (pow10BitLen <= 64)
-            return -ucmp128_128x64(y.dw1, y.dw0, x.dw1, x.dw0, dw0Pow10)
-        return -ucmp128_128x64(y.dw1, y.dw0, dw1Pow10, dw0Pow10, x.dw0)
+            return -ucmp128_128x64(y1, y0, x1, x0, dw0Pow10)
+        return -ucmp128_128x64(y1, y0, dw1Pow10, dw0Pow10, x0)
     } else {
         // scale up y
         if (pow10BitLen <= 64)
-            return ucmp128_128x64(x.dw1, x.dw0, y.dw1, y.dw0, dw0Pow10)
-        return ucmp128_128x64(x.dw1, x.dw0, dw1Pow10, dw0Pow10, y.dw0)
+            return ucmp128_128x64(x1, x0, y1, y0, dw0Pow10)
+        return ucmp128_128x64(x1, x0, dw1Pow10, dw0Pow10, y0)
     }
 }
 

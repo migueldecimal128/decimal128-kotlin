@@ -31,21 +31,23 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
             verify { a.isInfinite() }
             a
         }
-        FNZ_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
+        FNZ_INF, INF_FNZ, INF_INF ->
+            fmaInfProd(x.sign xor y.sign, a, ctx)
 
         INF_ZER -> ctx.signalInvalid(Decimal.NaN)
-        INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
-        INF_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
+        //INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
+        //INF_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
 
         NAN_FOUND -> nanOperandFound(x, y, ctx)
     }
 }
 
 private fun fmaFnzFnzFinite(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-    val i = ctx.decTmps.mdecBridge1.set(x)
-    val j = ctx.decTmps.mdecBridge2.set(y)
-    val k = ctx.decTmps.mdecBridge3.set(a)
-    val result = ctx.decTmps.mdecResult.setFma(i, j, k, ctx)
+    val decTmps = ctx.decTmps
+    val i = decTmps.mdecBridge1.set(x)
+    val j = decTmps.mdecBridge2.set(y)
+    val k = decTmps.mdecBridge3.set(a)
+    val result = decTmps.mdecResult.setFma(i, j, k, ctx)
     return Decimal.from(result)
 }
 
@@ -74,20 +76,20 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
     return ctx.signalInvalid(quietedNaN)
 }
 
-    private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-        verify { x.isZero() || y.isZero() }
-        verify { !a.isNaN() }
-        val prodSign = x.sign xor y.sign
-        val prodQ = x.qExp + y.qExp
-        if (a.isZero()) {
-            val fmaSign =
-                (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
-            return Decimal.newZero(fmaSign, min(prodQ, a.qExp), ctx)
-        }
-        if (a.isFiniteNonZero() && prodQ < a.qExp)
-            return rescaleToMinQExpImpl(a, prodQ, ctx)
-        return a
+private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
+    verify { x.isZero() || y.isZero() }
+    verify { !a.isNaN() }
+    val prodSign = x.sign xor y.sign
+    val prodQ = x.qExp + y.qExp
+    if (a.isZero()) {
+        val fmaSign =
+            (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
+        return Decimal.newZero(fmaSign, min(prodQ, a.qExp), ctx)
     }
+    if (a.isFiniteNonZero() && prodQ < a.qExp)
+        return rescaleToMinQExpImpl(a, prodQ, ctx)
+    return a
+}
 
 private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     verify { !a.isNaN() }

@@ -16,14 +16,14 @@ internal fun addImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> addZeroZero(x, ySign, y, ctx)
         ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
-        ZER_INF -> y
+        ZER_INF, FNZ_INF -> y
 
         FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
         FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> y
+        //FNZ_INF -> y
 
-        INF_ZER -> x
-        INF_FNZ -> x
+        INF_ZER, INF_FNZ -> x
+        //INF_FNZ -> x
         INF_INF -> addInfInf(x, ySign, y, ctx)
 
         NAN_FOUND -> nanOperandFound(x, y, ctx)
@@ -40,14 +40,14 @@ internal fun subImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
         ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
-        ZER_INF -> y.negate()
+        ZER_INF, FNZ_INF -> y.negate()
 
         FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
         FNZ_FNZ -> throw IllegalStateException()
-        FNZ_INF -> y.negate()
+        //FNZ_INF -> y.negate()
 
-        INF_ZER -> x
-        INF_FNZ -> x
+        INF_ZER, INF_FNZ -> x
+        //INF_FNZ -> x
         INF_INF -> addInfInf(x, ySignNegated, y, ctx)
 
         NAN_FOUND -> nanOperandFound(x, y, ctx)
@@ -231,9 +231,10 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
 }
 
 private fun fullWidthSub(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
-    val arg1 = ctx.decTmps.mdecBridge1.set(m)
-    val arg2 = ctx.decTmps.mdecBridge2.set(s)
-    val mdecDiff = ctx.decTmps.mdecResult
+    val decTmps = ctx.decTmps
+    val arg1 = decTmps.mdecBridge1.set(m)
+    val arg2 = decTmps.mdecBridge2.set(s)
+    val mdecDiff = decTmps.mdecResult
     val residue = MagnitudeAddSub.magScaledSub(mdecDiff, sign, arg1, arg2, ctx)
     mdecDiff.roundAndFinalize(residue, ctx)
     val diff = Decimal.from(mdecDiff)
