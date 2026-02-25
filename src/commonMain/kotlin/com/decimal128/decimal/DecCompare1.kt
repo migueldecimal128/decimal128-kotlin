@@ -154,13 +154,15 @@ object DecCompare1 {
     }
 
     private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
+        val xQ = x.qExp
+        val yQ = y.qExp
         return when {
-            x.qExp < NON_FINITE_QNAN -> -1
-            y.qExp < NON_FINITE_QNAN -> 1
+            xQ < NON_FINITE_QNAN -> -1
+            yQ < NON_FINITE_QNAN -> 1
             // if both are the same NaN, then compare payloads
-            x.qExp == y.qExp -> ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
+            xQ == yQ -> ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
             // strange ... qNaN sorts higher than sNaN
-            x.qExp == NON_FINITE_QNAN -> 1
+            xQ == NON_FINITE_QNAN -> 1
             else -> -1
         }
     }

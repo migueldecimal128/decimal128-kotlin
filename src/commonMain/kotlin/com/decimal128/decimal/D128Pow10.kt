@@ -4,17 +4,19 @@ object D128Pow10 {
 
     fun scaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negate: Boolean = false): Decimal {
         verify { pow10 > 0 }
+        val x0 = x.dw0
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
-        val p0 = x.dw0 * dw0Pow10
-        val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
+        val p0 = x0 * dw0Pow10
+        val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
         return Decimal(xSign, p1, p0, x.qExp - pow10)
     }
 
     fun fmaCoeffPow10(xSign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
         verify { pow10 > 0 }
+        val x0 = x.dw0
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
-        val p0 = x.dw0 * dw0Pow10
-        val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
+        val p0 = x0 * dw0Pow10
+        val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
 
         val s0 = p0 + y.dw0
         val carry0 = if (unsignedLT(s0, p0)) 1L else 0L
@@ -31,8 +33,9 @@ object D128Pow10 {
         verify { pow10 > 0 }
         verify { n.bitLen + pow10BitLen(pow10) <= 128}
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
-        val p0 = n.dw0 * dw0Pow10
-        val p1 = unsignedMulHi(n.dw0, dw0Pow10) + (n.dw0 * dw1Pow10) + (n.dw1 * dw0Pow10)
+        val n0 = n.dw0
+        val p0 = n0 * dw0Pow10
+        val p1 = unsignedMulHi(n0, dw0Pow10) + (n0 * dw1Pow10) + (n.dw1 * dw0Pow10)
 
         val d0 = m.dw0 - p0
         val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
@@ -47,9 +50,10 @@ object D128Pow10 {
      */
     fun fusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y: Decimal, ctx: DecContext): Decimal {
         verify { pow10 > 0 }
+        val x0 = x.dw0
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
-        val p0 = x.dw0 * dw0Pow10
-        val p1 = unsignedMulHi(x.dw0, dw0Pow10) + (x.dw0 * dw1Pow10) + (x.dw1 * dw0Pow10)
+        val p0 = x0 * dw0Pow10
+        val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
 
         val d0 = p0 - y.dw0
         val borrow0 = if (unsignedLT(p0, d0)) 1L else 0L
@@ -66,8 +70,9 @@ object D128Pow10 {
         verify { pow10 > 0 }
         verify { n.bitLen + pow10BitLen(pow10) <= 128}
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
-        val p0 = n.dw0 * dw0Pow10
-        val p1 = unsignedMulHi(n.dw0, dw0Pow10) + (n.dw0 * dw1Pow10) + (n.dw1 * dw0Pow10)
+        val n0 = n.dw0
+        val p0 = n0 * dw0Pow10
+        val p1 = unsignedMulHi(n0, dw0Pow10) + (n0 * dw1Pow10) + (n.dw1 * dw0Pow10)
 
         val d0 = m.dw0 - p0
         val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
