@@ -2,19 +2,19 @@
 
 package com.decimal128.decimal
 
-inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
+internal inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
     return carryAB to sumAB
 }
 
-inline fun sumU64(dwA:ULong, dwB:ULong) :Pair<ULong, ULong> {
+internal inline fun sumU64(dwA:ULong, dwB:ULong) :Pair<ULong, ULong> {
     val sumAB = dwA + dwB
     val carryAB = if (sumAB < dwA) 1uL else 0uL
     return carryAB to sumAB
 }
 
-inline fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
+internal inline fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -23,7 +23,7 @@ inline fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
     return carryABC to sumABC
 }
 
-inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long) : Pair<Long, Long> {
+internal inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -35,7 +35,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long) : Pair<Long, Long>
     return carryABCD to sumABCD
 }
 
-inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<Long, Long> {
+internal inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -51,7 +51,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long) : Pair<Long, Long> {
+internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -70,7 +70,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long) : Pair<Long, Long> {
+internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -92,7 +92,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long) : Pair<Long, Long> {
+internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -117,7 +117,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) : Pair<Long, Long> {
+internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) : Pair<Long, Long> {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -147,14 +147,14 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 
 
 // returns borrow 0 or 1
-/*inline*/ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
+internal inline fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
     val diffAZ = dwA - dwZ
     val borrowAZ = if (unsignedCmp(diffAZ, dwA) > 0) 1L else 0L
     return borrowAZ to diffAZ
 }
 
 
-/*inline*/ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
+internal inline fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
     verify { borrowIn in 0..1 }
     // First subtract b from a:
     val diffAB = dwA - dwB
@@ -165,7 +165,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun sumU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
+internal inline fun sumU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val s0 = x0 + y0
     val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
     val s1 = carry0 + x1 + y1
@@ -173,7 +173,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun sumU128U64(x1: Long, x0: Long, y0: Long) : Pair<Long, Long> {
+internal inline fun sumU128U64(x1: Long, x0: Long, y0: Long) : Pair<Long, Long> {
     val s0 = x0 + y0
     val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
     val s1 = carry0 + x1
@@ -181,7 +181,7 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-/*inline*/ fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
+internal inline fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
     val d0 = x0 - y0
     val borrow0 = if (unsignedLT(x0, y0)) 1L else 0L
     val d1 = x1 - y1 - borrow0
@@ -189,13 +189,13 @@ inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<
 }
 
 
-fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
+internal fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
     val p0 = x0 * y0
     val p1 = unsignedMulHi(x0, y0)
     return p1 to p0
 }
 
-/*inline*/ fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
+internal inline fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
@@ -205,18 +205,7 @@ fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
     return p1 to p0
 }
 
-/*inline*/ fun umul128x64to128(x1: ULong, x0: ULong, y0: ULong): Pair<ULong, ULong> {
-    val pp00Hi = unsignedMulHi(x0, y0)
-    val pp00Lo = x0 * y0
-    val pp10Lo = x1 * y0
-
-    val p0 = pp00Lo
-    val p1 = pp00Hi + pp10Lo
-    return p1 to p0
-}
-
-
-/*inline*/ fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
+internal inline fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
@@ -227,12 +216,12 @@ fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
     return p1 to p0
 }
 
-fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
+internal fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
     val (pow10Dw1, pow10Dw0) = pow10_128(pow10)
     return umul128x128to128(dw1, dw0, pow10Dw1, pow10Dw0)
 }
 
-/*inline*/ fun umul128x64to192(x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
+internal /*inline*/ fun umul128x64to192(x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
@@ -247,7 +236,7 @@ fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
 }
 
 
-/*inline*/ fun umul192x64to192(x2: Long, x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
+internal /*inline*/ fun umul192x64to192(x2: Long, x1: Long, x0: Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
@@ -263,7 +252,7 @@ fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
 }
 
 
-        /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long): Triple<Long, Long, Long> {
+internal /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
@@ -281,7 +270,7 @@ fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
 }
 
 
-        /*inline*/ fun usqr96to192(x1: Long, x0: Long): Triple<Long, Long, Long> {
+internal /*inline*/ fun usqr96to192(x1: Long, x0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, x0)
     val pp00Lo = x0 * x0
     val p0 = pp00Lo
@@ -303,7 +292,7 @@ fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
  * Divide the 128-bit unsigned (x1<<64 | x0) by the 64-bit unsigned y0,
  * returning Triple(quotientHigh64, quotientLow64, remainder).
  */
-fun udivMod128x64to128(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> {
+internal fun udivMod128x64to128(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> {
 
     // 1) special-case “pure 64-bit” dividend
     if (x1 == 0L) {
@@ -315,7 +304,7 @@ fun udivMod128x64to128(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> 
     }
 }
 
-fun udivMod128x64to128_stage2(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> {
+internal fun udivMod128x64to128_stage2(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> {
     require(y0 != 0L) { "division by zero" }
     val v1 = y0 ushr 32
     val v0 = y0 and MASK32
@@ -343,7 +332,7 @@ fun udivMod128x64to128_stage2(x1: Long, x0: Long, y0: Long) : Triple<Long, Long,
     return knuthUdiv128x64to128(x1, x0, y0)
 }
 
-fun udivMod128x64to128(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, ULong> {
+internal fun udivMod128x64to128(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, ULong> {
 
     // 1) special-case “pure 64-bit” dividend
     if (x1 == 0uL) {
@@ -355,7 +344,7 @@ fun udivMod128x64to128(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, U
     }
 }
 
-fun udivMod128x64to128_stage2(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, ULong> {
+internal fun udivMod128x64to128_stage2(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, ULong, ULong> {
     require(y0 != 0uL) { "division by zero" }
     val v1 = y0 shr 32
     val v0 = y0 and 0xFFFF_FFFFuL
@@ -388,7 +377,7 @@ fun udivMod128x64to128_stage2(x1: ULong, x0: ULong, y0: ULong) : Triple<ULong, U
  * Divide the 128-bit unsigned (xHigh<<64 | xLow) by the 64-bit unsigned y,
  * returning (quotientHigh64, quotientLow64, remainder64).
  */
-fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Long> {
+internal fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Long> {
     require(y != 0L) { "division by zero" }
     require((y ushr 32) != 0L)
 
@@ -544,21 +533,21 @@ fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long,Long,Lon
     return Triple(qDw1, qDw0, rDw0)
 }
 
-fun ucmp128(dw1X: Long, dw0X: Long, dw1Y: Long, dw0Y: Long): Int {
+internal fun ucmp128(dw1X: Long, dw0X: Long, dw1Y: Long, dw0Y: Long): Int {
     val cmpDw1 = unsignedCmp(dw1X, dw1Y)
     if (cmpDw1 != 0)
         return cmpDw1
     return unsignedCmp(dw0X, dw0Y)
 }
 
-inline fun cmp32(x: Int, y: Int): Int {
+internal inline fun cmp32(x: Int, y: Int): Int {
     val d = x - y
     val lt = d ushr 31
     val gt = -d ushr 31
     return gt - lt
 }
 
-fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int): Int {
+internal fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int): Int {
     verify { pow10 in 1..<MIN_POW10_DIGIT_LEN_192 }
     val (p1, p0) = pow10_128(pow10)
     if (pow10 < MIN_POW10_DIGIT_LEN_128)
@@ -567,7 +556,7 @@ fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int): Int {
     return ucmp128_128x64(x1, x0, p1, p0, y0)
 }
 
-fun ucmp128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Int {
+internal fun ucmp128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Int {
     val p1 = unsignedMulHi(y0, z0)
     val p0 = y0 * z0
 
@@ -577,7 +566,7 @@ fun ucmp128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Int {
     return cmp10
 }
 
-fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Int {
+internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Int {
     val pp00Hi = unsignedMulHi(y0, z0)
     val pp00Lo = y0 * z0
     val p0 = pp00Lo
@@ -593,14 +582,14 @@ fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Int {
     return cmp210
 }
 
-fun EQ128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Boolean {
+internal fun EQ128_64x64(x1: Long, x0: Long, y0: Long, z0: Long) : Boolean {
     val p1 = unsignedMulHi(y0, z0)
     val p0 = y0 * z0
 
     return ((x1 - p1) or (x0 - p0)) == 0L
 }
 
-fun EQ128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Boolean {
+internal fun EQ128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Boolean {
     val pp00Hi = unsignedMulHi(y0, z0)
     val pp00Lo = y0 * z0
     val p0 = pp00Lo
@@ -631,7 +620,7 @@ private const val S_U32_DIV_1E4 = 43
 //  Consider whether or not this should be used to short-circuit
 //  ... messing up the pipeline.
 
-fun countTrailingZeroDigits32(n: Int): Int {
+internal fun countTrailingZeroDigits32(n: Int): Int {
     verify { n > 0 }
     var d = n.toLong()
     var ntzd = 0

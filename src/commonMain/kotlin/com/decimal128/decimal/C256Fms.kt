@@ -15,9 +15,9 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
     val mBitLen = m.bitLen
     val nBitLen = n.bitLen
     verify { mBitLen >= nBitLen }
-    val m0 = m.dw0
-    val m1 = m.dw1
+    val m2 = m.dw2; val m1 = m.dw1; val m0 = m.dw0
     val n0 = n.dw0
+    val s3 = s.dw3; val s2 = s.dw2; val s1 = s.dw1; val s0 = s.dw0
     val sBitLen = s.bitLen
 
     val maxFusedBitLen = max(mBitLen + nBitLen, s.bitLen) + 1
@@ -28,7 +28,7 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m0,
                     n0,
-                    s.dw1, s.dw0
+                    s1, s0
                 )
 
             (mBitLen <= 128 && sBitLen <= 192) ->
@@ -36,23 +36,23 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m1, m0,
                     n0,
-                    s.dw2, s.dw1, s.dw0
+                    s2, s1, s0
                 )
 
             (mBitLen <= 192) ->
                 _fms3x1x4(
                     z, maxFusedBitLen,
-                    m.dw2, m1, m0,
+                    m2, m1, m0,
                     n0,
-                    s.dw3, s.dw2, s.dw1, s.dw0
+                    s3, s2, s1, s0
                 )
 
             else ->
                 _fms4x1x4(
                     z, maxFusedBitLen,
-                    m.dw3, m.dw2, m1, m0,
+                    m.dw3, m2, m1, m0,
                     n0,
-                    s.dw3, s.dw2, s.dw1, s.dw0
+                    s3, s2, s1, s0
                 )
         }
         return
@@ -65,15 +65,15 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m1, m0,
                     n1, n0,
-                    s.dw3, s.dw2, s.dw1, s.dw0
+                    s3, s2, s1, s0
                 )
 
             (mBitLen <= 192) ->
                 _fms3x2x4(
                     z, maxFusedBitLen,
-                    m.dw2, m1, m0,
+                    m2, m1, m0,
                     n1, n0,
-                    s.dw3, s.dw2, s.dw1, s.dw0
+                    s3, s2, s1, s0
                 )
 
             else -> throw RuntimeException("U256 overflow")
