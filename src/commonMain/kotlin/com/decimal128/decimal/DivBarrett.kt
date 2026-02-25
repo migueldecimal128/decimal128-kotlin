@@ -56,7 +56,7 @@ object DivBarrett {
 
     fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
         when {
-            pow5 > 0 && pow5 < BARRETT_POW5_MAX -> {
+            pow5 > 0 && pow5 < BARRETT_POW5_MAXX -> {
                 val denom = POW10[POW5_64_OFFSET + pow5]
                 val mu = POW10[BARRETT_POW5_MU_OFFSET + pow5]
                 val xBitLen = x.bitLen

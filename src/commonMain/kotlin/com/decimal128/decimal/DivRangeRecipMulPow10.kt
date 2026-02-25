@@ -225,6 +225,7 @@ object DivRangeRecipMulPow10 {
 
         if (RANGE_RECIP_PARAMS.size != iRRP) {
             println("RANGE_RECIP_PARAMS.size should be $iRRP")
+            throw IllegalStateException()
         }
     }
 

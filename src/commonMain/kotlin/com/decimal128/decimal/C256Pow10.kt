@@ -9,18 +9,19 @@ import kotlin.math.max
 private const val BASE_POW10_192 = (POW10_64_COUNT + POW10_128_COUNT) * 2
 private const val BASE_POW10_256 = BASE_POW10_192 + POW10_192_COUNT * 3
 
+// POW10_DWORD_COUNT = 215
 private const val POW10_DWORD_COUNT = (BASE_POW10_256 + POW10_256_COUNT * 4)
 
 internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
 internal const val BARRETT_POW10_MAXX = 10
 
 internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAXX
-internal const val POW5_64_MAX = 28
+internal const val POW5_64_MAXX = 28
 
-internal const val BARRETT_POW5_MU_OFFSET = POW5_64_OFFSET + POW5_64_MAX
-internal const val BARRETT_POW5_MAX = 14
+internal const val BARRETT_POW5_MU_OFFSET = POW5_64_OFFSET + POW5_64_MAXX
+internal const val BARRETT_POW5_MAXX = 14
 
-internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAX
+internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAXX
 internal const val MAGIC_POW10_MAXX = 20
 
 private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
@@ -170,7 +171,7 @@ private fun initTables() {
 
     // initialize powers of 5 that fit in 64 bits
     POW10[POW5_64_OFFSET] = 1L
-    for (i in 1..<POW5_64_MAX)
+    for (i in 1..<POW5_64_MAXX)
         POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
     // initialize Barrett division
@@ -187,7 +188,7 @@ private fun initTables() {
         val mu5 = hiTwoPow64 / pow5
         POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.toLong()
     }
-    for (i in 1..<BARRETT_POW5_MAX) {
+    for (i in 1..<BARRETT_POW5_MAXX) {
         val t = BigInt.fromUnsigned(POW10[POW5_64_OFFSET + i])
         val mu = hiTwoPow64 / t
         POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toLong()
