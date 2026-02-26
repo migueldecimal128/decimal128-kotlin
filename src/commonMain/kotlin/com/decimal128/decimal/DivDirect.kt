@@ -137,13 +137,33 @@ object DivDirect {
     }
 
     fun divModX32(z: C256?, x: C256, y0: Long): Long {
+        if ((y0 ushr 16) == 0L)
+            return divModX16(z, x, y0)
+        val x0 = x.dw0; val x1 = x.dw1
+        val x2 = x.dw2; val x3 = x.dw3
+        val xBitLen = x.bitLen
+        if ((y0 ushr 32) == 0L) {
+            val rem = when {
+                xBitLen <= 64 -> divMod64x32(z, x0, y0)
+                xBitLen <= 128 -> divMod128x32(z, x1, x0, y0)
+                xBitLen <= 192 -> divMod192x32(z, x2, x1, x0, y0)
+                else -> divMod256x32(z, x3, x2, x1, x0, y0)
+            }
+            return rem
+        }
+        throw IllegalArgumentException()
+    }
+
+    fun divModX16(z: C256?, x: C256, y0: Long): Long {
+        val x0 = x.dw0; val x1 = x.dw1
+        val x2 = x.dw2; val x3 = x.dw3
         val xBitLen = x.bitLen
         val rem = when {
-            ((y0 > 1L) && (y0 ushr 32) == 0L) -> when {
-                xBitLen <=  64 ->  divMod64x32(z, x.dw0, y0)
-                xBitLen <= 128 -> divMod128x32(z, x.dw1, x.dw0, y0)
-                xBitLen <= 192 -> divMod192x32(z, x.dw2, x.dw1, x.dw0, y0)
-                else ->           divMod256x32(z, x.dw3, x.dw2, x.dw1, x.dw0, y0)
+            ((y0 > 1L) && (y0 ushr 16) == 0L) -> when {
+                xBitLen <=  64 ->  divMod64x32(z, x0, y0) // yes, this is x32
+                xBitLen <= 128 -> divMod128x16(z, x1, x0, y0)
+                xBitLen <= 192 -> divMod192x16(z, x2, x1, x0, y0)
+                else ->           divMod256x16(z, x3, x2, x1, x0, y0)
             }
             (y0 == 1L) -> {
                 z?.c256Set(x)
@@ -284,6 +304,87 @@ object DivDirect {
         val dividend0 = (rem shl 32) or (x0 and MASK32)
         rem = unsignedMod(dividend0, y0)
 
+        return rem
+    }
+
+    fun divMod256x16(z: C256?, x3: Long, x2: Long, x1: Long, x0: Long, y0: Long): Long {
+        verify { (y0 ushr 16) == 0L }
+
+        // Process 64 bits of x3
+        val q3 = unsignedDiv(x3, y0)
+        var rem = x3 - (q3 * y0)
+
+        // Process hi 48 bits of x2
+        val dividend3 = (rem shl 48) or (x2 ushr 16)
+        val w3 = unsignedDiv(dividend3, y0)
+        rem = dividend3 - (w3 * y0)
+        // Process lo 16 bits of x2 + hi 32 bits of x1
+        val dividend2 = (rem shl 48) or ((x2 and MASK16) shl 32) or (x1 ushr 32)
+        val w2 = unsignedDiv(dividend2, y0)
+        rem = dividend2 - (w2 * y0)
+        // Process lo 32 bits of x1 + hi 16 bits of x0
+        val dividend1 = (rem shl 48) or ((x1 and MASK32) shl 16) or (x0 ushr 48)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = dividend1 - (w1 * y0)
+        // Process lo 48 bits of x0
+        val dividend0 = (rem shl 48) or (x0 and MASK48)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = dividend0 - (w0 * y0)
+
+        val q2 = (w3 shl 16) or (w2 ushr 32)
+        val q1 = (w2 shl 32) or (w1 ushr 16)
+        val q0 = (w1 shl 48) or w0
+
+        z?.c256Set256(q3, q2, q1, q0)
+        return rem
+    }
+
+    fun divMod192x16(z: C256?, x2: Long, x1: Long, x0: Long, y0: Long): Long {
+        verify { (y0 ushr 16) == 0L }
+
+        // Process 64 bits of x2
+        val q2 = unsignedDiv(x2, y0)
+        var rem = x2 - (q2 * y0)
+
+        // Process hi 48 bits of x1
+        val dividend2 = (rem shl 48) or (x1 ushr 16)
+        val w2 = unsignedDiv(dividend2, y0)
+        rem = dividend2 - (w2 * y0)
+        // Process lo 16 bits of x1 + hi 32 bits of x0
+        val dividend1 = (rem shl 48) or ((x1 and MASK16) shl 32) or (x0 ushr 32)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = dividend1 - (w1 * y0)
+        // Process lo 32 bits of x0
+        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = dividend0 - (w0 * y0)
+
+        val q1 = (w2 shl 16) or (w1 ushr 32)
+        val q0 = (w1 shl 32) or w0
+
+        z?.c256Set192(q2, q1, q0)
+        return rem
+    }
+
+    fun divMod128x16(z: C256?, x1: Long, x0: Long, y0: Long): Long {
+        verify { (y0 ushr 16) == 0L }
+
+        // Process 64 bits of x1
+        val q1 = unsignedDiv(x1, y0)
+        var rem = x1 - (q1 * y0)
+
+        // Process hi 32 bits of x0
+        val dividend1 = (rem shl 32) or (x0 ushr 32)
+        val w1 = unsignedDiv(dividend1, y0)
+        rem = dividend1 - (w1 * y0)
+        // Process lo 32 bits of x0
+        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val w0 = unsignedDiv(dividend0, y0)
+        rem = dividend0 - (w0 * y0)
+
+        val q0 = (w1 shl 32) or w0
+
+        z?.c256Set128(q1, q0)
         return rem
     }
 
