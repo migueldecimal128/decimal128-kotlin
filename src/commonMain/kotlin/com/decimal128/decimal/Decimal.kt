@@ -3,6 +3,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.C128ScalePow10.c128ScaleDownPow10
 import com.decimal128.decimal.DecCompare1.compareQuiet754
 import com.decimal128.decimal.DecCompare1.compareSignaling754
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
@@ -15,6 +16,7 @@ import com.decimal128.decimal.Ieee754Class.positiveSubnormal
 import com.decimal128.decimal.Ieee754Class.positiveZero
 import com.decimal128.decimal.Ieee754Class.quietNaN
 import com.decimal128.decimal.Ieee754Class.signalingNaN
+import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
@@ -908,7 +910,7 @@ class Decimal private constructor(
     fun roundToIntegralExact(ctx: DecContext) =
         roundToIntegral(ctx.decRounding, ctx, beQuiet = false)
 
-    fun roundToIntegral(rounding: DecRounding, ctx: DecContext, beQuiet: Boolean): Decimal {
+    fun roundToIntegral(rounding: DecRounding, ctx: DecContext, beQuiet: Boolean = false): Decimal {
         if (qExp >= 0) {
             if (qExp < NON_FINITE_SNAN)
                 return this
@@ -928,6 +930,114 @@ class Decimal private constructor(
         }
         return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0,
             residue, 0, rounding, ctx, beQuiet)
+    }
+
+    fun convertToLongTiesToEven(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
+
+    fun convertToLongTiesToAway(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
+
+    fun convertToLongTowardZero(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
+
+    fun convertToLongTowardPositive(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
+
+    fun convertToLongTowardNegative(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
+
+    fun convertToLongExactTiesToEven(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
+
+    fun convertToLongExactTiesToAway(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
+
+    fun convertToLongExactTowardZero(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
+
+    fun convertToLongExactTowardPositive(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
+
+    fun convertToLongExactTowardNegative(ctx: DecContext) =
+        convertToLong(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
+
+    fun convertToLongExact(ctx: DecContext) =
+        convertToLong(ctx.decRounding, ctx, suppressInexact = false)
+
+    fun convertToLong(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Long {
+        val signMask = signMask.toLong()
+        val sign = sign
+        val qExp = qExp
+        val bitLen = bitLen
+        val digitLen = digitLen
+        val dw0 = dw0
+        when {
+            qExp == 0 -> {
+                if (bitLen < 64)
+                    return (dw0 xor signMask) - signMask
+                if (dw0 == Long.MIN_VALUE && sign)
+                    return Long.MIN_VALUE
+                // return signalInvalid
+            }
+            qExp >= NON_FINITE_INF -> {
+                // return signalInvalid
+            }
+            bitLen == 0 -> return 0L
+            qExp > 0 -> {
+                // if there is headroom then scale it up
+                if (digitLen + qExp <= 19) {
+                    val result = dw0 * pow10_64(qExp)
+                    if (result > 0)
+                        return (result xor signMask) - signMask
+                    // Long.MIN_VALUE && sign is not possible ...
+                    // ... because we just multiplied by 10**qExp
+                    // ... so the value ends in 0
+                    // ... but Long.MIN_VALUE ends in 8
+                }
+                // return signalInvalid
+            }
+            else -> { // qExp < 0
+                // at least some fractional digits, perhaps 0 digits
+                val fracDigitLen = -qExp
+                if (fracDigitLen >= digitLen) {
+                    // all fractional digits
+                    val residue: Residue
+                    if (fracDigitLen > digitLen)
+                        residue = Residue.LT_HALF
+                    else {
+                        residue = Residue.fromValueDecade(this)
+                        verify { residue != Residue.EXACT }
+                    }
+                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    val ret = if (! roundUp) 0L else (signMask shl 1) or 1L
+                    if (suppressInexact)
+                        return ret
+                    return ctx.signalInexact(ret)
+                }
+                // both integral and fractional digits
+                val intDigitLen = digitLen - fracDigitLen
+                if (intDigitLen <= 19) {
+                    val dwPair = ctx.decTmps.dwPair1
+                    val residue = c128ScaleDownPow10(dwPair, dw1, dw0, fracDigitLen)
+                    // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
+                    var r0 = dwPair.dw0
+                    val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
+                    r0 += roundUp01
+                    verify { dwPair.dw1 == 0L }
+                    if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
+                        val ret = (r0 xor signMask) - signMask
+                        if (suppressInexact || residue == EXACT)
+                            return ret
+                        return ctx.signalInexact(ret)
+                    }
+                }
+                // return signalInvalid
+            }
+        }
+        // return signalInvalid
+        ctx.signalInvalid(this)
+        return Long.MIN_VALUE
     }
 
 }

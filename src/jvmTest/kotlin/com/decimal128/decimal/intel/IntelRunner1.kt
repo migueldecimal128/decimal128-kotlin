@@ -190,6 +190,53 @@ object IntelRunner1 {
         }
     }
 
+    fun runUnaryLongCtxMethodOp(fileName: String,
+                                   funcStr: String,
+                                   unaryCtxMethodOp: Decimal.(DecContext) -> Long,
+                                   decContext: DecContext,
+                                   verbose: Boolean = false,
+                                   skip: Boolean = true,
+                                   skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        runUnaryLongCtxMethodOp(filtered, unaryCtxMethodOp, decContext, verbose)
+    }
+
+    fun runUnaryLongCtxMethodOp(caseStrings: Array<String>,
+                                   unaryCtxMethodOp: Decimal.(DecContext) -> Long,
+                                   decContext: DecContext,
+                                   verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        runUnaryLongCtxMethodOp(cases, unaryCtxMethodOp, decContext, verbose)
+    }
+
+
+    fun runUnaryLongCtxMethodOp(cases: List<IntelCase1>,
+                                   unaryCtxMethodOp: Decimal.(DecContext) -> Long,
+                                   decContext: DecContext,
+                                   verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = decContext.with(tc.decRounding())
+            ctx.decFlags.clearAll()
+            val op1 = tc.op1Bid128(decContext)
+            if (verbose)
+                println("op1:$op1 parsingFlags:${decContext.decFlags}")
+            ctx.decFlags.clearAll()
+            val observed = op1.unaryCtxMethodOp(ctx)
+            val expected = tc.resLong
+            assertEquals(expected, observed,
+                "mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+            val expectedFlags = tc.decFlags()
+            val observedFlags = ctx.decFlags
+            assertEquals(expectedFlags.toString(), observedFlags.toString())
+        }
+    }
+
     fun runBinaryBooleanCtxMethodOp(fileName: String,
                                    funcStr: String,
                                    binaryCtxMethodOp: Decimal.(Decimal, DecContext) -> Boolean,

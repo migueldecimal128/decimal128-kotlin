@@ -92,6 +92,9 @@ class IntelCase1 private constructor (
     val resInt: Int
         get() = resStr.toInt()
 
+    val resLong: Long
+        get() = resStr.toLong()
+
     val resBoolean: Boolean
         get() {
             if (resStr == "0")
