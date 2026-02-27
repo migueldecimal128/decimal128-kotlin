@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestBid128NonComputational1 {
 
-    val verbose = true
+    val verbose = false
 
     /*****************************************************************************
      *

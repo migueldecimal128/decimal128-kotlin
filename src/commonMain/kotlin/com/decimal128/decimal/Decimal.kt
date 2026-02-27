@@ -153,8 +153,8 @@ class Decimal private constructor(
             }
         }
 
-        fun fromDPD(dwHi: Long, dwLo: Long) {
-
+        fun fromDPD(dwHi: Long, dwLo: Long): Decimal {
+            TODO()
         }
 
         /**
@@ -730,6 +730,9 @@ class Decimal private constructor(
     fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
 
     // IEEE754-2019 5.6.1 Comparisons
+
+    fun compareQuiet754(other: Decimal, ctx: DecContext): Compare754Result =
+        compareQuiet754(this, other, ctx)
 
     fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
         compareQuiet754(this, other, ctx) == IEEE754_EQ

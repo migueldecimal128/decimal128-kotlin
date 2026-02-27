@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class TestBid128Arith2 {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testScaleB(): Unit = runDecimalIntMethodOp(

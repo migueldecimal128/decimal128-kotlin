@@ -86,7 +86,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     }
 
     // step 7: check final bounds
-    verify { qExpIn >= qTiny }
+    verify { qExp >= qTiny }
     verify {calcDigitLen128(dw1, dw0) <= precision }
     if (qExp > qMax) {
         val qExcess = qExp - qMax
