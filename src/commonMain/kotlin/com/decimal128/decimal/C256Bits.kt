@@ -233,4 +233,3 @@ fun c256Set(z: C256, dd: DoubleDouble) {
     else
         c256SetSubUnscaled(z, z, uLo)
 }
-

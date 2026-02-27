@@ -46,7 +46,7 @@ internal fun c256SetDivRemX64(z: C256?, x: C256, y0: Long): Long {
     //TODO at this point I know that x.bitLen >= y.bitLen and x > y
     // if (bitLenDelta < some-small-number) then I should use repeated subtraction
     if ((y0 ushr 32) == 0L) {
-        return DivDirect.divModX32(z, x, y0)
+        return if ((y0 ushr 16) == 0L) DivDirect.divModX16(z, x, y0) else DivDirect.divModX32(z, x, y0)
     }
     return DivKnuth.knuthDivModX64(z, x, y0)
 }

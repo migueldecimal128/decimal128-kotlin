@@ -10,6 +10,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
 import com.decimal128.decimal.DecContext.Companion.DECIMAL128
+import com.decimal128.decimal.MagnitudeDiv.magDivFnzFnz
 import kotlin.math.max
 import kotlin.math.min
 
@@ -32,6 +33,8 @@ class MutDec() : C256() {
     val eExp: Int
         get() = qExp + digitLen - 1
 
+    val signMask = if (sign) -1 else 0
+    val signBit = if (sign) 1 else 0
     companion object {
 
         private fun addImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
@@ -566,6 +569,7 @@ class MutDec() : C256() {
         val productSign = x.sign xor y.sign
         when {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
+                // FIXME -- this tmp should be pulled from ctx.decTmps
                 val aT = if (this === a) MutDec().set(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 this.c256SetMul(x, y)
@@ -600,6 +604,20 @@ class MutDec() : C256() {
             }
         }
         return this
+    }
+
+    internal fun setFmdFnzFnzFnz(x: MutDec, y: MutDec, d: MutDec, ctx: DecContext): MutDec {
+        verify { max(max(x.qExp, y.qExp), d.qExp) < MIN_SPECIAL_VALUE &&
+                (x.digitLen * y.digitLen * d.digitLen) != 0 }
+        val resultSign = x.sign xor y.sign xor d.sign
+
+        val pT = ctx.decTmps.mdecFusedProduct
+
+        // raw multiply without roundAndFinalize ... remains exact
+        c256SetMul(pT, x, y)
+        pT.qExp = x.qExp + y.qExp
+        val residue = magDivFnzFnz(this, resultSign, pT, d, ctx)
+        return this.roundAndFinalize(residue, ctx)
     }
 
     fun setDiv(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
@@ -691,7 +709,7 @@ class MutDec() : C256() {
 
     internal fun setDivIntFnzFnz(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         this.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
-        this.setRoundToInteger(this, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+        this.setRoundToIntegralExact(this, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
 
         // Normalize integer toward qExp = 0 using available precision
         if (this.qExp > 0) {
@@ -895,31 +913,142 @@ class MutDec() : C256() {
         return bothAreZero
     }
 
-    fun mutateRoundToIntegral(x: MutDec, rounding: DecRounding, ctx: DecContext): MutDec {
-        if (qExp < 0) {
-            val residue = this.c256SetScaleDownPow10(x, -qExp)
-            qExp = 0
-            sign = x.sign
-            return roundAndFinalize(residue, rounding, ctx)
-        } else {
-            return set(x)
+    fun setRoundToIntegral(x: MutDec, rounding: DecRounding, ctx: DecContext): MutDec {
+        if (x.qExp >= 0) // this handles all special values as well
+            return set(x, ctx)
+        val xSign = x.sign
+        if (x.c256IsZero())
+            return setZero(xSign)
+        val fracDigitLen = -x.qExp
+        if (fracDigitLen >= x.digitLen) {
+            // all fractional digits
+            val residue: Residue
+            if (fracDigitLen > x.digitLen)
+                residue = Residue.LT_HALF
+            else {
+                residue = Residue.fromValueDecade(x)
+                verify { residue != Residue.EXACT }
+            }
+            val roundUp = residue.ulpRoundUp(rounding.negate(xSign), 0L)
+            if (! roundUp)
+                setZero(xSign)
+            else
+                setOne(xSign)
+            return ctx.signalInexact(this)
         }
+        // integral and fractional digits
+        val residue = c256SetScaleDownPow10(this, x, fracDigitLen)
+        qExp = 0
+        sign = xSign
+        return roundAndFinalize(residue, rounding, ctx)
     }
 
     fun setRoundToIntegralTiesToEven(x: MutDec, ctx: DecContext) =
-        mutateRoundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
+        setRoundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
 
     fun setRoundToIntegralTiesToAway(x: MutDec, ctx: DecContext) =
-        mutateRoundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
+        setRoundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
 
     fun setRoundToIntegralTowardZero(x: MutDec, ctx: DecContext) =
-        mutateRoundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
+        setRoundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
 
     fun setRoundToIntegralTowardPositive(x: MutDec, ctx: DecContext) =
-        mutateRoundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
+        setRoundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
 
     fun setRoundToIntegralTowardNegative(x: MutDec, ctx: DecContext) =
-        mutateRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
+        setRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
+
+    fun setRoundToIntegralExact(x: MutDec, ctx: DecContext): MutDec =
+        setRoundToIntegral(x, ctx.decRounding, ctx)
+
+    fun convertToLong(rounding: DecRounding, ctx: DecContext): Long {
+        val signMask = signMask.toLong()
+        val sign = sign
+        val qExp = qExp
+        val bitLen = bitLen
+        val digitLen = digitLen
+        val dw0 = dw0
+        when {
+            qExp == 0 -> {
+                if (bitLen < 64)
+                    return (dw0 xor signMask) - signMask
+                if (dw0 == Long.MIN_VALUE && sign)
+                    return Long.MIN_VALUE
+                ctx.signalInvalid(this)
+                return Long.MAX_VALUE - signMask
+            }
+            qExp >= NON_FINITE_INF -> {
+                val ret =
+                    if (qExp == NON_FINITE_INF && !sign) Long.MAX_VALUE
+                    else Long.MIN_VALUE
+                ctx.signalInvalid(this)
+                return ret
+            }
+            bitLen == 0 -> return 0L
+            qExp < 0 -> {
+                val fracDigitLen = -qExp
+                if (fracDigitLen >= digitLen) {
+                    // all fractional digits
+                    val residue: Residue
+                    if (fracDigitLen > digitLen)
+                        residue = Residue.LT_HALF
+                    else {
+                        residue = Residue.fromValueDecade(this)
+                        verify { residue != Residue.EXACT }
+                    }
+                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    return ctx.signalInexact(
+                        if (!roundUp)
+                            0L
+                        else
+                            -signMask
+                    )
+                }
+                // both integral and fractional digits
+                val t = ctx.decTmps.mdecArg1
+                val residue = c256SetScaleDownPow10(t, this, fracDigitLen)
+                val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                if (roundUp)
+                    c256MutateIncrement(t)
+                t.qExp = 0
+                t.sign = sign
+                // recursive call now that t.qExp == 0
+                // where tail recursion when I need it?
+                // even better ... GOTO
+                return t.toLong(rounding, ctx)
+            }
+            else -> {
+                if (digitLen + qExp <= 19) {
+                    val result = dw0 * pow10_64(qExp)
+                    if (result > 0)
+                        return (result xor signMask) - signMask
+                    // Long.MIN_VALUE && sign is not possible ...
+                    // ... because we just multiplied by 10**qExp
+                    // ... so the value ends in 0
+                    // ... but Long.MIN_VALUE ends in 8
+                }
+                return ctx.signalInvalid(Long.MAX_VALUE - signMask)
+            }
+        }
+    }
+
+    fun convertToLongTiesToEven(x: MutDec, ctx: DecContext): Long  =
+        convertToLong(ROUND_TIES_TO_EVEN, ctx)
+
+    fun convertToLongTiesToAway(x: MutDec, ctx: DecContext): Long  =
+        convertToLong(ROUND_TIES_TO_AWAY, ctx)
+
+    fun convertToLongTowardZero(x: MutDec, ctx: DecContext): Long  =
+        convertToLong(ROUND_TOWARD_ZERO, ctx)
+
+    fun convertToLongTowardPositive(x: MutDec, ctx: DecContext): Long  =
+        convertToLong(ROUND_TOWARD_POSITIVE, ctx)
+
+    fun convertToLongTowardNegative(x: MutDec, ctx: DecContext): Long  =
+        convertToLong(ROUND_TOWARD_NEGATIVE, ctx)
+
+    fun convertToLongExact(x: MutDec, ctx: DecContext): Long =
+        convertToLong(ctx.decRounding, ctx)
 
     /**
      * setNextUp and setNextDown are not considered arithmetic
@@ -1237,39 +1366,6 @@ class MutDec() : C256() {
         return setNaNOperand(x, y, env)
     }
 
-    fun setRoundToInteger(x: MutDec, env: DecContext) =
-        setRoundToInteger(x, env.decRounding, env)
-
-    fun setRoundToInteger(x: MutDec, rounding: DecRounding, env: DecContext): MutDec {
-        if (x.qExp >= 0) // this handles all special values as well
-            return set(x, env)
-        val xSign = x.sign
-        if (x.c256IsZero())
-            return setZero(xSign)
-        val fracDigitLen = -x.qExp
-        if (fracDigitLen >= x.digitLen) {
-            // all fractional digits
-            val residue: Residue
-            if (fracDigitLen > x.digitLen)
-                residue = Residue.LT_HALF
-            else {
-                residue = Residue.fromValueDecade(x)
-                verify { residue != Residue.EXACT }
-            }
-            val roundUp = residue.ulpRoundUp(rounding.negate(xSign), 0L)
-            if (! roundUp)
-                setZero(xSign)
-            else
-                setOne(xSign)
-            return env.signalInexact(this)
-        }
-        // integral and fractional digits
-        val residue = c256SetScaleDownPow10(x, fracDigitLen)
-        qExp = 0
-        sign = xSign
-        return roundAndFinalize(residue, rounding, env)
-    }
-
     fun setRemainderNear(x: MutDec, y: MutDec, env: DecContext): MutDec {
         // avoid aliasing issues
         val yT = if (this !== y) y else env.decTmps.mdecArg2.set(y)
@@ -1304,7 +1400,7 @@ class MutDec() : C256() {
                 // use INTERNAL_TMP_ENV so that flag-setting
                 val n = env.decTmps.mdecArg1.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
                 if (n.qExp < 0)
-                    n.setRoundToInteger(n, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+                    n.setRoundToIntegralExact(n, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
 
                 // save xSign ... in case of aliasing this === x
                 val xSign = x.sign

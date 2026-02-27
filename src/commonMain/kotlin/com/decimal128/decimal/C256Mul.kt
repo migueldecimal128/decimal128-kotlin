@@ -272,10 +272,7 @@ private fun _mulCoeff2x2(
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
-    if (maxBitLen <= 64) {
-        p.c256Set64(p0)
-        return
-    }
+    // don't worry about maxBitLen <= 64
     val pp01Hi = unsignedMulHi(x0, y1)
     val pp01Lo = x0 * y1
     val pp10Hi = unsignedMulHi(x1, y0)

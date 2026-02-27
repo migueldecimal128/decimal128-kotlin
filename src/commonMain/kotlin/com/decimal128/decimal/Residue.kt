@@ -83,6 +83,14 @@ value class Residue internal constructor(val value:Int) {
             return residueX
         }
 
+        fun fromRoundBitStickyBits(isolatedRoundBit: Long, stickyBits: Long) : Residue {
+            val roundBit = ((isolatedRoundBit or -isolatedRoundBit) ushr 63).toInt()
+            val stickyBit = ((stickyBits or -stickyBits) ushr 63).toInt()
+            val residueValue = (roundBit shl 1) or stickyBit
+            val residueX = Residue(residueValue)
+            return residueX
+        }
+
         fun fromRemainderDivisor(r: C256, d: C256): Residue {
             if (r.dw3 < 0L) {
                 // high bit of residue is set

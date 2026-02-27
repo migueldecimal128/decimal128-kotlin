@@ -86,6 +86,16 @@ data class DecContext(
         return decTraps.signal(trapContext)
     }
 
+    fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, l: Long): Long {
+        if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
+            decFlags.set(decException)
+            return l
+        }
+        val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
+        decTraps.signal(trapContext)
+        return l
+    }
+
     fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, mutDec: MutDec): MutDec {
         if (decTraps == null || !decTraps.hasTrapHandler(decException))
             return mutDec
@@ -226,6 +236,23 @@ data class DecContext(
             return dec
         }
         return signal(INEXACT, IS_INEXACT, "whatever", dec)
+    }
+
+    fun signalInexact(l: Long): Long {
+        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+            decFlags.set(INEXACT)
+            return l
+        }
+        return signal(INEXACT, IS_INEXACT, "whatever", l)
+    }
+
+    fun signalInvalid(l: Long): Long {
+        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+            decFlags.set(INVALID_OPERATION)
+            return l
+        }
+        return signal(INVALID_OPERATION,
+            DecExceptionReason.INVALID_CONV_TO_INTEGER, "whatever", l)
     }
 
     fun operandIsSignalingNaN(mutDec: MutDec) {

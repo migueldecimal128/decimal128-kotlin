@@ -659,7 +659,7 @@ class TestMutDecDectest {
                 "quantize" -> MutDec().setQuantize(op1, op2, env)
                 "reduce" -> MutDec().setStripTrailingZeros(op1, env)
                 "samequantum" -> MutDec().set(if (op1.sameQuantum(op2)) 1 else 0)
-                "tointegralx" -> MutDec().setRoundToInteger(op1, env)
+                "tointegralx" -> MutDec().setRoundToIntegralExact(op1, env)
                 "scaleb" -> {
 
                     val pow10 = operand2.toInt()

@@ -9,7 +9,7 @@ object MagnitudeDiv {
         val scaledNumerator = ctx.decTmps.mdecArg1
         scaledNumerator.c256SetScaleUpPow10(x, numeratorScale)
         val residue = when {
-            (y.bitLen <= 64) -> z.c256SetDivX64(scaledNumerator, y.dw0)
+            (y.bitLen <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0)
             else -> z.c256SetDiv(scaledNumerator, y)
         }
         val qPreferred = x.qExp - y.qExp

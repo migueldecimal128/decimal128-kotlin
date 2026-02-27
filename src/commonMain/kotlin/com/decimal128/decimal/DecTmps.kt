@@ -14,6 +14,13 @@ class DecTmps {
     val mdecArg2 = MutDec()
     val mdecArg3 = MutDec()
 
+    val mdecFusedProduct = MutDec()
+
+    val mdecTrans1 = MutDec()
+    val mdecTrans2 = MutDec()
+    val mdecTrans3 = MutDec()
+    val mdecTrans4 = MutDec()
+
     //
     val dwPair1 = DwPair()
 
