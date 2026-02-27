@@ -51,7 +51,7 @@ class TestEncodeDecodeDpd128 {
             test1(tc)
     }
 
-    val fptestOperandFilename = "/fptestOperandsUniq.txt"
+    val fptestOperandFilename = "/fptest/fptestOperandsUniq.txt"
 
     @Test
     fun testFptestOperands() {
