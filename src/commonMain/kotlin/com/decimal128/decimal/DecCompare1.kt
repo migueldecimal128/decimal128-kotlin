@@ -54,8 +54,8 @@ object DecCompare1 {
      * @return −1, 0, or +1 indicating the total-order relationship of `x` and `y`.
      */
     fun cmpTotalOrder(x: Decimal, y: Decimal): Int {
-        val xSign = x.sign0Neg1 // 0 or -1 (0xFFFF_FFFF)
-        if ((xSign xor y.sign0Neg1) != 0)
+        val xSign = x.signMask // 0 or -1 (0xFFFF_FFFF)
+        if ((xSign xor y.signMask) != 0)
             return (xSign shl 1) + 1 // return -1 or 1
         val cmpMag = cmpTotalOrderMag(x, y)
         return negateForSign(cmpMag, xSign)
@@ -203,8 +203,8 @@ object DecCompare1 {
      */
     fun cmpJavaStyle(x: Decimal, y: Decimal): Int {
         if (Decimal.neitherIsNaN(x, y)) {
-            val xSign = x.sign0Neg1 // 0 or -1 (0xFFFF_FFFF)
-            if ((xSign xor y.sign0Neg1) != 0)
+            val xSign = x.signMask // 0 or -1 (0xFFFF_FFFF)
+            if ((xSign xor y.signMask) != 0)
                 return (xSign shl 1) + 1 // return -1 or 1
             val cmpMag = cmpNumericMagnitude(x, y)
             return negateForSign(cmpMag, xSign)
@@ -337,9 +337,9 @@ object DecCompare1 {
             // Comparisons shall ignore the sign of zero (so +0 = −0).
             if (x.isZero() && y.isZero())
                 return IEEE754_EQ
-            val xSignMask = x.sign0Neg1 // 0 or -1 (0xFFFF_FFFF)
+            val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
             val cmp =
-                if (xSignMask != y.sign0Neg1) (xSignMask shl 1) + 1 // -1 or 1
+                if (xSignMask != y.signMask) (xSignMask shl 1) + 1 // -1 or 1
                 else negateForSign(cmpNumericMagnitude(x, y), xSignMask)
             return Compare754Result(cmp)
         }

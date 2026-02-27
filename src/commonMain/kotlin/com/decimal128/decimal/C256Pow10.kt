@@ -229,15 +229,15 @@ internal fun pow10_64(pow10: Int): Long {
     return POW10[(2*pow10) and ELIMINATE_BOUNDS_CHECK]
 }
 
-internal fun pow10_128_dw0(pow10: Int): Long {
+internal inline fun pow10_128_dw0(pow10: Int): Long {
     return POW10[(2*pow10) and ELIMINATE_BOUNDS_CHECK]
 }
 
-internal fun pow10_128_dw1(pow10: Int): Long {
+internal inline fun pow10_128_dw1(pow10: Int): Long {
     return POW10[(2*pow10 + 1) and ELIMINATE_BOUNDS_CHECK]
 }
 
-internal fun pow10_128(pow10: Int): Pair<Long, Long> {
+internal inline fun pow10_128(pow10: Int): Pair<Long, Long> {
     verify { pow10 < MIN_POW10_DIGIT_LEN_192 }
     val offset = (2*pow10) and ELIMINATE_BOUNDS_CHECK
     return POW10[offset + 1] to POW10[offset]
@@ -286,9 +286,9 @@ internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
     val digitCountEstimate = (bitLen * 1233) ushr 12
     val dw1T = dw1 xor Long.MIN_VALUE
     val dw0T = dw0 xor Long.MIN_VALUE
-    val pow10Offset = (digitCountEstimate shl 1) and ELIMINATE_BOUNDS_CHECK
-    val p1 = POW10[pow10Offset + 1] xor Long.MIN_VALUE
-    val p0 = POW10[pow10Offset + 0] xor Long.MIN_VALUE
+    val pow10Offset = digitCountEstimate shl 1
+    val p1 = POW10[(pow10Offset + 1) and ELIMINATE_BOUNDS_CHECK] xor Long.MIN_VALUE
+    val p0 = POW10[(pow10Offset + 0) and ELIMINATE_BOUNDS_CHECK] xor Long.MIN_VALUE
 
     val ret2 = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
@@ -354,14 +354,16 @@ internal fun compareWithHalfPow10_1(dw0: Long, pow10: Int): Int {
 }
 
 internal fun compareWithHalfPow10_2(dw1: Long, dw0: Long, pow10: Int): Int {
-    verify { pow10 >= MIN_POW10_DIGIT_LEN_128 && pow10 < MIN_POW10_DIGIT_LEN_192 }
-    val (pow10Dw1, pow10Dw0) = pow10_128(pow10)
-    val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
+    verify { pow10 >= 0 && pow10 < MIN_POW10_DIGIT_LEN_192 }
+    val pow10Dw1 = pow10_128_dw1(pow10)
     val halfPow10Dw1 = pow10Dw1 ushr 1
-    val cmp0 = unsignedCmp(dw0, halfPow10Dw0)
     val cmp1 = unsignedCmp(dw1, halfPow10Dw1)
-    val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-    return cmp10
+    if (cmp1 != 0)
+        return cmp1
+    val pow10Dw0 = pow10_128_dw0(pow10)
+    val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
+    val cmp0 = unsignedCmp(dw0, halfPow10Dw0)
+    return cmp0
 }
 
 internal fun compareWithHalfPow10_3(dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {

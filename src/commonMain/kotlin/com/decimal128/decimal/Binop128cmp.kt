@@ -1,10 +1,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.Decimal.Companion.NEG_ONE
-import com.decimal128.decimal.Decimal.Companion.NaN
-import com.decimal128.decimal.Decimal.Companion.POS_ONE
-import com.decimal128.decimal.Decimal.Companion.ZERO
 import kotlin.math.abs
 
 private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
@@ -44,7 +40,7 @@ private fun cmpNanFound(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 fun cmpTotalOrderImpl_x(x: Decimal, y: Decimal, ctx: DecContext): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
-    val negateMask = -x.sign01 // 0 or -1
+    val negateMask = -x.signBit // 0 or -1
     return (cmpTotalOrderMagnitudeImpl_x(x, y) xor negateMask) - negateMask
 }
 

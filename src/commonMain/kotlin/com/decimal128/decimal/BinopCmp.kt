@@ -52,7 +52,7 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 
             NAN_FOUND -> throw IllegalStateException()
         }
-    val negateMask = x.sign0Neg1
+    val negateMask = x.signMask
     val t = (cmpMag xor negateMask) - negateMask
     return mapToDecimal[t + 1]
 }
@@ -60,7 +60,7 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 private fun cmpFnzFnz(x: Decimal, y: Decimal): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
-    val negateMask = x.sign0Neg1 // 0 or -1
+    val negateMask = x.signMask // 0 or -1
     return (cmpMagnitudeFnzFnz(x, y) xor negateMask) - negateMask
 }
 
@@ -128,7 +128,7 @@ fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
-    val negateMask = -x.sign01 // 0 or -1
+    val negateMask = -x.signBit // 0 or -1
     return (cmpTotalOrderMagnitudeImpl(x, y, ctx) xor negateMask) - negateMask
 }
 

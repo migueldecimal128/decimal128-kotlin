@@ -4,10 +4,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.Magia
-import com.decimal128.decimal.DecExceptionReason.PARSE_BAD_UNDERSCORE
-import com.decimal128.decimal.DecExceptionReason.PARSE_DOUBLE_DOT
-import com.decimal128.decimal.DecExceptionReason.PARSE_EMPTY_STRING
-import com.decimal128.decimal.DecExceptionReason.PARSE_SIGN_ONLY
 import kotlin.math.max
 import kotlin.math.min
 
@@ -395,8 +391,8 @@ object D128ParsePrint {
 
     private fun toSpecialValueString(dec: Decimal): String {
         if (dec.qExp < NON_FINITE_QNAN)
-            return SPECIAL_VALUE_STRINGS[dec.sign01]
-        val nanIndex = (if (dec.qExp == NON_FINITE_QNAN) 2 else 4) + dec.sign01
+            return SPECIAL_VALUE_STRINGS[dec.signBit]
+        val nanIndex = (if (dec.qExp == NON_FINITE_QNAN) 2 else 4) + dec.signBit
         val nanStr = SPECIAL_VALUE_STRINGS[nanIndex]
         if ((dec.dw1 or dec.dw0) == 0L)
             return nanStr
@@ -409,19 +405,19 @@ object D128ParsePrint {
 
     private fun toIntegerString(dec: Decimal): String {
         if (dec.bitLen < 4) {
-            val i = ((16 and dec.sign0Neg1) + dec.dw0.toInt()) and 0x1F // bounds-check-elimination
+            val i = ((16 and dec.signMask) + dec.dw0.toInt()) and 0x1F // bounds-check-elimination
             return SMALL_INTEGER_STRINGS[i]
         }
-        val utf8 = ByteArray(dec.sign01 + dec.digitLen)
+        val utf8 = ByteArray(dec.signBit + dec.digitLen)
         utf8[0] = '-'.code.toByte() // will be overwritten if positive
-        IntegerParsePrint.u128ToUtf8(dec.digitLen, dec.dw1, dec.dw0, utf8, dec.sign01)
+        IntegerParsePrint.u128ToUtf8(dec.digitLen, dec.dw1, dec.dw0, utf8, dec.signBit)
         return utf8.decodeToString()
     }
 
     private fun toDecimalPointString(dec: Decimal): String {
         val digitsRightOfDecimal = -dec.qExp
         val leadingZeroCount = max(1 + digitsRightOfDecimal - dec.digitLen, 0)
-        val signLen = dec.sign01
+        val signLen = dec.signBit
         val decimalPointLen = 1
         val totalLen = signLen + leadingZeroCount + decimalPointLen + dec.digitLen
         val utf8 = ByteArray(totalLen)
@@ -438,7 +434,7 @@ object D128ParsePrint {
     private fun toNormalizedScientificString(dec: Decimal): String {
         val eExp = dec.eExp
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
-        val signLen = dec.sign01
+        val signLen = dec.signBit
         val decimalPointLen = if (dec.digitLen > 1) 1 else 0
         val printedDigitLen = dec.digitLen + 1 - (-dec.digitLen ushr 31)
         val expELen = 1

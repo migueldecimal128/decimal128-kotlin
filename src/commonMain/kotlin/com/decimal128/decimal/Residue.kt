@@ -34,11 +34,28 @@ value class Residue internal constructor(val value:Int) {
             val digitLen = c.digitLen
             if (digitLen == 0)
                 return EXACT
+            val c0 = c.dw0
+            val c1 = c.dw1
             val cmp = when {
-                digitLen < MIN_POW10_DIGIT_LEN_128 -> compareWithHalfPow10_1(c.dw0, digitLen)
-                digitLen < MIN_POW10_DIGIT_LEN_192 -> compareWithHalfPow10_2(c.dw1, c.dw0, digitLen)
-                digitLen < MIN_POW10_DIGIT_LEN_256 -> compareWithHalfPow10_3(c.dw2, c.dw1, c.dw0, digitLen)
-                else -> compareWithHalfPow10_4(c.dw3, c.dw2, c.dw1, c.dw0, digitLen)
+                digitLen < MIN_POW10_DIGIT_LEN_128 -> compareWithHalfPow10_1(c0, digitLen)
+                digitLen < MIN_POW10_DIGIT_LEN_192 -> compareWithHalfPow10_2(c1, c0, digitLen)
+                digitLen < MIN_POW10_DIGIT_LEN_256 -> compareWithHalfPow10_3(c.dw2, c1, c0, digitLen)
+                else -> compareWithHalfPow10_4(c.dw3, c.dw2, c1, c0, digitLen)
+            }
+            val residueValue = (cmp + 2) and 0x03
+            val residue = Residue(residueValue)
+            return residue
+        }
+
+        fun fromValueDecade(x: Decimal): Residue {
+            val digitLen = x.digitLen
+            if (digitLen == 0)
+                return EXACT
+            val x0 = x.dw0
+            val x1 = x.dw1
+            val cmp = when {
+                digitLen < MIN_POW10_DIGIT_LEN_128 -> compareWithHalfPow10_1(x0, digitLen)
+                else -> compareWithHalfPow10_2(x1, x0, digitLen)
             }
             val residueValue = (cmp + 2) and 0x03
             val residue = Residue(residueValue)

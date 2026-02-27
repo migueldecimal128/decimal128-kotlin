@@ -31,9 +31,9 @@ class Decimal private constructor(
 
     internal val sign: Boolean
         get() = signExp.toInt() < 0
-    internal val sign01: Int
+    internal val signBit: Int
         get() = signExp.toInt() ushr 31
-    internal val sign0Neg1: Int
+    internal val signMask: Int
         get() = signExp.toInt() shr 31
     internal val qExp: Int
         get() = (signExp.toInt() shl 17) shr 17
@@ -929,7 +929,6 @@ class Decimal private constructor(
         return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0,
             residue, 0, rounding, ctx, beQuiet)
     }
-
 
 }
 
