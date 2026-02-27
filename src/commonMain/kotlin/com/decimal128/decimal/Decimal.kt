@@ -933,39 +933,98 @@ class Decimal private constructor(
             residue, 0, rounding, ctx, beQuiet)
     }
 
-    fun convertToLongTiesToEven(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTiesToEven`.
+     * Rounds to nearest, ties to even. Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongTiesToEven(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
-    fun convertToLongTiesToAway(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTiesToAway`.
+     * Rounds to nearest, ties away from zero. Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongTiesToAway(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
-    fun convertToLongTowardZero(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardZero`.
+     * Rounds toward zero (truncation). Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongTowardZero(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
-    fun convertToLongTowardPositive(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardPositive`.
+     * Rounds toward positive infinity (ceiling). Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongTowardPositive(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
-    fun convertToLongTowardNegative(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardNegative`.
+     * Rounds toward negative infinity (floor). Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongTowardNegative(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
-    fun convertToLongExactTiesToEven(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTiesToEven`.
+     * Rounds to nearest, ties to even. Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongExactTiesToEven(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
-    fun convertToLongExactTiesToAway(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTiesToAway`.
+     * Rounds to nearest, ties away from zero. Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongExactTiesToAway(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
-    fun convertToLongExactTowardZero(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardZero`.
+     * Rounds toward zero (truncation). Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongExactTowardZero(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
-    fun convertToLongExactTowardPositive(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardPositive`.
+     * Rounds toward positive infinity (ceiling). Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongExactTowardPositive(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
-    fun convertToLongExactTowardNegative(ctx: DecContext) =
+    /**
+     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardNegative`.
+     * Rounds toward negative infinity (floor). Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongExactTowardNegative(ctx: DecContext) =
         convertToLong(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
-    fun convertToLongExact(ctx: DecContext) =
-        convertToLong(ctx.decRounding, ctx, suppressInexact = false)
-
+    /**
+     * Core implementation for all decimal-to-[Long] conversions.
+     *
+     * Implements the IEEE 754-2019 `convertToInteger` family of operations for signed 64-bit integers.
+     * The invalid sentinel [Long.MIN_VALUE] matches Intel's decimal library (bid128_to_int64_*).
+     *
+     * @param rounding the rounding mode to apply when the value is not exactly representable as a [Long]
+     * @param ctx the decimal context for signaling flags
+     * @param suppressInexact if true, suppresses [DecException.INEXACT] (used by the non-exact IEEE 754 variants).
+     *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
+     * @return the converted [Long], or [Long.MIN_VALUE] if the value is NaN, infinite, or out of range
+     */
     fun convertToLong(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Long {
         val signMask = signMask.toLong()
         val sign = sign
@@ -1040,40 +1099,99 @@ class Decimal private constructor(
         ctx.signalInvalid(this)
         return Long.MIN_VALUE
     }
-
-    fun convertToIntTiesToEven(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTiesToEven`.
+     * Rounds to nearest, ties to even. Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntTiesToEven(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
-    fun convertToIntTiesToAway(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTiesToAway`.
+     * Rounds to nearest, ties away from zero. Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntTiesToAway(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
-    fun convertToIntTowardZero(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardZero`.
+     * Rounds toward zero (truncation). Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntTowardZero(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
-    fun convertToIntTowardPositive(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardPositive`.
+     * Rounds toward positive infinity (ceiling). Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntTowardPositive(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
-    fun convertToIntTowardNegative(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardNegative`.
+     * Rounds toward negative infinity (floor). Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntTowardNegative(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
-    fun convertToIntExactTiesToEven(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTiesToEven`.
+     * Rounds to nearest, ties to even. Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntExactTiesToEven(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
-    fun convertToIntExactTiesToAway(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTiesToAway`.
+     * Rounds to nearest, ties away from zero. Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntExactTiesToAway(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
-    fun convertToIntExactTowardZero(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardZero`.
+     * Rounds toward zero (truncation). Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntExactTowardZero(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
-    fun convertToIntExactTowardPositive(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardPositive`.
+     * Rounds toward positive infinity (ceiling). Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntExactTowardPositive(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
-    fun convertToIntExactTowardNegative(ctx: DecContext) =
+    /**
+     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardNegative`.
+     * Rounds toward negative infinity (floor). Signals [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toIntExactTowardNegative(ctx: DecContext) =
         convertToInt(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
-    fun convertToIntExact(ctx: DecContext) =
-        convertToInt(ctx.decRounding, ctx, suppressInexact = false)
-
+    /**
+     * Core implementation for all decimal-to-[Int] conversions.
+     *
+     * Implements the IEEE 754-2019 `convertToInteger` family of operations for signed 32-bit integers.
+     * All internal arithmetic is performed in [Long] to avoid overflow during intermediate calculations.
+     * The invalid sentinel [Int.MIN_VALUE] matches Intel's decimal library (bid128_to_int32_*).
+     *
+     * @param rounding the rounding mode to apply when the value is not exactly representable as an [Int]
+     * @param ctx the decimal context for signaling flags
+     * @param suppressInexact if true, suppresses [DecException.INEXACT] (used by the non-exact IEEE 754 variants).
+     *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
+     * @return the converted [Int], or [Int.MIN_VALUE] if the value is NaN, infinite, or out of range
+     */
     fun convertToInt(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Int {
         val signMask = signMask
         val sign = sign
