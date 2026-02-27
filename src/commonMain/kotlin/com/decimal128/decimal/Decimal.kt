@@ -17,6 +17,7 @@ import com.decimal128.decimal.Ieee754Class.positiveZero
 import com.decimal128.decimal.Ieee754Class.quietNaN
 import com.decimal128.decimal.Ieee754Class.signalingNaN
 import com.decimal128.decimal.Residue.Companion.EXACT
+import com.decimal128.decimal.Residue.Companion.LT_HALF
 import kotlin.math.max
 import kotlin.math.min
 
@@ -924,7 +925,7 @@ class Decimal private constructor(
         tmpPair.dw1 = 0L
         val digitLen = this.digitLen
         val residue: Residue = when {
-            pow10 > digitLen -> Residue.LT_HALF
+            pow10 > digitLen -> LT_HALF
             pow10 == digitLen -> Residue.fromValuePow10(dw1, dw0, digitLen)
             else -> C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
         }
@@ -976,7 +977,7 @@ class Decimal private constructor(
             qExp == 0 -> {
                 if (bitLen < 64)
                     return (dw0 xor signMask) - signMask
-                if (dw0 == Long.MIN_VALUE && sign)
+                if (bitLen == 64 && dw0 == Long.MIN_VALUE && sign)
                     return Long.MIN_VALUE
                 // return signalInvalid
             }
@@ -1004,16 +1005,16 @@ class Decimal private constructor(
                     // all fractional digits
                     val residue: Residue
                     if (fracDigitLen > digitLen)
-                        residue = Residue.LT_HALF
+                        residue = LT_HALF
                     else {
                         residue = Residue.fromValueDecade(this)
-                        verify { residue != Residue.EXACT }
+                        verify { residue != EXACT }
                     }
                     val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                     val ret = if (! roundUp) 0L else (signMask shl 1) or 1L
-                    if (suppressInexact)
-                        return ret
-                    return ctx.signalInexact(ret)
+                    if (! suppressInexact)
+                        ctx.signalInexact(this)
+                    return ret
                 }
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
@@ -1027,9 +1028,9 @@ class Decimal private constructor(
                     verify { dwPair.dw1 == 0L }
                     if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
                         val ret = (r0 xor signMask) - signMask
-                        if (suppressInexact || residue == EXACT)
-                            return ret
-                        return ctx.signalInexact(ret)
+                        if (!suppressInexact && residue != EXACT)
+                            ctx.signalInexact(ret)
+                        return ret
                     }
                 }
                 // return signalInvalid
@@ -1038,6 +1039,117 @@ class Decimal private constructor(
         // return signalInvalid
         ctx.signalInvalid(this)
         return Long.MIN_VALUE
+    }
+
+    fun convertToIntTiesToEven(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
+
+    fun convertToIntTiesToAway(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
+
+    fun convertToIntTowardZero(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
+
+    fun convertToIntTowardPositive(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
+
+    fun convertToIntTowardNegative(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
+
+    fun convertToIntExactTiesToEven(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
+
+    fun convertToIntExactTiesToAway(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
+
+    fun convertToIntExactTowardZero(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
+
+    fun convertToIntExactTowardPositive(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
+
+    fun convertToIntExactTowardNegative(ctx: DecContext) =
+        convertToInt(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
+
+    fun convertToIntExact(ctx: DecContext) =
+        convertToInt(ctx.decRounding, ctx, suppressInexact = false)
+
+    fun convertToInt(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Int {
+        val signMask = signMask
+        val sign = sign
+        val qExp = qExp
+        val bitLen = bitLen
+        val digitLen = digitLen
+        val dw0 = dw0
+        val w0 = dw0.toInt()
+        when {
+            qExp == 0 -> {
+                if (bitLen < 32)
+                    return (w0 xor signMask) - signMask
+                if (bitLen == 32 && w0 == Int.MIN_VALUE && sign)
+                    return Int.MIN_VALUE
+                // return signalInvalid
+            }
+            qExp >= NON_FINITE_INF -> {
+                // return signalInvalid
+            }
+            bitLen == 0 -> return 0
+            qExp > 0 -> {
+                // if there is headroom then scale it up
+                if (digitLen + qExp <= 10) {
+                    val result = dw0 * pow10_64(qExp)
+                    if (result <= Int.MAX_VALUE.toLong())
+                        return (result.toInt() xor signMask) - signMask
+                    // Long.MIN_VALUE && sign is not possible ...
+                    // ... because we just multiplied by 10**qExp
+                    // ... so the value ends in 0
+                    // ... but Long.MIN_VALUE ends in 8
+                }
+                // return signalInvalid
+            }
+            else -> { // qExp < 0
+                // at least some fractional digits, perhaps 0 digits
+                val fracDigitLen = -qExp
+                if (fracDigitLen >= digitLen) {
+                    // all fractional digits
+                    val residue: Residue
+                    if (fracDigitLen > digitLen)
+                        residue = LT_HALF
+                    else {
+                        residue = Residue.fromValueDecade(this)
+                        verify { residue != Residue.EXACT }
+                    }
+                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    val ret = if (! roundUp) 0 else (signMask shl 1) or 1
+                    if (! suppressInexact)
+                        ctx.signalInexact(this)
+                    return ret
+                }
+                // both integral and fractional digits
+                val intDigitLen = digitLen - fracDigitLen
+                if (intDigitLen <= 10) {
+                    val dwPair = ctx.decTmps.dwPair1
+                    val residue = c128ScaleDownPow10(dwPair, dw1, dw0, fracDigitLen)
+                    var r0 = dwPair.dw0
+                    val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
+                    verify { dwPair.dw1 == 0L }
+                    // r0 cannot roll over
+                    // worse case is 10 9s 99999_99999 which rolls up to 11 digits
+                    r0 += roundUp01
+                    if (r0 <= Int.MAX_VALUE.toLong() ||
+                        r0 == -(Int.MIN_VALUE.toLong()) && sign) {
+                        val ret = (r0.toInt() xor signMask) - signMask
+                        if (!suppressInexact && residue != EXACT)
+                            ctx.signalInexact(this)
+                        return ret
+                    }
+                }
+                // return signalInvalid
+            }
+        }
+        // return signalInvalid
+        ctx.signalInvalid(this)
+        return Int.MIN_VALUE
     }
 
 }
