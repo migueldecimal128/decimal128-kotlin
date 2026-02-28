@@ -6,11 +6,6 @@ import kotlin.math.min
 
 object D128Compare {
 
-    fun isZero(d: Decimal) =
-        d.packedLengths.toInt() == 0 && d.qExp != NON_FINITE_INF
-
-    fun isOne(d: Decimal): Boolean = d.packedLengths.toInt() == 0x0201
-
     fun compare(x: Decimal, y: Decimal) : Int {
         val qMax = max(x.qExp, y.qExp)
         when {

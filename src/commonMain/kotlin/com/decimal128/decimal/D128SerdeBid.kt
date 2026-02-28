@@ -262,7 +262,7 @@ object D128SerdeBid {
                 //  non-canonical and the value used for c is zero.
                 if (digitLen > 34)
                     return Decimal.zero(sign, qExp)
-                return Decimal(sign, dw1, dw0, qExp)
+                return Decimal(sign, qExp, dw1, dw0)
             }
             // otherwise, the top two bits are 0b11
             // if the top 5 bits are 0x11110 then Infinity

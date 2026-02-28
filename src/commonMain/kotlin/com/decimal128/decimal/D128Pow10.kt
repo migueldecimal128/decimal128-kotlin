@@ -8,7 +8,7 @@ object D128Pow10 {
         val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
         val p0 = x0 * dw0Pow10
         val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
-        return Decimal(xSign, p1, p0, x.qExp - pow10)
+        return Decimal(xSign, x.qExp - pow10, p1, p0)
     }
 
     fun fmaCoeffPow10(xSign: Boolean, x: Decimal, pow10: Int, y: Decimal): Decimal {
@@ -21,7 +21,7 @@ object D128Pow10 {
         val s0 = p0 + y.dw0
         val carry0 = if (unsignedLT(s0, p0)) 1L else 0L
         val s1 = p1 + y.dw1 + carry0
-        return Decimal(xSign, s1, s0, y.qExp)
+        return Decimal(xSign, y.qExp, s1, s0)
     }
 
     /**
@@ -40,7 +40,7 @@ object D128Pow10 {
         val d0 = m.dw0 - p0
         val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
         val d1 = m.dw1 - p1 - borrow0
-        return Decimal(sign, d1, d0, m.qExp)
+        return Decimal(sign, m.qExp, d1, d0)
     }
 
     /**

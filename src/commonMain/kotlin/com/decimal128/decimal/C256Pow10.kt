@@ -26,7 +26,7 @@ internal const val MAGIC_POW10_MAXX = 20
 
 private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
 
-private const val ELIMINATE_BOUNDS_CHECK = 0xFF // POW10 Bounds Check Elimination
+private const val POW10_BCE = 0xFF // POW10 Bounds Check Elimination
 
 internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAXX_DIGIT_LEN)
@@ -217,7 +217,7 @@ internal fun pow10Offset(pow10: Int): Int {
     val mask = -pow10 shr 31
     return offset and mask
      */
-    return ELIMINATE_BOUNDS_CHECK and when {
+    return POW10_BCE and when {
         pow10 < MIN_POW10_DIGIT_LEN_192 -> 2 * pow10
         pow10 < MIN_POW10_DIGIT_LEN_256 -> BASE_POW10_192 + 3 * (pow10 - MIN_POW10_DIGIT_LEN_192)
         else -> BASE_POW10_256 + 4 * (pow10 - MIN_POW10_DIGIT_LEN_256)
@@ -226,20 +226,20 @@ internal fun pow10Offset(pow10: Int): Int {
 
 internal fun pow10_64(pow10: Int): Long {
     verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
-    return POW10[(2*pow10) and ELIMINATE_BOUNDS_CHECK]
+    return POW10[(2*pow10) and POW10_BCE]
 }
 
 internal inline fun pow10_128_dw0(pow10: Int): Long {
-    return POW10[(2*pow10) and ELIMINATE_BOUNDS_CHECK]
+    return POW10[(2*pow10) and POW10_BCE]
 }
 
 internal inline fun pow10_128_dw1(pow10: Int): Long {
-    return POW10[(2*pow10 + 1) and ELIMINATE_BOUNDS_CHECK]
+    return POW10[(2*pow10 + 1) and POW10_BCE]
 }
 
 internal inline fun pow10_128(pow10: Int): Pair<Long, Long> {
     verify { pow10 < MIN_POW10_DIGIT_LEN_192 }
-    val offset = (2*pow10) and ELIMINATE_BOUNDS_CHECK
+    val offset = (2*pow10) and POW10_BCE
     return POW10[offset + 1] to POW10[offset]
 }
 
@@ -270,13 +270,32 @@ internal fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
     // more importantly, it avoids boundary condition issues
     // for 128 and 192 bits where they cross from 2->3->4 limbs
     val digitCountEstimate = (bitLen * 1233) ushr 12
-    val p0 = POW10[(digitCountEstimate shl 1) and ELIMINATE_BOUNDS_CHECK]
+    val p0 = POW10[(digitCountEstimate shl 1) and POW10_BCE]
     return digitCountEstimate + 1 - (unsignedCmp(dw0, p0) ushr 31)
 }
 
 internal fun calcDigitLen128(dw1: Long, dw0: Long): Int {
     val bitLen = calcBitLen128(dw1, dw0)
     return calcDigitLen128(bitLen, dw1, dw0)
+}
+
+internal fun calcPackedLengths128(dw1: Long, dw0: Long): Int {
+    val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
+    val nlz1 = dw1.countLeadingZeroBits()
+    val nlz0 = dw0.countLeadingZeroBits()
+    val bitLen = 128 - nlz1 - (nlz0 and dw1IsZeroMask)
+
+    val digitCountEstimate = (bitLen * 1233) ushr 12
+    val dw1T = dw1 xor Long.MIN_VALUE
+    val dw0T = dw0 xor Long.MIN_VALUE
+    val pow10Offset = digitCountEstimate shl 1
+    val p1 = POW10[(pow10Offset + 1) and POW10_BCE] xor Long.MIN_VALUE
+    val p0 = POW10[(pow10Offset + 0) and POW10_BCE] xor Long.MIN_VALUE
+
+    val digitLen = digitCountEstimate +
+            if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
+
+    return (digitLen shl 9) or bitLen
 }
 
 internal fun calcDigitLen128(bitLen: Int, dw1: ULong, dw0: ULong): Int =
@@ -287,8 +306,8 @@ internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
     val dw1T = dw1 xor Long.MIN_VALUE
     val dw0T = dw0 xor Long.MIN_VALUE
     val pow10Offset = digitCountEstimate shl 1
-    val p1 = POW10[(pow10Offset + 1) and ELIMINATE_BOUNDS_CHECK] xor Long.MIN_VALUE
-    val p0 = POW10[(pow10Offset + 0) and ELIMINATE_BOUNDS_CHECK] xor Long.MIN_VALUE
+    val p1 = POW10[(pow10Offset + 1) and POW10_BCE] xor Long.MIN_VALUE
+    val p0 = POW10[(pow10Offset + 0) and POW10_BCE] xor Long.MIN_VALUE
 
     val ret2 = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
@@ -300,7 +319,7 @@ internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int 
         bitLen > 128 -> {
             val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
             val hiDigitCount = loDigitCount + 1
-            val pow10Offset = pow10Offset(loDigitCount) and ELIMINATE_BOUNDS_CHECK
+            val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
             val p2 = POW10[pow10Offset + 2]
             val p1 = POW10[pow10Offset + 1]
             val p0 = POW10[pow10Offset + 0]
@@ -323,7 +342,7 @@ internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: 
         bitLen > 192 -> {
             val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_256)
             val hiDigitCount = loDigitCount + 1
-            val pow10Offset = pow10Offset(loDigitCount) and ELIMINATE_BOUNDS_CHECK
+            val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
             val p3 = POW10[pow10Offset + 3]
             val p2 = POW10[pow10Offset + 2]
             val p1 = POW10[pow10Offset + 1]
@@ -368,7 +387,7 @@ internal fun compareWithHalfPow10_2(dw1: Long, dw0: Long, pow10: Int): Int {
 
 internal fun compareWithHalfPow10_3(dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
     verify { pow10 >= MIN_POW10_DIGIT_LEN_192 && pow10 < MIN_POW10_DIGIT_LEN_256 }
-    val pow10Offset = pow10Offset(pow10) and ELIMINATE_BOUNDS_CHECK
+    val pow10Offset = pow10Offset(pow10) and POW10_BCE
     val pow10Dw0 = POW10[pow10Offset + 0]
     val pow10Dw1 = POW10[pow10Offset + 1]
     val pow10Dw2 = POW10[pow10Offset + 2]
@@ -386,7 +405,7 @@ internal fun compareWithHalfPow10_3(dw2: Long, dw1: Long, dw0: Long, pow10: Int)
 internal fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
     verify { pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAXX_DIGIT_LEN }
     if (pow10 < MAXX_DIGIT_LEN) {
-        val pow10Offset = pow10Offset(pow10) and ELIMINATE_BOUNDS_CHECK
+        val pow10Offset = pow10Offset(pow10) and POW10_BCE
         val pow10Dw0 = POW10[pow10Offset + 0]
         val pow10Dw1 = POW10[pow10Offset + 1]
         val pow10Dw2 = POW10[pow10Offset + 2]
@@ -413,7 +432,7 @@ internal fun coeffIsPow10(x: C256): Boolean {
     val xBitLen = x.bitLen
     val xDigitLen = x.digitLen
     if (xDigitLen > 0) {
-        val pow10Offset = pow10Offset(xDigitLen - 1) and ELIMINATE_BOUNDS_CHECK
+        val pow10Offset = pow10Offset(xDigitLen - 1) and POW10_BCE
         val p0 = POW10[pow10Offset + 0]
         val p1 = POW10[pow10Offset + 1] and ((64 - xBitLen) shr 31).toLong()
         val p2 = POW10[pow10Offset + 2] and ((128 - xBitLen) shr 31).toLong()
@@ -426,7 +445,7 @@ internal fun coeffIsPow10(x: C256): Boolean {
 internal fun coeffSetPow10(z: C256, pow10: Int) {
     if (pow10 >= 0) {
         val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10) and ELIMINATE_BOUNDS_CHECK
+        val pow10Offset = pow10Offset(pow10) and POW10_BCE
         val p0 = POW10[pow10Offset + 0]
         val p1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p2 = POW10[pow10Offset + 2] and ((128 - pow10BitLen) shr 31).toLong()

@@ -25,7 +25,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     // Step 1: Fast path: already in valid decimal128 range
     val decFormat = ctx.decFormat
     if (inboundResidue == EXACT && decFormat.coeffQexpFit(dw1In, dw0In, qExpIn))
-        return Decimal(sign, dw1In, dw0In, qExpIn)
+        return Decimal(sign, qExpIn, dw1In, dw0In)
 
     // Step 2: special values
     /* NOT APPLICABLE because we are only dealing with Finite
@@ -95,7 +95,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
         else
             decFinalizeOverflow(sign, rounding, ctx, beQuiet)
     }
-    val ret = Decimal(sign, dw1, dw0, qExp)
+    val ret = Decimal(sign, qExp, dw1, dw0)
     return if (!applyRounding || beQuiet) ret else ctx.signalInexact(ret)
 }
 
@@ -110,7 +110,7 @@ private fun decFinalizeZero(sign: Boolean,
             qExp < ctx.qTiny ->
                 return decFinalizeUnderflowRegion(sign, dw1 = 0L, dw0 = 1L,
                     residue, qExp, rounding, ctx, beQuiet)
-            else -> z = Decimal.from(sign, dw1 = 0L, dw0 = 1L, qExp)
+            else -> z = Decimal(sign, qExp, dw1 = 0L, dw0 = 1L)
         }
     } else {
         z = Decimal.newZero(sign, qExp, ctx)
@@ -191,7 +191,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
             ++qExpT
         }
     }
-    val z = Decimal.from(sign, dw1T, dw0T, qExpT)
+    val z = Decimal(sign, qExpT, dw1T, dw0T)
     // IEEE 754 7.5: If the rounded result is exact, no underflow flag
     return if (totalResidue == EXACT || beQuiet) z else ctx.signalInexactUnderflow(z)
 }
@@ -205,7 +205,7 @@ private fun decFinalizeClamping(sign: Boolean,
     verify { ctx.decFormat.coeffFits(dw1S, dw0S) }
     // successful clamping does not signal because
     // the returned value is numerically equal
-    return Decimal.from(sign, dw1S, dw0S, qMax)
+    return Decimal(sign, qMax, dw1S, dw0S)
 }
 
 private fun decFinalizeOverflow(sign: Boolean, rounding: DecRounding,

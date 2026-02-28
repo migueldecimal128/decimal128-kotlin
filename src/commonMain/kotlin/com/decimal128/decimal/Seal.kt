@@ -64,6 +64,15 @@ value class Seal private constructor(val seal: Int) {
         internal operator fun invoke(sign: Boolean, qExp: Int, digitLen: Int, bitLen: Int): Seal =
             Seal(if (sign) 1 else 0, qExp, digitLen, bitLen)
 
+        /** Boolean-sign overload delegating to the raw `signBit` constructor. */
+        internal operator fun invoke(signExp: Short, packedLengths: Short): Seal {
+            val sign = signExp.toInt() ushr 31
+            val qExp = signExp.toInt() and 0x7FFF
+            val digitLen = packedLengths.toInt() shr 9
+            val bitLen = packedLengths.toInt() and 0x1FF
+            return Seal(sign, qExp, digitLen, bitLen)
+        }
+
         /** Computes `bitLen` and `digitLen` from the
          * 128-bit coefficient and builds the `Seal`. */
         internal operator fun invoke(sign: Boolean, qExp: Int, dw1: ULong, dw0: ULong): Seal {
@@ -85,10 +94,8 @@ value class Seal private constructor(val seal: Int) {
     internal val digitLen: Int
         get() = (seal shr 9) and 0x7F
 
-    internal val isNegative: Boolean
+    internal val sign: Boolean
         get() = seal < 0
-    internal val isPositive: Boolean
-        get() = seal >= 0
     internal val signBit: Int
         get() = seal ushr 31
     internal val signMask: Int

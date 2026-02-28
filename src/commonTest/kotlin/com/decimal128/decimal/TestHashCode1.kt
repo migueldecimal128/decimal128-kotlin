@@ -5,7 +5,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestHashCode1 {
-    val verbose = false
+    val verbose = true
+
     @Test
     fun testConstantHashCodes() {
         /*
@@ -107,6 +108,8 @@ class TestHashCode1 {
 
     @Test
     fun testHashZero() {
+        testPair(true, "0", "0.0000")
+
         testPair(true, "0", "0e1")
         testPair(true, "0", "0.0000")
         testPair(true, "0.0", "+0.0e6111")
@@ -141,10 +144,16 @@ class TestHashCode1 {
         testPair(false, "inf", "0")
     }
 
-    fun testPair(expectEqual: Boolean, x: String, y: String) =
-        testPair(expectEqual, Decimal.from(x), Decimal.from(y))
+    fun testPair(expectEqual: Boolean, xStr: String, yStr: String) {
+        val x = Decimal.from(xStr)
+        val y = Decimal.from(yStr)
+
+        testPair(expectEqual, x, y)
+    }
 
     fun testPair(expectEqual: Boolean, x: Decimal, y: Decimal) {
+        if (verbose)
+            println("expectEquals:$expectEqual, x:$x, y:$y")
         val hcX = x.hashCode()
         val hcY = y.hashCode()
         if (expectEqual)

@@ -56,6 +56,9 @@ internal fun subImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 
 private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
     // Both operands are zero. This is where the special rules apply.
+    // IEEE754-2019 6.3 The sign bit
+    // However, under all rounding-direction attributes,
+    // when x is zero, x + x and x − (−x) have the sign of x.
     val xSign = x.sign
     val xQ = x.qExp
     val yQ = y.qExp
