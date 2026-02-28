@@ -319,16 +319,6 @@ class Decimal private constructor(
             else
                 Decimal(sign, NON_FINITE_INF, dw1, dw0, allowNonCanonical = true)
 
-        // FIXME - consolidate with newZero that takes DecContext
-        fun zero(sign: Boolean = false, qExp: Int): Decimal {
-            if (qExp == 0)
-                return if (sign) NEG_ZEROe0 else POS_ZEROe0
-            val qClamped = max(min(qExp, DECIMAL128_QMAX_6111), DECIMAL128_QTINY_Neg6176)
-            val seal = (if (sign) BIT31 else 0) or ((qClamped and 0x7FFF) shl 16)
-            val zero = Decimal(seal, 0L, 0L)
-            return zero
-        }
-
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
             max(x.qExp, y.qExp) >= NON_FINITE_QNAN
 
@@ -381,6 +371,7 @@ class Decimal private constructor(
      *         with IEEE-754-2019 §7.5.2.
      */
     fun ieeeClass(): Ieee754Class {
+        val sign = sign; val qExp = qExp; val bitLen = bitLen
         return when {
             qExp >= NON_FINITE_INF -> when {
                 qExp == NON_FINITE_QNAN -> quietNaN
@@ -401,8 +392,8 @@ class Decimal private constructor(
      * isSignMinus(x) is true if and only if x has negative sign. isSignMinus applies to zeros and NaNs
      * as well.
      */
-    fun isSignMinus(): Boolean = sign // IEEE754 5.7.2
-    fun isNegative(): Boolean = sign
+    fun isSignMinus(): Boolean = seal < 0 // IEEE754 5.7.2
+    fun isNegative(): Boolean = seal < 0
 
     /**
      * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
@@ -445,6 +436,8 @@ class Decimal private constructor(
      *
      * This version tests for Zero, even on oversized coefficients.
      */
+    // FIXME - don't allow oversized coefficients here
+    //  this is too fragile ... figure out another way to pass unit tests
     fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
 
     /**
@@ -487,6 +480,7 @@ class Decimal private constructor(
      * - NaN: payload digits > 33
      */
     fun isCanonical(): Boolean {
+        val qExp = qExp; val digitLen = digitLen; val bitLen = bitLen;
         verify { bitLen == calcBitLen128(dw1, dw0) }
         verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
         return (qExp in -6176..6111 && digitLen <= 34) ||
@@ -512,7 +506,7 @@ class Decimal private constructor(
     fun isSameQuantum(other: Decimal) =
         (this.qExp == other.qExp) || (this.qExp >= NON_FINITE_QNAN && other.qExp >= NON_FINITE_QNAN)
 
-    fun abs() = if (sign) negate() else this
+    fun abs() = if (seal < 0) negate() else this
 
     fun negate(): Decimal {
         return when {
@@ -535,20 +529,17 @@ class Decimal private constructor(
 
     // IEEE754-2008 5.3.3
     fun logB(ctx: DecContext): Decimal {
-        val q = this.qExp
+        val qExp = qExp
         when {
             isZero() -> return ctx.signalDivByZero(NEG_INFINITY)
-            q < NON_FINITE_INF -> return from(eExp)
-            q == NON_FINITE_INF -> return POS_INFINITY
+            qExp < NON_FINITE_INF -> return from(eExp)
+            qExp == NON_FINITE_INF -> return POS_INFINITY
             else -> return nanOperandFound(this, ctx)
         }
     }
 
     fun scaleB(pow10Delta: Int, ctx: DecContext): Decimal {
-        val sign = this.sign
-        val qExp = this.qExp
-        val qTiny = ctx.qTiny
-        val qMax = ctx.qMax
+        val sign = sign; val qExp = qExp
         when {
             qExp < NON_FINITE_INF -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
@@ -739,7 +730,7 @@ class Decimal private constructor(
 
     // IEEE754-2019 5.6.1 Comparisons
 
-    fun compareQuiet754(other: Decimal, ctx: DecContext): Compare754Result =
+    fun compareQuiet(other: Decimal, ctx: DecContext): Compare754Result =
         compareQuiet754(this, other, ctx)
 
     fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
@@ -830,30 +821,31 @@ class Decimal private constructor(
     fun copy(): Decimal = Decimal(seal, dw1, dw0)
 
     override fun hashCode(): Int {
+        val sign = sign; val qExp = qExp
         return when {
             isFiniteNonZero() -> {
                 var r1 = dw1
                 var r0 = dw0
-                var rQExp = qExp
+                var rQ = qExp
                 if (qExp < DECIMAL128_QMAX_6111) {
                     val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
                     val (t1, t0, ntzd) = DecNtzd.ntzdU128(r1, r0)
                     r1 = t1
                     r0 = t0
-                    rQExp += ntzd
+                    rQ += ntzd
                     if (ntzd > maxNtzdClamp) {
-                        verify { rQExp > DECIMAL128_QMAX_6111 }
+                        verify { rQ > DECIMAL128_QMAX_6111 }
                         // oops ... we removed too many trailing zeros and pushed qExp too hi
                         // give back some zeros to bring down qExp
                         val giveBack = ntzd - maxNtzdClamp
                         val (t1, t0) = umul128xPow10to128(r1, r0, giveBack)
                         r1 = t1
                         r0 = t0
-                        rQExp = DECIMAL128_QMAX_6111
+                        rQ = DECIMAL128_QMAX_6111
                     }
                 }
                 val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
-                val hcQExp = rQExp * 31 * 31
+                val hcQExp = rQ * 31 * 31
                 val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
                 val hcDw0 = (r0 xor (r0 shr 32)).toInt()
                 hcSign + hcQExp + hcDw1 + hcDw0
@@ -923,6 +915,7 @@ class Decimal private constructor(
         roundToIntegral(ctx.decRounding, ctx, beQuiet = false)
 
     fun roundToIntegral(rounding: DecRounding, ctx: DecContext, beQuiet: Boolean = false): Decimal {
+        val sign = sign; val qExp = qExp; val dw1 = dw1; val dw0 = dw0
         if (qExp >= 0) {
             if (qExp < NON_FINITE_SNAN)
                 return this
@@ -1037,7 +1030,7 @@ class Decimal private constructor(
      * @return the converted [Long], or [Long.MIN_VALUE] if the value is NaN, infinite, or out of range
      */
     fun convertToLong(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Long {
-        val signMask = signMask.toLong()
+        val signMaskLong = signMask.toLong()
         val sign = sign
         val qExp = qExp
         val bitLen = bitLen
@@ -1046,7 +1039,7 @@ class Decimal private constructor(
         when {
             qExp == 0 -> {
                 if (bitLen < 64)
-                    return (dw0 xor signMask) - signMask
+                    return (dw0 xor signMaskLong) - signMaskLong
                 if (bitLen == 64 && dw0 == Long.MIN_VALUE && sign)
                     return Long.MIN_VALUE
                 // return signalInvalid
@@ -1060,7 +1053,7 @@ class Decimal private constructor(
                 if (digitLen + qExp <= 19) {
                     val result = dw0 * pow10_64(qExp)
                     if (result > 0)
-                        return (result xor signMask) - signMask
+                        return (result xor signMaskLong) - signMaskLong
                     // Long.MIN_VALUE && sign is not possible ...
                     // ... because we just multiplied by 10**qExp
                     // ... so the value ends in 0
@@ -1081,7 +1074,7 @@ class Decimal private constructor(
                         verify { residue != EXACT }
                     }
                     val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
-                    val ret = if (! roundUp) 0L else (signMask shl 1) or 1L
+                    val ret = if (! roundUp) 0L else (signMaskLong shl 1) or 1L
                     if (! suppressInexact)
                         ctx.signalInexact(this)
                     return ret
@@ -1097,7 +1090,7 @@ class Decimal private constructor(
                     r0 += roundUp01
                     verify { dwPair.dw1 == 0L }
                     if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
-                        val ret = (r0 xor signMask) - signMask
+                        val ret = (r0 xor signMaskLong) - signMaskLong
                         if (!suppressInexact && residue != EXACT)
                             ctx.signalInexact(ret)
                         return ret

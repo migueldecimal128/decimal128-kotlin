@@ -2,6 +2,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.DecContext.Companion.DECIMAL128
 import kotlin.math.min
 
 /**
@@ -210,93 +211,36 @@ object D128SerdeBid {
     }
 
     /**
-     * Decodes a Decimal128 value in **BID** format from its two 64-bit words.
+     * Decodes a Decimal128 value in **BID** (Binary Integer Decimal) format
+     * from its two 64-bit words, per IEEE 754-2019 section 3.5.2.
      *
-     * This extracts the sign, the 17-bit G-combination field, and the upper
-     * 46 coefficient bits from `bid128Hi`, combines them with the remaining
-     * 64 coefficient bits in `bid128Lo`, and reconstructs the corresponding
-     * `Decimal` value. Finite numbers, infinities, quiet NaNs, and signaling
-     * NaNs are handled per IEEE 754-2019 rules.
+     * The 128-bit encoding consists of:
+     *  - 1 sign bit
+     *  - 17-bit G-combination field (encodes exponent and high coefficient bits)
+     *  - 110-bit trailing significand field T (46 high bits in `bid128Hi`, 64 bits in `bid128Lo`)
      *
-     *  - For **finite values**, coefficients with more than 34 decimal digits
-     *    are non-canonical; such encodings are treated as having coefficient 0.
-     *  - For **infinity**, all lower bits are ignored.
-     *  - For **NaNs**, lower bits of the combination field are ignored,
-     *    the lower 110 (46 + 64) bits form the payload; non-canonical
-     *    payloads (more than 34 digits) have the payload set to 0.
+     * The combination field is decoded as follows:
+     *  - G[0:1] = `00`, `01`, or `10`: exponent from G[0:9], significand MSBs from G[10:12]
+     *  - G[0:3] = `1100`–`1110`: exponent from G[2:11], significand MSBs = `1000` + G[12]
+     *  - G[0:4] = `11110`: infinity
+     *  - G[0:4] = `11111`: NaN (G[5] determines signaling vs quiet)
+     *
+     * Special value handling:
+     *  - **Infinity**: all lower bits are ignored (or preserved if [allowNonCanonical])
+     *  - **NaN**: lower 110 bits form the payload; G[1:4] are ignored
+     *  - **Finite**: coefficient is validated against the 34-digit maximum (10^34 - 1);
+     *    non-canonical coefficients (value > 10^34 - 1) are treated as zero
+     *  - **NaN payload**: validated against the 33-digit maximum (10^33 - 1);
+     *    non-canonical payloads are set to zero
+     *
+     * When [ctx] has [DecPrefs.decodeBidAllowNonCanonical] set to `true`, non-canonical
+     * encodings are preserved rather than normalized to zero.
      *
      * @param bid128Hi the high 64 bits of the BID128 encoding
      * @param bid128Lo the low 64 bits of the BID128 encoding
-     * @return the decoded `Decimal` value
+     * @param ctx the decimal context; controls non-canonical encoding behavior via [DecPrefs]
+     * @return the decoded [Decimal] value
      */
-    fun decodeBid128_old(bid128Hi: Long, bid128Lo: Long, allowOversizeCoefficient: Boolean = false): Decimal {
-        // 1 + 17 + 46 == 64
-        // 1 bit for the sign
-        val sign = bid128Hi.toLong() < 0L
-        // 17 bit combination field ... 0x1FFFF
-        val combination = (bid128Hi shr 46).toInt() and 0x1FFFF
-        // 46 bits for the middle-chunk of the coefficient 46 + 64 == 110
-        val coefficientMid46 = bid128Hi and ((1L shl (110 - 64)) - 1L)
-        // To identify bits, IEEE754-2019 uses the terminology G0-G16 to identify
-        // the bits of the 17-bit combination field, with G0 as most significant.
-        when {
-            // if the top 2 bits are not 0b11
-            (combination and 0x18000) != 0x18000 -> {
-                //  IEEE754-2019 3.5.2 c) 2) i) -- p 21
-                //   If G0 and G1 together are one of 00, 01, or 10, then the biased
-                //   exponent E is formed from G0 through Gw+1 and the significand
-                //   is formed from bits Gw+2 through the end of the encoding (including T).
-                // w+5=17 w=12 Gw+1=G13 Gw+2=G14
-                // the top 14 bits of the combination field represent the biased exponent ...
-                val biasedExponent = combination shr 3
-                val qExp = biasedExponent + QTINY_Neg6176 // this is effectively a subtraction
-                // ... and the bottom 3 bits are the most significant bits of the significand
-                // coeff/significant is 3 + 46 + 64 == 113 ... but that's not all ... see below
-                val mostSignificant3 = (combination and 0x07).toLong() shl (110 - 64)
-                val dw1 = mostSignificant3 or coefficientMid46
-                val dw0 = bid128Lo
-                val bitLen = calcBitLen128(dw1, dw0)
-                val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-                // IEEE754-2019 3.5.2 p21
-                //  If the value exceeds the maximum, the significand c is
-                //  non-canonical and the value used for c is zero.
-                if (digitLen > 34)
-                    return Decimal.zero(sign, qExp)
-                return Decimal(sign, qExp, dw1, dw0)
-            }
-            // otherwise, the top two bits are 0b11
-            // if the top 5 bits are 0x11110 then Infinity
-            (combination and 0x1F000) == 0x1E000 -> return Decimal.infinity(sign)
-            // if the top 5 bits are 0x11111 then NaN
-            (combination and 0x1F000) == 0x1F000 -> {
-                // with the next bit determining signaling NaN
-                val isSignaling = (combination and 0x1F800) == 0x1F800
-                return Decimal.NaN(sign, isSignaling, coefficientMid46.toLong(), bid128Lo.toLong())
-            }
-            // otherwise, top 4 bits were 0x1100 0x1101 0x1110
-            else -> {
-                // IEEE754-2019 3.5.2 c) 2) ii) -- p 21
-                //  If G0 and G1 together are 11 and G2 and G3 together are one
-                //  of 00, 01, or 10, then the biased exponent E is formed from
-                //  G2 through Gw+3 and the significand is formed by prefixing
-                //  the 4 bits (8 + Gw+4) to T.
-                //
-                // This pattern is non-canonical for decimal128 because all
-                // all 114-bit coefficients starting with 0b100x exceed 34
-                // decimal digits.
-                // This encoding exists because for bid64 and bid32 having
-                // the top bit set is needed, so they simply replicated the
-                // encoding technique for bid128.
-                // this bit combination *is* used by DPD format.
-                //
-                // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
-                val E = (combination ushr 1) and 0x3FFF   // 14 bits
-                val qExp = E + QTINY_Neg6176              // preserve exponent
-                return Decimal.zero(sign, qExp)
-            }
-        }
-    }
-
     fun decodeBid128(bid128Hi: Long, bid128Lo: Long, ctx: DecContext): Decimal {
         // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 128 // storage width in bits
@@ -395,7 +339,7 @@ object D128SerdeBid {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if (dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
-            return Decimal.zero(sign, qExp)
+            return Decimal.newZero(sign, qExp, DECIMAL128) // use ctx? ... let's be safe
         return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
     }
 
@@ -517,7 +461,7 @@ object D128SerdeBid {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if (dw0 > coeffMax)
-            return Decimal.zero(sign, qExp)
+            return Decimal.newZero(sign, qExp, DECIMAL128)
         return Decimal(sign, qExp, 0L, dw0)
     }
 

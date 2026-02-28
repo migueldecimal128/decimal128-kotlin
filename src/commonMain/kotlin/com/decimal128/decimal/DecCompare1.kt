@@ -54,11 +54,11 @@ object DecCompare1 {
      * @return −1, 0, or +1 indicating the total-order relationship of `x` and `y`.
      */
     fun cmpTotalOrder(x: Decimal, y: Decimal): Int {
-        val xSign = x.signMask // 0 or -1 (0xFFFF_FFFF)
-        if ((xSign xor y.signMask) != 0)
-            return (xSign shl 1) + 1 // return -1 or 1
+        val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
+        if ((xSignMask xor y.signMask) != 0)
+            return (xSignMask shl 1) + 1 // return -1 or 1
         val cmpMag = cmpTotalOrderMag(x, y)
-        return negateForSign(cmpMag, xSign)
+        return negateForSign(cmpMag, xSignMask)
     }
 
     /**
@@ -319,10 +319,10 @@ object DecCompare1 {
      * for negative values.
      *
      * @param cmp the magnitude comparison result (−1, 0, or +1)
-     * @param sign0Neg1 0 for non-negative values, or −1 for negative values
+     * @param signMask 0 for non-negative values, or −1 for negative values
      */
-    private inline fun negateForSign(cmp: Int, sign0Neg1: Int) =
-        (cmp xor sign0Neg1) - sign0Neg1
+    private inline fun negateForSign(cmp: Int, signMask: Int) =
+        (cmp xor signMask) - signMask
 
     fun compareQuiet754(x: Decimal, y: Decimal, ctx: DecContext): Compare754Result =
         compare754(x, y, isSignaling = false, ctx)

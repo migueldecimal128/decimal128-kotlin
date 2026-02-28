@@ -89,7 +89,7 @@ class TestFptestDecimal {
 
         val expected = fptest.result() ?: return  // trap case not yet handled
 
-        val cmp754 = expected.compareQuiet754(observed, ctx)
+        val cmp754 = expected.compareQuiet(observed, ctx)
         if (expected.isNaN()) {
             assertTrue(observed.isNaN())
             assertEquals(IEEE754_UNORDERED, cmp754)
