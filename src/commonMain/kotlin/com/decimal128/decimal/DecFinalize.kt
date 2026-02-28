@@ -113,7 +113,7 @@ private fun decFinalizeZero(sign: Boolean,
             else -> z = Decimal(sign, qExp, dw1 = 0L, dw0 = 1L)
         }
     } else {
-        z = Decimal.newZero(sign, qExp, ctx)
+        z = Decimal.zero(sign, qExp, ctx)
     }
     return if (residue == EXACT || beQuiet) z else ctx.signalInexact(z)
 }
@@ -131,7 +131,7 @@ private fun decFinalizeUnderflowRegion(sign: Boolean,
             // Result is swamped - becomes zero or min finite
             // This is always inexact
             val z =
-                if (rounding.underflowsToZero(sign)) Decimal.newZero(sign, -9999, ctx)
+                if (rounding.underflowsToZero(sign)) Decimal.zero(sign, -9999, ctx)
                 else minFiniteMagnitude(sign, ctx)
             return if (beQuiet) z else ctx.signalInexactUnderflow(z)
         }
@@ -160,7 +160,7 @@ private fun decFinalizeUnderflowBoundary(sign: Boolean,
     val totalResidue = scaleResidue.merge(residue)
     val z =
         if (totalResidue.ulpRoundUp(rounding.negate(sign), 0L)) minFiniteMagnitude(sign, ctx)
-        else Decimal.newZero(sign, -9999, ctx)
+        else Decimal.zero(sign, -9999, ctx)
     return if (beQuiet) z else ctx.signalInexactUnderflow(z)
 }
 

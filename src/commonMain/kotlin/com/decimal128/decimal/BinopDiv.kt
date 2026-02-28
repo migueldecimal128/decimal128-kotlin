@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.Decimal.Companion.newZero
+import com.decimal128.decimal.Decimal.Companion.zero
 import kotlin.math.min
 
 internal fun divImpl(x: Decimal, y: Decimal): Decimal =
@@ -12,9 +12,9 @@ internal fun divImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         divFnzFnz(x, y, ctx)
     } else when (BinopSignature.of(x, y)) {
         ZER_ZER -> divZeroZero(x, y, ctx)
-        ZER_FNZ -> newZero(x.sign xor y.sign, x.qExp - y.qExp, ctx)
+        ZER_FNZ -> zero(x.sign xor y.sign, x.qExp - y.qExp, ctx)
         ZER_INF,
-        FNZ_INF -> newZero(x.sign xor y.sign, ctx.qTiny, ctx)
+        FNZ_INF -> zero(x.sign xor y.sign, ctx.qTiny, ctx)
 
         FNZ_ZER -> divFnzZero(x, y, ctx)
         FNZ_FNZ -> throw IllegalStateException()
@@ -99,7 +99,7 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
     return if (bothFnz(x, y)) {
         remFnzFnz(isTrunc, x, y, ctx)
     } else when (BinopSignature.of(x, y)) {
-        ZER_FNZ -> newZero(x.sign, min(x.qExp, y.qExp), ctx)
+        ZER_FNZ -> zero(x.sign, min(x.qExp, y.qExp), ctx)
         FNZ_INF,
         ZER_INF -> x
 

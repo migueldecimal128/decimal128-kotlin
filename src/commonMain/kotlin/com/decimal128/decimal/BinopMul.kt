@@ -26,7 +26,7 @@ internal fun mulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun mulZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
-    Decimal.newZero(x.sign xor y.sign, x.qExp + y.qExp, ctx)
+    Decimal.zero(x.sign xor y.sign, x.qExp + y.qExp, ctx)
 
 private fun mulInfZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
     ctx.signalInvalid(Decimal.NaN)

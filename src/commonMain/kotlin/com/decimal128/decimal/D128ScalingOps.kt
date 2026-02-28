@@ -41,7 +41,7 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
                 else -> return x
             }
         }
-        qX < NON_FINITE_INF -> return Decimal.newZero(x.sign, -decimalScale, ctx)
+        qX < NON_FINITE_INF -> return Decimal.zero(x.sign, -decimalScale, ctx)
         qX == NON_FINITE_INF -> return x
         else -> return nanOperandFound(x, ctx)
     }

@@ -78,7 +78,7 @@ private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext)
             return y
         qMin = yQ
     }
-    return Decimal.newZero(ctx.isRoundTowardNegative(), qMin, ctx)
+    return Decimal.zero(ctx.isRoundTowardNegative(), qMin, ctx)
 }
 
 private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal =
@@ -101,7 +101,7 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCo
     return when {
         (cmp > 0) -> C128AddSub.c128UnscaledSub(xSign, x, y)
         (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
-        else -> Decimal.newZero(ctx.isRoundTowardNegative(), x.qExp, ctx)
+        else -> Decimal.zero(ctx.isRoundTowardNegative(), x.qExp, ctx)
     }
 }
 
@@ -126,7 +126,7 @@ private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCont
     return when {
         cmpMag > 0 -> subFnzScaledMagnitude(xSign, x, y, ctx)
         cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
-        else -> Decimal.newZero(false, min(x.qExp, y.qExp), ctx)
+        else -> Decimal.zero(false, min(x.qExp, y.qExp), ctx)
     }
 }
 

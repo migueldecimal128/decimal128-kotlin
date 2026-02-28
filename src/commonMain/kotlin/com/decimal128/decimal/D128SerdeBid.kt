@@ -339,7 +339,7 @@ object D128SerdeBid {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if (dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
-            return Decimal.newZero(sign, qExp, DECIMAL128) // use ctx? ... let's be safe
+            return Decimal.zero(sign, qExp, DECIMAL128) // use ctx? ... let's be safe
         return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
     }
 
@@ -461,7 +461,7 @@ object D128SerdeBid {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if (dw0 > coeffMax)
-            return Decimal.newZero(sign, qExp, DECIMAL128)
+            return Decimal.zero(sign, qExp, DECIMAL128)
         return Decimal(sign, qExp, 0L, dw0)
     }
 

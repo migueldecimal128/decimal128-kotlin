@@ -63,6 +63,15 @@ class Decimal private constructor(
 
         private const val BIT31 = Int.MIN_VALUE
 
+        internal const val NON_FINITE_BIT  = 0x4000_0000
+        internal const val SNAN_BIT        = 0x1000_0000
+        internal const val QNAN_BIT        = 0x0800_0000
+        internal const val INF_BIT         = 0x0400_0000
+
+        internal const val SNAN_SEAL       = NON_FINITE_BIT or SNAN_BIT
+        internal const val QNAN_SEAL       = NON_FINITE_BIT or QNAN_BIT
+        internal const val INF_SEAL        = NON_FINITE_BIT or INF_BIT
+
         internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= -16384 && qExp <= 16383 }
             return Decimal(
@@ -149,18 +158,9 @@ class Decimal private constructor(
         private const val HASH_CODE_NEG_INFINITY = 52414862
         private const val HASH_CODE_NAN = 52594569
 
-        private const val NINES_33_HI = 0x044B82FA09B5A53FL
-        private const val NINES_33_LO = Long.MIN_VALUE or 0x06C2ABFAFF7FFFFFL
-        private const val NINES_33_BITLEN = 112
-
-        private const val NINES_38_HI = 0x4B3B4CA85A86C47AL
-        private const val NINES_38_LO = 0x098A223FFFFFFFFFL
-        private const val NINES_38_BITLEN = 127
-
-
         fun zero(sign: Boolean): Decimal = if (sign) NEG_ZEROe0 else POS_ZEROe0
 
-        fun newZero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
+        fun zero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
             val qClamped = max(min(qExp, ctx.qMax), ctx.qTiny)

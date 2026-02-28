@@ -373,7 +373,7 @@ object D128ParsePrint {
         val signedExp = if (expSign) -exp else exp
         val qExp = signedExp - fractionalDigitCount + max(0, significantDigitCount - precision)
         if ((dw0T or dw1T) == 0L) // allow any exponent with Zero
-            return Decimal.newZero(sign, qExp, ctx)
+            return Decimal.zero(sign, qExp, ctx)
         val dec = decRoundAndFinalizeFinite(sign, dw1T, dw0T, residue, qExp, ctx)
         if (!dec.isFiniteNonZero() && ctx.decPrefs.parseThrowOnOutOfRange)
             return "value out of range"
