@@ -14,18 +14,18 @@ import com.decimal128.decimal.MagnitudeDiv.magDivFnzFnz
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val MIN_SPECIAL_VALUE = 16381
-internal const val NON_FINITE_INF = 16381
+internal const val MIN_SPECIAL_VALUE = 16380
+internal const val NON_FINITE_INF = 16380
 // Total order has sNaN < qNaN
 // But, implementation needs to leave sNaN > qNaN
 // because that makes it easier to distinguish the sNaN
 // when converting from sNaN => qNaN
 // See setNaN(x, y, env)
-internal const val NON_FINITE_QNAN = 16382
-internal const val NON_FINITE_SNAN = 16383
+internal const val NON_FINITE_QNAN = 16381
+internal const val NON_FINITE_SNAN = 16382
 
-const val CAPPED_EXP_MIN = -16000
-const val CAPPED_EXP_MAX = 16000
+const val CAPPED_EXP_MIN = -7000
+const val CAPPED_EXP_MAX = 7000
 
 class MutDec() : C256() {
     var sign = false
@@ -1238,7 +1238,7 @@ class MutDec() : C256() {
         set(x)
         when {
             qExp < NON_FINITE_INF -> {
-                val p10 = capExponentRange(pow10)
+                val p10 = min(max(pow10, -99999), 99999)
                 qExp = capExponentRange(qExp + p10)
                 if (qExp > env.qMax || qExp < env.qTiny)
                     return finalize(env)

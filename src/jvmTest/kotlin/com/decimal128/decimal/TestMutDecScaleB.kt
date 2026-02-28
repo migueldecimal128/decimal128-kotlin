@@ -46,7 +46,7 @@ class TestMutDecScaleB {
                 if (s.isFinite())
                     BigDecimal(s.toString())
                 else
-                    BigDecimal("1E+16381")
+                    BigDecimal("1E+16380")
                 )
         assertEquals(expected, observed)
     }
