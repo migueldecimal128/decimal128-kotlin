@@ -36,7 +36,7 @@ enum class BinopSignature {
         fun of(x: MutDec, y: MutDec): BinopSignature =
             signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
-        private fun indexOf(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
+        private fun indexOf_x(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
             // these flags are 0/1 Int
             // each operand is identified by 2 bits
             // bit 1 says whether or not the value isSpecial
@@ -57,6 +57,20 @@ enum class BinopSignature {
                 (yIsSpecial01 shl 1) or (yIsFinite01 and yNonZero01) or (yIsSpecial01 and yIsNan01)
 
             return (xSignature shl 2) + ySignature
+        }
+
+        private fun indexOf(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
+            val xCat = when {
+                qX < MIN_SPECIAL_VALUE -> if (bitLenX == 0) 0 else 1  // ZER or FNZ
+                qX == NON_FINITE_INF   -> 2                            // INF
+                else                   -> 3                            // NAN
+            }
+            val yCat = when {
+                qY < MIN_SPECIAL_VALUE -> if (bitLenY == 0) 0 else 1  // ZER or FNZ
+                qY == NON_FINITE_INF   -> 2                            // INF
+                else                   -> 3                            // NAN
+            }
+            return (xCat shl 2) or yCat
         }
 
     }
