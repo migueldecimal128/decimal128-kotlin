@@ -22,17 +22,19 @@ import kotlin.math.max
 import kotlin.math.min
 
 // commonMain
-expect open class DecimalRep(seal: Int, dw1: Long, dw0: Long) {
+expect open class DecimalRep(steal: Int, seal: Int, dw1: Long, dw0: Long) {
+    internal val steal: Int
     internal val seal: Int
     internal val dw1: Long
     internal val dw0: Long
 }
 
 class Decimal private constructor(
+    steal: Int,
     seal: Int,
     dw1: Long,
     dw0: Long):
-    DecimalRep(seal, dw1, dw0), Comparable<Decimal> {
+    DecimalRep(steal, seal, dw1, dw0), Comparable<Decimal> {
 
     internal val bitLen: Int
         get() = seal and 0x1FF
@@ -74,7 +76,9 @@ class Decimal private constructor(
 
         internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= -16384 && qExp <= 16383 }
+            val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(
+                steal,
                 (if (sign) BIT31 else 0) or
                         ((qExp and 0x7FFF) shl 16) or
                         calcPackedLengths128(dw1, dw0),
@@ -89,7 +93,9 @@ class Decimal private constructor(
             verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
             verify { digitLen <= 38 }
             verify { digitLen <= 34 || allowNonCanonical }
+            val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(
+                steal,
                 (if (sign) BIT31 else 0) or
                         ((qExp and 0x7FFF) shl 16) or
                         (digitLen shl 9) or
@@ -108,7 +114,9 @@ class Decimal private constructor(
                 qExp == NON_FINITE_INF -> digitLen == 0
                 else -> digitLen <= ctx.decFormat.nanPayloadPrecision
             } }
+            val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(
+                steal,
                 (if (sign) BIT31 else 0) or
                         ((qExp and 0x7FFF) shl 16) or
                         (digitLen shl 9) or
@@ -123,7 +131,9 @@ class Decimal private constructor(
                 val digitLen = calcDigitLen128(dw1, dw0)
                 digitLen <= 34 || (allowNonCanonical && digitLen <= 38)
             }
+            val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(
+                steal,
                 (if (sign) BIT31 else 0) or
                         ((qExp and 0x7FFF) shl 16) or
                         calcPackedLengths128(dw1, dw0),
@@ -131,20 +141,20 @@ class Decimal private constructor(
             )
         }
 
-        val POS_ZEROe0 = Decimal(    0, 0L, 0L)
-        val NEG_ZEROe0 = Decimal(BIT31, 0L, 0L)
+        val POS_ZEROe0 = Decimal(stealEncodeZER(0, 0),     0, 0L, 0L)
+        val NEG_ZEROe0 = Decimal(stealEncodeZER(1, 0), BIT31, 0L, 0L)
         val ZERO = POS_ZEROe0
-        val POS_ONE = Decimal(         0x0201, 0L, 1L)
-        val NEG_ONE = Decimal(BIT31 or 0x0201, 0L, 1L)
+        val POS_ONE = Decimal(stealEncodeFNZ(0, 0, 0L, 1L),          0x0201, 0L, 1L)
+        val NEG_ONE = Decimal(stealEncodeFNZ(1, 0, 0L, 1L), BIT31 or 0x0201, 0L, 1L)
         val ONE = POS_ONE
-        val POS_INFINITY = Decimal(         (NON_FINITE_INF shl 16), 0L, 0L)
-        val NEG_INFINITY = Decimal(BIT31 or (NON_FINITE_INF shl 16), 0L, 0L)
+        val POS_INFINITY = Decimal(stealEncodeINF(0),          (NON_FINITE_INF shl 16), 0L, 0L)
+        val NEG_INFINITY = Decimal(stealEncodeINF(1), BIT31 or (NON_FINITE_INF shl 16), 0L, 0L)
         val INFINITY = POS_INFINITY
-        val POS_QNAN = Decimal(         (NON_FINITE_QNAN shl 16), 0L, 0L)
-        val NEG_QNAN = Decimal(BIT31 or (NON_FINITE_QNAN shl 16), 0L, 0L)
+        val POS_QNAN = Decimal(stealEncodeQNAN(0, 0L, 0L),          (NON_FINITE_QNAN shl 16), 0L, 0L)
+        val NEG_QNAN = Decimal(stealEncodeQNAN(1, 0L, 0L), BIT31 or (NON_FINITE_QNAN shl 16), 0L, 0L)
         val NaN = POS_QNAN
-        val POS_SNAN = Decimal(         (NON_FINITE_SNAN shl 16), 0L, 0L)
-        val NEG_SNAN = Decimal(BIT31 or (NON_FINITE_SNAN shl 16), 0L, 0L)
+        val POS_SNAN = Decimal(stealEncodeSNAN(0, 0L, 0L),          (NON_FINITE_SNAN shl 16), 0L, 0L)
+        val NEG_SNAN = Decimal(stealEncodeSNAN(1, 0L, 0L), BIT31 or (NON_FINITE_SNAN shl 16), 0L, 0L)
         val sNaN = POS_SNAN
 
         private const val DECIMAL128_QTINY_Neg6176 = -6176
@@ -166,7 +176,8 @@ class Decimal private constructor(
             val qClamped = max(min(qExp, ctx.qMax), ctx.qTiny)
             val seal =
                 (if (sign) BIT31 else 0) or ((qClamped and 0x7FFF) shl 16)
-            val zero = Decimal(seal, 0L, 0L)
+            val signBit = if (sign) 1 else 0
+            val zero = Decimal(stealEncodeZER(signBit, qClamped), seal, 0L, 0L)
             return zero
         }
 
@@ -510,7 +521,7 @@ class Decimal private constructor(
 
     fun negate(): Decimal {
         return when {
-            qExp != NON_FINITE_INF -> Decimal(seal xor BIT31, dw1, dw0)
+            qExp != NON_FINITE_INF -> Decimal(steal xor BIT31, seal xor BIT31, dw1, dw0)
             sign -> POS_INFINITY
             else -> NEG_INFINITY
         }
@@ -818,7 +829,7 @@ class Decimal private constructor(
 
     // this is only provided for IEEE754-2019 completeness.
     // in an immutable world it serves no purpose
-    fun copy(): Decimal = Decimal(seal, dw1, dw0)
+    fun copy(): Decimal = Decimal(steal, seal, dw1, dw0)
 
     override fun hashCode(): Int {
         val sign = sign; val qExp = qExp
