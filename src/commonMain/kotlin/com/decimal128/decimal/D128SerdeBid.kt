@@ -254,7 +254,7 @@ object D128SerdeBid {
         val coeffMaxLo: Long
         val payloadMaxHi: Long
         val payloadMaxLo: Long
-        val allowNonCanonical = ctx.decPrefs.decodeBidAllowNonCanonical
+        val allowNonCanonical = ctx.decPrefs.decodeBidAllowNonCanonical and false
         if (allowNonCanonical) {
             // (0b1001uL shl t) + ((1uL shl t) - 1uL)
             coeffMaxHi = 0x00027FFFFFFFFFFFL
@@ -338,7 +338,7 @@ object D128SerdeBid {
         // IEEE754-2019 3.5.2 p21
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
-        if (dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
+        if ((dw1 or dw0) == 0L || dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
             return Decimal.zero(sign, qExp, DECIMAL128) // use ctx? ... let's be safe
         return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
     }

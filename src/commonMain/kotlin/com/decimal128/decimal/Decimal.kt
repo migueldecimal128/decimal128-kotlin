@@ -37,18 +37,23 @@ class Decimal private constructor(
     DecimalRep(steal, seal, dw1, dw0), Comparable<Decimal> {
 
     internal val bitLen: Int
+        // get() = stealBitLen(steal) // problems with non-Canonical ... as expected
         get() = seal and 0x1FF
     internal val digitLen: Int
-        get() = (seal shr 9) and 0x7F
+        // get() = stealDigitLen(steal)
+        get() = (seal shr 9) and 0x3F
 
     internal val sign: Boolean
-        get() = seal < 0
+        get() = steal < 0
     internal val signBit: Int
-        get() = seal ushr 31
+        get() = steal ushr 31
     internal val signMask: Int
-        get() = seal shr 31
+        get() = steal shr 31
+
     internal val qExp: Int
+        // get() = stealQexp(steal) // lots of problems due to code expecting qExp >= NON_FINITE_INF
         get() = (seal shl 1) shr 17
+
     internal val eExp: Int
         get() = qExp + (digitLen - (-digitLen ushr 31))
 
@@ -66,12 +71,12 @@ class Decimal private constructor(
         private const val BIT31 = Int.MIN_VALUE
 
         internal const val NON_FINITE_BIT  = 0x4000_0000
-        internal const val SNAN_BIT        = 0x1000_0000
-        internal const val QNAN_BIT        = 0x0800_0000
+        internal const val QNAN_BIT        = 0x1000_0000
+        internal const val SNAN_BIT        = 0x0800_0000
         internal const val INF_BIT         = 0x0400_0000
 
-        internal const val SNAN_SEAL       = NON_FINITE_BIT or SNAN_BIT
         internal const val QNAN_SEAL       = NON_FINITE_BIT or QNAN_BIT
+        internal const val SNAN_SEAL       = NON_FINITE_BIT or SNAN_BIT
         internal const val INF_SEAL        = NON_FINITE_BIT or INF_BIT
 
         internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
@@ -177,6 +182,7 @@ class Decimal private constructor(
             val seal =
                 (if (sign) BIT31 else 0) or ((qClamped and 0x7FFF) shl 16)
             val signBit = if (sign) 1 else 0
+            val steal = stealEncodeZER(signBit, qClamped)
             val zero = Decimal(stealEncodeZER(signBit, qClamped), seal, 0L, 0L)
             return zero
         }
@@ -330,21 +336,21 @@ class Decimal private constructor(
             else
                 Decimal(sign, NON_FINITE_INF, dw1, dw0, allowNonCanonical = true)
 
-        internal fun hasNaN(x: Decimal, y: Decimal): Boolean =
-            max(x.qExp, y.qExp) >= NON_FINITE_QNAN
+        internal fun hasNaN(x: Decimal, y: Decimal): Boolean {
+            val result1 = max(x.qExp, y.qExp) >= NON_FINITE_QNAN
+            val result2 = stealIsNAN(x.steal) or stealIsNAN(y.steal)
+            check (result1 == result2)
+            return result2
+        }
 
-        internal fun neitherIsNaN(x: Decimal, y: Decimal) =
-            x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
+        internal fun neitherIsNaN(x: Decimal, y: Decimal) = !hasNaN(x, y)
+//            x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
 
     }
 
-    fun isNotZero() = !isZero()
-    fun isPosZero() = isZero() && !sign
-    fun isNegZero() = isZero() && sign
-
-    fun precision(): Int = if (qExp < NON_FINITE_INF) digitLen else -1
-    fun qExponent(): Int = if (qExp < NON_FINITE_INF) qExp else -1
-    fun eExponent(): Int = if (qExp < NON_FINITE_INF) eExp else -1
+    fun precision(): Int = if (isFinite()) digitLen else Int.MIN_VALUE
+    fun qExponent(): Int = if (isFinite()) qExp else Int.MIN_VALUE
+    fun eExponent(): Int = if (isFinite()) eExp else Int.MIN_VALUE
 
     // IEEE754-2019 5.7.2
 
@@ -385,17 +391,17 @@ class Decimal private constructor(
         val sign = sign; val qExp = qExp; val bitLen = bitLen
         return when {
             qExp >= NON_FINITE_INF -> when {
-                qExp == NON_FINITE_QNAN -> quietNaN
-                qExp > NON_FINITE_QNAN -> signalingNaN
-                sign -> negativeInfinity
-                else -> positiveInfinity
+                qExp == NON_FINITE_QNAN -> { verify { stealIsQNAN(steal) } ; quietNaN }
+                qExp > NON_FINITE_QNAN -> { verify {stealIsSNAN(steal) } ; signalingNaN }
+                sign -> { verify { stealIsINF(steal) } ; negativeInfinity }
+                else -> { verify { stealIsINF(steal) } ; positiveInfinity }
             }
-            bitLen == 0 && sign -> negativeZero
-            bitLen == 0 -> positiveZero
-            eExp < -6143 && sign -> negativeSubnormal
-            eExp < -6143 -> positiveSubnormal
-            sign -> negativeNormal
-            else -> positiveNormal
+            bitLen == 0 && sign -> { verify { stealIsZER(steal) } ; negativeZero }
+            bitLen == 0 -> { verify { stealIsZER(steal) } ; positiveZero }
+            eExp < -6143 && sign -> { verify { stealIsFNZ(steal) } ; negativeSubnormal }
+            eExp < -6143 -> { verify { stealIsFNZ(steal) } ; positiveSubnormal }
+            sign -> { verify { stealIsZER(steal) } ; negativeNormal }
+            else -> { verify { stealIsZER(steal) } ; positiveNormal }
         }
     }
 
@@ -411,11 +417,15 @@ class Decimal private constructor(
      * In this implementation, the check for subnormal is hardwired to the
      * decimal128 `eExp` adjusted (scientific) exponent -6143 and 34 digits.
      */
-    fun isNormal(): Boolean =
-        qExp < NON_FINITE_INF &&
+    fun isNormal(): Boolean {
+        val result1 =  qExp < NON_FINITE_INF &&
                 digitLen <= 34 &&
                 bitLen > 0 &&
                 eExp >= -6143
+        val result2 = stealIsFNZ(steal) && digitLen <= 34 && eExp >= -6143
+        check (result1 == result2)
+        return result2
+    }
 
     /**
      * isSubnormal(x) is true if and only if x is subnormal
@@ -425,19 +435,30 @@ class Decimal private constructor(
      *
      * This last test is the same as: `qExp == -6176 && digitLen < 34`
      */
-    fun isSubnormal(): Boolean = qExp < NON_FINITE_INF && bitLen > 0 && eExp < -6143
+    fun isSubnormal(): Boolean = stealIsFNZ(steal) && eExp < -6143
 
     /**
      * isFinite(x) is true if and only if x is zero, normal, or subnormal
      * (not infinite or NaN).
      */
-    fun isFinite(): Boolean = qExp < NON_FINITE_INF
+    fun isFinite(): Boolean {
+        verify { stealIsFinite(steal) == qExp < NON_FINITE_INF }
+        return stealIsFinite(steal)
+    }
 
     /**
      * isFiniteNonZero(x) is true if and only if x is normal or subnormal
      * (not zero, infinite, or NaN).
      */
-    fun isFiniteNonZero(): Boolean = qExp < NON_FINITE_INF && bitLen > 0
+    fun isFiniteNonZero(): Boolean {
+        val result1 = qExp < NON_FINITE_INF && bitLen > 0
+        //verify { stealIsFNZ(steal) == qExp < NON_FINITE_INF && bitLen > 0 }
+        val result2 = stealIsFNZ(steal)
+        if (result1 != result2)
+            println("foo!")
+        check (result1 == result2)
+        return result2
+    }
 
     /**
      * isZero(x) is true if and only if x is ±0.
@@ -449,7 +470,11 @@ class Decimal private constructor(
      */
     // FIXME - don't allow oversized coefficients here
     //  this is too fragile ... figure out another way to pass unit tests
-    fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+    //fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+    // FIXME ... a few problems in unexpected places
+    fun isZero(): Boolean = stealIsZER(steal)
+
+    fun isNotZero() = !isZero()
 
     /**
      * isCanonicalZero(x) is true if x is ±0 and the coefficient
@@ -458,21 +483,37 @@ class Decimal private constructor(
      * IEEE rules state that nonCanonical coefficients must be treated
      * as zero. Therefore, more than 34 digits == 0
      */
-    fun isCanonicalZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
+    fun isCanonicalZero(): Boolean {
+        val a = isFinite()
+        val b = bitLen == 0
+        val c = digitLen > 34
+        val result1 = isFinite() && (bitLen == 0 || digitLen > 34)
+        val result2 = stealIsZER(steal)
+        if (result1 != result2)
+            println("foo!")
+        check(result1 == result2)
+        return result2
+    }
 
     /**
      * isInfinite(x) is true if and only if x is infinite.
      *
      * This includes positiveInfinity and negativeInfinity.
      */
-    fun isInfinite(): Boolean = qExp == NON_FINITE_INF
+    fun isInfinite(): Boolean {
+        verify { stealIsINF(steal) == (qExp == NON_FINITE_INF) }
+        return stealIsINF(steal)
+    }
 
     /**
      * isNaN(x) is true if and only if x is a NaN.
      *
      * NaN Not A Number values may be quiet or signaling.
      */
-    fun isNaN(): Boolean = qExp >= NON_FINITE_QNAN
+    fun isNaN(): Boolean {
+        verify { stealIsNAN(steal) == (qExp >= NON_FINITE_QNAN) }
+        return stealIsNAN(steal)
+    }
 
     /**
      * isSignaling(x) is true if and only if x is a signaling NaN.
@@ -481,7 +522,11 @@ class Decimal private constructor(
      * operations an environment flag is set and trapping to an
      * optional exception handler may take place.
      */
-    fun isSignaling(): Boolean = qExp == NON_FINITE_SNAN
+    fun isSignaling(): Boolean {
+        verify { stealIsSNAN(steal) == (qExp == NON_FINITE_SNAN) }
+        return stealIsSNAN(steal)
+        //return qExp == NON_FINITE_SNAN
+    }
 
     /**
      * In the context of Decimal128 BID encoding, the only
@@ -517,7 +562,7 @@ class Decimal private constructor(
     fun isSameQuantum(other: Decimal) =
         (this.qExp == other.qExp) || (this.qExp >= NON_FINITE_QNAN && other.qExp >= NON_FINITE_QNAN)
 
-    fun abs() = if (seal < 0) negate() else this
+    fun abs() = if (steal < 0) negate() else this
 
     fun negate(): Decimal {
         return when {
@@ -547,6 +592,7 @@ class Decimal private constructor(
             qExp == NON_FINITE_INF -> return POS_INFINITY
             else -> return nanOperandFound(this, ctx)
         }
+
     }
 
     fun scaleB(pow10Delta: Int, ctx: DecContext): Decimal {

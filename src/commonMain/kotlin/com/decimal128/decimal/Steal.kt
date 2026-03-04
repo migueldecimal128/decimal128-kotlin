@@ -31,6 +31,9 @@ internal /*inline*/ fun stealIsFNZ(steal: Int): Boolean = (steal and STEAL_TYPE_
 internal /*inline*/ fun stealIsINF(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_INF
 internal /*inline*/ fun stealIsNAN(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_NAN
 
+internal /*inline*/ fun stealIsFinite(steal: Int): Boolean  = (steal and STEAL_NONFINITE_BIT) == 0
+internal /*inline*/ fun stealNotFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) != 0
+
 internal const val STEAL_QNAN_BIT      = 0x1000_0000
 internal const val STEAL_NAN_MASK      = 0x7000_0000
 internal const val STEAL_NAN_SNAN      = 0x6000_0000
@@ -70,7 +73,7 @@ internal /*inline*/ fun stealEncodeINF(signBit: Int) =
 //  ... e.g. link INF + coeff ... at this point I think not
 
 internal /*inline*/ fun stealEncodeSNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
-    (signBit shl 31) or STEAL_NAN_QNAN or calcPackedLengths128(payloadDw1, payloadDw0)
+    (signBit shl 31) or STEAL_NAN_SNAN or calcPackedLengths128(payloadDw1, payloadDw0)
 
 internal /*inline*/ fun stealEncodeQNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
     (signBit shl 31) or STEAL_NAN_QNAN or calcPackedLengths128(payloadDw1, payloadDw0)
@@ -78,7 +81,9 @@ internal /*inline*/ fun stealEncodeQNAN(signBit: Int, payloadDw1: Long, payloadD
 internal fun stealRaw(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Int {
     val signBit = if (sign) 1 else 0
     return when {
-        qExp < NON_FINITE_INF   -> stealEncodeFNZ(signBit, qExp, dw1, dw0)
+        qExp < NON_FINITE_INF   ->
+            if ((dw1 or dw0) == 0L) stealEncodeZER(signBit, qExp)
+            else stealEncodeFNZ(signBit, qExp, dw1, dw0)
         qExp == NON_FINITE_INF  -> stealEncodeINF(signBit)
         qExp == NON_FINITE_SNAN -> stealEncodeSNAN(signBit, dw1, dw0)
         qExp == NON_FINITE_QNAN -> stealEncodeQNAN(signBit, dw1, dw0)
