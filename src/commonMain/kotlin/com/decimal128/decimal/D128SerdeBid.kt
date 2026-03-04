@@ -250,25 +250,14 @@ object D128SerdeBid {
         val w5 = 17 // w+5, combination field width in bits
         val t = 110 // trailing significand field width in bits
         verify { 1 + w5 + t == k }
-        val coeffMaxHi: Long
-        val coeffMaxLo: Long
-        val payloadMaxHi: Long
-        val payloadMaxLo: Long
-        val allowNonCanonical = ctx.decPrefs.decodeBidAllowNonCanonical and false
-        if (allowNonCanonical) {
-            // (0b1001uL shl t) + ((1uL shl t) - 1uL)
-            coeffMaxHi = 0x00027FFFFFFFFFFFL
-            coeffMaxLo = -1L
-            payloadMaxHi = coeffMaxHi
-            payloadMaxLo = coeffMaxLo
-        } else {
-            // 34 nines
-            coeffMaxHi = 0x0001ED09BEAD87C0L
-            coeffMaxLo = 0x378D8E63FFFFFFFFL
-            // 33 nines
-            payloadMaxHi = 0x0000314DC6448D93L
-            payloadMaxLo = 0x38C15B09FFFFFFFFL
-        }
+
+        // 34 nines
+        val coeffMaxHi = 0x0001ED09BEAD87C0L
+        val coeffMaxLo = 0x378D8E63FFFFFFFFL
+        // 33 nines
+        val payloadMaxHi = 0x0000314DC6448D93L
+        val payloadMaxLo = 0x38C15B09FFFFFFFFL
+
         // 1 + 17 + 110 == 128
         // 1 bit for the sign
         val sign = bid128Hi < 0L
@@ -310,10 +299,7 @@ object D128SerdeBid {
             }
             // if the top 5 bits are 0b11110 then Infinity
             (combination shr (w5 - 5)) == 0b11110 -> {
-                if (!allowNonCanonical)
-                    return Decimal.infinity(sign)
-                val remaining58Hi = (bid128Hi shl 6) ushr 6
-                return Decimal.infinityNonCanonical(sign, remaining58Hi, bid128Lo)
+                return Decimal.infinity(sign)
             }
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
@@ -322,10 +308,9 @@ object D128SerdeBid {
                 val payloadHi = coeffTHi
                 val payloadLo = bid128Lo
                 if (payloadHi > payloadMaxHi || payloadHi == payloadMaxHi && unsignedGT(payloadLo, payloadMaxLo)) {
-                    if (! allowNonCanonical)
-                        return Decimal.NaN(sign, isSignaling)
+                    return Decimal.NaN(sign, isSignaling)
                 }
-                return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo, allowNonCanonical)
+                return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo)
             }
 
             else -> {
@@ -340,7 +325,7 @@ object D128SerdeBid {
         //  non-canonical and the value used for c is zero.
         if ((dw1 or dw0) == 0L || dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
             return Decimal.zero(sign, qExp, DECIMAL128) // use ctx? ... let's be safe
-        return Decimal(sign, qExp, dw1, dw0, allowNonCanonical)
+        return Decimal(sign, qExp, dw1, dw0)
     }
 
     fun decodeBid64(bid64: Long, allowNonCanonical: Boolean = false): Decimal {

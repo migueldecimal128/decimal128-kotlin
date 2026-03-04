@@ -25,7 +25,6 @@ data class DecPrefs(
     val printAutoMinNoExponent: Int = -6,
     val printStyle: PrintStyle = PrintStyle.AUTO,
 
-    val decodeBidAllowNonCanonical: Boolean = false,
     val propagatePreferSnan: Boolean = true,
 ) {
     companion object {

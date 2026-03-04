@@ -29,8 +29,7 @@ object IntelRunner1 {
         cases.forEach { tc ->
             if (verbose)
                 println(tc.text)
-            val decPrefs = DecPrefs().copy(decodeBidAllowNonCanonical = allowNonCanonical)
-            val ctx = DECIMAL128.with(decPrefs).withNewFlags().with(tc.decRounding())
+            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
             val op1 = tc.op1Bid128(ctx)
             if (verbose)
                 println("op1:$op1 decFlags:${ctx.decFlags}")
@@ -82,8 +81,7 @@ object IntelRunner1 {
                           allowNonCanonical: Boolean,
                           verbose: Boolean = false ) {
         cases.forEach { tc ->
-            val decPrefs = DecPrefs().copy(decodeBidAllowNonCanonical = allowNonCanonical)
-            val ctx = DECIMAL128.with(decPrefs).withNewFlags()
+            val ctx = DECIMAL128.withNewFlags()
             val op1 = tc.op1Bid128(ctx)
             if (verbose) {
                 println(tc.text)
