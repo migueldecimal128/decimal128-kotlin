@@ -8,6 +8,7 @@ import kotlin.math.min
 internal inline fun packLengths(digitLen: Int, bitLen: Int) =
     ((digitLen shl 9) or bitLen).toShort()
 
+/*
 internal inline fun packSignExp(sign: Boolean, qExp: Int): Short = ((if (sign) 0x8000 else 0) or (qExp and 0x7FFF)).toShort()
 
 internal inline fun unpackBitLen(packedLengths: Short) = packedLengths.toInt() and 0x1FF
@@ -35,6 +36,8 @@ internal inline fun calcPackedLengths(dw1: Long, dw0: Long): Short {
 internal inline fun capExponentRange(e: Int): Int {
     return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
 }
+
+ */
 
 // These have an implied binary decimal point at 2**32
 private const val LOG2_10_FLOOR: Long = 14_267_572_564L

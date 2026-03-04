@@ -31,11 +31,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     @JvmField
     internal var digitLen: Int
 
-    //internal var packedLengths: Short
-    //internal val bitLen: Int
-    //    get() = packedLengths.toInt() and 0x1FF
-    //internal val digitLen: Int
-    //    get() = (packedLengths.toInt() shr 9) and 0x07F
     init {
         this.dw3 = dw3
         this.dw2 = dw2
@@ -43,7 +38,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         this.dw0 = dw0
         this.bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
         this.digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
-        //this.packedLengths = packLengths(digitLen, bitLen)
     }
 
     fun c256SetZero() {
@@ -175,7 +169,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
     }
 
     internal inline fun c256EnableIndexSetAndZeroOut() {
-        //packedLengths = -1
         bitLen = -1
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
