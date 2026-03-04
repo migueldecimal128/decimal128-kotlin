@@ -5,16 +5,11 @@ package com.decimal128.decimal
 import kotlin.math.min
 import kotlin.math.max
 
-internal fun calcBitLen64(dw0: ULong): Int = calcBitLen64(dw0.toLong())
-
 internal fun calcBitLen64(dw0: Long): Int {
     val nlz0 = dw0.countLeadingZeroBits()
     val bitLen = 64 - nlz0
     return bitLen
 }
-
-internal fun calcBitLen128(dw1: ULong, dw0: ULong): Int =
-    calcBitLen128(dw1.toLong(), dw0.toLong())
 
 internal fun calcBitLen128(dw1: Long, dw0: Long): Int {
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()

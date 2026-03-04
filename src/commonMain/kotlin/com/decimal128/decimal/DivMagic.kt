@@ -128,52 +128,6 @@ object DivMagic {
         return residue
     }
 
-    fun magicDivPow10_64(x0: ULong, pow10: Int): ULong {
-        initializeMagicPow10_64()
-        verify { initialized }
-        when {
-            pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
-                val m = POW10[MAGIC_POW10_M_OFFSET + pow10].toULong()
-                val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
-                val denom = pow10_64(pow10).toULong()
-                val s = flagAndShift and 0x3F
-                val correctionMask = (flagAndShift shr 31).toLong().toULong()
-
-                val carryAmount = 1uL shl -s // 1uL shl (64 - s)
-                val pHiUncorrected = unsignedMulHi(x0, m)
-                val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
-                val carry = if (pHiCorrected < pHiUncorrected) carryAmount else 0uL
-                val qHat = pHiCorrected shr s
-                val q0 = carry + qHat
-
-                return q0
-            }
-
-            pow10 == 0 -> return x0
-            else -> throw IllegalArgumentException()
-        }
-    }
-
-    fun magicDivPow10_64(x0: Long, pow10: Int): Long {
-        initializeMagicPow10_64()
-        verify { pow10 > 0 && pow10 < MAGIC_POW10_MAXX }
-        verify { initialized }
-        val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
-        val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
-        val denom = pow10_64(pow10)
-        val s = flagAndShift and 0x3F
-        val correctionMask = (flagAndShift shr 31).toLong()
-
-        val carryAmount = 1L shl -s // 1L shl (64 - s)
-        val pHiUncorrected = unsignedMulHi(x0, m)
-        val pHiCorrected = pHiUncorrected + (x0 and correctionMask)
-        val carry = if (unsignedLT(pHiCorrected, pHiUncorrected)) carryAmount else 0L
-        val qHat = pHiCorrected shr s
-        val q0 = carry + qHat
-
-        return q0
-    }
-
     private fun magicDivModPow10_64(z: C256, x0: Long, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
@@ -191,8 +145,10 @@ object DivMagic {
                 val q0 = carry + qHat
 
                 val reconstructedHi = unsignedMulHi(q0, denom)
+                verify { reconstructedHi == 0L || reconstructedHi == 1L }
                 val reconstructedLo = q0 * denom
                 val rHat = x0 - reconstructedLo
+                // add denom iff reconstructedHi == 1
                 val remainder = rHat + (-reconstructedHi and denom)
 
                 z.c256Set64(q0)

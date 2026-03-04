@@ -440,45 +440,4 @@ object DivBarrett {
         return remainder
     }
 
-    fun barrettDivMod128Pow10(dw1: ULong, dw0: ULong, pow10: Int):
-            Triple<ULong, ULong, ULong> {
-        if (pow10 < 1 || pow10 >= BARRETT_POW10_MAXX)
-            throw IllegalArgumentException()
-
-        val denom = pow10_64(pow10).toULong()
-        val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10].toULong()
-
-        val dwA = dw0 and 0xFFFF_FFFFuL
-        val dwB = dw0 shr 32
-        val dwG = dw1
-
-        val qHatG = unsignedMulHi(dwG, mu)
-        val rHatG = dwG - (qHatG * denom)
-        val adjustG = (((rHatG - denom).toLong() shr 63).inv()).toULong()
-        val qG = qHatG - adjustG
-        val rG = rHatG - (adjustG and denom)
-
-        val ppB = (rG shl 32) or dwB
-        val qHatB = unsignedMulHi(ppB, mu)
-        val rHatB = ppB - (qHatB * denom)
-        val adjustB = (((rHatB - denom).toLong() shr 63).inv()).toULong()
-        val qB = qHatB - adjustB
-        val rB = rHatB - (adjustB and denom)
-
-        val ppA = (rB shl 32) or dwA
-        val qHatA = unsignedMulHi(ppA, mu)
-        val rHatA = ppA - (qHatA * denom)
-        val adjustA = (((rHatA - denom).toLong() shr 63).inv()).toULong()
-        val qA = qHatA - adjustA
-        val rA = rHatA - (adjustA and denom)
-
-        val remainder = rA
-
-        val q1 = qG
-        val q0 = (qB shl 32) or qA
-        return Triple(q1, q0, remainder)
-    }
-
-
-
 }

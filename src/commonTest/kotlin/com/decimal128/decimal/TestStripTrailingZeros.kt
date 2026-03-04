@@ -27,17 +27,6 @@ class TestStripTrailingZeros {
 
     val verbose = false
 
-    @Test
-    fun test1() {
-        // force the load of C256Pow10
-        val x = pow10BitLen(1)
-        val foo = 9876543210987654321uL
-        for (pow10 in 1..9) {
-            val (q1, q0, r) = DivBarrett.barrettDivMod128Pow10(0uL, foo, pow10)
-            if (verbose)
-                println("pow10:$pow10 q1:$q1 q0:$q0")
-        }
-    }
 
     @Test
     fun testStrip64() {

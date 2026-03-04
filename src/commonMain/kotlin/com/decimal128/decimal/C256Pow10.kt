@@ -298,9 +298,6 @@ internal fun calcPackedLengths128(dw1: Long, dw0: Long): Int {
     return (digitLen shl 9) or bitLen
 }
 
-internal fun calcDigitLen128(bitLen: Int, dw1: ULong, dw0: ULong): Int =
-    calcDigitLen128(bitLen, dw1.toLong(), dw0.toLong())
-
 internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
     val digitCountEstimate = (bitLen * 1233) ushr 12
     val dw1T = dw1 xor Long.MIN_VALUE
