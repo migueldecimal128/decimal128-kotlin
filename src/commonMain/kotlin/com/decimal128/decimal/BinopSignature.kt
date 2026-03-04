@@ -31,7 +31,8 @@ enum class BinopSignature {
         }
 
         fun of(x: Decimal, y: Decimal): BinopSignature =
-            signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
+//            signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
+            signatures16[indexOf(x.steal, y.steal) and 0x0F]
 
         fun of(x: MutDec, y: MutDec): BinopSignature =
             signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
@@ -70,6 +71,12 @@ enum class BinopSignature {
                 qY == NON_FINITE_INF   -> 2                            // INF
                 else                   -> 3                            // NAN
             }
+            return (xCat shl 2) or yCat
+        }
+
+        private fun indexOf(xSteal: Int, ySteal: Int): Int {
+            val xCat = stealType(xSteal)
+            val yCat = stealType(ySteal)
             return (xCat shl 2) or yCat
         }
 

@@ -37,11 +37,11 @@ class Decimal private constructor(
     DecimalRep(steal, seal, dw1, dw0), Comparable<Decimal> {
 
     internal val bitLen: Int
-        // get() = stealBitLen(steal) // problems with non-Canonical ... as expected
-        get() = seal and 0x1FF
+        get() = stealBitLen(steal) // problems with non-Canonical ... as expected
+        // get() = seal and 0x1FF
     internal val digitLen: Int
-        // get() = stealDigitLen(steal)
-        get() = (seal shr 9) and 0x3F
+        get() = stealDigitLen(steal)
+        // get() = (seal shr 9) and 0x3F
 
     internal val sign: Boolean
         get() = steal < 0
