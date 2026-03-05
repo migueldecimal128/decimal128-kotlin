@@ -13,6 +13,7 @@ object MagnitudeAddSub {
         //    u256AddUnscaled(z, x, y)
         //    return Residue.EXACT
         //}
+        val tmpDwQuad = ctx.decTmps.dwQuad1
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
@@ -27,7 +28,7 @@ object MagnitudeAddSub {
                 val residue = when {
                     shiftRight == 0 -> {
                         verify { shiftLeft > 0 }
-                        c256SetAddScaled(z, m, shiftLeft, n)
+                        c256SetAddScaled(z, m, shiftLeft, n, tmpDwQuad)
                         EXACT
                     }
 

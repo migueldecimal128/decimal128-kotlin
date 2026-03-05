@@ -28,6 +28,7 @@ const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
 
 class MutDec() : C256() {
+    var type: Int = STEAL_TYPE_ZER
     var sign = false
     var qExp = 0
     val eExp: Int

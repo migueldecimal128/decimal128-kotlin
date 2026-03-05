@@ -62,18 +62,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256IsPowerOf10() = coeffIsPow10(this)
 
-    internal inline fun c256IsAllNines(nineCount: Int) : Boolean  {
-        val pow10BitLen = pow10BitLen(nineCount)
-        if (bitLen != pow10BitLen)
-            return false
-        val offset = pow10Offset(nineCount)
-        if (dw0 != POW10[offset] - 1)
-            return false
-        if (nineCount >= MIN_POW10_DIGIT_LEN_128 && dw1 != POW10[offset])
-            return false
-        return true
-    }
-
     fun updateDigitLenBitLen() {
         val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
         val digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
@@ -85,10 +73,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         this.digitLen = digitLen
         this.bitLen = bitLen
     }
-
-    //FIXME this case can probably be accelerated because
-    // of bitLen delta <= 1 and digitLen delta <= 1
-    private fun updateLengthsAfterRoundUp() = updateDigitLenBitLen()
 
     internal fun c256HasValidLengths(): Boolean {
         if (bitLen != calcBitLen256(dw3, dw2, dw1, dw0))

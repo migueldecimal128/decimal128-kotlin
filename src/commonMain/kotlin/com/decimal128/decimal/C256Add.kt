@@ -32,7 +32,10 @@ internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256) {
     z.c256Set256(p3, p2, p1, p0)
 }
 
-internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
+internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) =
+    c256SetAddScaled(z, x, scaleDelta, y, DwQuad())
+
+internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256, tmpDwQuad: DwQuad) {
     verify { scaleDelta > 0 }
     verify { scaleDelta < PRECISION_34 }
 

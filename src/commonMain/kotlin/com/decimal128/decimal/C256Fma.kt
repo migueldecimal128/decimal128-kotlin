@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 import kotlin.math.max
 
-internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
+internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256, tmpDwQuad: DwQuad = DwQuad()) {
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
@@ -19,6 +19,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
     val n0 = n.dw0
     val a0 = a.dw0
     val a1 = a.dw1
+    val a2 = a.dw2
+    val a3 = a.dw3
 
     val maxFusedBitLen = max(mBitLen + nBitLen, a.bitLen) + 1
     if (nBitLen <= 64) {
@@ -28,7 +30,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
                     z, maxFusedBitLen,
                     m0,
                     n0,
-                    a1, a0
+                    a1, a0,
+                    tmpDwQuad
                 )
 
             (mBitLen <= 128 && aBitLen <= 192) ->
@@ -36,7 +39,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
                     z, maxFusedBitLen,
                     m1, m0,
                     n0,
-                    a.dw2, a1, a0
+                    a2, a1, a0,
+                    tmpDwQuad
                 )
 
             (mBitLen <= 192) ->
@@ -44,7 +48,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
                     z, maxFusedBitLen,
                     m.dw2, m1, m0,
                     n0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             else ->
@@ -52,7 +57,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
                     z, maxFusedBitLen,
                     m.dw3, m.dw2, m1, m0,
                     n0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
         }
         return
@@ -65,7 +71,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
                     z, maxFusedBitLen,
                     m1, m0,
                     n1, n0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             (mBitLen <= 192) ->
@@ -73,7 +80,8 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
                     z, maxFusedBitLen,
                     m.dw2, m1, m0,
                     n1, n0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -83,7 +91,7 @@ internal fun c256SetFma(z: C256, x: C256, y: C256, a: C256) {
     throw RuntimeException("coeff overflow")
 }
 
-internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
+internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256, tmpDwQuad: DwQuad = DwQuad()) {
     verify { pow10 >= 0 }
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
@@ -98,10 +106,16 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
     val x1 = x.dw1
     val a0 = a.dw0
     val a1 = a.dw1
+    val a2 = a.dw2
+    val a3 = a.dw3
     val maxFusedBitLen = max(xBitLen + p10BitLen, aBitLen) + 1
     if (maxFusedBitLen <= 128) {
-        val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
-        val (s1, s0) = sumU128(f1, f0, a1, a0)
+        umul128x128to128(tmpDwQuad, x1, x0, p1, p0)
+        val f0 = tmpDwQuad.dw0
+        val f1 = tmpDwQuad.dw1
+        sumU128(tmpDwQuad, f1, f0, a1, a0)
+        val s0 = tmpDwQuad.dw0
+        val s1 = tmpDwQuad.dw1
         z.c256Set128(s1, s0)
         return
     }
@@ -112,7 +126,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     x0,
                     p0,
-                    a1, a0
+                    a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128 && aBitLen <= 192) ->
@@ -120,7 +135,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     x1, x0,
                     p0,
-                    a.dw2, a1, a0
+                    a2, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 192) ->
@@ -128,7 +144,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             else ->
@@ -136,7 +153,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     x.dw3, x.dw2, x1, x0,
                     p0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
         }
         return
@@ -148,7 +166,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     p1, p0,
                     x0,
-                    a.dw2, a1, a0
+                    a2, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -156,7 +175,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     x1, x0,
                     p1, p0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 192) ->
@@ -164,7 +184,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p1, p0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -179,7 +200,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -187,7 +209,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x1, x0,
-                    a.dw3, a.dw2, a1, a0
+                    a3, a2, a1, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -200,7 +223,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
             z, maxFusedBitLen,
             p3, p2, p1, p0,
             x0,
-            a.dw3, a.dw2, a1, a0
+            a3, a2, a1, a0,
+            tmpDwQuad
         )
         return
     } else {
@@ -208,7 +232,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256) {
     }
 }
 
-internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
+internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long, tmpDwQuad: DwQuad = DwQuad()) {
     verify { pow10 >= 0 }
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
@@ -227,8 +251,12 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
     val x1 = x.dw1
     val maxFusedBitLen = max(xBitLen + p10BitLen, aBitLen) + 1
     if (maxFusedBitLen <= 128) {
-        val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
-        val (s1, s0) = sumU128(f1, f0, a1, a0)
+        umul128x128to128(tmpDwQuad, x1, x0, p1, p0)
+        val f0 = tmpDwQuad.dw0
+        val f1 = tmpDwQuad.dw1
+        sumU128(tmpDwQuad, f1, f0, a1, a0)
+        val s0 = tmpDwQuad.dw0
+        val s1 = tmpDwQuad.dw1
         z.c256Set128(s1, s0)
         return
     }
@@ -239,7 +267,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     x0,
                     p0,
-                    a1, a0
+                    a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -247,7 +276,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     x1, x0,
                     p0,
-                    0L, a1, a0
+                    0L, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 192) ->
@@ -255,7 +285,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p0,
-                    0L, 0L, a1, a0
+                    0L, 0L, a1, a0,
+                    tmpDwQuad
                 )
 
             else ->
@@ -263,7 +294,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     x.dw3, x.dw2, x1, x0,
                     p0,
-                    0L, 0L, a1, a0
+                    0L, 0L, a1, a0,
+                    tmpDwQuad
                 )
         }
         return
@@ -275,7 +307,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     p1, p0,
                     x0,
-                    0L, a1, a0
+                    0L, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -283,7 +316,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     x1, x0,
                     p1, p0,
-                    0L, 0L, a1, a0
+                    0L, 0L, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 192) ->
@@ -291,7 +325,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p1, p0,
-                    0L, 0L, a1, a0
+                    0L, 0L, a1, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -306,7 +341,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x0,
-                    0L, 0L, a1, a0
+                    0L, 0L, a1, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -314,7 +350,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x1, x0,
-                    0L, 0L, a1, a0
+                    0L, 0L, a1, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -327,7 +364,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
             z, maxFusedBitLen,
             p3, p2, p1, p0,
             x0,
-            0L, 0L, a1, a0
+            0L, 0L, a1, a0,
+            tmpDwQuad
         )
         return
     } else {
@@ -335,7 +373,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long) {
     }
 }
 
-internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
+internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long, tmpDwQuad: DwQuad = DwQuad()) {
     verify { pow10 >= 0 }
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
@@ -353,8 +391,12 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
     val x1 = x.dw1
     val maxFusedBitLen = max(xBitLen + p10BitLen, aBitLen) + 1
     if (maxFusedBitLen <= 128) {
-        val (f1, f0) = umul128x128to128(x1, x0, p1, p0)
-        val (s1, s0) = sumU128U64(f1, f0, a0)
+        umul128x128to128(tmpDwQuad, x1, x0, p1, p0)
+        val f0 = tmpDwQuad.dw0
+        val f1 = tmpDwQuad.dw1
+        sumU128U64(tmpDwQuad, f1, f0, a0)
+        val s0 = tmpDwQuad.dw0
+        val s1 = tmpDwQuad.dw1
         z.c256Set128(s1, s0)
         return
     }
@@ -365,7 +407,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     x0,
                     p0,
-                    0L, a0
+                    0L, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -373,7 +416,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     x1, x0,
                     p0,
-                    0L, 0L, a0
+                    0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 192) ->
@@ -381,7 +425,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p0,
-                    0L, 0L, 0L, a0
+                    0L, 0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             else ->
@@ -389,7 +434,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     x.dw3, x.dw2, x1, x0,
                     p0,
-                    0L, 0L, 0L, a0
+                    0L, 0L, 0L, a0,
+                    tmpDwQuad
                 )
         }
         return
@@ -401,7 +447,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     p1, p0,
                     x0,
-                    0L, 0L, a0
+                    0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -409,7 +456,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     x1, x0,
                     p1, p0,
-                    0L, 0L, 0L, a0
+                    0L, 0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 192) ->
@@ -417,7 +465,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p1, p0,
-                    0L, 0L, 0L, a0
+                    0L, 0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -432,7 +481,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x0,
-                    0L, 0L, 0L, a0
+                    0L, 0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             (xBitLen <= 128) ->
@@ -440,7 +490,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x1, x0,
-                    0L, 0L, 0L, a0
+                    0L, 0L, 0L, a0,
+                    tmpDwQuad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -453,7 +504,8 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long) {
             z, maxFusedBitLen,
             p3, p2, p1, p0,
             x0,
-            0L, 0L, 0L, a0
+            0L, 0L, 0L, a0,
+            tmpDwQuad
         )
         return
     } else {
@@ -529,7 +581,8 @@ private fun _fma4x1x4(
     maxFusedBitLen: Int,
     x3: Long, x2: Long, x1: Long, x0: Long,
     y0: Long,
-    a3: Long, a2: Long, a1: Long, a0: Long
+    a3: Long, a2: Long, a1: Long, a0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -538,7 +591,9 @@ private fun _fma4x1x4(
         f.c256Set64(f0)
         return
     }
-    val (carry0, f0) = sumU64(pp00Lo, a0)
+    sumU64(tmpDwQuad, pp00Lo, a0)
+    val f0 = tmpDwQuad.dw0
+    val carry0 = tmpDwQuad.dw1
     val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     if (maxFusedBitLen <= 128) {
@@ -546,7 +601,9 @@ private fun _fma4x1x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
+    sumU64(tmpDwQuad, carry0, pp00Hi, pp10Lo, a1)
+    val f1 = tmpDwQuad.dw0
+    val carry1 = tmpDwQuad.dw1
     val pp20Hi = unsignedMulHi(x2, y0)
     val pp20Lo = x2 * y0
     if (maxFusedBitLen <= 192) {
@@ -554,7 +611,9 @@ private fun _fma4x1x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2) = sumU64(carry1, pp10Hi, pp20Lo, a2)
+    sumU64(tmpDwQuad, carry1, pp10Hi, pp20Lo, a2)
+    val f2 = tmpDwQuad.dw0
+    val carry2 = tmpDwQuad.dw1
     val pp30Hi = unsignedMulHi(x3, y0)
     val pp30Lo = x3 * y0
 
@@ -563,8 +622,12 @@ private fun _fma4x1x4(
         f.c256Set256(f3, f2, f1, f0)
         return
     }
-    val (carry3, f3) = sumU64(carry2, pp20Hi, pp30Lo, a3)
-    val (carry4, f4) = sumU64(carry3, pp30Hi)
+    sumU64(tmpDwQuad, carry2, pp20Hi, pp30Lo, a3)
+    val f3 = tmpDwQuad.dw0
+    val carry3 = tmpDwQuad.dw1
+    sumU64(tmpDwQuad, carry3, pp30Hi)
+    val f4 = tmpDwQuad.dw0
+    val carry4 = tmpDwQuad.dw1
     if ((carry4 or f4) == 0L) {
         verify { maxFusedBitLen in 257..258 }
         f.c256Set256(f3, f2, f1, f0)
@@ -578,7 +641,8 @@ private fun _fma3x2x4(
     maxFusedBitLen: Int,
     x2: Long, x1: Long, x0: Long,
     y1: Long, y0: Long,
-    a3: Long, a2: Long, a1: Long, a0: Long
+    a3: Long, a2: Long, a1: Long, a0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -587,7 +651,10 @@ private fun _fma3x2x4(
         f.c256Set64(f0)
         return
     }
-    val (carry0, f0) = sumU64(pp00Lo, a0)
+    sumU64(tmpDwQuad, pp00Lo, a0)
+    val f0 = tmpDwQuad.dw0
+    val carry0 = tmpDwQuad.dw1
+
     val pp01Hi = unsignedMulHi(x0, y1)
     val pp01Lo = x0 * y1
     val pp10Hi = unsignedMulHi(x1, y0)
@@ -597,7 +664,9 @@ private fun _fma3x2x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
+    sumU64(tmpDwQuad, carry0, pp00Hi, pp01Lo, pp10Lo, a1)
+    val f1 = tmpDwQuad.dw0
+    val carry1 = tmpDwQuad.dw1
     val pp11Hi = unsignedMulHi(x1, y1)
     val pp11Lo = x1 * y1
     val pp20Hi = unsignedMulHi(x2, y0)
@@ -607,7 +676,9 @@ private fun _fma3x2x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo, a2)
+    sumU64(tmpDwQuad, carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo, a2)
+    val f2 = tmpDwQuad.dw0
+    val carry2 = tmpDwQuad.dw1
     val pp21Hi = unsignedMulHi(x2, y1)
     val pp21Lo = x2 * y1
 
@@ -616,8 +687,12 @@ private fun _fma3x2x4(
         f.c256Set256(f3, f2, f1, f0)
         return
     }
-    val (carry3, f3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo, a3)
-    val (carry4, f4) = sumU64(carry3, pp21Hi)
+    sumU64(tmpDwQuad, carry2, pp11Hi, pp20Hi, pp21Lo, a3)
+    val f3 = tmpDwQuad.dw0
+    val carry3 = tmpDwQuad.dw1
+    sumU64(tmpDwQuad, carry3, pp21Hi)
+    val f4 = tmpDwQuad.dw0
+    val carry4 = tmpDwQuad.dw1
     if ((carry4 or f4) == 0L) {
         verify { maxFusedBitLen in 257..258 }
         f.c256Set256(f3, f2, f1, f0)
@@ -631,7 +706,8 @@ private fun _fma3x1x4(
     maxFusedBitLen: Int,
     x2: Long, x1: Long, x0: Long,
     y0: Long,
-    a3: Long, a2: Long, a1: Long, a0: Long
+    a3: Long, a2: Long, a1: Long, a0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -640,7 +716,9 @@ private fun _fma3x1x4(
         f.c256Set64(f0)
         return
     }
-    val (carry0, f0) = sumU64(pp00Lo, a0)
+    sumU64(tmpDwQuad, pp00Lo, a0)
+    val f0 = tmpDwQuad.dw0
+    val carry0 = tmpDwQuad.dw1
     val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     if (maxFusedBitLen <= 128) {
@@ -648,7 +726,9 @@ private fun _fma3x1x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
+    sumU64(tmpDwQuad, carry0, pp00Hi, pp10Lo, a1)
+    val f1 = tmpDwQuad.dw0
+    val carry1 = tmpDwQuad.dw1
     val pp20Hi = unsignedMulHi(x2, y0)
     val pp20Lo = x2 * y0
     if (maxFusedBitLen <= 192) {
@@ -656,14 +736,18 @@ private fun _fma3x1x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2) = sumU64(carry1, pp10Hi, pp20Lo, a2)
+    sumU64(tmpDwQuad, carry1, pp10Hi, pp20Lo, a2)
+    val f2 = tmpDwQuad.dw0
+    val carry2 = tmpDwQuad.dw1
 
     if (maxFusedBitLen <= 256) {
         val f3 = carry2 + pp20Hi + a3
         f.c256Set256(f3, f2, f1, f0)
         return
     }
-    val (carry3, f3) = sumU64(carry2, pp20Hi, a3)
+    sumU64(tmpDwQuad, carry2, pp20Hi, a3)
+    val f3 = tmpDwQuad.dw0
+    val carry3 = tmpDwQuad.dw1
     if (carry3 == 0L) {
         verify { maxFusedBitLen in 257..258 }
         f.c256Set256(f3, f2, f1, f0)
@@ -677,7 +761,8 @@ private fun _fma2x2x4(
     maxFusedBitLen: Int,
     x1: Long, x0: Long,
     y1: Long, y0: Long,
-    a3: Long, a2: Long, a1: Long, a0: Long
+    a3: Long, a2: Long, a1: Long, a0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -686,7 +771,9 @@ private fun _fma2x2x4(
         f.c256Set64(f0)
         return
     }
-    val (carry0, f0) = sumU64(pp00Lo, a0)
+    sumU64(tmpDwQuad, pp00Lo, a0)
+    val f0 = tmpDwQuad.dw0
+    val carry0 = tmpDwQuad.dw1
     val pp01Hi = unsignedMulHi(x0, y1)
     val pp01Lo = x0 * y1
     val pp10Hi = unsignedMulHi(x1, y0)
@@ -696,7 +783,9 @@ private fun _fma2x2x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1) = sumU64(carry0, pp00Hi, pp01Lo, pp10Lo, a1)
+    sumU64(tmpDwQuad, carry0, pp00Hi, pp01Lo, pp10Lo, a1)
+    val f1 = tmpDwQuad.dw0
+    val carry1 = tmpDwQuad.dw1
     val pp11Hi = unsignedMulHi(x1, y1)
     val pp11Lo = x1 * y1
     if (maxFusedBitLen <= 192) {
@@ -704,14 +793,18 @@ private fun _fma2x2x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, a2)
+    sumU64(tmpDwQuad, carry1, pp01Hi, pp10Hi, pp11Lo, a2)
+    val f2 = tmpDwQuad.dw0
+    val carry2 = tmpDwQuad.dw1
 
     if (maxFusedBitLen <= 256) {
         val f3 = carry2 + pp11Hi + a3
         f.c256Set256(f3, f2, f1, f0)
         return
     }
-    val (carry3, f3) = sumU64(carry2, pp11Hi, a3)
+    sumU64(tmpDwQuad, carry2, pp11Hi, a3)
+    val f3 = tmpDwQuad.dw0
+    val carry3 = tmpDwQuad.dw1
     if (carry3 == 0L) {
         verify { maxFusedBitLen in 257..258 }
         f.c256Set256(f3, f2, f1, f0)
@@ -725,7 +818,8 @@ private fun _fma2x1x3(
     maxFusedBitLen: Int,
     x1: Long, x0: Long,
     y0: Long,
-    a2: Long, a1: Long, a0: Long
+    a2: Long, a1: Long, a0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -734,7 +828,9 @@ private fun _fma2x1x3(
         f.c256Set64(f0)
         return
     }
-    val (carry0, f0) = sumU64(pp00Lo, a0)
+    sumU64(tmpDwQuad, pp00Lo, a0)
+    val f0 = tmpDwQuad.dw0
+    val carry0 = tmpDwQuad.dw1
     val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     if (maxFusedBitLen <= 128) {
@@ -742,24 +838,29 @@ private fun _fma2x1x3(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1) = sumU64(carry0, pp00Hi, pp10Lo, a1)
+    sumU64(tmpDwQuad, carry0, pp00Hi, pp10Lo, a1)
+    val f1 = tmpDwQuad.dw0
+    val carry1 = tmpDwQuad.dw1
     if (maxFusedBitLen <= 192) {
         val f2 = carry1 + pp10Hi + a2
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2) = sumU64(carry1, pp10Hi, a2)
+    sumU64(tmpDwQuad, carry1, pp10Hi, a2)
+    val f2 = tmpDwQuad.dw0
+    val carry2 = tmpDwQuad.dw1
     val f3 = carry2
     f.c256Set256(f3, f2, f1, f0)
 }
 
 @Suppress("NOTHING_TO_INLINE")
-private inline fun _fma1x1x2(
+private /*inline*/ fun _fma1x1x2(
     f: C256,
     maxFusedBitLen: Int,
     x0: Long,
     y0: Long,
-    a1: Long, a0: Long
+    a1: Long, a0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -768,14 +869,17 @@ private inline fun _fma1x1x2(
         f.c256Set64(f0)
         return
     }
-    val (carry0, f0) = sumU64(pp00Lo, a0)
+    sumU64(tmpDwQuad, pp00Lo, a0)
+    val carry0 = tmpDwQuad.dw1
+    val f0 = tmpDwQuad.dw0
     if (maxFusedBitLen <= 128) {
         val f1 = carry0 + pp00Hi + a1
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1) = sumU64(carry0, pp00Hi, a1)
-    val f2 = carry1
+    sumU64(tmpDwQuad, carry0, pp00Hi, a1)
+    val f1 = tmpDwQuad.dw0
+    val f2 = tmpDwQuad.dw1
     f.c256Set192(f2, f1, f0)
     return
 }

@@ -4,7 +4,7 @@ package com.decimal128.decimal
 
 internal object C128ScalePow10 {
 
-    fun c128ScaleDownPow10(result: DwPair, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun c128ScaleDownPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residue {
         if (dw1 == 0L) {
             verify { pow10 < MIN_POW10_DIGIT_LEN_128}
             val denomPow10 = pow10_64(pow10)
@@ -34,7 +34,7 @@ internal object C128ScalePow10 {
         return residue
     }
 
-    fun barrettDivPow10(result: DwPair, dw1: Long, dw0: Long, pow10: Int): Residue {
+    fun barrettDivPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residue {
         val denom = pow10_64(pow10)
         val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
 

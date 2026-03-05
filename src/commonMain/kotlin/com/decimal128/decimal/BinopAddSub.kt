@@ -163,7 +163,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
                 residue = Residue.fromValuePow10(n1, n0, n.digitLen)
         }
         else -> {
-            val tmpPair = ctx.decTmps.dwPair1
+            val tmpPair = ctx.decTmps.dwQuad1
             residue = C128ScalePow10.c128ScaleDownPow10(tmpPair, n1, n0, shiftRight)
             dw0Sum += tmpPair.dw0
             dw1Sum += tmpPair.dw1 + if (unsignedLT(dw0Sum, tmpPair.dw0)) 1L else 0L

@@ -22,7 +22,8 @@ class DecTmps {
     val mdecTrans4 = MutDec()
 
     //
-    val dwPair1 = DwPair()
+    val dwQuad1 = DwQuad()
+    val dwQuad2 = DwQuad()
 
 
     // printing must have dedicated tmps because toString()
