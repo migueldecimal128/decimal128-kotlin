@@ -90,7 +90,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
                 quot != null && quot !== y -> quot
                 else -> C256()
             }
-            t.c256SetSub(x, y)
+            c256SetSubUnscaled(t, x, y)
             val residue = Residue.fromRemainderDivisor(t, y)
             rem?.c256Set(t)
             quot?.c256SetOne()

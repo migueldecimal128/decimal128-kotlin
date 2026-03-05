@@ -80,7 +80,7 @@ class TestC256Fma {
         val coeffExpected = newCoeff(case.biProduct)
         val coeffProd = C256()
         //println("$coeffX (${coeffX.digitCount}) * $coeffY (${coeffY.digitCount}) + $coeffA (${coeffA.digitCount}) = expected:$expected")
-        coeffProd.c256SetFma(coeffX, coeffY, coeffA)
+        c256SetFma(coeffProd, coeffX, coeffY, coeffA)
         val biProd = coeffProd.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.digitLen}) * $coeffY (${coeffY.digitLen}) + $coeffA (${coeffA.digitLen}) = $coeffProd (${coeffProd.digitLen})  expected:$expected")
@@ -95,13 +95,13 @@ class TestC256Fma {
 
         val rnd = random.nextInt(3)
         if (rnd == 0) {
-            coeffX.c256SetFma(coeffX, coeffY, coeffA)
+            c256SetFma(coeffX, coeffX, coeffY, coeffA)
             assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
-            coeffY.c256SetFma(coeffX, coeffY, coeffA)
+            c256SetFma(coeffY, coeffX, coeffY, coeffA)
             assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
-            coeffA.c256SetFma(coeffX, coeffY, coeffA)
+            c256SetFma(coeffA, coeffX, coeffY, coeffA)
             assert(coeffA.coeffToBigInteger().equals(expected))
         }
 

@@ -139,7 +139,7 @@ object MagnitudeAddSub {
                     if (shiftMLeft > 0)
                         c256SetSubScaled(z, m, shiftMLeft, tmpY)
                     else
-                        z.c256SetSub(m, tmpY)
+                        c256SetSubUnscaled(z, m, tmpY)
                     if (residue != EXACT)
                         z.c256MutateDecrement()
                     residue.subtractionInverse()

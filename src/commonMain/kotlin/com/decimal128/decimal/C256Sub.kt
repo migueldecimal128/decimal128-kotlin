@@ -5,7 +5,7 @@ internal fun c256SetSubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtra
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
-    verify { x.c256UnscaledCompareTo(y) >= 0 }
+    verify { c256UnscaledCompare(x, y) >= 0 }
     val xBitLen = x.bitLen
     verify { xBitLen >= y.bitLen }
 
@@ -54,7 +54,7 @@ internal fun c256SetSubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
     verify { y.c256HasValidLengths() }
     verify { z.c256HasValidLengths() }
 
-    verify { y.c256ScaledCompareTo(x, scaleDelta) <= 0 }
+    verify { c256ScaledCompare(y, x, scaleDelta) <= 0 }
 
     c256FmsPow10(z, x, scaleDelta, y)
 }
@@ -71,7 +71,7 @@ internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
     verify { y.c256HasValidLengths() }
     verify { z.c256HasValidLengths() }
 
-    verify { x.c256ScaledCompareTo(y, scaleDelta) >= 0 }
+    verify { c256ScaledCompare(x, y, scaleDelta) >= 0 }
 
     c256FusedSubMulPow10(z, x, y, scaleDelta)
 }

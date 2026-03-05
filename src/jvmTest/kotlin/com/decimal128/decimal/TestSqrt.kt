@@ -131,12 +131,12 @@ class TestSqrt{
         guess0Coeff.c256MutateDecrement()
 
         val guess0Squared = C256()
-        guess0Squared.c256SetMul(guess0Coeff, guess0Coeff)
+        c256SetMul(guess0Squared, guess0Coeff, guess0Coeff)
         if (verbose)
             println(" --> coeffGuess0:$guess0Coeff guess0Squared:$guess0Squared")
-        while (guess0Squared.c256UnscaledCompareTo(radicandScaled) > 0) {
+        while (c256UnscaledCompare(guess0Squared, radicandScaled) > 0) {
             guess0Coeff.c256MutateDecrement()
-            guess0Squared.c256SetMul(guess0Coeff, guess0Coeff)
+            c256SetMul(guess0Squared, guess0Coeff, guess0Coeff)
         }
         val residual0 = C256()
         c256SetSubUnscaled(residual0, radicandScaled, guess0Squared)
@@ -160,15 +160,15 @@ class TestSqrt{
         delta0Coeff.c256SetShiftLeft(delta0Coeff, max(delta0Exp - 52, 0))
 
         val guess1Coeff = C256()
-        guess1Coeff.c256SetAdd(guess0Coeff, delta0Coeff)
+        c256SetAddUnscaled(guess1Coeff, guess0Coeff, delta0Coeff)
         if (verbose)
             println(" --> guess1Coeff:$guess1Coeff")
 
         val guess1Squared = C256()
-        guess1Squared.c256SetMul(guess1Coeff, guess1Coeff)
-        while (guess1Squared.c256UnscaledCompareTo(radicandScaled) > 0) {
+        c256SetMul(guess1Squared, guess1Coeff, guess1Coeff)
+        while (c256UnscaledCompare(guess1Squared, radicandScaled) > 0) {
             guess1Coeff.c256MutateDecrement()
-            guess1Squared.c256SetMul(guess1Coeff, guess1Coeff)
+            c256SetMul(guess1Squared, guess1Coeff, guess1Coeff)
         }
         val residual1 = C256()
         c256SetSubUnscaled(residual1, radicandScaled, guess1Squared)
@@ -181,12 +181,12 @@ class TestSqrt{
         val residue1 = delta1.c256SetDiv(residual1, guess1x2)
 
         val guess2 = C256()
-        guess2.c256SetAdd(guess1Coeff, delta1)
+        c256SetAddUnscaled(guess2, guess1Coeff, delta1)
         if (verbose)
             println(" --> guess2:$guess2")
 
         val guess2Squared = C256()
-        guess2Squared.c256SetSqr(guess2)
+        c256SetSqr(guess2Squared, guess2)
         val residual2 = C256()
         c256SetSubUnscaled(residual2, radicandScaled, guess2Squared)
         if (verbose)

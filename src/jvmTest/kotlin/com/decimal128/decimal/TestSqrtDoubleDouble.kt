@@ -142,11 +142,11 @@ class TestSqrtDoubleDouble{
             if (verbose)
                 println(" --> dbl0:$dRadicandScaled doubleGuess0:$dGuess0 coeffGuess0:$coeffGuess0")
 
-            coeffGuess0Squared.c256SetSqr(coeffGuess0)
-            if (coeffRadicandScaled.c256UnscaledCompareTo(coeffGuess0Squared) < 0)
+            c256SetSqr(coeffGuess0Squared, coeffGuess0)
+            if (c256UnscaledCompare(coeffRadicandScaled, coeffGuess0Squared) < 0)
                 continue
 
-            coeffResidual0.c256SetSub(coeffRadicandScaled, coeffGuess0Squared)
+            c256SetSubUnscaled(coeffResidual0, coeffRadicandScaled, coeffGuess0Squared)
             if (verbose)
                 println(" --> residual0:$coeffResidual0")
 
@@ -161,14 +161,14 @@ class TestSqrtDoubleDouble{
             coeffDelta0.c256MutateDecrement()
             coeffDelta0.c256SetShiftLeft(coeffDelta0, max(delta0Exp - 52, 0))
 
-            coeffGuess1.c256SetAdd(coeffGuess0, coeffDelta0)
+            c256SetAddUnscaled(coeffGuess1, coeffGuess0, coeffDelta0)
             if (verbose)
                 println(" --> guess1Coeff:$coeffGuess1")
 
-            coeffGuess1Squared.c256SetSqr(coeffGuess1)
+            c256SetSqr(coeffGuess1Squared, coeffGuess1)
             if (verbose)
                 println(" ==> coeffRadicandScaled:$coeffRadicandScaled coeffGuess1Squared:$coeffGuess1Squared")
-            if (coeffRadicandScaled.c256UnscaledCompareTo(coeffGuess1Squared) >= 0)
+            if (c256UnscaledCompare(coeffRadicandScaled, coeffGuess1Squared) >= 0)
                 break
             }
         if (corrections > 0) {
@@ -192,15 +192,15 @@ class TestSqrtDoubleDouble{
         coeffDelta1.c256Set(ddDelta1)
 
         val coeffGuess2 = C256()
-        coeffGuess2.c256SetAdd(coeffGuess1, coeffDelta1)
+        c256SetAddUnscaled(coeffGuess2, coeffGuess1, coeffDelta1)
 
         if (verbose)
             println(" ==> coeffGuess2:$coeffGuess2")
 
         val coeffGuess2Squared = C256()
-        coeffGuess2Squared.c256SetMul(coeffGuess2, coeffGuess2)
+        c256SetMul(coeffGuess2Squared, coeffGuess2, coeffGuess2)
         val residual2 = C256()
-        residual2.c256SetSub(coeffRadicandScaled, coeffGuess2Squared)
+        c256SetSubUnscaled(residual2, coeffRadicandScaled, coeffGuess2Squared)
 
         if (verbose)
             println(" ==> residual2:$residual2")

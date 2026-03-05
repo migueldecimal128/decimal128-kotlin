@@ -112,18 +112,18 @@ class MutDec() : C256() {
             // exact zero sum (or difference) shall be −0.
             val isRoundTowardNegative = ctx.isRoundTowardNegative()
             if (xSign == ySign) {
-                z.c256SetAdd(x, y)
+                c256SetAddUnscaled(z, x, y)
                 z.sign = xSign
             } else {
                 val cmp = c256UnscaledCompare(x, y)
                 when {
                     (cmp > 0) -> {
-                        z.c256SetSub(x, y)
+                        c256SetSubUnscaled(z, x, y)
                         z.sign = if (z.bitLen > 0) xSign else isRoundTowardNegative
                     }
 
                     (cmp < 0) -> {
-                        z.c256SetSub(y, x)
+                        c256SetSubUnscaled(z, y, x)
                         z.sign = if (z.bitLen > 0) ySign else isRoundTowardNegative
                     }
 
@@ -526,7 +526,7 @@ class MutDec() : C256() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
-                this.c256SetMul(x, y)
+                c256SetMul(this, x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 return finalize(ctx)
@@ -548,7 +548,7 @@ class MutDec() : C256() {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                this.c256SetSqr(x)
+                c256SetSqr(this, x)
                 this.qExp = this.qExp shl 1
                 this.sign = false
                 return finalize(ctx)            }
@@ -573,7 +573,7 @@ class MutDec() : C256() {
                 // FIXME -- this tmp should be pulled from ctx.decTmps
                 val aT = if (this === a) MutDec().set(a) else a
                 // multiply without roundAndFinalize .. remains exact
-                this.c256SetMul(x, y)
+                c256SetMul(this, x, y)
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
@@ -845,9 +845,9 @@ class MutDec() : C256() {
                     return cmpExpSci
                 val expDelta = this.qExp - other.qExp
                 val ret = when {
-                    expDelta == 0 -> c256UnscaledCompareTo(other)
-                    expDelta > 0 -> -other.c256ScaledCompareTo(this, expDelta)
-                    else -> c256ScaledCompareTo(other, -expDelta)
+                    expDelta == 0 -> c256UnscaledCompare(this, other)
+                    expDelta > 0 -> -c256ScaledCompare(other, this, expDelta)
+                    else -> c256ScaledCompare(this, other, -expDelta)
                 }
                 return ret
             }
@@ -906,9 +906,9 @@ class MutDec() : C256() {
         if (! eitherIsZero) {
             val expDelta = this.qExp - other.qExp
             return when {
-                expDelta == 0 -> this.c256UnscaledEQ(other)
-                expDelta > 0 -> other.c256ScaledEQ(this, expDelta)
-                else -> this.c256ScaledEQ(other, -expDelta)
+                expDelta == 0 -> c256UnscaledEQ(this, other)
+                expDelta > 0 -> c256ScaledEQ(other, this, expDelta)
+                else -> c256ScaledEQ(this, other, -expDelta)
             }
         }
         return bothAreZero
@@ -1123,7 +1123,7 @@ class MutDec() : C256() {
         }
         c256MutateIncrement()
         if (digitLen > ctx.precision) { // rolled up a decade
-            c256SetPow10(ctx.precision - 1)
+            c256SetPow10(this, ctx.precision - 1)
             ++this.qExp
         }
     }

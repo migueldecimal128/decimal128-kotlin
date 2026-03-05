@@ -20,7 +20,7 @@ object DivKnuth {
 
     fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256): Residue {
         verify { c256GTOne(y) }
-        verify { x.c256UnscaledCompareTo(y) > 0 }
+        verify { c256UnscaledCompare(x, y) > 0 }
 
         un[0] = x.dw0.toInt()
         un[1] = (x.dw0 ushr 32).toInt()

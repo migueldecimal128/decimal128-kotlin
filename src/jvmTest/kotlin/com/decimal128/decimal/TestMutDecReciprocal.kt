@@ -119,21 +119,21 @@ class TestMutDecReciprocal{
             println("dGuess0:$dGuess0 cGuess:$cGuess")
         }
 
-        val coeff2xS = C256().apply { c256SetPow10(scalePow10); c256MutateShiftLeft(1) }
+        val coeff2xS = C256().apply { c256SetPow10(this, scalePow10); c256MutateShiftLeft(1) }
         val t = C256()
 
-        t.c256SetMul(divisor, cGuess)
-        t.c256SetSub(coeff2xS, t)
-        t.c256SetMul(t, cGuess)
+        c256SetMul(t, divisor, cGuess)
+        c256SetSubUnscaled(t, coeff2xS, t)
+        c256SetMul(t, t, cGuess)
         cGuess.c256SetScaleDownPow10(t, scalePow10)
 
         if (verbose) {
             println("cGuess:$cGuess")
         }
 
-        t.c256SetMul(divisor, cGuess)
-        t.c256SetSub(coeff2xS, t)
-        t.c256SetMul(t, cGuess)
+        c256SetMul(t, divisor, cGuess)
+        c256SetSubUnscaled(t, coeff2xS, t)
+        c256SetMul(t, t, cGuess)
         cGuess.c256SetScaleDownPow10(t, scalePow10)
 
         if (verbose) {

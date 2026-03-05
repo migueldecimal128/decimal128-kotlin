@@ -30,7 +30,7 @@ internal fun c256UnscaledCompare(x: C256, y: IntArray): Int {
     return unsignedCmp(x.dw0, y0)
 }
 
-internal fun u256UnscaledEQ(x: C256, y: C256): Boolean {
+internal fun c256UnscaledEQ(x: C256, y: C256): Boolean {
     return ((x.bitLen - y.bitLen).toLong() or
             (x.dw0 - y.dw0) or (x.dw1 - y.dw1) or
             (x.dw2 - y.dw2) or (x.dw3 - y.dw3)) == 0L

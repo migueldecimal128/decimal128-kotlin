@@ -439,7 +439,7 @@ internal fun coeffIsPow10(x: C256): Boolean {
     return false
 }
 
-internal fun coeffSetPow10(z: C256, pow10: Int) {
+internal fun c256SetPow10(z: C256, pow10: Int) {
     if (pow10 >= 0) {
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10) and POW10_BCE

@@ -82,35 +82,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         return true
     }
 
-    internal inline fun c256UnscaledCompareTo(other: C256) = c256UnscaledCompare(this, other)
-
-    internal inline fun c256UnscaledEQ(other: C256) = u256UnscaledEQ(this, other)
-
-    internal inline fun c256ScaledCompareTo(other: C256, scaleDelta: Int)  = c256ScaledCompare(this, other, scaleDelta)
-
-    internal inline fun c256ScaledEQ(other: C256, scaleDelta: Int) = c256ScaledEQ(this, other, scaleDelta)
-
-    internal inline fun c256SetPow2(pow2: Int) = c256SetPow2(this, pow2)
-
-    internal inline fun c256SetPow10(pow10: Int) = coeffSetPow10(this, pow10)
-
-    internal inline fun c256SetAdd(x: C256, scaleDelta: Int, y: C256) = c256SetAdd(this, x, scaleDelta, y)
-
-    internal inline fun c256SetAdd(x: C256, y: C256) = c256SetAddUnscaled(this, x, y)
-
-    internal inline fun c256SetSub(x: C256, y: C256) = c256SetSubUnscaled(this, x, y)
-
-    internal inline fun c256SetMul(x: C256, y: C256) = c256SetMul(this, x, y)
-
-    internal inline fun c256SetSqr(x: C256) = c256SetSqr(this, x)
-
-    internal inline fun c256SetFma(x: C256, y: C256, a: C256) = c256SetFma(this, x, y, a)
-
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a: C256) = c256SetFmaPow10(this, x, pow10, a)
-
     internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a0: Long) = c256SetFmaPow10(this, x, pow10, a0)
-
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a1: Long, a0: Long) = c256SetFmaPow10(this, x, pow10, a1, a0)
 
     internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = c256SetFmaPow10(this, this, pow10, a)
 
@@ -118,13 +90,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256SetDiv(x: C256, y: C256) = c256SetDiv(this, x, y)
 
-    internal inline fun c256SetDivX64(x: C256, y0: Long) = c256SetDivX64(this, x, y0)
-
     internal inline fun c256SetDivModX64(x: C256, y0: Long) = c256SetDivRemX64(this, x, y0)
-
-    internal inline fun c256SetRem(x: C256, y: C256) = c256SetRem(this, x, y)
-
-    internal inline fun c256SetDivRem(rem: C256, x: C256, y: C256) = c256SetDivRem(this, rem, x, y)
 
     internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = c256SetScaleUpPow10(this, x, pow10)
 
@@ -248,6 +214,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
             IntegerParsePrint.int256ToString(false, this)
     fun u256ToUtf8(bytes: ByteArray, off: Int) = IntegerParsePrint.int256ToUtf8(false, this, bytes, off)
 
-    override fun equals(other: Any?) = other is C256 && u256UnscaledEQ(this, other)
+    override fun equals(other: Any?) = other is C256 && c256UnscaledEQ(this, other)
 
 }
