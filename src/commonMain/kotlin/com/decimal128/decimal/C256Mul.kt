@@ -6,7 +6,7 @@ internal fun c256SetMul(z: C256, x: C256, y: C256, tmpDwQuad: DwQuad) {
         val maxProdBitLen = x.bitLen + y.bitLen
         _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0, tmpDwQuad)
     } else
-        throw IllegalArgumentException("mul arg >=128 bits ... overflow")
+        throwCoeffMultiplyOverflow()
 }
 
 fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, tmpDwQuad: DwQuad) {
@@ -21,7 +21,7 @@ fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, tmpDwQuad: DwQuad) {
         }
 
         (xBitLen <= 128) -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0, tmpDwQuad)
-        else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
+        else -> throwCoeffMultiplyOverflow()
     }
 }
 
@@ -37,7 +37,7 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long, tmpD
         }
 
         (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0, tmpDwQuad)
-        else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
+        else -> throwCoeffMultiplyOverflow()
     }
 }
 
@@ -54,7 +54,7 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: 
         }
 
         (xBitLen <= 128) -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0, tmpDwQuad)
-        else -> throw RuntimeException("coeff overflow")
+        else -> throwCoeffMultiplyOverflow()
     }
 }
 
@@ -70,7 +70,7 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: 
             else -> z.c256SetZero()
         }
 
-        else -> throw RuntimeException("coeff overflow")
+        else -> throwCoeffMultiplyOverflow()
     }
 }
 
@@ -132,7 +132,7 @@ private fun _mulCoeff4x4(
         p.c256Set256(p3, p2, p1, p0)
         return
     }
-    throw RuntimeException("coeff multiply overflow")
+    throwCoeffMultiplyOverflow()
 }
 
 private fun _mulCoeff4x1(
@@ -169,7 +169,6 @@ private fun _mulCoeff4x1(
     sumU64(tmpDwQuad, carry1, pp10Hi, pp20Lo)
     val carry2 = tmpDwQuad.dw1
     val p2 = tmpDwQuad.dw0
-    val pp30Hi = unsignedMulHi(x3, y0)
     val pp30Lo = x3 * y0
 
     if (maxBitLen <= 256) {
@@ -185,7 +184,7 @@ private fun _mulCoeff4x1(
         p.c256Set256(p3, p2, p1, p0)
         return
     }
-    throw RuntimeException("coeff multiply overflow")
+    throwCoeffMultiplyOverflow()
 }
 
 private fun _mulCoeff3x2(
@@ -241,8 +240,13 @@ private fun _mulCoeff3x2(
         p.c256Set256(p3, p2, p1, p0)
         return
     }
+    throwCoeffMultiplyOverflow()
+}
+
+private fun throwCoeffMultiplyOverflow() {
     throw RuntimeException("coeff multiply overflow")
 }
+
 
 private fun _mulCoeff3x1(
     p: C256,
