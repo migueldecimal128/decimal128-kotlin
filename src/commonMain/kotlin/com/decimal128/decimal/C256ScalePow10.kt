@@ -31,11 +31,13 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, tmpDwQuad: DwQuad
                 }
 
                 (pow10BitLen <= 192) -> {
-                    c256SetMul(z, x, pow10BitLen, POW10[pow10Offset + 2], pow10dw1, pow10dw0)
+                    c256SetMul(z, x, pow10BitLen, POW10[pow10Offset + 2], pow10dw1, pow10dw0, tmpDwQuad)
                 }
 
                 (pow10BitLen <= 256) -> {
-                    c256SetMul(z, x, pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], pow10dw1, pow10dw0)
+                    c256SetMul(z, x,
+                        pow10BitLen, POW10[pow10Offset + 3], POW10[pow10Offset + 2], pow10dw1, pow10dw0,
+                        tmpDwQuad)
                 }
 
                 else -> throw RuntimeException()
