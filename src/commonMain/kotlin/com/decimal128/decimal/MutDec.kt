@@ -509,6 +509,7 @@ class MutDec() : C256() {
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
                 c256SetMul(this, x, y)
+                this.type = STEAL_TYPE_FNZ
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 return finalize(ctx)
@@ -531,6 +532,7 @@ class MutDec() : C256() {
         when {
             qX < MIN_SPECIAL_VALUE -> {
                 c256SetSqr(this, x)
+                this.type = STEAL_TYPE_FNZ
                 this.qExp = this.qExp shl 1
                 this.sign = false
                 return finalize(ctx)            }
@@ -553,9 +555,10 @@ class MutDec() : C256() {
         when {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
                 // FIXME -- this tmp should be pulled from ctx.decTmps
-                val aT = if (this === a) MutDec().set(a) else a
+                val aT = if (this === a) ctx.decTmps.mdecArg1.set(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 c256SetMul(this, x, y)
+                this.type = STEAL_TYPE_FNZ
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
