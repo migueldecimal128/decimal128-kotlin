@@ -66,6 +66,7 @@ class MutDec() : C256() {
                             val headroom = ctx.precision - x.digitLen
                             // FMA adding 0 will lead to -headroom
                             val shiftLeft = max(0, min(headroom, gap))
+                            z.type = STEAL_TYPE_FNZ
                             z.qExp = x.qExp - shiftLeft
                             z.sign = x.sign
                             c256SetScaleUpPow10(z, x, shiftLeft)
@@ -87,8 +88,9 @@ class MutDec() : C256() {
                             c256SetScaleUpPow10(z, y, shiftLeft)
                         }
 
-                        x.qExp == y.qExp -> unscaledFiniteNonZeroAddImpl(z, x, ySign, y, ctx)
-                        else -> scaledFiniteNonZeroAddImpl(z, x, ySign, y, ctx)
+                        else -> addFnzImpl(z, x, ySign, y, ctx)
+//                        x.qExp == y.qExp -> unscaledAddFnzImpl(z, x, ySign, y, ctx)
+//                        else -> scaledAddFnzImpl(z, x, ySign, y, ctx)
                     }
                 }
 
@@ -98,10 +100,18 @@ class MutDec() : C256() {
             return z
         }
 
-        private fun unscaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+        private fun addFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+            return if (x.qExp == y.qExp)
+                unscaledAddFnzImpl(z, x, ySign, y, ctx)
+            else
+                scaledAddFnzImpl(z, x, ySign, y, ctx)
+        }
+
+        private fun unscaledAddFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
             verify { x.bitLen > 0 && y.bitLen > 0 }  // Optional: could remove in production
             verify { x.qExp == y.qExp }
             val xSign = x.sign
+            z.type = STEAL_TYPE_FNZ
             z.qExp = x.qExp
             // IEEE754-2019 6.3 The sign bit
             // When the sum of two operands with opposite signs
@@ -136,7 +146,7 @@ class MutDec() : C256() {
             return z.finalize(ctx)
         }
 
-        private fun scaledFiniteNonZeroAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+        private fun scaledAddFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
             val qX = x.qExp
             val qY = y.qExp
             verify { qX != qY }
@@ -230,6 +240,7 @@ class MutDec() : C256() {
 
     fun setZero(sign: Boolean): MutDec {
         c256SetZero()
+        this.type = STEAL_TYPE_ZER
         this.qExp = 0
         this.sign = sign
         return this
@@ -237,6 +248,7 @@ class MutDec() : C256() {
 
     fun setZero(sign: Boolean = false, qExp: Int = 0, ctx: DecContext): MutDec {
         c256SetZero()
+        this.type = STEAL_TYPE_ZER
         this.qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
         this.sign = sign
         return this
@@ -244,6 +256,7 @@ class MutDec() : C256() {
 
     fun setOne(sign: Boolean = false): MutDec {
         c256SetOne()
+        this.type = STEAL_TYPE_FNZ
         this.qExp = 0
         this.sign = sign
         return this
@@ -253,6 +266,7 @@ class MutDec() : C256() {
         val xQ = x.qExp
         verify { xQ >= NON_FINITE_QNAN }
         this.set(x)
+        this.type = STEAL_NAN_QNAN
         this.qExp = NON_FINITE_QNAN
         if (xQ == NON_FINITE_SNAN)
             ctx.signalInvalid(this)
@@ -265,6 +279,7 @@ class MutDec() : C256() {
         val maxQ = max(xQ, yQ)
         verify { maxQ >= NON_FINITE_QNAN }
         this.set(if (maxQ == xQ) x else y)
+        this.type = STEAL_NAN_QNAN
         this.qExp = NON_FINITE_QNAN
         if (maxQ == NON_FINITE_SNAN)
             ctx.signalInvalid(this)
@@ -279,6 +294,7 @@ class MutDec() : C256() {
         val q = x.qExp
         verify { q >= NON_FINITE_QNAN }
         setZero()
+        type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
@@ -286,6 +302,7 @@ class MutDec() : C256() {
     internal fun setNaN(ctx: DecContext) {
         setZero()
         sign = false
+        type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
     }
 
@@ -297,18 +314,21 @@ class MutDec() : C256() {
     internal fun setNaN(payload: Int, ctx: DecContext) {
         sign = false
         c256Set64(payload.toLong())
+        type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
     }
 
     internal fun setNaN(): MutDec {
         setZero()
+        type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
         return this
     }
 
     internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
         this.sign = sign
+        this.type = if (isSignaling) STEAL_NAN_SNAN else STEAL_NAN_QNAN
         this.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
         this.dw3 = 0
         this.dw2 = 0
@@ -318,6 +338,7 @@ class MutDec() : C256() {
 
     fun setSNaN(ctx: DecContext) {
         setZero()
+        this.type = STEAL_NAN_SNAN
         qExp = NON_FINITE_SNAN
     }
 
@@ -328,6 +349,7 @@ class MutDec() : C256() {
         //  Changing the coefficient to one would make negation slightly
         //  easier, but isn't worth doing
         this.c256SetZero()
+        this.type = STEAL_TYPE_INF
         this.qExp = NON_FINITE_INF
         this.sign = sign
         return this
@@ -336,6 +358,7 @@ class MutDec() : C256() {
     fun set(n: Int): MutDec = set(n.toLong())
 
     fun set(l: Long): MutDec {
+        this.type = if (l == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         this.qExp = 0
         this.sign = l < 0
         val mask = l shr 63
@@ -345,6 +368,7 @@ class MutDec() : C256() {
     }
 
     fun setUnsigned(ul: Long): MutDec {
+        this.type = if (ul == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         this.qExp = 0
         this.sign = false
         c256Set64(ul)
@@ -352,6 +376,7 @@ class MutDec() : C256() {
     }
 
     fun set(l: Long, qExp: Int, ctx: DecContext): MutDec {
+        this.type = if (l == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         this.qExp = ctx.capExponentRange(qExp)
         this.sign = l < 0
         val mask = l shr 63
@@ -361,18 +386,23 @@ class MutDec() : C256() {
     }
 
     fun set(x: MutDec): MutDec {
-        c256Set(x)
-        this.qExp = x.qExp
-        this.sign = x.sign
+        if (this !== x) {
+            c256Set(x)
+            this.type = x.type
+            this.qExp = x.qExp
+            this.sign = x.sign
+        }
         return this
     }
 
     fun set(x: MutDec, ctx: DecContext): MutDec {
         if (this !== x) {
             c256Set(x)
+            this.type = x.type
             this.qExp = x.qExp
             this.sign = x.sign
             if (qExp == NON_FINITE_SNAN) {
+                this.type = STEAL_NAN_QNAN
                 qExp = NON_FINITE_QNAN
                 ctx.signalInvalid(this)
             }
@@ -382,6 +412,7 @@ class MutDec() : C256() {
 
     fun set(xMagnitude: MutDec, sign: Boolean): MutDec {
         c256Set(xMagnitude)
+        this.type = xMagnitude.type
         this.qExp = xMagnitude.qExp
         this.sign = sign
         return this
@@ -390,6 +421,7 @@ class MutDec() : C256() {
     fun set(x: Decimal): MutDec {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
+        this.type = x.steal and (if (x.isNaN()) STEAL_NAN_MASK else STEAL_TYPE_MASK)
         this.bitLen = x.bitLen
         this.digitLen = x.digitLen
         this.qExp = x.qExp
@@ -409,6 +441,7 @@ class MutDec() : C256() {
     fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = SerDeDpd128.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
 
     fun setMaxFiniteMagnitude(ctx: DecContext): MutDec {
+        type = STEAL_TYPE_FNZ
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
@@ -423,12 +456,14 @@ class MutDec() : C256() {
     }
 
     fun setMinFiniteMagnitude(ctx: DecContext): MutDec {
+        type = STEAL_TYPE_FNZ
         qExp = ctx.qTiny
         super.c256SetOne()
         return this
     }
 
     fun setMinZeroMagnitude(ctx: DecContext): MutDec {
+        type = STEAL_TYPE_ZER
         qExp = ctx.qTiny
         super.c256SetZero()
         return this
@@ -450,59 +485,6 @@ class MutDec() : C256() {
     fun mutateAbs(): MutDec {
         // IEEE differs from GDAS/Colishaw
         this.sign = false
-        return this
-    }
-
-    fun mutateToIntegral(ctx: DecContext): MutDec {
-        // FIXME ... not tested and not correct
-        when {
-            qExp < MIN_SPECIAL_VALUE -> {
-                if (qExp < 0) {
-                    if (bitLen == 0) {
-                        qExp = 0
-                        return this
-                    }
-                    ctx.signalInexact(this)
-                    val eExp = sciExp()
-                    when (ctx.decRounding) {
-                        ROUND_TIES_TO_EVEN, ROUND_TIES_TO_AWAY -> {
-                            if (eExp <= -2) {
-                                return MutDec()
-                            }
-                            val half = MutDec().set(5L, -1, ctx)
-                            val cmp = this.compareTo(half)
-                            if (cmp < 0 || cmp == 0 && ctx.decRounding == ROUND_TIES_TO_EVEN) {
-                                // FIXME this is a mutate ... what am I doing creating new instances?
-                                return MutDec()
-                            } else {
-                                return this.set(1)
-                            }
-                        }
-                        ROUND_TOWARD_ZERO -> return MutDec()
-                        ROUND_TOWARD_NEGATIVE -> {
-                            if (sign)
-                                return this.set(1)
-                            else
-                                return MutDec()
-                        }
-                        ROUND_TOWARD_POSITIVE -> {
-                            if (!sign)
-                                return this.set(1)
-                            else
-                                return MutDec()
-                        }
-                    }
-                }
-            }
-            qExp == NON_FINITE_SNAN -> qExp = NON_FINITE_QNAN
-        }
-        return this
-    }
-
-    fun mutateCopySign(x: MutDec, y: MutDec): MutDec {
-        val sign = y.sign
-        set(x)
-        this.sign = sign
         return this
     }
 

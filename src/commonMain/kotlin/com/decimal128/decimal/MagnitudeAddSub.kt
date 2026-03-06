@@ -56,6 +56,7 @@ object MagnitudeAddSub {
                         residue
                     }
                 }
+                z.type = STEAL_TYPE_FNZ
                 z.qExp = qAlign
                 z.sign = sign
                 return residue
@@ -63,6 +64,7 @@ object MagnitudeAddSub {
             // one of the two is zero
             // return the value of the non-zero (if any), scaled to the smaller exponent
             (m.bitLen > 0) -> {
+                z.type = STEAL_TYPE_FNZ
                 z.qExp = qAlign
                 c256SetScaleUpPow10(z, m, shiftLeft)
                 z.sign = sign
@@ -72,6 +74,7 @@ object MagnitudeAddSub {
             else -> {
                 // if m == 0 then return n ... n != 0 and n == 0
                 z.c256Set(n)
+                z.type = n.type
                 z.qExp = n.qExp
                 z.sign = sign
                 return EXACT
@@ -145,6 +148,7 @@ object MagnitudeAddSub {
                     residue.subtractionInverse()
                 }
             }
+            z.type = STEAL_TYPE_FNZ
             z.qExp = qAlign
             z.sign = mSign
             return residue
@@ -159,6 +163,7 @@ object MagnitudeAddSub {
             // just adjust y's coefficient and subtract
             val gap = s.qExp - m.qExp
             c256FusedSubMulPow10(z, m, s, gap)
+            z.type = STEAL_TYPE_FNZ
             z.qExp = m.qExp
             z.sign = mSign
             return EXACT
