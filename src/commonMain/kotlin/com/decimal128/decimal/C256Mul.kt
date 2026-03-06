@@ -1,15 +1,15 @@
 package com.decimal128.decimal
 
 
-internal fun c256SetMul(z: C256, x: C256, y: C256) {
+internal fun c256SetMul(z: C256, x: C256, y: C256, tmpDwQuad: DwQuad) {
     if ((x.bitLen < 128) and (y.bitLen < 128)) {
         val maxProdBitLen = x.bitLen + y.bitLen
-        _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0)
+        _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0, tmpDwQuad)
     } else
         throw IllegalArgumentException("mul arg >=128 bits ... overflow")
 }
 
-fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long) {
+fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, tmpDwQuad: DwQuad) {
     val xBitLen = x.bitLen
     val maxBitLen = xBitLen + yBitLen
     when {
@@ -20,23 +20,23 @@ fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long) {
             z.c256Set128(pHi, pLo)
         }
 
-        (xBitLen <= 128) -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0)
+        (xBitLen <= 128) -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0, tmpDwQuad)
         else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
     }
 }
 
-internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long) {
+internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long, tmpDwQuad: DwQuad) {
     verify { yBitLen in 65..128 }
     val xBitLen = x.bitLen
     val maxBitLen = xBitLen + yBitLen
     when {
         (xBitLen <= 64) -> when {
-            (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0)
+            (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0, tmpDwQuad)
             (xBitLen == 1) -> z.c256Set128(y1, y0)
             else -> z.c256SetZero()
         }
 
-        (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0)
+        (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0, tmpDwQuad)
         else -> throw IllegalArgumentException("mul arg >=128 bits ... overflow")
     }
 }
@@ -267,7 +267,8 @@ private fun _mulCoeff2x2(
     p: C256,
     maxBitLen: Int,
     x1: Long, x0: Long,
-    y1: Long, y0: Long
+    y1: Long, y0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -282,7 +283,9 @@ private fun _mulCoeff2x2(
         p.c256Set128(p1, p0)
         return
     }
-    val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
+    sumU64(tmpDwQuad, pp00Hi, pp01Lo, pp10Lo)
+    val carry1 = tmpDwQuad.dw1
+    val p1 = tmpDwQuad.dw0
     val pp11Hi = unsignedMulHi(x1, y1)
     val pp11Lo = x1 * y1
     if (maxBitLen <= 192) {
@@ -300,7 +303,8 @@ private fun _mulCoeff2x1(
     p: C256,
     maxBitLen: Int,
     x1: Long, x0: Long,
-    y0: Long
+    y0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -316,7 +320,9 @@ private fun _mulCoeff2x1(
         p.c256Set128(p1, p0)
         return
     }
-    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    sumU64(tmpDwQuad, pp00Hi, pp10Lo)
+    val carry1 = tmpDwQuad.dw1
+    val p1 = tmpDwQuad.dw0
     val p2 = carry1 + pp10Hi
     p.c256Set192(p2, p1, p0)
 }

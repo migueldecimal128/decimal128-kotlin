@@ -13,7 +13,7 @@ object MagnitudeAddSub {
         //    u256AddUnscaled(z, x, y)
         //    return Residue.EXACT
         //}
-        val tmpDwQuad = ctx.decTmps.dwQuad1
+        val tmpDwQuad = ctx.tmps.dwQuad1
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
@@ -38,7 +38,7 @@ object MagnitudeAddSub {
                             Residue.LT_HALF
                         else
                             Residue.fromValueDecade(n)
-                        c256SetScaleUpPow10(z, m, shiftLeft)
+                        c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.dwQuad1)
                         residueT
                     }
 
@@ -66,7 +66,7 @@ object MagnitudeAddSub {
             (m.bitLen > 0) -> {
                 z.type = STEAL_TYPE_FNZ
                 z.qExp = qAlign
-                c256SetScaleUpPow10(z, m, shiftLeft)
+                c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.dwQuad1)
                 z.sign = sign
                 return EXACT
             }
@@ -123,7 +123,7 @@ object MagnitudeAddSub {
                     else
                         Residue.fromValueDecade(s).subtractionInverse()
                     if (shiftMLeft > 0) {
-                        c256SetScaleUpPow10(z, m, shiftMLeft)
+                        c256SetScaleUpPow10(z, m, shiftMLeft, ctx.tmps.dwQuad1)
                     } else {
                         z.c256Set(m)
                     }

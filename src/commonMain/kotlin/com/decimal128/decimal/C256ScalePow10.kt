@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.Residue.Companion.EXACT
 
 
-internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int) {
+internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, tmpDwQuad: DwQuad) {
     when {
         pow10 > 0 -> {
             val pow10BitLen = pow10BitLen(pow10)
@@ -18,7 +18,7 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int) {
                         z.c256Set192(p2, p1, p0)
                         return
                     }
-                    c256SetMul(z, x, pow10BitLen, pow10dw0)
+                    c256SetMul(z, x, pow10BitLen, pow10dw0, tmpDwQuad)
                 }
 
                 (pow10BitLen <= 128) -> {
@@ -27,7 +27,7 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int) {
                         z.c256Set192(p2, p1, p0)
                         return
                     }
-                    c256SetMul(z, x, pow10BitLen, pow10dw1, pow10dw0)
+                    c256SetMul(z, x, pow10BitLen, pow10dw1, pow10dw0, tmpDwQuad)
                 }
 
                 (pow10BitLen <= 192) -> {

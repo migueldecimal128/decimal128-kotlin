@@ -6,7 +6,7 @@ import kotlin.math.min
 object MagnitudeSqrt {
     val verbose = false
 
-    fun magSqrt(sqrt: MutDec, radicand: MutDec): Residue {
+    fun magSqrt(sqrt: MutDec, radicand: MutDec, tmpDwQuad: DwQuad): Residue {
         val qPreferred = radicand.qExp shr 1
         if (radicand.c256IsZero()) {
             sqrt.c256SetZero()
@@ -16,7 +16,7 @@ object MagnitudeSqrt {
         }
         val coeffRadicandScaled = C256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
-        c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp)
+        c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, tmpDwQuad)
         if (verbose)
             println("radicand:$radicand radicandScaled:$coeffRadicandScaled")
 
@@ -98,7 +98,7 @@ object MagnitudeSqrt {
             println(" ==> coeffGuess2:$coeffGuess2")
 
         val coeffGuess2Squared = C256()
-        c256SetMul(coeffGuess2Squared, coeffGuess2, coeffGuess2)
+        c256SetMul(coeffGuess2Squared, coeffGuess2, coeffGuess2, tmpDwQuad)
         val residual2 = C256()
         c256SetSubUnscaled(residual2, coeffRadicandScaled, coeffGuess2Squared)
 

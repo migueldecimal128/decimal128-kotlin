@@ -69,7 +69,7 @@ class MutDec() : C256() {
                             z.type = STEAL_TYPE_FNZ
                             z.qExp = x.qExp - shiftLeft
                             z.sign = x.sign
-                            c256SetScaleUpPow10(z, x, shiftLeft)
+                            c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.dwQuad1)
                             // we could be here because of FMA, so need to finalize
                             z.finalize(ctx)
                         }
@@ -85,7 +85,7 @@ class MutDec() : C256() {
                             val shiftLeft = min(headroom, gap)
                             z.qExp = y.qExp - shiftLeft
                             z.sign = ySign
-                            c256SetScaleUpPow10(z, y, shiftLeft)
+                            c256SetScaleUpPow10(z, y, shiftLeft, ctx.tmps.dwQuad1)
                         }
 
                         else -> addFnzImpl(z, x, ySign, y, ctx)
@@ -508,7 +508,7 @@ class MutDec() : C256() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
-                c256SetMul(this, x, y)
+                c256SetMul(this, x, y, ctx.tmps.dwQuad1)
                 this.type = STEAL_TYPE_FNZ
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
@@ -555,9 +555,9 @@ class MutDec() : C256() {
         when {
             qMaxXYA < MIN_SPECIAL_VALUE -> {
                 // FIXME -- this tmp should be pulled from ctx.decTmps
-                val aT = if (this === a) ctx.decTmps.mdecArg1.set(a) else a
+                val aT = if (this === a) ctx.tmps.mdecArg1.set(a) else a
                 // multiply without roundAndFinalize .. remains exact
-                c256SetMul(this, x, y)
+                c256SetMul(this, x, y, ctx.tmps.dwQuad1)
                 this.type = STEAL_TYPE_FNZ
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
@@ -597,10 +597,10 @@ class MutDec() : C256() {
                 (x.digitLen * y.digitLen * d.digitLen) != 0 }
         val resultSign = x.sign xor y.sign xor d.sign
 
-        val pT = ctx.decTmps.mdecFusedProduct
+        val pT = ctx.tmps.mdecFusedProduct
 
         // raw multiply without roundAndFinalize ... remains exact
-        c256SetMul(pT, x, y)
+        c256SetMul(pT, x, y, ctx.tmps.dwQuad1)
         pT.qExp = x.qExp + y.qExp
         val residue = magDivFnzFnz(this, resultSign, pT, d, ctx)
         return this.roundAndFinalize(residue, ctx)
@@ -703,7 +703,7 @@ class MutDec() : C256() {
                 val headroom = ctx.precision - this.digitLen
                 if (headroom < this.qExp)
                     return ctx.signalInvalid(setNaN())
-                c256SetScaleUpPow10(this, this, this.qExp)
+                c256SetScaleUpPow10(this, this, this.qExp, ctx.tmps.dwQuad1)
             }
             qExp = 0
         }
@@ -737,7 +737,7 @@ class MutDec() : C256() {
             qX < MIN_SPECIAL_VALUE -> {
                 when {
                     (x.bitLen > 0) -> {
-                        val residue = MagnitudeSqrt.magSqrt(this, x)
+                        val residue = MagnitudeSqrt.magSqrt(this, x, ctx.tmps.dwQuad1)
                         this.sign = false
                         roundAndFinalize(residue, ctx)
                     }
@@ -991,7 +991,7 @@ class MutDec() : C256() {
                     )
                 }
                 // both integral and fractional digits
-                val t = ctx.decTmps.mdecArg1
+                val t = ctx.tmps.mdecArg1
                 val residue = c256SetScaleDownPow10(t, this, fracDigitLen)
                 val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                 if (roundUp)
@@ -1103,7 +1103,7 @@ class MutDec() : C256() {
     private fun mutateNextAwayFromZero(ctx: DecContext) {
         val headroom = min(ctx.precision - digitLen, qExp - ctx.qTiny)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom)
+            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.dwQuad1)
             this.qExp -= headroom
         }
         c256MutateIncrement()
@@ -1117,7 +1117,7 @@ class MutDec() : C256() {
         val headroom =
             min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - ctx.qTiny)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom)
+            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.dwQuad1)
             this.qExp -= headroom
         }
         c256MutateDecrement()
@@ -1159,18 +1159,18 @@ class MutDec() : C256() {
     }
 
     // IEEE754-2008 5.3.2
-    fun setQuantize(x: MutDec, y: MutDec, env: DecContext): MutDec {
+    fun setQuantize(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // Handle NaN propagation
         val qX = x.qExp
         val qY = y.qExp
         if (qX > NON_FINITE_INF || qY > NON_FINITE_INF)
-            return setNaNOperand(x, y, env)
+            return setNaNOperand(x, y, ctx)
         // Handle infinity cases
         if (qX == NON_FINITE_INF || qY == NON_FINITE_INF) {
             if (qX == NON_FINITE_INF && qY == NON_FINITE_INF)
                 return set(x)
             this.setNaN()
-            env.signalInvalid(this)
+            ctx.signalInvalid(this)
             return this
         }
 
@@ -1184,36 +1184,36 @@ class MutDec() : C256() {
                 // Target exponent is larger: need to scale coefficient DOWN
                 // This means truncating with rounding
                 if (x.c256IsZero())
-                    return setZero(x.sign, qY, env)
+                    return setZero(x.sign, qY, ctx)
                 // Scale down by delta positions
                 val residue = c256SetScaleDownPow10(this, x, delta)
                 qExp = qY
                 sign = x.sign
                 if (residue != Residue.EXACT)
-                    roundAndFinalize(residue, env.decRounding, env)
+                    roundAndFinalize(residue, ctx.decRounding, ctx)
                 return this
             }
 
             else -> {  // delta < 0
                 if (x.c256IsZero())
-                    return setZero(x.sign, qY, env)
+                    return setZero(x.sign, qY, ctx)
 
                 // Target exponent is smaller: need to scale coefficient UP
                 val scaleAmount = -delta
                 val resultDigitLen = x.digitLen + scaleAmount
 
                 // Check if result would exceed precision
-                if (resultDigitLen > env.precision) {
+                if (resultDigitLen > ctx.precision) {
                     this.setNaN()
-                    env.signalInvalid(this)
+                    ctx.signalInvalid(this)
                     return this
                 }
 
                 // Scale up coefficient
-                c256SetScaleUpPow10(this, x, scaleAmount)
+                c256SetScaleUpPow10(this, x, scaleAmount, ctx.tmps.dwQuad1)
                 this.qExp = qY
                 this.sign = x.sign
-                verify { digitLen <= env.precision }
+                verify { digitLen <= ctx.precision }
                 return this
             }
         }
@@ -1266,7 +1266,7 @@ class MutDec() : C256() {
             qX < NON_FINITE_INF -> {
                 var ctzd = 0
                 var remaining = maxToStrip
-                val t = env.decTmps.mdecArg1
+                val t = env.tmps.mdecArg1
                 var t0 = x
                 var m: Long = 0L
                 while (remaining > 0) {
@@ -1354,13 +1354,13 @@ class MutDec() : C256() {
 
     fun setRemainderNear(x: MutDec, y: MutDec, env: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else env.decTmps.mdecArg2.set(y)
+        val yT = if (this !== y) y else env.tmps.mdecArg2.set(y)
         val truncIsOdd: Boolean = setRemTruncImpl(x, yT, env)
         if (!isZero() && isFinite()) {
             val rem2 = if (sign) {
-                env.decTmps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
+                env.tmps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
             } else {
-                env.decTmps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
+                env.tmps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
             }
             val cmp = magnitudeCompareTo(rem2)
              if (cmp > 0 || (cmp == 0) && truncIsOdd)
@@ -1384,7 +1384,7 @@ class MutDec() : C256() {
                 // setRemainder is an EXACT operation, so we will use a temp
                 // environment so that INEXACT flag/trap does not get signaled.
                 // use INTERNAL_TMP_ENV so that flag-setting
-                val n = env.decTmps.mdecArg1.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+                val n = env.tmps.mdecArg1.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
                 if (n.qExp < 0)
                     n.setRoundToIntegralExact(n, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
 

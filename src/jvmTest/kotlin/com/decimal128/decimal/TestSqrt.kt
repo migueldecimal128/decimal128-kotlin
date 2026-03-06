@@ -111,7 +111,8 @@ class TestSqrt{
         }
         val radicandScaled = C256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
-        c256SetScaleUpPow10(radicandScaled, radicand, scaleUp)
+        val tmpDwQuad = DwQuad()
+        c256SetScaleUpPow10(radicandScaled, radicand, scaleUp, tmpDwQuad)
         if (verbose)
             println("radicand:$radicand radicandScaled:$radicandScaled")
 
@@ -131,12 +132,12 @@ class TestSqrt{
         guess0Coeff.c256MutateDecrement()
 
         val guess0Squared = C256()
-        c256SetMul(guess0Squared, guess0Coeff, guess0Coeff)
+        c256SetMul(guess0Squared, guess0Coeff, guess0Coeff, tmpDwQuad)
         if (verbose)
             println(" --> coeffGuess0:$guess0Coeff guess0Squared:$guess0Squared")
         while (c256UnscaledCompare(guess0Squared, radicandScaled) > 0) {
             guess0Coeff.c256MutateDecrement()
-            c256SetMul(guess0Squared, guess0Coeff, guess0Coeff)
+            c256SetMul(guess0Squared, guess0Coeff, guess0Coeff, tmpDwQuad)
         }
         val residual0 = C256()
         c256SetSubUnscaled(residual0, radicandScaled, guess0Squared)
@@ -165,10 +166,10 @@ class TestSqrt{
             println(" --> guess1Coeff:$guess1Coeff")
 
         val guess1Squared = C256()
-        c256SetMul(guess1Squared, guess1Coeff, guess1Coeff)
+        c256SetMul(guess1Squared, guess1Coeff, guess1Coeff, tmpDwQuad)
         while (c256UnscaledCompare(guess1Squared, radicandScaled) > 0) {
             guess1Coeff.c256MutateDecrement()
-            c256SetMul(guess1Squared, guess1Coeff, guess1Coeff)
+            c256SetMul(guess1Squared, guess1Coeff, guess1Coeff, tmpDwQuad)
         }
         val residual1 = C256()
         c256SetSubUnscaled(residual1, radicandScaled, guess1Squared)

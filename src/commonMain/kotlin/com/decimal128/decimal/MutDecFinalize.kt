@@ -221,7 +221,7 @@ private fun MutDec.finalizeClamping(ctx: DecContext): MutDec {
     val qExcess = qExp - ctx.qMax
     verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
 
-    c256SetScaleUpPow10(this, this, qExcess)
+    c256SetScaleUpPow10(this, this, qExcess, ctx.tmps.dwQuad1)
     qExp -= qExcess
     verify { qExp == ctx.qMax }
 

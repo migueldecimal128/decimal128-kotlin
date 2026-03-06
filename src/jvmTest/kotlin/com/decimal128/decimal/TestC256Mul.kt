@@ -102,7 +102,7 @@ class TestC256Mul {
         val coeffC = C256()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = expected:$expected")
-        c256SetMul(coeffC, coeffA, coeffB)
+        c256SetMul(coeffC, coeffA, coeffB, DwQuad())
         val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
@@ -115,7 +115,7 @@ class TestC256Mul {
             throw RuntimeException()
         }
 
-        c256SetMul(coeffA, coeffA, coeffB)
+        c256SetMul(coeffA, coeffA, coeffB, DwQuad())
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 

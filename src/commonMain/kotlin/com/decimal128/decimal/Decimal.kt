@@ -981,7 +981,7 @@ class Decimal private constructor(
         if (isZero())
             return zero(sign)
         val pow10 = -qExp
-        val tmpPair = ctx.decTmps.dwQuad1
+        val tmpPair = ctx.tmps.dwQuad1
         tmpPair.dw0 = 0L
         tmpPair.dw1 = 0L
         val digitLen = this.digitLen
@@ -1139,7 +1139,7 @@ class Decimal private constructor(
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
                 if (intDigitLen <= 19) {
-                    val dwPair = ctx.decTmps.dwQuad1
+                    val dwPair = ctx.tmps.dwQuad1
                     val residue = c128ScaleDownPow10(dwPair, dw1, dw0, fracDigitLen)
                     // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
                     var r0 = dwPair.dw0
@@ -1307,7 +1307,7 @@ class Decimal private constructor(
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
                 if (intDigitLen <= 10) {
-                    val dwPair = ctx.decTmps.dwQuad1
+                    val dwPair = ctx.tmps.dwQuad1
                     val residue = c128ScaleDownPow10(dwPair, dw1, dw0, fracDigitLen)
                     var r0 = dwPair.dw0
                     val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)

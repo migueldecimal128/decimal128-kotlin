@@ -106,7 +106,7 @@ class TestC256ScaleUp {
         val env = DecContext()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = expected:$expected")
-        c256SetScaleUpPow10(coeffObserved, coeffA, pow10)
+        c256SetScaleUpPow10(coeffObserved, coeffA, pow10, DwQuad())
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
             println("$coeffA (${coeffA.digitLen}) * 10**$pow10 = $coeffObserved (${coeffObserved.digitLen})  expected:$expected")
