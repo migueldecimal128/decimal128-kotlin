@@ -452,7 +452,7 @@ object DecimalParsePrint {
         x.c256Set64(coeff19)
         if (coeffDigitCount > 19) {
             val pow10 = coeffDigitCount - 19
-            x.u256MutateFmaPow10(pow10, coeff34)
+            c256SetFmaPow10(x, x, pow10, coeff34)
         }
         x.sign = sign
 
@@ -514,7 +514,7 @@ object DecimalParsePrint {
         if (!discardNanPayload && payloadDigitCount > 0) {
             x.c256Set64(accumulator19)
             if (payloadDigitCount > 19)
-                x.u256MutateFmaPow10(payloadDigitCount - 19, accumulator38)
+                c256SetFmaPow10(x, x, payloadDigitCount - 19, accumulator38)
         }
         x.sign = sign
         x.qExp = if (hasS) NON_FINITE_SNAN else NON_FINITE_QNAN

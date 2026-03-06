@@ -7,10 +7,10 @@ object MagnitudeDiv {
     fun magDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
         val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
         val scaledNumerator = ctx.decTmps.mdecArg1
-        scaledNumerator.c256SetScaleUpPow10(x, numeratorScale)
+        c256SetScaleUpPow10(scaledNumerator, x, numeratorScale)
         val residue = when {
             (y.bitLen <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0)
-            else -> z.c256SetDiv(scaledNumerator, y)
+            else -> c256SetDiv(z, scaledNumerator, y)
         }
         val qPreferred = x.qExp - y.qExp
         var qZ = x.qExp - y.qExp - numeratorScale
@@ -40,7 +40,7 @@ object MagnitudeDiv {
                             t = q
                         }
                         if (pow10Count > 0) {
-                            z.c256SetScaleDownPow10(z, pow10Count)
+                            c256SetScaleDownPow10(z, z, pow10Count)
                             qZ += pow10Count
                         }
                         break
@@ -50,8 +50,8 @@ object MagnitudeDiv {
                         qZ += chunk
                     }
                 } while (qZ < qPreferred && ntz > 0)
-            } else if (z.c256IsMultipleOf10()) {
-                z.c256SetScaleDownPow10(z, 1)
+            } else if (c256IsMultipleOf10(z)) {
+                c256SetScaleDownPow10(z, z, 1)
                 ++qZ
             }
         }

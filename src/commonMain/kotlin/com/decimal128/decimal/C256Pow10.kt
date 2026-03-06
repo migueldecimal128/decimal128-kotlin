@@ -425,7 +425,7 @@ internal fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, 
     }
 }
 
-internal fun coeffIsPow10(x: C256): Boolean {
+internal fun c256IsPowerOf10(x: C256): Boolean {
     val xBitLen = x.bitLen
     val xDigitLen = x.digitLen
     if (xDigitLen > 0) {

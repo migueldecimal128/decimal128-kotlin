@@ -111,7 +111,7 @@ class TestSqrt{
         }
         val radicandScaled = C256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
-        radicandScaled.c256SetScaleUpPow10(radicand, scaleUp)
+        c256SetScaleUpPow10(radicandScaled, radicand, scaleUp)
         if (verbose)
             println("radicand:$radicand radicandScaled:$radicandScaled")
 
@@ -178,7 +178,7 @@ class TestSqrt{
         val guess1x2 = C256()
         guess1x2.c256SetShiftLeft(guess1Coeff, 1)
         val delta1 = C256()
-        val residue1 = delta1.c256SetDiv(residual1, guess1x2)
+        val residue1 = c256SetDiv(delta1, residual1, guess1x2)
 
         val guess2 = C256()
         c256SetAddUnscaled(guess2, guess1Coeff, delta1)
@@ -227,7 +227,7 @@ class TestSqrt{
                             t = q
                         }
                         if (pow10Count > 0) {
-                            sqrt.c256SetScaleDownPow10(sqrt, pow10Count)
+                            c256SetScaleDownPow10(sqrt, sqrt, pow10Count)
                             qZ += pow10Count
                         }
                         break
@@ -237,8 +237,8 @@ class TestSqrt{
                         qZ += chunk
                     }
                 } while (qZ < qPreferred && ntz > 0)
-            } else if (sqrt.c256IsMultipleOf10()) {
-                sqrt.c256SetScaleDownPow10(sqrt, 1)
+            } else if (c256IsMultipleOf10(sqrt)) {
+                c256SetScaleDownPow10(sqrt, sqrt, 1)
                 ++qZ
             }
         }

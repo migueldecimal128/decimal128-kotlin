@@ -112,7 +112,7 @@ class TestReduce {
         if (x.bitLen > 0 && isMultipleOfFive_256(x.dw3, x.dw2, x.dw1, x.dw0)) {
             val k = calcReductionPow10(x)
             if (k > 0) {
-                val residue = z.c256SetScaleDownPow10(x, k)
+                val residue = c256SetScaleDownPow10(z, x, k)
                 assert(residue == Residue.EXACT)
                 return k
             }

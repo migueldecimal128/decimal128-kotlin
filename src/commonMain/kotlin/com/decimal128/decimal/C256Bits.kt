@@ -143,6 +143,12 @@ fun isMultipleOfFive256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Boolean {
     return ret
 }
 
+fun c256IsMultipleOf10(x: C256): Boolean {
+    if (x.bitLen < 4 || (x.dw0 and 1L) != 0L)
+        return false
+    return c256IsMultipleOf5(x)
+}
+
 fun c256IsMultipleOf5(x: C256): Boolean {
     val bitLen = x.bitLen
     return when {

@@ -248,14 +248,14 @@ internal object IntegerParsePrint {
                 ++accumulatorDigitCount
                 if (accumulatorDigitCount < 19)
                     continue
-                u.u256MutateFmaPow10(19, accumulator)
+                c256SetFmaPow10(u, u, 19, accumulator)
                 accumulator = 0L
                 accumulatorDigitCount = 0
             }
             if (ch != '\u0000' || chLast == '_')
                 break@invalid_syntax
             if (accumulatorDigitCount > 0)
-                u.u256MutateFmaPow10(accumulatorDigitCount, accumulator)
+                c256SetFmaPow10(u, u, accumulatorDigitCount, accumulator)
             return sign
         } while (false)
         throw IllegalArgumentException("invalid integer syntax:$src")

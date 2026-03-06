@@ -52,16 +52,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256IsZero() = bitLen == 0
 
-    internal inline fun c256IsMultipleOf5() = c256IsMultipleOf5(this)
-
-    internal inline fun c256IsMultipleOf10(): Boolean {
-        if (bitLen < 4 || (dw0 and 1) != 0L)
-            return false
-        return c256IsMultipleOf5()
-    }
-
-    internal inline fun c256IsPowerOf10() = coeffIsPow10(this)
-
     fun updateDigitLenBitLen() {
         val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
         val digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
@@ -82,19 +72,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         return true
     }
 
-    internal inline fun c256SetFmaPow10(x: C256, pow10: Int, a0: Long) = c256SetFmaPow10(this, x, pow10, a0)
-
-    internal inline fun u256MutateFmaPow10(pow10: Int, a: Long) = c256SetFmaPow10(this, this, pow10, a)
-
-    internal inline fun c256SetFms(x: C256, y: C256, subtrahend: C256) = c256SetFms(this, x, y, subtrahend)
-
-    internal inline fun c256SetDiv(x: C256, y: C256) = c256SetDiv(this, x, y)
-
-    internal inline fun c256SetDivModX64(x: C256, y0: Long) = c256SetDivRemX64(this, x, y0)
-
-    internal inline fun c256SetScaleUpPow10(x: C256, pow10: Int) = c256SetScaleUpPow10(this, x, pow10)
-
-    internal inline fun c256SetScaleDownPow10(x: C256, pow10: Int) = c256SetScaleDownPow10(this, x, pow10)
 
     internal inline operator fun get(index: Int): Long {
         return when (index) {

@@ -97,7 +97,7 @@ class TestC256Fms {
         val coeffResult = C256()
         if (verbose)
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = expected:$expected (${expected.bitLength()} bits)")
-        coeffResult.c256SetFms(coeffX, coeffY, coeffS)
+        c256SetFms(coeffResult, coeffX, coeffY, coeffS)
         val biProd = coeffResult.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = $coeffResult (${coeffResult.bitLen} bits)  expected:$expected (${expected.bitLength()} bits)")
@@ -105,13 +105,13 @@ class TestC256Fms {
 
         val rnd = random.nextInt(3)
         if (rnd == 0) {
-            coeffX.c256SetFms(coeffX, coeffY, coeffS)
+            c256SetFms(coeffX, coeffX, coeffY, coeffS)
             assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
-            coeffY.c256SetFms(coeffY, coeffX, coeffS)
+            c256SetFms(coeffY, coeffY, coeffX, coeffS)
             assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
-            coeffS.c256SetFms(coeffX, coeffY, coeffS)
+            c256SetFms(coeffS, coeffX, coeffY, coeffS)
             assert(coeffS.coeffToBigInteger().equals(expected))
         }
 

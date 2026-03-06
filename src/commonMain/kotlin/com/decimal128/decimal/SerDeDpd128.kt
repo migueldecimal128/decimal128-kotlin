@@ -101,7 +101,7 @@ object SerDeDpd128 {
                 val binLo = binFromDeclets7(decletsLo6)
                 if (binHi != 0L) {
                     d.c256Set64(binHi)
-                    d.c256SetFmaPow10(d, 18, binLo)
+                    c256SetFmaPow10(d, d, 18, binLo)
                 } else {
                     d.c256Set64(binLo)
                 }
@@ -123,7 +123,7 @@ object SerDeDpd128 {
                         val binHi = binFromDeclets7(decletsHi5)
                         val binLo = binFromDeclets7(decletsLo6)
                         d.c256Set64(binHi)
-                        d.c256SetFmaPow10(d, 18, binLo)
+                        c256SetFmaPow10(d, d, 18, binLo)
                         payloadHi = d.dw1
                         payloadLo = d.dw0
                     }
@@ -149,7 +149,7 @@ object SerDeDpd128 {
         var binLo = d.dw0
         if (d.digitLen > 18) {
             val q = C256()
-            val r = q.c256SetDivModX64(d, TEN_POW_18)
+            val r = c256SetDivRemX64(q, d, TEN_POW_18)
             binLo = r
             var binHi = q.dw0
             if (q.digitLen > 15) {

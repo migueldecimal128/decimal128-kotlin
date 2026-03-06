@@ -718,7 +718,7 @@ class MutDec() : C256() {
                 val headroom = ctx.precision - this.digitLen
                 if (headroom < this.qExp)
                     return ctx.signalInvalid(setNaN())
-                this.c256SetScaleUpPow10(this, this.qExp)
+                c256SetScaleUpPow10(this, this, this.qExp)
             }
             qExp = 0
         }
@@ -1118,7 +1118,7 @@ class MutDec() : C256() {
     private fun mutateNextAwayFromZero(ctx: DecContext) {
         val headroom = min(ctx.precision - digitLen, qExp - ctx.qTiny)
         if (headroom > 0) {
-            this.c256SetScaleUpPow10(this, headroom)
+            c256SetScaleUpPow10(this, this, headroom)
             this.qExp -= headroom
         }
         c256MutateIncrement()
@@ -1130,9 +1130,9 @@ class MutDec() : C256() {
 
     private fun mutateNextTowardZero(ctx: DecContext) {
         val headroom =
-            min(ctx.precision - digitLen + if (c256IsPowerOf10()) 1 else 0, qExp - ctx.qTiny)
+            min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - ctx.qTiny)
         if (headroom > 0) {
-            this.c256SetScaleUpPow10(this, headroom)
+            c256SetScaleUpPow10(this, this, headroom)
             this.qExp -= headroom
         }
         c256MutateDecrement()
@@ -1201,7 +1201,7 @@ class MutDec() : C256() {
                 if (x.c256IsZero())
                     return setZero(x.sign, qY, env)
                 // Scale down by delta positions
-                val residue = this.c256SetScaleDownPow10(x, delta)
+                val residue = c256SetScaleDownPow10(this, x, delta)
                 qExp = qY
                 sign = x.sign
                 if (residue != Residue.EXACT)
@@ -1225,7 +1225,7 @@ class MutDec() : C256() {
                 }
 
                 // Scale up coefficient
-                this.c256SetScaleUpPow10(x, scaleAmount)
+                c256SetScaleUpPow10(this, x, scaleAmount)
                 this.qExp = qY
                 this.sign = x.sign
                 verify { digitLen <= env.precision }
@@ -1303,7 +1303,7 @@ class MutDec() : C256() {
                 ctzd = min(ctzd, env.qMax - qX)
                 if (ctzd == 0)
                     return set(x)
-                c256SetScaleDownPow10(x, ctzd)
+                c256SetScaleDownPow10(this, x, ctzd)
                 qExp = qX + ctzd
                 sign = x.sign
                 return this

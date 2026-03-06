@@ -117,7 +117,7 @@ class TestSqrtDoubleDouble{
         }
         val coeffRadicandScaled = C256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
-        coeffRadicandScaled.c256SetScaleUpPow10(radicand, scaleUp)
+        c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp)
         if (verbose)
             println("radicand:$radicand radicandScaled:$coeffRadicandScaled")
 
@@ -240,7 +240,7 @@ class TestSqrtDoubleDouble{
                             t = q
                         }
                         if (pow10Count > 0) {
-                            sqrt.c256SetScaleDownPow10(sqrt, pow10Count)
+                            c256SetScaleDownPow10(sqrt, sqrt, pow10Count)
                             qZ += pow10Count
                         }
                         break
@@ -250,8 +250,8 @@ class TestSqrtDoubleDouble{
                         qZ += chunk
                     }
                 } while (qZ < qPreferred && ntz > 0)
-            } else if (sqrt.c256IsMultipleOf10()) {
-                sqrt.c256SetScaleDownPow10(sqrt, 1)
+            } else if (c256IsMultipleOf10(sqrt)) {
+                c256SetScaleDownPow10(sqrt, sqrt, 1)
                 ++qZ
             }
         }
