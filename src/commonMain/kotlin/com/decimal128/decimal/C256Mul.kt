@@ -53,7 +53,7 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: 
             else -> z.c256SetZero()
         }
 
-        (xBitLen <= 128) -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0)
+        (xBitLen <= 128) -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0, tmpDwQuad)
         else -> throw RuntimeException("coeff overflow")
     }
 }
@@ -192,7 +192,8 @@ private fun _mulCoeff3x2(
     p: C256,
     maxBitLen: Int,
     x2: Long, x1: Long, x0: Long,
-    y1: Long, y0: Long
+    y1: Long, y0: Long,
+    tmpDwQuad: DwQuad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -210,7 +211,9 @@ private fun _mulCoeff3x2(
         p.c256Set128(p1, p0)
         return
     }
-    val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
+    sumU64(tmpDwQuad, pp00Hi, pp01Lo, pp10Lo)
+    val carry1 = tmpDwQuad.dw1
+    val p1 = tmpDwQuad.dw0
     val pp11Hi = unsignedMulHi(x1, y1)
     val pp11Lo = x1 * y1
     val pp20Hi = unsignedMulHi(x2, y0)
@@ -220,8 +223,9 @@ private fun _mulCoeff3x2(
         p.c256Set192(p2, p1, p0)
         return
     }
-    val (carry2, p2) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo)
-    val pp21Hi = unsignedMulHi(x2, y1)
+    sumU64(tmpDwQuad, carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo)
+    val carry2 = tmpDwQuad.dw1
+    val p2 = tmpDwQuad.dw0
     val pp21Lo = x2 * y1
 
     if (maxBitLen <= 256) {
@@ -229,7 +233,9 @@ private fun _mulCoeff3x2(
         p.c256Set256(p3, p2, p1, p0)
         return
     }
-    val (carry3, p3) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo)
+    sumU64(tmpDwQuad, carry2, pp11Hi, pp20Hi, pp21Lo)
+    val carry3 = tmpDwQuad.dw1
+    val p3 = tmpDwQuad.dw0
     if (carry3 == 0L) {
         verify { maxBitLen == 257 }
         p.c256Set256(p3, p2, p1, p0)
