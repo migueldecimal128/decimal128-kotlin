@@ -6,6 +6,13 @@ build/
 
 ### IntelliJ IDEA ###
 .idea/
+.idea/codeStyles/codeStyleConfig.xml
+.idea/gradle.xml
+.idea/artifacts/
+.idea/inspectionProfiles/
+.idea/inspectionProfiles/Project_Default.xml
+.idea/vcs.xml
+.idea/name
 *.iws
 *.iml
 *.ipr
