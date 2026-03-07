@@ -99,8 +99,8 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCo
         return addUnscaledMagnitudes(ySign, x, y, ctx)
     val cmp = c128UnscaledCompare(x, y)
     return when {
-        (cmp > 0) -> C128AddSub.c128UnscaledSub(xSign, x, y)
-        (cmp < 0) -> C128AddSub.c128UnscaledSub(ySign, y, x)
+        (cmp > 0) -> unscaledSub(xSign, x, y)
+        (cmp < 0) -> unscaledSub(ySign, y, x)
         else -> Decimal.zero(ctx.isRoundTowardNegative(), x.qExp, ctx)
     }
 }
@@ -241,5 +241,17 @@ private fun fullWidthSub(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext)
     val residue = MagnitudeAddSub.magScaledSub(mdecDiff, sign, arg1, arg2, ctx)
     mdecDiff.roundAndFinalize(residue, ctx)
     val diff = Decimal.from(mdecDiff)
+    return diff
+}
+
+private fun unscaledSub(sign: Boolean, x: Decimal, y: Decimal): Decimal {
+    verify { x.validate() }
+    verify { y.validate() }
+    verify { x.bitLen >= y.bitLen }
+
+    val d0 = x.dw0 - y.dw0
+    val carry0 = if (unsignedCmp(d0, x.dw0) > 0) 1L else 0L
+    val d1 = x.dw1 - y.dw1 - carry0
+    val diff = Decimal(sign, x.qExp, d1, d0)
     return diff
 }
