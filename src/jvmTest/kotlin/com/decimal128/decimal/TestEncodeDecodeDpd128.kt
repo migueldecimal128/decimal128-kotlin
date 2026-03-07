@@ -45,7 +45,8 @@ class TestEncodeDecodeDpd128 {
 
     val jnaBidDpdShim = JnaBidDpdShim.INSTANCE
 
-    @Test
+    // only run on x86 because of JNA shim
+    // @Test
     fun testCases() {
         for (tc in tcs)
             test1(tc)
@@ -53,7 +54,7 @@ class TestEncodeDecodeDpd128 {
 
     val fptestOperandFilename = "/fptest/fptestOperandsUniq.txt"
 
-    @Test
+    //@Test
     fun testFptestOperands() {
         this::class.java.getResourceAsStream(fptestOperandFilename)!!
             .bufferedReader()

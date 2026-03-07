@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 
 class TestJnaBidDpdShim {
 
-    @Test
+    //@Test
     fun test1() {
         val jnaBidDpdShim = JnaBidDpdShim.INSTANCE
         val values = listOf(
