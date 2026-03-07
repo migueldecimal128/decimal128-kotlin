@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestContextParams1 {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testContextA() {

@@ -464,6 +464,7 @@ object DecimalParsePrint {
         val totalDigitsAfterDecimal = leadingFractionalZeroCount + fractionalDigitCount
         val qExp = signedExp - totalDigitsAfterDecimal + discardedDigitCount
 
+        x.type = if ((coeff19 or coeff34) == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         x.qExp = qExp
 
         val hasDiscardedNonZero = guardDigit or stickyBits != 0

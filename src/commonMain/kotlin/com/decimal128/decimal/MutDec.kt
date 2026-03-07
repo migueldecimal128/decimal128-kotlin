@@ -929,6 +929,7 @@ class MutDec() : C256() {
         }
         // integral and fractional digits
         val residue = c256SetScaleDownPow10(this, x, fracDigitLen)
+        type = if (this.c256IsZero()) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         qExp = 0
         sign = xSign
         return roundAndFinalize(residue, rounding, ctx)
@@ -1192,6 +1193,7 @@ class MutDec() : C256() {
                     return setZero(x.sign, qY, ctx)
                 // Scale down by delta positions
                 val residue = c256SetScaleDownPow10(this, x, delta)
+                type = if (this.bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
                 qExp = qY
                 sign = x.sign
                 if (residue != Residue.EXACT)

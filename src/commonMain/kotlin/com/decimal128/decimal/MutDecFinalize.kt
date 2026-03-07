@@ -43,6 +43,8 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
         return finalizeZero(inboundResidue, rounding, ctx)
     }
 
+    verify { stealIsFNZ(type) }
+
     // Step 4: Handle underflow
     // Only divert if range truncation exceeds precision truncation,
     // meaning the normal path can't bring qExp into range on its own

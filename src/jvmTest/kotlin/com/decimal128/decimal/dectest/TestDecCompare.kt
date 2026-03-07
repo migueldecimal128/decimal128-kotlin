@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 
 class TestDecCompare {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testCompare() = runBinaryDecimalCtxOp(

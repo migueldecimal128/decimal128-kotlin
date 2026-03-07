@@ -11,7 +11,7 @@ import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
 
-    val verbose = true
+    val verbose = false
 
     val decPrefs = DecPrefs().copy(propagatePreferSnan = false)
     val decContext = DecContext(decPrefs = decPrefs)

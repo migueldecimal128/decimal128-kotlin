@@ -256,6 +256,7 @@ class TestSqrtDoubleDouble{
                 ++qZ
             }
         }
+        sqrt.type = if (sqrt.c256IsZero()) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         sqrt.qExp = qZ
         sqrt.roundAndFinalize(residue2, DecContext())
 

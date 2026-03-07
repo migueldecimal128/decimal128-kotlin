@@ -60,6 +60,7 @@ private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val n = tmps.mdecBridge2.set(y)
     val p = tmps.mdecResult
     c256SetMul(p, m, n, tmps.dwQuad1)
+    p.type = STEAL_TYPE_FNZ
     p.qExp = x.qExp + y.qExp
     p.sign = x.sign xor y.sign
     p.finalize(ctx)

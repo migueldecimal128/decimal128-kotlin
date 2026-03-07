@@ -5,7 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestHashCode1 {
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testConstantHashCodes() {

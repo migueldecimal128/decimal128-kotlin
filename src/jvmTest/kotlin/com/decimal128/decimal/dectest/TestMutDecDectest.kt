@@ -318,8 +318,8 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
-        "dqqua756 quantize -0.099E-6143  1e-6145 ->  -1.0E-6144  Inexact Rounded Subnormal",
         "dqqua716 quantize  0.099E-6143 10e-6144  ->   1E-6144   Inexact Rounded Subnormal",
+        "dqqua756 quantize -0.099E-6143  1e-6145 ->  -1.0E-6144  Inexact Rounded Subnormal",
         "dqqua012 quantize 0.9    1e+0   -> 1 Inexact Rounded",
 
         "dqrmn003 remaindernear  1     2    ->  1",

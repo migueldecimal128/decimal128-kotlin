@@ -10,6 +10,7 @@ object MagnitudeSqrt {
         val qPreferred = radicand.qExp shr 1
         if (radicand.c256IsZero()) {
             sqrt.c256SetZero()
+            sqrt.type = STEAL_TYPE_ZER
             sqrt.qExp = qPreferred
             sqrt.sign = radicand.sign
             return Residue.EXACT
@@ -109,6 +110,7 @@ object MagnitudeSqrt {
             println(" --> scaleUp:$scaleUp preferred:$qPreferred")
 
         sqrt.c256Set(coeffGuess2)
+        sqrt.type = STEAL_TYPE_FNZ
         sqrt.qExp = -scaleUp / 2
         sqrt.sign = false
 
