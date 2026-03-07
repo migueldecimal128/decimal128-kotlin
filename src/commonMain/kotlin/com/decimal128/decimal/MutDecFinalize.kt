@@ -38,8 +38,10 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
     }
 
     // Step 3: Zero coefficient
-    if (digitLen == 0)
+    if (bitLen == 0) {
+        verify { stealIsZER(type) }
         return finalizeZero(inboundResidue, rounding, ctx)
+    }
 
     // Step 4: Handle underflow
     // Only divert if range truncation exceeds precision truncation,

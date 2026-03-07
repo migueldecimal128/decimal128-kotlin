@@ -508,8 +508,13 @@ class MutDec() : C256() {
         val qMaxXY = max(qX, qY)
         when {
             qMaxXY < MIN_SPECIAL_VALUE -> {
-                c256SetMul(this, x, y, ctx.tmps.dwQuad1)
-                this.type = STEAL_TYPE_FNZ
+                if (x.isZero() || y.isZero()) {
+                    c256SetZero()
+                    this.type = STEAL_TYPE_ZER
+                } else {
+                    c256SetMul(this, x, y, ctx.tmps.dwQuad1)
+                    this.type = STEAL_TYPE_FNZ
+                }
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 return finalize(ctx)

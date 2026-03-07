@@ -20,6 +20,8 @@ class TestFptestRead {
     val verbose = false
 
     val tcs = arrayOf (
+        "d64* =0 i +0e-398 +0e-398 -> +0e-398",
+
         // I created this case from a bad case ... so I don't know if u flag is correct or not
         "d64+ 0 xu +6e-398 +0 -> +6e-398 u",
 
