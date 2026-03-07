@@ -9,7 +9,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 
 class TestDecNoncomputational {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAbs() = runUnaryDecimalOp(
@@ -137,5 +137,17 @@ class TestDecNoncomputational {
         Decimal::copy,
         verbose = verbose,
     )
+
+    @Test
+    fun testEncodeCases() = runUnaryDecimalOp(
+        Decimal::copy,
+        verbose = verbose,
+        cases = arrayOf(
+            "decq542 apply   NaN1              -> #7c000000000000000000000000000001",
+            "decq400 apply   0E-8000                 -> #00000000000000000000000000000000  Clamped",
+        )
+    )
+
+
 }
 

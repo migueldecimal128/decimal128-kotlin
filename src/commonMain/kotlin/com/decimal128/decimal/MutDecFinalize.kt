@@ -195,6 +195,7 @@ private fun MutDec.finalizeSubnormal(
     truncationNeeded: Int
 ): MutDec {
     verify { truncationNeeded > 0 && truncationNeeded < digitLen }
+    verify { type == STEAL_TYPE_FNZ }
 
     // Scale down to fit in subnormal range
     val scaleResidue = c256SetScaleDownPow10(this, this, truncationNeeded)
@@ -226,6 +227,7 @@ private fun MutDec.finalizeSubnormal(
 }
 
 private fun MutDec.finalizeClamping(ctx: DecContext): MutDec {
+    verify { type == STEAL_TYPE_FNZ }
     val qExcess = qExp - ctx.qMax
     verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
 

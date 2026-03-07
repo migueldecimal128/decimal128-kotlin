@@ -11,7 +11,7 @@ import com.decimal128.decimal.fmaImpl
 
 class TestDecMisc {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testLogB() = runUnaryDecimalCtxOp(
@@ -150,6 +150,7 @@ class TestDecMisc {
         Decimal::roundToIntegralExact,
         verbose = verbose,
         cases = arrayOf(
+            "dqintx074 tointegralx '1.23E+6144'  -> #47ffd300000000000000000000000000 Clamped",
         )
     )
 

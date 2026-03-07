@@ -183,7 +183,7 @@ class Decimal private constructor(
                 (if (sign) BIT31 else 0) or ((qClamped and 0x7FFF) shl 16)
             val signBit = if (sign) 1 else 0
             val steal = stealEncodeZER(signBit, qClamped)
-            val zero = Decimal(stealEncodeZER(signBit, qClamped), seal, 0L, 0L)
+            val zero = Decimal(steal, seal, 0L, 0L)
             return zero
         }
 

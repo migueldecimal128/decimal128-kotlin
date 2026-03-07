@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestDecWithScale {
 
-    val verbose = false
+    val verbose = true
 
     data class TC(val str: String, val scale: Int, val expected: String)
 

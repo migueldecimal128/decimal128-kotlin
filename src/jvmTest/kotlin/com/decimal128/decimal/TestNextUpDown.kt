@@ -7,8 +7,6 @@ import java.math.BigDecimal
 class TestNextUpDown {
 
     val tcs = arrayOf(
-        BigDecimal("8"),
-
         BigDecimal("1e-6176"),
         BigDecimal("-1e-6176"),
         BigDecimal("-9999999999999999999999999999999999e6111"),

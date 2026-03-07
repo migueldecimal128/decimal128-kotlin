@@ -190,22 +190,22 @@ class MutDec() : C256() {
         }
 
         fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
-            SerDeBid128.decodeLittleEndianBid128(MutDec(), littleEndianLongs)
+            decodeLittleEndianBid128(MutDec(), littleEndianLongs)
         fun decodeLittleEndianBid128(littleEndianBytes: ByteArray) =
-            SerDeBid128.decodeLittleEndianBid128(MutDec(), littleEndianBytes)
+            decodeLittleEndianBid128(MutDec(), littleEndianBytes)
         fun decodeBigEndianBid128(bigEndianLongs: LongArray) =
-            SerDeBid128.decodeBigEndianBid128(MutDec(), bigEndianLongs)
+            decodeBigEndianBid128(MutDec(), bigEndianLongs)
         fun decodeBigEndianBid128(bigEndianBytes: ByteArray) =
-            SerDeBid128.decodeBigEndianBid128(MutDec(), bigEndianBytes)
+            decodeBigEndianBid128(MutDec(), bigEndianBytes)
 
         fun decodeLittleEndianDpd128(littleEndianLongs: LongArray) =
-            SerDeDpd128.decodeLittleEndianDpd128(MutDec(), littleEndianLongs)
+            decodeLittleEndianDpd128(MutDec(), littleEndianLongs)
         fun decodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
-            SerDeDpd128.decodeLittleEndianDpd128(MutDec(), littleEndianBytes)
+            decodeLittleEndianDpd128(MutDec(), littleEndianBytes)
         fun decodeBigEndianDpd128(bigEndianLongs: LongArray) =
-            SerDeDpd128.decodeBigEndianDpd128(MutDec(), bigEndianLongs)
+            decodeBigEndianDpd128(MutDec(), bigEndianLongs)
         fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
-            SerDeDpd128.decodeBigEndianDpd128(MutDec(), bigEndianBytes)
+            decodeBigEndianDpd128(MutDec(), bigEndianBytes)
 
         private const val MAX_MASK = 1
         private const val MAG_MASK = 2
@@ -232,6 +232,43 @@ class MutDec() : C256() {
 
     }
 
+    internal fun validate(): Boolean {
+        if (bitLen != calcBitLen256(dw3, dw2, dw1, dw0))
+            return false
+        if (digitLen != calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
+            return false;
+        when (type) {
+            STEAL_TYPE_ZER -> {
+                if (bitLen > 0)
+                    return false
+                if (qExp >= NON_FINITE_INF)
+                    return false
+            }
+            STEAL_TYPE_FNZ -> {
+                if (bitLen == 0)
+                    return false
+                if (qExp >= NON_FINITE_INF)
+                    return false
+            }
+            STEAL_TYPE_INF -> {
+                if (bitLen != 0)
+                    return false
+                if (qExp != NON_FINITE_INF)
+                    return false
+            }
+            STEAL_NAN_SNAN -> {
+                if (qExp != NON_FINITE_SNAN)
+                    return false
+            }
+            STEAL_NAN_QNAN -> {
+                if (qExp != NON_FINITE_QNAN)
+                    return false
+            }
+            else -> return false
+        }
+        return true
+    }
+
     // if the digitLen is non-zero then subtract 1
     // if digitLen == 0 then sciExp stays 0 ... 0e0
     fun sciExp() = qExp + (digitLen - (-digitLen ushr 31))
@@ -243,6 +280,7 @@ class MutDec() : C256() {
         this.type = STEAL_TYPE_ZER
         this.qExp = 0
         this.sign = sign
+        verify { validate() }
         return this
     }
 
@@ -251,6 +289,7 @@ class MutDec() : C256() {
         this.type = STEAL_TYPE_ZER
         this.qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
         this.sign = sign
+        verify { validate() }
         return this
     }
 
@@ -259,6 +298,7 @@ class MutDec() : C256() {
         this.type = STEAL_TYPE_FNZ
         this.qExp = 0
         this.sign = sign
+        verify { validate() }
         return this
     }
 
@@ -270,6 +310,7 @@ class MutDec() : C256() {
         this.qExp = NON_FINITE_QNAN
         if (xQ == NON_FINITE_SNAN)
             ctx.signalInvalid(this)
+        verify { validate() }
         return this
     }
 
@@ -283,6 +324,7 @@ class MutDec() : C256() {
         this.qExp = NON_FINITE_QNAN
         if (maxQ == NON_FINITE_SNAN)
             ctx.signalInvalid(this)
+        verify { validate() }
         return this
     }
 
@@ -297,6 +339,7 @@ class MutDec() : C256() {
         type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
+        verify { validate() }
     }
 
     internal fun setNaN(ctx: DecContext) {
@@ -304,11 +347,13 @@ class MutDec() : C256() {
         sign = false
         type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
+        verify { validate() }
     }
 
     internal fun setNaNSignalInvalid(ctx: DecContext) {
         setNaN(ctx)
         ctx.signalInvalid(this)
+        verify { validate() }
     }
 
     internal fun setNaN(payload: Int, ctx: DecContext) {
@@ -317,12 +362,14 @@ class MutDec() : C256() {
         type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
+        verify { validate() }
     }
 
     internal fun setNaN(): MutDec {
         setZero()
         type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
+        verify { validate() }
         return this
     }
 
@@ -330,16 +377,15 @@ class MutDec() : C256() {
         this.sign = sign
         this.type = if (isSignaling) STEAL_NAN_SNAN else STEAL_NAN_QNAN
         this.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-        this.dw3 = 0
-        this.dw2 = 0
-        this.dw1 = payloadHi and ((1L shl (110 - 64)) - 1L)
-        this.dw0 = payloadLo
+        c256Set128(payloadHi and ((1L shl (110 - 64)) - 1L), payloadLo)
+        verify { validate() }
     }
 
     fun setSNaN(ctx: DecContext) {
         setZero()
         this.type = STEAL_NAN_SNAN
         qExp = NON_FINITE_SNAN
+        verify { validate() }
     }
 
     fun setInfinite(sign: Boolean = false): MutDec {
@@ -352,6 +398,7 @@ class MutDec() : C256() {
         this.type = STEAL_TYPE_INF
         this.qExp = NON_FINITE_INF
         this.sign = sign
+        verify { validate() }
         return this
     }
 
@@ -364,6 +411,7 @@ class MutDec() : C256() {
         val mask = l shr 63
         val abs = (l xor mask) - mask
         c256Set64(abs)
+        verify { validate() }
         return this
     }
 
@@ -372,6 +420,7 @@ class MutDec() : C256() {
         this.qExp = 0
         this.sign = false
         c256Set64(ul)
+        verify { validate() }
         return this
     }
 
@@ -382,6 +431,7 @@ class MutDec() : C256() {
         val mask = l shr 63
         val abs = (l xor mask) - mask
         c256Set64(abs)
+        verify { validate() }
         return this
     }
 
@@ -392,6 +442,7 @@ class MutDec() : C256() {
             this.qExp = x.qExp
             this.sign = x.sign
         }
+        verify { validate() }
         return this
     }
 
@@ -407,6 +458,7 @@ class MutDec() : C256() {
                 ctx.signalInvalid(this)
             }
         }
+        verify { validate() }
         return this
     }
 
@@ -415,6 +467,7 @@ class MutDec() : C256() {
         this.type = xMagnitude.type
         this.qExp = xMagnitude.qExp
         this.sign = sign
+        verify { validate() }
         return this
     }
 
@@ -426,6 +479,7 @@ class MutDec() : C256() {
         this.digitLen = x.digitLen
         this.qExp = x.qExp
         this.sign = x.sign
+        verify { validate() }
         return this
     }
 
@@ -433,12 +487,21 @@ class MutDec() : C256() {
 
     fun set(str: String, ctx: DecContext): MutDec {
         DecimalParsePrint.decFromString(this, str, ctx)
+        verify { validate() }
         return this
     }
 
-    fun setBid128(bid128Hi: Long, bid128Lo: Long) = SerDeBid128.decodeBid128Longs(this, bid128Hi, bid128Lo)
+    fun setBid128(bid128Hi: Long, bid128Lo: Long): MutDec {
+        decodeBid128Longs(this, bid128Hi, bid128Lo)
+        verify { validate() }
+        return this
+    }
 
-    fun setDpd128(dpd128Hi: Long, dpd128Lo: Long) = SerDeDpd128.decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
+    fun setDpd128(dpd128Hi: Long, dpd128Lo: Long): MutDec {
+        decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
+        verify { validate() }
+        return this
+    }
 
     fun setMaxFiniteMagnitude(ctx: DecContext): MutDec {
         type = STEAL_TYPE_FNZ
@@ -452,6 +515,7 @@ class MutDec() : C256() {
             super.c256Set128(POW10[offset + 1], POW10[offset] - 1)
         } else
             throw IllegalArgumentException()
+        verify { validate() }
         return this
     }
 
@@ -1127,6 +1191,8 @@ class MutDec() : C256() {
             this.qExp -= headroom
         }
         c256MutateDecrement()
+        if (c256IsZero())
+            type = STEAL_TYPE_ZER
     }
 
     fun minNum(x: MutDec, y: MutDec, ctx: DecContext) = minNum_helper(x, y, 0, ctx)
@@ -1280,6 +1346,7 @@ class MutDec() : C256() {
                     val divPow10 = min(9, remaining)
                     val divisor = pow10_64(divPow10)
                     m = DivDirect.divModX32(t, t0, divisor)
+                    t.type = if (t.bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
                     if (m != 0L)
                         break
                     t0 = t
@@ -1701,23 +1768,23 @@ class MutDec() : C256() {
     }
 
     fun encodeLittleEndianLongsBid128() = encodeLittleEndianBid128(LongArray(2))
-    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = SerDeBid128.encodeLittleEndianBid128(this, littleEndianLongs)
+    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = encodeLittleEndianBid128(this, littleEndianLongs)
     fun encodeLittleEndianBytesBid128() = encodeLittleEndianBid128(ByteArray(16))
-    fun encodeLittleEndianBid128(littleEndianBytes: ByteArray) = SerDeBid128.encodeLittleEndianBid128(this, littleEndianBytes)
+    fun encodeLittleEndianBid128(littleEndianBytes: ByteArray) = encodeLittleEndianBid128(this, littleEndianBytes)
 
     fun encodeLittleEndianLongsDpd128() = encodeLittleEndianDpd128(LongArray(2))
-    fun encodeLittleEndianDpd128(littleEndianLongs: LongArray) = SerDeDpd128.encodeLittleEndianDpd128(littleEndianLongs, this)
+    fun encodeLittleEndianDpd128(littleEndianLongs: LongArray) = encodeLittleEndianDpd128(littleEndianLongs, this)
     fun encodeLittleEndianBytesDpd128() = encodeLittleEndianDpd128(ByteArray(16))
-    fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray) = SerDeDpd128.encodeLittleEndianDpd128(littleEndianBytes, this)
+    fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray) = encodeLittleEndianDpd128(littleEndianBytes, this)
 
     fun encodeBigEndianLongsBid128() = encodeBigEndianBid128(LongArray(2))
-    fun encodeBigEndianBid128(BigEndianLongs: LongArray) = SerDeBid128.encodeBigEndianBid128(this, BigEndianLongs)
+    fun encodeBigEndianBid128(BigEndianLongs: LongArray) = encodeBigEndianBid128(this, BigEndianLongs)
     fun encodeBigEndianBytesBid128() = encodeBigEndianBid128(ByteArray(16))
-    fun encodeBigEndianBid128(BigEndianBytes: ByteArray) = SerDeBid128.encodeBigEndianBid128(this, BigEndianBytes)
+    fun encodeBigEndianBid128(BigEndianBytes: ByteArray) = encodeBigEndianBid128(this, BigEndianBytes)
 
     fun encodeBigEndianLongsDpd128() = encodeBigEndianDpd128(LongArray(2))
-    fun encodeBigEndianDpd128(bigEndianLongs: LongArray) = SerDeDpd128.encodeBigEndianDpd128(bigEndianLongs, this)
+    fun encodeBigEndianDpd128(bigEndianLongs: LongArray) = encodeBigEndianDpd128(bigEndianLongs, this)
     fun encodeBigEndianBytesDpd128() = encodeBigEndianDpd128(ByteArray(16))
-    fun encodeBigEndianDpd128(bigEndianBytes: ByteArray) = SerDeDpd128.encodeBigEndianDpd128(bigEndianBytes, this)
+    fun encodeBigEndianDpd128(bigEndianBytes: ByteArray) = encodeBigEndianDpd128(bigEndianBytes, this)
 
 }

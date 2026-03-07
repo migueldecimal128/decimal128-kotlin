@@ -14,8 +14,8 @@ class TestDpdDecletEncodeDecode {
             println("ENCODE binary -> declet")
         }
         for (n in 0L..999L) {
-            val enc = SerDeDpd128.encodeDpdDeclet(n)
-            val dec = SerDeDpd128.decodeDpdDeclet(enc)
+            val enc = encodeDpdDeclet(n)
+            val dec = decodeDpdDeclet(enc)
             if (verbose)
                 println("binary:$n 0x${n.toString(16)}-> declet:$enc 0x${enc.toString(16)}")
             if (dec != n) {
@@ -34,11 +34,11 @@ class TestDpdDecletEncodeDecode {
         // Test all 1024 possible declets
         var nonCanonCount = 0
         for (d in 0L..1023L) {
-            val valDecoded = SerDeDpd128.decodeDpdDeclet(d)
+            val valDecoded = decodeDpdDeclet(d)
             if (verbose)
                 println("declet:$d 0x${d.toString(16)}-> binary:$valDecoded 0x${valDecoded.toString(16)}")
             if (valDecoded in 0L..999L) {
-                val reEnc = SerDeDpd128.encodeDpdDeclet(valDecoded)
+                val reEnc = encodeDpdDeclet(valDecoded)
                 if (reEnc != d) nonCanonCount++
             } else {
                 println("decode produced out-of-range: $valDecoded for declet ${d.toString(2).padStart(10,'0')}")

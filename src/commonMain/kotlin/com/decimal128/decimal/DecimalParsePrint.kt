@@ -518,6 +518,7 @@ object DecimalParsePrint {
                 c256SetFmaPow10(x, x, payloadDigitCount - 19, accumulator38)
         }
         x.sign = sign
+        x.type = if (hasS) STEAL_NAN_SNAN else STEAL_NAN_QNAN
         x.qExp = if (hasS) NON_FINITE_SNAN else NON_FINITE_QNAN
         return true
     }
