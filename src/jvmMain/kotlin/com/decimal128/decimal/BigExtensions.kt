@@ -64,6 +64,14 @@ fun MutDec.set(bd: BigDecimal) = this.set(bd, DecContext())
 fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
     this.u256Set(bd.abs().unscaledValue())
     this.qExp = -bd.scale()
+    this.type = when {
+        bd.compareTo(BigDecimal.ZERO) == 0 -> STEAL_TYPE_ZER
+        this.qExp < 16380 -> STEAL_TYPE_FNZ
+        this.qExp == 16380 -> STEAL_TYPE_INF
+        this.qExp == 16381 -> STEAL_NAN_QNAN
+        this.qExp == 16382 -> STEAL_NAN_SNAN
+        else -> throw IllegalStateException()
+    }
     this.sign = bd.signum() < 0
     this.finalize(ctx)
 }

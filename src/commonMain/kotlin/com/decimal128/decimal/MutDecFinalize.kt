@@ -30,8 +30,12 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
     }
 
     // Step 2: special values
-    if (qExp >= MIN_SPECIAL_VALUE)
+    if (qExp >= MIN_SPECIAL_VALUE) {
+        verify { qExp == NON_FINITE_INF && stealIsINF(type) ||
+                qExp == NON_FINITE_SNAN && stealIsSNAN(type) ||
+                qExp == NON_FINITE_QNAN && stealIsQNAN(type) }
         return this
+    }
 
     // Step 3: Zero coefficient
     if (digitLen == 0)
