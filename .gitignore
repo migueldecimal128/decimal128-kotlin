@@ -12,6 +12,7 @@ build/
 .idea/inspectionProfiles/
 .idea/inspectionProfiles/Project_Default.xml
 .idea/vcs.xml
+
 .idea/name
 *.iws
 *.iml
