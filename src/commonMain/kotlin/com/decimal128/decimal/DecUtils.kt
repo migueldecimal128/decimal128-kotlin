@@ -191,15 +191,6 @@ internal fun calcBExpMax(bitLen: Int, qExp: Int): Int {
     return bExpMax
 }
 
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean {
-    // both x.qExp and y.qExp must < MIN_SPECIAL_VALUE
-    // and x and y must have non-zero bitLens
-    // the only thing important in the following line is the sign bits
-    return ((x.qExp - MIN_SPECIAL_VALUE) and
-            (y.qExp - MIN_SPECIAL_VALUE) and
-            -x.bitLen and
-            -y.bitLen) < 0
-}
+internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean =
+    stealBothFNZ(x.steal, y.steal)
 

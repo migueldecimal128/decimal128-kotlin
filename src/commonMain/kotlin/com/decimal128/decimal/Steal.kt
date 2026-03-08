@@ -31,6 +31,9 @@ internal /*inline*/ fun stealIsFNZ(steal: Int): Boolean = (steal and STEAL_TYPE_
 internal /*inline*/ fun stealIsINF(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_INF
 internal /*inline*/ fun stealIsNAN(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_NAN
 
+internal /*inline*/ fun stealBothFNZ(stealX: Int, stealY: Int) =
+    stealIsFNZ(stealX) and stealIsFNZ(stealY)
+
 internal /*inline*/ fun stealType(steal: Int): Int = (steal shr 29) and 0x03
 
 internal /*inline*/ fun stealIsFinite(steal: Int): Boolean  = (steal and STEAL_NONFINITE_BIT) == 0
