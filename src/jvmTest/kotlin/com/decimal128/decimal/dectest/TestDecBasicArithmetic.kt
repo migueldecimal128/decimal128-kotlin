@@ -1,6 +1,6 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.addImpl
+import com.decimal128.decimal.d128AddImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.divImpl
@@ -8,7 +8,7 @@ import com.decimal128.decimal.divIntImpl
 import com.decimal128.decimal.mulImpl
 import com.decimal128.decimal.remNearImpl
 import com.decimal128.decimal.remTruncImpl
-import com.decimal128.decimal.subImpl
+import com.decimal128.decimal.d128SubImpl
 
 class TestDecBasicArithmetic {
 
@@ -18,13 +18,13 @@ class TestDecBasicArithmetic {
     fun testAdd() = runBinaryDecimalCtxOp(
         "dqAdd.decTest",
         "add",
-        ::addImpl,
+        ::d128AddImpl,
         verbose = verbose
     )
 
     @Test
     fun testAddCases() = runBinaryDecimalCtxOp(
-        ::addImpl,
+        ::d128AddImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqadd7976 add      9999999999999999999999999999999999E+6111  9E+6110  -> Infinity Overflow Inexact Rounded",
@@ -45,13 +45,13 @@ class TestDecBasicArithmetic {
     fun testSubtract() = runBinaryDecimalCtxOp(
         "dqSubtract.decTest",
         "subtract",
-        ::subImpl,
+        ::d128SubImpl,
         verbose = verbose
     )
 
     @Test
     fun testSubtractCases() = runBinaryDecimalCtxOp(
-        ::subImpl,
+        ::d128SubImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqsub063 subtract '70000'    '10000e+34' -> '-9.999999999999999999999999999999993E+37' Rounded",

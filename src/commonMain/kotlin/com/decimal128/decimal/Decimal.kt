@@ -927,13 +927,13 @@ class Decimal private constructor(
      */
     override fun toString(): String = D128ParsePrint.toString(this)
 
-    operator fun plus(other: Decimal): Decimal = addImpl(this, other)
+    operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
     context(decContext: DecContext)
-    operator fun plus(other: Decimal): Decimal = addImpl(this, other, decContext)
+    operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other, decContext)
 
-    operator fun minus(other: Decimal): Decimal = subImpl(this, other)
+    operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other)
     context(decContext: DecContext)
-    operator fun minus(other: Decimal): Decimal = subImpl(this, other, decContext)
+    operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other, decContext)
 
     operator fun times(other: Decimal): Decimal = mulImpl(this, other)
     context(decContext: DecContext)

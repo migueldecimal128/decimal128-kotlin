@@ -5,10 +5,10 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun addImpl(x: Decimal, y: Decimal): Decimal =
-    addImpl(x, y, DecContext.current())
+internal fun d128AddImpl(x: Decimal, y: Decimal): Decimal =
+    d128AddImpl(x, y, DecContext.current())
 
-internal fun addImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val ySign = y.sign
     return if (bothFnz(x, y)) {
         addFnzFnz(x, ySign, y, ctx)
@@ -29,10 +29,10 @@ internal fun addImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     }
 }
 
-internal fun subImpl(x: Decimal, y: Decimal): Decimal =
-    subImpl(x, y, DecContext.current())
+internal fun d128SubImpl(x: Decimal, y: Decimal): Decimal =
+    d128SubImpl(x, y, DecContext.current())
 
-internal fun subImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val ySignNegated = ! y.sign
     return if (bothFnz(x, y)) {
         addFnzFnz(x, ySignNegated, y, ctx)

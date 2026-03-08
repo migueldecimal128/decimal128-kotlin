@@ -20,7 +20,7 @@ enum class BinopSignature {
 
     companion object {
 
-        private val signatures16 = Array<BinopSignature>(16) {
+        internal val signatures16 = Array<BinopSignature>(16) {
             i ->
             val xSig = i shr 2
             val ySig = i and 0x03
@@ -30,11 +30,11 @@ enum class BinopSignature {
                 entries[xSig * 3 + ySig]
         }
 
-        fun of(x: Decimal, y: Decimal): BinopSignature =
+        internal inline fun of(x: Decimal, y: Decimal): BinopSignature =
 //            signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
             signatures16[indexOf(x.steal, y.steal) and 0x0F]
 
-        fun of(x: MutDec, y: MutDec): BinopSignature =
+        internal inline fun of(x: MutDec, y: MutDec): BinopSignature =
             signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
         private fun indexOf_x(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
@@ -74,7 +74,7 @@ enum class BinopSignature {
             return (xCat shl 2) or yCat
         }
 
-        private fun indexOf(xSteal: Int, ySteal: Int): Int {
+        internal inline fun indexOf(xSteal: Int, ySteal: Int): Int {
             val xCat = stealType(xSteal)
             val yCat = stealType(ySteal)
             return (xCat shl 2) or yCat

@@ -2,11 +2,11 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
-import com.decimal128.decimal.addImpl
+import com.decimal128.decimal.d128AddImpl
 import com.decimal128.decimal.divImpl
 import com.decimal128.decimal.mulImpl
 import com.decimal128.decimal.remNearImpl
-import com.decimal128.decimal.subImpl
+import com.decimal128.decimal.d128SubImpl
 import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
@@ -26,7 +26,7 @@ class TestBid128BasicArithmetic {
     fun testAdd() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_add",
-        ::addImpl,
+        ::d128AddImpl,
         skip = true,
         skipCases = arrayOf(
         ),
@@ -44,7 +44,7 @@ class TestBid128BasicArithmetic {
             "bid128_add 0 [0001ed09bead87c0378d8e62ffffffff] [7c003fffffffffff38c15b08ffffffff] [7c000000000000000000000000000000] 00",
             "bid128_add 0 [0000000000000000,5dfecf59bad3acaa] [4014d000d4008a04,ffffffddfdfdfeff] [4014d000d4008a04ffffffddfdfdfeff] 20",
         ),
-        ::addImpl,
+        ::d128AddImpl,
         decContext = decContext,
         verbose = verbose,
     )
@@ -53,7 +53,7 @@ class TestBid128BasicArithmetic {
     fun testSub() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_sub",
-        ::subImpl,
+        ::d128SubImpl,
         skip = true,
         skipCases = arrayOf(
         ),
@@ -66,7 +66,7 @@ class TestBid128BasicArithmetic {
         arrayOf(
             "bid128_sub 0 +1000000010000010.0100000E-6192 +8998898888898999998899999999.988888889E-6026 [8121bbae128738e463d45adcde9f1499] 00",
         ),
-        ::subImpl,
+        ::d128SubImpl,
         decContext = decContext,
         verbose = verbose,
     )
