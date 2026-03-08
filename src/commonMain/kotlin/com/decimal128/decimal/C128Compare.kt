@@ -2,12 +2,6 @@ package com.decimal128.decimal
 
 object C128Compare {
 
-    fun c128IsZero(x: Decimal) = x.seal and 0xFFFF == 0
-
-    fun c128IsNotZero(x: Decimal) = x.seal and 0xFFFF != 0
-
-    fun c128IsOne(x: Decimal) = x.seal == 0x0201
-
     fun c128UnscaledCompare(x: Decimal, y: Decimal) : Int {
         val xBitLen = x.bitLen
         val yBitLen = y.bitLen

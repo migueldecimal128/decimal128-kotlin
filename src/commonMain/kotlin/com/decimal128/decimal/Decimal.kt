@@ -409,8 +409,8 @@ class Decimal private constructor(
      * isSignMinus(x) is true if and only if x has negative sign. isSignMinus applies to zeros and NaNs
      * as well.
      */
-    fun isSignMinus(): Boolean = seal < 0 // IEEE754 5.7.2
-    fun isNegative(): Boolean = seal < 0
+    fun isSignMinus(): Boolean = steal < 0 // IEEE754 5.7.2
+    fun isNegative(): Boolean = steal < 0
 
     /**
      * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
@@ -779,7 +779,7 @@ class Decimal private constructor(
      * ```
      */
     infix fun bitwiseEQ(other: Decimal): Boolean =
-        ((this.seal - other.seal).toLong() or
+        ((this.steal - other.steal).toLong() or
                 (this.dw1 - other.dw1) or
                 (this.dw0 - other.dw0)) == 0L
 
