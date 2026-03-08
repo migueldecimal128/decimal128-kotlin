@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.C128ScalePow10.c128ScaleDownPow10
 import com.decimal128.decimal.DecCompare1.compareQuiet754
 import com.decimal128.decimal.DecCompare1.compareSignaling754
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
@@ -783,7 +782,7 @@ class Decimal private constructor(
                 (this.dw1 - other.dw1) or
                 (this.dw0 - other.dw0)) == 0L
 
-    fun magnitudeCompareTo(other: Decimal): Int = D128Compare.magnitudeCompare(this, other)
+    fun magnitudeCompareTo(other: Decimal): Int = magnitudeCompare(this, other)
 
     // IEEE754-2019 5.6.1 Comparisons
 
@@ -988,7 +987,7 @@ class Decimal private constructor(
         val residue: Residue = when {
             pow10 > digitLen -> LT_HALF
             pow10 == digitLen -> Residue.fromValuePow10(dw1, dw0, digitLen)
-            else -> C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
+            else -> c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
         }
         return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0,
             residue, 0, rounding, ctx, beQuiet)

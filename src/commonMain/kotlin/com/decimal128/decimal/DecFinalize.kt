@@ -62,7 +62,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     if (precisionTruncationNeeded > 0) {
         val tmpPair = ctx.tmps.dwQuad1
         val truncationResidue =
-            C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, precisionTruncationNeeded)
+            c128ScaleDownPow10(tmpPair, dw1, dw0, precisionTruncationNeeded)
         dw1 = tmpPair.dw1
         dw0 = tmpPair.dw0
         totalResidue = truncationResidue.merge(totalResidue)
@@ -175,7 +175,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
 
     val tmpPair = ctx.tmps.dwQuad1
-    val scaleResidue = C128ScalePow10.c128ScaleDownPow10(tmpPair, dw1, dw0, truncationNeeded)
+    val scaleResidue = c128ScaleDownPow10(tmpPair, dw1, dw0, truncationNeeded)
     val totalResidue = scaleResidue.merge(residue)
     var dw1T = tmpPair.dw1
     var dw0T = tmpPair.dw0

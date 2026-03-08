@@ -1,7 +1,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
-import com.decimal128.decimal.C128Compare.c128UnscaledCompare
 import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
@@ -164,7 +163,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
         }
         else -> {
             val tmpPair = ctx.tmps.dwQuad1
-            residue = C128ScalePow10.c128ScaleDownPow10(tmpPair, n1, n0, shiftRight)
+            residue = c128ScaleDownPow10(tmpPair, n1, n0, shiftRight)
             dw0Sum += tmpPair.dw0
             dw1Sum += tmpPair.dw1 + if (unsignedLT(dw0Sum, tmpPair.dw0)) 1L else 0L
         }
@@ -195,7 +194,7 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
         // simple case: scale s up and subtract, always exact
         val qDelta = s.qExp - m.qExp
         verify { qDelta < ctx.precision }
-        return D128Pow10.fusedSubtractMulPow10(sign, m, s, qDelta)
+        return d128FusedSubtractMulPow10(sign, m, s, qDelta)
     }
     // case 2: |m| > |s|, m.qExp > s.qExp
 
@@ -206,7 +205,7 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
         if (headroom >= gap) {
             // case 2a
             // m has enough headroom to scale and align with s.qExp
-            return D128Pow10.fusedMulPow10Subtract(sign, m, gap, s, ctx)
+            return d128FusedMulPow10Subtract(sign, m, gap, s, ctx)
         }
     }
 
