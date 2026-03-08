@@ -3,8 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecCompare1.compareQuiet754
-import com.decimal128.decimal.DecCompare1.compareSignaling754
 import com.decimal128.decimal.Ieee754Class.negativeInfinity
 import com.decimal128.decimal.Ieee754Class.negativeNormal
 import com.decimal128.decimal.Ieee754Class.negativeSubnormal
@@ -657,7 +655,7 @@ class Decimal private constructor(
      *         this value and [other].
      */
 
-    fun compareTotalOrderTo(other: Decimal) = DecCompare1.cmpTotalOrder(this, other)
+    fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other)
 
     fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
 
@@ -670,7 +668,7 @@ class Decimal private constructor(
      *
      * @return −1, 0, or +1 describing the total-order magnitude relation.
      */
-    fun compareTotalOrderMagTo(other: Decimal) = DecCompare1.cmpTotalOrderMag(this, other)
+    fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other)
 
     fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
 
@@ -706,9 +704,9 @@ class Decimal private constructor(
      * @return −1, 0, or +1 describing the Java-style ordering of this
      *         value relative to [other].
      */
-    fun compareJavaStyleTo(other: Decimal): Int = DecCompare1.cmpJavaStyle(this, other)
+    fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other)
 
-    fun equalsJavaStyle(other: Decimal): Boolean = DecCompare1.eqJavaStyle(this, other)
+    fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other)
 
     /**
      * Compares this decimal128 value with [other] using **Java-style numeric
@@ -782,94 +780,94 @@ class Decimal private constructor(
                 (this.dw1 - other.dw1) or
                 (this.dw0 - other.dw0)) == 0L
 
-    fun magnitudeCompareTo(other: Decimal): Int = magnitudeCompare(this, other)
+    fun magnitudeCompareTo(other: Decimal): Int = d128CompareMagnitude(this, other)
 
     // IEEE754-2019 5.6.1 Comparisons
 
     fun compareQuiet(other: Decimal, ctx: DecContext): Compare754Result =
-        compareQuiet754(this, other, ctx)
+        d128CompareQuiet754(this, other, ctx)
 
     fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) == IEEE754_EQ
+        d128CompareQuiet754(this, other, ctx) == IEEE754_EQ
 
     fun compareQuietNotEqual(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) != IEEE754_EQ
+        d128CompareQuiet754(this, other, ctx) != IEEE754_EQ
 
     fun compareSignalingEqual(other: Decimal, ctx: DecContext): Boolean =
-        compareSignaling754(this, other, ctx) == IEEE754_EQ
+        d128CompareSignaling754(this, other, ctx) == IEEE754_EQ
 
     fun compareSignalingGreater(other: Decimal, ctx: DecContext): Boolean =
-        compareSignaling754(this, other, ctx) == IEEE754_GT
+        d128CompareSignaling754(this, other, ctx) == IEEE754_GT
 
     fun compareSignalingGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareSignaling754(this, other, ctx)
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
     }
 
     fun compareSignalingLess(other: Decimal, ctx: DecContext): Boolean =
-        compareSignaling754(this, other, ctx) == IEEE754_LT
+        d128CompareSignaling754(this, other, ctx) == IEEE754_LT
 
     fun compareSignalingLessEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareSignaling754(this, other, ctx)
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
     }
 
     fun compareSignalingNotEqual(other: Decimal, ctx: DecContext): Boolean =
-        compareSignaling754(this, other, ctx) != IEEE754_EQ
+        d128CompareSignaling754(this, other, ctx) != IEEE754_EQ
 
     fun compareSignalingNotGreater(other: Decimal, ctx: DecContext): Boolean =
-        compareSignaling754(this, other, ctx) != IEEE754_GT
+        d128CompareSignaling754(this, other, ctx) != IEEE754_GT
 
     fun compareSignalingLessUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareSignaling754(this, other, ctx)
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
     }
 
     fun compareSignalingNotLess(other: Decimal, ctx: DecContext): Boolean =
-        compareSignaling754(this, other, ctx) != IEEE754_LT
+        d128CompareSignaling754(this, other, ctx) != IEEE754_LT
 
     fun compareSignalingGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareSignaling754(this, other, ctx)
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
     }
 
     fun compareQuietGreater(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) == IEEE754_GT
+        d128CompareQuiet754(this, other, ctx) == IEEE754_GT
 
     fun compareQuietGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareQuiet754(this, other, ctx)
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
     }
 
     fun compareQuietLess(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) == IEEE754_LT
+        d128CompareQuiet754(this, other, ctx) == IEEE754_LT
 
     fun compareQuietLessEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareQuiet754(this, other, ctx)
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
     }
 
     fun compareQuietUnordered(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) == IEEE754_UNORDERED
+        d128CompareQuiet754(this, other, ctx) == IEEE754_UNORDERED
 
     fun compareQuietNotGreater(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) != IEEE754_GT
+        d128CompareQuiet754(this, other, ctx) != IEEE754_GT
 
     fun compareQuietLessUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareQuiet754(this, other, ctx)
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
     }
 
     fun compareQuietNotLess(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) != IEEE754_LT
+        d128CompareQuiet754(this, other, ctx) != IEEE754_LT
 
     fun compareQuietGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = compareQuiet754(this, other, ctx)
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
     }
 
     fun compareQuietOrdered(other: Decimal, ctx: DecContext): Boolean =
-        compareQuiet754(this, other, ctx) != IEEE754_UNORDERED
+        d128CompareQuiet754(this, other, ctx) != IEEE754_UNORDERED
 
 
     // this is only provided for IEEE754-2019 completeness.
