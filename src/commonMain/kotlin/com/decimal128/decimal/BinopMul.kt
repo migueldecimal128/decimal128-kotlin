@@ -2,10 +2,10 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.BinopSignature.*
 
-internal fun mulImpl(x: Decimal, y: Decimal): Decimal =
-    mulImpl(x, y, DecContext.current())
+internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
+    d128MulImpl(x, y, DecContext.current())
 
-internal fun mulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         mulFnzFnz(x, y, ctx)
     } else when (BinopSignature.of(x, y)) {

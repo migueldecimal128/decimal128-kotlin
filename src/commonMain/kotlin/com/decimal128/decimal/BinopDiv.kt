@@ -4,10 +4,10 @@ import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.zero
 import kotlin.math.min
 
-internal fun divImpl(x: Decimal, y: Decimal): Decimal =
-    divImpl(x, y, DecContext.current())
+internal fun d128DivImpl(x: Decimal, y: Decimal): Decimal =
+    d128DivImpl(x, y, DecContext.current())
 
-internal fun divImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         divFnzFnz(x, y, ctx)
     } else when (BinopSignature.of(x, y)) {
@@ -83,10 +83,10 @@ private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return Decimal.from(quotient)
 }
 
-internal fun remTruncImpl(x: Decimal, y: Decimal): Decimal =
+internal fun d128RemTruncImpl(x: Decimal, y: Decimal): Decimal =
     remImpl(isTrunc = true, x, y, DecContext.current())
 
-internal fun remTruncImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+internal fun d128RemTruncImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
     remImpl(isTrunc = true, x, y, ctx)
 
 internal fun remNearImpl(x: Decimal, y: Decimal): Decimal =

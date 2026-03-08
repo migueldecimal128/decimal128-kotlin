@@ -3,11 +3,11 @@ package com.decimal128.decimal.dectest
 import com.decimal128.decimal.d128AddImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import org.junit.jupiter.api.Test
-import com.decimal128.decimal.divImpl
+import com.decimal128.decimal.d128DivImpl
 import com.decimal128.decimal.divIntImpl
-import com.decimal128.decimal.mulImpl
+import com.decimal128.decimal.d128MulImpl
 import com.decimal128.decimal.remNearImpl
-import com.decimal128.decimal.remTruncImpl
+import com.decimal128.decimal.d128RemTruncImpl
 import com.decimal128.decimal.d128SubImpl
 
 class TestDecBasicArithmetic {
@@ -67,13 +67,13 @@ class TestDecBasicArithmetic {
     fun testMultiply() = runBinaryDecimalCtxOp(
         "dqMultiply.decTest",
         "multiply",
-        ::mulImpl,
+        ::d128MulImpl,
         verbose = verbose
     )
 
     @Test
     fun testMultiplyCases() = runBinaryDecimalCtxOp(
-        ::mulImpl,
+        ::d128MulImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqmul580 multiply  Inf  -Inf   -> -Infinity",
@@ -86,7 +86,7 @@ class TestDecBasicArithmetic {
     fun testDivide() = runBinaryDecimalCtxOp(
         "dqDivide.decTest",
         "divide",
-        ::divImpl,
+        ::d128DivImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -95,7 +95,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testDivideCases() = runBinaryDecimalCtxOp(
-        ::divImpl,
+        ::d128DivImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqdiv732 divide 00.00 0.000  -> NaN Division_undefined",
@@ -130,7 +130,7 @@ class TestDecBasicArithmetic {
     fun testRemainder() = runBinaryDecimalCtxOp(
         "dqRemainder.decTest",
         "remainder",
-        ::remTruncImpl,
+        ::d128RemTruncImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -146,7 +146,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testRemainderCases() = runBinaryDecimalCtxOp(
-        ::remTruncImpl,
+        ::d128RemTruncImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqrem131 remainder  0     -1   ->  0",

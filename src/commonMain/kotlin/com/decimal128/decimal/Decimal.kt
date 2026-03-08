@@ -333,15 +333,9 @@ class Decimal private constructor(
             else
                 Decimal(sign, NON_FINITE_INF, dw1, dw0, allowNonCanonical = true)
 
-        internal fun hasNaN(x: Decimal, y: Decimal): Boolean {
-            val result1 = max(x.qExp, y.qExp) >= NON_FINITE_QNAN
-            val result2 = stealIsNAN(x.steal) or stealIsNAN(y.steal)
-            check (result1 == result2)
-            return result2
-        }
+        internal fun hasNaN(x: Decimal, y: Decimal): Boolean = stealHasNAN(x.steal, y.steal)
 
         internal fun neitherIsNaN(x: Decimal, y: Decimal) = !hasNaN(x, y)
-//            x.qExp < NON_FINITE_QNAN && y.qExp < NON_FINITE_QNAN
 
     }
 
@@ -414,15 +408,7 @@ class Decimal private constructor(
      * In this implementation, the check for subnormal is hardwired to the
      * decimal128 `eExp` adjusted (scientific) exponent -6143 and 34 digits.
      */
-    fun isNormal(): Boolean {
-        val result1 =  qExp < NON_FINITE_INF &&
-                digitLen <= 34 &&
-                bitLen > 0 &&
-                eExp >= -6143
-        val result2 = stealIsFNZ(steal) && digitLen <= 34 && eExp >= -6143
-        check (result1 == result2)
-        return result2
-    }
+    fun isNormal(): Boolean = stealIsFNZ(steal) && digitLen <= 34 && eExp >= -6143
 
     /**
      * isSubnormal(x) is true if and only if x is subnormal
@@ -438,24 +424,13 @@ class Decimal private constructor(
      * isFinite(x) is true if and only if x is zero, normal, or subnormal
      * (not infinite or NaN).
      */
-    fun isFinite(): Boolean {
-        verify { stealIsFinite(steal) == qExp < NON_FINITE_INF }
-        return stealIsFinite(steal)
-    }
+    fun isFinite(): Boolean = stealIsFinite(steal)
 
     /**
      * isFiniteNonZero(x) is true if and only if x is normal or subnormal
      * (not zero, infinite, or NaN).
      */
-    fun isFiniteNonZero(): Boolean {
-        val result1 = qExp < NON_FINITE_INF && bitLen > 0
-        //verify { stealIsFNZ(steal) == qExp < NON_FINITE_INF && bitLen > 0 }
-        val result2 = stealIsFNZ(steal)
-        if (result1 != result2)
-            println("foo!")
-        check (result1 == result2)
-        return result2
-    }
+    fun isFiniteNonZero(): Boolean = stealIsFNZ(steal)
 
     /**
      * isZero(x) is true if and only if x is ±0.
@@ -465,10 +440,6 @@ class Decimal private constructor(
      *
      * This version tests for Zero, even on oversized coefficients.
      */
-    // FIXME - don't allow oversized coefficients here
-    //  this is too fragile ... figure out another way to pass unit tests
-    //fun isZero(): Boolean = isFinite() && (bitLen == 0 || digitLen > 34)
-    // FIXME ... a few problems in unexpected places
     fun isZero(): Boolean = stealIsZER(steal)
 
     fun isNotZero() = !isZero()
@@ -480,37 +451,21 @@ class Decimal private constructor(
      * IEEE rules state that nonCanonical coefficients must be treated
      * as zero. Therefore, more than 34 digits == 0
      */
-    fun isCanonicalZero(): Boolean {
-        val a = isFinite()
-        val b = bitLen == 0
-        val c = digitLen > 34
-        val result1 = isFinite() && (bitLen == 0 || digitLen > 34)
-        val result2 = stealIsZER(steal)
-        if (result1 != result2)
-            println("foo!")
-        check(result1 == result2)
-        return result2
-    }
+    fun isCanonicalZero(): Boolean = stealIsZER(steal)
 
     /**
      * isInfinite(x) is true if and only if x is infinite.
      *
      * This includes positiveInfinity and negativeInfinity.
      */
-    fun isInfinite(): Boolean {
-        verify { stealIsINF(steal) == (qExp == NON_FINITE_INF) }
-        return stealIsINF(steal)
-    }
+    fun isInfinite(): Boolean = stealIsINF(steal)
 
     /**
      * isNaN(x) is true if and only if x is a NaN.
      *
      * NaN Not A Number values may be quiet or signaling.
      */
-    fun isNaN(): Boolean {
-        verify { stealIsNAN(steal) == (qExp >= NON_FINITE_QNAN) }
-        return stealIsNAN(steal)
-    }
+    fun isNaN(): Boolean = stealIsNAN(steal)
 
     /**
      * isSignaling(x) is true if and only if x is a signaling NaN.
@@ -519,11 +474,7 @@ class Decimal private constructor(
      * operations an environment flag is set and trapping to an
      * optional exception handler may take place.
      */
-    fun isSignaling(): Boolean {
-        verify { stealIsSNAN(steal) == (qExp == NON_FINITE_SNAN) }
-        return stealIsSNAN(steal)
-        //return qExp == NON_FINITE_SNAN
-    }
+    fun isSignaling(): Boolean = stealIsSNAN(steal)
 
     /**
      * In the context of Decimal128 BID encoding, the only
@@ -556,8 +507,15 @@ class Decimal private constructor(
      * This method performs no normalization or coefficient adjustments; it
      * simply compares the raw `qExp` fields.
      */
-    fun isSameQuantum(other: Decimal) =
-        (this.qExp == other.qExp) || (this.qExp >= NON_FINITE_QNAN && other.qExp >= NON_FINITE_QNAN)
+    fun isSameQuantum(other: Decimal): Boolean {
+        val stealX = steal
+        val stealY = other.steal
+        return when {
+            stealIsFinite(stealX) -> stealIsFinite(stealY) && stealQexp(stealX) == stealQexp(stealY)
+            stealIsINF(stealX) -> stealIsINF(stealY)
+            else -> stealIsNAN(stealY)
+        }
+    }
 
     fun abs() = if (steal < 0) negate() else this
 
@@ -582,26 +540,26 @@ class Decimal private constructor(
 
     // IEEE754-2008 5.3.3
     fun logB(ctx: DecContext): Decimal {
-        val qExp = qExp
-        when {
-            isZero() -> return ctx.signalDivByZero(NEG_INFINITY)
-            qExp < NON_FINITE_INF -> return from(eExp)
-            qExp == NON_FINITE_INF -> return POS_INFINITY
-            else -> return nanOperandFound(this, ctx)
+        val steal = steal
+        return when {
+            stealIsZER(steal) -> ctx.signalDivByZero(NEG_INFINITY)
+            stealIsFNZ(steal) -> from(eExp)
+            stealIsINF(steal) -> POS_INFINITY
+            else -> nanOperandFound(this, ctx)
         }
 
     }
 
     fun scaleB(pow10Delta: Int, ctx: DecContext): Decimal {
-        val sign = sign; val qExp = qExp
-        when {
-            qExp < NON_FINITE_INF -> {
+        val steal = steal
+        return when {
+            stealIsFinite(steal) -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
                 val qNew = qExp + pow10DeltaCapped
-                return decFinalizeFinite(sign, dw1, dw0, qNew, ctx)
+                decFinalizeFinite(sign, dw1, dw0, qNew, ctx)
             }
-            qExp == NON_FINITE_INF -> return this
-            else -> return nanOperandFound(this, ctx)
+            stealIsINF(steal) -> this
+            else -> nanOperandFound(this, ctx)
         }
     }
 
@@ -875,9 +833,10 @@ class Decimal private constructor(
     fun copy(): Decimal = Decimal(steal, seal, dw1, dw0)
 
     override fun hashCode(): Int {
-        val sign = sign; val qExp = qExp
-        return when {
-            isFiniteNonZero() -> {
+        val steal = steal
+        when {
+            stealIsFNZ(steal) -> {
+                val qExp = qExp
                 var r1 = dw1
                 var r0 = dw0
                 var rQ = qExp
@@ -902,13 +861,11 @@ class Decimal private constructor(
                 val hcQExp = rQ * 31 * 31
                 val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
                 val hcDw0 = (r0 xor (r0 shr 32)).toInt()
-                hcSign + hcQExp + hcDw1 + hcDw0
+                return hcSign + hcQExp + hcDw1 + hcDw0
             }
-            isNegative() && isZero() -> HASH_CODE_NEG_ZERO
-            isZero() -> HASH_CODE_POS_ZERO
-            isNegative() && isInfinite() -> HASH_CODE_NEG_INFINITY
-            isInfinite() -> HASH_CODE_POS_INFINITY
-            else -> HASH_CODE_NAN
+            stealIsZER(steal) -> return if (steal < 0) HASH_CODE_NEG_ZERO else HASH_CODE_POS_ZERO
+            stealIsINF(steal) -> return if (steal < 0) HASH_CODE_NEG_INFINITY else HASH_CODE_POS_INFINITY
+            else -> return HASH_CODE_NAN
         }
     }
 
@@ -935,17 +892,17 @@ class Decimal private constructor(
     context(decContext: DecContext)
     operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other, decContext)
 
-    operator fun times(other: Decimal): Decimal = mulImpl(this, other)
+    operator fun times(other: Decimal): Decimal = d128MulImpl(this, other)
     context(decContext: DecContext)
-    operator fun times(other: Decimal): Decimal = mulImpl(this, other, decContext)
+    operator fun times(other: Decimal): Decimal = d128MulImpl(this, other, decContext)
 
-    operator fun div(other: Decimal): Decimal = divImpl(this, other)
+    operator fun div(other: Decimal): Decimal = d128DivImpl(this, other)
     context(decContext: DecContext)
-    operator fun div(other: Decimal): Decimal = divImpl(this, other, decContext)
+    operator fun div(other: Decimal): Decimal = d128DivImpl(this, other, decContext)
 
-    operator fun rem(other: Decimal): Decimal = remTruncImpl(this, other)
+    operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other)
     context(decContext: DecContext)
-    operator fun rem(other: Decimal): Decimal = remTruncImpl(this, other, decContext)
+    operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other, decContext)
 
     inline fun remainderTruncate(other: Decimal): Decimal = rem(other)
     fun remainderNear(other: Decimal): Decimal = rem(other)

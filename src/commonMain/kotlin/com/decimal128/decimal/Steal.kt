@@ -31,8 +31,21 @@ internal /*inline*/ fun stealIsFNZ(steal: Int): Boolean = (steal and STEAL_TYPE_
 internal /*inline*/ fun stealIsINF(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_INF
 internal /*inline*/ fun stealIsNAN(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_NAN
 
+internal /*inline*/ fun stealBothZER(stealX: Int, stealY: Int) =
+    stealIsZER(stealX) and stealIsZER(stealY)
 internal /*inline*/ fun stealBothFNZ(stealX: Int, stealY: Int) =
     stealIsFNZ(stealX) and stealIsFNZ(stealY)
+internal /*inline*/ fun stealBothFinite(stealX: Int, stealY: Int) =
+    stealIsFinite(stealX) and stealIsFinite(stealY)
+internal /*inline*/ fun stealBothINF(stealX: Int, stealY: Int) =
+    stealIsINF(stealX) and stealIsINF(stealY)
+internal /*inline*/ fun stealBothNAN(stealX: Int, stealY: Int) =
+    stealIsNAN(stealX) and stealIsNAN(stealY)
+
+internal /*inline*/ fun stealHasINF(stealX: Int, stealY: Int) =
+    stealIsINF(stealX) or stealIsINF(stealY)
+internal /*inline*/ fun stealHasNAN(stealX: Int, stealY: Int) =
+    stealIsNAN(stealX) or stealIsNAN(stealY)
 
 internal /*inline*/ fun stealType(steal: Int): Int = (steal shr 29) and 0x03
 

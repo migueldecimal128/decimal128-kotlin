@@ -3,8 +3,8 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.d128AddImpl
-import com.decimal128.decimal.divImpl
-import com.decimal128.decimal.mulImpl
+import com.decimal128.decimal.d128DivImpl
+import com.decimal128.decimal.d128MulImpl
 import com.decimal128.decimal.remNearImpl
 import com.decimal128.decimal.d128SubImpl
 import kotlin.test.Test
@@ -75,7 +75,7 @@ class TestBid128BasicArithmetic {
     fun testMul() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_mul",
-        ::mulImpl,
+        ::d128MulImpl,
         skip = true,
         skipCases = arrayOf(
         ),
@@ -87,7 +87,7 @@ class TestBid128BasicArithmetic {
     fun testMulCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
         ),
-        ::mulImpl,
+        ::d128MulImpl,
         decContext = decContext,
         verbose = verbose,
     )
@@ -96,7 +96,7 @@ class TestBid128BasicArithmetic {
     fun testDiv() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_div",
-        ::divImpl,
+        ::d128DivImpl,
         skip = true,
         skipCases = arrayOf(
         ),
@@ -108,7 +108,7 @@ class TestBid128BasicArithmetic {
     fun testDivCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
         ),
-        ::divImpl,
+        ::d128DivImpl,
         decContext = decContext,
         verbose = verbose,
     )
