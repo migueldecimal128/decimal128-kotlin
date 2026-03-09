@@ -206,15 +206,17 @@ private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
 }
 
 private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
-    val xQ = x.qExp
-    val yQ = y.qExp
+    val stealX = x.steal
+    val stealY = y.steal
+    verify { stealHasNAN(stealX, stealY) }
     return when {
-        xQ < NON_FINITE_QNAN -> -1
-        yQ < NON_FINITE_QNAN -> 1
+        !stealIsNAN(stealX) -> -1
+        !stealIsNAN(stealY) -> 1
         // if both are the same NaN, then compare payloads
-        xQ == yQ -> ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
-        // strange ... qNaN sorts higher than sNaN
-        xQ == NON_FINITE_QNAN -> 1
+        (stealX and STEAL_NAN_MASK) == (stealY and STEAL_NAN_MASK) ->
+            ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
+        // qNaN sorts higher than sNaN
+        stealIsQNAN(stealX) -> 1
         else -> -1
     }
 }

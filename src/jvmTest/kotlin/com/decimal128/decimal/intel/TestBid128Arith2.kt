@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class TestBid128Arith2 {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testScaleB(): Unit = runDecimalIntMethodOp(
@@ -89,6 +89,16 @@ class TestBid128Arith2 {
     fun testNextUp(): Unit = runUnaryDecimalCtxMethodOp(
         "/intel/readtest.in",
         "bid128_nextup",
+        Decimal::nextUp,
+        DecContext.DECIMAL128,
+        verbose = verbose,
+    )
+
+    @Test
+    fun testNextUpCases(): Unit = runUnaryDecimalCtxMethodOp(
+        arrayOf(
+            "bid128_nextup 0 [782d2f94d69006ec,2196c0c64c5c5d60] [78000000000000000000000000000000] 00",
+        ),
         Decimal::nextUp,
         DecContext.DECIMAL128,
         verbose = verbose,

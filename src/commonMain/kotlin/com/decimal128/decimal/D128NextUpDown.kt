@@ -3,15 +3,27 @@ package com.decimal128.decimal
 import kotlin.math.min
 
 internal fun nextUpOrDown(isUp: Boolean, x: Decimal, ctx: DecContext): Decimal {
-    return when {
-        x.qExp == NON_FINITE_SNAN ->
-            ctx.signalInvalid(Decimal.qNaN(x.sign, x.dw1, x.dw0))
-        x.qExp == NON_FINITE_QNAN -> x
-        x.qExp == NON_FINITE_INF && x.sign != isUp -> x
-        x.qExp == NON_FINITE_INF -> maxFiniteMagnitude(x.sign, ctx)
-        x.isZero() -> minFiniteMagnitude(sign = !isUp, ctx)
-        x.sign == isUp -> nextFnzTowardZero(x, ctx)
-        else -> nextFnzAwayFromZero(x, ctx)
+    val stealX = x.steal
+    val signX = stealSignFlag(stealX)
+    when {
+        stealIsFNZ(stealX) -> {
+            return if (signX == isUp)
+                nextFnzTowardZero(x, ctx)
+            else
+                nextFnzAwayFromZero(x, ctx)
+        }
+        stealIsZER(stealX) -> return minFiniteMagnitude(sign = !isUp, ctx)
+        stealIsINF(stealX) -> {
+            return if (signX == isUp)
+                maxFiniteMagnitude(signX, ctx)
+            else
+                x
+        }
+        stealIsQNAN(stealX) -> return x
+        else -> {
+            verify { stealIsSNAN(stealX) }
+            return ctx.signalInvalid(Decimal.qNaN(signX, x.dw1, x.dw0))
+        }
     }
 }
 

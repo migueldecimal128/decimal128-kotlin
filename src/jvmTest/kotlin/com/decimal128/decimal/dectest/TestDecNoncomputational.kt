@@ -9,7 +9,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 
 class TestDecNoncomputational {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAbs() = runUnaryDecimalOp(

@@ -61,18 +61,23 @@ private fun fmaFnzFnzFinite(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext)
  * I will check and signal.
  */
 private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-    val qX = x.qExp
-    val qY = y.qExp
-    val qA = a.qExp
-    val maxQ = max(max(qX, qY), qA)
-    verify { maxQ >= NON_FINITE_QNAN }
-    val theNaN = if (maxQ == qX) x else if (maxQ == qY) y else a
-    if (maxQ == NON_FINITE_QNAN) {
-        if ((x.isZero() && y.isInfinite()) ||(x.isInfinite() && y.isZero()))
-            return ctx.signalInvalid(theNaN)
-        return theNaN
+    val stealX = x.steal
+    val stealY = y.steal
+    val stealA = a.steal
+    verify { stealIsNAN(stealX) or stealIsNAN(stealY) or stealIsNAN(stealA) }
+    val hasSNAN = stealIsSNAN(stealX) or stealIsSNAN(stealY) or stealIsSNAN(stealA)
+    val targetNAN = if (hasSNAN) STEAL_NAN_SNAN else STEAL_NAN_QNAN
+    val theNAN =
+        if ((stealX and STEAL_NAN_MASK) == targetNAN) x
+        else if ((stealY and STEAL_NAN_MASK) == targetNAN) y
+        else a
+
+    if (!hasSNAN) {
+        if ((stealIsZER(stealX) and stealIsINF(stealY)) or (stealIsINF(stealX) and stealIsZER(stealY)))
+            return ctx.signalInvalid(theNAN)
+        return theNAN
     }
-    val quietedNaN = Decimal.qNaN(theNaN.sign, theNaN.dw1, theNaN.dw0)
+    val quietedNaN = Decimal.qNaN(theNAN.sign, theNAN.dw1, theNAN.dw0)
     return ctx.signalInvalid(quietedNaN)
 }
 

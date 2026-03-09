@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun nanOperandFound(x: Decimal, y: Decimal,
+internal fun nanOperandFound_y(x: Decimal, y: Decimal,
                              ctx: DecContext, alwaysSignal: Boolean = false): Decimal {
     val xQ = x.qExp
     val yQ = y.qExp
@@ -24,22 +24,24 @@ internal fun nanOperandFound(x: Decimal, y: Decimal,
     return ctx.signalInvalid(quietedNaN)
 }
 
-internal fun nanOperandFound_x(x: Decimal, y: Decimal,
-                             ctx: DecContext, alwaysSignal: Boolean = false): Decimal {
+internal fun nanOperandFound(x: Decimal, y: Decimal,
+                               ctx: DecContext, alwaysSignal: Boolean = false): Decimal {
     val stealX = x.steal
     val stealY = y.steal
     verify { stealHasNAN(stealX, stealY) }
-    val isSignaling = stealIsSNAN(stealX) or stealIsNAN(stealY)
+    val preferSnan = ctx.decPrefs.propagatePreferSnan
+    val takeY = !stealIsNAN(stealX) || (preferSnan && stealIsSNAN(stealY) && !stealIsSNAN(stealX))
     val theNaN: Decimal
     val stealNaN: Int
-    if (!stealIsNAN(stealY) || stealIsSNAN(stealX) || !ctx.decPrefs.propagatePreferSnan) {
-        theNaN = x
-        stealNaN = stealX
-    } else {
+    if (takeY) {
         theNaN = y
         stealNaN = stealY
+    } else {
+        theNaN = x
+        stealNaN = stealX
     }
     verify { stealIsNAN(stealNaN) }
+    val isSignaling = stealIsSNAN(stealX) or stealIsSNAN(stealY)
     if (!alwaysSignal && !isSignaling)
         return theNaN
     if (!theNaN.isSignaling())

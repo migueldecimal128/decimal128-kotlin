@@ -6,9 +6,11 @@ import kotlin.test.assertEquals
 
 class TestIntelBidRoundTrip1 {
 
-    val verbose = false
+    val verbose = true
 
     val tcs = arrayOf(
+        "[78000000000000000000000000000000]", // Infinity
+
         //"[7c003fffffffffff38c15b0affffffff]", // 34 digits ... too many
         //"[7c003fffffffffff38c15b08ffffffff]", // 34 digits ... too many
         "[0001ed09bead87c0378d8e62ffffffff]",

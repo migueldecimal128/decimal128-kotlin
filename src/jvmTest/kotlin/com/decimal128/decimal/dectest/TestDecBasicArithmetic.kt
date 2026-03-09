@@ -12,7 +12,7 @@ import com.decimal128.decimal.d128SubImpl
 
 class TestDecBasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
@@ -27,6 +27,8 @@ class TestDecBasicArithmetic {
         ::d128AddImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqadd7875 add  sNaN15  sNaN18 ->  NaN15  Invalid_operation",
+
             "dqadd7976 add      9999999999999999999999999999999999E+6111  9E+6110  -> Infinity Overflow Inexact Rounded",
 
             "dqadd039 add '700000'  '10000e+34' -> '1.000000000000000000000000000000007E+38' Rounded",

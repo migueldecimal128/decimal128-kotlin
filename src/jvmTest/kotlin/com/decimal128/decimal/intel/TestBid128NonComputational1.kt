@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestBid128NonComputational1 {
 
-    val verbose = false
+    val verbose = true
 
     /*****************************************************************************
      *
@@ -155,6 +155,7 @@ class TestBid128NonComputational1 {
         allowNonCanonical = true,
         verbose = verbose,
         cases = arrayOf(
+            "bid128_isCanonical 0 [7c0013e87ada0359,835044d68d872147] 1 00",
 //            "bid128_isCanonical 0 [7c003fffffffffff38c15b08ffffffff] 0 00",
 //            "bid128_isCanonical 0 [fa79d291c68723e9,bf36ffd4dbefc63f] 0 00",
 //            "bid128_isCanonical 0 [f800000001000000,0000000000000000] 0 00",

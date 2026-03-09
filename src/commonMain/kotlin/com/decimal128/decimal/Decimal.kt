@@ -54,8 +54,8 @@ class Decimal private constructor(
             if (stealQ != sealQ) {
                 println("kilroy was here!")
             }
-            return sealQ
-            //return stealQ
+            //return sealQ
+            return stealQ
         }
 
     internal val eExp: Int
@@ -534,14 +534,16 @@ class Decimal private constructor(
      * - NaN: payload digits > 33
      */
     fun isCanonical(): Boolean {
-        val qExp = qExp;
-        val digitLen = digitLen;
-        val bitLen = bitLen;
-        verify { bitLen == calcBitLen128(dw1, dw0) }
-        verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
-        return (qExp in -6176..6111 && digitLen <= 34) ||
-                (qExp == NON_FINITE_INF && bitLen == 0) ||
-                (qExp > NON_FINITE_INF && digitLen <= 33)
+        val steal = steal
+        val qExp = stealQexp(steal)
+        val digitLen = stealDigitLen(steal)
+        verify { digitLen == calcDigitLen128(dw1, dw0) }
+        return when {
+            stealIsFinite(steal) -> qExp in -6176..6111 && digitLen <= 34
+            stealIsINF(steal) -> digitLen == 0
+            else -> // NAN
+                digitLen <= 33
+        }
     }
 
     // 5.7.3 Decimal operation

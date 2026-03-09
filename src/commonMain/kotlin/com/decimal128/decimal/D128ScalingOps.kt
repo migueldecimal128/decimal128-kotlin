@@ -3,14 +3,15 @@ package com.decimal128.decimal
 import kotlin.math.min
 
 internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int = 99): Decimal {
-    val qX = x.qExp
+    val stealX = x.steal
     return when {
-        qX < NON_FINITE_INF -> {
+        stealIsFNZ(stealX) -> {
             val t = ctx.tmps.mdecBridge1.set(x)
             val r = ctx.tmps.mdecResult.setStripTrailingZeros(t, ctx, maxToStrip)
             Decimal.from(r)
         }
-        qX == NON_FINITE_INF -> x
+        stealIsZER(stealX) -> Decimal.zero(stealSignFlag(stealX))
+        stealIsINF(stealX) -> x
         else -> nanOperandFound(x, ctx)
     }
 }
