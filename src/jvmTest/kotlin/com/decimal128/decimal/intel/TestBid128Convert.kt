@@ -22,6 +22,7 @@ class TestBid128Convert {
     @Test
     fun testConvertToLongTiesToEvenCases(): Unit = runUnaryLongCtxMethodOp(
         arrayOf (
+            "bid128_to_int64_rnint 0 [0000000000000000,0000000000000000] 0 00",
             "bid128_to_int64_rnint 0 [AFFE314DC6448D9338C15B0A00000000] -1 00 -- -(1)",
             "bid128_to_int64_rnint 0 [3023C6BF52633FFFFFFE3940AD9CC000] -9223372036854775808 01 -- 2^63-0.5",
             "bid128_to_int64_rnint 0 [2FFE49F4A966D45CD522088F00000000] 2 00 -- 1.5",

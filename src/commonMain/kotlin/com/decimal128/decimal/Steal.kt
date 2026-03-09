@@ -52,6 +52,10 @@ internal /*inline*/ fun stealType(steal: Int): Int = (steal shr 29) and 0x03
 internal /*inline*/ fun stealIsFinite(steal: Int): Boolean  = (steal and STEAL_NONFINITE_BIT) == 0
 internal /*inline*/ fun stealNotFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) != 0
 
+internal /*inline*/ fun stealSignFlag(steal: Int): Boolean = steal < 0
+internal /*inline*/ fun stealSignBit(steal: Int): Int = steal ushr 31
+internal /*inline*/ fun stealSignMask(steal: Int): Int = steal shr 31
+
 internal const val STEAL_QNAN_BIT      = 0x1000_0000
 internal const val STEAL_NAN_MASK      = 0x7000_0000
 internal const val STEAL_NAN_SNAN      = 0x6000_0000
@@ -73,7 +77,7 @@ internal const val STEAL_QEXP_SHL = 3
 internal const val STEAL_QEXP_SHR = 18
 internal const val STEAL_QEXP_MASK = 0x3FFF
 internal /*inline*/ fun stealQexp(steal: Int) =
-    ((steal shl STEAL_QEXP_SHL) shr STEAL_QEXP_SHR) and STEAL_QEXP_MASK
+    (steal shl STEAL_QEXP_SHL) shr STEAL_QEXP_SHR
 
 
 internal /*inline*/ fun stealEncodeZER(signBit: Int, qExp: Int) =
