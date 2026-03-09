@@ -2,7 +2,7 @@
 
 package com.decimal128.decimal
 
-enum class BinopSignature {
+ enum class BinopSignature {
     FNZ_FNZ,
     FNZ_INF,
     FNZ_ZER,

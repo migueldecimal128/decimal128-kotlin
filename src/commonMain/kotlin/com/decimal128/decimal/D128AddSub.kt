@@ -10,22 +10,22 @@ internal fun d128AddImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val ySign = y.sign
-    return if (bothFnz(x, y)) {
+    val signature = signatureOf(x.steal, y.steal)
+    return if (signature == xFNZ_FNZ) {
         addFnzFnz(x, ySign, y, ctx)
-    } else when (binopSignatureOf(x, y)) {
-        ZER_ZER -> addZeroZero(x, ySign, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
-        ZER_INF, FNZ_INF -> y
+    } else when (signature) {
+        xZER_ZER -> addZeroZero(x, ySign, y, ctx)
+        xZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
+        xZER_INF, xFNZ_INF -> y
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
-        FNZ_FNZ -> throw IllegalStateException()
+        xFNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
         //FNZ_INF -> y
 
-        INF_ZER, INF_FNZ -> x
+        xINF_ZER, xINF_FNZ -> x
         //INF_FNZ -> x
-        INF_INF -> addInfInf(x, ySign, y, ctx)
+        xINF_INF -> addInfInf(x, ySign, y, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
 }
 
@@ -33,23 +33,21 @@ internal fun d128SubImpl(x: Decimal, y: Decimal): Decimal =
     d128SubImpl(x, y, DecContext.current())
 
 internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val signature = signatureOf(x.steal, y.steal)
     val ySignNegated = ! y.sign
-    return if (bothFnz(x, y)) {
+    return if (signature == xFNZ_FNZ) {
         addFnzFnz(x, ySignNegated, y, ctx)
-    } else when (binopSignatureOf(x, y)) {
-        ZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
-        ZER_INF, FNZ_INF -> y.negate()
+    } else when (signature) {
+        xZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
+        xZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
+        xZER_INF, xFNZ_INF -> y.negate()
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
-        FNZ_FNZ -> throw IllegalStateException()
-        //FNZ_INF -> y.negate()
+        xFNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
 
-        INF_ZER, INF_FNZ -> x
-        //INF_FNZ -> x
-        INF_INF -> addInfInf(x, ySignNegated, y, ctx)
+        xINF_ZER, xINF_FNZ -> x
+        xINF_INF -> addInfInf(x, ySignNegated, y, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
 }
 

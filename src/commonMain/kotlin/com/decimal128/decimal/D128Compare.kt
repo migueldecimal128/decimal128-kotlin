@@ -128,22 +128,21 @@ internal fun d128CompareTotalOrder(x: Decimal, y: Decimal): Int {
  * @return −1, 0, or +1 describing the total-order magnitude relation.
  */
 fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
+    val signature = signatureOf(x.steal, y.steal)
     val cmp =
-        if (bothFnz(x, y))
+        if (signature == xFNZ_FNZ) {
             cmpTotalOrderMagFnzFnz(x, y)
-        else when (binopSignatureOf(x, y)) {
-            ZER_ZER -> cmp32(x.qExp, y.qExp)
-            ZER_FNZ -> -1
-            ZER_INF -> -1
+        } else when (signature) {
+            xZER_ZER -> cmp32(x.qExp, y.qExp)
+            xZER_FNZ,
+            xZER_INF,
+            xFNZ_INF -> -1
 
-            FNZ_ZER -> 1
-            FNZ_FNZ -> throw IllegalStateException()
-            FNZ_INF -> -1
-
-            INF_ZER -> 1
-            INF_FNZ -> 1
-            INF_INF -> 0
-            NAN_FOUND -> cmpTotalOrderMagnitudeNanFound(x, y)
+            xFNZ_ZER,
+            xINF_ZER,
+            xINF_FNZ -> 1
+            xINF_INF -> 0
+            else -> cmpTotalOrderMagnitudeNanFound(x, y)
         }
     return cmp
 }
@@ -302,18 +301,19 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
  *         `false` otherwise.
  */
 internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
-    return when (binopSignatureOf(x, y)) {
-        ZER_ZER -> true
-        FNZ_FNZ -> x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
-        ZER_FNZ,
-        ZER_INF,
-        FNZ_ZER,
-        FNZ_INF,
-
-        INF_ZER,
-        INF_FNZ,
-        INF_INF -> x.sign == y.sign
-        NAN_FOUND -> x.isNaN() && y.isNaN()
+    val signature = signatureOf(x.steal, y.steal)
+    return if (signature == xFNZ_FNZ) {
+        x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
+    } else when (signature) {
+        xFNZ_ZER,
+        xFNZ_INF,
+        xINF_ZER,
+        xZER_FNZ,
+        xZER_INF,
+        xINF_FNZ -> false
+        xZER_ZER -> true
+        xINF_INF -> x.sign == y.sign
+        else -> x.isNaN() && y.isNaN()
     }
 }
 
@@ -346,22 +346,21 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
  * @return −1 if `|x| < |y|`, 0 if `|x| == |y|`, or +1 if `|x| > |y|`.
  */
 private fun cmpNumericMagnitude(x: Decimal, y: Decimal): Int {
+    val signature = signatureOf(x.steal, y.steal)
     val cmpMag =
-        if (bothFnz(x, y))
+        if (signature == xFNZ_FNZ) {
             cmpMagFnzFnz(x, y)
-        else when (binopSignatureOf(x, y)) {
-            ZER_ZER -> 0
-            ZER_FNZ -> -1
-            ZER_INF -> -1
+        } else when (signature) {
+            xZER_ZER -> 0
+            xZER_FNZ,
+            xZER_INF,
+            xFNZ_INF -> -1
 
-            FNZ_ZER -> 1
-            //FNZ_FNZ -> throw IllegalStateException()
-            FNZ_INF -> -1
-
-            INF_ZER -> 1
-            INF_FNZ -> 1
-            INF_INF -> 0
-            FNZ_FNZ, NAN_FOUND -> throw IllegalStateException()
+            xFNZ_ZER,
+            xINF_ZER,
+            xINF_FNZ -> 1
+            xINF_INF -> 0
+            else -> throw IllegalStateException()
         }
     return cmpMag
 }
