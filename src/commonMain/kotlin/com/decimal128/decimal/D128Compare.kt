@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.NEG_ONEe0
 import com.decimal128.decimal.Decimal.Companion.NaN
 import com.decimal128.decimal.Decimal.Companion.POS_ONEe0
@@ -128,20 +127,20 @@ internal fun d128CompareTotalOrder(x: Decimal, y: Decimal): Int {
  * @return −1, 0, or +1 describing the total-order magnitude relation.
  */
 fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
-    val signature = signatureOf(x.steal, y.steal)
+    val signature = binopSignatureOf(x.steal, y.steal)
     val cmp =
-        if (signature == xFNZ_FNZ) {
+        if (signature == FNZ_FNZ) {
             cmpTotalOrderMagFnzFnz(x, y)
         } else when (signature) {
-            xZER_ZER -> cmp32(x.qExp, y.qExp)
-            xZER_FNZ,
-            xZER_INF,
-            xFNZ_INF -> -1
+            ZER_ZER -> cmp32(x.qExp, y.qExp)
+            ZER_FNZ,
+            ZER_INF,
+            FNZ_INF -> -1
 
-            xFNZ_ZER,
-            xINF_ZER,
-            xINF_FNZ -> 1
-            xINF_INF -> 0
+            FNZ_ZER,
+            INF_ZER,
+            INF_FNZ -> 1
+            INF_INF -> 0
             else -> cmpTotalOrderMagnitudeNanFound(x, y)
         }
     return cmp
@@ -301,18 +300,18 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
  *         `false` otherwise.
  */
 internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
-    val signature = signatureOf(x.steal, y.steal)
-    return if (signature == xFNZ_FNZ) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
     } else when (signature) {
-        xFNZ_ZER,
-        xFNZ_INF,
-        xINF_ZER,
-        xZER_FNZ,
-        xZER_INF,
-        xINF_FNZ -> false
-        xZER_ZER -> true
-        xINF_INF -> x.sign == y.sign
+        FNZ_ZER,
+        FNZ_INF,
+        INF_ZER,
+        ZER_FNZ,
+        ZER_INF,
+        INF_FNZ -> false
+        ZER_ZER -> true
+        INF_INF -> x.sign == y.sign
         else -> x.isNaN() && y.isNaN()
     }
 }
@@ -346,20 +345,20 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
  * @return −1 if `|x| < |y|`, 0 if `|x| == |y|`, or +1 if `|x| > |y|`.
  */
 private fun cmpNumericMagnitude(x: Decimal, y: Decimal): Int {
-    val signature = signatureOf(x.steal, y.steal)
+    val signature = binopSignatureOf(x.steal, y.steal)
     val cmpMag =
-        if (signature == xFNZ_FNZ) {
+        if (signature == FNZ_FNZ) {
             cmpMagFnzFnz(x, y)
         } else when (signature) {
-            xZER_ZER -> 0
-            xZER_FNZ,
-            xZER_INF,
-            xFNZ_INF -> -1
+            ZER_ZER -> 0
+            ZER_FNZ,
+            ZER_INF,
+            FNZ_INF -> -1
 
-            xFNZ_ZER,
-            xINF_ZER,
-            xINF_FNZ -> 1
-            xINF_INF -> 0
+            FNZ_ZER,
+            INF_ZER,
+            INF_FNZ -> 1
+            INF_INF -> 0
             else -> throw IllegalStateException()
         }
     return cmpMag
@@ -498,33 +497,33 @@ internal fun cmpImpl(x: Decimal, y: Decimal): Decimal =
     cmpImpl(x, y, DecContext.current())
 
 internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    if (hasNaN(x, y))
+    val xSteal = x.steal
+    val ySteal = y.steal
+    if (stealHasNAN(xSteal, ySteal))
         return nanOperandFound(x, y, ctx)
-    if (x.isZero() && y.isZero())
+    val signature = binopSignatureOf(x.steal, y.steal)
+    if (signature == ZER_ZER)
         return ZERO
-    if (x.sign != y.sign)
-        return if (x.sign) NEG_ONEe0 else POS_ONEe0
+    val xSignMask = x.signMask
+    if (xSignMask != y.signMask)
+        return if (xSignMask == 0) POS_ONEe0 else NEG_ONEe0
     val cmpMag =
-        if (bothFnz(x, y)) {
+        if (signature == FNZ_FNZ) {
             cmpMagnitudeFnzFnz(x, y)
-        } else when (binopSignatureOf(x, y)) {
-            ZER_ZER -> throw IllegalStateException()
-            ZER_FNZ -> -1
-            ZER_INF -> -1
-
-            FNZ_ZER -> 1
-            FNZ_FNZ -> throw IllegalStateException()
+        } else when (signature) {
+            ZER_FNZ,
+            ZER_INF,
             FNZ_INF -> -1
 
-            INF_ZER -> 1
+            FNZ_ZER,
+            INF_ZER,
             INF_FNZ -> 1
-            INF_INF -> 0
+            INF_INF -> return ZERO
 
-            NAN_FOUND -> throw IllegalStateException()
+            else -> return nanOperandFound(x, y, ctx)
         }
-    val negateMask = x.signMask
-    val t = (cmpMag xor negateMask) - negateMask
-    return mapToDecimal[t + 1]
+    val t = (cmpMag xor xSignMask) - xSignMask
+    return mapToDecimal[(t + 1) and 0x03]
 }
 
 private fun cmpFnzFnz(x: Decimal, y: Decimal): Int {
@@ -575,22 +574,21 @@ internal fun cmpMagnitudeImpl(x: Decimal, y: Decimal): Decimal =
     cmpMagnitudeImpl(x, y, DecContext.current())
 
 fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val cmp = if (bothFnz(x, y)) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    val cmp = if (signature == FNZ_FNZ) {
         cmpMagnitudeFnzFnz(x, y)
-    } else when (binopSignatureOf(x, y)) {
-        ZER_ZER -> 0
-        ZER_FNZ -> -1
-        ZER_INF -> -1
-
-        FNZ_ZER -> 1
-        FNZ_FNZ -> throw IllegalStateException()
+    } else when (signature) {
+        ZER_ZER,
+        INF_INF -> 0
+        ZER_FNZ,
+        ZER_INF,
         FNZ_INF -> -1
 
-        INF_ZER -> 1
+        FNZ_ZER,
+        INF_ZER,
         INF_FNZ -> 1
-        INF_INF -> 0
 
-        NAN_FOUND -> return nanOperandFound(x, y, ctx)
+        else -> return nanOperandFound(x, y, ctx)
     }
     return mapToDecimal[(cmp + 1) and 0x03]
 }
@@ -603,21 +601,20 @@ internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
 }
 
 fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
-    return if (bothFnz(x, y)) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
-    } else when (binopSignatureOf(x, y)) {
+    } else when (signature) {
         ZER_ZER -> x.qExp.compareTo(y.qExp)
-        ZER_FNZ -> -1
-        ZER_INF -> -1
-
-        FNZ_ZER -> 1
-        FNZ_FNZ -> throw IllegalStateException()
+        ZER_FNZ,
+        ZER_INF,
         FNZ_INF -> -1
 
-        INF_ZER -> 1
+        FNZ_ZER,
+        INF_ZER,
         INF_FNZ -> 1
         INF_INF -> 0
-        NAN_FOUND -> cmpTotalOrderMagnitudeNanFound(x, y)
+        else -> cmpTotalOrderMagnitudeNanFound(x, y)
     }
 }
 

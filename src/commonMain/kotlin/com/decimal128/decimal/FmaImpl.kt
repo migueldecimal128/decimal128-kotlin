@@ -1,32 +1,22 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.BinopSignature.FNZ_FNZ
-import com.decimal128.decimal.BinopSignature.FNZ_INF
-import com.decimal128.decimal.BinopSignature.FNZ_ZER
-import com.decimal128.decimal.BinopSignature.INF_FNZ
-import com.decimal128.decimal.BinopSignature.INF_INF
-import com.decimal128.decimal.BinopSignature.INF_ZER
-import com.decimal128.decimal.BinopSignature.NAN_FOUND
-import com.decimal128.decimal.BinopSignature.ZER_FNZ
-import com.decimal128.decimal.BinopSignature.ZER_INF
-import com.decimal128.decimal.BinopSignature.ZER_ZER
-import kotlin.math.max
 import kotlin.math.min
 
 internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal): Decimal =
     fmaImpl(x, y, a, DecContext.current())
 
 internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-    if (x.isFiniteNonZero() && y.isFiniteNonZero() && a.isFinite())
+    val signatureXY = binopSignatureOf(x.steal, y.steal)
+    if (signatureXY == FNZ_FNZ && a.isFinite())
         return fmaFnzFnzFinite(x, y, a, ctx)
     if (a.isNaN())
         return fmaNanAddend(x, y, a, ctx)
-    return when (binopSignatureOf(x, y)) {
-        ZER_ZER -> fmaZeroProd(x, y, a, ctx)
-        ZER_FNZ -> fmaZeroProd(x, y, a, ctx)
+    return when (signatureXY) {
+        ZER_ZER,
+        ZER_FNZ,
+        FNZ_ZER -> fmaZeroProd(x, y, a, ctx)
         ZER_INF -> ctx.signalInvalid(Decimal.NaN)
 
-        FNZ_ZER -> fmaZeroProd(x, y, a, ctx)
         FNZ_FNZ -> {
             verify { a.isInfinite() }
             a
@@ -38,7 +28,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
         //INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
         //INF_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
 }
 

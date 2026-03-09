@@ -1,27 +1,25 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.BinopSignature.*
-
 internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
     d128MulImpl(x, y, DecContext.current())
 
 internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    return if (bothFnz(x, y)) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         mulFnzFnz(x, y, ctx)
-    } else when (binopSignatureOf(x, y)) {
-        ZER_ZER -> mulZero(x, y, ctx)
-        ZER_FNZ -> mulZero(x, y, ctx)
-        ZER_INF -> mulInfZero(x, y, ctx)
-
+    } else when (signature) {
+        ZER_ZER,
+        ZER_FNZ,
         FNZ_ZER -> mulZero(x, y, ctx)
-        FNZ_FNZ -> mulFnzFnz(x, y, ctx)
-        FNZ_INF -> mulInfNonzero(x, y)
 
+        ZER_INF,
         INF_ZER -> mulInfZero(x, y, ctx)
-        INF_FNZ -> mulInfNonzero(x, y)
+
+        FNZ_INF,
+        INF_FNZ,
         INF_INF -> mulInfNonzero(x, y)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
 }
 

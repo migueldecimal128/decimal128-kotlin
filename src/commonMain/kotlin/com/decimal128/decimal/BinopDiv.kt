@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Decimal.Companion.zero
 import kotlin.math.min
 
@@ -8,22 +7,22 @@ internal fun d128DivImpl(x: Decimal, y: Decimal): Decimal =
     d128DivImpl(x, y, DecContext.current())
 
 internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    return if (bothFnz(x, y)) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         divFnzFnz(x, y, ctx)
-    } else when (binopSignatureOf(x, y)) {
+    } else when (signature) {
         ZER_ZER -> divZeroZero(x, y, ctx)
         ZER_FNZ -> zero(x.sign xor y.sign, x.qExp - y.qExp, ctx)
         ZER_INF,
         FNZ_INF -> zero(x.sign xor y.sign, ctx.qTiny, ctx)
 
         FNZ_ZER -> divFnzZero(x, y, ctx)
-        FNZ_FNZ -> throw IllegalStateException()
 
         INF_ZER,
         INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
         INF_INF -> divInfInf(x, y, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
 }
 
@@ -56,22 +55,22 @@ internal fun divIntImpl(x: Decimal, y: Decimal): Decimal =
     divIntImpl(x, y, DecContext.current())
 
 internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    return if (bothFnz(x, y)) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         divIntFnzFnz(x, y, ctx)
-    } else when (binopSignatureOf(x, y)) {
+    } else when (signature) {
         ZER_ZER -> divZeroZero(x, y, ctx)
         ZER_FNZ,
         ZER_INF,
         FNZ_INF -> Decimal.zero(x.sign xor y.sign)
 
         FNZ_ZER -> divFnzZero(x, y, ctx)
-        FNZ_FNZ -> throw IllegalStateException()
 
         INF_ZER,
         INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
         INF_INF -> divInfInf(x, y, ctx)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
     // otherwise, divInt() == div()
 }
@@ -96,21 +95,21 @@ internal fun remNearImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
     remImpl(isTrunc = false, x, y, ctx)
 
 internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    return if (bothFnz(x, y)) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         remFnzFnz(isTrunc, x, y, ctx)
-    } else when (binopSignatureOf(x, y)) {
+    } else when (signature) {
         ZER_FNZ -> zero(x.sign, min(x.qExp, y.qExp), ctx)
         FNZ_INF,
         ZER_INF -> x
 
-        FNZ_FNZ, // Illegal state, we checked above
         ZER_ZER,
         FNZ_ZER,
         INF_ZER,
         INF_FNZ,
         INF_INF -> ctx.signalInvalid(Decimal.NaN)
 
-        NAN_FOUND -> nanOperandFound(x, y, ctx)
+        else -> nanOperandFound(x, y, ctx)
     }
 }
 

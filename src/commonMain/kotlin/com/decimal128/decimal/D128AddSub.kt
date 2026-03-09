@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.BinopSignature.*
 import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
@@ -10,20 +9,20 @@ internal fun d128AddImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val ySign = y.sign
-    val signature = signatureOf(x.steal, y.steal)
-    return if (signature == xFNZ_FNZ) {
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
         addFnzFnz(x, ySign, y, ctx)
     } else when (signature) {
-        xZER_ZER -> addZeroZero(x, ySign, y, ctx)
-        xZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
-        xZER_INF, xFNZ_INF -> y
+        ZER_ZER -> addZeroZero(x, ySign, y, ctx)
+        ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
+        ZER_INF, FNZ_INF -> y
 
-        xFNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
         //FNZ_INF -> y
 
-        xINF_ZER, xINF_FNZ -> x
+        INF_ZER, INF_FNZ -> x
         //INF_FNZ -> x
-        xINF_INF -> addInfInf(x, ySign, y, ctx)
+        INF_INF -> addInfInf(x, ySign, y, ctx)
 
         else -> nanOperandFound(x, y, ctx)
     }
@@ -33,19 +32,19 @@ internal fun d128SubImpl(x: Decimal, y: Decimal): Decimal =
     d128SubImpl(x, y, DecContext.current())
 
 internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val signature = signatureOf(x.steal, y.steal)
+    val signature = binopSignatureOf(x.steal, y.steal)
     val ySignNegated = ! y.sign
-    return if (signature == xFNZ_FNZ) {
+    return if (signature == FNZ_FNZ) {
         addFnzFnz(x, ySignNegated, y, ctx)
     } else when (signature) {
-        xZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
-        xZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
-        xZER_INF, xFNZ_INF -> y.negate()
+        ZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
+        ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
+        ZER_INF, FNZ_INF -> y.negate()
 
-        xFNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
 
-        xINF_ZER, xINF_FNZ -> x
-        xINF_INF -> addInfInf(x, ySignNegated, y, ctx)
+        INF_ZER, INF_FNZ -> x
+        INF_INF -> addInfInf(x, ySignNegated, y, ctx)
 
         else -> nanOperandFound(x, y, ctx)
     }
