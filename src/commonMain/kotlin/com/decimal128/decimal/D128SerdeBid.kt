@@ -166,26 +166,27 @@ object D128SerdeBid {
      * @param mostSigBits4 the most significant 4 coefficient digits (top 3 bits used by BID)
      * @return the sign and 17-bit combination field positioned in bits 63–46
      */
-    private inline fun encodeSignAndGCombinationFieldBid128(sign: Boolean, qExp: Int, mostSigBits4: Int) : Long {
+    private inline fun encodeSignAndGCombinationFieldBid128(d: Decimal) : Long {
         // this is 4 digits for DPD format, but only the most significant 3-bits of BID
-        require (mostSigBits4 in 0..9)
-        val signBit = if (sign) Long.MIN_VALUE else 0L
+        val mostSigBits3 = (d.dw1 shr (110 - 64)).toInt() and 0x07
+        val steal = d.steal
+        val signBitLong = stealSignBit(steal).toLong() shl 63
         val gCombinationField = when {
-            qExp < MIN_SPECIAL_VALUE -> {
-                require(qExp in QTINY_Neg6176..QMAX_6111)
+            stealIsFinite(steal) -> {
+                val qExp = stealQexp(steal)
+                verify { qExp in QTINY_Neg6176..QMAX_6111 }
                 val biasedQExp = qExp - QTINY_Neg6176 // remember qTiny is negative
                 verify { (biasedQExp and 0x3000) != 0x3000 }
-                if ((mostSigBits4 and 0x08) == 0)
-                    (biasedQExp shl 3) or mostSigBits4
-                else
-                    0x18000 or (biasedQExp shl 1) or (mostSigBits4 and 1)
+                (biasedQExp shl 3) or mostSigBits3
             }
-            qExp == NON_FINITE_INF  -> 0b11110 shl 12
-            qExp == NON_FINITE_QNAN -> 0b111110 shl 11
-            qExp == NON_FINITE_SNAN -> 0b111111 shl 11
-            else -> throw RuntimeException("unrecognized")
+            stealIsINF(steal) -> 0b11110 shl 12
+            stealIsQNAN(steal) -> 0b111110 shl 11
+            else -> {
+                verify { stealIsSNAN(steal) }
+                0b111111 shl 11
+            }
         }
-        val signCombo = signBit or (gCombinationField.toLong() shl 46)
+        val signCombo = signBitLong or (gCombinationField.toLong() shl 46)
         return signCombo
     }
 
@@ -203,8 +204,7 @@ object D128SerdeBid {
         // Don't be confused by the fact that this is 3 bits
         // but below you will see 4 bits.
         // The format allows 4 bits, but only 3 are used.
-        val mostSignificant3 = (d.dw1 shr (110 - 64)).toInt() and 0x07
-        val signCombo = encodeSignAndGCombinationFieldBid128(d.sign, d.qExp, mostSignificant3)
+        val signCombo = encodeSignAndGCombinationFieldBid128(d)
         val significand110Hi = d.dw1 and ((1L shl (110 - 64)) - 1L)
         val bidDecimal128Hi = signCombo or significand110Hi
         return bidDecimal128Hi

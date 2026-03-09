@@ -12,7 +12,7 @@ import com.decimal128.decimal.d128SubImpl
 
 class TestDecBasicArithmetic {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
