@@ -13,8 +13,6 @@ import com.decimal128.decimal.Ieee754Class.positiveSubnormal
 import com.decimal128.decimal.Ieee754Class.positiveZero
 import com.decimal128.decimal.Ieee754Class.quietNaN
 import com.decimal128.decimal.Ieee754Class.signalingNaN
-import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.Residue.Companion.LT_HALF
 import kotlin.math.max
 import kotlin.math.min
 
@@ -35,10 +33,11 @@ class Decimal private constructor(
 
     internal val bitLen: Int
         get() = stealBitLen(steal) // problems with non-Canonical ... as expected
-        // get() = seal and 0x1FF
+
+    // get() = seal and 0x1FF
     internal val digitLen: Int
         get() = stealDigitLen(steal)
-        // get() = (seal shr 9) and 0x3F
+    // get() = (seal shr 9) and 0x3F
 
     internal val sign: Boolean
         get() = steal < 0
@@ -67,14 +66,14 @@ class Decimal private constructor(
 
         private const val BIT31 = Int.MIN_VALUE
 
-        internal const val NON_FINITE_BIT  = 0x4000_0000
-        internal const val QNAN_BIT        = 0x1000_0000
-        internal const val SNAN_BIT        = 0x0800_0000
-        internal const val INF_BIT         = 0x0400_0000
+        internal const val NON_FINITE_BIT = 0x4000_0000
+        internal const val QNAN_BIT = 0x1000_0000
+        internal const val SNAN_BIT = 0x0800_0000
+        internal const val INF_BIT = 0x0400_0000
 
-        internal const val QNAN_SEAL       = NON_FINITE_BIT or QNAN_BIT
-        internal const val SNAN_SEAL       = NON_FINITE_BIT or SNAN_BIT
-        internal const val INF_SEAL        = NON_FINITE_BIT or INF_BIT
+        internal const val QNAN_SEAL = NON_FINITE_BIT or QNAN_BIT
+        internal const val SNAN_SEAL = NON_FINITE_BIT or SNAN_BIT
+        internal const val INF_SEAL = NON_FINITE_BIT or INF_BIT
 
         internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= -16384 && qExp <= 16383 }
@@ -84,13 +83,16 @@ class Decimal private constructor(
                 (if (sign) BIT31 else 0) or
                         ((qExp and 0x7FFF) shl 16) or
                         calcPackedLengths128(dw1, dw0),
-                dw1, dw0)
+                dw1, dw0
+            )
         }
 
-        internal operator fun invoke(sign: Boolean, qExp: Int,
-                                     digitLen: Int, bitLen: Int,
-                                     dw1: Long, dw0: Long,
-                                     allowNonCanonical: Boolean = false): Decimal {
+        internal operator fun invoke(
+            sign: Boolean, qExp: Int,
+            digitLen: Int, bitLen: Int,
+            dw1: Long, dw0: Long,
+            allowNonCanonical: Boolean = false
+        ): Decimal {
             verify { bitLen == calcBitLen128(dw1, dw0) }
             verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
             verify { digitLen <= 38 }
@@ -102,20 +104,25 @@ class Decimal private constructor(
                         ((qExp and 0x7FFF) shl 16) or
                         (digitLen shl 9) or
                         bitLen,
-                dw1, dw0)
+                dw1, dw0
+            )
         }
 
-        internal operator fun invoke(sign: Boolean, qExp: Int,
-                                     digitLen: Int, bitLen: Int,
-                                     dw1: Long, dw0: Long,
-                                     ctx: DecContext): Decimal {
+        internal operator fun invoke(
+            sign: Boolean, qExp: Int,
+            digitLen: Int, bitLen: Int,
+            dw1: Long, dw0: Long,
+            ctx: DecContext
+        ): Decimal {
             verify { bitLen == calcBitLen128(dw1, dw0) }
             verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
-            verify { when {
-                qExp < NON_FINITE_INF -> digitLen < ctx.precision
-                qExp == NON_FINITE_INF -> digitLen == 0
-                else -> digitLen <= ctx.decFormat.nanPayloadPrecision
-            } }
+            verify {
+                when {
+                    qExp < NON_FINITE_INF -> digitLen < ctx.precision
+                    qExp == NON_FINITE_INF -> digitLen == 0
+                    else -> digitLen <= ctx.decFormat.nanPayloadPrecision
+                }
+            }
             val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(
                 steal,
@@ -123,12 +130,15 @@ class Decimal private constructor(
                         ((qExp and 0x7FFF) shl 16) or
                         (digitLen shl 9) or
                         bitLen,
-                dw1, dw0)
+                dw1, dw0
+            )
         }
 
-        internal operator fun invoke(sign: Boolean, qExp: Int,
-                                     dw1: Long, dw0: Long,
-                                     allowNonCanonical: Boolean = false): Decimal {
+        internal operator fun invoke(
+            sign: Boolean, qExp: Int,
+            dw1: Long, dw0: Long,
+            allowNonCanonical: Boolean = false
+        ): Decimal {
             verify {
                 val digitLen = calcDigitLen128(dw1, dw0)
                 digitLen <= 34 || (allowNonCanonical && digitLen <= 38)
@@ -143,19 +153,19 @@ class Decimal private constructor(
             )
         }
 
-        val POS_ZEROe0 = Decimal(stealEncodeZER(0, 0),     0, 0L, 0L)
+        val POS_ZEROe0 = Decimal(stealEncodeZER(0, 0), 0, 0L, 0L)
         val NEG_ZEROe0 = Decimal(stealEncodeZER(1, 0), BIT31, 0L, 0L)
         val ZERO = POS_ZEROe0
-        val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, 0L, 1L),          0x0201, 0L, 1L)
+        val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, 0L, 1L), 0x0201, 0L, 1L)
         val NEG_ONEe0 = Decimal(stealEncodeFNZ(1, 0, 0L, 1L), BIT31 or 0x0201, 0L, 1L)
         val ONE = POS_ONEe0
-        val POS_INFINITY = Decimal(stealEncodeINF(0),          (NON_FINITE_INF shl 16), 0L, 0L)
+        val POS_INFINITY = Decimal(stealEncodeINF(0), (NON_FINITE_INF shl 16), 0L, 0L)
         val NEG_INFINITY = Decimal(stealEncodeINF(1), BIT31 or (NON_FINITE_INF shl 16), 0L, 0L)
         val INFINITY = POS_INFINITY
-        val POS_QNAN = Decimal(stealEncodeQNAN(0, 0L, 0L),          (NON_FINITE_QNAN shl 16), 0L, 0L)
+        val POS_QNAN = Decimal(stealEncodeQNAN(0, 0L, 0L), (NON_FINITE_QNAN shl 16), 0L, 0L)
         val NEG_QNAN = Decimal(stealEncodeQNAN(1, 0L, 0L), BIT31 or (NON_FINITE_QNAN shl 16), 0L, 0L)
         val NaN = POS_QNAN
-        val POS_SNAN = Decimal(stealEncodeSNAN(0, 0L, 0L),          (NON_FINITE_SNAN shl 16), 0L, 0L)
+        val POS_SNAN = Decimal(stealEncodeSNAN(0, 0L, 0L), (NON_FINITE_SNAN shl 16), 0L, 0L)
         val NEG_SNAN = Decimal(stealEncodeSNAN(1, 0L, 0L), BIT31 or (NON_FINITE_SNAN shl 16), 0L, 0L)
         val sNaN = POS_SNAN
 
@@ -240,7 +250,7 @@ class Decimal private constructor(
             val payloadIsZero = (dw1 or dw0) == 0L
             return when {
                 payloadIsZero && sign -> NEG_QNAN
-                payloadIsZero         -> POS_QNAN
+                payloadIsZero -> POS_QNAN
                 else -> Decimal(sign, NON_FINITE_QNAN, dw1, dw0)
             }
         }
@@ -251,7 +261,7 @@ class Decimal private constructor(
             val payloadIsZero = (dw1 or dw0) == 0L
             return when {
                 payloadIsZero && sign -> NEG_SNAN
-                payloadIsZero         -> POS_SNAN
+                payloadIsZero -> POS_SNAN
                 else -> Decimal(sign, NON_FINITE_QNAN, dw1, dw0)
             }
         }
@@ -379,20 +389,51 @@ class Decimal private constructor(
      *         with IEEE-754-2019 §7.5.2.
      */
     fun ieeeClass(): Ieee754Class {
-        val sign = sign; val qExp = qExp; val bitLen = bitLen
+        val sign = sign;
+        val qExp = qExp;
+        val bitLen = bitLen
         return when {
             qExp >= NON_FINITE_INF -> when {
-                qExp == NON_FINITE_QNAN -> { verify { stealIsQNAN(steal) } ; quietNaN }
-                qExp > NON_FINITE_QNAN -> { verify {stealIsSNAN(steal) } ; signalingNaN }
-                sign -> { verify { stealIsINF(steal) } ; negativeInfinity }
-                else -> { verify { stealIsINF(steal) } ; positiveInfinity }
+                qExp == NON_FINITE_QNAN -> {
+                    verify { stealIsQNAN(steal) }; quietNaN
+                }
+
+                qExp > NON_FINITE_QNAN -> {
+                    verify { stealIsSNAN(steal) }; signalingNaN
+                }
+
+                sign -> {
+                    verify { stealIsINF(steal) }; negativeInfinity
+                }
+
+                else -> {
+                    verify { stealIsINF(steal) }; positiveInfinity
+                }
             }
-            bitLen == 0 && sign -> { verify { stealIsZER(steal) } ; negativeZero }
-            bitLen == 0 -> { verify { stealIsZER(steal) } ; positiveZero }
-            eExp < -6143 && sign -> { verify { stealIsFNZ(steal) } ; negativeSubnormal }
-            eExp < -6143 -> { verify { stealIsFNZ(steal) } ; positiveSubnormal }
-            sign -> { verify { stealIsZER(steal) } ; negativeNormal }
-            else -> { verify { stealIsZER(steal) } ; positiveNormal }
+
+            bitLen == 0 && sign -> {
+                verify { stealIsZER(steal) }; negativeZero
+            }
+
+            bitLen == 0 -> {
+                verify { stealIsZER(steal) }; positiveZero
+            }
+
+            eExp < -6143 && sign -> {
+                verify { stealIsFNZ(steal) }; negativeSubnormal
+            }
+
+            eExp < -6143 -> {
+                verify { stealIsFNZ(steal) }; positiveSubnormal
+            }
+
+            sign -> {
+                verify { stealIsZER(steal) }; negativeNormal
+            }
+
+            else -> {
+                verify { stealIsZER(steal) }; positiveNormal
+            }
         }
     }
 
@@ -484,7 +525,9 @@ class Decimal private constructor(
      * - NaN: payload digits > 33
      */
     fun isCanonical(): Boolean {
-        val qExp = qExp; val digitLen = digitLen; val bitLen = bitLen;
+        val qExp = qExp;
+        val digitLen = digitLen;
+        val bitLen = bitLen;
         verify { bitLen == calcBitLen128(dw1, dw0) }
         verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
         return (qExp in -6176..6111 && digitLen <= 34) ||
@@ -558,6 +601,7 @@ class Decimal private constructor(
                 val qNew = qExp + pow10DeltaCapped
                 decFinalizeFinite(sign, dw1, dw0, qNew, ctx)
             }
+
             stealIsINF(steal) -> this
             else -> nanOperandFound(this, ctx)
         }
@@ -577,6 +621,7 @@ class Decimal private constructor(
     fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZerosImpl(this, ctx)
 
     fun withScale(decimalScale: Int, ctx: DecContext): Decimal = withScale(this, decimalScale, ctx)
+
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
      * *totalOrder* relation.
@@ -863,6 +908,7 @@ class Decimal private constructor(
                 val hcDw0 = (r0 xor (r0 shr 32)).toInt()
                 return hcSign + hcQExp + hcDw1 + hcDw0
             }
+
             stealIsZER(steal) -> return if (steal < 0) HASH_CODE_NEG_ZERO else HASH_CODE_POS_ZERO
             stealIsINF(steal) -> return if (steal < 0) HASH_CODE_NEG_INFINITY else HASH_CODE_POS_INFINITY
             else -> return HASH_CODE_NAN
@@ -885,22 +931,27 @@ class Decimal private constructor(
     override fun toString(): String = D128ParsePrint.toString(this)
 
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
+
     context(decContext: DecContext)
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other, decContext)
 
     operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other)
+
     context(decContext: DecContext)
     operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other, decContext)
 
     operator fun times(other: Decimal): Decimal = d128MulImpl(this, other)
+
     context(decContext: DecContext)
     operator fun times(other: Decimal): Decimal = d128MulImpl(this, other, decContext)
 
     operator fun div(other: Decimal): Decimal = d128DivImpl(this, other)
+
     context(decContext: DecContext)
     operator fun div(other: Decimal): Decimal = d128DivImpl(this, other, decContext)
 
     operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other)
+
     context(decContext: DecContext)
     operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other, decContext)
 
@@ -908,45 +959,22 @@ class Decimal private constructor(
     fun remainderNear(other: Decimal): Decimal = rem(other)
 
     fun roundToIntegralTiesToEven(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
 
     fun roundToIntegralTiesToAway(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
 
     fun roundToIntegralTowardZero(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
 
     fun roundToIntegralTowardPositive(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
 
     fun roundToIntegralTowardNegative(ctx: DecContext) =
-        roundToIntegral(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
 
     fun roundToIntegralExact(ctx: DecContext) =
-        roundToIntegral(ctx.decRounding, ctx, beQuiet = false)
-
-    fun roundToIntegral(rounding: DecRounding, ctx: DecContext, beQuiet: Boolean = false): Decimal {
-        val sign = sign; val qExp = qExp; val dw1 = dw1; val dw0 = dw0
-        if (qExp >= 0) {
-            if (qExp < NON_FINITE_SNAN)
-                return this
-            return nanOperandFound(this, ctx)
-        }
-        if (isZero())
-            return zero(sign)
-        val pow10 = -qExp
-        val tmpPair = ctx.tmps.dwQuad1
-        tmpPair.dw0 = 0L
-        tmpPair.dw1 = 0L
-        val digitLen = this.digitLen
-        val residue: Residue = when {
-            pow10 > digitLen -> LT_HALF
-            pow10 == digitLen -> Residue.fromValuePow10(dw1, dw0, digitLen)
-            else -> c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
-        }
-        return decRoundAndFinalizeFinite(sign, tmpPair.dw1, tmpPair.dw0,
-            residue, 0, rounding, ctx, beQuiet)
-    }
+        d128RoundToIntegral(this, ctx.decRounding, ctx, beQuiet = false)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTiesToEven`.
@@ -954,7 +982,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongTiesToEven(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTiesToAway`.
@@ -962,7 +990,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongTiesToAway(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardZero`.
@@ -970,7 +998,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongTowardZero(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardPositive`.
@@ -978,7 +1006,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongTowardPositive(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardNegative`.
@@ -986,7 +1014,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongTowardNegative(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTiesToEven`.
@@ -994,7 +1022,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongExactTiesToEven(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTiesToAway`.
@@ -1002,7 +1030,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongExactTiesToAway(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardZero`.
@@ -1010,7 +1038,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongExactTowardZero(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardPositive`.
@@ -1018,7 +1046,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongExactTowardPositive(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardNegative`.
@@ -1026,101 +1054,15 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongExactTowardNegative(ctx: DecContext) =
-        convertToLong(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
-    /**
-     * Core implementation for all decimal-to-[Long] conversions.
-     *
-     * Implements the IEEE 754-2019 `convertToInteger` family of operations for signed 64-bit integers.
-     * The invalid sentinel [Long.MIN_VALUE] matches Intel's decimal library (bid128_to_int64_*).
-     *
-     * @param rounding the rounding mode to apply when the value is not exactly representable as a [Long]
-     * @param ctx the decimal context for signaling flags
-     * @param suppressInexact if true, suppresses [DecException.INEXACT] (used by the non-exact IEEE 754 variants).
-     *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
-     * @return the converted [Long], or [Long.MIN_VALUE] if the value is NaN, infinite, or out of range
-     */
-    fun convertToLong(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Long {
-        val signMaskLong = signMask.toLong()
-        val sign = sign
-        val qExp = qExp
-        val bitLen = bitLen
-        val digitLen = digitLen
-        val dw0 = dw0
-        when {
-            qExp == 0 -> {
-                if (bitLen < 64)
-                    return (dw0 xor signMaskLong) - signMaskLong
-                if (bitLen == 64 && dw0 == Long.MIN_VALUE && sign)
-                    return Long.MIN_VALUE
-                // return signalInvalid
-            }
-            qExp >= NON_FINITE_INF -> {
-                // return signalInvalid
-            }
-            bitLen == 0 -> return 0L
-            qExp > 0 -> {
-                // if there is headroom then scale it up
-                if (digitLen + qExp <= 19) {
-                    val result = dw0 * pow10_64(qExp)
-                    if (result > 0)
-                        return (result xor signMaskLong) - signMaskLong
-                    // Long.MIN_VALUE && sign is not possible ...
-                    // ... because we just multiplied by 10**qExp
-                    // ... so the value ends in 0
-                    // ... but Long.MIN_VALUE ends in 8
-                }
-                // return signalInvalid
-            }
-            else -> { // qExp < 0
-                // at least some fractional digits, perhaps 0 digits
-                val fracDigitLen = -qExp
-                if (fracDigitLen >= digitLen) {
-                    // all fractional digits
-                    val residue: Residue
-                    if (fracDigitLen > digitLen)
-                        residue = LT_HALF
-                    else {
-                        residue = Residue.fromValueDecade(this)
-                        verify { residue != EXACT }
-                    }
-                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
-                    val ret = if (! roundUp) 0L else (signMaskLong shl 1) or 1L
-                    if (! suppressInexact)
-                        ctx.signalInexact(this)
-                    return ret
-                }
-                // both integral and fractional digits
-                val intDigitLen = digitLen - fracDigitLen
-                if (intDigitLen <= 19) {
-                    val dwPair = ctx.tmps.dwQuad1
-                    val residue = c128ScaleDownPow10(dwPair, dw1, dw0, fracDigitLen)
-                    // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
-                    var r0 = dwPair.dw0
-                    val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
-                    r0 += roundUp01
-                    verify { dwPair.dw1 == 0L }
-                    if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
-                        val ret = (r0 xor signMaskLong) - signMaskLong
-                        if (!suppressInexact && residue != EXACT)
-                            ctx.signalInexact(ret)
-                        return ret
-                    }
-                }
-                // return signalInvalid
-            }
-        }
-        // return signalInvalid
-        ctx.signalInvalid(this)
-        return Long.MIN_VALUE
-    }
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTiesToEven`.
      * Rounds to nearest, ties to even. Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntTiesToEven(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
+        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTiesToAway`.
@@ -1128,7 +1070,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntTiesToAway(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
+        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardZero`.
@@ -1136,7 +1078,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntTowardZero(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardPositive`.
@@ -1144,7 +1086,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntTowardPositive(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardNegative`.
@@ -1152,7 +1094,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntTowardNegative(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTiesToEven`.
@@ -1160,7 +1102,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntExactTiesToEven(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
+        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTiesToAway`.
@@ -1168,7 +1110,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntExactTiesToAway(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
+        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardZero`.
@@ -1176,7 +1118,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntExactTowardZero(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardPositive`.
@@ -1184,7 +1126,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntExactTowardPositive(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
     /**
      * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardNegative`.
@@ -1192,98 +1134,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toIntExactTowardNegative(ctx: DecContext) =
-        convertToInt(DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
-
-    /**
-     * Core implementation for all decimal-to-[Int] conversions.
-     *
-     * Implements the IEEE 754-2019 `convertToInteger` family of operations for signed 32-bit integers.
-     * All internal arithmetic is performed in [Long] to avoid overflow during intermediate calculations.
-     * The invalid sentinel [Int.MIN_VALUE] matches Intel's decimal library (bid128_to_int32_*).
-     *
-     * @param rounding the rounding mode to apply when the value is not exactly representable as an [Int]
-     * @param ctx the decimal context for signaling flags
-     * @param suppressInexact if true, suppresses [DecException.INEXACT] (used by the non-exact IEEE 754 variants).
-     *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
-     * @return the converted [Int], or [Int.MIN_VALUE] if the value is NaN, infinite, or out of range
-     */
-    fun convertToInt(rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Int {
-        val signMask = signMask
-        val sign = sign
-        val qExp = qExp
-        val bitLen = bitLen
-        val digitLen = digitLen
-        val dw0 = dw0
-        val w0 = dw0.toInt()
-        when {
-            qExp == 0 -> {
-                if (bitLen < 32)
-                    return (w0 xor signMask) - signMask
-                if (bitLen == 32 && w0 == Int.MIN_VALUE && sign)
-                    return Int.MIN_VALUE
-                // return signalInvalid
-            }
-            qExp >= NON_FINITE_INF -> {
-                // return signalInvalid
-            }
-            bitLen == 0 -> return 0
-            qExp > 0 -> {
-                // if there is headroom then scale it up
-                if (digitLen + qExp <= 10) {
-                    val result = dw0 * pow10_64(qExp)
-                    if (result <= Int.MAX_VALUE.toLong())
-                        return (result.toInt() xor signMask) - signMask
-                    // Long.MIN_VALUE && sign is not possible ...
-                    // ... because we just multiplied by 10**qExp
-                    // ... so the value ends in 0
-                    // ... but Long.MIN_VALUE ends in 8
-                }
-                // return signalInvalid
-            }
-            else -> { // qExp < 0
-                // at least some fractional digits, perhaps 0 digits
-                val fracDigitLen = -qExp
-                if (fracDigitLen >= digitLen) {
-                    // all fractional digits
-                    val residue: Residue
-                    if (fracDigitLen > digitLen)
-                        residue = LT_HALF
-                    else {
-                        residue = Residue.fromValueDecade(this)
-                        verify { residue != Residue.EXACT }
-                    }
-                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
-                    val ret = if (! roundUp) 0 else (signMask shl 1) or 1
-                    if (! suppressInexact)
-                        ctx.signalInexact(this)
-                    return ret
-                }
-                // both integral and fractional digits
-                val intDigitLen = digitLen - fracDigitLen
-                if (intDigitLen <= 10) {
-                    val dwPair = ctx.tmps.dwQuad1
-                    val residue = c128ScaleDownPow10(dwPair, dw1, dw0, fracDigitLen)
-                    var r0 = dwPair.dw0
-                    val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
-                    verify { dwPair.dw1 == 0L }
-                    // r0 cannot roll over
-                    // worse case is 10 9s 99999_99999 which rolls up to 11 digits
-                    r0 += roundUp01
-                    if (r0 <= Int.MAX_VALUE.toLong() ||
-                        r0 == -(Int.MIN_VALUE.toLong()) && sign) {
-                        val ret = (r0.toInt() xor signMask) - signMask
-                        if (!suppressInexact && residue != EXACT)
-                            ctx.signalInexact(this)
-                        return ret
-                    }
-                }
-                // return signalInvalid
-            }
-        }
-        // return signalInvalid
-        ctx.signalInvalid(this)
-        return Int.MIN_VALUE
-    }
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
 }
 
