@@ -79,6 +79,15 @@ internal const val STEAL_QEXP_MASK = 0x3FFF
 internal /*inline*/ fun stealQexp(steal: Int) =
     (steal shl STEAL_QEXP_SHL) shr STEAL_QEXP_SHR
 
+internal /*inline*/ fun stealEexp(steal: Int): Int {
+    // eExp = qExp + (digitLen - (-digitLen ushr 31))
+    // eExp = qExp + (digitLen - (-bitLen ushr 31))
+    return ((steal shl STEAL_QEXP_SHL) shr STEAL_QEXP_SHR) +
+            ((steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK) -
+            (-(steal and STEAL_BITLEN_MASK) ushr 31)
+}
+
+
 
 internal /*inline*/ fun stealEncodeZER(signBit: Int, qExp: Int) =
     (signBit shl 31) or ((qExp shl STEAL_QEXP_SHR) ushr STEAL_QEXP_SHL)

@@ -24,12 +24,36 @@ internal fun nanOperandFound(x: Decimal, y: Decimal,
     return ctx.signalInvalid(quietedNaN)
 }
 
+internal fun nanOperandFound_x(x: Decimal, y: Decimal,
+                             ctx: DecContext, alwaysSignal: Boolean = false): Decimal {
+    val stealX = x.steal
+    val stealY = y.steal
+    verify { stealHasNAN(stealX, stealY) }
+    val isSignaling = stealIsSNAN(stealX) or stealIsNAN(stealY)
+    val theNaN: Decimal
+    val stealNaN: Int
+    if (!stealIsNAN(stealY) || stealIsSNAN(stealX) || !ctx.decPrefs.propagatePreferSnan) {
+        theNaN = x
+        stealNaN = stealX
+    } else {
+        theNaN = y
+        stealNaN = stealY
+    }
+    verify { stealIsNAN(stealNaN) }
+    if (!alwaysSignal && !isSignaling)
+        return theNaN
+    if (!theNaN.isSignaling())
+        return ctx.signalInvalid(theNaN)
+    val quietedNaN = Decimal.qNaN(stealSignFlag(stealNaN), theNaN.dw1, theNaN.dw0)
+    return ctx.signalInvalid(quietedNaN)
+}
+
 internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
-    val qX = x.qExp
-    verify { qX >= NON_FINITE_QNAN }
-    if (qX == NON_FINITE_QNAN)
+    val steal = x.steal
+    verify { stealIsNAN(steal) }
+    if (stealIsQNAN(steal))
         return x
-    val quietedNaN = Decimal.qNaN(x.sign, x.dw1, x.dw0)
+    val quietedNaN = Decimal.qNaN(stealSignFlag(steal), x.dw1, x.dw0)
     return ctx.signalInvalid(quietedNaN)
 }
 

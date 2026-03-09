@@ -48,9 +48,18 @@ class Decimal private constructor(
 
     internal val qExp: Int
         // get() = stealQexp(steal) // lots of problems due to code expecting qExp >= NON_FINITE_INF
-        get() = (seal shl 1) shr 17
+        get() {
+            val stealQ = stealQexp(steal)
+            val sealQ = (seal shl 1) shr 17
+            if (stealQ != sealQ) {
+                println("kilroy was here!")
+            }
+            return sealQ
+            //return stealQ
+        }
 
     internal val eExp: Int
+        // get() = stealEexp(steal)
         get() = qExp + (digitLen - (-digitLen ushr 31))
 
     // the lower/upper bound of the normalized binary exponent interval

@@ -4,22 +4,25 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.LT_HALF
 
 internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, ctx: DecContext, beQuiet: Boolean = false): Decimal {
-    val sign = x.sign;
-    val qExp = x.qExp;
-    val dw1 = x.dw1;
-    val dw0 = x.dw0
-    if (qExp >= 0) {
-        if (qExp < NON_FINITE_SNAN)
-            return x
-        return nanOperandFound(x, ctx)
+    val stealX = x.steal
+    if (!stealIsFinite(stealX)) {
+        if (stealIsSNAN(stealX))
+            return nanOperandFound(x, ctx)
+        return x
     }
+    val qExp = stealQexp(stealX)
+    if (qExp >= 0)
+        return x
+    val sign = stealSignFlag(stealX)
     if (x.isZero())
         return Decimal.zero(sign)
+    val dw1 = x.dw1;
+    val dw0 = x.dw0
     val pow10 = -qExp
     val tmpPair = ctx.tmps.dwQuad1
     tmpPair.dw0 = 0L
     tmpPair.dw1 = 0L
-    val digitLen = x.digitLen
+    val digitLen = stealDigitLen(stealX)
     val residue: Residue = when {
         pow10 > digitLen -> LT_HALF
         pow10 == digitLen -> Residue.fromValuePow10(dw1, dw0, digitLen)

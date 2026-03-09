@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 
 class TestParseSimple1 {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun test() {
@@ -36,6 +36,10 @@ class TestParseSimple1 {
 
     @Test
     fun testTheUpperAtmosphere() {
+        test1("1.234567890123456789012345678901234", "1.234567890123456789012345678901234")
+
+        test1("1e6145", "Infinity")
+
         test1("1234567890123456789012345678901234", "1234567890123456789012345678901234")
         test1("1234567890123456789012345678901234.", "1234567890123456789012345678901234")
         test1("1234567890123456789012345678901234.0", "1234567890123456789012345678901234")

@@ -380,13 +380,29 @@ object D128ParsePrint {
         return dec
     }
 
-    fun toString(dec: Decimal): String {
-        return when {
-            dec.qExp == 0 -> toIntegerString(dec)
-            dec.qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString(dec)
-            dec.qExp < 0 && dec.eExp >= -6 -> toDecimalPointString(dec)
-            else -> toNormalizedScientificString(dec)
+    fun toString(x: Decimal): String {
+        val stealX = x.steal
+        if (stealIsFinite(stealX)) {
+            val qExp = stealQexp(stealX)
+            return when {
+                qExp == 0 -> toIntegerString(x)
+                qExp < 0 && stealEexp(stealX) >= -6 -> toDecimalPointString(x)
+                else -> toNormalizedScientificString(x)
+            }
         }
+        val signBit = stealSignBit(stealX)
+        if (stealIsINF(stealX))
+            return SPECIAL_VALUE_STRINGS[stealSignBit(stealX)]
+        val nanIndex = (if (stealIsQNAN(stealX)) 2 else 4) + signBit
+        val nanStr = SPECIAL_VALUE_STRINGS[nanIndex]
+        val digitLen = stealDigitLen(stealX)
+        if (digitLen == 0)
+            return nanStr
+        val utf8 = ByteArray(nanStr.length + digitLen)
+        for (i in nanStr.indices)
+            utf8[i] = nanStr[i].code.toByte()
+        IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, nanStr.length)
+        return String(utf8)
     }
 
     private fun toSpecialValueString(dec: Decimal): String {

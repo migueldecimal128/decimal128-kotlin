@@ -254,17 +254,20 @@ private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
  * @return −1, 0, or +1 describing the Java-style ordering between `x` and `y`.
  */
 internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
-    if (Decimal.neitherIsNaN(x, y)) {
-        val xSign = x.signMask // 0 or -1 (0xFFFF_FFFF)
-        if ((xSign xor y.signMask) != 0)
-            return (xSign shl 1) + 1 // return -1 or 1
-        val cmpMag = cmpNumericMagnitude(x, y)
-        return negateForSign(cmpMag, xSign)
-    }
-    return when {
-        x.qExp < NON_FINITE_QNAN -> -1
-        y.qExp < NON_FINITE_QNAN -> 1
-        else -> 0
+    val stealX = x.steal
+    val stealY = y.steal
+    when {
+        !stealHasNAN(stealX, stealY) -> {
+            val xSignMask = stealSignMask(stealX) // 0 or -1 (0xFFFF_FFFF)
+            if (xSignMask != stealSignMask(stealY))
+                return (xSignMask shl 1) + 1 // return -1 or 1
+            val cmpMag = cmpNumericMagnitude(x, y)
+            return negateForSign(cmpMag, xSignMask)
+        }
+
+        !stealIsNAN(stealX) -> return -1
+        !stealIsNAN(stealY) -> return 1
+        else -> return 0
     }
 }
 
@@ -299,15 +302,14 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
 internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
     return when (BinopSignature.of(x, y)) {
         ZER_ZER -> true
-        ZER_FNZ -> false
-        ZER_INF -> false
-
-        FNZ_ZER -> false
         FNZ_FNZ -> x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
-        FNZ_INF -> false
+        ZER_FNZ,
+        ZER_INF,
+        FNZ_ZER,
+        FNZ_INF,
 
-        INF_ZER -> false
-        INF_FNZ -> false
+        INF_ZER,
+        INF_FNZ,
         INF_INF -> x.sign == y.sign
         NAN_FOUND -> x.isNaN() && y.isNaN()
     }
