@@ -3,16 +3,16 @@
 package com.decimal128.decimal
 
 enum class BinopSignature {
-    ZER_ZER,
-    ZER_FNZ,
-    ZER_INF,
-
-    FNZ_ZER,
     FNZ_FNZ,
+    FNZ_ZER,
     FNZ_INF,
 
-    INF_ZER,
+    ZER_FNZ,
+    ZER_ZER,
+    ZER_INF,
+
     INF_FNZ,
+    INF_ZER,
     INF_INF,
 
     NAN_FOUND;
@@ -37,37 +37,14 @@ enum class BinopSignature {
         internal inline fun of(x: MutDec, y: MutDec): BinopSignature =
             signatures16[indexOf(x.qExp, x.bitLen, y.qExp, y.bitLen) and 0x0F]
 
-        private fun indexOf_x(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
-            // these flags are 0/1 Int
-            // each operand is identified by 2 bits
-            // bit 1 says whether or not the value isSpecial
-            // bit 0 says either zer/fnz or inf/nan
-
-            val xIsSpecial01 = (qX - MIN_SPECIAL_VALUE).inv() ushr 31
-            val yIsSpecial01 = (qY - MIN_SPECIAL_VALUE).inv() ushr 31
-            val xIsFinite01 = 1 - xIsSpecial01
-            val yIsFinite01 = 1 - yIsSpecial01
-            val xNonZero01 = -bitLenX ushr 31
-            val yNonZero01 = -bitLenY ushr 31
-            val xIsNan01 = (NON_FINITE_INF - qX) ushr 31
-            val yIsNan01 = (NON_FINITE_INF - qY) ushr 31
-
-            val xSignature =
-                (xIsSpecial01 shl 1) or (xIsFinite01 and xNonZero01) or (xIsSpecial01 and xIsNan01)
-            val ySignature =
-                (yIsSpecial01 shl 1) or (yIsFinite01 and yNonZero01) or (yIsSpecial01 and yIsNan01)
-
-            return (xSignature shl 2) + ySignature
-        }
-
         private fun indexOf(qX: Int, bitLenX: Int, qY: Int, bitLenY: Int): Int {
             val xCat = when {
-                qX < MIN_SPECIAL_VALUE -> if (bitLenX == 0) 0 else 1  // ZER or FNZ
+                qX < MIN_SPECIAL_VALUE -> if (bitLenX != 0) 0 else 1   // FNZ or ZER
                 qX == NON_FINITE_INF   -> 2                            // INF
                 else                   -> 3                            // NAN
             }
             val yCat = when {
-                qY < MIN_SPECIAL_VALUE -> if (bitLenY == 0) 0 else 1  // ZER or FNZ
+                qY < MIN_SPECIAL_VALUE -> if (bitLenY != 0) 0 else 1   // FNZ or ZER
                 qY == NON_FINITE_INF   -> 2                            // INF
                 else                   -> 3                            // NAN
             }

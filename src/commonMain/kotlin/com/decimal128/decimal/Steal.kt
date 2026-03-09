@@ -18,26 +18,29 @@ b0: isNonZero/isNaN
  */
 internal const val STEAL_SIGN = Int.MIN_VALUE
 internal const val STEAL_NONFINITE_BIT = 0x0000_0002
-internal const val STEAL_NONZERO_BIT   = 0x0000_0001
+internal const val STEAL_IS_ZERO_BIT   = 0x0000_0001
 
 internal const val STEAL_TYPE_MASK     = 0x0000_0003
 
-internal const val STEAL_TYPE_ZER      = 0x0000_0000
-internal const val STEAL_TYPE_FNZ      = STEAL_NONZERO_BIT
+internal const val STEAL_TYPE_FNZ      = 0x0000_0000
+internal const val STEAL_TYPE_ZER      = STEAL_IS_ZERO_BIT
 internal const val STEAL_TYPE_INF      = STEAL_NONFINITE_BIT
-internal const val STEAL_TYPE_NAN      = STEAL_NONFINITE_BIT or STEAL_NONZERO_BIT
+internal const val STEAL_TYPE_NAN      = STEAL_NONFINITE_BIT or STEAL_IS_ZERO_BIT
 
-internal /*inline*/ fun stealIsZER(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_ZER
 internal /*inline*/ fun stealIsFNZ(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_FNZ
+internal /*inline*/ fun stealIsZER(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_ZER
 internal /*inline*/ fun stealIsINF(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_INF
 internal /*inline*/ fun stealIsNAN(steal: Int): Boolean = (steal and STEAL_TYPE_MASK) == STEAL_TYPE_NAN
 
+internal /*inline*/ fun stealBothFNZ(stealX: Int, stealY: Int) =
+    // below only works because FNZ == 0  //stealIsFNZ(stealX) and stealIsFNZ(stealY)
+    stealIsFNZ(stealX or stealY)
+
 internal /*inline*/ fun stealBothZER(stealX: Int, stealY: Int) =
     stealIsZER(stealX) and stealIsZER(stealY)
-internal /*inline*/ fun stealBothFNZ(stealX: Int, stealY: Int) =
-    stealIsFNZ(stealX) and stealIsFNZ(stealY)
 internal /*inline*/ fun stealBothFinite(stealX: Int, stealY: Int) =
-    stealIsFinite(stealX) and stealIsFinite(stealY)
+    // below only works because it is a NON-FINITE bit // stealIsFinite(stealX) and stealIsFinite(stealY)
+    stealIsFinite(stealX or stealY)
 internal /*inline*/ fun stealBothINF(stealX: Int, stealY: Int) =
     stealIsINF(stealX) and stealIsINF(stealY)
 internal /*inline*/ fun stealBothNAN(stealX: Int, stealY: Int) =
@@ -57,7 +60,6 @@ internal /*inline*/ fun stealSignFlag(steal: Int): Boolean = steal < 0
 internal /*inline*/ fun stealSignBit(steal: Int): Int = steal ushr 31
 internal /*inline*/ fun stealSignMask(steal: Int): Int = steal shr 31
 
-internal const val STEAL_QNAN_BIT      = 0x0002_0000
 internal const val STEAL_NAN_MASK      = 0x0002_0003
 internal const val STEAL_NAN_SNAN      = 0x0000_0003
 internal const val STEAL_NAN_QNAN      = 0x0002_0003
