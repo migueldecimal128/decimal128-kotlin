@@ -9,7 +9,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 
 class TestDecNoncomputational {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAbs() = runUnaryDecimalOp(
@@ -34,6 +34,7 @@ class TestDecNoncomputational {
         Decimal::abs,
         verbose = verbose,
         cases = arrayOf(
+            "dqabs521 abs '-Inf'   -> 'Infinity'",
             "dqabs121 abs   2682682682682682682682682682682682    ->  2682682682682682682682682682682682",
             "dqabs038 abs '+0.000000000001' -> '1E-12'",
         )

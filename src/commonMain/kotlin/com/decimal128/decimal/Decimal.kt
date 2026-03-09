@@ -53,6 +53,7 @@ class Decimal private constructor(
             val sealQ = (seal shl 1) shr 17
             if (stealQ != sealQ) {
                 println("kilroy was here!")
+                check(stealQ == sealQ)
             }
             //return sealQ
             return stealQ
@@ -574,11 +575,15 @@ class Decimal private constructor(
     fun abs() = if (steal < 0) negate() else this
 
     fun negate(): Decimal {
-        return when {
-            qExp != NON_FINITE_INF -> Decimal(steal xor BIT31, seal xor BIT31, dw1, dw0)
-            sign -> POS_INFINITY
-            else -> NEG_INFINITY
+        val steal = steal
+        val newSign = !stealSignFlag(steal)
+        when {
+            stealIsZER(steal) -> if (stealQexp(steal) == 0) return zero(newSign)
+            stealIsINF(steal) -> return infinity(newSign)
+            stealIsNAN(steal) && stealBitLen(steal) == 0 ->
+                    return NaN(newSign, signaling = stealIsSNAN(steal))
         }
+        return Decimal(steal xor BIT31, seal xor BIT31, dw1, dw0)
     }
 
     fun copySign(signDonor: Decimal): Decimal =

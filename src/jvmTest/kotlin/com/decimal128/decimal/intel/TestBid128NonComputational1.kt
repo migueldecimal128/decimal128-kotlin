@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestBid128NonComputational1 {
 
-    val verbose = false
+    val verbose = true
 
     /*****************************************************************************
      *
@@ -186,6 +186,15 @@ class TestBid128NonComputational1 {
     fun testCopySign() = IntelRunner1.runBinaryDecimalMethodOp(
         "/intel/readtest.in",
         "bid128_copySign",
+        Decimal::copySign,
+        verbose = verbose
+    )
+
+    @Test
+    fun testCopySignCases() = IntelRunner1.runBinaryDecimalMethodOp(
+        arrayOf(
+            "bid128_copySign 0 SNaN -Infinity [fe000000000000000000000000000000] 00",
+        ),
         Decimal::copySign,
         verbose = verbose
     )
