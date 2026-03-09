@@ -279,7 +279,7 @@ internal fun calcDigitLen128(dw1: Long, dw0: Long): Int {
     return calcDigitLen128(bitLen, dw1, dw0)
 }
 
-internal fun calcPackedLengths128(dw1: Long, dw0: Long): Int {
+internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
     val nlz1 = dw1.countLeadingZeroBits()
     val nlz0 = dw0.countLeadingZeroBits()
@@ -295,7 +295,7 @@ internal fun calcPackedLengths128(dw1: Long, dw0: Long): Int {
     val digitLen = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
 
-    return (digitLen shl 9) or bitLen
+    return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
 }
 
 internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {

@@ -9,17 +9,18 @@ STEAL == Sign Type Exponent And Lengths
 
 /*
 b31: sign
-b30: isNonFinite
-b29: isNonZero/isNaN
-b28-b15: qExp (signed)
-b14-b10: digitLenCorrection
-b9:b0: bitLen
+b30-b17: qExp (signed)
+b16-b11: digitLen
+b10-b2: bitLen
+b1-b0: type
+b1: isNonFinite
+b0: isNonZero/isNaN
  */
 internal const val STEAL_SIGN = Int.MIN_VALUE
-internal const val STEAL_NONFINITE_BIT = 0x4000_0000
-internal const val STEAL_NONZERO_BIT   = 0x2000_0000
+internal const val STEAL_NONFINITE_BIT = 0x0000_0002
+internal const val STEAL_NONZERO_BIT   = 0x0000_0001
 
-internal const val STEAL_TYPE_MASK     = 0x6000_0000
+internal const val STEAL_TYPE_MASK     = 0x0000_0003
 
 internal const val STEAL_TYPE_ZER      = 0x0000_0000
 internal const val STEAL_TYPE_FNZ      = STEAL_NONZERO_BIT
@@ -47,7 +48,7 @@ internal /*inline*/ fun stealHasINF(stealX: Int, stealY: Int) =
 internal /*inline*/ fun stealHasNAN(stealX: Int, stealY: Int) =
     stealIsNAN(stealX) or stealIsNAN(stealY)
 
-internal /*inline*/ fun stealType(steal: Int): Int = (steal shr 29) and 0x03
+internal /*inline*/ fun stealType(steal: Int): Int = steal and 0x03
 
 internal /*inline*/ fun stealIsFinite(steal: Int): Boolean  = (steal and STEAL_NONFINITE_BIT) == 0
 internal /*inline*/ fun stealNotFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) != 0
@@ -56,46 +57,52 @@ internal /*inline*/ fun stealSignFlag(steal: Int): Boolean = steal < 0
 internal /*inline*/ fun stealSignBit(steal: Int): Int = steal ushr 31
 internal /*inline*/ fun stealSignMask(steal: Int): Int = steal shr 31
 
-internal const val STEAL_QNAN_BIT      = 0x1000_0000
-internal const val STEAL_NAN_MASK      = 0x7000_0000
-internal const val STEAL_NAN_SNAN      = 0x6000_0000
-internal const val STEAL_NAN_QNAN      = 0x7000_0000
+internal const val STEAL_QNAN_BIT      = 0x0002_0000
+internal const val STEAL_NAN_MASK      = 0x0002_0003
+internal const val STEAL_NAN_SNAN      = 0x0000_0003
+internal const val STEAL_NAN_QNAN      = 0x0002_0003
 
 internal /*inline*/ fun stealIsQNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_QNAN
 internal /*inline*/ fun stealIsSNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_SNAN
 
 
+internal const val STEAL_BITLEN_SHIFT = 2
 internal const val STEAL_BITLEN_MASK = 0x1FF
-internal /*inline*/ fun stealBitLen(steal: Int) = steal and STEAL_BITLEN_MASK
+internal const val STEAL_BITLEN_UNSHIFTED_MASK = 0x1FF shl STEAL_BITLEN_SHIFT
+internal /*inline*/ fun stealBitLen(steal: Int) = (steal ushr STEAL_BITLEN_SHIFT) and STEAL_BITLEN_MASK
 
-internal const val STEAL_DIGITLEN_SHIFT = 9
+internal const val STEAL_DIGITLEN_SHIFT = 11
 internal const val STEAL_DIGITLEN_MASK = 0x3F
 internal /*inline*/ fun stealDigitLen(steal: Int) =
     (steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK
 
-internal const val STEAL_QEXP_SHL = 3
-internal const val STEAL_QEXP_SHR = 18
-internal const val STEAL_QEXP_MASK = 0x3FFF
+internal const val STEAL_QEXP_DECODE_SHL = 1
+internal const val STEAL_QEXP_DECODE_SHR = 18
+internal const val STEAL_QEXP_ENCODE_SHL = 17
+internal const val STEAL_QEXP_ENCODE_MASK = 0x3FFF
 internal /*inline*/ fun stealQexp(steal: Int) =
-    (steal shl STEAL_QEXP_SHL) shr STEAL_QEXP_SHR
+    (steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR
 
 internal /*inline*/ fun stealEexp(steal: Int): Int {
     // eExp = qExp + (digitLen - (-digitLen ushr 31))
     // eExp = qExp + (digitLen - (-bitLen ushr 31))
-    return ((steal shl STEAL_QEXP_SHL) shr STEAL_QEXP_SHR) +
+    return ((steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR) +
             ((steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK) -
-            (-(steal and STEAL_BITLEN_MASK) ushr 31)
+            (-(steal and STEAL_BITLEN_UNSHIFTED_MASK) ushr 31)
 }
 
 
 
 internal /*inline*/ fun stealEncodeZER(signBit: Int, qExp: Int) =
-    (signBit shl 31) or ((qExp shl STEAL_QEXP_SHR) ushr STEAL_QEXP_SHL)
+    (signBit shl 31) or
+            ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
+            STEAL_TYPE_ZER
 
 internal /*inline*/ fun stealEncodeFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long) =
-    (signBit shl 31) or STEAL_TYPE_FNZ or
-            ((qExp shl STEAL_QEXP_SHR) ushr STEAL_QEXP_SHL) or
-            calcPackedLengths128(dw1, dw0)
+    (signBit shl 31) or
+            ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
+            calcStealPackedLengths128(dw1, dw0) or
+            STEAL_TYPE_FNZ
 
 internal /*inline*/ fun stealEncodeINF(signBit: Int) =
     (signBit shl 31) or STEAL_TYPE_INF
@@ -104,10 +111,10 @@ internal /*inline*/ fun stealEncodeINF(signBit: Int) =
 //  ... e.g. link INF + coeff ... at this point I think not
 
 internal /*inline*/ fun stealEncodeSNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
-    (signBit shl 31) or STEAL_NAN_SNAN or calcPackedLengths128(payloadDw1, payloadDw0)
+    (signBit shl 31) or calcStealPackedLengths128(payloadDw1, payloadDw0) or STEAL_NAN_SNAN
 
 internal /*inline*/ fun stealEncodeQNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
-    (signBit shl 31) or STEAL_NAN_QNAN or calcPackedLengths128(payloadDw1, payloadDw0)
+    (signBit shl 31) or calcStealPackedLengths128(payloadDw1, payloadDw0) or STEAL_NAN_QNAN
 
 internal fun stealRaw(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Int {
     val signBit = if (sign) 1 else 0
