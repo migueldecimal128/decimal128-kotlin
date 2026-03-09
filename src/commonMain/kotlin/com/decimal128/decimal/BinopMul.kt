@@ -8,7 +8,7 @@ internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
 internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         mulFnzFnz(x, y, ctx)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> mulZero(x, y, ctx)
         ZER_FNZ -> mulZero(x, y, ctx)
         ZER_INF -> mulInfZero(x, y, ctx)

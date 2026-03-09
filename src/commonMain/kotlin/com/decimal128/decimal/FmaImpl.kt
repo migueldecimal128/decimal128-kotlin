@@ -21,7 +21,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
         return fmaFnzFnzFinite(x, y, a, ctx)
     if (a.isNaN())
         return fmaNanAddend(x, y, a, ctx)
-    return when (BinopSignature.of(x, y)) {
+    return when (binopSignatureOf(x, y)) {
         ZER_ZER -> fmaZeroProd(x, y, a, ctx)
         ZER_FNZ -> fmaZeroProd(x, y, a, ctx)
         ZER_INF -> ctx.signalInvalid(Decimal.NaN)

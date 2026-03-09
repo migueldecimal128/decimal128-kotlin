@@ -131,7 +131,7 @@ fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
     val cmp =
         if (bothFnz(x, y))
             cmpTotalOrderMagFnzFnz(x, y)
-        else when (BinopSignature.of(x, y)) {
+        else when (binopSignatureOf(x, y)) {
             ZER_ZER -> cmp32(x.qExp, y.qExp)
             ZER_FNZ -> -1
             ZER_INF -> -1
@@ -302,7 +302,7 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
  *         `false` otherwise.
  */
 internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
-    return when (BinopSignature.of(x, y)) {
+    return when (binopSignatureOf(x, y)) {
         ZER_ZER -> true
         FNZ_FNZ -> x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
         ZER_FNZ,
@@ -349,7 +349,7 @@ private fun cmpNumericMagnitude(x: Decimal, y: Decimal): Int {
     val cmpMag =
         if (bothFnz(x, y))
             cmpMagFnzFnz(x, y)
-        else when (BinopSignature.of(x, y)) {
+        else when (binopSignatureOf(x, y)) {
             ZER_ZER -> 0
             ZER_FNZ -> -1
             ZER_INF -> -1
@@ -508,7 +508,7 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val cmpMag =
         if (bothFnz(x, y)) {
             cmpMagnitudeFnzFnz(x, y)
-        } else when (BinopSignature.of(x, y)) {
+        } else when (binopSignatureOf(x, y)) {
             ZER_ZER -> throw IllegalStateException()
             ZER_FNZ -> -1
             ZER_INF -> -1
@@ -578,7 +578,7 @@ internal fun cmpMagnitudeImpl(x: Decimal, y: Decimal): Decimal =
 fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val cmp = if (bothFnz(x, y)) {
         cmpMagnitudeFnzFnz(x, y)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> 0
         ZER_FNZ -> -1
         ZER_INF -> -1
@@ -606,7 +606,7 @@ internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
 fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     return if (bothFnz(x, y)) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> x.qExp.compareTo(y.qExp)
         ZER_FNZ -> -1
         ZER_INF -> -1

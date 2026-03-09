@@ -10,7 +10,7 @@ internal fun d128DivImpl(x: Decimal, y: Decimal): Decimal =
 internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         divFnzFnz(x, y, ctx)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> divZeroZero(x, y, ctx)
         ZER_FNZ -> zero(x.sign xor y.sign, x.qExp - y.qExp, ctx)
         ZER_INF,
@@ -58,7 +58,7 @@ internal fun divIntImpl(x: Decimal, y: Decimal): Decimal =
 internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         divIntFnzFnz(x, y, ctx)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> divZeroZero(x, y, ctx)
         ZER_FNZ,
         ZER_INF,
@@ -98,7 +98,7 @@ internal fun remNearImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
 internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (bothFnz(x, y)) {
         remFnzFnz(isTrunc, x, y, ctx)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_FNZ -> zero(x.sign, min(x.qExp, y.qExp), ctx)
         FNZ_INF,
         ZER_INF -> x

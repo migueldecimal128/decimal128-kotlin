@@ -12,7 +12,7 @@ internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val ySign = y.sign
     return if (bothFnz(x, y)) {
         addFnzFnz(x, ySign, y, ctx)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> addZeroZero(x, ySign, y, ctx)
         ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
         ZER_INF, FNZ_INF -> y
@@ -36,7 +36,7 @@ internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val ySignNegated = ! y.sign
     return if (bothFnz(x, y)) {
         addFnzFnz(x, ySignNegated, y, ctx)
-    } else when (BinopSignature.of(x, y)) {
+    } else when (binopSignatureOf(x, y)) {
         ZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
         ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
         ZER_INF, FNZ_INF -> y.negate()
