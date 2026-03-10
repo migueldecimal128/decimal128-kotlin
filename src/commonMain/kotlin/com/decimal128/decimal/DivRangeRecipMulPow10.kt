@@ -255,7 +255,7 @@ private fun releaseTemporaryStorage() {
 }
 
 private var initialized = false
-fun initialize() {
+private fun initialize() {
     if (!initialized) {
         calcPowTables()
         populateTable()
@@ -266,7 +266,7 @@ fun initialize() {
     }
 }
 
-fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int): Residue {
+internal fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int): Residue {
     verify { pow10 >= K_MIN }
     initialize()
     return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
