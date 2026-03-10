@@ -3,6 +3,7 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.d128AddImpl
+import com.decimal128.decimal.d128AddSubImpl
 import com.decimal128.decimal.d128DivImpl
 import com.decimal128.decimal.d128MulImpl
 import com.decimal128.decimal.remNearImpl

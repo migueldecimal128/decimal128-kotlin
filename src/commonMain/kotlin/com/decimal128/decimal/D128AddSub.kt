@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Residue.Companion.EXACT
@@ -5,60 +8,47 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal fun d128AddImpl(x: Decimal, y: Decimal): Decimal =
-    d128AddImpl(x, y, DecContext.current())
+    d128AddSubImpl(x, y.steal, y, DecContext.current())
 
-internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val xSteal = x.steal; val ySteal = y.steal
-    val ySign = stealSignFlag(ySteal)
+internal fun d128SubImpl(x: Decimal, y: Decimal): Decimal =
+    d128AddSubImpl(x, y.steal xor Int.MIN_VALUE, y, DecContext.current())
+
+internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+    d128AddSubImpl(x, y.steal, y, ctx)
+
+internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+    d128AddSubImpl(x, y.steal xor Int.MIN_VALUE, y, ctx)
+
+internal fun d128AddSubImpl(x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
+    val xSteal = x.steal
     val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
-        addFnzFnz(x, ySign, y, ctx)
+        addFnzFnz(xSteal, x, ySteal, y, ctx)
     } else when (signature) {
-        ZER_ZER -> addZeroZero(x, ySign, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp(), ctx)
-        ZER_INF, FNZ_INF -> y
+        ZER_ZER -> addZeroZero(xSteal, x, ySteal, y, ctx)
+        ZER_FNZ -> scaleToMinExp(ySteal, y, stealQexp(xSteal), ctx)
+        ZER_INF, FNZ_INF -> Decimal.infinity(stealSignFlag(ySteal))
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp(), ctx)
+        FNZ_ZER -> scaleToMinExp(xSteal, x, stealQexp(ySteal), ctx)
         //FNZ_INF -> y
 
         INF_ZER, INF_FNZ -> x
         //INF_FNZ -> x
-        INF_INF -> addInfInf(x, ySign, y, ctx)
+        INF_INF -> addInfInf(xSteal, x, ySteal, y, ctx)
 
         else -> nanOperandFound(x, y, ctx)
     }
 }
 
-internal fun d128SubImpl(x: Decimal, y: Decimal): Decimal =
-    d128SubImpl(x, y, DecContext.current())
-
-internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val signature = binopSignatureOf(x.steal, y.steal)
-    val ySignNegated = ! y.sign
-    return if (signature == FNZ_FNZ) {
-        addFnzFnz(x, ySignNegated, y, ctx)
-    } else when (signature) {
-        ZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp(), ctx)
-        ZER_INF, FNZ_INF -> y.negate()
-
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp(), ctx)
-
-        INF_ZER, INF_FNZ -> x
-        INF_INF -> addInfInf(x, ySignNegated, y, ctx)
-
-        else -> nanOperandFound(x, y, ctx)
-    }
-}
-
-private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
+private fun addZeroZero(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
     // Both operands are zero. This is where the special rules apply.
     // IEEE754-2019 6.3 The sign bit
     // However, under all rounding-direction attributes,
     // when x is zero, x + x and x − (−x) have the sign of x.
-    val xSign = x.sign
-    val xQ = x.qExp()
-    val yQ = y.qExp()
+    val xSign = stealSignFlag(xSteal)
+    val ySign = stealSignFlag(ySteal)
+    val xQ = stealQexp(xSteal)
+    val yQ = stealQexp(ySteal)
     if (xSign == ySign) {
         // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
         return if (xQ <= yQ) x else y // return min qExp
@@ -79,20 +69,21 @@ private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext)
     return Decimal.zero(isRoundTowardNegative, qMin, ctx)
 }
 
-private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal =
-    if (x.sign == ySign)
+private fun addInfInf(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal =
+    if (xSteal == ySteal)
         x
     else
         ctx.signalInvalid(Decimal.NaN)
 
-private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext) =
-    if (x.qExp() == y.qExp())
-        addFnzFnzUnscaled(x, ySign, y, ctx)
+private inline fun addFnzFnz(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext) =
+    if (stealQexp(xSteal) == stealQexp(ySteal))
+        addFnzFnzUnscaled(xSteal, x, ySteal, y, ctx)
     else
-        addFnzFnzScaled(x, ySign, y, ctx)
+        addFnzFnzScaled(xSteal, x, ySteal, y, ctx)
 
-private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
-    val xSign = x.sign
+private inline fun addFnzFnzUnscaled(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
+    val xSign = stealSignFlag(xSteal)
+    val ySign = stealSignFlag(ySteal)
     if (xSign == ySign)
         return addUnscaledMagnitudes(ySign, x, y, ctx)
     val cmp = c128UnscaledCompare(x, y)
@@ -103,7 +94,7 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCo
     }
 }
 
-private fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+private inline fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     verify { max(x.bitLen(), y.bitLen()) + 1 <= 128 }
     val x0 = x.dw0
     val y0 = y.dw0
@@ -115,9 +106,9 @@ private fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: De
     return decFinalizeFinite(sign, s1, s0, x.qExp(), ctx)
 }
 
-private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
-    val xSteal = x.steal
+private inline fun addFnzFnzScaled(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
     val xSign = stealSignFlag(xSteal)
+    val ySign = stealSignFlag(ySteal)
     if (xSign == ySign)
         return addFnzScaledMagnitudes(ySign, x, y, ctx)
     // signs differ ... subtract scaled magnitudes
@@ -125,7 +116,7 @@ private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCont
     return when {
         cmpMag > 0 -> subFnzScaledMagnitude(xSign, x, y, ctx)
         cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
-        else -> Decimal.zero(false, min(stealQexp(xSteal), y.qExp()), ctx)
+        else -> Decimal.zero(false, min(stealQexp(xSteal), stealQexp(ySteal)), ctx)
     }
 }
 

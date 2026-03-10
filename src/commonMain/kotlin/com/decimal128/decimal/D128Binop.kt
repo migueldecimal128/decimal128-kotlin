@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import kotlin.math.max
@@ -38,16 +41,15 @@ internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
     return ctx.signalInvalid(quietedNaN)
 }
 
-internal fun scaleToMinExp(xSign: Boolean, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {
-    val xSteal = x.steal
+internal fun scaleToMinExp(xSteal: Int, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {
     val xQ = stealQexp(xSteal)
     if (xQ <= otherExp)
-        return if (x.sign == xSign) x else x.negate()
-    val delta = x.qExp() - otherExp
+        return if (x.steal == xSteal) x else x.negate()
+    val delta = xQ - otherExp
     verify { delta > 0 }
     val headroom = ctx.precision - stealDigitLen(xSteal)
     if (headroom == 0)
-        return if (x.sign == xSign) x else x.negate()
+        return if (x.steal == xSteal) x else x.negate()
     val shiftLeft = min(headroom, delta)
-    return d128ScaleCoeffUpPow10(xSign, x, shiftLeft)
+    return d128ScaleCoeffUpPow10(stealSignFlag(xSteal), x, shiftLeft)
 }

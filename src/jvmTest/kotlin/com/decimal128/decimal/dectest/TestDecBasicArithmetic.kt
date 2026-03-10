@@ -1,6 +1,7 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.d128AddImpl
+import com.decimal128.decimal.d128AddSubImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import org.junit.jupiter.api.Test
 import com.decimal128.decimal.d128DivImpl
@@ -56,6 +57,7 @@ class TestDecBasicArithmetic {
         ::d128SubImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqsub787 subtract -1000  Inf   -> -Infinity",
             "dqsub063 subtract '70000'    '10000e+34' -> '-9.999999999999999999999999999999993E+37' Rounded",
             "dqsub472 subtract '0.4444444444444444444444444444444444'  '-0.5555555555555555555555555555555561' -> '1.000000000000000000000000000000000' Inexact Rounded",
             "dqsub470 subtract '0.4444444444444444444444444444444444'  '-0.5555555555555555555555555555555563' -> '1.000000000000000000000000000000001' Inexact Rounded",

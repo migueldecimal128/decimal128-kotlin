@@ -868,12 +868,12 @@ class Decimal private constructor(
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
 
     context(decContext: DecContext)
-    operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other, decContext)
+    operator fun plus(other: Decimal): Decimal = d128AddSubImpl(this, other.steal, other, decContext)
 
     operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other)
 
     context(decContext: DecContext)
-    operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other, decContext)
+    operator fun minus(other: Decimal): Decimal = d128AddSubImpl(this, other.steal xor Int.MIN_VALUE, other, decContext)
 
     operator fun times(other: Decimal): Decimal = d128MulImpl(this, other)
 
