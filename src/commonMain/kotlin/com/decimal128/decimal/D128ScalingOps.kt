@@ -17,18 +17,20 @@ internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int
 }
 
 internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal {
-    val qX = x.qExp()
+    val xSteal = x.steal
+    val xQ = stealQexp(xSteal)
     val qDesired = -decimalScale
-    val digitLen = x.digitLen
+    val xDigitLen = stealDigitLen(xSteal)
+    // FIXME ... still checking qExp for special values!
     when {
-        qX < NON_FINITE_INF && x.digitLen > 0 -> {
-            val qDelta = qX - qDesired
+        xQ < NON_FINITE_INF && xDigitLen > 0 -> {
+            val qDelta = xQ - qDesired
             when {
                 qDelta > 0 -> { // add fractional zeros
-                    val headroom = min(ctx.precision - digitLen, qX - ctx.qTiny)
+                    val headroom = min(ctx.precision - xDigitLen, xQ - ctx.qTiny)
                     if (qDelta <= headroom) {
                         val (dw1, dw0) = umul128xPow10to128(x.dw1, x.dw0, qDelta)
-                        return Decimal(x.sign, qX - qDelta, dw1, dw0)
+                        return Decimal(x.sign, xQ - qDelta, dw1, dw0)
                     }
                     return ctx.signalInvalid(Decimal.NaN)
                 }
@@ -42,8 +44,8 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
                 else -> return x
             }
         }
-        qX < NON_FINITE_INF -> return Decimal.zero(x.sign, -decimalScale, ctx)
-        qX == NON_FINITE_INF -> return x
+        xQ < NON_FINITE_INF -> return Decimal.zero(x.sign, -decimalScale, ctx)
+        xQ == NON_FINITE_INF -> return x
         else -> return nanOperandFound(x, ctx)
     }
 }

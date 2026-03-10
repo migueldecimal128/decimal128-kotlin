@@ -48,7 +48,7 @@ value class Residue internal constructor(val value:Int) {
         }
 
         fun fromValueDecade(x: Decimal): Residue {
-            val digitLen = x.digitLen
+            val digitLen = stealDigitLen(x.steal)
             if (digitLen == 0)
                 return EXACT
             val x0 = x.dw0

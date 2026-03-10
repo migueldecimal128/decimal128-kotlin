@@ -94,14 +94,16 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {
-    val headroom = ctx.precision - x.digitLen
-    val qDelta = min(x.qExp() - qNew, headroom)
+    val xSteal = x.steal
+    val xQ = stealQexp(xSteal)
+    val headroom = ctx.precision - stealDigitLen(xSteal)
+    val qDelta = min(xQ - qNew, headroom)
     if (qDelta <= 0)
         return x
     val t = ctx.tmps.mdecBridge1.set(x)
     val r = ctx.tmps.mdecResult
     c256SetScaleUpPow10(r, t, qDelta, ctx.tmps.dwQuad1)
-    r.qExp = x.qExp() - qDelta
+    r.qExp = xQ - qDelta
     r.sign = x.sign
     return Decimal.from(r.finalize(ctx))
 }

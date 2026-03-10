@@ -39,13 +39,15 @@ internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
 }
 
 internal fun scaleToMinExp(xSign: Boolean, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {
-    if (x.qExp() <= otherExp)
+    val xSteal = x.steal
+    val xQ = stealQexp(xSteal)
+    if (xQ <= otherExp)
         return if (x.sign == xSign) x else x.negate()
     val delta = x.qExp() - otherExp
     verify { delta > 0 }
-    val headroom = ctx.precision - x.digitLen
+    val headroom = ctx.precision - stealDigitLen(xSteal)
     if (headroom == 0)
-        return if (xSign == x.sign) x else x.negate()
+        return if (x.sign == xSign) x else x.negate()
     val shiftLeft = min(headroom, delta)
     return d128ScaleCoeffUpPow10(xSign, x, shiftLeft)
 }

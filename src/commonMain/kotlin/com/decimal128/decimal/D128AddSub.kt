@@ -132,9 +132,14 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
     val flip = x.qExp() > y.qExp()
     val m = if (flip) x else y
     val n = if (flip) y else x
-    val qDelta = m.qExp() - n.qExp()
+    val mSteal = m.steal
+    val nSteal = n.steal
+    val mQ = stealQexp(mSteal)
+    val nQ = stealQexp(nSteal)
+    val qDelta = mQ - nQ
     verify { qDelta >= 0 }
-    val headroom = ctx.precision - m.digitLen
+    val mDigitLen = stealDigitLen(mSteal)
+    val headroom = ctx.precision - mDigitLen
     val n1 = n.dw1; val n0 = n.dw0
     var dw1Sum = m.dw1
     var dw0Sum = m.dw0
@@ -144,9 +149,10 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
         dw1Sum = dw1T
         dw0Sum = dw0T
     }
-    val qAlign = m.qExp() - shiftLeft
-    val shiftRight = qAlign - n.qExp()
+    val qAlign = mQ - shiftLeft
+    val shiftRight = qAlign - nQ
     val residue: Residue
+    val nDigitLen = stealDigitLen(nSteal)
     when {
         shiftRight == 0 -> {
             verify { shiftLeft > 0 }
@@ -154,11 +160,11 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
             dw1Sum += n1 + if (unsignedLT(dw0Sum, n0)) 1L else 0L
             residue = Residue.EXACT
         }
-        shiftRight >= n.digitLen -> { // fully swamped
-            if (shiftRight > n.digitLen)
+        shiftRight >= nDigitLen -> { // fully swamped
+            if (shiftRight > nDigitLen)
                 residue = Residue.LT_HALF
             else
-                residue = Residue.fromValuePow10(n1, n0, n.digitLen)
+                residue = Residue.fromValuePow10(n1, n0, nDigitLen)
         }
         else -> {
             val tmpPair = ctx.tmps.dwQuad1

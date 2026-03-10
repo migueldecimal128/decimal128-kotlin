@@ -472,13 +472,14 @@ class MutDec() : C256() {
     }
 
     fun set(x: Decimal): MutDec {
+        val xSteal = x.steal
         this.dw1 = x.dw1
         this.dw0 = x.dw0
-        this.type = x.steal and (if (x.isNaN()) STEAL_NAN_MASK else STEAL_TYPE_MASK)
-        this.bitLen = x.bitLen
-        this.digitLen = x.digitLen
-        this.qExp = x.qExp()
-        this.sign = x.sign
+        this.type = xSteal and (if (x.isNaN()) STEAL_NAN_MASK else STEAL_TYPE_MASK)
+        this.bitLen = stealBitLen(xSteal)
+        this.digitLen = stealDigitLen(xSteal)
+        this.qExp = stealQexp(xSteal)
+        this.sign = stealSignFlag(xSteal)
         verify { validate() }
         return this
     }

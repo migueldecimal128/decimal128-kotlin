@@ -32,8 +32,7 @@ class Decimal private constructor(
     internal val bitLen: Int
         get() = stealBitLen(steal) // problems with non-Canonical ... as expected
 
-    internal val digitLen: Int
-        get() = stealDigitLen(steal)
+    internal inline fun digitLen(): Int = stealDigitLen(steal)
 
     internal val sign: Boolean
         get() = steal < 0
@@ -305,9 +304,9 @@ class Decimal private constructor(
 
     }
 
-    fun precision(): Int = if (isFinite()) digitLen else Int.MIN_VALUE
-    fun qExponent(): Int = if (isFinite()) qExp() else Int.MIN_VALUE
-    fun eExponent(): Int = if (isFinite()) eExp() else Int.MIN_VALUE
+    fun precision(): Int = if (isFinite()) stealDigitLen(steal) else Int.MIN_VALUE
+    fun qExponent(): Int = if (isFinite()) stealQexp(steal) else Int.MIN_VALUE
+    fun eExponent(): Int = if (isFinite()) stealEexp(steal) else Int.MIN_VALUE
 
     // IEEE754-2019 5.7.2
 
@@ -538,9 +537,10 @@ class Decimal private constructor(
         if (this.sign == signDonor.sign) this else this.negate()
 
     internal fun validate(): Boolean {
+        val bitLen = stealBitLen(steal)
         if (bitLen != calcBitLen128(dw1, dw0))
             return false
-        if (digitLen != calcDigitLen128(bitLen, dw1, dw0))
+        if (stealDigitLen(steal) != calcDigitLen128(bitLen, dw1, dw0))
             return false;
         return true
     }
