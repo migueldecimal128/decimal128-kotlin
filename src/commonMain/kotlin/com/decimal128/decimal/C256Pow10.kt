@@ -12,14 +12,13 @@ private const val BASE_POW10_256 = BASE_POW10_192 + POW10_192_COUNT * 3
 // POW10_DWORD_COUNT = 215
 private const val POW10_DWORD_COUNT = (BASE_POW10_256 + POW10_256_COUNT * 4)
 
-internal const val BARRETT_POW10_MU_OFFSET = POW10_DWORD_COUNT
-internal const val BARRETT_POW10_MAXX = 10
-
-internal const val POW5_64_OFFSET = BARRETT_POW10_MU_OFFSET + BARRETT_POW10_MAXX
+internal const val POW5_64_OFFSET = POW10_DWORD_COUNT
 internal const val POW5_64_MAXX = 28
 
 internal const val BARRETT_POW5_MU_OFFSET = POW5_64_OFFSET + POW5_64_MAXX
 internal const val BARRETT_POW5_MAXX = 14
+
+internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MAXX // implemented via shift and pow5
 
 internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_MAXX
 internal const val MAGIC_POW10_MAXX = 20
@@ -175,22 +174,18 @@ private fun initTables() {
         POW10[POW5_64_OFFSET + i] = POW10[POW5_64_OFFSET + i - 1] * 5L
 
     // initialize Barrett division
-    val hiTwoPow64 = BigInt.ONE.shl(64)
-    hiPow10 = BigInt.ONE
+    val biTwoPow64 = BigInt.ONE.shl(64)
+    var biPow5 = BigInt.ONE
 
     // mu for 10**0 == 0 ... used for checking div by 1 case
     for (i in 1..<BARRETT_POW10_MAXX) {
-        hiPow10 *= 10
-        val mu10 = hiTwoPow64 / hiPow10
-        POW10[BARRETT_POW10_MU_OFFSET + i] = mu10.toLong()
-
-        val pow5 = hiPow10 ushr i
-        val mu5 = hiTwoPow64 / pow5
+        biPow5 *= 5
+        val mu5 = biTwoPow64 / biPow5
         POW10[BARRETT_POW5_MU_OFFSET + i] = mu5.toLong()
     }
     for (i in 1..<BARRETT_POW5_MAXX) {
         val t = BigInt.fromUnsigned(POW10[POW5_64_OFFSET + i])
-        val mu = hiTwoPow64 / t
+        val mu = biTwoPow64 / t
         POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toLong()
     }
     // initialization of Magic multipliers M is in DivMagic

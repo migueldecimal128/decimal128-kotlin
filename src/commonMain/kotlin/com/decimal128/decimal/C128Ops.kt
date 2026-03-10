@@ -45,38 +45,42 @@ fun c128ScaleDownPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residu
 }
 
 private fun barrettDivPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residue {
-    val denom = pow10_64(pow10)
-    val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
+    val lowBits = dw0 and ((1L shl pow10) - 1)
+    val shifted1 = dw1 ushr pow10
+    val shifted0 = (dw1 shl (64 - pow10)) or (dw0 ushr pow10)
 
-    val dwA = dw0 and 0xFFFF_FFFFL
-    val dwB = dw0 ushr 32
-    val dwG = dw1
+    val denom5 = POW10[POW5_64_OFFSET + pow10]
+    val mu = POW10[BARRETT_POW5_MU_OFFSET + pow10]
+
+    val dwA = shifted0 and 0xFFFF_FFFFL
+    val dwB = shifted0 ushr 32
+    val dwG = shifted1
 
     val qHatG = unsignedMulHi(dwG, mu)
-    val rHatG = dwG - (qHatG * denom)
-    val adjustG = ((rHatG - denom) shr 63).inv()
+    val rHatG = dwG - (qHatG * denom5)
+    val adjustG = ((rHatG - denom5) shr 63).inv()
     val qG = qHatG - adjustG
-    val rG = rHatG - (adjustG and denom)
+    val rG = rHatG - (adjustG and denom5)
 
     val ppB = (rG shl 32) or dwB
     val qHatB = unsignedMulHi(ppB, mu)
-    val rHatB = ppB - (qHatB * denom)
-    val adjustB = ((rHatB - denom) shr 63).inv()
+    val rHatB = ppB - (qHatB * denom5)
+    val adjustB = ((rHatB - denom5) shr 63).inv()
     val qB = qHatB - adjustB
-    val rB = rHatB - (adjustB and denom)
+    val rB = rHatB - (adjustB and denom5)
 
     val ppA = (rB shl 32) or dwA
     val qHatA = unsignedMulHi(ppA, mu)
-    val rHatA = ppA - (qHatA * denom)
-    val adjustA = ((rHatA - denom) shr 63).inv()
+    val rHatA = ppA - (qHatA * denom5)
+    val adjustA = ((rHatA - denom5) shr 63).inv()
     val qA = qHatA - adjustA
-    val rA = rHatA - (adjustA and denom)
-
-    val remainder = rA
+    val rA = rHatA - (adjustA and denom5)
 
     result.dw1 = qG
     result.dw0 = (qB shl 32) or qA
 
-    val residue = Residue.fromRemainderDivisor(remainder, denom)
+    val remainder10 = (rA shl pow10) + lowBits
+    val denom10 = pow10_64(pow10)
+    val residue = Residue.fromRemainderDivisor(remainder10, denom10)
     return residue
 }

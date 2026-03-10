@@ -207,7 +207,7 @@ object DivRangeRecipMulPow10 {
     }
 
     var iRRP = 1
-    val RANGE_RECIP_PARAMS = LongArray(814)
+    val RANGE_RECIP_PARAMS = LongArray(709)
 
     private fun serializeTable() {
         for (q in Q_MIN..<Q_MAXX) {

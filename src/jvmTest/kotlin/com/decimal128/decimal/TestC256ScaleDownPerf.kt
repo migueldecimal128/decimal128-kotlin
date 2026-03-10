@@ -11,7 +11,7 @@ class TestC256ScaleDownPerf {
 
     val verbose = false
 
-    val testSize = 1000000
+    val testSize = 100_000
     val iterCount = 20
     val mdValues = Array<MutDec>(testSize) { MutDec() }
     val scaleValues = IntArray(testSize)
@@ -35,7 +35,9 @@ class TestC256ScaleDownPerf {
             val md = mdValues[i]
             val bi = randBi()
             md.u256Set(bi)
-            val excess = max(min(md.digitLen - 34, 44), 10)
+            val excess = max(min(md.digitLen - 34, 44), BARRETT_POW10_MAXX)
+            if (verbose)
+                println("excess:$excess")
             if (excess > 0)
                 scaleValues[i] = excess
             else

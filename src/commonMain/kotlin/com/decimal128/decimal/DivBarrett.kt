@@ -18,96 +18,42 @@ internal fun barrettDivModPow10(z: C256, x: C256, pow10: Int): Long {
     return remainder10
 }
 
-internal fun barrettDivModPow10_x(z: C256, x: C256, pow10: Int): Long {
-    when {
-        pow10 > 0 && pow10 < BARRETT_POW10_MAXX -> {
-            val denom = pow10_64(pow10)
-            val mu = POW10[BARRETT_POW10_MU_OFFSET + pow10]
-            val xBitLen = x.bitLen
-            val remainder = when {
-                xBitLen <= 64 ->
-                    barrettDivMod_64(z, x.dw0, denom, mu)
-
-                pow10 <= 3 -> when {
-                    xBitLen <= 118 ->
-                        barrettDivMod_54_118(z, x, denom, mu)
-
-                    xBitLen <= 172 ->
-                        barrettDivMod_54_172(z, x, denom, mu)
-
-                    xBitLen <= 226 ->
-                        barrettDivMod_54_226(z, x, denom, mu)
-
-                    else ->
-                        barrettDivMod_54_256(z, x, denom, mu)
-                }
-
-                xBitLen <= 128 ->
-                    barrettDivMod_32_128(z, x, denom, mu)
-
-                xBitLen <= 192 ->
-                    barrettDivMod_32_192(z, x, denom, mu)
-
-                else ->
-                    barrettDivMod_32_256(z, x, denom, mu)
-            }
-            return remainder
-        }
-
-        pow10 == 0 -> {
-            z.c256Set(x)
-            return 0L
-        }
-
-        else ->
-            throw RuntimeException()
-    }
-}
 
 internal fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
-    when {
-        pow5 > 0 && pow5 < BARRETT_POW5_MAXX -> {
-            val denom = POW10[POW5_64_OFFSET + pow5]
-            val mu = POW10[BARRETT_POW5_MU_OFFSET + pow5]
-            val xBitLen = x.bitLen
-            val remainder = when {
-                xBitLen <= 64 ->
-                    barrettDivMod_64(z, x.dw0, denom, mu)
+    verify { pow5 in 1..<BARRETT_POW10_MAXX }
 
-                pow5 <= 4 -> when {
+    val denom = POW10[POW5_64_OFFSET + pow5]
+    val mu = POW10[BARRETT_POW5_MU_OFFSET + pow5]
+    val xBitLen = x.bitLen
+    val remainder = when {
+        xBitLen <= 64 ->
+            barrettDivMod_64(z, x.dw0, denom, mu)
 
-                    xBitLen <= 118 ->
-                        barrettDivMod_54_118(z, x, denom, mu)
+        pow5 <= 4 -> when {
 
-                    xBitLen <= 172 ->
-                        barrettDivMod_54_172(z, x, denom, mu)
+            xBitLen <= 118 ->
+                barrettDivMod_54_118(z, x, denom, mu)
 
-                    xBitLen <= 226 ->
-                        barrettDivMod_54_226(z, x, denom, mu)
+            xBitLen <= 172 ->
+                barrettDivMod_54_172(z, x, denom, mu)
 
-                    else ->
-                        barrettDivMod_54_256(z, x, denom, mu)
-                }
+            xBitLen <= 226 ->
+                barrettDivMod_54_226(z, x, denom, mu)
 
-                xBitLen <= 128 ->
-                    barrettDivMod_32_128(z, x, denom, mu)
-
-                xBitLen <= 192 ->
-                    barrettDivMod_32_192(z, x, denom, mu)
-
-                else ->
-                    barrettDivMod_32_256(z, x, denom, mu)
-            }
-            return remainder
+            else ->
+                barrettDivMod_54_256(z, x, denom, mu)
         }
 
-        pow5 == 0 -> {
-            z.c256Set(x)
-            return 0L
-        }
+        xBitLen <= 128 ->
+            barrettDivMod_32_128(z, x, denom, mu)
 
-        else -> throw RuntimeException("pow5 out of range:" + pow5)
+        xBitLen <= 192 ->
+            barrettDivMod_32_192(z, x, denom, mu)
+
+        else ->
+            barrettDivMod_32_256(z, x, denom, mu)
     }
+    return remainder
 }
 
 private fun barrettDivMod_64(q: C256, dw0: Long, denom: Long, mu: Long): Long {

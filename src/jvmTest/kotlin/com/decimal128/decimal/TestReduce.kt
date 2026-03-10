@@ -87,6 +87,8 @@ class TestReduce {
 
     fun calcReductionPow10(x: C256): Int {
         val ntz = x.c256NumberTrailingZeros()
+        if (ntz == 0)
+            return 0
         if ((x.bitLen - ntz) <= 64) {
             val dw = x.c256DwordAtBitIndex(ntz)
             return calcReductionPow5_64(dw, ntz)
@@ -143,6 +145,9 @@ class TestReduce {
     }
 
     val tcs = arrayOf(
+        TC("123456789123456789123456789123456789123456789"),
+        TC(FIVE.pow(110)),
+        TC("12345678901234567890123456789123456789123456789123456789123456891"),
         TC("12345678989012345600"),
         TC("14600000000000000000"), // 14600000000000000000
         TC("5000000000000000"),
@@ -173,7 +178,10 @@ class TestReduce {
         for (i in 0..<100000) {
             var bi = ZERO
             do {
-                val pow10 = min(random.nextInt(30), random.nextInt(30))
+                var pow10: Int
+                do {
+                    pow10 = min(random.nextInt(30), random.nextInt(30))
+                } while (pow10 == 0)
                 bi = randBi().multiply(BigInteger.TEN.pow(pow10))
             } while (bi.bitLength() > 256)
             val case = TC(bi)
