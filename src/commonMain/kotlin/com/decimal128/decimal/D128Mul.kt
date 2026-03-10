@@ -11,34 +11,27 @@ internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val xSteal = x.steal; val ySteal = y.steal
+    val prodSignFlag = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
+    val prodExp = stealQexp(xSteal) + stealQexp(ySteal)
     val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
-        mulFnzFnz(xSteal, x, ySteal, y, ctx)
+        val prodBitLen = stealBitLen(xSteal) + stealBitLen(ySteal)
+        mulFnzFnz(prodSignFlag, prodExp, prodBitLen, x, y, ctx)
     } else when (signature) {
         ZER_ZER,
         ZER_FNZ,
-        FNZ_ZER -> mulZero(xSteal, x, ySteal, y, ctx)
+        FNZ_ZER -> Decimal.zero(prodSignFlag, prodExp, ctx)
 
         ZER_INF,
-        INF_ZER -> mulInfZero(ctx)
+        INF_ZER -> ctx.signalInvalid(Decimal.NaN)
 
         FNZ_INF,
         INF_FNZ,
-        INF_INF -> mulInfNonzero(xSteal, x, ySteal, y)
+        INF_INF -> Decimal.infinity(prodSignFlag)
 
         else -> nanOperandFound(x, y, ctx)
     }
 }
-
-private inline fun mulZero(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal =
-    Decimal.zero(stealSignFlag(xSteal) xor stealSignFlag(ySteal),
-        stealQexp(xSteal) + stealQexp(ySteal), ctx)
-
-private inline fun mulInfZero(ctx: DecContext): Decimal =
-    ctx.signalInvalid(Decimal.NaN)
-
-private fun mulInfNonzero(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal): Decimal =
-    if (stealSignFlag(xSteal) xor stealSignFlag(ySteal)) NEG_INFINITY else POS_INFINITY
 
 // fast-path iff ...
 //  product bitLen strictly less than decFormat.maxBitLen
@@ -48,14 +41,11 @@ private fun mulInfNonzero(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal): Dec
 //  exponent on the low end must be >= eMin, not qTiny
 //  anything in the range [qTiny, eMin) is subnormal
 //  and must be scaled, so not on the fast-path
-private inline fun mulFnzFnz(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
-    val prodBitLen = stealBitLen(xSteal) + stealBitLen(ySteal)
-    val prodExp = stealQexp(xSteal) + stealQexp(ySteal)
+private inline fun mulFnzFnz(prodSignFlag: Boolean, prodExp: Int, prodBitLen: Int, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (prodBitLen <= 128) {
         val p0 = x.dw0 * y.dw0
         val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
-        val prodSign = x.sign xor y.sign
-        return decFinalizeFinite(prodSign, p1, p0, prodExp, ctx)
+        return decFinalizeFinite(prodSignFlag, p1, p0, prodExp, ctx)
     }
     return mulFnzFnz256(x, y, ctx)
 }
