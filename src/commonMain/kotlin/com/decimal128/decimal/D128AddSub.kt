@@ -8,8 +8,9 @@ internal fun d128AddImpl(x: Decimal, y: Decimal): Decimal =
     d128AddImpl(x, y, DecContext.current())
 
 internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val ySign = y.sign
-    val signature = binopSignatureOf(x.steal, y.steal)
+    val xSteal = x.steal; val ySteal = y.steal
+    val ySign = stealSignFlag(ySteal)
+    val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
         addFnzFnz(x, ySign, y, ctx)
     } else when (signature) {
@@ -103,7 +104,7 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCo
 }
 
 private fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    verify { max(x.bitLen, y.bitLen) + 1 <= 128 }
+    verify { max(x.bitLen(), y.bitLen()) + 1 <= 128 }
     val x0 = x.dw0
     val y0 = y.dw0
     val s0 = x0 + y0
@@ -258,7 +259,7 @@ private fun fullWidthSub(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext)
 private fun unscaledSub(sign: Boolean, x: Decimal, y: Decimal): Decimal {
     verify { x.validate() }
     verify { y.validate() }
-    verify { x.bitLen >= y.bitLen }
+    verify { x.bitLen() >= y.bitLen() }
 
     val x0 = x.dw0
 

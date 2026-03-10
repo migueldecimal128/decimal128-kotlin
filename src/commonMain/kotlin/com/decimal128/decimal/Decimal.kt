@@ -29,10 +29,7 @@ class Decimal private constructor(
     dw0: Long):
     DecimalRep(steal, dw1, dw0), Comparable<Decimal> {
 
-    internal val bitLen: Int
-        get() = stealBitLen(steal) // problems with non-Canonical ... as expected
-
-    internal inline fun digitLen(): Int = stealDigitLen(steal)
+    internal fun bitLen(): Int = stealBitLen(steal)
 
     internal val sign: Boolean
         get() = steal < 0
@@ -343,51 +340,25 @@ class Decimal private constructor(
      * @return the IEEE-754 class of this decimal128 value, in accordance
      *         with IEEE-754-2019 §7.5.2.
      */
-    fun ieeeClass(): Ieee754Class {
-        val sign = sign;
-        val qExp = qExp();
-        val bitLen = bitLen
-        return when {
-            qExp >= NON_FINITE_INF -> when {
-                qExp == NON_FINITE_QNAN -> {
-                    verify { stealIsQNAN(steal) }; quietNaN
+    fun ieeeClass(ctx: DecContext): Ieee754Class {
+        val steal = steal
+        val sign = stealSignFlag(steal)
+        val type = stealType(steal)
+        return when (type) {
+            STEAL_TYPE_FNZ -> {
+                if (stealEexp(steal) < ctx.decFormat.eMin) {
+                    if (sign) negativeSubnormal else positiveSubnormal
                 }
-
-                qExp > NON_FINITE_QNAN -> {
-                    verify { stealIsSNAN(steal) }; signalingNaN
-                }
-
-                sign -> {
-                    verify { stealIsINF(steal) }; negativeInfinity
-                }
-
-                else -> {
-                    verify { stealIsINF(steal) }; positiveInfinity
-                }
+                if (sign) negativeNormal else positiveNormal
             }
-
-            bitLen == 0 && sign -> {
-                verify { stealIsZER(steal) }; negativeZero
+            STEAL_TYPE_INF -> {
+                if (sign) negativeInfinity else positiveInfinity
             }
-
-            bitLen == 0 -> {
-                verify { stealIsZER(steal) }; positiveZero
+            STEAL_TYPE_ZER -> {
+                if (sign) negativeZero else positiveZero
             }
-
-            eExp() < -6143 && sign -> {
-                verify { stealIsFNZ(steal) }; negativeSubnormal
-            }
-
-            eExp() < -6143 -> {
-                verify { stealIsFNZ(steal) }; positiveSubnormal
-            }
-
-            sign -> {
-                verify { stealIsZER(steal) }; negativeNormal
-            }
-
             else -> {
-                verify { stealIsZER(steal) }; positiveNormal
+                if (stealIsQNAN(steal)) quietNaN else signalingNaN
             }
         }
     }

@@ -3,8 +3,8 @@
 package com.decimal128.decimal
 
 internal fun c128UnscaledCompare(x: Decimal, y: Decimal): Int {
-    val xBitLen = x.bitLen
-    val yBitLen = y.bitLen
+    val xBitLen = x.bitLen()
+    val yBitLen = y.bitLen()
     if (xBitLen != yBitLen)
         return ((xBitLen - yBitLen) shr 30) or 1
     val cmp0 = unsignedCmp(x.dw0, y.dw0)

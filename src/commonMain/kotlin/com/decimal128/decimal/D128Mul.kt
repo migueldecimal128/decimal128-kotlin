@@ -41,8 +41,9 @@ private fun mulInfNonzero(x: Decimal, y: Decimal): Decimal =
 //  anything in the range [qTiny, eMin) is subnormal
 //  and must be scaled, so not on the fast-path
 private fun mulFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val prodBitLen = x.bitLen + y.bitLen
-    val prodExp = x.qExp() + y.qExp()
+    val xSteal = x.steal; val ySteal = y.steal
+    val prodBitLen = stealBitLen(xSteal) + stealBitLen(ySteal)
+    val prodExp = stealQexp(xSteal) + stealQexp(ySteal)
     if (prodBitLen <= 128) {
         val p0 = x.dw0 * y.dw0
         val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
@@ -53,14 +54,15 @@ private fun mulFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val xSteal = x.steal; val ySteal = y.steal
     val tmps = ctx.tmps
     val m = tmps.mdecBridge1.set(x)
     val n = tmps.mdecBridge2.set(y)
     val p = tmps.mdecResult
     c256SetMul(p, m, n, tmps.dwQuad1)
     p.type = STEAL_TYPE_FNZ
-    p.qExp = x.qExp() + y.qExp()
-    p.sign = x.sign xor y.sign
+    p.qExp = stealQexp(xSteal) + stealQexp(ySteal)
+    p.sign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
     p.finalize(ctx)
     val d = Decimal.from(p)
     return d

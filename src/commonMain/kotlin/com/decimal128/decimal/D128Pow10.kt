@@ -16,7 +16,7 @@ internal fun d128ScaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negat
  */
 internal fun d128FusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, pow10: Int): Decimal {
     verify { pow10 > 0 }
-    verify { n.bitLen + pow10BitLen(pow10) <= 128 }
+    verify { n.bitLen() + pow10BitLen(pow10) <= 128 }
     val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
     val n0 = n.dw0
     val p0 = n0 * dw0Pow10

@@ -218,8 +218,7 @@ internal fun pow10Offset(pow10: Int): Int {
     }
 }
 
-internal fun pow10_64(pow10: Int): Long {
-    verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
+internal inline fun pow10_64(pow10: Int): Long {
     return POW10[(2*pow10) and POW10_BCE]
 }
 
