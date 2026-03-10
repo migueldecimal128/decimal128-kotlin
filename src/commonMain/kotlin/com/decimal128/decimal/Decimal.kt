@@ -48,10 +48,10 @@ class Decimal private constructor(
     // the lower/upper bound of the normalized binary exponent interval
     // what is the range of binary exponents given a decimal with
     // bitLen bits in the coeff and qExp
-    internal val bExpMin: Int
-        get() = calcBExpMin(bitLen, qExp())
-    internal val bExpMax: Int
-        get() = calcBExpMax(bitLen, qExp())
+    internal fun bExpMin(): Int =
+        calcBExpMin(stealBitLen(steal), stealQexp(steal))
+    internal fun bExpMax(): Int =
+        calcBExpMax(stealBitLen(steal), stealQexp(steal))
 
 
     companion object {

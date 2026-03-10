@@ -166,8 +166,8 @@ private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
     val cmpMag = when {
         xE > yE -> 1
         xE < yE -> -1
-        x.bExpMin > y.bExpMax -> 1
-        x.bExpMax < y.bExpMin -> -1
+        x.bExpMin() > y.bExpMax() -> 1
+        x.bExpMax() < y.bExpMin() -> -1
         xQ == yQ -> ucmp128(x1, x0, y1, y0)
         xQ > yQ -> -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ)
         // x.qExp < y.qExp
@@ -596,3 +596,50 @@ private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     return x.qExp().compareTo(y.qExp())
 }
 
+internal fun d128MaxImpl(x: Decimal, y: Decimal): Decimal =
+    d128MaxImpl(x, y, DecContext.current())
+
+internal fun d128MaxImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    if (Decimal.neitherIsNaN(x, y))
+        return if (cmpTotalOrderImpl(x, y, ctx) >= 0) x else y
+    return nanOperandFound(x, y, ctx)
+}
+
+internal fun d128MaxNumImpl(x: Decimal, y: Decimal): Decimal =
+    d128MaxNumImpl(x, y, DecContext.current())
+
+internal fun d128MaxNumImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    if (Decimal.neitherIsNaN(x, y))
+        return if (cmpTotalOrderImpl(x, y, ctx) >= 0) x else y
+    if (!x.isSignaling() && !y.isSignaling()) {
+        if (!x.isNaN())
+            return x
+        if (!y.isNaN())
+            return y
+    }
+    return nanOperandFound(x, y, ctx)
+}
+
+internal fun d128MinImpl(x: Decimal, y: Decimal): Decimal =
+    d128MinImpl(x, y, DecContext.current())
+
+internal fun d128MinImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    if (Decimal.neitherIsNaN(x, y))
+        return if (cmpTotalOrderImpl(x, y, ctx) <= 0) x else y
+    return nanOperandFound(x, y, ctx)
+}
+
+internal fun d128MinNumImpl(x: Decimal, y: Decimal): Decimal =
+    d128MinNumImpl(x, y, DecContext.current())
+
+internal fun d128MinNumImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    if (Decimal.neitherIsNaN(x, y))
+        return if (cmpTotalOrderImpl(x, y, ctx) <= 0) x else y
+    if (!x.isSignaling() && !y.isSignaling()) {
+        if (!x.isNaN())
+            return x
+        if (!y.isNaN())
+            return y
+    }
+    return nanOperandFound(x, y, ctx)
+}

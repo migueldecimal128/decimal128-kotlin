@@ -2,10 +2,10 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import org.junit.jupiter.api.Test
-import com.decimal128.decimal.maxImpl
-import com.decimal128.decimal.maxNumImpl
-import com.decimal128.decimal.minImpl
-import com.decimal128.decimal.minNumImpl
+import com.decimal128.decimal.d128MaxImpl
+import com.decimal128.decimal.d128MaxNumImpl
+import com.decimal128.decimal.d128MinImpl
+import com.decimal128.decimal.d128MinNumImpl
 
 class TestDecMinMax {
 
@@ -15,7 +15,7 @@ class TestDecMinMax {
     fun testMax() = runBinaryDecimalCtxOp(
         "dqMax.decTest",
         "max",
-        ::maxImpl,
+        ::d128MaxImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -47,7 +47,7 @@ class TestDecMinMax {
 
     @Test
     fun testMaxCases() = runBinaryDecimalCtxOp(
-        ::maxImpl,
+        ::d128MaxImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqmax407 max  0.10   0       ->  0.10",
@@ -58,13 +58,13 @@ class TestDecMinMax {
     fun testMaxNumber() = runBinaryDecimalCtxOp(
         "dqMax.decTest",
         "max",
-        ::maxNumImpl,
+        ::d128MaxNumImpl,
         verbose = verbose,
     )
 
     @Test
     fun testMaxNumCases() = runBinaryDecimalCtxOp(
-        ::maxNumImpl,
+        ::d128MaxNumImpl,
         verbose = verbose,
         cases = arrayOf(
         )
@@ -74,7 +74,7 @@ class TestDecMinMax {
     fun testMin() = runBinaryDecimalCtxOp(
         "dqMin.decTest",
         "min",
-        ::minImpl,
+        ::d128MinImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -106,7 +106,7 @@ class TestDecMinMax {
 
     @Test
     fun testMinCases() = runBinaryDecimalCtxOp(
-        ::minImpl,
+        ::d128MinImpl,
         verbose = verbose,
         cases = arrayOf(
         )
@@ -116,13 +116,13 @@ class TestDecMinMax {
     fun testMinNumber() = runBinaryDecimalCtxOp(
         "dqMin.decTest",
         "min",
-        ::minNumImpl,
+        ::d128MinNumImpl,
         verbose = verbose,
     )
 
     @Test
     fun testMinNumCases() = runBinaryDecimalCtxOp(
-        ::minNumImpl,
+        ::d128MinNumImpl,
         verbose = verbose,
         cases = arrayOf(
         )
