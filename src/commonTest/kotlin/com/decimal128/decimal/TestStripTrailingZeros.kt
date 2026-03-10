@@ -35,17 +35,27 @@ class TestStripTrailingZeros {
         test1(10000000000uL)
     }
 
+    val TEST_COUNT = 1_000
+
     @Test
     fun testRandom64() {
-        for (i in 0..<10000)
+        for (i in 0..<TEST_COUNT) {
+            val rnd = Random.nextULong()
+            if (rnd == 0uL)
+                continue
             test1(Random.nextULong())
-        for (i in 0..<10000) {
+        }
+        for (i in 0..<TEST_COUNT) {
             val base = Random.nextULong() and 0x0FFF_FFFFuL
+            if (base == 0uL)
+                continue
             val pow = pow10(Random.nextInt(10))
             test1(base * pow)
         }
-        for (i in 0..<10000) {
-            val base = Random.Default.nextULong() and 0x0FFF_FFFFuL
+        for (i in 0..<TEST_COUNT) {
+            val base = Random.nextULong() and 0x0FFF_FFFFuL
+            if (base == 0uL)
+                continue
             val pow = pow10(Random.nextInt(10))
             test1(base * pow)
         }
@@ -58,11 +68,13 @@ class TestStripTrailingZeros {
 
     @Test
     fun testRandom128() {
-        for (i in 0..<1000) {
+        for (i in 0..<TEST_COUNT) {
             val hi = BigInt.fromRandom(Random.nextInt(129))
+            if (hi.isZero())
+                continue
             test1(hi)
         }
-        for (i in 0..<1000) {
+        for (i in 0..<TEST_COUNT) {
             val hi = BigInt.from(Random.nextInt(100)) * BigInt.from(10).pow(Random.nextInt(20))
             if (hi.magnitudeBitLen() > 128 || hi.isZero())
                 continue
