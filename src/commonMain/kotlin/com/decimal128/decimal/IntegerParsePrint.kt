@@ -67,12 +67,12 @@ internal object IntegerParsePrint {
         val t: C256 = tmp?.c256Set(c) ?: C256(c)
         do {
             val ibMaxx = off + t.digitLen
-            val r = DivBarrett.barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
+            val r = barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
             Magia.render9DigitsBeforeIndex(r, utf8, ibMaxx)
         } while (t.bitLen > 128)
         do {
             val ibMaxx = off + t.digitLen
-            val r = DivBarrett.barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
+            val r = barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
             Magia.render9DigitsBeforeIndex(r, utf8, ibMaxx)
         } while (t.bitLen > 64)
         u64ToUtf8(t.digitLen, t.dw0, utf8, off)

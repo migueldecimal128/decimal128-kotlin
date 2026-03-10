@@ -126,7 +126,7 @@ object MagnitudeSqrt {
                 do {
                     val deltaQ = qPreferred - qZ
                     val chunk = min(min(9, deltaQ), ntz)
-                    val chunkRemainder = DivBarrett.barrettDivModPow10(quot, sqrt, chunk)
+                    val chunkRemainder = barrettDivModPow10(quot, sqrt, chunk)
                     if (chunkRemainder > 0) {
                         var pow10Count = 0
                         var t = chunkRemainder

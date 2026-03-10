@@ -21,7 +21,7 @@ object MagnitudeDiv {
                 do {
                     val deltaQ = qPreferred - qZ
                     val chunk = min(min(9, deltaQ), ntz)
-                    val chunkRemainder = DivBarrett.barrettDivModPow10(quot, z, chunk)
+                    val chunkRemainder = barrettDivModPow10(quot, z, chunk)
                     // FIXME -- the stripTrailingZeros code uses a faster way to
                     //  countTrailingZeroDigits
                     if (chunkRemainder > 0) {
