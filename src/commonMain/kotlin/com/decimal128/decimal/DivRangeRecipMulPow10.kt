@@ -304,29 +304,45 @@ private fun _divPow10(
     val d2 = (x3 shl dividendShiftLeft) or (x2 ushr dividendShiftRight)
     val d3 = (x3 ushr dividendShiftRight)
 
+    val modulusBitLen = fractionBitLen and 0x3F
+    val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
+    val shiftRight = modulusBitLen
+    val shiftLeft = -shiftRight
+    val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
+    val halfUlpBitMask = 1L shl halfUlpBitIndex
+    val fractionTailMask = halfUlpBitMask - 1
+
     val residue = when {
         (d3 != 0L) ->
             c256RecipMul256(
                 z, paramsIndex + 1, mDwordCount,
-                d3, d2, d1, d0, fractionBitLen, stickyBitsPow2
-            )
+                d3, d2, d1, d0,
+                fractionBitLen, stickyBitsPow2,
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
+                )
 
         (d2 != 0L) ->
             c256RecipMul192(
                 z, paramsIndex + 1, mDwordCount,
-                d2, d1, d0, fractionBitLen, stickyBitsPow2
+                d2, d1, d0,
+                fractionBitLen, stickyBitsPow2,
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
             )
 
         (d1 != 0L) ->
             c256RecipMul128(
                 z, paramsIndex + 1, mDwordCount,
-                d1, d0, fractionBitLen, stickyBitsPow2
+                d1, d0,
+                fractionBitLen, stickyBitsPow2,
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
             )
 
         (d0 != 0L) ->
             c256RecipMul64(
                 z, paramsIndex + 1, mDwordCount,
-                d0, fractionBitLen, stickyBitsPow2
+                d0,
+                fractionBitLen, stickyBitsPow2,
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
             )
 
         else -> throw RuntimeException("why am I here?")
@@ -337,18 +353,17 @@ private fun _divPow10(
 }
 
 
-private fun c256RecipMul256(
+private inline fun c256RecipMul256(
     quotient: C256,
     mOff: Int, mLen: Int,
-    n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
+    n3: Long, n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long,
+
+    shiftRightNonZeroMask: Long,
+    shiftRight: Int,        // == modulusBitLen
+    shiftLeft: Int,
+    halfUlpBitMask: Long,
+    fractionTailMask: Long,
 ): Residue {
-    val modulusBitLen = fractionBitLen and 0x3F
-    val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
-    val shiftRight = modulusBitLen
-    val shiftLeft = -shiftRight
-    val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
-    val halfUlpBitMask = 1L shl halfUlpBitIndex
-    val fractionTailMask = halfUlpBitMask - 1
     var isolatedRoundBit = 0L
     var quotientIndex = 0
 
@@ -526,18 +541,17 @@ private fun c256RecipMul256(
     return residue
 }
 
-private fun c256RecipMul192(
+private inline fun c256RecipMul192(
     quotient: C256,
     mOff: Int, mLen: Int,
-    n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
+    n2: Long, n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long,
+
+    shiftRightNonZeroMask: Long,
+    shiftRight: Int,        // == modulusBitLen
+    shiftLeft: Int,
+    halfUlpBitMask: Long,
+    fractionTailMask: Long,
 ): Residue {
-    val modulusBitLen = fractionBitLen and 0x3F
-    val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
-    val shiftRight = modulusBitLen
-    val shiftLeft = -shiftRight
-    val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
-    val halfUlpBitMask = 1L shl halfUlpBitIndex
-    val fractionTailMask = halfUlpBitMask - 1
     var isolatedRoundBit = 0L
     var quotientIndex = 0
 
@@ -674,18 +688,17 @@ private fun c256RecipMul192(
     return residue
 }
 
-private fun c256RecipMul128(
+private inline fun c256RecipMul128(
     quotient: C256,
     mOff: Int, mLen: Int,
-    n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
+    n1: Long, n0: Long, fractionBitLen: Int, stickyBitsPow2: Long,
+
+    shiftRightNonZeroMask: Long,
+    shiftRight: Int,        // == modulusBitLen
+    shiftLeft: Int,
+    halfUlpBitMask: Long,
+    fractionTailMask: Long,
 ): Residue {
-    val modulusBitLen = fractionBitLen and 0x3F
-    val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
-    val shiftRight = modulusBitLen
-    val shiftLeft = -shiftRight
-    val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
-    val halfUlpBitMask = 1L shl halfUlpBitIndex
-    val fractionTailMask = halfUlpBitMask - 1
     var isolatedRoundBit = 0L
     var quotientIndex = 0
 
@@ -788,18 +801,17 @@ private fun c256RecipMul128(
     return residue
 }
 
-private fun c256RecipMul64(
+private inline fun c256RecipMul64(
     quotient: C256,
     mOff: Int, mLen: Int,
-    n0: Long, fractionBitLen: Int, stickyBitsPow2: Long
+    n0: Long, fractionBitLen: Int, stickyBitsPow2: Long,
+
+    shiftRightNonZeroMask: Long,
+    shiftRight: Int,        // == modulusBitLen
+    shiftLeft: Int,
+    halfUlpBitMask: Long,
+    fractionTailMask: Long,
 ): Residue {
-    val modulusBitLen = fractionBitLen and 0x3F
-    val shiftRightNonZeroMask = -modulusBitLen.toLong() shr 63
-    val shiftRight = modulusBitLen
-    val shiftLeft = -shiftRight // jvm spec looks only at the bottom bits
-    val halfUlpBitIndex = (fractionBitLen - 1) and 0x3F
-    val halfUlpBitMask = 1L shl halfUlpBitIndex
-    val fractionTailMask = halfUlpBitMask - 1
     var isolatedRoundBit = 0L
     var quotientIndex = 0
 
