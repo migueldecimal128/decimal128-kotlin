@@ -506,7 +506,7 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     val yQ = y.qExp()
     if (xQ == yQ)
         return ucmp128(x1, x0, y1, y0)
-    val cmpSci = x.eExp.compareTo(y.eExp)
+    val cmpSci = x.eExp().compareTo(y.eExp())
     if (cmpSci != 0)
         return cmpSci
     val qDelta = xQ - yQ

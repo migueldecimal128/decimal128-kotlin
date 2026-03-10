@@ -42,13 +42,9 @@ class Decimal private constructor(
     internal val signMask: Int
         get() = steal shr 31
 
-    //internal val qExp: Int
-    //    get() = stealQexp(steal)
-
     internal inline fun qExp(): Int = stealQexp(steal)
 
-    internal val eExp: Int
-        get() = stealEexp(steal)
+    internal inline fun eExp(): Int = stealEexp(steal)
 
     // the lower/upper bound of the normalized binary exponent interval
     // what is the range of binary exponents given a decimal with
@@ -311,7 +307,7 @@ class Decimal private constructor(
 
     fun precision(): Int = if (isFinite()) digitLen else Int.MIN_VALUE
     fun qExponent(): Int = if (isFinite()) qExp() else Int.MIN_VALUE
-    fun eExponent(): Int = if (isFinite()) eExp else Int.MIN_VALUE
+    fun eExponent(): Int = if (isFinite()) eExp() else Int.MIN_VALUE
 
     // IEEE754-2019 5.7.2
 
@@ -379,11 +375,11 @@ class Decimal private constructor(
                 verify { stealIsZER(steal) }; positiveZero
             }
 
-            eExp < -6143 && sign -> {
+            eExp() < -6143 && sign -> {
                 verify { stealIsFNZ(steal) }; negativeSubnormal
             }
 
-            eExp < -6143 -> {
+            eExp() < -6143 -> {
                 verify { stealIsFNZ(steal) }; positiveSubnormal
             }
 
@@ -409,7 +405,9 @@ class Decimal private constructor(
      * In this implementation, the check for subnormal is hardwired to the
      * decimal128 `eExp` adjusted (scientific) exponent -6143 and 34 digits.
      */
-    fun isNormal(): Boolean = stealIsFNZ(steal) && digitLen <= 34 && eExp >= -6143
+    fun isNormal(): Boolean = stealIsFNZ(steal) &&
+            stealDigitLen(steal) <= 34 &&
+            stealEexp(steal) >= -6143
 
     /**
      * isSubnormal(x) is true if and only if x is subnormal
@@ -419,7 +417,7 @@ class Decimal private constructor(
      *
      * This last test is the same as: `qExp == -6176 && digitLen < 34`
      */
-    fun isSubnormal(): Boolean = stealIsFNZ(steal) && eExp < -6143
+    fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealEexp(steal) < -6143
 
     /**
      * isFinite(x) is true if and only if x is zero, normal, or subnormal
@@ -552,7 +550,7 @@ class Decimal private constructor(
         val steal = steal
         return when {
             stealIsZER(steal) -> ctx.signalDivByZero(NEG_INFINITY)
-            stealIsFNZ(steal) -> from(eExp)
+            stealIsFNZ(steal) -> from(stealEexp(steal))
             stealIsINF(steal) -> POS_INFINITY
             else -> nanOperandFound(this, ctx)
         }

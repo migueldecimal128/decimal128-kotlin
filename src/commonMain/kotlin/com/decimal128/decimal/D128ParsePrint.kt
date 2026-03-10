@@ -434,7 +434,7 @@ object D128ParsePrint {
     }
 
     private fun toNormalizedScientificString(dec: Decimal): String {
-        val eExp = dec.eExp
+        val eExp = dec.eExp()
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
         val signLen = dec.signBit
         val decimalPointLen = if (dec.digitLen > 1) 1 else 0
