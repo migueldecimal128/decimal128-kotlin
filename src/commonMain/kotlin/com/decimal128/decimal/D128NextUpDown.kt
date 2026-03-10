@@ -29,10 +29,12 @@ internal fun nextUpOrDown(isUp: Boolean, x: Decimal, ctx: DecContext): Decimal {
 
 internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     verify { x.isFiniteNonZero() }
-    var qExp = x.qExp
+    val xSteal = x.steal
+    var qExp = stealQexp(xSteal)
     var dw1 = x.dw1
     var dw0 = x.dw0
-    val headroom = min(ctx.precision - x.digitLen, qExp - ctx.qTiny)
+    val headroom = min(ctx.precision - stealDigitLen(xSteal), qExp - ctx.qTiny)
+    val xSign = stealSignFlag(xSteal)
     if (headroom > 0) {
         val (dw1T, dw0T) = umul128xPow10to128(dw1, dw0, headroom)
         dw1 = dw1T
@@ -47,14 +49,14 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
         dw0 = ctx.decFormat.dw0MinFullPrecisionCoeff
         ++qExp
         if (qExp > ctx.qMax)
-            return Decimal.infinity(x.sign)
+            return Decimal.infinity(xSign)
     }
-    return Decimal(x.sign, qExp, dw1, dw0)
+    return Decimal(xSign, qExp, dw1, dw0)
 }
 
 internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     verify { x.isFiniteNonZero() }
-    var qExp = x.qExp
+    var qExp = x.qExp()
     var dw1 = x.dw1
     var dw0 = x.dw0
     val headroom = min(ctx.precision - x.digitLen, qExp - ctx.qTiny)

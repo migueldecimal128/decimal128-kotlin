@@ -120,7 +120,7 @@ class TestFptestDecimal {
             return true
         val result = fptest.result()
 
-        if (result != null && result.qExp in -3104..-3000)
+        if (result != null && result.qExp() in -3104..-3000)
             return true
         if (fptest.hasTrap("o") && fptest.expectsSignal("o") && ctx.overflow)
             return true
@@ -128,19 +128,19 @@ class TestFptestDecimal {
         val hasTrapU = fptest.hasTrap("u")
         val expectsSignalU = fptest.expectsSignal("u")
         if (hasTrapU && expectsSignalU && result != null) {
-            if (result.qExp in 38..179)
+            if (result.qExp() in 38..179)
                 return true
-            if (result.qExp in -201..-37)
+            if (result.qExp() in -201..-37)
                 return true
-            if (result.qExp in 2282..3041)
+            if (result.qExp() in 2282..3041)
                 return true
-            if (result.qExp in 360..648)
+            if (result.qExp() in 360..648)
                 return true
-            if (result.qExp in 902..1049)
+            if (result.qExp() in 902..1049)
                 return true
-            if (result.qExp in -1063..-207)
+            if (result.qExp() in -1063..-207)
                 return true
-            if (result.qExp in -2972..-2034)
+            if (result.qExp() in -2972..-2034)
                 return true
         }
 

@@ -405,20 +405,6 @@ object D128ParsePrint {
         return String(utf8)
     }
 
-    private fun toSpecialValueString(dec: Decimal): String {
-        if (dec.qExp < NON_FINITE_QNAN)
-            return SPECIAL_VALUE_STRINGS[dec.signBit]
-        val nanIndex = (if (dec.qExp == NON_FINITE_QNAN) 2 else 4) + dec.signBit
-        val nanStr = SPECIAL_VALUE_STRINGS[nanIndex]
-        if ((dec.dw1 or dec.dw0) == 0L)
-            return nanStr
-        val utf8 = ByteArray(nanStr.length + dec.digitLen)
-        for (i in nanStr.indices)
-            utf8[i] = nanStr[i].code.toByte()
-        IntegerParsePrint.u128ToUtf8(dec.digitLen, dec.dw1, dec.dw0, utf8, nanStr.length)
-        return String(utf8)
-    }
-
     private fun toIntegerString(dec: Decimal): String {
         if (dec.bitLen < 4) {
             val i = ((16 and dec.signMask) + dec.dw0.toInt()) and 0x1F // bounds-check-elimination
@@ -431,7 +417,7 @@ object D128ParsePrint {
     }
 
     private fun toDecimalPointString(dec: Decimal): String {
-        val digitsRightOfDecimal = -dec.qExp
+        val digitsRightOfDecimal = -dec.qExp()
         val leadingZeroCount = max(1 + digitsRightOfDecimal - dec.digitLen, 0)
         val signLen = dec.signBit
         val decimalPointLen = 1

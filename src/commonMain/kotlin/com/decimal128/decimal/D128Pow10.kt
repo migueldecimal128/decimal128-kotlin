@@ -6,7 +6,7 @@ internal fun d128ScaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negat
     val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
     val p0 = x0 * dw0Pow10
     val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
-    return Decimal(xSign, x.qExp - pow10, p1, p0)
+    return Decimal(xSign, x.qExp() - pow10, p1, p0)
 }
 
 /**
@@ -25,7 +25,7 @@ internal fun d128FusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, po
     val d0 = m.dw0 - p0
     val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
     val d1 = m.dw1 - p1 - borrow0
-    return Decimal(sign, m.qExp, d1, d0)
+    return Decimal(sign, m.qExp(), d1, d0)
 }
 
 /**
@@ -43,5 +43,5 @@ internal fun d128FusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y:
     val d0 = p0 - y.dw0
     val borrow0 = if (unsignedLT(p0, d0)) 1L else 0L
     val d1 = p1 - y.dw1 - borrow0
-    return decFinalizeFinite(sign, d1, d0, y.qExp, ctx)
+    return decFinalizeFinite(sign, d1, d0, y.qExp(), ctx)
 }

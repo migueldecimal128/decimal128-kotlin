@@ -75,13 +75,13 @@ private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): De
     verify { x.isZero() || y.isZero() }
     verify { !a.isNaN() }
     val prodSign = x.sign xor y.sign
-    val prodQ = x.qExp + y.qExp
+    val prodQ = x.qExp() + y.qExp()
     if (a.isZero()) {
         val fmaSign =
             (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
-        return Decimal.zero(fmaSign, min(prodQ, a.qExp), ctx)
+        return Decimal.zero(fmaSign, min(prodQ, a.qExp()), ctx)
     }
-    if (a.isFiniteNonZero() && prodQ < a.qExp)
+    if (a.isFiniteNonZero() && prodQ < a.qExp())
         return rescaleToMinQExpImpl(a, prodQ, ctx)
     return a
 }
@@ -93,15 +93,15 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     return ctx.signalInvalid(Decimal.NaN)
 }
 
-internal fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {
+private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {
     val headroom = ctx.precision - x.digitLen
-    val qDelta = min(x.qExp - qNew, headroom)
+    val qDelta = min(x.qExp() - qNew, headroom)
     if (qDelta <= 0)
         return x
     val t = ctx.tmps.mdecBridge1.set(x)
     val r = ctx.tmps.mdecResult
     c256SetScaleUpPow10(r, t, qDelta, ctx.tmps.dwQuad1)
-    r.qExp = x.qExp - qDelta
+    r.qExp = x.qExp() - qDelta
     r.sign = x.sign
     return Decimal.from(r.finalize(ctx))
 }

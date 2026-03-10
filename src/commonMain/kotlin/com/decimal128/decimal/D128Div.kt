@@ -7,22 +7,26 @@ internal fun d128DivImpl(x: Decimal, y: Decimal): Decimal =
     d128DivImpl(x, y, DecContext.current())
 
 internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val signature = binopSignatureOf(x.steal, y.steal)
+    val xSteal = x.steal; val ySteal = y.steal
+    val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
         divFnzFnz(x, y, ctx)
-    } else when (signature) {
-        ZER_ZER -> divZeroZero(x, y, ctx)
-        ZER_FNZ -> zero(x.sign xor y.sign, x.qExp - y.qExp, ctx)
-        ZER_INF,
-        FNZ_INF -> zero(x.sign xor y.sign, ctx.qTiny, ctx)
+    } else {
+        val resultSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
+        when (signature) {
+            ZER_ZER -> divZeroZero(x, y, ctx)
+            ZER_FNZ -> zero(resultSign, x.qExp() - y.qExp(), ctx)
+            ZER_INF,
+            FNZ_INF -> zero(resultSign, ctx.qTiny, ctx)
 
-        FNZ_ZER -> divFnzZero(x, y, ctx)
+            FNZ_ZER -> divFnzZero(x, y, ctx)
 
-        INF_ZER,
-        INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
-        INF_INF -> divInfInf(x, y, ctx)
+            INF_ZER,
+            INF_FNZ -> Decimal.infinity(resultSign)
+            INF_INF -> divInfInf(x, y, ctx)
 
-        else -> nanOperandFound(x, y, ctx)
+            else -> nanOperandFound(x, y, ctx)
+        }
     }
 }
 
@@ -99,7 +103,7 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
     return if (signature == FNZ_FNZ) {
         remFnzFnz(isTrunc, x, y, ctx)
     } else when (signature) {
-        ZER_FNZ -> zero(x.sign, min(x.qExp, y.qExp), ctx)
+        ZER_FNZ -> zero(x.sign, min(x.qExp(), y.qExp()), ctx)
         FNZ_INF,
         ZER_INF -> x
 

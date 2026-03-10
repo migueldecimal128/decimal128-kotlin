@@ -14,10 +14,10 @@ internal fun d128AddImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         addFnzFnz(x, ySign, y, ctx)
     } else when (signature) {
         ZER_ZER -> addZeroZero(x, ySign, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp, ctx)
+        ZER_FNZ -> scaleToMinExp(ySign, y, x.qExp(), ctx)
         ZER_INF, FNZ_INF -> y
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp(), ctx)
         //FNZ_INF -> y
 
         INF_ZER, INF_FNZ -> x
@@ -38,10 +38,10 @@ internal fun d128SubImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         addFnzFnz(x, ySignNegated, y, ctx)
     } else when (signature) {
         ZER_ZER -> addZeroZero(x, ySignNegated, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp, ctx)
+        ZER_FNZ -> scaleToMinExp(ySignNegated, y, x.qExp(), ctx)
         ZER_INF, FNZ_INF -> y.negate()
 
-        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp, ctx)
+        FNZ_ZER -> scaleToMinExp(x.sign, x, y.qExp(), ctx)
 
         INF_ZER, INF_FNZ -> x
         INF_INF -> addInfInf(x, ySignNegated, y, ctx)
@@ -56,8 +56,8 @@ private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext)
     // However, under all rounding-direction attributes,
     // when x is zero, x + x and x − (−x) have the sign of x.
     val xSign = x.sign
-    val xQ = x.qExp
-    val yQ = y.qExp
+    val xQ = x.qExp()
+    val yQ = y.qExp()
     if (xSign == ySign) {
         // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
         return if (xQ <= yQ) x else y // return min qExp
@@ -70,11 +70,12 @@ private fun addZeroZero(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext)
         if (xSign == isRoundTowardNegative)
             return x
     } else {
+        // yes, this should be y.sign, not ySign
         if (y.sign == isRoundTowardNegative)
             return y
         qMin = yQ
     }
-    return Decimal.zero(ctx.isRoundTowardNegative(), qMin, ctx)
+    return Decimal.zero(isRoundTowardNegative, qMin, ctx)
 }
 
 private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal =
@@ -84,7 +85,7 @@ private fun addInfInf(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): 
         ctx.signalInvalid(Decimal.NaN)
 
 private fun addFnzFnz(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext) =
-    if (x.qExp == y.qExp)
+    if (x.qExp() == y.qExp())
         addFnzFnzUnscaled(x, ySign, y, ctx)
     else
         addFnzFnzScaled(x, ySign, y, ctx)
@@ -97,7 +98,7 @@ private fun addFnzFnzUnscaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCo
     return when {
         (cmp > 0) -> unscaledSub(xSign, x, y)
         (cmp < 0) -> unscaledSub(ySign, y, x)
-        else -> Decimal.zero(ctx.isRoundTowardNegative(), x.qExp, ctx)
+        else -> Decimal.zero(ctx.isRoundTowardNegative(), x.qExp(), ctx)
     }
 }
 
@@ -110,11 +111,12 @@ private fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, ctx: De
     val x1 = x.dw1
     val y1 = y.dw1
     val s1 = x1 + y1 + carry0
-    return decFinalizeFinite(sign, s1, s0, x.qExp, ctx)
+    return decFinalizeFinite(sign, s1, s0, x.qExp(), ctx)
 }
 
 private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecContext): Decimal {
-    val xSign = x.sign
+    val xSteal = x.steal
+    val xSign = stealSignFlag(xSteal)
     if (xSign == ySign)
         return addFnzScaledMagnitudes(ySign, x, y, ctx)
     // signs differ ... subtract scaled magnitudes
@@ -122,15 +124,15 @@ private fun addFnzFnzScaled(x: Decimal, ySign: Boolean, y: Decimal, ctx: DecCont
     return when {
         cmpMag > 0 -> subFnzScaledMagnitude(xSign, x, y, ctx)
         cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
-        else -> Decimal.zero(false, min(x.qExp, y.qExp), ctx)
+        else -> Decimal.zero(false, min(stealQexp(xSteal), y.qExp()), ctx)
     }
 }
 
 private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val flip = x.qExp > y.qExp
+    val flip = x.qExp() > y.qExp()
     val m = if (flip) x else y
     val n = if (flip) y else x
-    val qDelta = m.qExp - n.qExp
+    val qDelta = m.qExp() - n.qExp()
     verify { qDelta >= 0 }
     val headroom = ctx.precision - m.digitLen
     val n1 = n.dw1; val n0 = n.dw0
@@ -142,8 +144,8 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
         dw1Sum = dw1T
         dw0Sum = dw0T
     }
-    val qAlign = m.qExp - shiftLeft
-    val shiftRight = qAlign - n.qExp
+    val qAlign = m.qExp() - shiftLeft
+    val shiftRight = qAlign - n.qExp()
     val residue: Residue
     when {
         shiftRight == 0 -> {
@@ -175,7 +177,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
  * s == subtrahend
  *
  * We can handle the following cases in the 128-bit world
- * 1. m.qExp < s.qExp ... scale s.coefficient up by qDelta
+ * 1. m.qExp() < s.qExp() ... scale s.coefficient up by qDelta
  * 2. sufficient headroom in 38 digits to completely cover the gap
  * 3. fully swamped
  *
@@ -184,21 +186,28 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
 private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
     verify { m.magnitudeCompareTo(s) > 0 }
     verify { s.isNotZero() }
-    verify { m.qExp != s.qExp }
+    verify { m.qExp() != s.qExp() }
 
-    if (m.qExp < s.qExp) {
+    val mSteal = m.steal
+    val sSteal = s.steal
+    val qM = stealQexp(mSteal)
+    val qS = stealQexp(sSteal)
+    val precision = ctx.precision
+
+    if (qM < qS) {
         // case 1: |m| > |s|, m.qExp < s.qExp
         // simple case: scale s up and subtract, always exact
-        val qDelta = s.qExp - m.qExp
-        verify { qDelta < ctx.precision }
+        val qDelta = qS - qM
+        verify { qDelta < precision }
         return d128FusedSubtractMulPow10(sign, m, s, qDelta)
     }
     // case 2: |m| > |s|, m.qExp > s.qExp
 
-    verify { ctx.precision < 38 }
+    verify { precision < 38 }
+    val mDigitLen = stealDigitLen(mSteal)
     run {
-        val headroom = 38 - m.digitLen
-        val gap = m.qExp - s.qExp
+        val headroom = 38 - mDigitLen
+        val gap = qM - qS
         if (headroom >= gap) {
             // case 2a
             // m has enough headroom to scale and align with s.qExp
@@ -209,14 +218,14 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
     // case 3: fully swamped
     run {
         // in this case, headroom and shift are based upon ctx.precision
-
-        val headroomP = 1 + ctx.precision - m.digitLen
+        val sDigitLen = stealDigitLen(sSteal)
+        val headroomP = 1 + precision - mDigitLen
         if (headroomP < 1) return@run  // no room for guard digit, skip to fullWidthAdd
-        val qAlignP = m.qExp - headroomP
-        val shiftSRight = qAlignP - s.qExp
-        if (shiftSRight >= s.digitLen) {
+        val qAlignP = qM - headroomP
+        val shiftSRight = qAlignP - qS
+        if (shiftSRight >= sDigitLen) {
             val residueInverse =
-                if (shiftSRight > s.digitLen) Residue.GT_HALF
+                if (shiftSRight > sDigitLen) Residue.GT_HALF
                 else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
             verify { residueInverse != EXACT }
             val (dw1S, dw0S) = umul128xPow10to128(m.dw1, m.dw0, headroomP)
@@ -245,9 +254,11 @@ private fun unscaledSub(sign: Boolean, x: Decimal, y: Decimal): Decimal {
     verify { y.validate() }
     verify { x.bitLen >= y.bitLen }
 
-    val d0 = x.dw0 - y.dw0
-    val carry0 = if (unsignedCmp(d0, x.dw0) > 0) 1L else 0L
+    val x0 = x.dw0
+
+    val d0 = x0 - y.dw0
+    val carry0 = if (unsignedCmp(d0, x0) > 0) 1L else 0L
     val d1 = x.dw1 - y.dw1 - carry0
-    val diff = Decimal(sign, x.qExp, d1, d0)
+    val diff = Decimal(sign, x.qExp(), d1, d0)
     return diff
 }

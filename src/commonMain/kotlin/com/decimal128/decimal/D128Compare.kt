@@ -13,58 +13,22 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal fun d128CompareMagnitude(x: Decimal, y: Decimal): Int {
-    val qMax = max(x.qExp, y.qExp)
-    return when {
-        qMax < NON_FINITE_INF -> magnitudeCompareFinite(x, y)
-        qMax == NON_FINITE_INF -> magnitudeCompareInfinite(x, y)
-        else -> magnitudeCompareNaN(x, y)
+    val signature = binopSignatureOf(x.steal, y.steal)
+    return if (signature == FNZ_FNZ) {
+        cmpMagnitudeFnzFnz(x, y)
+    } else when (signature) {
+        FNZ_INF,
+        ZER_FNZ,
+        ZER_INF -> -1
+
+        FNZ_ZER,
+        INF_FNZ,
+        INF_ZER -> 1
+        INF_INF,
+        ZER_ZER -> 0
+        else -> TODO()
     }
 }
-
-private fun magnitudeCompareFinite(x: Decimal, y: Decimal): Int {
-    if (x.qExp == y.qExp)
-        return ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
-    val cmpSci = x.eExp.compareTo(y.eExp)
-    if (cmpSci != 0)
-        return cmpSci
-    val qDelta = x.qExp - y.qExp
-    val qDeltaAbs = abs(qDelta)
-    val pow10BitLen = pow10BitLen(qDeltaAbs)
-    val (dw1Pow10, dw0Pow10) = pow10_128(qDeltaAbs)
-    if (qDelta > 0) {
-        // x.qExp is larger
-        // scale up x.coefficient
-        if (pow10BitLen <= 64)
-            return -ucmp128_128x64(y.dw1, y.dw0, x.dw1, x.dw0, dw0Pow10)
-        return -ucmp128_128x64(y.dw1, y.dw0, dw1Pow10, dw0Pow10, x.dw0)
-    } else {
-        // scale up y
-        if (pow10BitLen <= 64)
-            return ucmp128_128x64(x.dw1, x.dw0, y.dw1, y.dw0, dw0Pow10)
-        return ucmp128_128x64(x.dw1, x.dw0, dw1Pow10, dw0Pow10, y.dw0)
-    }
-}
-
-private fun magnitudeCompareInfinite(x: Decimal, y: Decimal): Int {
-    verify { max(x.qExp, y.qExp) == NON_FINITE_INF }
-    val minExp = min(x.qExp, y.qExp)
-    return when {
-        minExp == NON_FINITE_INF -> 0
-        x.qExp == NON_FINITE_INF -> 1
-        else -> -1
-    }
-}
-
-private fun magnitudeCompareNaN(x: Decimal, y: Decimal): Int {
-    val minExp = min(x.qExp, y.qExp)
-    return when {
-        minExp >= NON_FINITE_QNAN -> 0
-        x.qExp >= NON_FINITE_QNAN -> 1
-        y.qExp >= NON_FINITE_QNAN -> -1
-        else -> throw IllegalStateException()
-    }
-}
-
 
 /**
  * Compares two decimal128 values using the IEEE-754 *totalOrder* relation.
@@ -132,7 +96,7 @@ fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
         if (signature == FNZ_FNZ) {
             cmpTotalOrderMagFnzFnz(x, y)
         } else when (signature) {
-            ZER_ZER -> cmp32(x.qExp, y.qExp)
+            ZER_ZER -> cmp32(x.qExp(), y.qExp())
             ZER_FNZ,
             ZER_INF,
             FNZ_INF -> -1
@@ -183,22 +147,31 @@ private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
 
     // of course, we are comparing magnitude so assume signs are equal
     // and that return value may be negated because of sign.
-    val cmpExp = cmp32(x.qExp, y.qExp)
+    val cmpExp = cmp32(x.qExp(), y.qExp())
     val cmpMagIsZeroMask = (cmpMag or -cmpMag).inv()
     val cmp = cmpMag or (cmpExp and cmpMagIsZeroMask)
     return cmp
 }
 
 private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
+    val xSteal = x.steal; val ySteal = y.steal
+    val xQ = stealQexp(xSteal)
+    val yQ = stealQexp(ySteal)
+    val xE = stealEexp(xSteal)
+    val yE = stealEexp(ySteal)
+    val x0 = x.dw0
+    val x1 = x.dw1
+    val y0 = y.dw0
+    val y1 = y.dw1
     val cmpMag = when {
-        x.eExp > y.eExp -> 1
-        x.eExp < y.eExp -> -1
+        xE > yE -> 1
+        xE < yE -> -1
         x.bExpMin > y.bExpMax -> 1
         x.bExpMax < y.bExpMin -> -1
-        x.qExp == y.qExp -> ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
-        x.qExp > y.qExp -> -ucmp128ScalePow10(y.dw1, y.dw0, x.dw1, x.dw0, x.qExp - y.qExp)
+        xQ == yQ -> ucmp128(x1, x0, y1, y0)
+        xQ > yQ -> -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ)
         // x.qExp < y.qExp
-        else -> ucmp128ScalePow10(x.dw1, x.dw0, y.dw1, y.dw0, y.qExp - x.qExp)
+        else -> ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ)
     }
     return cmpMag
 }
@@ -526,18 +499,11 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return mapToDecimal[(t + 1) and 0x03]
 }
 
-private fun cmpFnzFnz(x: Decimal, y: Decimal): Int {
-    if (x.sign != y.sign)
-        return if (x.sign) -1 else 1
-    val negateMask = x.signMask // 0 or -1
-    return (cmpMagnitudeFnzFnz(x, y) xor negateMask) - negateMask
-}
-
 private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     val x1 = x.dw1; val x0 = x.dw0
-    val xQ = x.qExp
+    val xQ = x.qExp()
     val y1 = y.dw1; val y0 = y.dw0
-    val yQ = y.qExp
+    val yQ = y.qExp()
     if (xQ == yQ)
         return ucmp128(x1, x0, y1, y0)
     val cmpSci = x.eExp.compareTo(y.eExp)
@@ -605,7 +571,7 @@ fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     return if (signature == FNZ_FNZ) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
     } else when (signature) {
-        ZER_ZER -> x.qExp.compareTo(y.qExp)
+        ZER_ZER -> x.qExp().compareTo(y.qExp())
         ZER_FNZ,
         ZER_INF,
         FNZ_INF -> -1
@@ -627,6 +593,6 @@ private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     //    totalOrder(x, y) is true if and only if the exponent of x ≥ the exponent of y
     //  ii) otherwise,
     //    totalOrder(x, y) is true if and only if the exponent of x ≤ the exponent of y.
-    return x.qExp.compareTo(y.qExp)
+    return x.qExp().compareTo(y.qExp())
 }
 

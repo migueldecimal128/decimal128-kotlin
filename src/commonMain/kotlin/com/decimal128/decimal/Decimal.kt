@@ -42,8 +42,10 @@ class Decimal private constructor(
     internal val signMask: Int
         get() = steal shr 31
 
-    internal val qExp: Int
-        get() = stealQexp(steal)
+    //internal val qExp: Int
+    //    get() = stealQexp(steal)
+
+    internal inline fun qExp(): Int = stealQexp(steal)
 
     internal val eExp: Int
         get() = stealEexp(steal)
@@ -52,9 +54,9 @@ class Decimal private constructor(
     // what is the range of binary exponents given a decimal with
     // bitLen bits in the coeff and qExp
     internal val bExpMin: Int
-        get() = calcBExpMin(bitLen, qExp)
+        get() = calcBExpMin(bitLen, qExp())
     internal val bExpMax: Int
-        get() = calcBExpMax(bitLen, qExp)
+        get() = calcBExpMax(bitLen, qExp())
 
 
     companion object {
@@ -308,7 +310,7 @@ class Decimal private constructor(
     }
 
     fun precision(): Int = if (isFinite()) digitLen else Int.MIN_VALUE
-    fun qExponent(): Int = if (isFinite()) qExp else Int.MIN_VALUE
+    fun qExponent(): Int = if (isFinite()) qExp() else Int.MIN_VALUE
     fun eExponent(): Int = if (isFinite()) eExp else Int.MIN_VALUE
 
     // IEEE754-2019 5.7.2
@@ -348,7 +350,7 @@ class Decimal private constructor(
      */
     fun ieeeClass(): Ieee754Class {
         val sign = sign;
-        val qExp = qExp;
+        val qExp = qExp();
         val bitLen = bitLen
         return when {
             qExp >= NON_FINITE_INF -> when {
@@ -562,7 +564,7 @@ class Decimal private constructor(
         return when {
             stealIsFinite(steal) -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
-                val qNew = qExp + pow10DeltaCapped
+                val qNew = qExp() + pow10DeltaCapped
                 decFinalizeFinite(sign, dw1, dw0, qNew, ctx)
             }
 
@@ -573,7 +575,7 @@ class Decimal private constructor(
 
     fun quantumExponent(ctx: DecContext): Int {
         if (isFinite())
-            return qExp
+            return qExp()
         ctx.signalInvalid()
         return Int.MIN_VALUE
     }
@@ -845,7 +847,7 @@ class Decimal private constructor(
         val steal = steal
         when {
             stealIsFNZ(steal) -> {
-                val qExp = qExp
+                val qExp = qExp()
                 var r1 = dw1
                 var r0 = dw0
                 var rQ = qExp

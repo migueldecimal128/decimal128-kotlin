@@ -477,7 +477,7 @@ class MutDec() : C256() {
         this.type = x.steal and (if (x.isNaN()) STEAL_NAN_MASK else STEAL_TYPE_MASK)
         this.bitLen = x.bitLen
         this.digitLen = x.digitLen
-        this.qExp = x.qExp
+        this.qExp = x.qExp()
         this.sign = x.sign
         verify { validate() }
         return this
