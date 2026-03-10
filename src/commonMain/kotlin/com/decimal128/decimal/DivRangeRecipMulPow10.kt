@@ -205,6 +205,15 @@ private fun offsetIndex(digitCount: Int, pow10: Int): Int {
     return index
 }
 
+private fun paramsIndex(digitCount: Int, pow10: Int): Int {
+    return OFFSETS[offsetIndex(digitCount, pow10)].toInt()
+}
+
+private fun storeParamsIndex(digitCount: Int, pow10: Int, paramsIndex: Int) {
+    val offsetIndex = offsetIndex(digitCount, pow10)
+    OFFSETS[offsetIndex] = paramsIndex.toShort()
+}
+
 private var iRRP = 1
 private val RANGE_RECIP_PARAMS = LongArray(709)
 
@@ -213,12 +222,12 @@ private fun serializeTable() {
         for (k in K_MIN..<min(q, K_MAXX)) {
             val te = recipTable[q][k]
             val i = offsetIndex(q, k)
-            val offset = when {
+            val paramsIndex = when {
                 te == NULL_TABLE_ENTRY -> -1
-                q > te.qMin -> OFFSETS[offsetIndex(te.qMin, k)]
+                q > te.qMin -> paramsIndex(te.qMin, k)
                 else -> serialize(te)
             }
-            OFFSETS[i] = offset.toShort()
+            storeParamsIndex(q, k, paramsIndex)
         }
     }
 
@@ -228,7 +237,31 @@ private fun serializeTable() {
     }
 
     for (i in RANGE_RECIP_PARAMS.indices)
-        com.decimal128.decimal.POW10[RANGE_RECIP_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
+        POW10[RANGE_RECIP_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
+
+    for (i in OFFSETS.indices) {
+        val value = OFFSETS[i].toInt() and 0xFFFF
+        if (value != 0) {
+            val base = when {
+                i < 768 -> 0
+                (i - 768) < 128 * 1 -> 56 * 1
+                (i - 768) < 128 * 2 -> 56 * 2
+                (i - 768) < 128 * 3 -> 56 * 3
+                (i - 768) < 128 * 4 -> 56 * 4
+                (i - 768) < 128 * 5 -> 56 * 5
+                (i - 768) < 128 * 6 -> 56 * 6
+                (i - 768) < 128 * 7 -> 56 * 7
+                (i - 768) < 128 * 8 -> 56 * 8
+                (i - 768) < 128 * 9 -> 56 * 9
+                else -> 0
+            }
+            val diff = value - base
+            if (diff < 0 || diff > 255)
+                println("FAIL at index $i: value=$value base=$base diff=$diff")
+        }
+    }
+
+    println("kilroy was here!")
 }
 
 private fun serialize(te: TableEntry): Int {
@@ -281,8 +314,8 @@ private fun _divPow10(
     // since we have passed in x3 x2 x1 x0
     z.c256EnableIndexSetAndZeroOut()
 
-    val paramsIndex = OFFSETS[offsetIndex(qDigitCount, kPow10)].toInt() + RANGE_RECIP_PARAMS_BASE
-    val descriptor = com.decimal128.decimal.POW10[paramsIndex and com.decimal128.decimal.POW10_BCE]
+    val paramsIndex = paramsIndex(qDigitCount, kPow10) + RANGE_RECIP_PARAMS_BASE
+    val descriptor = POW10[paramsIndex and POW10_BCE]
     verify { qDigitCount in unpackQMin(descriptor)..unpackQMax(descriptor) }
     verify { kPow10 == unpackK(descriptor) }
     val prodDwordLen = unpackProdDwordLen(descriptor)
