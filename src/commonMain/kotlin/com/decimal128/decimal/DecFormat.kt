@@ -37,13 +37,7 @@ data class DecFormat(val precision: Int,
     val dw1MaxxCoeff: Long = pow10_128_dw1(precision)
     val dw0MinFullPrecisionCoeff:Long = pow10_128_dw0(precision - 1)
     val dw1MinFullPrecisionCoeff:Long = pow10_128_dw1(precision - 1)
-    val packedLengthsAfterOverflow = pow10PackedLengths(precision - 1)
     val nanPayloadPrecision = if (precision == 34) 33 else 38
-
-    fun isC128AddSafe(xBitLen: Int, yBitLen: Int): Boolean {
-        val sumBitLen = max(xBitLen, yBitLen) + 1
-        return sumBitLen < maxBitLen
-    }
 
     internal inline fun coeffFits(dw1: Long, dw0: Long): Boolean =
         unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)

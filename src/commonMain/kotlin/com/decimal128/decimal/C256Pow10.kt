@@ -202,12 +202,6 @@ internal fun pow10BitLen(pow10: Int): Int {
     return (POW10_BIT_LEN_MINUS_1[pow10].toInt() and 0xFF) + 1
 }
 
-internal fun pow10PackedLengths(pow10: Int): Short {
-    val bitLen = pow10BitLen(pow10)
-    val packedLengths = packLengths(pow10 + 1, bitLen)
-    return packedLengths
-}
-
 internal fun pow10Offset(pow10: Int): Int {
     /*
     val p = pow10 - 1

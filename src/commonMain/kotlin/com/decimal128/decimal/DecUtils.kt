@@ -5,40 +5,6 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal inline fun packLengths(digitLen: Int, bitLen: Int) =
-    ((digitLen shl 9) or bitLen).toShort()
-
-/*
-internal inline fun packSignExp(sign: Boolean, qExp: Int): Short = ((if (sign) 0x8000 else 0) or (qExp and 0x7FFF)).toShort()
-
-internal inline fun unpackBitLen(packedLengths: Short) = packedLengths.toInt() and 0x1FF
-
-internal inline fun unpackDigitLen(packedLengths: Short) = (packedLengths.toInt() shr 9) and 0x7F
-
-internal inline fun unpackSign(signExp: Short) = signExp < 0
-
-internal inline fun unpackExp(signExp: Short) = (signExp.toInt() shl 1) shr 1
-
-internal inline fun calcPackedLengths(dw0: Long): Short {
-    val bitLen = calcBitLen64(dw0)
-    val digitLen = calcDigitLen64(bitLen, dw0)
-    val packed = packLengths(digitLen, bitLen)
-    return packed
-}
-
-internal inline fun calcPackedLengths(dw1: Long, dw0: Long): Short {
-    val bitLen = calcBitLen128(dw1, dw0)
-    val digitLen = calcDigitLen128(bitLen, dw1, dw0)
-    val packed = packLengths(digitLen, bitLen)
-    return packed
-}
-
-internal inline fun capExponentRange(e: Int): Int {
-    return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
-}
-
- */
-
 // These have an implied binary decimal point at 2**32
 private const val LOG2_10_FLOOR: Long = 14_267_572_564L
 private const val LOG2_10_CEIL: Long = 14_267_572_565L
@@ -104,7 +70,7 @@ private const val LOG2_10_CEIL: Long = 14_267_572_565L
  * This method is branch-free and guaranteed correct: the returned value is
  * always ≤ the true binary exponent, never above it.
  */
-internal fun calcBExpMin(bitLen: Int, qExp: Int): Int {
+internal inline fun calcBExpMin(bitLen: Int, qExp: Int): Int {
     val bitLenNonZeroMask = -bitLen shr 31
     val q64 = qExp.toLong()
     val bitLenLess1 = bitLen - 1
@@ -174,7 +140,7 @@ internal fun calcBExpMin(bitLen: Int, qExp: Int): Int {
  * This method is branch-free and guaranteed correct: the returned value is
  * always ≥ the true binary exponent, never below it.
  */
-internal fun calcBExpMax(bitLen: Int, qExp: Int): Int {
+internal inline fun calcBExpMax(bitLen: Int, qExp: Int): Int {
     val bitLenNonZeroMask = -bitLen shr 31
     val q64 = qExp.toLong()
     // shifting 2's complement takes the floor for pos and neg
@@ -190,7 +156,4 @@ internal fun calcBExpMax(bitLen: Int, qExp: Int): Int {
     val bExpMax = (bExpMaxWhenNeg and signMask) or (bExpMaxWhenPos and signMask.inv())
     return bExpMax
 }
-
-internal inline fun bothFnz(x: Decimal, y: Decimal): Boolean =
-    stealBothFNZ(x.steal, y.steal)
 
