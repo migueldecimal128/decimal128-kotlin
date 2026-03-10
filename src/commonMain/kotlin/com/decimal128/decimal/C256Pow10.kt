@@ -24,11 +24,12 @@ internal const val MAGIC_POW10_M_OFFSET = BARRETT_POW5_MU_OFFSET + BARRETT_POW5_
 internal const val MAGIC_POW10_MAXX = 20
 
 private const val TOTAL_ALLOCATION = MAGIC_POW10_M_OFFSET + MAGIC_POW10_MAXX
-
-private const val POW10_BCE = 0xFF // POW10 Bounds Check Elimination
-
-internal val POW10 = LongArray(TOTAL_ALLOCATION)
 private val POW10_BIT_LEN_MINUS_1 = ByteArray(MAXX_DIGIT_LEN)
+
+internal const val RANGE_RECIP_PARAMS_BASE = TOTAL_ALLOCATION
+internal val POW10 = LongArray(1024)
+internal const val POW10_BCE = 0x03FF // POW10 Bounds Check Elimination
+
 
 /*
 // minBitCount:0  maxBitCount:64
@@ -189,11 +190,12 @@ private fun initTables() {
         POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toLong()
     }
     // initialization of Magic multipliers M is in DivMagic
+    // initialization of RECIP_MUL_PARAMS is in DivRangeRecipMulPow10
 }
 
 private val _nada = initTables()
 
-internal fun pow10BitLen(pow10: Int): Int {
+internal inline fun pow10BitLen(pow10: Int): Int {
     return (POW10_BIT_LEN_MINUS_1[pow10].toInt() and 0xFF) + 1
 }
 
