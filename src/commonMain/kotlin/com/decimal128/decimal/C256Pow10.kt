@@ -9,6 +9,7 @@ import kotlin.math.max
 
 private fun initTables() {
     var hiPow10 = BigInt.ONE
+    loadResourceTable()
     var j = 0
     for (i in 0..<MAXX_DIGIT_LEN) {
         POW10_BITLEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()

@@ -319,7 +319,7 @@ private fun releaseTemporaryStorage() {
     recipTable = emptyArray()
 }
 
-private var initialized = false
+private var initialized = true
 private fun initialize() {
     if (!initialized) {
         calcPowTables()

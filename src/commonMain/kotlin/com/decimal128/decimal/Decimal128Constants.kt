@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import java.io.DataInputStream
+
 internal const val MASK16L = 0x0000_0000_0000_FFFFL
 internal const val MASK32L = 0x0000_0000_FFFF_FFFFL
 internal const val MASK48L = 0x0000_FFFF_FFFF_FFFFL
@@ -160,6 +162,98 @@ internal const val RRMP10_K_MAXX = RRMP10_Q_MAXX - 34
 internal const val RRMP10_LOOKUP_ROW_SIZE = 32 // K_MAXX - K_MIN
 internal const val RRMP10_LOOKUP_SHIFT = 5
 internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT
+
+
+internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
+internal const val EXPECTED_TABLE_VERSION = 0x0001_D128
+internal const val EXPECTED_DWORD_TABLES_SIZE = 986 // DWORD_TABLES_SIZE
+internal const val EXPECTED_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
+internal const val EXPECTED_DWORD_TABLES_FNV1A = 739413891
+internal const val EXPECTED_BYTE_TABLES_FNV1A = 1447633196
+
+// comment this out to prevent loading of the resource table when the class loads
+val loadResourceTable = loadResourceTable()
+private var resourceLoadAttempted = false
+private var resourceLoadSuccessful = false
+
+fun loadResourceTable() {
+    if (resourceLoadAttempted)
+        return
+    resourceLoadAttempted = true
+    val stream = object {}.javaClass.getResourceAsStream(RESOURCE_TABLE_PATHNAME)
+        if (stream == null) {
+            println("resource not found:$RESOURCE_TABLE_PATHNAME")
+            return
+        }
+
+    val dis = DataInputStream(stream.buffered())
+    dis.use {
+        // read and verify header
+        val version = dis.readInt()
+        if (version != EXPECTED_TABLE_VERSION)
+            throw RuntimeException("decimal128_tables.bin version mismatch: expected 0x${EXPECTED_TABLE_VERSION.toString(16)}, got 0x${version.toString(16)}")
+
+        val dwordTablesSize = dis.readInt()
+        if (dwordTablesSize != EXPECTED_DWORD_TABLES_SIZE)
+            throw RuntimeException("decimal128_tables.bin dword table size mismatch: expected $EXPECTED_DWORD_TABLES_SIZE, got $dwordTablesSize")
+
+        val byteTablesSize = dis.readInt()
+        if (byteTablesSize != EXPECTED_BYTE_TABLES_SIZE)
+            throw RuntimeException("decimal128_tables.bin byte table size mismatch: expected $EXPECTED_BYTE_TABLES_SIZE, got $byteTablesSize")
+
+        val headerDwordFnv1a = dis.readInt()
+        if (headerDwordFnv1a != EXPECTED_DWORD_TABLES_FNV1A)
+            throw RuntimeException("decimal128_tables.bin HEADER headerDwordFnv1a mismatch")
+
+        val headerByteFnv1a = dis.readInt()
+        if (headerByteFnv1a != EXPECTED_BYTE_TABLES_FNV1A)
+            throw RuntimeException("decimal128_tables.bin HEADER headerByteFnv1a mismatch")
+
+        // read dword table
+        for (i in 0..<dwordTablesSize)
+            DWORD_TABLES[i] = dis.readLong()
+
+        // read byte table
+        for (i in 0..<byteTablesSize)
+            BYTE_TABLES[i] = dis.readByte()
+
+        // verify checksums
+        val actualDwordFnv1a = fnv1a(DWORD_TABLES)
+        if (actualDwordFnv1a != EXPECTED_DWORD_TABLES_FNV1A)
+            throw RuntimeException("decimal128_tables.bin ACTUAL actualDwordFnv1a mismatch")
+
+        val actualByteFnv1a = fnv1a(BYTE_TABLES)
+        if (actualByteFnv1a != EXPECTED_BYTE_TABLES_FNV1A)
+            throw RuntimeException("decimal128_tables.bin ACTUAL headerByteFnv1a mismatch")
+
+        resourceLoadSuccessful = true
+    }
+}
+
+private const val FNV_OFFSET_BASIS = -0x7ee3ad4b // 2166136261 as signed Int
+private const val FNV_PRIME = 16777619
+
+private fun fnv1a(bytes: ByteArray): Int {
+    var hash = FNV_OFFSET_BASIS
+    for (b in bytes) {
+        hash = hash xor (b.toInt() and 0xff)
+        hash *= FNV_PRIME
+    }
+    return hash
+}
+
+private fun fnv1a(longs: LongArray): Int {
+    var hash = FNV_OFFSET_BASIS
+    for (value in longs) {
+        // Process the 8 bytes within the Long
+        for (i in 0..7) {
+            val byte = ((value shr (i * 8)) and 0xFF).toInt()
+            hash = hash xor byte
+            hash *= FNV_PRIME
+        }
+    }
+    return hash
+}
 
 
 /**
