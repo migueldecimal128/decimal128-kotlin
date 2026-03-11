@@ -190,8 +190,9 @@ private fun tableMerge() {
     }
 }
 
-private const val ROW_SIZE = K_MAXX - K_MIN
-private const val TABLE_SIZE = (Q_MAXX - Q_MIN) * ROW_SIZE
+private const val ROW_SIZE = 32 // K_MAXX - K_MIN
+private const val ROW_SIZE_SHIFT = 5
+private const val TABLE_SIZE = (Q_MAXX - Q_MIN) shl ROW_SIZE_SHIFT
 
 // I tried setting this up to use triangle indexing
 // it only saved 15% of the table size and required
@@ -199,12 +200,12 @@ private const val TABLE_SIZE = (Q_MAXX - Q_MIN) * ROW_SIZE
 // of the upper triangle vs the lower rectangle
 
 private fun offsetIndex(digitCount: Int, pow10: Int): Int {
+    verify { K_MAXX - K_MIN <= ROW_SIZE }
     verify { digitCount in Q_MIN..<Q_MAXX }
     verify { pow10 in K_MIN..<K_MAXX }
-    val index = (digitCount - Q_MIN) * ROW_SIZE + (pow10 - K_MIN)
+    val index = ((digitCount - Q_MIN) shl ROW_SIZE_SHIFT) + (pow10 - K_MIN)
     return index
 }
-
 
 private val OFFSETS = ShortArray(TABLE_SIZE)
 
@@ -279,7 +280,6 @@ private fun serializeTable() {
     for (i in RANGE_RECIP_PARAMS.indices)
         POW10[RANGE_RECIP_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
 
-    /*
     for (i in OFFSETS.indices) {
         val value = OFFSETS[i].toInt() and 0xFFFF
         if (value != 0) {
@@ -304,7 +304,6 @@ private fun serializeTable() {
 
     println("kilroy was here!")
 
-     */
 }
 
 private fun serialize(te: TableEntry): Int {
