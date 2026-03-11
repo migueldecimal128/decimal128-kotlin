@@ -326,8 +326,40 @@ private fun initialize() {
         populateTable()
         tableMerge()
         serializeTable()
+        DivMagic.initializeMagicPow10_64()
+        val dwordChecksum = Fnv1aChecksum.fnv1a(DWORD_TABLES)
+        val byteChecksum = Fnv1aChecksum.fnv1a(BYTE_TABLES)
+        println("dwordChecksum:$dwordChecksum byteChecksum:$byteChecksum")
+        verify { dwordChecksum == 739413891 && byteChecksum == 1447633196 }
         releaseTemporaryStorage()
         initialized = true
+    }
+}
+
+object Fnv1aChecksum {
+    private const val FNV_OFFSET_BASIS = -0x7ee3ad4b // 2166136261 as signed Int
+    private const val FNV_PRIME = 16777619
+
+    fun fnv1a(bytes: ByteArray): Int {
+        var hash = FNV_OFFSET_BASIS
+        for (b in bytes) {
+            hash = hash xor (b.toInt() and 0xff)
+            hash *= FNV_PRIME
+        }
+        return hash
+    }
+
+    fun fnv1a(longs: LongArray): Int {
+        var hash = FNV_OFFSET_BASIS
+        for (value in longs) {
+            // Process the 8 bytes within the Long
+            for (i in 0..7) {
+                val byte = ((value shr (i * 8)) and 0xFF).toInt()
+                hash = hash xor byte
+                hash *= FNV_PRIME
+            }
+        }
+        return hash
     }
 }
 
