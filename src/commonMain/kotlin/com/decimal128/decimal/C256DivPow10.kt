@@ -22,12 +22,12 @@ internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int): Residue {
                     Residue.fromValueDecade(x)
                 })
     }
-    if (pow10 < K_MAXX)
+    if (pow10 < RRMP10_K_MAXX)
         return divRangeRecipMulPow10(z, x, pow10)
     // perform a two-step
-    val step1a = K_MAXX - 1
+    val step1a = RRMP10_K_MAXX - 1
     val step2a = pow10 - step1a
-    verify { step2a < K_MAXX }
+    verify { step2a < RRMP10_K_MAXX }
     val step2 = max(step2a, BARRETT_POW10_MAXX - 1)
     val step1 = pow10 - step2
     val residue1 = divRangeRecipMulPow10(z, x, step1)

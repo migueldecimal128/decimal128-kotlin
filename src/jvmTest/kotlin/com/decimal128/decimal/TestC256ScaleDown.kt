@@ -102,9 +102,9 @@ class TestC256ScaleDown {
 
     @Test
     fun testDecimalBoundaries() {
-        for (qDigitCount in Q_MIN..<Q_MAXX) {
+        for (qDigitCount in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {
             val biQ = BigInteger.TEN.pow(qDigitCount)
-            for (xPow10 in K_MIN..<min(K_MAXX, qDigitCount + 2)) {
+            for (xPow10 in RRMP10_K_MIN..<min(RRMP10_K_MAXX, qDigitCount + 2)) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
                     if (biA.bitLength() <= 256) {
@@ -139,7 +139,7 @@ class TestC256ScaleDown {
             val dw3 = quads[i + 3]
             val coeff = C256(dw3, dw2, dw1, dw0)
             val biQ = coeff.coeffToBigInteger()
-            for (xPow10 in K_MIN..<K_MAXX) {
+            for (xPow10 in RRMP10_K_MIN..<RRMP10_K_MAXX) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
                     if (biA.bitLength() <= 64) {
@@ -177,7 +177,7 @@ class TestC256ScaleDown {
 
     fun randPow(bi: BigInteger) : Int {
         val biDigitCount = bi.toString().length
-        val maxPow = min(K_MAXX - 1, biDigitCount + 2)
+        val maxPow = min(RRMP10_K_MAXX - 1, biDigitCount + 2)
         val randPow = random.nextInt(maxPow)
         return randPow
     }
@@ -186,7 +186,7 @@ class TestC256ScaleDown {
         while (true) {
             val bitLength = random.nextInt(0, 257)
             val bi = BigInteger(bitLength, random)
-            if (bi.toString().length < Q_MAXX)
+            if (bi.toString().length < RRMP10_Q_MAXX)
                 return bi
         }
     }

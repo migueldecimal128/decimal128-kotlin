@@ -59,7 +59,7 @@ class TestC256ScaleDownPerf {
             val bitLength = random.nextInt(66, 230)
             val bi1 = BigInteger(bitLength, random)
             val bi = bi1 or (BigInteger.ONE shl bitLength - 1)
-            if (bi.toString().length < Q_MAXX)
+            if (bi.toString().length < RRMP10_Q_MAXX)
                 return bi
         }
     }

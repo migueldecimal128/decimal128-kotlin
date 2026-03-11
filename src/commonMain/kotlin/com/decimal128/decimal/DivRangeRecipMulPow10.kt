@@ -5,26 +5,13 @@ package com.decimal128.decimal
 import com.decimal128.bigint.BigInt
 import kotlin.math.min
 
-// if the dividend has less than 20 digits then division can be handled by other means
-internal const val Q_MIN = POW10_64_COUNT
-// 256-bit coefficient supports all 77 digit numbers and some 78 digit numbers.
-// Current QA test suite wants to test the limits, so this needs to be 79.
-// Realistically, this could probably be dropped to 77 if I fully enforced
-// normalization to no more than 38 digits in a 128-bit coefficient
-// which would lead to at most a 76 digit product.
-// This would shrink the table by two rows *and* by 2 columns
-// since it would reduce K_MAXX by 2
-internal const val Q_MAXX = 79 // exclusive
-internal const val K_MIN = BARRETT_POW10_MAXX
-internal const val K_MAXX = Q_MAXX - 34
-
-private var POW_10 = Array<BigInt>(Q_MAXX) { BigInt.ONE }
-private var POW_5 = Array<BigInt>(K_MAXX) { BigInt.ONE }
+private var POW_10 = Array<BigInt>(RRMP10_Q_MAXX) { BigInt.ONE }
+private var POW_5 = Array<BigInt>(RRMP10_K_MAXX) { BigInt.ONE }
 
 private fun calcPowTables() {
-    for (i in 1..<Q_MAXX)
+    for (i in 1..<RRMP10_Q_MAXX)
         POW_10[i] = POW_10[i - 1] * 10
-    for (i in 1..<K_MAXX)
+    for (i in 1..<RRMP10_K_MAXX)
         POW_5[i] = POW_5[i - 1] * 5
 }
 
@@ -62,13 +49,13 @@ private fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
 
 private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, BigInt.ONE, -1)
 
-private var recipTable: Array<Array<TableEntry>> = Array(Q_MAXX) { Array<TableEntry>(K_MAXX) { NULL_TABLE_ENTRY } }
+private var recipTable: Array<Array<TableEntry>> = Array(RRMP10_Q_MAXX) { Array<TableEntry>(RRMP10_K_MAXX) { NULL_TABLE_ENTRY } }
 
 private fun populateTable() {
-    for (j in Q_MIN..<Q_MAXX) {
-        var prev = recipTable[j - 1][K_MIN]
-        for (k in K_MIN..<min(j, K_MAXX)) {
-            val yPrev = if (prev != NULL_TABLE_ENTRY) prev.S else 5 * K_MIN
+    for (j in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {
+        var prev = recipTable[j - 1][RRMP10_K_MIN]
+        for (k in RRMP10_K_MIN..<min(j, RRMP10_K_MAXX)) {
+            val yPrev = if (prev != NULL_TABLE_ENTRY) prev.S else 5 * RRMP10_K_MIN
             val te = findTableEntry(j, k, yPrev + 2)
             if (te != null) {
                 //println("($j, $k) => minimalY:${te.S}")
@@ -183,9 +170,9 @@ private fun isValid(dividend: BigInt, k: Int, M: BigInt, S: Int): Boolean {
 }
 
 private fun tableMerge() {
-    for (k in K_MIN..<K_MAXX) {
-        var tePrev = recipTable[Q_MAXX - 1][k]
-        for (q in Q_MAXX - 2 downTo Q_MIN) {
+    for (k in RRMP10_K_MIN..<RRMP10_K_MAXX) {
+        var tePrev = recipTable[RRMP10_Q_MAXX - 1][k]
+        for (q in RRMP10_Q_MAXX - 2 downTo RRMP10_Q_MIN) {
             val te = recipTable[q][k]
             if (tePrev != NULL_TABLE_ENTRY && te.prodDwordLen() == tePrev.prodDwordLen()) {
                 tePrev.qMin = q
@@ -198,20 +185,16 @@ private fun tableMerge() {
     }
 }
 
-private const val ROW_SIZE = 32 // K_MAXX - K_MIN
-private const val ROW_SIZE_SHIFT = 5
-private const val TABLE_SIZE = (Q_MAXX - Q_MIN) shl ROW_SIZE_SHIFT
-
 // I tried setting this up to use triangle indexing
 // it only saved 15% of the table size and required
 // more calculation to find the offsetIndex, esp because
 // of the upper triangle vs the lower rectangle
 
 private fun offsetIndex(digitCount: Int, pow10: Int): Int {
-    verify { K_MAXX - K_MIN <= ROW_SIZE }
-    verify { digitCount in Q_MIN..<Q_MAXX }
-    verify { pow10 in K_MIN..<K_MAXX }
-    val index = ((digitCount - Q_MIN) shl ROW_SIZE_SHIFT) + (pow10 - K_MIN)
+    verify { RRMP10_K_MAXX - RRMP10_K_MIN <= RRMP10_LOOKUP_ROW_SIZE }
+    verify { digitCount in RRMP10_Q_MIN..<RRMP10_Q_MAXX }
+    verify { pow10 in RRMP10_K_MIN..<RRMP10_K_MAXX }
+    val index = ((digitCount - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT) + (pow10 - RRMP10_K_MIN)
     return index
 }
 
@@ -226,7 +209,7 @@ private fun storeParamsIndex(digitCount: Int, pow10: Int, paramsIndex: Int) {
 }
 
 
-private val OFFSETS = ShortArray(TABLE_SIZE)
+private val OFFSETS = ShortArray(RRMP10_LOOKUP_TABLE_SIZE)
 
 private fun paramsIndex_x(digitCount: Int, pow10: Int): Int {
     return OFFSETS[offsetIndex(digitCount, pow10)].toInt()
@@ -237,28 +220,23 @@ private fun storeParamsIndex_x(digitCount: Int, pow10: Int, paramsIndex: Int) {
     OFFSETS[offsetIndex] = paramsIndex.toShort()
 }
 
-private val ENCODED_OFFSETS = ByteArray(TABLE_SIZE)
-
 private const val BASE_INTERCEPT = 768
 
 private fun storeParamsIndex_y(digitCount: Int, pow10: Int, paramsIndex: Int) {
-    if (digitCount == 48 && pow10 == 29)
-        println("kilroy was here!")
     val offsetIndex = offsetIndex(digitCount, pow10)
     val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
     val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
     val base = (block shl 6) - (block shl 3)  // base = block * 56
     val effectiveBase = base and baseMask
     val encodedIndex = paramsIndex - effectiveBase
-    if (encodedIndex !in 0..255)
-        println("digitCount:$digitCount pow10:$pow10 paramsIndex:$paramsIndex offsetIndex:$offsetIndex effectiveBase:$effectiveBase")
     verify { encodedIndex in 0..255 }
-    ENCODED_OFFSETS[offsetIndex] = encodedIndex.toByte()
+    BYTE_TABLES[RRMP10_LOOKUP_BASE + offsetIndex] = encodedIndex.toByte()
 }
 
 private fun paramsIndex_y(digitCount: Int, pow10: Int): Int {
     val offsetIndex = offsetIndex(digitCount, pow10)
-    val encodedIndex = ENCODED_OFFSETS[offsetIndex].toInt() and 0xFF
+    val encodedIndex =
+        BYTE_TABLES[(RRMP10_LOOKUP_BASE + offsetIndex) and BYTE_TABLES_BCE].toInt() and 0xFF
     val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
     val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
     val base = (block shl 6) - (block shl 3)  // base = block * 56
@@ -270,8 +248,8 @@ private var iRRP = 1
 private val RANGE_RECIP_PARAMS = LongArray(709)
 
 private fun serializeTable() {
-    for (q in Q_MIN..<Q_MAXX) {
-        for (k in K_MIN..<min(q, K_MAXX)) {
+    for (q in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {
+        for (k in RRMP10_K_MIN..<min(q, RRMP10_K_MAXX)) {
             val te = recipTable[q][k]
             val i = offsetIndex(q, k)
             val paramsIndex = when {
@@ -290,7 +268,7 @@ private fun serializeTable() {
 
     for (i in RANGE_RECIP_PARAMS.indices)
         DWORD_TABLES[RANGE_RECIP_MUL_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
-
+/*
     for (i in OFFSETS.indices) {
         val value = OFFSETS[i].toInt() and 0xFFFF
         if (value != 0) {
@@ -314,6 +292,8 @@ private fun serializeTable() {
     }
 
     println("kilroy was here!")
+
+ */
 }
 
 private fun serialize(te: TableEntry): Int {
@@ -352,7 +332,7 @@ private fun initialize() {
 }
 
 internal fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int): Residue {
-    verify { pow10 >= K_MIN }
+    verify { pow10 >= RRMP10_K_MIN }
     initialize()
     return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
 }
@@ -360,8 +340,8 @@ internal fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int): Residue {
 private fun _divPow10(
     z: C256, qDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, kPow10: Int
 ): Residue {
-    require(qDigitCount in Q_MIN..<Q_MAXX)
-    require(kPow10 in K_MIN..<K_MAXX)
+    require(qDigitCount in RRMP10_Q_MIN..<RRMP10_Q_MAXX)
+    require(kPow10 in RRMP10_K_MIN..<RRMP10_K_MAXX)
     // clear coeff without worrying about aliasing
     // since we have passed in x3 x2 x1 x0
     z.c256EnableIndexSetAndZeroOut()

@@ -109,7 +109,9 @@ internal const val MAGIC_POW10_M_MAXX = 20
 internal const val RANGE_RECIP_MUL_PARAMS_BASE = MAGIC_POW10_M_BASE + MAGIC_POW10_M_MAXX
 internal const val RANGE_RECIP_MUL_PARAMS_MAXX = 709
 
-internal const val TOTAL_ALLOCATION = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
+internal const val DWORD_TABLES_SIZE = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
+
+private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 986)
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
 internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
@@ -139,6 +141,43 @@ internal const val POW10_BITLEN_COUNT = MAXX_DIGIT_LEN
  */
 internal const val MAGIC_FLAG_AND_SHIFT_BASE = POW10_BITLEN_COUNT
 internal const val MAGIC_FLAG_AND_SHIFT_MAXX = MAGIC_POW10_M_MAXX
+
+// RRMP10 == Range Recip Mul Pow10
+
+// if the dividend has less than 20 digits then division can be handled by other means
+internal const val RRMP10_Q_MIN = POW10_64_COUNT
+// 256-bit coefficient supports all 77 digit numbers and some 78 digit numbers.
+// Current QA test suite wants to test the limits, so this needs to be 79.
+// Realistically, this could probably be dropped to 77 if I fully enforced
+// normalization to no more than 38 digits in a 128-bit coefficient
+// which would lead to at most a 76 digit product.
+// This would shrink the table by two rows *and* by 2 columns
+// since it would reduce K_MAXX by 2
+internal const val RRMP10_Q_MAXX = 79 // exclusive
+internal const val RRMP10_K_MIN = BARRETT_POW10_MAXX
+internal const val RRMP10_K_MAXX = RRMP10_Q_MAXX - 34
+
+internal const val RRMP10_LOOKUP_ROW_SIZE = 32 // K_MAXX - K_MIN
+internal const val RRMP10_LOOKUP_SHIFT = 5
+internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT
+
+
+/**
+ * DivRangeRecipMulPow10 needs a 2-dimensional array for
+ * digitLenDividend by powerOfTenDivisor ... q * k.
+ *
+ * This is used as an index into RANGE_RECIP_MUL_PARAMS where
+ * the actual params are stored.
+ *
+ * The index is stored with some complicated encoding so that
+ * the entries will fit in a single byte.
+ */
+internal const val RRMP10_LOOKUP_BASE = MAGIC_FLAG_AND_SHIFT_BASE + MAGIC_FLAG_AND_SHIFT_MAXX
+internal const val RRMP10_LOOKUP_MAXX = RRMP10_LOOKUP_TABLE_SIZE
+
+internal const val BYTE_TABLES_SIZE = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX
+
+private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == 1986)
 
 /*
 // minBitCount:0  maxBitCount:64
