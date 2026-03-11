@@ -5,10 +5,18 @@ package com.decimal128.decimal
 import com.decimal128.bigint.BigInt
 import kotlin.math.min
 
-const val Q_MIN = POW10_64_COUNT
-const val Q_MAXX = 79 // exclusive
-const val K_MIN = BARRETT_POW10_MAXX
-const val K_MAXX = Q_MAXX - 34
+// if the dividend has less than 20 digits then division can be handled by other means
+internal const val Q_MIN = POW10_64_COUNT
+// 256-bit coefficient supports all 77 digit numbers and some 78 digit numbers.
+// Current QA test suite wants to test the limits, so this needs to be 79.
+// Realistically, this could probably be dropped to 77 if I fully enforced
+// normalization to no more than 38 digits in a 128-bit coefficient
+// which would lead to at most a 76 digit product.
+// This would shrink the table by two rows *and* by 2 columns
+// since it would reduce K_MAXX by 2
+internal const val Q_MAXX = 79 // exclusive
+internal const val K_MIN = BARRETT_POW10_MAXX
+internal const val K_MAXX = Q_MAXX - 34
 
 private var POW_10 = Array<BigInt>(Q_MAXX) { BigInt.ONE }
 private var POW_5 = Array<BigInt>(K_MAXX) { BigInt.ONE }
@@ -208,6 +216,7 @@ private fun offsetIndex(digitCount: Int, pow10: Int): Int {
 }
 
 private fun paramsIndex(digitCount: Int, pow10: Int): Int {
+  //  return paramsIndex_x(digitCount, pow10)
     return paramsIndex_y(digitCount, pow10)
 }
 
@@ -216,7 +225,7 @@ private fun storeParamsIndex(digitCount: Int, pow10: Int, paramsIndex: Int) {
     storeParamsIndex_y(digitCount, pow10, paramsIndex)
 }
 
-/*
+
 private val OFFSETS = ShortArray(TABLE_SIZE)
 
 private fun paramsIndex_x(digitCount: Int, pow10: Int): Int {
@@ -227,16 +236,17 @@ private fun storeParamsIndex_x(digitCount: Int, pow10: Int, paramsIndex: Int) {
     val offsetIndex = offsetIndex(digitCount, pow10)
     OFFSETS[offsetIndex] = paramsIndex.toShort()
 }
-*/
 
 private val ENCODED_OFFSETS = ByteArray(TABLE_SIZE)
+
+private const val BASE_INTERCEPT = 768
 
 private fun storeParamsIndex_y(digitCount: Int, pow10: Int, paramsIndex: Int) {
     if (digitCount == 48 && pow10 == 29)
         println("kilroy was here!")
     val offsetIndex = offsetIndex(digitCount, pow10)
-    val baseMask = (768 - offsetIndex) shr 31
-    val block = (offsetIndex - 640) ushr 7
+    val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
+    val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
     val base = (block shl 6) - (block shl 3)  // base = block * 56
     val effectiveBase = base and baseMask
     val encodedIndex = paramsIndex - effectiveBase
@@ -249,8 +259,8 @@ private fun storeParamsIndex_y(digitCount: Int, pow10: Int, paramsIndex: Int) {
 private fun paramsIndex_y(digitCount: Int, pow10: Int): Int {
     val offsetIndex = offsetIndex(digitCount, pow10)
     val encodedIndex = ENCODED_OFFSETS[offsetIndex].toInt() and 0xFF
-    val baseMask = (768 - offsetIndex) shr 31
-    val block = (offsetIndex - 640) ushr 7
+    val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
+    val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
     val base = (block shl 6) - (block shl 3)  // base = block * 56
     val effectiveBase = base and baseMask
     return effectiveBase + encodedIndex
@@ -280,7 +290,7 @@ private fun serializeTable() {
 
     for (i in RANGE_RECIP_PARAMS.indices)
         DWORD_TABLES[RANGE_RECIP_MUL_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
-/*
+
     for (i in OFFSETS.indices) {
         val value = OFFSETS[i].toInt() and 0xFFFF
         if (value != 0) {
@@ -304,7 +314,6 @@ private fun serializeTable() {
     }
 
     println("kilroy was here!")
-*/
 }
 
 private fun serialize(te: TableEntry): Int {
