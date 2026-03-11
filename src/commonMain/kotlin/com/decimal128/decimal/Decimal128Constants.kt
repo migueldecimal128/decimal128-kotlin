@@ -25,17 +25,9 @@ internal const val MIN_POW10_DIGIT_LEN_192 = 39          // 0x00000027 39
 internal const val MIN_POW10_DIGIT_LEN_256 = 58          // 0x0000003A 58
 
 internal const val MAX_DIGIT_LEN = 77          // 0x0000004D 77
-
+// 256-bit coefficient handles all 77 digit integers
 internal const val MAXX_DIGIT_LEN = 78          // 0x0000004E 78
 
-internal const val BYTE_TABLES_BCE = 2047
-
-internal val BYTE_TABLES = ByteArray(BYTE_TABLES_BCE + 1)
-internal val POW10_BITLEN_MINUS_1 = BYTE_TABLES
-internal const val POW10_BITLEN_MINUS_1_BCE = BYTE_TABLES_BCE
-
-internal const val POW10_192_BASE = (POW10_64_COUNT + POW10_128_COUNT) * 2
-internal const val POW10_256_BASE = POW10_192_BASE + POW10_192_COUNT * 3
 
 /**
  * DWORD_TABLES stores multiple tables in a single LongArray.
@@ -74,6 +66,8 @@ internal const val DWORD_TABLES_BCE = 1023
 internal val POW10 = DWORD_TABLES
 internal const val POW10_BCE = DWORD_TABLES_BCE
 
+internal const val POW10_192_BASE = (POW10_64_COUNT + POW10_128_COUNT) * 2
+internal const val POW10_256_BASE = POW10_192_BASE + POW10_192_COUNT * 3
 // POW10_DWORD_COUNT = 215
 internal const val POW10_DWORD_COUNT = (POW10_256_BASE + POW10_256_COUNT * 4)
 
@@ -120,6 +114,31 @@ internal const val TOTAL_ALLOCATION = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
 internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
 
+
+/**
+ * BYTE_TABLES is a single allocated array of 2k bytes that is used to store
+ * multiple single-byte tables.
+ *
+ * - POW10_BITLEN_MINUS_1 is a direct lookup of the number of bits required
+ *   to store a power of 10. 10**0 requires 1 bit. 10**77 requires 256 bits.
+ *   We subtract 1 and store it in a byte, adding 1 upon lookup.
+ *
+ * - MAGIC_FLAG_AND_SHIFT
+ */
+internal val BYTE_TABLES = ByteArray(2048)
+internal const val BYTE_TABLES_BCE = 2047 // 0x7FF
+
+internal val POW10_BITLEN_MINUS_1 = BYTE_TABLES
+internal const val POW10_BITLEN_MINUS_1_BCE = BYTE_TABLES_BCE
+
+internal const val POW10_BITLEN_COUNT = MAXX_DIGIT_LEN
+
+/**
+ * Magic division lookup table containing the "additional bit" flag
+ * and the shr shift right value.
+ */
+internal const val MAGIC_FLAG_AND_SHIFT_BASE = POW10_BITLEN_COUNT
+internal const val MAGIC_FLAG_AND_SHIFT_MAXX = MAGIC_POW10_M_MAXX
 
 /*
 // minBitCount:0  maxBitCount:64

@@ -85,20 +85,19 @@ object DivMagic {
 
 
     private var initialized = false
-    val MAGIC_FLAG_AND_SHIFT_POW10 = ByteArray(MAGIC_POW10_M_MAXX)
 
     fun initializeMagicPow10_64() {
         if (initialized)
             return
         initialized = true
-        POW10[MAGIC_POW10_M_BASE + 0] = 1
-        MAGIC_FLAG_AND_SHIFT_POW10[0] = Byte.MIN_VALUE
+        DWORD_TABLES[MAGIC_POW10_M_BASE + 0] = 1
+        BYTE_TABLES[MAGIC_FLAG_AND_SHIFT_BASE + 0] = Byte.MIN_VALUE
         for (k in 1..<MAGIC_POW10_M_MAXX) {
             val d     = pow10_64(k)
             val magic = magicu64(d)
-            POW10[MAGIC_POW10_M_BASE + k]   = magic.m
-            MAGIC_FLAG_AND_SHIFT_POW10[k] =
-                (if (magic.add) 0x80 or magic.s else magic.s).toByte()
+            DWORD_TABLES[MAGIC_POW10_M_BASE + k] = magic.m
+            val flagAndShift = magic.s or if (magic.add) 0x80 else 0
+            BYTE_TABLES[MAGIC_FLAG_AND_SHIFT_BASE + k] = flagAndShift.toByte()
         }
     }
 
@@ -131,8 +130,9 @@ object DivMagic {
     private fun magicDivModPow10_64(z: C256, x0: Long, pow10: Int): Long {
         when {
             pow10 > 0 && pow10 < MAGIC_POW10_M_MAXX -> {
-                val m = POW10[MAGIC_POW10_M_BASE + pow10]
-                val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
+                val m = DWORD_TABLES[(MAGIC_POW10_M_BASE + pow10) and DWORD_TABLES_BCE]
+                val flagAndShift =
+                    BYTE_TABLES[(MAGIC_FLAG_AND_SHIFT_BASE + pow10) and BYTE_TABLES_BCE].toInt()
                 val denom = pow10_64(pow10)
                 val s = flagAndShift and 0x3F
                 val correctionMask = (flagAndShift shr 31).toLong()
