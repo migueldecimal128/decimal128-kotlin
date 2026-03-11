@@ -207,16 +207,17 @@ private fun offsetIndex(digitCount: Int, pow10: Int): Int {
     return index
 }
 
-private val OFFSETS = ShortArray(TABLE_SIZE)
-
 private fun paramsIndex(digitCount: Int, pow10: Int): Int {
     return paramsIndex_y(digitCount, pow10)
 }
 
 private fun storeParamsIndex(digitCount: Int, pow10: Int, paramsIndex: Int) {
-    storeParamsIndex_x(digitCount, pow10, paramsIndex)
+//    storeParamsIndex_x(digitCount, pow10, paramsIndex)
     storeParamsIndex_y(digitCount, pow10, paramsIndex)
 }
+
+/*
+private val OFFSETS = ShortArray(TABLE_SIZE)
 
 private fun paramsIndex_x(digitCount: Int, pow10: Int): Int {
     return OFFSETS[offsetIndex(digitCount, pow10)].toInt()
@@ -226,7 +227,7 @@ private fun storeParamsIndex_x(digitCount: Int, pow10: Int, paramsIndex: Int) {
     val offsetIndex = offsetIndex(digitCount, pow10)
     OFFSETS[offsetIndex] = paramsIndex.toShort()
 }
-
+*/
 
 private val ENCODED_OFFSETS = ByteArray(TABLE_SIZE)
 
@@ -279,7 +280,7 @@ private fun serializeTable() {
 
     for (i in RANGE_RECIP_PARAMS.indices)
         POW10[RANGE_RECIP_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
-
+/*
     for (i in OFFSETS.indices) {
         val value = OFFSETS[i].toInt() and 0xFFFF
         if (value != 0) {
@@ -303,7 +304,7 @@ private fun serializeTable() {
     }
 
     println("kilroy was here!")
-
+*/
 }
 
 private fun serialize(te: TableEntry): Int {
