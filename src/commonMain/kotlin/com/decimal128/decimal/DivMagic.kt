@@ -23,89 +23,6 @@ object DivMagic {
      *
      */
 
-    data class Magic(val m: Long, val add: Boolean, val s: Int)
-
-    /**
-     * Compute magic number and shift for unsigned division by d (1 ≤ d < 2^64),
-     * using BigInt instead of BigInteger.
-     */
-    fun magicu64(d: Long): Magic {
-        require(d != 0L) { "divisor must be nonzero" }
-        val N = 64
-
-        // 1) build BigInt version of 2^N and of the unsigned divisor
-        val hiD        = BigInt.fromUnsigned(d)
-
-        // 2) anc = (2^N − 1) − ((2^N − 1) mod d)
-        val nBitMask   = BigInt.withBitMask(N)
-        val anc      = nBitMask - (nBitMask % hiD)
-
-        // 3) initialize p, q1/r1 for anc and q2/r2 for d
-        var p          = (N - 1).toLong()
-        val twoPowN1 = BigInt.withSetBit(N - 1)         // 2^(N−1)
-
-        //var (q1, r1) = twoPowN1.divMod(anc)
-        var q1 = twoPowN1 / anc
-        var r1 = twoPowN1 % anc
-        //var (q2, r2) = twoPowN1.divMod(hiD)
-        var q2 = twoPowN1 / hiD
-        var r2 = twoPowN1 % hiD
-        lateinit var delta: BigInt
-
-        do {
-            p += 1
-
-            // double q1/r1 mod anc
-            q1 = q1 shl 1
-            r1 = r1 shl 1
-            if (r1 >= anc) {
-                q1 += 1
-                r1 -= anc
-            }
-
-            // double q2/r2 mod biD
-            q2 = q2 shl 1
-            r2 = r2 shl 1
-            if (r2 >= hiD) {
-                q2 += 1
-                r2 -= hiD
-            }
-
-            delta = hiD - r2
-        } while (q1 < delta || q1 == delta && r1.isZero())
-
-        // 5) extract the “true” multiplier and shift
-        val Mtrue   = q2 + 1
-        val addFlag = Mtrue.isBitSet(N)            // bit-64 set?
-        val m_mod   = Mtrue.toLong()           // low 64 bits
-        val s       = (p - N).toInt()
-
-        return Magic(m_mod, addFlag, s)
-    }
-
-
-    private var initialized = false
-
-    fun initializeMagicPow10_64() {
-        if (initialized)
-            return
-        initialized = true
-        DWORD_TABLES[MAGIC_POW10_M_BASE + 0] = 1
-        BYTE_TABLES[MAGIC_FLAG_AND_SHIFT_BASE + 0] = Byte.MIN_VALUE
-        for (k in 1..<MAGIC_POW10_M_MAXX) {
-            val d     = pow10_64(k)
-            val magic = magicu64(d)
-            DWORD_TABLES[MAGIC_POW10_M_BASE + k] = magic.m
-            val flagAndShift = magic.s or if (magic.add) 0x80 else 0
-            BYTE_TABLES[MAGIC_FLAG_AND_SHIFT_BASE + k] = flagAndShift.toByte()
-        }
-    }
-
-    init {
-        //initializeMagicPow10_64()
-    }
-
-
     // Magic division allows a 64-bit dividend and a 64-bit divisor
     // However, on a 64-bit machine it cannot be used for multi-word
     // division beyond 32-bit limbs because a 32-bit remainder has to
@@ -120,8 +37,7 @@ object DivMagic {
 
     fun magicDivPow10_64(z: C256, x0: Long, pow10: Int): Residue {
         verify { pow10 in 0..<MAGIC_POW10_M_MAXX }
-        initializeMagicPow10_64()
-        verify { initialized }
+        verify { DWORD_TABLES[MAGIC_POW10_M_BASE + 1] == 0xCCCCCCCCCCCCCCCDuL.toLong() }
         val remainder = magicDivModPow10_64(z, x0, pow10)
         val residue = Residue.residueFromRemainderPow10(remainder, pow10)
         return residue

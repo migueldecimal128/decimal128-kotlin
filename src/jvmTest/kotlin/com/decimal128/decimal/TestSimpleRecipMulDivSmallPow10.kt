@@ -25,7 +25,8 @@ class TestSimpleRecipMulDivSmallPow10 {
             val biM = twoPow64.divide(BigInteger(pow10.toString()))
             val m = biM.toLong()
             simpleRecipPow10s[i] = m
-            println("simpleRecipPow10s[$i] = $m 0x${biM.toString(16)}")
+            if (verbose)
+                println("simpleRecipPow10s[$i] = $m 0x${biM.toString(16)}")
         }
     }
 
@@ -102,7 +103,8 @@ class TestSimpleRecipMulDivSmallPow10 {
         val bi54321 = bi5.shiftLeft(192).or(bi4.shiftLeft(144)).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
         val pow10 = 1
         val (expectedQ, expectedR) = bi54321.divideAndRemainder(TEN.pow(pow10))
-        println("bi:$bi54321 0x${bi54321.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
+        if (verbose)
+            println("bi:$bi54321 0x${bi54321.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
 
         val (observedQ, observedR) = divModPow10Simple(bi54321, pow10)
 
@@ -121,7 +123,8 @@ class TestSimpleRecipMulDivSmallPow10 {
             val biM = twoPow64.divide(BigInteger(pow10Div2.toString()))
             val m = biM.toLong()
             simpleRecipPow10sDiv2[i] = m
-            println("simpleRecipPow10sDiv2[$i] = $m 0x${biM.toString(16)}")
+            if (verbose)
+                println("simpleRecipPow10sDiv2[$i] = $m 0x${biM.toString(16)}")
         }
     }
 
@@ -217,7 +220,8 @@ class TestSimpleRecipMulDivSmallPow10 {
         val bi54321 = bi5.shiftLeft(192).or(bi4.shiftLeft(144)).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
         val pow10 = 1
         val (expectedQ, expectedR) = bi54321.divideAndRemainder(TEN.pow(pow10))
-        println("bi:$bi54321 0x${bi54321.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
+        if (verbose)
+            println("bi:$bi54321 0x${bi54321.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
 
         val (observedQ, observedR) = simpleRecipDivModPow10Div2(bi54321, pow10)
 
@@ -232,7 +236,8 @@ class TestSimpleRecipMulDivSmallPow10 {
         val bi1024 = BigInteger("1024")
         val pow10 = 1
         val (expectedQ, expectedR) = bi1024.divideAndRemainder(TEN.pow(pow10))
-        println("bi:$bi1024 0x${bi1024.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
+        if (verbose)
+            println("bi:$bi1024 0x${bi1024.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
 
         val (observedQ, observedR) = simpleRecipDivModPow10Div2(bi1024, pow10)
 
@@ -247,7 +252,8 @@ class TestSimpleRecipMulDivSmallPow10 {
         val bi256 = ONE.shiftLeft(256).subtract(ONE)
         val pow10 = 1
         val (expectedQ, expectedR) = bi256.divideAndRemainder(TEN.pow(pow10))
-        println("bi:$bi256 0x${bi256.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
+        if (verbose)
+            println("bi:$bi256 0x${bi256.toString(16)} pow10:$pow10 expectedQ:$expectedQ expectedR:$expectedR")
 
         val (observedQ, observedR) = simpleRecipDivModPow10Div2(bi256, pow10)
 

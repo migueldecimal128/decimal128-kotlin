@@ -1,33 +1,14 @@
-package com.decimal128.decimal.intel
+package com.decimal128.decimal
 
 import com.decimal128.bigint.BigInt
-import com.decimal128.decimal.BARRETT_POW10_MAXX
-import com.decimal128.decimal.BARRETT_POW5_MU_BASE
-import com.decimal128.decimal.BARRETT_POW5_MU_MAXX
-import com.decimal128.decimal.MAGIC_FLAG_AND_SHIFT_BASE
-import com.decimal128.decimal.MAGIC_POW10_M_BASE
-import com.decimal128.decimal.MAGIC_POW10_M_MAXX
-import com.decimal128.decimal.MAXX_DIGIT_LEN
-import com.decimal128.decimal.MIN_POW10_DIGIT_LEN_128
-import com.decimal128.decimal.POW5_64_BASE
-import com.decimal128.decimal.POW5_64_MAXX
-import com.decimal128.decimal.RANGE_RECIP_MUL_PARAMS_BASE
-import com.decimal128.decimal.RRMP10_K_MAXX
-import com.decimal128.decimal.RRMP10_K_MIN
-import com.decimal128.decimal.RRMP10_LOOKUP_BASE
-import com.decimal128.decimal.RRMP10_LOOKUP_ROW_SIZE
-import com.decimal128.decimal.RRMP10_LOOKUP_SHIFT
-import com.decimal128.decimal.RRMP10_LOOKUP_TABLE_SIZE
-import com.decimal128.decimal.RRMP10_Q_MAXX
-import com.decimal128.decimal.RRMP10_Q_MIN
-import com.decimal128.decimal.Residue
-import com.decimal128.decimal.verify
 import java.io.DataOutputStream
 import java.io.File
 import kotlin.math.min
 import kotlin.test.Test
 
 class DecGenConstantTables {
+
+    val verbose = false
 
     val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
     val X_RESOURCE_TABLE_VERSION = 0x0001_D128
@@ -42,7 +23,8 @@ class DecGenConstantTables {
         initializeTables()
         X_DWORD_TABLES_FNV1A = fnv1a(X_DWORD_TABLES)
         X_BYTE_TABLES_FNV1A = fnv1a(X_BYTE_TABLES)
-        println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
+        if (verbose)
+            println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
         check(X_DWORD_TABLES_FNV1A == 739413891)
         check(X_BYTE_TABLES_FNV1A == 1447633196)
         saveConstantTablesAsResource()
@@ -81,7 +63,7 @@ class DecGenConstantTables {
     val X_BYTE_TABLES = ByteArray(2048)
 
     private fun initPow10Pow5() {
-        var hiPow10 = BigInt.ONE
+        var hiPow10 = BigInt.Companion.ONE
         var j = 0
         for (i in 0..<MAXX_DIGIT_LEN) {
             X_BYTE_TABLES[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
@@ -102,8 +84,8 @@ class DecGenConstantTables {
 
     private fun initBarrett() {
         // initialize Barrett division
-        val biTwoPow64 = BigInt.ONE.shl(64)
-        var biPow5 = BigInt.ONE
+        val biTwoPow64 = BigInt.Companion.ONE.shl(64)
+        var biPow5 = BigInt.Companion.ONE
 
         // mu for 10**0 == 0 ... used for checking div by 1 case
         for (i in 1..<BARRETT_POW10_MAXX) {
@@ -112,7 +94,7 @@ class DecGenConstantTables {
             X_DWORD_TABLES[BARRETT_POW5_MU_BASE + i] = mu5.toLong()
         }
         for (i in 1..<BARRETT_POW5_MU_MAXX) {
-            val t = BigInt.fromUnsigned(X_DWORD_TABLES[POW5_64_BASE + i])
+            val t = BigInt.Companion.fromUnsigned(X_DWORD_TABLES[POW5_64_BASE + i])
             val mu = biTwoPow64 / t
             X_DWORD_TABLES[BARRETT_POW5_MU_BASE + i] = mu.toLong()
         }
@@ -164,15 +146,15 @@ class DecGenConstantTables {
         val N = 64
 
         // 1) build BigInt version of 2^N and of the unsigned divisor
-        val hiD        = BigInt.fromUnsigned(d)
+        val hiD        = BigInt.Companion.fromUnsigned(d)
 
         // 2) anc = (2^N − 1) − ((2^N − 1) mod d)
-        val nBitMask   = BigInt.withBitMask(N)
+        val nBitMask   = BigInt.Companion.withBitMask(N)
         val anc      = nBitMask - (nBitMask % hiD)
 
         // 3) initialize p, q1/r1 for anc and q2/r2 for d
         var p          = (N - 1).toLong()
-        val twoPowN1 = BigInt.withSetBit(N - 1)         // 2^(N−1)
+        val twoPowN1 = BigInt.Companion.withSetBit(N - 1)         // 2^(N−1)
 
         //var (q1, r1) = twoPowN1.divMod(anc)
         var q1 = twoPowN1 / anc
@@ -216,8 +198,8 @@ class DecGenConstantTables {
 
     //RRMP10
 
-    private var POW_10 = Array<BigInt>(RRMP10_Q_MAXX) { BigInt.ONE }
-    private var POW_5 = Array<BigInt>(RRMP10_K_MAXX) { BigInt.ONE }
+    private var POW_10 = Array<BigInt>(RRMP10_Q_MAXX) { BigInt.Companion.ONE }
+    private var POW_5 = Array<BigInt>(RRMP10_K_MAXX) { BigInt.Companion.ONE }
 
     private fun calcPowTables() {
         for (i in 1..<RRMP10_Q_MAXX)
@@ -258,7 +240,7 @@ class DecGenConstantTables {
     private fun unpackS(d: Long) = (d ushr 16).toInt() and 0xFFFF
     private fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
 
-    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, BigInt.ONE, -1)
+    private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, BigInt.Companion.ONE, -1)
 
     private var recipTable: Array<Array<TableEntry>> = Array(RRMP10_Q_MAXX) { Array<TableEntry>(RRMP10_K_MAXX) { NULL_TABLE_ENTRY } }
 
@@ -304,7 +286,7 @@ class DecGenConstantTables {
     }
 
     private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
-        val twoPowY = BigInt.ONE shl y
+        val twoPowY = BigInt.Companion.ONE shl y
         val fivePowK = POW_5[k]
         val tenPowK = POW_10[k]
         val tenPowQ = POW_10[q]
@@ -353,7 +335,7 @@ class DecGenConstantTables {
         val expectedResidue = Residue.fromRemainderDivisor(expectedRem, tenPowK)
 
         val dividendAlfa = dividend shr (k - 1)
-        val maskAlfa = BigInt.withBitMask(k - 1)
+        val maskAlfa = BigInt.Companion.withBitMask(k - 1)
         val fracAlfa = dividend and maskAlfa
         val stickyAlfa = fracAlfa.isNotZero()
 
@@ -431,12 +413,10 @@ class DecGenConstantTables {
         OFFSETS[offsetIndex] = paramsIndex.toShort()
     }
 
-    private val BASE_INTERCEPT = 768
-
     private fun storeParamsIndex_y(digitCount: Int, pow10: Int, paramsIndex: Int) {
         val offsetIndex = offsetIndex(digitCount, pow10)
-        val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
-        val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
+        val baseMask = (RRMP10_ENCODE_BASE_INTERCEPT - offsetIndex) shr 31
+        val block = (offsetIndex - (RRMP10_ENCODE_BASE_INTERCEPT - 128)) ushr 7
         val base = (block shl 6) - (block shl 3)  // base = block * 56
         val effectiveBase = base and baseMask
         val encodedIndex = paramsIndex - effectiveBase
@@ -448,8 +428,8 @@ class DecGenConstantTables {
         val offsetIndex = offsetIndex(digitCount, pow10)
         val encodedIndex =
             X_BYTE_TABLES[(RRMP10_LOOKUP_BASE + offsetIndex)].toInt() and 0xFF
-        val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
-        val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
+        val baseMask = (RRMP10_ENCODE_BASE_INTERCEPT - offsetIndex) shr 31
+        val block = (offsetIndex - (RRMP10_ENCODE_BASE_INTERCEPT - 128)) ushr 7
         val base = (block shl 6) - (block shl 3)  // base = block * 56
         val effectiveBase = base and baseMask
         return effectiveBase + encodedIndex
@@ -484,6 +464,9 @@ class DecGenConstantTables {
             val value = OFFSETS[i].toInt() and 0xFFFF
             if (value != 0) {
                 val base = when {
+                    // this table drove manual generation of
+                    // RRMP10_ENCODE_BASE_INTERCEPT
+                    // growth is step-wise linear after the x-intercept
                     i < 768 -> 0
                     (i - 768) < 128 * 1 -> 56 * 1
                     (i - 768) < 128 * 2 -> 56 * 2

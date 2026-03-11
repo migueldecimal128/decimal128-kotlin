@@ -7,6 +7,8 @@ import java.math.BigDecimal.ONE
 
 class TestMutDecScaleB {
 
+    val verbose = false
+
     class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecContext) {
         constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecContext())
         val expected =
@@ -36,7 +38,8 @@ class TestMutDecScaleB {
         val bd = tc.bd
         val pow10 = tc.pow10
         val expected = tc.expected
-        println("$bd pow10:$pow10 => $expected")
+        if (verbose)
+            println("$bd pow10:$pow10 => $expected")
 
         val d = MutDec()
         d.set(bd)

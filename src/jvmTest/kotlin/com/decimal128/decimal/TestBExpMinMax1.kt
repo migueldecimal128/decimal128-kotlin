@@ -8,6 +8,8 @@ import kotlin.math.floor
 
 class TestBExpMinMax1 {
 
+    val verbose = false
+
     private fun trueBExpMin(bitLen: Int, qExp: Int): Int {
         if (bitLen == 0) return 0
         val x = (bitLen - 1).toDouble() + qExp.toDouble() * LOG2_10_DOUBLE
@@ -24,8 +26,6 @@ class TestBExpMinMax1 {
 
     @Test
     fun testExhaustive() {
-        var maxDelta = 0
-        var minDelta = 999
         var deltaZeroCount = 0
         var deltaOneCount = 0
         for (bitLen in 0..255) {
@@ -46,6 +46,7 @@ class TestBExpMinMax1 {
                     ++deltaOneCount
             }
         }
-        println("deltaZeroCount:$deltaZeroCount deltaOneCount:$deltaOneCount")
+        if (verbose)
+            println("deltaZeroCount:$deltaZeroCount deltaOneCount:$deltaOneCount")
     }
 }

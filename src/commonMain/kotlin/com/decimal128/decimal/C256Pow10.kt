@@ -7,44 +7,6 @@ import kotlin.math.max
 
 
 
-private fun initTables() {
-    var hiPow10 = BigInt.ONE
-    loadResourceTable()
-    var j = 0
-    for (i in 0..<MAXX_DIGIT_LEN) {
-        POW10_BITLEN_MINUS_1[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
-        for (dw in hiPow10.magnitudeToLittleEndianLongArray())
-            POW10[j++] = dw
-        if (i < MIN_POW10_DIGIT_LEN_128)
-            ++j
-        hiPow10 *= 10
-    }
-
-    // initialize powers of 5 that fit in 64 bits
-    POW10[POW5_64_BASE] = 1L
-    for (i in 1..<POW5_64_MAXX)
-        POW10[POW5_64_BASE + i] = POW10[POW5_64_BASE + i - 1] * 5L
-
-    // initialize Barrett division
-    val biTwoPow64 = BigInt.ONE.shl(64)
-    var biPow5 = BigInt.ONE
-
-    // mu for 10**0 == 0 ... used for checking div by 1 case
-    for (i in 1..<BARRETT_POW10_MAXX) {
-        biPow5 *= 5
-        val mu5 = biTwoPow64 / biPow5
-        POW10[BARRETT_POW5_MU_BASE + i] = mu5.toLong()
-    }
-    for (i in 1..<BARRETT_POW5_MU_MAXX) {
-        val t = BigInt.fromUnsigned(POW10[POW5_64_BASE + i])
-        val mu = biTwoPow64 / t
-        POW10[BARRETT_POW5_MU_BASE + i] = mu.toLong()
-    }
-    // initialization of Magic multipliers M is in DivMagic
-}
-
-private val _nada = initTables()
-
 internal inline fun pow10BitLen(pow10: Int): Int {
     return (POW10_BITLEN_MINUS_1[pow10 and POW10_BITLEN_MINUS_1_BCE].toInt() and 0xFF) + 1
 }

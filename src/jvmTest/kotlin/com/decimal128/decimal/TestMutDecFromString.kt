@@ -64,7 +64,8 @@ class TestMutDecFromString {
         val bdRaw = BigDecimal(strVal)
         val bd = bdToIeeeDecimal128(bdRaw, RoundingMode.HALF_EVEN)
         val str = bdToDecimal128String(bd)
-        println("$strVal -> bdRaw:$bdRaw -> bd:$bd -> $str")
+        if (verbose)
+            println("$strVal -> bdRaw:$bdRaw -> bd:$bd -> $str")
     }
 
     @Test

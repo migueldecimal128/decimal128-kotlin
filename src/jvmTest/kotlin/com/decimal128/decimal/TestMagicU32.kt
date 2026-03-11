@@ -63,12 +63,14 @@ class TestMagicU32 {
         val l32 = tc.l
         val bitLen = 64 - java.lang.Long.numberOfLeadingZeros(l32)
         if (bitLen > 32) {
-            println("more than 32 bits long:$l32 (bitLen:$bitLen)")
+            if (verbose)
+                println("more than 32 bits long:$l32 (bitLen:$bitLen)")
             return
         }
         val k = tc.pow10
         if (k !in 0..9) {
-            println("pow10:$k out of range")
+            if (verbose)
+                println("pow10:$k out of range")
             return
         }
         test1(l32, tc.pow10)

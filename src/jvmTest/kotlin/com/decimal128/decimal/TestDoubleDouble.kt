@@ -61,24 +61,30 @@ class TestDoubleDouble {
         val ddSumX = newDoubleDoubleFromBigInteger(biSum)
         val ddProdX = newDoubleDoubleFromBigInteger(biProd)
         val ddQuotX = newDoubleDoubleFromBigInteger(biQuot)
-        println("ddA:$ddA")
-        println("ddB:$ddB")
-        println("ddSumX:$ddSumX")
-        println("ddProdX:$ddProdX")
-        println("ddQuotX:$ddQuotX")
+        if (verbose) {
+            println("ddA:$ddA")
+            println("ddB:$ddB")
+            println("ddSumX:$ddSumX")
+            println("ddProdX:$ddProdX")
+            println("ddQuotX:$ddQuotX")
+        }
 
         val ddSumY = DoubleDouble.newAdd(ddA, ddB)
-        println("ddSumY:$ddSumY")
+        if (verbose)
+            println("ddSumY:$ddSumY")
 
         val cmpXY = ddSumX.compareTo(ddSumY)
-        println("cmpXY:$cmpXY")
+        if (verbose)
+            println("cmpXY:$cmpXY")
 
         val ddProdY = DoubleDouble.newMulBetter(ddC, ddSumY)
-        println("ddProdY:$ddProdY")
+        if (verbose)
+            println("ddProdY:$ddProdY")
         assert(ddProdX.EQwithinUlpSlop(ddProdY, 1))
 
         val ddQuotY = DoubleDouble.newDiv(ddProdY, ddD)
-        println("ddQuotY:$ddQuotY")
+        if (verbose)
+            println("ddQuotY:$ddQuotY")
         assert(ddQuotX.EQwithinUlpSlop(ddQuotY, 16))
     }
 }

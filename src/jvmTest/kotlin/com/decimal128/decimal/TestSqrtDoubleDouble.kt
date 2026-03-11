@@ -177,7 +177,8 @@ class TestSqrtDoubleDouble{
                 ++corrections1
             else
                 ++correctionsGT1
-            println("corrections:$corrections total:$total corrections1:$corrections1 correctionsGT1:$correctionsGT1")
+            if (verbose)
+                println("corrections:$corrections total:$total corrections1:$corrections1 correctionsGT1:$correctionsGT1")
         }
         val coeffResidual1 = C256()
         c256SetSubUnscaled(coeffResidual1, coeffRadicandScaled, coeffGuess1Squared)

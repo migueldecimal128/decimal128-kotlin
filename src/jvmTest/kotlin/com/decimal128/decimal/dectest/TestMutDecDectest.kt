@@ -455,7 +455,8 @@ class TestMutDecDectest {
             processDirective(trimmed) -> {}
             processTest(trimmed) -> {}
             else -> {
-                println("UNRECOGNIZED: $trimmed")
+                if (verbose)
+                    println("UNRECOGNIZED: $trimmed")
             }
         }
     }

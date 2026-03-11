@@ -4,6 +4,8 @@ import kotlin.test.Test
 
 class TestU64ToUtf8 {
 
+    val verbose = false
+
     @Test
     fun test0() {
         var t = 0L
@@ -13,7 +15,8 @@ class TestU64ToUtf8 {
             val ret = IntegerParsePrint.u64ToUtf8(digitCount, t, utf8, 1)
             val str = String(utf8)
             val str2 = String(utf8, 1, ret-1)
-            println("digitCount:$digitCount str:$str str2:$str2")
+            if (verbose)
+                println("digitCount:$digitCount str:$str str2:$str2")
         }
     }
 
@@ -23,6 +26,7 @@ class TestU64ToUtf8 {
         val ret = IntegerParsePrint.u64ToUtf8(2, 45L, utf8, 1)
         val str = String(utf8)
         val str2 = String(utf8, 1, ret-1)
-        println("str:$str str2:$str2")
+        if (verbose)
+            println("str:$str str2:$str2")
     }
 }

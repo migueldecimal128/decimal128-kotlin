@@ -6,6 +6,8 @@ import java.math.BigDecimal
 
 class TestNextUpDown {
 
+    val verbose = false
+
     val tcs = arrayOf(
         BigDecimal("1e-6176"),
         BigDecimal("-1e-6176"),
@@ -61,7 +63,8 @@ class TestNextUpDown {
         up.setNextUp(n, env)
         down.setNextDown(n, env)
 
-        println("n:$n up:$up down:$down")
+        if (verbose)
+            println("n:$n up:$up down:$down")
 
         val t = MutDec()
 

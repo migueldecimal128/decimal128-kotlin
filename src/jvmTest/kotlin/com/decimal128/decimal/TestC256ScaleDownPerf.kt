@@ -26,7 +26,8 @@ class TestC256ScaleDownPerf {
             runThru()
         val stopTime = System.currentTimeMillis()
         val elapsedMillis = stopTime - startTime
-        println("elapsedMillis:$elapsedMillis")
+        if (verbose)
+            println("elapsedMillis:$elapsedMillis")
     }
 
     fun buildRandom() {

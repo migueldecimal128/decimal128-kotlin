@@ -39,7 +39,8 @@ class TestMutDecMagMul {
     @Test
     fun testBrokenIeee() {
         val bd = bdToIeeeDecimal128(BigDecimal.ZERO, RoundingMode.HALF_EVEN)
-        println("bd:$bd")
+        if (verbose)
+            println("bd:$bd")
     }
 
     @Test

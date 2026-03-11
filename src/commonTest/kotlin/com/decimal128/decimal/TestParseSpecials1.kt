@@ -11,7 +11,8 @@ class TestParseSpecials1 {
     @Test
     fun testParseInfinity() {
         val x = Decimal.from(1234567890)
-        println("x:$x")
+        if (verbose)
+            println("x:$x")
 
         val infinity = D128ParsePrint.parseInfinityText("infinity")
         assertEquals(Decimal.POS_INFINITY, infinity)

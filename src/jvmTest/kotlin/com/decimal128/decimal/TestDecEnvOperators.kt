@@ -4,7 +4,9 @@ import com.decimal128.decimal.DecContext.Companion.DECIMAL128
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class TestenvOperators {
+class TestContextOperators {
+
+    val verbose = false
 
     @Test
     fun test1() {
@@ -14,7 +16,8 @@ class TestenvOperators {
             val c = Decimal.from(4)
             val x = b * c
             val d = a + b * c
-            println("a:$a + b:$b * c:$c = d:$d")
+            if (verbose)
+                println("a:$a + b:$b * c:$c = d:$d")
             assertEquals("14", "$d")
 
             val e = a - b
@@ -26,7 +29,8 @@ class TestenvOperators {
             val f = Decimal.from(6)
             val g = Decimal.from(7)
             val h = (e + f) * g
-            println("(e:$e + f:$f) * g:$g = h:$h")
+            if (verbose)
+                println("(e:$e + f:$f) * g:$g = h:$h")
             assertEquals("77", "$h")
         }
     }

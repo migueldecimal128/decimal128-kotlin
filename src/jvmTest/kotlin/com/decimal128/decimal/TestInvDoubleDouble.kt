@@ -135,7 +135,8 @@ class TestInvDoubleDouble{
     fun testDdReciprocal() {
         val ddX = DoubleDouble(3.0, 0.0)
         val ddRecip = ddReciprocal(ddX)
-        println("ddX:$ddX ddRecip:$ddRecip")
+        if (verbose)
+            println("ddX:$ddX ddRecip:$ddRecip")
     }
 
     fun ddReciprocal(a: DoubleDouble): DoubleDouble {

@@ -2,43 +2,12 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.bigint.BigInt
-import kotlin.math.min
-
-private var POW_10 = Array<BigInt>(RRMP10_Q_MAXX) { BigInt.ONE }
-private var POW_5 = Array<BigInt>(RRMP10_K_MAXX) { BigInt.ONE }
-
-private fun calcPowTables() {
-    for (i in 1..<RRMP10_Q_MAXX)
-        POW_10[i] = POW_10[i - 1] * 10
-    for (i in 1..<RRMP10_K_MAXX)
-        POW_5[i] = POW_5[i - 1] * 5
-}
-
-private data class TableEntry(val qMax: Int, val k: Int, val prodBitLen: Int, val M: BigInt, val S: Int) {
-    var qMin = qMax
-    fun prodDwordLen() = (prodBitLen + 0x3f) ushr 6
-
-    override fun toString() = if (qMax == -1) "[NULL]" else "[q:$qMin-$qMax k:$k bitLen:$prodBitLen M:$M S:$S]"
-}
-
 // qMin = 8 bits
 // qMax = 8 bits
 // k = 8 bits
 // maxProdDwordLen = 8 bits
 // S = 16 bits
 // mDwordLen = 16 bits
-private fun packDescriptor(te: TableEntry): Long {
-    val prodDwordLen = te.prodDwordLen()
-    val MDwordLen = te.M.magnitudeLongArrayLen()
-    val descriptor = (te.qMin.toLong() shl 56) or
-            (te.qMax.toLong() shl 48) or
-            (te.k.toLong() shl 40) or
-            (prodDwordLen.toLong() shl 32) or
-            (te.S shl 16).toLong() or
-            (MDwordLen).toLong()
-    return descriptor
-}
 
 private fun unpackQMin(d: Long) = (d ushr 56).toInt()
 private fun unpackQMax(d: Long) = (d ushr 48).toInt() and 0xFF
@@ -47,143 +16,7 @@ private fun unpackProdDwordLen(d: Long) = (d ushr 32).toInt() and 0xFF
 private fun unpackS(d: Long) = (d ushr 16).toInt() and 0xFFFF
 private fun unpackMDwordLen(d: Long) = d.toInt() and 0xFFFF
 
-private val NULL_TABLE_ENTRY = TableEntry(-1, -1, -1, BigInt.ONE, -1)
 
-private var recipTable: Array<Array<TableEntry>> = Array(RRMP10_Q_MAXX) { Array<TableEntry>(RRMP10_K_MAXX) { NULL_TABLE_ENTRY } }
-
-private fun populateTable() {
-    for (j in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {
-        var prev = recipTable[j - 1][RRMP10_K_MIN]
-        for (k in RRMP10_K_MIN..<min(j, RRMP10_K_MAXX)) {
-            val yPrev = if (prev != NULL_TABLE_ENTRY) prev.S else 5 * RRMP10_K_MIN
-            val te = findTableEntry(j, k, yPrev + 2)
-            if (te != null) {
-                //println("($j, $k) => minimalY:${te.S}")
-                recipTable[j][k] = te
-                prev = te
-                //println(te)
-            }
-        }
-    }
-}
-
-private fun findTableEntry(q: Int, k: Int, yStart: Int): TableEntry? {
-    var y = yStart
-    var te = computeMSIfValid(q, k, y)
-    if (te != null) {
-        while (true) {
-            --y
-            if (y == 0)
-                throw IllegalStateException()
-            val teDown = computeMSIfValid(q, k, y) ?: return te
-            te = teDown
-        }
-    } else {
-        var yUp = yStart + 1
-        while (true) {
-            val teUp = computeMSIfValid(q, k, yUp)
-            if (teUp != null)
-                return teUp
-            ++yUp
-            if (yUp == 500)
-                throw IllegalStateException()
-            //println("q:$q k:$k yUp:$yUp")
-        }
-    }
-}
-
-private fun computeMSIfValid(q: Int, k: Int, y: Int): TableEntry? {
-    val twoPowY = BigInt.ONE shl y
-    val fivePowK = POW_5[k]
-    val tenPowK = POW_10[k]
-    val tenPowQ = POW_10[q]
-    val x = twoPowY + fivePowK - 1
-    val M = x / fivePowK
-
-    val S = y
-
-    val C_max = tenPowQ
-    val C_max_prime = C_max shr (k - 1)
-    val maxProd = C_max_prime * M
-
-    if (!isValid(tenPowQ, k, M, S))
-        return null
-    //println("tenPowQ is valid")
-    val half = tenPowK shr 1
-
-    if (!isValid(half, k, M, S))
-        return null
-    //println("half is valid")
-    val nines5 = tenPowQ - half
-
-    if (!isValid(nines5, k, M, S))
-        return null
-    //println("nines5 is valid")
-    val nines5down = nines5 - 1
-
-    if (!isValid(nines5down, k, M, S))
-        return null
-    //println("nines5down is valid")
-    val nines5up = nines5 + 1
-
-    if (!isValid(nines5up, k, M, S))
-        return null
-    //println("nines5up is valid")
-
-    val bitLen = maxProd.magnitudeBitLen()
-    return TableEntry(q, k, bitLen, M, y)
-}
-
-private fun isValid(dividend: BigInt, k: Int, M: BigInt, S: Int): Boolean {
-    val tenPowK = POW_10[k]
-    //val (expectedQuot, expectedRem) = dividend.divMod(tenPowK)
-    val expectedQuot = dividend / tenPowK
-    val expectedRem = dividend % tenPowK
-    val expectedResidue = Residue.fromRemainderDivisor(expectedRem, tenPowK)
-
-    val dividendAlfa = dividend shr (k - 1)
-    val maskAlfa = BigInt.withBitMask(k - 1)
-    val fracAlfa = dividend and maskAlfa
-    val stickyAlfa = fracAlfa.isNotZero()
-
-    val prod = dividendAlfa * M
-    val quotPlusRound = prod ushr S
-    val quot = quotPlusRound ushr 1
-    val round = quotPlusRound.isBitSet(0)
-
-    if (expectedQuot != quot)
-        return false
-
-    val fracBeta = prod - (quotPlusRound shl S)
-    val stickyBeta = fracBeta >= M
-
-    val sticky = stickyAlfa or stickyBeta
-
-    val residue = when {
-        round and sticky -> Residue.GT_HALF
-        round -> Residue.HALF
-        sticky -> Residue.LT_HALF
-        else -> Residue.EXACT
-    }
-
-    return expectedResidue == residue
-}
-
-private fun tableMerge() {
-    for (k in RRMP10_K_MIN..<RRMP10_K_MAXX) {
-        var tePrev = recipTable[RRMP10_Q_MAXX - 1][k]
-        for (q in RRMP10_Q_MAXX - 2 downTo RRMP10_Q_MIN) {
-            val te = recipTable[q][k]
-            if (tePrev != NULL_TABLE_ENTRY && te.prodDwordLen() == tePrev.prodDwordLen()) {
-                tePrev.qMin = q
-                recipTable[q][k] = tePrev
-                //println("merge($q, $k)")
-            } else {
-                tePrev = te
-            }
-        }
-    }
-}
 
 // I tried setting this up to use triangle indexing
 // it only saved 15% of the table size and required
@@ -191,7 +24,6 @@ private fun tableMerge() {
 // of the upper triangle vs the lower rectangle
 
 private fun offsetIndex(digitCount: Int, pow10: Int): Int {
-    verify { RRMP10_K_MAXX - RRMP10_K_MIN <= RRMP10_LOOKUP_ROW_SIZE }
     verify { digitCount in RRMP10_Q_MIN..<RRMP10_Q_MAXX }
     verify { pow10 in RRMP10_K_MIN..<RRMP10_K_MAXX }
     val index = ((digitCount - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT) + (pow10 - RRMP10_K_MIN)
@@ -199,173 +31,18 @@ private fun offsetIndex(digitCount: Int, pow10: Int): Int {
 }
 
 private fun paramsIndex(digitCount: Int, pow10: Int): Int {
-  //  return paramsIndex_x(digitCount, pow10)
-    return paramsIndex_y(digitCount, pow10)
-}
-
-private fun storeParamsIndex(digitCount: Int, pow10: Int, paramsIndex: Int) {
-//    storeParamsIndex_x(digitCount, pow10, paramsIndex)
-    storeParamsIndex_y(digitCount, pow10, paramsIndex)
-}
-
-
-private val OFFSETS = ShortArray(RRMP10_LOOKUP_TABLE_SIZE)
-
-private fun paramsIndex_x(digitCount: Int, pow10: Int): Int {
-    return OFFSETS[offsetIndex(digitCount, pow10)].toInt()
-}
-
-private fun storeParamsIndex_x(digitCount: Int, pow10: Int, paramsIndex: Int) {
-    val offsetIndex = offsetIndex(digitCount, pow10)
-    OFFSETS[offsetIndex] = paramsIndex.toShort()
-}
-
-private const val BASE_INTERCEPT = 768
-
-private fun storeParamsIndex_y(digitCount: Int, pow10: Int, paramsIndex: Int) {
-    val offsetIndex = offsetIndex(digitCount, pow10)
-    val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
-    val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
-    val base = (block shl 6) - (block shl 3)  // base = block * 56
-    val effectiveBase = base and baseMask
-    val encodedIndex = paramsIndex - effectiveBase
-    verify { encodedIndex in 0..255 }
-    BYTE_TABLES[RRMP10_LOOKUP_BASE + offsetIndex] = encodedIndex.toByte()
-}
-
-private fun paramsIndex_y(digitCount: Int, pow10: Int): Int {
     val offsetIndex = offsetIndex(digitCount, pow10)
     val encodedIndex =
         BYTE_TABLES[(RRMP10_LOOKUP_BASE + offsetIndex) and BYTE_TABLES_BCE].toInt() and 0xFF
-    val baseMask = (BASE_INTERCEPT - offsetIndex) shr 31
-    val block = (offsetIndex - (BASE_INTERCEPT - 128)) ushr 7
+    val baseMask = (RRMP10_ENCODE_BASE_INTERCEPT - offsetIndex) shr 31
+    val block = (offsetIndex - (RRMP10_ENCODE_BASE_INTERCEPT - 128)) ushr 7
     val base = (block shl 6) - (block shl 3)  // base = block * 56
     val effectiveBase = base and baseMask
     return effectiveBase + encodedIndex
 }
 
-private var iRRP = 1
-private val RANGE_RECIP_PARAMS = LongArray(709)
-
-private fun serializeTable() {
-    for (q in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {
-        for (k in RRMP10_K_MIN..<min(q, RRMP10_K_MAXX)) {
-            val te = recipTable[q][k]
-            val i = offsetIndex(q, k)
-            val paramsIndex = when {
-                te == NULL_TABLE_ENTRY -> -1
-                q > te.qMin -> paramsIndex(te.qMin, k)
-                else -> serialize(te)
-            }
-            storeParamsIndex(q, k, paramsIndex)
-        }
-    }
-
-    if (RANGE_RECIP_PARAMS.size != iRRP) {
-        println("RANGE_RECIP_PARAMS.size should be $iRRP")
-        throw IllegalStateException()
-    }
-
-    for (i in RANGE_RECIP_PARAMS.indices)
-        DWORD_TABLES[RANGE_RECIP_MUL_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
-/*
-    for (i in OFFSETS.indices) {
-        val value = OFFSETS[i].toInt() and 0xFFFF
-        if (value != 0) {
-            val base = when {
-                i < 768 -> 0
-                (i - 768) < 128 * 1 -> 56 * 1
-                (i - 768) < 128 * 2 -> 56 * 2
-                (i - 768) < 128 * 3 -> 56 * 3
-                (i - 768) < 128 * 4 -> 56 * 4
-                (i - 768) < 128 * 5 -> 56 * 5
-                (i - 768) < 128 * 6 -> 56 * 6
-                (i - 768) < 128 * 7 -> 56 * 7
-                (i - 768) < 128 * 8 -> 56 * 8
-                (i - 768) < 128 * 9 -> 56 * 9
-                else -> 0
-            }
-            val diff = value - base
-            if (diff < 0 || diff > 255)
-                println("FAIL at index $i: value=$value base=$base diff=$diff")
-        }
-    }
-
-    println("kilroy was here!")
-
- */
-}
-
-private fun serialize(te: TableEntry): Int {
-    val offset = iRRP
-    appendLong(packDescriptor(te))
-    val mLimbs = te.M.magnitudeToLittleEndianLongArray()
-    for (mLimb in mLimbs)
-        appendLong(mLimb)
-    return offset
-}
-
-private fun appendLong(dw: Long) {
-    if (iRRP == RANGE_RECIP_PARAMS.size)
-        throw RuntimeException("RANGE_RECIP_PARAMS is too small")
-    RANGE_RECIP_PARAMS[iRRP] = dw
-    ++iRRP
-}
-
-private fun releaseTemporaryStorage() {
-    POW_5 = emptyArray()
-    POW_10 = POW_5
-
-    recipTable = emptyArray()
-}
-
-private var initialized = true
-private fun initialize() {
-    if (!initialized) {
-        calcPowTables()
-        populateTable()
-        tableMerge()
-        serializeTable()
-        DivMagic.initializeMagicPow10_64()
-        val dwordChecksum = Fnv1aChecksum.fnv1a(DWORD_TABLES)
-        val byteChecksum = Fnv1aChecksum.fnv1a(BYTE_TABLES)
-        println("dwordChecksum:$dwordChecksum byteChecksum:$byteChecksum")
-        verify { dwordChecksum == 739413891 && byteChecksum == 1447633196 }
-        releaseTemporaryStorage()
-        initialized = true
-    }
-}
-
-object Fnv1aChecksum {
-    private const val FNV_OFFSET_BASIS = -0x7ee3ad4b // 2166136261 as signed Int
-    private const val FNV_PRIME = 16777619
-
-    fun fnv1a(bytes: ByteArray): Int {
-        var hash = FNV_OFFSET_BASIS
-        for (b in bytes) {
-            hash = hash xor (b.toInt() and 0xff)
-            hash *= FNV_PRIME
-        }
-        return hash
-    }
-
-    fun fnv1a(longs: LongArray): Int {
-        var hash = FNV_OFFSET_BASIS
-        for (value in longs) {
-            // Process the 8 bytes within the Long
-            for (i in 0..7) {
-                val byte = ((value shr (i * 8)) and 0xFF).toInt()
-                hash = hash xor byte
-                hash *= FNV_PRIME
-            }
-        }
-        return hash
-    }
-}
-
 internal fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int): Residue {
     verify { pow10 >= RRMP10_K_MIN }
-    initialize()
     return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
 }
 

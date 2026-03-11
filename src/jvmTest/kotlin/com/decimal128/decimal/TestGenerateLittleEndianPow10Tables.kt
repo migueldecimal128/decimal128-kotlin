@@ -7,6 +7,8 @@ import java.math.BigInteger
 
 class TestGenerateLittleEndianPow10Tables {
 
+    val verbose = false
+
     @Test
     fun testPrintLimit() {
         val biMax64 = BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE)
@@ -14,7 +16,8 @@ class TestGenerateLittleEndianPow10Tables {
         val biStrLen = biStr.length
         val biStrHex = biMax64.toString(16)
 
-        println("biMax64:$biStr ($biStrLen) $biStrHex")
+        if (verbose)
+            println("biMax64:$biStr ($biStrLen) $biStrHex")
     }
 
     fun getDigitCount(bitCount: Int) : Int {
@@ -28,7 +31,8 @@ class TestGenerateLittleEndianPow10Tables {
     fun printBoundaryDigitCounts() {
         for (bitCount in 64..256 step 64) {
             val digitCount = getDigitCount(bitCount)
-            println("bitCount:$bitCount  digitCount:$digitCount")
+            if (verbose)
+                println("bitCount:$bitCount  digitCount:$digitCount")
         }
     }
 
@@ -37,7 +41,8 @@ class TestGenerateLittleEndianPow10Tables {
         val bi = BigInteger.ONE.shiftLeft(16)
         val ceilLog10 = Math.ceil(Math.log10(bi.toDouble())).toInt()
         val biUp = BigInteger.TEN.pow(ceilLog10)
-        println("bi:$bi  ceilLog10:$ceilLog10  biUp:$biUp")
+        if (verbose)
+            println("bi:$bi  ceilLog10:$ceilLog10  biUp:$biUp")
     }
 
     @Test
@@ -66,9 +71,11 @@ class TestGenerateLittleEndianPow10Tables {
                 continue
             val l = t.toLong()
             val hex = l.toHexString(numberHexFormat)
-            print("${hex}uL.toLong(), ")
+            if (verbose)
+                print("${hex}uL.toLong(), ")
         }
-        println("// $biStr ($pow10)")
+        if (verbose)
+            println("// $biStr ($pow10)")
     }
 
     fun printTable(minBitCount: Int, maxBitCount: Int) {
@@ -77,7 +84,8 @@ class TestGenerateLittleEndianPow10Tables {
         val minDigitCount = getDigitCount(minBitCount)
         val maxDigitCount = getDigitCount(maxBitCount)
 
-        println("// minBitCount:$minBitCount  maxBitCount:$maxBitCount")
+        if (verbose)
+            println("// minBitCount:$minBitCount  maxBitCount:$maxBitCount")
         //printTableLine(biMin)
         for (pow in minDigitCount..<maxDigitCount) {
             val biPow = BigInteger.TEN.pow(pow)

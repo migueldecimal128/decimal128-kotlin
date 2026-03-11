@@ -6,6 +6,8 @@ import java.math.BigInteger
 
 class TestDoubleDoubleTwoSum {
 
+    val verbose = false
+
     fun doubleDoubleFromBigInteger(n: BigInteger): Pair<Double, Double> {
         if (n.signum() == 0) return 0.0 to 0.0
         val sign = n.signum()
@@ -209,24 +211,30 @@ class TestDoubleDoubleTwoSum {
         val ddSumX = doubleDoubleFromBigInteger(biSum)
         val ddProdX = doubleDoubleFromBigInteger(biProd)
         val ddQuotX = doubleDoubleFromBigInteger(biQuot)
-        println("ddA:$ddA")
-        println("ddB:$ddB")
-        println("ddSumX:$ddSumX")
-        println("ddProdX:$ddProdX")
-        println("ddQuotX:$ddQuotX")
+        if (verbose) {
+            println("ddA:$ddA")
+            println("ddB:$ddB")
+            println("ddSumX:$ddSumX")
+            println("ddProdX:$ddProdX")
+            println("ddQuotX:$ddQuotX")
+        }
 
         val ddSumY = addDoubleDouble(ddA.first, ddA.second, ddB.first, ddB.second)
-        println("ddSumY:$ddSumY")
+        if (verbose)
+            println("ddSumY:$ddSumY")
 
         val cmpXY = compareDoubleDouble(ddSumX.first, ddSumX.second, ddSumY.first, ddSumY.second)
-        println("cmpXY:$cmpXY")
+        if (verbose)
+            println("cmpXY:$cmpXY")
 
         val ddProdY = mulDoubleDouble(ddC.first, ddC.second, ddSumY.first, ddSumY.second)
-        println("ddProdY:$ddProdY")
+        if (verbose)
+            println("ddProdY:$ddProdY")
         assertEquals(ddProdX, ddProdY)
 
         val ddQuotY = divDoubleDouble(ddProdY.first, ddProdY.second, ddD.first, ddD.second)
-        println("ddQuotY:$ddQuotY")
+        if (verbose)
+            println("ddQuotY:$ddQuotY")
         assertEquals(ddQuotX, ddQuotY)
     }
 }

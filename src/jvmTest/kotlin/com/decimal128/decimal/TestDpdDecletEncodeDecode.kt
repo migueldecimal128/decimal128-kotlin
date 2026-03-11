@@ -22,7 +22,8 @@ class TestDpdDecletEncodeDecode {
                 println("Mismatch at $n: enc=${enc.toString(2)} dec=$dec")
             }
         }
-        println("Canonical round-trip check done.")
+        if (verbose)
+            println("Canonical round-trip check done.")
     }
 
     @Test
@@ -44,7 +45,8 @@ class TestDpdDecletEncodeDecode {
                 println("decode produced out-of-range: $valDecoded for declet ${d.toString(2).padStart(10,'0')}")
             }
         }
-        println("Non-canonical declets collapsed to canonical: $nonCanonCount")
+        if (verbose)
+            println("Non-canonical declets collapsed to canonical: $nonCanonCount")
         assertEquals(24, nonCanonCount)
     }
 

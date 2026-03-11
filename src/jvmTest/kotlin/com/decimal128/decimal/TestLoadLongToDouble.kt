@@ -9,6 +9,8 @@ import java.lang.Math.sqrt
 
 class TestLoadLongToDouble {
 
+    val verbose = false
+
     val longCases = longArrayOf(
         1L shl 8,
         2L * 1L,
@@ -30,8 +32,8 @@ class TestLoadLongToDouble {
         val rBiasedExp = (rBits ushr 52) and 0x7FF
         val rUnbiasedExp = rBiasedExp - 1023
         val rSignificand = rBits and 0xF_FFFF_FFFF_FFFFL
-
-        println("radicand %s %5d 0x%03X 0x%013X %s".format(rSign, rUnbiasedExp, rBiasedExp, rSignificand, r))
+        if (verbose)
+            println("radicand %s %5d 0x%03X 0x%013X %s".format(rSign, rUnbiasedExp, rBiasedExp, rSignificand, r))
 
         val s = sqrt(r)
         val sBits = doubleToRawLongBits(s)
@@ -40,7 +42,8 @@ class TestLoadLongToDouble {
         val sUnbiasedExp = sBiasedExp - 1023
         val sSignificand = sBits and 0xF_FFFF_FFFF_FFFFL
 
-        println(" -> sqrt %s %5d 0x%03X 0x%013X %s".format(sSign, sUnbiasedExp, sBiasedExp, sSignificand, s))
+        if (verbose)
+            println(" -> sqrt %s %5d 0x%03X 0x%013X %s".format(sSign, sUnbiasedExp, sBiasedExp, sSignificand, s))
     }
 
     val biCases = arrayOf(
@@ -51,7 +54,8 @@ class TestLoadLongToDouble {
     fun testBiCases() {
         for (bi in biCases) {
             val (biEst, kEvenUpPow10) = biSqrtEstimate(bi)
-            println("$bi -> $biEst kEvenUpPow10:$kEvenUpPow10")
+            if (verbose)
+                println("$bi -> $biEst kEvenUpPow10:$kEvenUpPow10")
         }
     }
 
