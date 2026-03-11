@@ -2,9 +2,9 @@ package com.decimal128.decimal
 
 import com.decimal128.bigint.Magia
 import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.Residue.Companion.LT_HALF
-import com.decimal128.decimal.Residue.Companion.HALF
 import com.decimal128.decimal.Residue.Companion.GT_HALF
+import com.decimal128.decimal.Residue.Companion.HALF
+import com.decimal128.decimal.Residue.Companion.LT_HALF
 
 object DivKnuth {
 

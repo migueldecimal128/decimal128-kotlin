@@ -1,8 +1,6 @@
 package com.decimal128.decimal
 
 import kotlin.math.max
-import kotlin.or
-import kotlin.unaryMinus
 
 internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
     verify { z.c256HasValidLengths() }

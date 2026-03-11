@@ -1,9 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
 package com.decimal128.decimal
-import com.decimal128.decimal.Residue.Companion.EXACT
-import kotlin.math.max
-import kotlin.math.min
 
 // These have an implied binary decimal point at 2**32
 private const val LOG2_10_FLOOR: Long = 14_267_572_564L

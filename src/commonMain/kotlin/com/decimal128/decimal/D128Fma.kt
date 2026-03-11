@@ -2,9 +2,6 @@ package com.decimal128.decimal
 
 import kotlin.math.min
 
-internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal): Decimal =
-    fmaImpl(x, y, a, DecContext.current())
-
 internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
     val signatureXY = binopSignatureOf(x.steal, y.steal)
     if (signatureXY == FNZ_FNZ && a.isFinite())

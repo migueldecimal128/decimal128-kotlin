@@ -3,16 +3,7 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.Ieee754Class.negativeInfinity
-import com.decimal128.decimal.Ieee754Class.negativeNormal
-import com.decimal128.decimal.Ieee754Class.negativeSubnormal
-import com.decimal128.decimal.Ieee754Class.negativeZero
-import com.decimal128.decimal.Ieee754Class.positiveInfinity
-import com.decimal128.decimal.Ieee754Class.positiveNormal
-import com.decimal128.decimal.Ieee754Class.positiveSubnormal
-import com.decimal128.decimal.Ieee754Class.positiveZero
-import com.decimal128.decimal.Ieee754Class.quietNaN
-import com.decimal128.decimal.Ieee754Class.signalingNaN
+import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
 

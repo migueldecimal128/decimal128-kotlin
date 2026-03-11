@@ -3,9 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.Decimal.Companion.NEG_INFINITY
-import com.decimal128.decimal.Decimal.Companion.POS_INFINITY
-
 internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
     d128MulImpl(x, y, DecContext.current())
 

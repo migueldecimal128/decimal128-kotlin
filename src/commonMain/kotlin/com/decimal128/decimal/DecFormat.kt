@@ -3,8 +3,6 @@
 
 package com.decimal128.decimal
 
-import kotlin.math.max
-
 data class DecFormat(val precision: Int,
                      val eMax: Int,
                      val eMin: Int
@@ -12,8 +10,6 @@ data class DecFormat(val precision: Int,
     constructor(precision: Int,
                 eMax: Int
         ) : this(precision, eMax, -(eMax - 1))
-
-    constructor(decRounding: DecRounding) : this(34, 6144)
 
     companion object {
         val DECIMAL_64 = DecFormat(16, 384)

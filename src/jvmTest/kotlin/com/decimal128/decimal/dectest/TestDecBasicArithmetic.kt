@@ -1,15 +1,8 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.d128AddImpl
-import com.decimal128.decimal.d128AddSubImpl
+import com.decimal128.decimal.*
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import org.junit.jupiter.api.Test
-import com.decimal128.decimal.d128DivImpl
-import com.decimal128.decimal.divIntImpl
-import com.decimal128.decimal.d128MulImpl
-import com.decimal128.decimal.remNearImpl
-import com.decimal128.decimal.d128RemTruncImpl
-import com.decimal128.decimal.d128SubImpl
 
 class TestDecBasicArithmetic {
 

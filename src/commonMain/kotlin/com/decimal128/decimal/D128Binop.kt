@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import kotlin.math.max
 import kotlin.math.min
 
 internal fun nanOperandFound(x: Decimal, y: Decimal,

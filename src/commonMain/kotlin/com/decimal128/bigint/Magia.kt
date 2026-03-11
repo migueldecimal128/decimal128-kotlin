@@ -4,10 +4,24 @@
 
 package com.decimal128.bigint
 
+import com.decimal128.bigint.Magia.ZERO
+import com.decimal128.bigint.Magia.bitLen
+import com.decimal128.bigint.Magia.bitLengthBigIntegerStyle
+import com.decimal128.bigint.Magia.fromHex
+import com.decimal128.bigint.Magia.knuthDivide
+import com.decimal128.bigint.Magia.mutateFmaPow10
+import com.decimal128.bigint.Magia.newMul
+import com.decimal128.bigint.Magia.nonZeroLimbLen
+import com.decimal128.bigint.Magia.ntz
+import com.decimal128.bigint.Magia.render9DigitsBeforeIndex
+import com.decimal128.bigint.Magia.renderTailDigitsBeforeIndex
+import com.decimal128.bigint.Magia.toBinaryBytes
+import com.decimal128.bigint.Magia.toHexString
+import com.decimal128.bigint.Magia.toString
 import com.decimal128.bigint.intrinsic.unsignedMulHi
 import com.decimal128.decimal.unsignedLT
-import kotlin.math.min
 import kotlin.math.max
+import kotlin.math.min
 
 
 // magia == MAGnitude IntArray ... it's magic!

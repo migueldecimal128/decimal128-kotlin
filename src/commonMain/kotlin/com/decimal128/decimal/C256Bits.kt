@@ -2,8 +2,8 @@
 
 package com.decimal128.decimal
 
-import kotlin.math.min
 import kotlin.math.max
+import kotlin.math.min
 
 internal fun calcBitLen64(dw0: Long): Int {
     val nlz0 = dw0.countLeadingZeroBits()
