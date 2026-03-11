@@ -192,12 +192,12 @@ private fun tableMerge() {
 
 private const val ROW_SIZE = K_MAXX - K_MIN
 private const val TABLE_SIZE = (Q_MAXX - Q_MIN) * ROW_SIZE
-private val OFFSETS = ShortArray(TABLE_SIZE)
 
 // I tried setting this up to use triangle indexing
 // it only saved 15% of the table size and required
 // more calculation to find the offsetIndex, esp because
 // of the upper triangle vs the lower rectangle
+
 private fun offsetIndex(digitCount: Int, pow10: Int): Int {
     verify { digitCount in Q_MIN..<Q_MAXX }
     verify { pow10 in K_MIN..<K_MAXX }
@@ -205,13 +205,53 @@ private fun offsetIndex(digitCount: Int, pow10: Int): Int {
     return index
 }
 
+
+private val OFFSETS = ShortArray(TABLE_SIZE)
+
 private fun paramsIndex(digitCount: Int, pow10: Int): Int {
-    return OFFSETS[offsetIndex(digitCount, pow10)].toInt()
+    return paramsIndex_y(digitCount, pow10)
 }
 
 private fun storeParamsIndex(digitCount: Int, pow10: Int, paramsIndex: Int) {
+    storeParamsIndex_x(digitCount, pow10, paramsIndex)
+    storeParamsIndex_y(digitCount, pow10, paramsIndex)
+}
+
+private fun paramsIndex_x(digitCount: Int, pow10: Int): Int {
+    return OFFSETS[offsetIndex(digitCount, pow10)].toInt()
+}
+
+private fun storeParamsIndex_x(digitCount: Int, pow10: Int, paramsIndex: Int) {
     val offsetIndex = offsetIndex(digitCount, pow10)
     OFFSETS[offsetIndex] = paramsIndex.toShort()
+}
+
+
+private val ENCODED_OFFSETS = ByteArray(TABLE_SIZE)
+
+private fun storeParamsIndex_y(digitCount: Int, pow10: Int, paramsIndex: Int) {
+    if (digitCount == 48 && pow10 == 29)
+        println("kilroy was here!")
+    val offsetIndex = offsetIndex(digitCount, pow10)
+    val baseMask = (768 - offsetIndex) shr 31
+    val block = (offsetIndex - 640) ushr 7
+    val base = (block shl 6) - (block shl 3)  // base = block * 56
+    val effectiveBase = base and baseMask
+    val encodedIndex = paramsIndex - effectiveBase
+    if (encodedIndex !in 0..255)
+        println("digitCount:$digitCount pow10:$pow10 paramsIndex:$paramsIndex offsetIndex:$offsetIndex effectiveBase:$effectiveBase")
+    verify { encodedIndex in 0..255 }
+    ENCODED_OFFSETS[offsetIndex] = encodedIndex.toByte()
+}
+
+private fun paramsIndex_y(digitCount: Int, pow10: Int): Int {
+    val offsetIndex = offsetIndex(digitCount, pow10)
+    val encodedIndex = ENCODED_OFFSETS[offsetIndex].toInt() and 0xFF
+    val baseMask = (768 - offsetIndex) shr 31
+    val block = (offsetIndex - 640) ushr 7
+    val base = (block shl 6) - (block shl 3)  // base = block * 56
+    val effectiveBase = base and baseMask
+    return effectiveBase + encodedIndex
 }
 
 private var iRRP = 1
@@ -239,6 +279,7 @@ private fun serializeTable() {
     for (i in RANGE_RECIP_PARAMS.indices)
         POW10[RANGE_RECIP_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
 
+    /*
     for (i in OFFSETS.indices) {
         val value = OFFSETS[i].toInt() and 0xFFFF
         if (value != 0) {
@@ -262,6 +303,8 @@ private fun serializeTable() {
     }
 
     println("kilroy was here!")
+
+     */
 }
 
 private fun serialize(te: TableEntry): Int {
