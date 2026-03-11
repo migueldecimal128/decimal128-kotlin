@@ -190,7 +190,6 @@ private fun initTables() {
         POW10[BARRETT_POW5_MU_OFFSET + i] = mu.toLong()
     }
     // initialization of Magic multipliers M is in DivMagic
-    // initialization of RECIP_MUL_PARAMS is in DivRangeRecipMulPow10
 }
 
 private val _nada = initTables()
