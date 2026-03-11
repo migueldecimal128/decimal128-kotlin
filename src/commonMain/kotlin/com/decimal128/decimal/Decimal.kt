@@ -718,7 +718,7 @@ class Decimal private constructor(
                 (this.dw1 - other.dw1) or
                 (this.dw0 - other.dw0)) == 0L
 
-    fun magnitudeCompareTo(other: Decimal): Int = d128CompareMagnitude(this, other)
+    fun magnitudeCompareTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other)
 
     // IEEE754-2019 5.6.1 Comparisons
 

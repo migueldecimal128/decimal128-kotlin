@@ -9,10 +9,8 @@ import com.decimal128.decimal.Decimal.Companion.POS_ONEe0
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import com.decimal128.decimal.Decimal.Companion.hasNaN
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
-internal fun d128CompareMagnitude(x: Decimal, y: Decimal): Int {
+internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
         cmpMagnitudeFnzFnz(x, y)
@@ -26,7 +24,7 @@ internal fun d128CompareMagnitude(x: Decimal, y: Decimal): Int {
         INF_ZER -> 1
         INF_INF,
         ZER_ZER -> 0
-        else -> TODO()
+        else -> throw IllegalArgumentException("NaN found")
     }
 }
 

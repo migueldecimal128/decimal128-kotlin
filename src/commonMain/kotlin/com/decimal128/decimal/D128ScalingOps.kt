@@ -18,34 +18,36 @@ internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int
 
 internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal {
     val xSteal = x.steal
-    val xQ = stealQexp(xSteal)
-    val qDesired = -decimalScale
-    val xDigitLen = stealDigitLen(xSteal)
-    // FIXME ... still checking qExp for special values!
-    when {
-        xQ < NON_FINITE_INF && xDigitLen > 0 -> {
-            val qDelta = xQ - qDesired
-            when {
-                qDelta > 0 -> { // add fractional zeros
-                    val headroom = min(ctx.precision - xDigitLen, xQ - ctx.qTiny)
-                    if (qDelta <= headroom) {
-                        val (dw1, dw0) = umul128xPow10to128(x.dw1, x.dw0, qDelta)
-                        return Decimal(x.sign, xQ - qDelta, dw1, dw0)
-                    }
-                    return ctx.signalInvalid(Decimal.NaN)
+    if (stealIsFNZ(xSteal)) {
+        val xQ = stealQexp(xSteal)
+        val xDigitLen = stealDigitLen(xSteal)
+        val qDesired = -decimalScale
+        val qDelta = xQ - qDesired
+        when {
+            qDelta > 0 -> { // add fractional zeros
+                val headroom = min(ctx.precision - xDigitLen, xQ - ctx.qTiny)
+                if (qDelta <= headroom) {
+                    val (dw1, dw0) = umul128xPow10to128(x.dw1, x.dw0, qDelta)
+                    return Decimal(x.sign, xQ - qDelta, dw1, dw0)
                 }
-                qDelta < 0 -> { // remove fractional zeros
-                    val t = ctx.tmps.mdecBridge1.set(x)
-                    val r = ctx.tmps.mdecBridge2.setStripTrailingZeros(t, ctx, -qDelta)
-                    if (r.qExp == -decimalScale)
-                        return Decimal.from(r)
-                    return ctx.signalInvalid(Decimal.NaN)
-                }
-                else -> return x
+                return ctx.signalInvalid(Decimal.NaN)
             }
+
+            qDelta < 0 -> { // remove fractional zeros
+                val t = ctx.tmps.mdecBridge1.set(x)
+                val r = ctx.tmps.mdecBridge2.setStripTrailingZeros(t, ctx, -qDelta)
+                if (r.qExp == -decimalScale)
+                    return Decimal.from(r)
+                return ctx.signalInvalid(Decimal.NaN)
+            }
+
+            else -> return x
         }
-        xQ < NON_FINITE_INF -> return Decimal.zero(x.sign, -decimalScale, ctx)
-        xQ == NON_FINITE_INF -> return x
-        else -> return nanOperandFound(x, ctx)
     }
+    if (stealIsZER(xSteal))
+        return Decimal.zero(x.sign, -decimalScale, ctx)
+    if (stealIsINF(xSteal))
+        return x
+    verify { stealIsNAN(xSteal) }
+    return nanOperandFound(x, ctx)
 }
