@@ -279,7 +279,7 @@ private fun serializeTable() {
     }
 
     for (i in RANGE_RECIP_PARAMS.indices)
-        POW10[RANGE_RECIP_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
+        DWORD_TABLES[RANGE_RECIP_MUL_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]
 /*
     for (i in OFFSETS.indices) {
         val value = OFFSETS[i].toInt() and 0xFFFF
@@ -357,8 +357,8 @@ private fun _divPow10(
     // since we have passed in x3 x2 x1 x0
     z.c256EnableIndexSetAndZeroOut()
 
-    val paramsIndex = paramsIndex(qDigitCount, kPow10) + RANGE_RECIP_PARAMS_BASE
-    val descriptor = POW10[paramsIndex and POW10_BCE]
+    val paramsIndex = paramsIndex(qDigitCount, kPow10) + RANGE_RECIP_MUL_PARAMS_BASE
+    val descriptor = DWORD_TABLES[paramsIndex and DWORD_TABLES_BCE]
     verify { qDigitCount in unpackQMin(descriptor)..unpackQMax(descriptor) }
     verify { kPow10 == unpackK(descriptor) }
     val prodDwordLen = unpackProdDwordLen(descriptor)
@@ -476,7 +476,7 @@ private inline fun c256RecipMul256(
     var carry_1 = 0L
     var mI = 0
     while (mI < mLen) {
-        val mX = POW10[(mOff + mI) and POW10_BCE]
+        val mX = DWORD_TABLES[(mOff + mI) and DWORD_TABLES_BCE]
 
         val pp01_0 = unsignedMulHi(mX, n0)
         val pp00_0 = mX * n0
@@ -655,7 +655,7 @@ private inline fun c256RecipMul192(
     var carry_1 = 0L
     var mI = 0
     while (mI < mLen) {
-        val mX = POW10[(mOff + mI) and POW10_BCE]
+        val mX = DWORD_TABLES[(mOff + mI) and DWORD_TABLES_BCE]
 
         val pp01_0 = unsignedMulHi(mX, n0)
         val pp00_0 = mX * n0
@@ -795,7 +795,7 @@ private inline fun c256RecipMul128(
     var carry_1 = 0L
     var mI = 0
     while (mI < mLen) {
-        val mX = POW10[(mOff + mI) and POW10_BCE]
+        val mX = DWORD_TABLES[(mOff + mI) and DWORD_TABLES_BCE]
 
         val pp01_0 = unsignedMulHi(mX, n0)
         val pp00_0 = mX * n0
@@ -903,7 +903,7 @@ private inline fun c256RecipMul64(
     var carry_1 = 0L
     var mI = 0
     while (mI < mLen) {
-        val mX = POW10[(mOff + mI) and POW10_BCE]
+        val mX = DWORD_TABLES[(mOff + mI) and DWORD_TABLES_BCE]
 
         val pp01_0 = unsignedMulHi(mX, n0)
         val pp00_0 = mX * n0

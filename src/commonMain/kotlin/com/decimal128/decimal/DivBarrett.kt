@@ -22,8 +22,8 @@ internal fun barrettDivModPow10(z: C256, x: C256, pow10: Int): Long {
 internal fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
     verify { pow5 in 1..<BARRETT_POW10_MAXX }
 
-    val denom = POW10[POW5_64_OFFSET + pow5]
-    val mu = POW10[BARRETT_POW5_MU_OFFSET + pow5]
+    val denom = POW10[POW5_64_BASE + pow5]
+    val mu = POW10[BARRETT_POW5_MU_BASE + pow5]
     val xBitLen = x.bitLen
     val remainder = when {
         xBitLen <= 64 ->
@@ -79,11 +79,11 @@ internal fun barrettDivMod_32_256(q: C256, x: C256, denom: Long, mu: Long): Long
     val dw2 = x.dw2;
     val dw3 = x.dw3
 
-    val dwA = dw0 and 0xFFFF_FFFFL
+    val dwA = dw0 and MASK32L
     val dwB = dw0 ushr 32
-    val dwC = dw1 and 0xFFFF_FFFFL
+    val dwC = dw1 and MASK32L
     val dwD = dw1 ushr 32
-    val dwE = dw2 and 0xFFFF_FFFFL
+    val dwE = dw2 and MASK32L
     val dwF = dw2 ushr 32
     val dwG = dw3
 
@@ -151,9 +151,9 @@ private fun barrettDivMod_32_192(q: C256, x: C256, denom: Long, mu: Long): Long 
     val dw1 = x.dw1;
     val dw2 = x.dw2
 
-    val dwA = dw0 and 0xFFFF_FFFFL
+    val dwA = dw0 and MASK32L
     val dwB = dw0 ushr 32
-    val dwC = dw1 and 0xFFFF_FFFFL
+    val dwC = dw1 and MASK32L
     val dwD = dw1 ushr 32
     val dwG = dw2
 
@@ -205,7 +205,7 @@ internal fun barrettDivMod_32_128(q: C256, x: C256, denom: Long, mu: Long): Long
     val dw0 = x.dw0;
     val dw1 = x.dw1
 
-    val dwA = dw0 and 0xFFFF_FFFFL
+    val dwA = dw0 and MASK32L
     val dwB = dw0 ushr 32
     val dwG = dw1
 

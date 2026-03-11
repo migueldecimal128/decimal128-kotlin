@@ -485,12 +485,12 @@ internal fun udivMod128x64to128(x1: Long, x0: Long, y0: Long) : Triple<Long, Lon
 internal fun udivMod128x64to128_stage2(x1: Long, x0: Long, y0: Long) : Triple<Long, Long, Long> {
     require(y0 != 0L) { "division by zero" }
     val v1 = y0 ushr 32
-    val v0 = y0 and MASK32
+    val v0 = y0 and MASK32L
     if (v1 == 0L) {
         val u3 = x1 ushr 32
-        val u2 = x1 and MASK32
+        val u2 = x1 and MASK32L
         val u1 = x0 ushr 32
-        val u0 = x0 and MASK32
+        val u0 = x0 and MASK32L
 
         val t3 = u3
         val q3 = unsignedDiv(t3, v0); val r3 = unsignedMod(t3, v0)
@@ -565,8 +565,8 @@ internal fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long
 
     // Normalize divisor
     val yNorm = y shl s
-    val vn1   = (yNorm ushr 32) and MASK32  // top 32 bits (MSB=1)
-    val vn0   =  yNorm         and MASK32  // low 32 bits
+    val vn1   = (yNorm ushr 32) and MASK32L  // top 32 bits (MSB=1)
+    val vn0   =  yNorm         and MASK32L  // low 32 bits
 
     // Normalize dividend (128-bit << s)
     val carryHigh = if (s == 0) 0L else xHigh ushr (64 - s)
@@ -574,11 +574,11 @@ internal fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long
     val loNorm    = xLow  shl s
 
     // Carve out five 32-bit limbs u4…u0
-    var un4 = carryHigh             and MASK32
-    var un3 = (hiNorm ushr 32)      and MASK32
-    var un2 =  hiNorm               and MASK32
-    var un1 = (loNorm ushr 32)      and MASK32
-    var un0 =  loNorm               and MASK32
+    var un4 = carryHigh             and MASK32L
+    var un3 = (hiNorm ushr 32)      and MASK32L
+    var un2 =  hiNorm               and MASK32L
+    var un1 = (loNorm ushr 32)      and MASK32L
+    var un0 =  loNorm               and MASK32L
 
 
     // --- Estimate q2, q1, q0 ---
@@ -600,28 +600,28 @@ internal fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long
         var borrow = 0L
         val p0 = qhat * vn0
         val p1 = qhat * vn1
-        val p0_lo = p0 and MASK32
+        val p0_lo = p0 and MASK32L
         val p0_hi = p0 ushr 32
-        val p1_lo_raw = (p1 and MASK32) + p0_hi
+        val p1_lo_raw = (p1 and MASK32L) + p0_hi
         val carry1 = if (unsignedCmp(p1_lo_raw, B) >= 0) 1L else 0L
-        val p1_mid = p1_lo_raw and MASK32
+        val p1_mid = p1_lo_raw and MASK32L
         val p1_hi = (p1 ushr 32) + carry1
         // subtract at un2
         var t = un2 - p0_lo
-        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32L
         // subtract at un3
         t = un3 - p1_mid - borrow
-        borrow = if (unsignedCmp(t, un3) > 0) 1L else 0L; un3 = t and MASK32
+        borrow = if (unsignedCmp(t, un3) > 0) 1L else 0L; un3 = t and MASK32L
         // subtract at un4
         t = un4 - p1_hi - borrow
-        borrow = if (unsignedCmp(t, un4) > 0) 1L else 0L; un4 = t and MASK32
+        borrow = if (unsignedCmp(t, un4) > 0) 1L else 0L; un4 = t and MASK32L
         if (borrow != 0L) {
             qhat -= 1L
             // add back V aligned
             var carry = 0L
-            t = un2 + vn0; carry = if (unsignedLT(t, un2)) 1L else 0L; un2 = t and MASK32
-            t = un3 + vn1 + carry; carry = if (unsignedLT(t, un3) || (carry == 1L && t == un3)) 1L else 0L; un3 = t and MASK32
-            un4 = (un4 + carry) and MASK32
+            t = un2 + vn0; carry = if (unsignedLT(t, un2)) 1L else 0L; un2 = t and MASK32L
+            t = un3 + vn1 + carry; carry = if (unsignedLT(t, un3) || (carry == 1L && t == un3)) 1L else 0L; un3 = t and MASK32L
+            un4 = (un4 + carry) and MASK32L
         }
         q2 = qhat
     }
@@ -643,24 +643,24 @@ internal fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long
         var borrow = 0L
         val p0 = qhat * vn0
         val p1 = qhat * vn1
-        val p0_lo = p0 and MASK32
+        val p0_lo = p0 and MASK32L
         val p0_hi = p0 ushr 32
-        val p1_lo_raw = (p1 and MASK32) + p0_hi
+        val p1_lo_raw = (p1 and MASK32L) + p0_hi
         val carry1 = if (unsignedCmp(p1_lo_raw, B) >= 0) 1L else 0L
-        val p1_mid = p1_lo_raw and MASK32
+        val p1_mid = p1_lo_raw and MASK32L
         val p1_hi = (p1 ushr 32) + carry1
         var t = un1 - p0_lo
-        borrow = if (unsignedCmp(t, un1) > 0) 1L else 0L; un1 = t and MASK32
+        borrow = if (unsignedCmp(t, un1) > 0) 1L else 0L; un1 = t and MASK32L
         t = un2 - p1_mid - borrow
-        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32L
         t = un3 - p1_hi - borrow
-        borrow = if (unsignedCmp(t, un3) > 0) 1L else 0L; un3 = t and MASK32
+        borrow = if (unsignedCmp(t, un3) > 0) 1L else 0L; un3 = t and MASK32L
         if (borrow != 0L) {
             qhat -= 1L
             var carry = 0L
-            t = un1 + vn0; carry = if (unsignedLT(t, un1)) 1L else 0L; un1 = t and MASK32
-            t = un2 + vn1 + carry; carry = if (unsignedLT(t, un2) || (carry == 1L && t == un2)) 1L else 0L; un2 = t and MASK32
-            un3 = (un3 + carry) and MASK32
+            t = un1 + vn0; carry = if (unsignedLT(t, un1)) 1L else 0L; un1 = t and MASK32L
+            t = un2 + vn1 + carry; carry = if (unsignedLT(t, un2) || (carry == 1L && t == un2)) 1L else 0L; un2 = t and MASK32L
+            un3 = (un3 + carry) and MASK32L
         }
         q1 = qhat
     }
@@ -682,24 +682,24 @@ internal fun knuthUdiv128x64to128(xHigh: Long, xLow: Long, y: Long): Triple<Long
         var borrow = 0L
         val p0 = qhat * vn0
         val p1 = qhat * vn1
-        val p0_lo = p0 and MASK32
+        val p0_lo = p0 and MASK32L
         val p0_hi = p0 ushr 32
-        val p1_lo_raw = (p1 and MASK32) + p0_hi
+        val p1_lo_raw = (p1 and MASK32L) + p0_hi
         val carry1 = if (unsignedCmp(p1_lo_raw, B) >= 0) 1L else 0L
-        val p1_mid = p1_lo_raw and MASK32
+        val p1_mid = p1_lo_raw and MASK32L
         val p1_hi = (p1 ushr 32) + carry1
         var t = un0 - p0_lo
-        borrow = if (unsignedCmp(t, un0) > 0) 1L else 0L; un0 = t and MASK32
+        borrow = if (unsignedCmp(t, un0) > 0) 1L else 0L; un0 = t and MASK32L
         t = un1 - p1_mid - borrow
-        borrow = if (unsignedCmp(t, un1) > 0) 1L else 0L; un1 = t and MASK32
+        borrow = if (unsignedCmp(t, un1) > 0) 1L else 0L; un1 = t and MASK32L
         t = un2 - p1_hi - borrow
-        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32
+        borrow = if (unsignedCmp(t, un2) > 0) 1L else 0L; un2 = t and MASK32L
         if (borrow != 0L) {
             qhat -= 1L
             var carry = 0L
-            t = un0 + vn0; carry = if (unsignedLT(t, un0)) 1L else 0L; un0 = t and MASK32
-            t = un1 + vn1 + carry; carry = if (unsignedLT(t, un1) || (carry == 1L && t == un1)) 1L else 0L; un1 = t and MASK32
-            un2 = (un2 + carry) and MASK32
+            t = un0 + vn0; carry = if (unsignedLT(t, un0)) 1L else 0L; un0 = t and MASK32L
+            t = un1 + vn1 + carry; carry = if (unsignedLT(t, un1) || (carry == 1L && t == un1)) 1L else 0L; un1 = t and MASK32L
+            un2 = (un2 + carry) and MASK32L
         }
         q0 = qhat
     }

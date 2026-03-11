@@ -17,16 +17,16 @@ internal fun c256UnscaledCompare(x: C256, y: C256): Int {
 
 internal fun c256UnscaledCompare(x: C256, y: IntArray): Int {
     require(y.size >= 8)
-    val y3 = (y[7].toLong() shl 32) or (y[6].toLong() and MASK32)
+    val y3 = (y[7].toLong() shl 32) or (y[6].toLong() and MASK32L)
     if (x.dw3 != y3)
         return unsignedCmp(x.dw3, y3)
-    val y2 = (y[5].toLong() shl 32) or (y[4].toLong() and MASK32)
+    val y2 = (y[5].toLong() shl 32) or (y[4].toLong() and MASK32L)
     if (x.dw2 != y2)
         return unsignedCmp(x.dw2, y2)
-    val y1 = (y[3].toLong() shl 32) or (y[2].toLong() and MASK32)
+    val y1 = (y[3].toLong() shl 32) or (y[2].toLong() and MASK32L)
     if (x.dw1 != y1)
         return unsignedCmp(x.dw1, y1)
-    val y0 = (y[1].toLong() shl 32) or (y[0].toLong() and MASK32)
+    val y0 = (y[1].toLong() shl 32) or (y[0].toLong() and MASK32L)
     return unsignedCmp(x.dw0, y0)
 }
 

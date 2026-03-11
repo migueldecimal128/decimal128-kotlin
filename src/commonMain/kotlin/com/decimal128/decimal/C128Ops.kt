@@ -49,10 +49,10 @@ private fun barrettDivPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): R
     val shifted1 = dw1 ushr pow10
     val shifted0 = (dw1 shl (64 - pow10)) or (dw0 ushr pow10)
 
-    val denom5 = POW10[POW5_64_OFFSET + pow10]
-    val mu = POW10[BARRETT_POW5_MU_OFFSET + pow10]
+    val denom5 = POW10[POW5_64_BASE + pow10]
+    val mu = POW10[BARRETT_POW5_MU_BASE + pow10]
 
-    val dwA = shifted0 and 0xFFFF_FFFFL
+    val dwA = shifted0 and MASK32L
     val dwB = shifted0 ushr 32
     val dwG = shifted1
 

@@ -146,7 +146,7 @@ object DivKnuth {
 
         knuthDivideCore(m, 2)
 
-        val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32)
+        val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32L)
         val remainder = remainderNormalized ushr s
         quot?.c256Set(q, m)
         return remainder
@@ -178,15 +178,15 @@ object DivKnuth {
             throw RuntimeException("invalid args")
         }
 
-        val vn_1 = vn[n - 1].toLong() and MASK32
-        val vn_2 = vn[n - 2].toLong() and MASK32
+        val vn_1 = vn[n - 1].toLong() and MASK32L
+        val vn_2 = vn[n - 2].toLong() and MASK32L
 
         // -- main loop --
         for (j in m - n downTo 0) {
 
             // estimate q̂ = (un[j+n]*B + un[j+n-1]) / vn[n-1]
-            val hi = un[j + n].toLong() and MASK32
-            val lo = un[j + n - 1].toLong() and MASK32
+            val hi = un[j + n].toLong() and MASK32L
+            val lo = un[j + n - 1].toLong() and MASK32L
             //if (hi == 0L && lo < vn_1) // this would short-circuit,
             //    continue               // but probability is astronomically small
             val num = (hi shl 32) or lo
@@ -196,11 +196,11 @@ object DivKnuth {
             // correct estimate
             while ((qhat ushr 32) != 0L ||
                 unsignedCmp(
-                    qhat * vn_2, (rhat shl 32) + (un[j + n - 2].toLong() and MASK32)
+                    qhat * vn_2, (rhat shl 32) + (un[j + n - 2].toLong() and MASK32L)
                 ) > 0
             ) {
                 qhat--
-                rhat += (vn[n - 1].toLong() and MASK32)
+                rhat += (vn[n - 1].toLong() and MASK32L)
                 if ((rhat ushr 32) != 0L)
                     break
             }
@@ -209,22 +209,22 @@ object DivKnuth {
             // multiply & subtract
             var carry = 0L
             for (i in 0 until n) {
-                val prod = qhat * (vn[i].toLong() and MASK32)
+                val prod = qhat * (vn[i].toLong() and MASK32L)
                 val prodHi = prod ushr 32
-                val prodLo = prod and MASK32
-                val unIJ = (un[j + i].toLong() and MASK32)
+                val prodLo = prod and MASK32L
+                val unIJ = (un[j + i].toLong() and MASK32L)
                 val t = unIJ - prodLo - carry
                 un[j + i] = t.toInt()
                 carry = prodHi - (t shr 32) // t is signed, so this should *indeed* be signed shr
             }
-            val t = (un[j + n].toLong() and MASK32) - carry
+            val t = (un[j + n].toLong() and MASK32L) - carry
             un[j + n] = t.toInt()
             q[j] = (qhat - (t ushr 63)).toInt()
             if (t < 0) {
                 var c2 = 0L
                 for (i in 0 until n) {
-                    val sum = (un[j + i].toLong() and MASK32) +
-                            (vn[i].toLong() and MASK32) + c2
+                    val sum = (un[j + i].toLong() and MASK32L) +
+                            (vn[i].toLong() and MASK32L) + c2
                     un[j + i] = sum.toInt()
                     c2 = sum ushr 32
                 }

@@ -7,7 +7,7 @@ import com.decimal128.decimal.Residue.Companion.LT_HALF
 
 @Suppress("NOTHING_TO_INLINE")
 private inline fun getShiftedLeft(v: IntArray, i: Int, shift: Int): Long {
-    return ((v[i] shl shift) or ((v[i - (-i ushr 31)] ushr -shift) and (-shift shr 31))).toLong() and MASK32
+    return ((v[i] shl shift) or ((v[i - (-i ushr 31)] ushr -shift) and (-shift shr 31))).toLong() and MASK32L
     //if (i == 0) {
     //    v[0] shl s
     //} else {

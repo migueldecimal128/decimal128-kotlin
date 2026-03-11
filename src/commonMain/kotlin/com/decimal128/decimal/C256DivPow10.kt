@@ -5,7 +5,7 @@ import kotlin.math.max
 internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int): Residue {
     verify { pow10 >= 0 }
     val xBitLen = x.bitLen
-    if (pow10 < MAGIC_POW10_MAXX) {
+    if (pow10 < MAGIC_POW10_M_MAXX) {
         if (xBitLen <= 64)
             return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
         if (pow10 < BARRETT_POW10_MAXX)

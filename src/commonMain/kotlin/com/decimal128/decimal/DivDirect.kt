@@ -55,25 +55,25 @@ object DivDirect {
         val dividend7 = (rem shl 32) or (x3 ushr 32)
         rem = unsignedMod(dividend7, y0)
         // Process lo 32 bits of x3
-        val dividend6 = (rem shl 32) or (x3 and MASK32)
+        val dividend6 = (rem shl 32) or (x3 and MASK32L)
         rem = unsignedMod(dividend6, y0)
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
         rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
-        val dividend4 = (rem shl 32) or (x2 and MASK32)
+        val dividend4 = (rem shl 32) or (x2 and MASK32L)
         rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
         rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
-        val dividend2 = (rem shl 32) or (x1 and MASK32)
+        val dividend2 = (rem shl 32) or (x1 and MASK32L)
         rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
         rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         rem = unsignedMod(dividend0, y0)
 
         return rem
@@ -86,19 +86,19 @@ object DivDirect {
         val dividend5 = (rem shl 32) or (x2 ushr 32)
         rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
-        val dividend4 = (rem shl 32) or (x2 and MASK32)
+        val dividend4 = (rem shl 32) or (x2 and MASK32L)
         rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
         rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
-        val dividend2 = (rem shl 32) or (x1 and MASK32)
+        val dividend2 = (rem shl 32) or (x1 and MASK32L)
         rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
         rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         rem = unsignedMod(dividend0, y0)
 
         return rem
@@ -111,13 +111,13 @@ object DivDirect {
         val dividend3 = (rem shl 32) or (x1 ushr 32)
         rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
-        val dividend2 = (rem shl 32) or (x1 and MASK32)
+        val dividend2 = (rem shl 32) or (x1 and MASK32L)
         rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
         rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         rem = unsignedMod(dividend0, y0)
 
         return rem
@@ -130,7 +130,7 @@ object DivDirect {
         val dividend1 = (rem shl 32) or (x0 ushr 32)
         rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         rem = unsignedMod(dividend0, y0)
 
         return rem
@@ -185,7 +185,7 @@ object DivDirect {
         val w5 = unsignedDiv(dividend5, y0)
         rem = dividend5 - (w5 * y0)
         // Process lo 32 bits of x2
-        val dividend4 = (rem shl 32) or (x2 and MASK32)
+        val dividend4 = (rem shl 32) or (x2 and MASK32L)
         val w4 = unsignedDiv(dividend4, y0)
         rem = dividend4 - (w4 * y0)
         // Process hi 32 bits of x1
@@ -193,7 +193,7 @@ object DivDirect {
         val w3 = unsignedDiv(dividend3, y0)
         rem = dividend3 - (w3 * y0)
         // Process lo 32 bits of x1
-        val dividend2 = (rem shl 32) or (x1 and MASK32)
+        val dividend2 = (rem shl 32) or (x1 and MASK32L)
         val w2 = unsignedDiv(dividend2, y0)
         rem = dividend2 - (w2 * y0)
         // Process hi 32 bits of x0
@@ -201,7 +201,7 @@ object DivDirect {
         val w1 = unsignedDiv(dividend1, y0)
         rem = dividend1 - (w1 * y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         val w0 = unsignedDiv(dividend0, y0)
         rem = dividend0 - (w0 * y0)
 
@@ -225,7 +225,7 @@ object DivDirect {
         val w3 = unsignedDiv(dividend3, y0)
         rem = dividend3 - (w3 * y0)
         // Process lo 32 bits of x1
-        val dividend2 = (rem shl 32) or (x1 and MASK32)
+        val dividend2 = (rem shl 32) or (x1 and MASK32L)
         val w2 = unsignedDiv(dividend2, y0)
         rem = dividend2 - (w2 * y0)
         // Process hi 32 bits of x0
@@ -233,7 +233,7 @@ object DivDirect {
         val w1 = unsignedDiv(dividend1, y0)
         rem = dividend1 - (w1 * y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         val w0 = unsignedDiv(dividend0, y0)
         rem = dividend0 - (w0 * y0)
 
@@ -256,7 +256,7 @@ object DivDirect {
         val w1 = unsignedDiv(dividend1, y0)
         rem = dividend1 - (w1 * y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         val w0 = unsignedDiv(dividend0, y0)
         rem = dividend0 - (w0 * y0)
 
@@ -283,25 +283,25 @@ object DivDirect {
         val dividend7 = (rem shl 32) or (x3 ushr 32)
         rem = unsignedMod(dividend7, y0)
         // Process lo 32 bits of x3
-        val dividend6 = (rem shl 32) or (x3 and MASK32)
+        val dividend6 = (rem shl 32) or (x3 and MASK32L)
         rem = unsignedMod(dividend6, y0)
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
         rem = unsignedMod(dividend5, y0)
         // Process lo 32 bits of x2
-        val dividend4 = (rem shl 32) or (x2 and MASK32)
+        val dividend4 = (rem shl 32) or (x2 and MASK32L)
         rem = unsignedMod(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
         rem = unsignedMod(dividend3, y0)
         // Process lo 32 bits of x1
-        val dividend2 = (rem shl 32) or (x1 and MASK32)
+        val dividend2 = (rem shl 32) or (x1 and MASK32L)
         rem = unsignedMod(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
         rem = unsignedMod(dividend1, y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         rem = unsignedMod(dividend0, y0)
 
         return rem
@@ -319,15 +319,15 @@ object DivDirect {
         val w3 = unsignedDiv(dividend3, y0)
         rem = dividend3 - (w3 * y0)
         // Process lo 16 bits of x2 + hi 32 bits of x1
-        val dividend2 = (rem shl 48) or ((x2 and MASK16) shl 32) or (x1 ushr 32)
+        val dividend2 = (rem shl 48) or ((x2 and MASK16L) shl 32) or (x1 ushr 32)
         val w2 = unsignedDiv(dividend2, y0)
         rem = dividend2 - (w2 * y0)
         // Process lo 32 bits of x1 + hi 16 bits of x0
-        val dividend1 = (rem shl 48) or ((x1 and MASK32) shl 16) or (x0 ushr 48)
+        val dividend1 = (rem shl 48) or ((x1 and MASK32L) shl 16) or (x0 ushr 48)
         val w1 = unsignedDiv(dividend1, y0)
         rem = dividend1 - (w1 * y0)
         // Process lo 48 bits of x0
-        val dividend0 = (rem shl 48) or (x0 and MASK48)
+        val dividend0 = (rem shl 48) or (x0 and MASK48L)
         val w0 = unsignedDiv(dividend0, y0)
         rem = dividend0 - (w0 * y0)
 
@@ -351,11 +351,11 @@ object DivDirect {
         val w2 = unsignedDiv(dividend2, y0)
         rem = dividend2 - (w2 * y0)
         // Process lo 16 bits of x1 + hi 32 bits of x0
-        val dividend1 = (rem shl 48) or ((x1 and MASK16) shl 32) or (x0 ushr 32)
+        val dividend1 = (rem shl 48) or ((x1 and MASK16L) shl 32) or (x0 ushr 32)
         val w1 = unsignedDiv(dividend1, y0)
         rem = dividend1 - (w1 * y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         val w0 = unsignedDiv(dividend0, y0)
         rem = dividend0 - (w0 * y0)
 
@@ -378,7 +378,7 @@ object DivDirect {
         val w1 = unsignedDiv(dividend1, y0)
         rem = dividend1 - (w1 * y0)
         // Process lo 32 bits of x0
-        val dividend0 = (rem shl 32) or (x0 and MASK32)
+        val dividend0 = (rem shl 32) or (x0 and MASK32L)
         val w0 = unsignedDiv(dividend0, y0)
         rem = dividend0 - (w0 * y0)
 

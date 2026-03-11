@@ -123,7 +123,7 @@ internal object IntegerParsePrint {
             val s2 = (r2 shl 32) or (dw0T ushr 32)
             val q1 = unsignedMulHi(s2, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
             val r1 = s2 - (q1 * 1_0000_0000L)
-            val s1 = (r1 shl 32) or (dw0T and 0xFFFF_FFFFL)
+            val s1 = (r1 shl 32) or (dw0T and MASK32L)
             val q0 = unsignedMulHi(s1, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
             val r0 = s1 - (q0 * 1_0000_0000L)
             dw0T = (q1 shl 32) + q0

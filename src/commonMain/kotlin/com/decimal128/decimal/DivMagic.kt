@@ -85,18 +85,18 @@ object DivMagic {
 
 
     private var initialized = false
-    val MAGIC_FLAG_AND_SHIFT_POW10 = ByteArray(MAGIC_POW10_MAXX)
+    val MAGIC_FLAG_AND_SHIFT_POW10 = ByteArray(MAGIC_POW10_M_MAXX)
 
     fun initializeMagicPow10_64() {
         if (initialized)
             return
         initialized = true
-        POW10[MAGIC_POW10_M_OFFSET + 0] = 1
+        POW10[MAGIC_POW10_M_BASE + 0] = 1
         MAGIC_FLAG_AND_SHIFT_POW10[0] = Byte.MIN_VALUE
-        for (k in 1..<MAGIC_POW10_MAXX) {
+        for (k in 1..<MAGIC_POW10_M_MAXX) {
             val d     = pow10_64(k)
             val magic = magicu64(d)
-            POW10[MAGIC_POW10_M_OFFSET + k]   = magic.m
+            POW10[MAGIC_POW10_M_BASE + k]   = magic.m
             MAGIC_FLAG_AND_SHIFT_POW10[k] =
                 (if (magic.add) 0x80 or magic.s else magic.s).toByte()
         }
@@ -120,7 +120,7 @@ object DivMagic {
     // 32-bit divisor
 
     fun magicDivPow10_64(z: C256, x0: Long, pow10: Int): Residue {
-        verify { pow10 in 0..<MAGIC_POW10_MAXX }
+        verify { pow10 in 0..<MAGIC_POW10_M_MAXX }
         initializeMagicPow10_64()
         verify { initialized }
         val remainder = magicDivModPow10_64(z, x0, pow10)
@@ -130,8 +130,8 @@ object DivMagic {
 
     private fun magicDivModPow10_64(z: C256, x0: Long, pow10: Int): Long {
         when {
-            pow10 > 0 && pow10 < MAGIC_POW10_MAXX -> {
-                val m = POW10[MAGIC_POW10_M_OFFSET + pow10]
+            pow10 > 0 && pow10 < MAGIC_POW10_M_MAXX -> {
+                val m = POW10[MAGIC_POW10_M_BASE + pow10]
                 val flagAndShift = MAGIC_FLAG_AND_SHIFT_POW10[pow10].toInt()
                 val denom = pow10_64(pow10)
                 val s = flagAndShift and 0x3F
