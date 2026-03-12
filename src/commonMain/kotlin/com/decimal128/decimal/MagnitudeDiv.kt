@@ -5,12 +5,14 @@ import kotlin.math.min
 object MagnitudeDiv {
 
     fun magDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
+        val tmps = ctx.tmps
         val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
-        val scaledNumerator = ctx.tmps.mdecArg1
+        val scaledNumerator = tmps.mdecArg1
         c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, ctx.tmps.dwQuad1)
+        val knuthTmp = tmps.knuthTmp
         val residue = when {
-            (y.bitLen <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0)
-            else -> c256SetDiv(z, scaledNumerator, y)
+            (y.bitLen <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, knuthTmp)
+            else -> c256SetDiv(z, scaledNumerator, y, knuthTmp)
         }
         val qPreferred = x.qExp - y.qExp
         var qZ = x.qExp - y.qExp - numeratorScale

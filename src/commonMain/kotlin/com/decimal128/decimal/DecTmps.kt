@@ -24,7 +24,8 @@ class DecTmps {
     //
     val dwQuad1 = DwQuad()
     val dwQuad2 = DwQuad()
-
+    
+    val knuthTmp = IntArray(32)
 
     // printing must have dedicated tmps because toString()
     // will be called during debugging and we don't want to

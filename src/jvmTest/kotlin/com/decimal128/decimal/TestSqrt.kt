@@ -99,6 +99,8 @@ class TestSqrt{
     }
 
     fun setSqrt(sqrt: MutDec, radicand: MutDec) {
+        val tmps = DecTmps()
+
         val qPreferred = radicand.qExp shr 1
         if (radicand.c256IsZero()) {
             val sciExp = radicand.sciExp()
@@ -179,7 +181,7 @@ class TestSqrt{
         val guess1x2 = C256()
         guess1x2.c256SetShiftLeft(guess1Coeff, 1)
         val delta1 = C256()
-        val residue1 = c256SetDiv(delta1, residual1, guess1x2)
+        val residue1 = c256SetDiv(delta1, residual1, guess1x2, tmps.knuthTmp)
 
         val guess2 = C256()
         c256SetAddUnscaled(guess2, guess1Coeff, delta1)

@@ -93,16 +93,17 @@ class TestC256Div {
         val coeffC = C256()
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / $coeffB (${coeffB.digitLen}) = expected:$expected")
-        c256SetDiv(coeffC, coeffA, coeffB)
+        val tmps = DecTmps()
+        c256SetDiv(coeffC, coeffA, coeffB, tmps.knuthTmp)
         val biC = coeffC.coeffToBigInteger()
         if (! biC.equals(expected))
             println("$coeffA (${coeffA.digitLen}) / $coeffB (${coeffB.digitLen}) = $coeffC (${coeffC.digitLen})  expected:$expected")
         assert (biC.equals(expected))
         if (random.nextBoolean()) {
-            c256SetDiv(coeffA, coeffA, coeffB)
+            c256SetDiv(coeffA, coeffA, coeffB, tmps.knuthTmp)
             assert(coeffA.coeffToBigInteger().equals(expected))
         } else {
-            c256SetDiv(coeffB, coeffA, coeffB)
+            c256SetDiv(coeffB, coeffA, coeffB, tmps.knuthTmp)
             assert(coeffB.coeffToBigInteger().equals(expected))
 
         }
