@@ -48,7 +48,7 @@ internal fun c256SetDivRemX64(z: C256?, x: C256, y0: Long, knuthD: IntArray): Lo
     if ((y0 ushr 32) == 0L) {
         return if ((y0 ushr 16) == 0L) DivDirect.divModX16(z, x, y0) else DivDirect.divModX32(z, x, y0)
     }
-    return DivKnuth.knuthDivModX64(z, x, y0, knuthD)
+    return divKnuthDivModX64(z, x, y0, knuthD)
 }
 
 internal fun c256SetDiv(z: C256, x: C256, y: C256, knuthD: IntArray) = c256SetDivRem(z, null, x, y, knuthD)
@@ -104,7 +104,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: In
     verify { bitLenDelta >= 0 }
     //TODO at this point I know that x.bitLen >= y.bitLen and x > y
     // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-    return DivKnuth.knuthDivideWrapper(quot, rem, x, y, knuthD)
+    return divKnuth(quot, rem, x, y, knuthD)
 }
 
 internal fun c256DivNearestX64(z: C256, x: C256, y: Long, knuthD: IntArray) {
