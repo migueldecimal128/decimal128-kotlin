@@ -1,8 +1,6 @@
 package com.decimal128.decimal
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
-import java.math.BigInteger
 import java.util.*
 
 class TestMagicU32 {

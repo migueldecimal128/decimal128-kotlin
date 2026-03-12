@@ -1,8 +1,6 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-
 import java.math.BigInteger
 
 class TestGenerateLittleEndianPow10Tables {

@@ -2,10 +2,10 @@ package com.decimal128.decimal
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.lang.Long.compareUnsigned
 import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigInteger
-import java.math.BigInteger.*
+import java.math.BigInteger.ONE
+import java.math.BigInteger.TEN
 import java.util.*
 
 class TestSimpleRecipMulDivSmallPow10 {
