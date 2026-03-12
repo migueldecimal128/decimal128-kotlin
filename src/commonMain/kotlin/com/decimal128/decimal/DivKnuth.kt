@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import com.decimal128.bigint.Magia
@@ -234,9 +237,16 @@ object DivKnuth {
         }
     }
 
-    private const val UN = 0
-    private const val VN = 9
-    private const val Q = 17
+    /**
+     * All 3 of the multi-limb values are stored in the same knuthTmp array,
+     * but at different offsets.
+     * Offset bases use conventional Knuth-D names.
+     * Note that entry 0 in knuthTmp is not used because this simplifies
+     * the normalization loop by eliminating the boundary condition.
+     */
+    private const val UN = 1
+    private const val VN = 10
+    private const val Q = 18
     private const val BCE = 0x1F
 
     fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256, knuthTmp: IntArray): Residue {
@@ -244,6 +254,7 @@ object DivKnuth {
         verify { c256UnscaledCompare(x, y) > 0 }
         check(knuthTmp.size >= 32)
 
+        knuthTmp[0] = 0
         knuthTmp[UN + 0] = x.dw0.toInt(); knuthTmp[UN + 1] = (x.dw0 ushr 32).toInt()
         knuthTmp[UN + 2] = x.dw1.toInt(); knuthTmp[UN + 3] = (x.dw1 ushr 32).toInt()
         knuthTmp[UN + 4] = x.dw2.toInt(); knuthTmp[UN + 5] = (x.dw2 ushr 32).toInt()
@@ -263,7 +274,7 @@ object DivKnuth {
         val s = vnNonZeroVal.countLeadingZeroBits()
 
         if (s != 0)
-            normalizeShiftLeft(knuthTmp, VN + n, s)
+            normalizeDividendDivisorShiftLeft(knuthTmp, VN + n, s)
 
         for (i in 0 until ((m - n + 1) and BCE))
             knuthTmp[Q + i] = 0
@@ -273,7 +284,7 @@ object DivKnuth {
         if (rem != null) {
             // looks funny but this is correct
             // remainder has at most n limbs
-            denormalizeShiftRight(knuthTmp, n, s)
+            denormalizeRemainderShiftRight(knuthTmp, n, s)
             val r0 = (knuthTmp[UN + 1].toLong() shl 32) or (knuthTmp[UN + 0].toLong() and MASK32L)
             val r1 = (knuthTmp[UN + 3].toLong() shl 32) or (knuthTmp[UN + 2].toLong() and MASK32L)
             val r2 = (knuthTmp[UN + 5].toLong() shl 32) or (knuthTmp[UN + 4].toLong() and MASK32L)
@@ -294,28 +305,26 @@ object DivKnuth {
                 var isZero = 0
                 if (s == 0) {
                     // note that this is shifting LEFT to double the remainder
-                    for (i in n - 1 downTo 1) {
+                    // remember that UN == 1 and that we peek into the unused knuthTmp[0] == 0
+                    for (i in n - 1 downTo 0) {
                         val UN_i = (UN + i) and BCE
                         val t = (knuthTmp[UN_i] shl 1) or (knuthTmp[(UN_i - 1) and BCE] ushr -1)
                         knuthTmp[UN_i] = t
                         isZero = isZero or t
                     }
-                    val t = knuthTmp[UN] shl 1
-                    knuthTmp[UN] = t
-                    isZero = isZero or t
                 } else {
                     val s1 = s - 1
                     if (s1 > 0) {
-                        for (i in 0 until n - 1) {
+                        // this is a shift right by s1 == s - 1
+                        // we will peek into the next higher limb
+                        // that is guaranteed to be == 0
+                        // this eliminates the boundary-condition check
+                        for (i in 0 until n) {
                             val UN_i = (UN + i) and BCE
                             val t = (knuthTmp[(UN_i + 1) and BCE] shl -s1) or (knuthTmp[UN_i] ushr s1)
                             knuthTmp[UN_i] = t
                             isZero = isZero or t
                         }
-                        val UN_n_m1 = (UN + n - 1) and BCE
-                        val t = knuthTmp[UN_n_m1] ushr s1
-                        knuthTmp[UN_n_m1] = t
-                        isZero = isZero or t
                     } else {
                         // still need to test for isZero
                         var i = 0
@@ -347,21 +356,25 @@ object DivKnuth {
         return residue
     }
 
-    fun normalizeShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
-        require(bitCount >= 0 && xLen >= 0 && xLen <= x.size)
+    /**
+     * This is not a _normal_ shift in that x[0] is not
+     * shifted at all
+     */
+    private inline fun normalizeDividendDivisorShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
         val right = 32 - bitCount
         for (i in xLen - 1 downTo 1)
             x[i] = (x[i] shl bitCount) or (x[i - 1] ushr right)
-        x[0] = x[0] shl bitCount
     }
 
-    fun denormalizeShiftRight(x: IntArray, xLen: Int, bitCount: Int) {
-        require (bitCount >= 0 && xLen >= 0 && xLen <= x.size && bitCount > 0)
+    /**
+     * This is not a _normal_ shift right in that it peeks
+     * to the next higher limb, which for the remainder is
+     * guaranteed to be zero
+     */
+    private inline fun denormalizeRemainderShiftRight(x: IntArray, xLen: Int, bitCount: Int) {
         val left = 32 - bitCount
-        val xLast = xLen - 1
-        for (i in 0..<xLast)
+        for (i in 0..<xLen)
             x[i] = (x[i + 1] shl left) or (x[i] ushr bitCount)
-        x[xLast] = x[xLast] ushr bitCount
     }
 
     fun knuthDivideCore2(
