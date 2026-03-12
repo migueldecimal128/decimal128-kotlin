@@ -813,19 +813,16 @@ class Decimal private constructor(
                 var rQ = qExp
                 if (qExp < DECIMAL128_QMAX_6111) {
                     val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
-                    val (t1, t0, ntzd) = DecNtzd.ntzdU128(r1, r0)
-                    r1 = t1
-                    r0 = t0
-                    rQ += ntzd
-                    if (ntzd > maxNtzdClamp) {
-                        verify { rQ > DECIMAL128_QMAX_6111 }
-                        // oops ... we removed too many trailing zeros and pushed qExp too hi
-                        // give back some zeros to bring down qExp
-                        val giveBack = ntzd - maxNtzdClamp
-                        val (t1, t0) = umul128xPow10to128(r1, r0, giveBack)
-                        r1 = t1
-                        r0 = t0
-                        rQ = DECIMAL128_QMAX_6111
+                    val t = DecContext.current().tmps.mdecArg1
+                    t.c256Set128(dw1, dw0)
+                    val ntzdActual = c256CountTrailingZeroDigitsDestructive(t)
+                    val ntzdNormalized = min(maxNtzdClamp, ntzdActual)
+                    if (ntzdNormalized > 0) {
+                        t.c256Set128(dw1, dw0)
+                        c256SetDivPow10(t, t, ntzdNormalized)
+                        r1 = t.dw1
+                        r0 = t.dw0
+                        rQ = qExp + ntzdNormalized
                     }
                 }
                 val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE

@@ -5,7 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestHashCode1 {
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testConstantHashCodes() {
@@ -82,9 +82,9 @@ class TestHashCode1 {
 
     @Test
     fun testHashFnzNotEqual() {
+        testPair(false, "2", "1.999999999999999999999999999999999")
         testPair(false, "10", "1.01e1")
         testPair(false, "-1", "1")
-        testPair(false, "2", "1.999999999999999999999999999999999")
     }
 
     @Test

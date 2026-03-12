@@ -117,7 +117,7 @@ private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 986)
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
 internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
-
+internal const val BARRETT_POW10_MAX = BARRETT_POW10_MAXX - 1
 
 /**
  * BYTE_TABLES is a single allocated array of 2k bytes that is used to store
