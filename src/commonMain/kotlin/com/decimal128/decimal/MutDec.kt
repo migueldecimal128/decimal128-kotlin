@@ -1775,10 +1775,10 @@ class MutDec() : C256() {
 
     fun encodeLittleEndianLongsDpd128() = encodeLittleEndianDpd128(LongArray(2))
     fun encodeLittleEndianDpd128(littleEndianLongs: LongArray) =
-        encodeLittleEndianDpd128(littleEndianLongs, this, DecContext.current().tmps.knuthTmp)
+        encodeLittleEndianDpd128(littleEndianLongs, this, DecContext.current().tmps.knuthD)
     fun encodeLittleEndianBytesDpd128() = encodeLittleEndianDpd128(ByteArray(16))
     fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
-        encodeLittleEndianDpd128(littleEndianBytes, this, DecContext.current().tmps.knuthTmp)
+        encodeLittleEndianDpd128(littleEndianBytes, this, DecContext.current().tmps.knuthD)
 
     fun encodeBigEndianLongsBid128() = encodeBigEndianBid128(LongArray(2))
     fun encodeBigEndianBid128(BigEndianLongs: LongArray) = encodeBigEndianBid128(this, BigEndianLongs)
@@ -1787,9 +1787,9 @@ class MutDec() : C256() {
 
     fun encodeBigEndianLongsDpd128() = encodeBigEndianDpd128(LongArray(2))
     fun encodeBigEndianDpd128(bigEndianLongs: LongArray) =
-        encodeBigEndianDpd128(bigEndianLongs, this, DecContext.current().tmps.knuthTmp)
+        encodeBigEndianDpd128(bigEndianLongs, this, DecContext.current().tmps.knuthD)
     fun encodeBigEndianBytesDpd128() = encodeBigEndianDpd128(ByteArray(16))
     fun encodeBigEndianDpd128(bigEndianBytes: ByteArray) =
-        encodeBigEndianDpd128(bigEndianBytes, this, DecContext.current().tmps.knuthTmp)
+        encodeBigEndianDpd128(bigEndianBytes, this, DecContext.current().tmps.knuthD)
 
 }

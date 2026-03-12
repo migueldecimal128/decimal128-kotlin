@@ -90,10 +90,10 @@ object DivKnuth {
     }
 
     /**
-     * All 3 of the multi-limb values are stored in the same knuthTmp array,
+     * All 3 of the multi-limb values are stored in the same knuthD array,
      * but at different offsets.
      * Offset bases use conventional Knuth-D names.
-     * Note that entry 0 in knuthTmp is not used because this simplifies
+     * Note that entry 0 in knuthD is not used because this simplifies
      * the normalization loop by eliminating the boundary condition.
      */
     private const val UN = 1
@@ -101,49 +101,49 @@ object DivKnuth {
     private const val Q = 18
     private const val BCE = 0x1F
 
-    fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256, knuthTmp: IntArray): Residue {
+    fun knuthDivideWrapper(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArray): Residue {
         verify { c256GTOne(y) }
         verify { c256UnscaledCompare(x, y) > 0 }
-        check(knuthTmp.size >= 32)
+        check(knuthD.size >= 32)
 
-        verify { knuthTmp[0] == 0 }
-        knuthTmp[UN + 0] = x.dw0.toInt(); knuthTmp[UN + 1] = (x.dw0 ushr 32).toInt()
-        knuthTmp[UN + 2] = x.dw1.toInt(); knuthTmp[UN + 3] = (x.dw1 ushr 32).toInt()
-        knuthTmp[UN + 4] = x.dw2.toInt(); knuthTmp[UN + 5] = (x.dw2 ushr 32).toInt()
-        knuthTmp[UN + 6] = x.dw3.toInt(); knuthTmp[UN + 7] = (x.dw3 ushr 32).toInt()
-        verify { knuthTmp[UN + 8] == 0 }
+        verify { knuthD[0] == 0 }
+        knuthD[UN + 0] = x.dw0.toInt(); knuthD[UN + 1] = (x.dw0 ushr 32).toInt()
+        knuthD[UN + 2] = x.dw1.toInt(); knuthD[UN + 3] = (x.dw1 ushr 32).toInt()
+        knuthD[UN + 4] = x.dw2.toInt(); knuthD[UN + 5] = (x.dw2 ushr 32).toInt()
+        knuthD[UN + 6] = x.dw3.toInt(); knuthD[UN + 7] = (x.dw3 ushr 32).toInt()
+        verify { knuthD[UN + 8] == 0 }
 
         val m = ((x.bitLen - 1) ushr 5) + 1
 
-        knuthTmp[VN + 0] = y.dw0.toInt(); knuthTmp[VN + 1] = (y.dw0 ushr 32).toInt()
-        knuthTmp[VN + 2] = y.dw1.toInt(); knuthTmp[VN + 3] = (y.dw1 ushr 32).toInt()
-        knuthTmp[VN + 4] = y.dw2.toInt(); knuthTmp[VN + 5] = (y.dw2 ushr 32).toInt()
-        knuthTmp[VN + 6] = y.dw3.toInt(); knuthTmp[VN + 7] = (y.dw3 ushr 32).toInt()
+        knuthD[VN + 0] = y.dw0.toInt(); knuthD[VN + 1] = (y.dw0 ushr 32).toInt()
+        knuthD[VN + 2] = y.dw1.toInt(); knuthD[VN + 3] = (y.dw1 ushr 32).toInt()
+        knuthD[VN + 4] = y.dw2.toInt(); knuthD[VN + 5] = (y.dw2 ushr 32).toInt()
+        knuthD[VN + 6] = y.dw3.toInt(); knuthD[VN + 7] = (y.dw3 ushr 32).toInt()
 
         val vnNonZeroIndex = ((y.bitLen - 1) ushr 5)
-        val vnNonZeroVal = knuthTmp[VN + vnNonZeroIndex]
+        val vnNonZeroVal = knuthD[VN + vnNonZeroIndex]
         val n = vnNonZeroIndex + 1
         val s = vnNonZeroVal.countLeadingZeroBits()
 
         if (s != 0) {
             // note that this is shifting both dividend (starting at entry[1])
             // and divisor (starting at entry 10)
-            normalizeShiftLeft(knuthTmp, VN + n, s)
+            normalizeShiftLeft(knuthD, VN + n, s)
         }
 
         for (i in 0 until ((m - n + 1) and BCE))
-            knuthTmp[Q + i] = 0
+            knuthD[Q + i] = 0
 
-        knuthDivideCore2(knuthTmp, m, n)
+        knuthDivideCore(knuthD, m, n)
 
         if (rem != null) {
             // looks funny but this is correct
             // remainder has at most n limbs
-            denormalizeRemainderShiftRight(knuthTmp, n, s)
-            val r0 = (knuthTmp[UN + 1].toLong() shl 32) or (knuthTmp[UN + 0].toLong() and MASK32L)
-            val r1 = (knuthTmp[UN + 3].toLong() shl 32) or (knuthTmp[UN + 2].toLong() and MASK32L)
-            val r2 = (knuthTmp[UN + 5].toLong() shl 32) or (knuthTmp[UN + 4].toLong() and MASK32L)
-            val r3 = (knuthTmp[UN + 7].toLong() shl 32) or (knuthTmp[UN + 6].toLong() and MASK32L)
+            denormalizeRemainderShiftRight(knuthD, n, s)
+            val r0 = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN + 0].toLong() and MASK32L)
+            val r1 = (knuthD[UN + 3].toLong() shl 32) or (knuthD[UN + 2].toLong() and MASK32L)
+            val r2 = (knuthD[UN + 5].toLong() shl 32) or (knuthD[UN + 4].toLong() and MASK32L)
+            val r3 = (knuthD[UN + 7].toLong() shl 32) or (knuthD[UN + 6].toLong() and MASK32L)
             rem.c256Set256(r3, r2, r1, r0)
         }
 
@@ -153,18 +153,18 @@ object DivKnuth {
         val residue =
             if (rem != null) {
                 EXACT
-            } else if (knuthTmp[(UN + n - 1) and BCE] < 0) {
+            } else if (knuthD[(UN + n - 1) and BCE] < 0) {
                 // msb of remainder is set ... doubling it will make it bigger than the divisor
                 GT_HALF
             } else {
                 var isZero = 0
                 if (s == 0) {
                     // note that this is shifting LEFT to double the remainder
-                    // remember that UN == 1 and that we peek into the unused knuthTmp[0] == 0
+                    // remember that UN == 1 and that we peek into the unused knuthD[0] == 0
                     for (i in n - 1 downTo 0) {
                         val UN_i = (UN + i) and BCE
-                        val t = (knuthTmp[UN_i] shl 1) or (knuthTmp[(UN_i - 1) and BCE] ushr -1)
-                        knuthTmp[UN_i] = t
+                        val t = (knuthD[UN_i] shl 1) or (knuthD[(UN_i - 1) and BCE] ushr -1)
+                        knuthD[UN_i] = t
                         isZero = isZero or t
                     }
                 } else {
@@ -176,15 +176,15 @@ object DivKnuth {
                         // this eliminates the boundary-condition check
                         for (i in 0 until n) {
                             val UN_i = (UN + i) and BCE
-                            val t = (knuthTmp[(UN_i + 1) and BCE] shl -s1) or (knuthTmp[UN_i] ushr s1)
-                            knuthTmp[UN_i] = t
+                            val t = (knuthD[(UN_i + 1) and BCE] shl -s1) or (knuthD[UN_i] ushr s1)
+                            knuthD[UN_i] = t
                             isZero = isZero or t
                         }
                     } else {
                         // still need to test for isZero
                         var i = 0
                         do {
-                            isZero = isZero or knuthTmp[(UN + i) and BCE]
+                            isZero = isZero or knuthD[(UN + i) and BCE]
                         } while (isZero == 0 && ++i < n)
                     }
                 }
@@ -202,10 +202,10 @@ object DivKnuth {
                 }
             }
         if (quot != null) {
-            val q0 = (knuthTmp[Q + 1].toLong() shl 32) or (knuthTmp[Q + 0].toLong() and MASK32L)
-            val q1 = (knuthTmp[Q + 3].toLong() shl 32) or (knuthTmp[Q + 2].toLong() and MASK32L)
-            val q2 = (knuthTmp[Q + 5].toLong() shl 32) or (knuthTmp[Q + 4].toLong() and MASK32L)
-            val q3 = (knuthTmp[Q + 7].toLong() shl 32) or (knuthTmp[Q + 6].toLong() and MASK32L)
+            val q0 = (knuthD[Q + 1].toLong() shl 32) or (knuthD[Q + 0].toLong() and MASK32L)
+            val q1 = (knuthD[Q + 3].toLong() shl 32) or (knuthD[Q + 2].toLong() and MASK32L)
+            val q2 = (knuthD[Q + 5].toLong() shl 32) or (knuthD[Q + 4].toLong() and MASK32L)
+            val q3 = (knuthD[Q + 7].toLong() shl 32) or (knuthD[Q + 6].toLong() and MASK32L)
             quot.c256Set256(q3, q2, q1, q0)
         }
         return residue
@@ -232,43 +232,43 @@ object DivKnuth {
             x[i] = (x[i + 1] shl left) or (x[i] ushr bitCount)
     }
 
-    fun knuthDivModX64(quot: C256?, x: C256, y0: Long, knuthTmp: IntArray): Long {
+    fun knuthDivModX64(quot: C256?, x: C256, y0: Long, knuthD: IntArray): Long {
         verify { (y0 ushr 32) != 0L }
         verify { x.bitLen > 64 }
 
-        verify { knuthTmp[0] == 0 }
-        knuthTmp[UN + 0] = x.dw0.toInt(); knuthTmp[UN + 1] = (x.dw0 ushr 32).toInt()
-        knuthTmp[UN + 2] = x.dw1.toInt(); knuthTmp[UN + 3] = (x.dw1 ushr 32).toInt()
-        knuthTmp[UN + 4] = x.dw2.toInt(); knuthTmp[UN + 5] = (x.dw2 ushr 32).toInt()
-        knuthTmp[UN + 6] = x.dw3.toInt(); knuthTmp[UN + 7] = (x.dw3 ushr 32).toInt()
-        verify { knuthTmp[UN + 8] == 0 }
+        verify { knuthD[0] == 0 }
+        knuthD[UN + 0] = x.dw0.toInt(); knuthD[UN + 1] = (x.dw0 ushr 32).toInt()
+        knuthD[UN + 2] = x.dw1.toInt(); knuthD[UN + 3] = (x.dw1 ushr 32).toInt()
+        knuthD[UN + 4] = x.dw2.toInt(); knuthD[UN + 5] = (x.dw2 ushr 32).toInt()
+        knuthD[UN + 6] = x.dw3.toInt(); knuthD[UN + 7] = (x.dw3 ushr 32).toInt()
+        verify { knuthD[UN + 8] == 0 }
 
         val m = ((x.bitLen - 1) ushr 5) + 1
 
         val s = y0.countLeadingZeroBits()
 
-        knuthTmp[VN + 0] = y0.toInt()
-        knuthTmp[VN + 1] = (y0 ushr 32).toInt()
+        knuthD[VN + 0] = y0.toInt()
+        knuthD[VN + 1] = (y0 ushr 32).toInt()
         //val n = 2
 
         if (s != 0) {
             // note that this is shifting both dividend (starting at entry[1])
             // and divisor (starting at entry 10)
-            normalizeShiftLeft(knuthTmp, VN + 2, s)
+            normalizeShiftLeft(knuthD, VN + 2, s)
         }
 
         for (i in 0 until ((m - 2 + 1) and BCE))
-            knuthTmp[Q + i] = 0
+            knuthD[Q + i] = 0
 
-        knuthDivideCore2(knuthTmp, m, 2)
+        knuthDivideCore(knuthD, m, 2)
 
-        val remainderNormalized = (knuthTmp[UN + 1].toLong() shl 32) or (knuthTmp[UN + 0].toLong() and MASK32L)
+        val remainderNormalized = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN + 0].toLong() and MASK32L)
         val remainder = remainderNormalized ushr s
         if (quot != null) {
-            val q0 = (knuthTmp[Q + 1].toLong() shl 32) or (knuthTmp[Q + 0].toLong() and MASK32L)
-            val q1 = (knuthTmp[Q + 3].toLong() shl 32) or (knuthTmp[Q + 2].toLong() and MASK32L)
-            val q2 = (knuthTmp[Q + 5].toLong() shl 32) or (knuthTmp[Q + 4].toLong() and MASK32L)
-            val q3 = (knuthTmp[Q + 7].toLong() shl 32) or (knuthTmp[Q + 6].toLong() and MASK32L)
+            val q0 = (knuthD[Q + 1].toLong() shl 32) or (knuthD[Q + 0].toLong() and MASK32L)
+            val q1 = (knuthD[Q + 3].toLong() shl 32) or (knuthD[Q + 2].toLong() and MASK32L)
+            val q2 = (knuthD[Q + 5].toLong() shl 32) or (knuthD[Q + 4].toLong() and MASK32L)
+            val q3 = (knuthD[Q + 7].toLong() shl 32) or (knuthD[Q + 6].toLong() and MASK32L)
             quot.c256Set256(q3, q2, q1, q0)
         }
         return remainder
@@ -291,7 +291,7 @@ object DivKnuth {
      * n: number of words in v (≥ 2) ... or VN
      *
      */
-    fun knuthDivideCore2(
+    fun knuthDivideCore(
         knuthD: IntArray,
         m: Int,
         n: Int

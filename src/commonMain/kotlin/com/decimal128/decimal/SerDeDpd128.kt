@@ -4,31 +4,31 @@ private const val TEN_POW_15 = 1_000_000_000_000_000L
 private const val TEN_POW_18 = 1_000_000_000_000_000_000L
 private const val EIGHTEEN_NINES = TEN_POW_18 - 1L
 
-internal fun encodeBigEndianDpd128(bigEndianLongs: LongArray, d: MutDec, knuthTmp: IntArray): LongArray {
+internal fun encodeBigEndianDpd128(bigEndianLongs: LongArray, d: MutDec, knuthD: IntArray): LongArray {
     require(d.digitLen <= 34)
     require(bigEndianLongs.size == 2)
-    encodeDpd128(d, true, bigEndianLongs, null, knuthTmp)
+    encodeDpd128(d, true, bigEndianLongs, null, knuthD)
     return bigEndianLongs
 }
 
-internal fun encodeBigEndianDpd128(bigEndianBytes: ByteArray, d: MutDec, knuthTmp: IntArray): ByteArray {
+internal fun encodeBigEndianDpd128(bigEndianBytes: ByteArray, d: MutDec, knuthD: IntArray): ByteArray {
     require(d.digitLen <= 34)
     require(bigEndianBytes.size == 16)
-    encodeDpd128(d, true, null, bigEndianBytes, knuthTmp)
+    encodeDpd128(d, true, null, bigEndianBytes, knuthD)
     return bigEndianBytes
 }
 
-internal fun encodeLittleEndianDpd128(littleEndianLongs: LongArray, d: MutDec, knuthTmp:IntArray): LongArray {
+internal fun encodeLittleEndianDpd128(littleEndianLongs: LongArray, d: MutDec, knuthD:IntArray): LongArray {
     require(d.digitLen <= 34)
     require(littleEndianLongs.size == 2)
-    encodeDpd128(d, false, littleEndianLongs, null, knuthTmp)
+    encodeDpd128(d, false, littleEndianLongs, null, knuthD)
     return littleEndianLongs
 }
 
-internal fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray, d: MutDec, knuthTmp:IntArray): ByteArray {
+internal fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray, d: MutDec, knuthD:IntArray): ByteArray {
     require(d.digitLen <= 34)
     require(littleEndianBytes.size == 16)
-    encodeDpd128(d, false, null, littleEndianBytes, knuthTmp)
+    encodeDpd128(d, false, null, littleEndianBytes, knuthD)
     return littleEndianBytes
 }
 
@@ -145,14 +145,14 @@ internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDe
     return d
 }
 
-private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, bytes: ByteArray?, knuthTmp: IntArray) {
+private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, bytes: ByteArray?, knuthD: IntArray) {
     verify { d.digitLen <= 34 }
     var mostSigBcd4 = 0
     var declets5Hi = 0L
     var binLo = d.dw0
     if (d.digitLen > 18) {
         val q = C256()
-        val r = c256SetDivRemX64(q, d, TEN_POW_18, knuthTmp)
+        val r = c256SetDivRemX64(q, d, TEN_POW_18, knuthD)
         binLo = r
         var binHi = q.dw0
         if (q.digitLen > 15) {
