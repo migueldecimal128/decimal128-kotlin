@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.bigint.Magia
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.GT_HALF
 import com.decimal128.decimal.Residue.Companion.HALF
@@ -21,153 +20,6 @@ object DivKnuth {
     private val vn = IntArray(8)
     private val un = IntArray(9)
 
-    fun knuthDivideWrapper_1(quot: C256?, rem: C256?, x: C256, y: C256, knuthTmp: IntArray): Residue {
-        verify { c256GTOne(y) }
-        verify { c256UnscaledCompare(x, y) > 0 }
-        check(knuthTmp.size >= 32)
-
-        un[0] = x.dw0.toInt()
-        un[1] = (x.dw0 ushr 32).toInt()
-        un[2] = x.dw1.toInt()
-        un[3] = (x.dw1 ushr 32).toInt()
-        un[4] = x.dw2.toInt()
-        un[5] = (x.dw2 ushr 32).toInt()
-        un[6] = x.dw3.toInt()
-        un[7] = (x.dw3 ushr 32).toInt()
-        un[8] = 0
-
-        val m = ((x.bitLen - 1) ushr 5) + 1
-
-        vn[0] = y.dw0.toInt()
-        vn[1] = (y.dw0 ushr 32).toInt()
-        vn[2] = y.dw1.toInt()
-        vn[3] = (y.dw1 ushr 32).toInt()
-        vn[4] = y.dw2.toInt()
-        vn[5] = (y.dw2 ushr 32).toInt()
-        vn[6] = y.dw3.toInt()
-        vn[7] = (y.dw3 ushr 32).toInt()
-
-        val vnNonZeroIndex = ((y.bitLen - 1) ushr 5)
-        val vnNonZeroVal = vn[vnNonZeroIndex]
-        val n = vnNonZeroIndex + 1
-        val s = vnNonZeroVal.countLeadingZeroBits()
-
-        if (s != 0) {
-            Magia.mutateShiftLeft(un, m + 1, s)
-            Magia.mutateShiftLeft(vn, n, s)
-        }
-
-        q.fill(0)
-
-        knuthDivideCore(m, n)
-
-        if (rem != null) {
-            Magia.mutateShiftRight(un, n, s)
-            rem.c256Set(un, n)
-        }
-
-        // shifting right by s will denormalize to normal remainder
-        // I will shift right by s-1
-        // this will give me 2*remainder that I can compare with y
-        val residue =
-            if (rem != null) {
-                EXACT
-            } else if (un[n - 1] < 0) {
-                // msb of remainder is set ... doubling it will make it bigger than the divisor
-                GT_HALF
-            } else {
-                var isZero = 0
-                if (s == 0) {
-                    // note that this is shifting LEFT to double the remainder
-                    for (i in n - 1 downTo 1) {
-                        un[i] = (un[i] shl 1) or (un[i - 1] ushr -1)
-                        isZero = isZero or un[i]
-                    }
-                    un[0] = un[0] shl 1
-                    isZero = isZero or un[0]
-                } else {
-                    val s1 = s - 1
-                    if (s1 > 0) {
-                        for (i in 0 until n - 1) {
-                            un[i] = (un[i + 1] shl -s1) or (un[i] ushr s1)
-                            isZero = isZero or un[i]
-                        }
-                        un[n - 1] = un[n - 1] ushr s1
-                        isZero = isZero or un[n - 1]
-                    } else {
-                        // still need to test for isZero
-                        var i = 0
-                        do {
-                            isZero = isZero or un[i]
-                        } while (isZero == 0 && ++i < n)
-                    }
-                }
-                if (isZero == 0) {
-                    EXACT
-                } else {
-                    // note that this compare is reversed ... y compare 2*remainder
-                    val cmp = c256UnscaledCompare(y, un)
-                    if (cmp > 0)
-                        LT_HALF
-                    else if (cmp < 0)
-                        GT_HALF
-                    else
-                        HALF
-                }
-            }
-        quot?.c256Set(q, m)
-        return residue
-    }
-
-    fun knuthDivModX64(quot: C256?, x: C256, y0: Long, knuthTmp: IntArray): Long {
-        verify { (y0 ushr 32) != 0L }
-        verify { x.bitLen > 64 }
-
-        un[0] = x.dw0.toInt()
-        un[1] = (x.dw0 ushr 32).toInt()
-        un[2] = x.dw1.toInt()
-        un[3] = (x.dw1 ushr 32).toInt()
-        un[4] = x.dw2.toInt()
-        un[5] = (x.dw2 ushr 32).toInt()
-        un[6] = x.dw3.toInt()
-        un[7] = (x.dw3 ushr 32).toInt()
-        un[8] = 0
-
-        val m = ((x.bitLen - 1) ushr 5) + 1
-
-        val s = y0.countLeadingZeroBits()
-        val y0Normalized = y0 shl s
-
-        vn[0] = y0Normalized.toInt()
-        vn[1] = (y0Normalized ushr 32).toInt()
-        //val n = 2
-
-        if (s != 0) {
-            Magia.mutateShiftLeft(un, m + 1, s)
-        }
-
-        q.fill(0)
-
-        knuthDivideCore(m, 2)
-
-        val remainderNormalized = (un[1].toLong() shl 32) or (un[0].toLong() and MASK32L)
-        val remainder = remainderNormalized ushr s
-        quot?.c256Set(q, m)
-        return remainder
-    }
-
-    /**
-     * Multi‐word division (Knuth’s Algorithm D) in base 2^32.
-     *
-     * q: quotient array (length ≥ m – n + 1)
-     * r: remainder array (length ≥ n), or null if you don’t need it
-     * u: dividend array (length = m), little‐endian (u[0] = low word)
-     * v: divisor array (length = n ≥ 2), little‐endian, v[n − 1] ≠ 0
-     * m: number of words in u (≥ n)
-     * n: number of words in v (≥ 1)
-     *
-     * Returns 0 on success, 1 if (m < n || n ≤ 0 || v[n − 1] == 0).
-     */
 
     fun knuthDivideCore(
 //        q: IntArray,
@@ -254,12 +106,12 @@ object DivKnuth {
         verify { c256UnscaledCompare(x, y) > 0 }
         check(knuthTmp.size >= 32)
 
-        knuthTmp[0] = 0
+        verify { knuthTmp[0] == 0 }
         knuthTmp[UN + 0] = x.dw0.toInt(); knuthTmp[UN + 1] = (x.dw0 ushr 32).toInt()
         knuthTmp[UN + 2] = x.dw1.toInt(); knuthTmp[UN + 3] = (x.dw1 ushr 32).toInt()
         knuthTmp[UN + 4] = x.dw2.toInt(); knuthTmp[UN + 5] = (x.dw2 ushr 32).toInt()
         knuthTmp[UN + 6] = x.dw3.toInt(); knuthTmp[UN + 7] = (x.dw3 ushr 32).toInt()
-        knuthTmp[UN + 8] = 0
+        verify { knuthTmp[UN + 8] == 0 }
 
         val m = ((x.bitLen - 1) ushr 5) + 1
 
@@ -273,8 +125,11 @@ object DivKnuth {
         val n = vnNonZeroIndex + 1
         val s = vnNonZeroVal.countLeadingZeroBits()
 
-        if (s != 0)
-            normalizeDividendDivisorShiftLeft(knuthTmp, VN + n, s)
+        if (s != 0) {
+            // note that this is shifting both dividend (starting at entry[1])
+            // and divisor (starting at entry 10)
+            normalizeShiftLeft(knuthTmp, VN + n, s)
+        }
 
         for (i in 0 until ((m - n + 1) and BCE))
             knuthTmp[Q + i] = 0
@@ -360,7 +215,7 @@ object DivKnuth {
      * This is not a _normal_ shift in that x[0] is not
      * shifted at all
      */
-    private inline fun normalizeDividendDivisorShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
+    private inline fun normalizeShiftLeft(x: IntArray, xLen: Int, bitCount: Int) {
         val right = 32 - bitCount
         for (i in xLen - 1 downTo 1)
             x[i] = (x[i] shl bitCount) or (x[i - 1] ushr right)
@@ -377,18 +232,77 @@ object DivKnuth {
             x[i] = (x[i + 1] shl left) or (x[i] ushr bitCount)
     }
 
+    fun knuthDivModX64(quot: C256?, x: C256, y0: Long, knuthTmp: IntArray): Long {
+        verify { (y0 ushr 32) != 0L }
+        verify { x.bitLen > 64 }
+
+        verify { knuthTmp[0] == 0 }
+        knuthTmp[UN + 0] = x.dw0.toInt(); knuthTmp[UN + 1] = (x.dw0 ushr 32).toInt()
+        knuthTmp[UN + 2] = x.dw1.toInt(); knuthTmp[UN + 3] = (x.dw1 ushr 32).toInt()
+        knuthTmp[UN + 4] = x.dw2.toInt(); knuthTmp[UN + 5] = (x.dw2 ushr 32).toInt()
+        knuthTmp[UN + 6] = x.dw3.toInt(); knuthTmp[UN + 7] = (x.dw3 ushr 32).toInt()
+        verify { knuthTmp[UN + 8] == 0 }
+
+        val m = ((x.bitLen - 1) ushr 5) + 1
+
+        val s = y0.countLeadingZeroBits()
+
+        knuthTmp[VN + 0] = y0.toInt()
+        knuthTmp[VN + 1] = (y0 ushr 32).toInt()
+        //val n = 2
+
+        if (s != 0) {
+            // note that this is shifting both dividend (starting at entry[1])
+            // and divisor (starting at entry 10)
+            normalizeShiftLeft(knuthTmp, VN + 2, s)
+        }
+
+        for (i in 0 until ((m - 2 + 1) and BCE))
+            knuthTmp[Q + i] = 0
+
+        knuthDivideCore2(knuthTmp, m, 2)
+
+        val remainderNormalized = (knuthTmp[UN + 1].toLong() shl 32) or (knuthTmp[UN + 0].toLong() and MASK32L)
+        val remainder = remainderNormalized ushr s
+        if (quot != null) {
+            val q0 = (knuthTmp[Q + 1].toLong() shl 32) or (knuthTmp[Q + 0].toLong() and MASK32L)
+            val q1 = (knuthTmp[Q + 3].toLong() shl 32) or (knuthTmp[Q + 2].toLong() and MASK32L)
+            val q2 = (knuthTmp[Q + 5].toLong() shl 32) or (knuthTmp[Q + 4].toLong() and MASK32L)
+            val q3 = (knuthTmp[Q + 7].toLong() shl 32) or (knuthTmp[Q + 6].toLong() and MASK32L)
+            quot.c256Set256(q3, q2, q1, q0)
+        }
+        return remainder
+    }
+
+
+    /**
+     * Multi‐word division (Knuth’s Algorithm D) in base 2^32.
+     *
+     * A specialized variant that uses a single array with dedicated
+     * offsets to support division with limb counts up to 8.
+     *
+     * knuthD.size == 32 must be true
+     *
+     * QN: quotient offset (length ≥ m – n + 1)
+     * remainder is left in UN and must be de-normalized
+     * UN: normalized dividend offset (length = m), little‐endian
+     * VN: normalized divisor array (length = n ≥ 2), little‐endian, v[n − 1] ≠ 0
+     * m: number of words in u (≥ n), but the normalized UN consumes 1 more hi word
+     * n: number of words in v (≥ 2) ... or VN
+     *
+     */
     fun knuthDivideCore2(
-        knuthTmp: IntArray,
+        knuthD: IntArray,
         m: Int,
         n: Int
     ) {
         // invalid parameters?
-        if (m > 8 || m < 2 || m < n || n < 2 || knuthTmp.size < 32) {
+        if (m > 8 || m < 2 || m < n || n < 2 || knuthD.size != 32) {
             throw RuntimeException("invalid args")
         }
 
-        val vn_1 = knuthTmp[(VN + n - 1) and BCE].toLong() and MASK32L
-        val vn_2 = knuthTmp[(VN + n - 2) and BCE].toLong() and MASK32L
+        val vn_1 = knuthD[(VN + n - 1) and BCE].toLong() and MASK32L
+        val vn_2 = knuthD[(VN + n - 2) and BCE].toLong() and MASK32L
 
         // -- main loop --
         for (j in m - n downTo 0) {
@@ -396,8 +310,8 @@ object DivKnuth {
             val UN_j_n = (UN + j + n) and BCE
 
             // estimate q̂ = (un[j+n]*B + un[j+n-1]) / vn[n-1]
-            val hi = knuthTmp[UN_j_n].toLong() and MASK32L
-            val lo = knuthTmp[(UN_j_n - 1) and BCE].toLong() and MASK32L
+            val hi = knuthD[UN_j_n].toLong() and MASK32L
+            val lo = knuthD[(UN_j_n - 1) and BCE].toLong() and MASK32L
             val num = (hi shl 32) or lo
             var qhat = unsignedDiv(num, vn_1)
             var rhat = unsignedMod(num, vn_1)
@@ -405,11 +319,11 @@ object DivKnuth {
             // correct estimate
             while ((qhat ushr 32) != 0L ||
                 unsignedCmp(
-                    qhat * vn_2, (rhat shl 32) + (knuthTmp[(UN_j_n - 2) and BCE].toLong() and MASK32L)
+                    qhat * vn_2, (rhat shl 32) + (knuthD[(UN_j_n - 2) and BCE].toLong() and MASK32L)
                 ) > 0
             ) {
                 qhat--
-                rhat += (knuthTmp[(VN + n - 1) and BCE].toLong() and MASK32L)
+                rhat += (knuthD[(VN + n - 1) and BCE].toLong() and MASK32L)
                 if ((rhat ushr 32) != 0L)
                     break
             }
@@ -419,27 +333,27 @@ object DivKnuth {
             var carry = 0L
             for (i in 0 until n) {
                 val UN_j_i = (UN + j + i) and BCE
-                val prod = qhat * (knuthTmp[(VN + i) and BCE].toLong() and MASK32L)
+                val prod = qhat * (knuthD[(VN + i) and BCE].toLong() and MASK32L)
                 val prodHi = prod ushr 32
                 val prodLo = prod and MASK32L
-                val unIJ = (knuthTmp[UN_j_i].toLong() and MASK32L)
+                val unIJ = (knuthD[UN_j_i].toLong() and MASK32L)
                 val t = unIJ - prodLo - carry
-                knuthTmp[UN_j_i] = t.toInt()
+                knuthD[UN_j_i] = t.toInt()
                 carry = prodHi - (t shr 32) // t is signed, so this should *indeed* be signed shr
             }
-            val t = (knuthTmp[UN_j_n].toLong() and MASK32L) - carry
-            knuthTmp[UN_j_n] = t.toInt()
-            knuthTmp[(Q + j) and BCE] = (qhat - (t ushr 63)).toInt()
+            val t = (knuthD[UN_j_n].toLong() and MASK32L) - carry
+            knuthD[UN_j_n] = t.toInt()
+            knuthD[(Q + j) and BCE] = (qhat - (t ushr 63)).toInt()
             if (t < 0) {
                 var c2 = 0L
                 for (i in 0 until n) {
                     val UN_j_i = (UN + j + i) and BCE
-                    val sum = (knuthTmp[UN_j_i].toLong() and MASK32L) +
-                            (knuthTmp[(VN + i) and BCE].toLong() and MASK32L) + c2
-                    knuthTmp[UN_j_i] = sum.toInt()
+                    val sum = (knuthD[UN_j_i].toLong() and MASK32L) +
+                            (knuthD[(VN + i) and BCE].toLong() and MASK32L) + c2
+                    knuthD[UN_j_i] = sum.toInt()
                     c2 = sum ushr 32
                 }
-                knuthTmp[UN_j_n] += c2.toInt()
+                knuthD[UN_j_n] += c2.toInt()
             }
         }
     }

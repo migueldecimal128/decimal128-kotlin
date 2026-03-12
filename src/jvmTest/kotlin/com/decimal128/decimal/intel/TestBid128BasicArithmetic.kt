@@ -101,6 +101,7 @@ class TestBid128BasicArithmetic {
     @Test
     fun testDivCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
+            "bid128_div 0 [b0457561041f2a538564461e0cc0c855] [b030000000000000dd77b6811f136c62] [302ee9f84615c4b2f831147e0365dac4] 20",
         ),
         ::d128DivImpl,
         decContext = decContext,
