@@ -332,7 +332,7 @@ class DecGenConstantTables {
         //val (expectedQuot, expectedRem) = dividend.divMod(tenPowK)
         val expectedQuot = dividend / tenPowK
         val expectedRem = dividend % tenPowK
-        val expectedResidue = Residue.fromRemainderDivisor(expectedRem, tenPowK)
+        val expectedResidue = residueFromRemainderDivisor(expectedRem, tenPowK)
 
         val dividendAlfa = dividend shr (k - 1)
         val maskAlfa = BigInt.Companion.withBitMask(k - 1)
@@ -534,4 +534,18 @@ class DecGenConstantTables {
         }
         return hash
     }
+
+}
+
+fun residueFromRemainderDivisor(remainder: BigInt, divisor: BigInt): Residue {
+    if (remainder.isZero())
+        return Residue.EXACT
+    val remainderDoubled = remainder shl 1
+    val cmp = remainderDoubled.compareTo(divisor)
+    return when {
+        cmp < 0 -> Residue.LT_HALF
+        cmp == 0 -> Residue.HALF
+        else -> Residue.GT_HALF
+    }
+
 }

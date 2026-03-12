@@ -148,19 +148,6 @@ value class Residue internal constructor(val value:Int) {
             return residue
         }
 
-        fun fromRemainderDivisor(remainder: BigInt, divisor: BigInt): Residue {
-            if (remainder.isZero())
-                return EXACT
-            val remainderDoubled = remainder shl 1
-            val cmp = remainderDoubled.compareTo(divisor)
-            return when {
-                cmp < 0 -> LT_HALF
-                cmp == 0 -> HALF
-                else -> GT_HALF
-            }
-
-        }
-
         fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue {
             val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
             val pow10div2 = pow10_64(pow10) ushr 1
