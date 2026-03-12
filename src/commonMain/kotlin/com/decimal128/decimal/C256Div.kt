@@ -51,14 +51,14 @@ internal fun c256SetDivRemX64(z: C256?, x: C256, y0: Long, knuthD: IntArray): Lo
     return divKnuthDivModX64(z, x, y0, knuthD)
 }
 
-internal fun c256SetDiv(z: C256, x: C256, y: C256, knuthD: IntArray) = c256SetDivRem(z, null, x, y, knuthD)
+internal fun c256SetDiv(z: C256, x: C256, y: C256, tmps: DecTmps) = c256SetDivRem(z, null, x, y, tmps)
 
-internal fun c256SetRem(z: C256, x: C256, y: C256, knuthD: IntArray) = c256SetDivRem(null, z, x, y, knuthD)
+internal fun c256SetRem(z: C256, x: C256, y: C256, tmps: DecTmps) = c256SetDivRem(null, z, x, y, tmps)
 
-internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArray): Residue {
+internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, tmps: DecTmps): Residue {
     if (y.bitLen <= 64) {
         val y0 = y.dw0
-        val r0 = c256SetDivRemX64(quot, x, y0, knuthD)
+        val r0 = c256SetDivRemX64(quot, x, y0, tmps.knuthD)
         if (rem != null) {
             rem.c256Set64(r0)
             return EXACT
@@ -85,11 +85,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: In
             quot?.c256SetZero()
             return residue
         } else if (cmp > 0) {
-            val t = when {
-                rem != null && rem !== y -> rem
-                quot != null && quot !== y -> quot
-                else -> C256()
-            }
+            val t = tmps.mdecDiv
             c256SetSubUnscaled(t, x, y)
             val residue = Residue.fromRemainderDivisor(t, y)
             rem?.c256Set(t)
@@ -104,7 +100,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: In
     verify { bitLenDelta >= 0 }
     //TODO at this point I know that x.bitLen >= y.bitLen and x > y
     // if (bitLenDelta < some-small-number) then I should use repeated subtraction
-    return divKnuth(quot, rem, x, y, knuthD)
+    return divKnuth(quot, rem, x, y, tmps.knuthD)
 }
 
 internal fun c256DivNearestX64(z: C256, x: C256, y: Long, knuthD: IntArray) {
@@ -116,8 +112,8 @@ internal fun c256DivNearestX64(z: C256, x: C256, y: Long, knuthD: IntArray) {
     }
 }
 
-internal fun c256DivNearest(z: C256, x: C256, y: C256, knuthD: IntArray) {
-    val residue = c256SetDivRem(z, null, x, y, knuthD)
+internal fun c256DivNearest(z: C256, x: C256, y: C256, tmps: DecTmps) {
+    val residue = c256SetDivRem(z, null, x, y, tmps)
     when (residue) {
         GT_HALF -> z.c256MutateIncrement()
         HALF -> if (z.dw0 and 1L == 1L) z.c256MutateIncrement()

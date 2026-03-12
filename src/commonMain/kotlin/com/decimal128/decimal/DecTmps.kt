@@ -11,8 +11,7 @@ class DecTmps {
 
     // use of these tmps should be internal to the MutDec layer
     val mdecArg1 = MutDec()
-    val mdecArg2 = MutDec()
-    val mdecArg3 = MutDec()
+    val mdecDiv = MutDec()
 
     val mdecFusedProduct = MutDec()
 

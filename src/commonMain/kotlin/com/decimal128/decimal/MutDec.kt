@@ -1429,7 +1429,7 @@ class MutDec() : C256() {
 
     fun setRemainderNear(x: MutDec, y: MutDec, env: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else env.tmps.mdecArg2.set(y)
+        val yT = if (this !== y) y else env.tmps.mdecDiv.set(y)
         val truncIsOdd: Boolean = setRemTruncImpl(x, yT, env)
         if (!isZero() && isFinite()) {
             val rem2 = if (sign) {
