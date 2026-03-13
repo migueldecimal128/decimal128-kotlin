@@ -58,8 +58,7 @@ class TestC256ScaleUp {
                 for (deltaX in deltas) {
                     val biA = biX.add(deltaX)
                     val tc = TC(biA, pow10)
-                    if (tc.biProduct.bitLength() <= 256)
-                        test1(tc)
+                    test1(tc)
                 }
             }
         }
@@ -96,8 +95,10 @@ class TestC256ScaleUp {
 
     fun test1(case: TC) {
         val expected = case.biProduct
-        if (expected.bitLength() > 256) {
-            println("product would overflow ... skipped")
+        if (expected.toString().length > 76) {
+            if (verbose) {
+                println("product would overflow ... skipped")
+            }
             return
         }
         val coeffA = newCoeff(case.biA)
