@@ -69,7 +69,7 @@ class MutDec() : C256() {
                             z.type = STEAL_TYPE_FNZ
                             z.qExp = x.qExp - shiftLeft
                             z.sign = x.sign
-                            c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.dwQuad1)
+                            c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
                             // we could be here because of FMA, so need to finalize
                             z.finalize(ctx)
                         }
@@ -85,7 +85,7 @@ class MutDec() : C256() {
                             val shiftLeft = min(headroom, gap)
                             z.qExp = y.qExp - shiftLeft
                             z.sign = ySign
-                            c256SetScaleUpPow10(z, y, shiftLeft, ctx.tmps.dwQuad1)
+                            c256SetScaleUpPow10(z, y, shiftLeft, ctx.tmps.pentad1)
                         }
 
                         else -> addFnzImpl(z, x, ySign, y, ctx)
@@ -577,7 +577,7 @@ class MutDec() : C256() {
                     c256SetZero()
                     this.type = STEAL_TYPE_ZER
                 } else {
-                    c256SetMul(this, x, y, ctx.tmps.dwQuad1)
+                    c256SetMul(this, x, y, ctx.tmps.pentad1)
                     this.type = STEAL_TYPE_FNZ
                 }
                 this.qExp = x.qExp + y.qExp
@@ -627,7 +627,7 @@ class MutDec() : C256() {
                 // FIXME -- this tmp should be pulled from ctx.decTmps
                 val aT = if (this === a) ctx.tmps.mdecArg1.set(a) else a
                 // multiply without roundAndFinalize .. remains exact
-                c256SetMul(this, x, y, ctx.tmps.dwQuad1)
+                c256SetMul(this, x, y, ctx.tmps.pentad1)
                 this.type = STEAL_TYPE_FNZ
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
@@ -670,7 +670,7 @@ class MutDec() : C256() {
         val pT = ctx.tmps.mdecFusedProduct
 
         // raw multiply without roundAndFinalize ... remains exact
-        c256SetMul(pT, x, y, ctx.tmps.dwQuad1)
+        c256SetMul(pT, x, y, ctx.tmps.pentad1)
         pT.qExp = x.qExp + y.qExp
         val residue = magDivFnzFnz(this, resultSign, pT, d, ctx)
         return this.roundAndFinalize(residue, ctx)
@@ -773,7 +773,7 @@ class MutDec() : C256() {
                 val headroom = ctx.precision - this.digitLen
                 if (headroom < this.qExp)
                     return ctx.signalInvalid(setNaN())
-                c256SetScaleUpPow10(this, this, this.qExp, ctx.tmps.dwQuad1)
+                c256SetScaleUpPow10(this, this, this.qExp, ctx.tmps.pentad1)
             }
             qExp = 0
         }
@@ -807,7 +807,7 @@ class MutDec() : C256() {
             qX < MIN_SPECIAL_VALUE -> {
                 when {
                     (x.bitLen > 0) -> {
-                        val residue = MagnitudeSqrt.magSqrt(this, x, ctx.tmps.dwQuad1)
+                        val residue = MagnitudeSqrt.magSqrt(this, x, ctx.tmps.pentad1)
                         this.sign = false
                         roundAndFinalize(residue, ctx)
                     }
@@ -1174,7 +1174,7 @@ class MutDec() : C256() {
     private fun mutateNextAwayFromZero(ctx: DecContext) {
         val headroom = min(ctx.precision - digitLen, qExp - ctx.qTiny)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.dwQuad1)
+            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
             this.qExp -= headroom
         }
         c256MutateIncrement()
@@ -1188,7 +1188,7 @@ class MutDec() : C256() {
         val headroom =
             min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - ctx.qTiny)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.dwQuad1)
+            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
             this.qExp -= headroom
         }
         c256MutateDecrement()
@@ -1284,7 +1284,7 @@ class MutDec() : C256() {
                 }
 
                 // Scale up coefficient
-                c256SetScaleUpPow10(this, x, scaleAmount, ctx.tmps.dwQuad1)
+                c256SetScaleUpPow10(this, x, scaleAmount, ctx.tmps.pentad1)
                 this.qExp = qY
                 this.sign = x.sign
                 verify { digitLen <= ctx.precision }

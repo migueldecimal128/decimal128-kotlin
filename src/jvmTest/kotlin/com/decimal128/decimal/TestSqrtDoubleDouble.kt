@@ -117,8 +117,8 @@ class TestSqrtDoubleDouble{
         }
         val coeffRadicandScaled = C256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
-        val tmpDwQuad = DwQuad()
-        c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, tmpDwQuad)
+        val tmpPentad = Pentad()
+        c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, tmpPentad)
         if (verbose)
             println("radicand:$radicand radicandScaled:$coeffRadicandScaled")
 
@@ -200,7 +200,7 @@ class TestSqrtDoubleDouble{
             println(" ==> coeffGuess2:$coeffGuess2")
 
         val coeffGuess2Squared = C256()
-        c256SetMul(coeffGuess2Squared, coeffGuess2, coeffGuess2, tmpDwQuad)
+        c256SetMul(coeffGuess2Squared, coeffGuess2, coeffGuess2, tmpPentad)
         val residual2 = C256()
         c256SetSubUnscaled(residual2, coeffRadicandScaled, coeffGuess2Squared)
 

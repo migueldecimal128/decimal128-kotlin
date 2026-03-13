@@ -19,7 +19,7 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, ctx: DecCont
     val dw1 = x.dw1;
     val dw0 = x.dw0
     val pow10 = -qExp
-    val tmpPair = ctx.tmps.dwQuad1
+    val tmpPair = ctx.tmps.pentad1
     tmpPair.dw0 = 0L
     tmpPair.dw1 = 0L
     val digitLen = stealDigitLen(stealX)
@@ -100,7 +100,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppre
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
                 if (intDigitLen <= 19) {
-                    val dwPair = ctx.tmps.dwQuad1
+                    val dwPair = ctx.tmps.pentad1
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
                     var r0 = dwPair.dw0
@@ -191,7 +191,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
                 if (intDigitLen <= 10) {
-                    val dwPair = ctx.tmps.dwQuad1
+                    val dwPair = ctx.tmps.pentad1
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     var r0 = dwPair.dw0
                     val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)

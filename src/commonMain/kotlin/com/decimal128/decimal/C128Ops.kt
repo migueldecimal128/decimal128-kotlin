@@ -14,7 +14,7 @@ internal fun c128UnscaledCompare(x: Decimal, y: Decimal): Int {
 }
 
 
-fun c128ScaleDownPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residue {
+fun c128ScaleDownPow10(result: Pentad, dw1: Long, dw0: Long, pow10: Int): Residue {
     if (dw1 == 0L) {
         verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
         val denomPow10 = pow10_64(pow10)
@@ -44,7 +44,7 @@ fun c128ScaleDownPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residu
     return residue
 }
 
-private fun barrettDivPow10(result: DwQuad, dw1: Long, dw0: Long, pow10: Int): Residue {
+private fun barrettDivPow10(result: Pentad, dw1: Long, dw0: Long, pow10: Int): Residue {
     val lowBits = dw0 and ((1L shl pow10) - 1)
     val shifted1 = dw1 ushr pow10
     val shifted0 = (dw1 shl (64 - pow10)) or (dw0 ushr pow10)

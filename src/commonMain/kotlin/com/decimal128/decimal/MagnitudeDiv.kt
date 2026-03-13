@@ -8,7 +8,7 @@ object MagnitudeDiv {
         val tmps = ctx.tmps
         val numeratorScale = ctx.precision + 1 - (x.digitLen - y.digitLen)
         val scaledNumerator = tmps.mdecArg1
-        c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, ctx.tmps.dwQuad1)
+        c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, ctx.tmps.pentad1)
         val residue = when {
             (y.bitLen <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)
             else -> c256SetDiv(z, scaledNumerator, y, tmps)

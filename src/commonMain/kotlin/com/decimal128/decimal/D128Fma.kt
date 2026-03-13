@@ -99,7 +99,7 @@ private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decima
         return x
     val t = ctx.tmps.mdecBridge1.set(x)
     val r = ctx.tmps.mdecResult
-    c256SetScaleUpPow10(r, t, qDelta, ctx.tmps.dwQuad1)
+    c256SetScaleUpPow10(r, t, qDelta, ctx.tmps.pentad1)
     r.qExp = xQ - qDelta
     r.sign = x.sign
     return Decimal.from(r.finalize(ctx))

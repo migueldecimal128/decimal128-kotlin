@@ -122,7 +122,7 @@ class TestMutDecReciprocal{
         val coeff2xS = C256().apply { c256SetPow10(this, scalePow10); c256MutateShiftLeft(1) }
         val t = C256()
 
-        val tmpDwQuad = ctx.tmps.dwQuad1
+        val tmpDwQuad = ctx.tmps.pentad1
         c256SetMul(t, divisor, cGuess, tmpDwQuad)
         c256SetSubUnscaled(t, coeff2xS, t)
         c256SetMul(t, t, cGuess, tmpDwQuad)

@@ -159,10 +159,10 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
                 residue = Residue.fromValuePow10(n1, n0, nDigitLen)
         }
         else -> {
-            val tmpPair = ctx.tmps.dwQuad1
-            residue = c128ScaleDownPow10(tmpPair, n1, n0, shiftRight)
-            dw0Sum += tmpPair.dw0
-            dw1Sum += tmpPair.dw1 + if (unsignedLT(dw0Sum, tmpPair.dw0)) 1L else 0L
+            val tmpDwQuad = ctx.tmps.pentad1
+            residue = c128ScaleDownPow10(tmpDwQuad, n1, n0, shiftRight)
+            dw0Sum += tmpDwQuad.dw0
+            dw1Sum += tmpDwQuad.dw1 + if (unsignedLT(dw0Sum, tmpDwQuad.dw0)) 1L else 0L
         }
     }
     return decRoundAndFinalizeFinite(resultSign, dw1Sum, dw0Sum, residue, qAlign, ctx)

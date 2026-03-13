@@ -21,8 +21,8 @@ class DecTmps {
     val mdecTrans4 = MutDec()
 
     //
-    val dwQuad1 = DwQuad()
-    val dwQuad2 = DwQuad()
+    val pentad1 = Pentad()
+    val pentad2 = Pentad()
     
     val knuthD = IntArray(32)
 
