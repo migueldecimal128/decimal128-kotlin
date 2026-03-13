@@ -2098,7 +2098,7 @@ object Magia {
                 utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
                 ib -= 4
             } else {
-                IllegalArgumentException()
+                throw IllegalArgumentException()
             }
         }
         if (t != 0L || dw == 0L) {
