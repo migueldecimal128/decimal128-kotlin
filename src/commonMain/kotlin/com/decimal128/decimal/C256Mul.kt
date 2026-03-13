@@ -1,33 +1,57 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
-
+/**
+ * Multiplies two decimal coefficients, each at most 127 bits (38 digits).
+ * Fast path for both operands <= 64 bits. Maximum product is 254 bits.
+ */
 internal fun c256SetMul(z: C256, x: C256, y: C256, pentad: Pentad) {
     val xBitLen = x.bitLen
     val yBitLen = y.bitLen
-    if ((xBitLen <= 127) and (yBitLen <= 127)) {
-        val maxProdBitLen = xBitLen + yBitLen
-        _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0, pentad)
-    } else
-        throwCoeffMultiplyOverflow()
+    when {
+        (xBitLen or yBitLen) <= 64 -> { //if ((xBitLen <= 64) and (yBitLen <= 64))
+            val pHi = unsignedMulHi(x.dw0, y.dw0)
+            val pLo = x.dw0 * y.dw0
+            z.c256Set128(pHi, pLo)
+            return
+        }
+
+        (xBitLen or yBitLen) <= 127 -> { //if ((xBitLen <= 127) and (yBitLen <= 127))
+            val maxProdBitLen = xBitLen + yBitLen
+            _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0, pentad)
+        }
+
+        else -> throwCoeffMultiplyOverflow()
+    }
 }
 
+/**
+ * Multiplies a decimal coefficient by a 64-bit unsigned integer (1 limb).
+ * Dispatches to [_mulCoeff2x1] or handles inline for 64-bit x.
+ */
 fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, pentad: Pentad) {
     val xBitLen = x.bitLen
     verify { xBitLen <= 127 }
     val maxBitLen = xBitLen + yBitLen
     when {
-        (xBitLen <= 64) -> {
+        xBitLen <= 64 -> {
             val x0 = x.dw0
             val pHi = unsignedMulHi(x0, y0)
             val pLo = x0 * y0
             z.c256Set128(pHi, pLo)
         }
 
-        (xBitLen <= 128) -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0, pentad)
+        xBitLen <= 127 -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0, pentad)
         else -> throwCoeffMultiplyOverflow()
     }
 }
 
+/**
+ * Multiplies a decimal coefficient by a 128-bit unsigned integer (2 limbs, 65..128 bits).
+ * Dispatches to [_mulCoeff2x1] or [_mulCoeff2x2] based on x limb count.
+ */
 internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long, pentad: Pentad) {
     verify { yBitLen in 65..128 }
     val xBitLen = x.bitLen
@@ -35,17 +59,16 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y1: Long, y0: Long, pent
     val maxBitLen = xBitLen + yBitLen
     verify { maxBitLen <= 254 }
     when {
-        (xBitLen <= 64) -> when {
-            (xBitLen > 1) -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0, pentad)
-            (xBitLen == 1) -> z.c256Set128(y1, y0)
-            else -> z.c256SetZero()
-        }
-
-        (xBitLen <= 128) -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0, pentad)
+        xBitLen <= 64 -> _mulCoeff2x1(z, maxBitLen, y1, y0, x.dw0, pentad)
+        xBitLen <= 127 -> _mulCoeff2x2(z, maxBitLen, x.dw1, x.dw0, y1, y0, pentad)
         else -> throwCoeffMultiplyOverflow()
     }
 }
 
+/**
+ * Multiplies a decimal coefficient by a 192-bit unsigned integer (3 limbs, 129..192 bits).
+ * Dispatches to [_mulCoeff3x1] or [_mulCoeff3x2] based on x limb count.
+ */
 internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: Long,
                         pentad: Pentad) {
     verify { yBitLen in 129..192 }
@@ -54,17 +77,16 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: 
     val maxBitLen = xBitLen + yBitLen
     verify { maxBitLen <= 254 }
     when {
-        (xBitLen <= 64) -> when {
-            (xBitLen > 1) -> _mulCoeff3x1(z, maxBitLen, y2, y1, y0, x.dw0, pentad)
-            (xBitLen == 1) -> z.c256Set192(y2, y1, y0)
-            else -> z.c256SetZero()
-        }
-
-        (xBitLen <= 128) -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0, pentad)
+        xBitLen <= 64 -> _mulCoeff3x1(z, maxBitLen, y2, y1, y0, x.dw0, pentad)
+        xBitLen <= 127 -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0, pentad)
         else -> throwCoeffMultiplyOverflow()
     }
 }
 
+/**
+ * Multiplies a decimal coefficient by a 256-bit unsigned integer (4 limbs, 193..256 bits).
+ * x is constrained to 64 bits (1 limb); dispatches to [_mulCoeff4x1].
+ */
 internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: Long, y0: Long,
                         pentad: Pentad) {
     verify { yBitLen in 193..256 }
@@ -72,17 +94,16 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: 
     verify { xBitLen <= 64 }
     val maxBitLen = xBitLen + yBitLen
     verify { maxBitLen <= 254 }
-    when {
-        (xBitLen <= 64) -> when {
-            (xBitLen > 1) -> _mulCoeff4x1(z, maxBitLen, y3, y2, y1, y0, x.dw0, pentad)
-            (xBitLen == 1) -> z.c256Set256(y3, y2, y1, y0)
-            else -> z.c256SetZero()
-        }
-
-        else -> throwCoeffMultiplyOverflow()
-    }
+    if (xBitLen <= 64)
+        _mulCoeff4x1(z, maxBitLen, y3, y2, y1, y0, x.dw0, pentad)
+    else
+        throwCoeffMultiplyOverflow()
 }
 
+/**
+ * provided only as a reference implementation
+ */
+/*
 @Suppress("UNUSED")
 private fun _mulCoeff4x4(
     p: C256,
@@ -143,8 +164,12 @@ private fun _mulCoeff4x4(
     }
     throwCoeffMultiplyOverflow()
 }
+*/
 
-private fun _mulCoeff4x1(
+/**
+ * 4-limb × 1-limb multiply. Product at most 254 bits (10^76 - 1 requires 253 bits).
+ */
+private inline fun _mulCoeff4x1(
     p: C256,
     maxBitLen: Int,
     x3: Long, x2: Long, x1: Long, x0: Long,
@@ -185,18 +210,14 @@ private fun _mulCoeff4x1(
         p.c256Set256(p3, p2, p1, p0)
         return
     }
-    sumU64(pentad, carry2, pp20Hi, pp30Lo)
-    val carry3 = pentad.dw1
-    val p3 = pentad.dw0
-    if (carry3 == 0L) {
-        verify { maxBitLen == 257 }
-        p.c256Set256(p3, p2, p1, p0)
-        return
-    }
+    // 10**76 - 1 has 253 bits
     throwCoeffMultiplyOverflow()
 }
 
-private fun _mulCoeff3x2(
+/**
+ * 3-limb × 2-limb multiply. Product at most 254 bits (10^76 - 1 requires 253 bits).
+ */
+private inline fun _mulCoeff3x2(
     p: C256,
     maxBitLen: Int,
     x2: Long, x1: Long, x0: Long,
@@ -238,23 +259,14 @@ private fun _mulCoeff3x2(
         p.c256Set256(p3, p2, p1, p0)
         return
     }
-    sumU64(pentad, carry2, pp11Hi, pp20Hi, pp21Lo)
-    val carry3 = pentad.dw1
-    val p3 = pentad.dw0
-    if (carry3 == 0L) {
-        verify { maxBitLen == 257 }
-        p.c256Set256(p3, p2, p1, p0)
-        return
-    }
+    // 10**76 - 1 has 253 bits
     throwCoeffMultiplyOverflow()
 }
 
-private fun throwCoeffMultiplyOverflow() {
-    throw RuntimeException("coeff multiply overflow")
-}
-
-
-private fun _mulCoeff3x1(
+/**
+ * 3-limb × 1-limb multiply. Product at most 192 bits.
+ */
+private inline fun _mulCoeff3x1(
     p: C256,
     maxBitLen: Int,
     x2: Long, x1: Long, x0: Long,
@@ -290,6 +302,9 @@ private fun _mulCoeff3x1(
     p.c256Set256(p3, p2, p1, p0)
 }
 
+/**
+ * 2-limb × 2-limb multiply. Product at most 254 bits (10^76 - 1 requires 253 bits).
+ */
 private fun _mulCoeff2x2(
     c: C256,
     maxBitLen: Int,
@@ -328,7 +343,10 @@ private fun _mulCoeff2x2(
     c.c256Set256(p3, p2, p1, p0)
 }
 
-private fun _mulCoeff2x1(
+/**
+ * 2-limb × 1-limb multiply. Product at most 192 bits.
+ */
+private inline fun _mulCoeff2x1(
     c: C256,
     maxBitLen: Int,
     x1: Long, x0: Long,
@@ -352,3 +370,11 @@ private fun _mulCoeff2x1(
     val p2 = carry1 + pp10Hi
     c.c256Set192(p2, p1, p0)
 }
+
+/**
+ * Thrown when a coefficient product exceeds the supported range.
+ */
+private fun throwCoeffMultiplyOverflow() {
+    throw RuntimeException("coeff multiply overflow")
+}
+

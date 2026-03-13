@@ -7,14 +7,13 @@ package com.decimal128.decimal
  * primitive integer values from operations without heap allocation of
  * Pair() or Triple().
  */
-class Pentad {
-    var w = 0
-    var dw0 = 0L
-    var dw1 = 0L
-    var dw2 = 0L
-    var dw3 = 0L
+expect class Pentad() {
+    var w: Int
+    var dw0: Long
+    var dw1: Long
+    var dw2: Long
+    var dw3: Long
 
-    override fun toString(): String {
-        return "[w:${w.toUInt()} dw0:${dw0.toULong()} dw1:${dw1.toULong()} dw2:${dw2.toULong()} dw3:${dw3.toULong()}]"
-    }
+    override fun toString(): String
+
 }
