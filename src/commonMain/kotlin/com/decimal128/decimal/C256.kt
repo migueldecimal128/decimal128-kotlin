@@ -154,13 +154,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256Set(x: LongArray, xOff: Int, xLen: Int) = c256Set(this, x, xOff, xLen)
 
-    internal inline fun c256Set(x: IntArray, xLen: Int) = c256Set(this, x, xLen)
-
-    internal inline fun c256SetShiftRight(x: LongArray, xOff: Int, xLen: Int, bitCount: Int) =
-        c256SetShiftRight(this, x, xOff, xLen, bitCount)
-
-    internal inline fun getDwordAtBitIndex(bitIndex: Int): Long = getDwordAtBitIndex(this, bitIndex)
-
     internal inline fun c256ToFloorDouble() = c256ToFloorDouble(this)
 
     internal inline fun c256Set(d: Double) = c256Set(this, d)

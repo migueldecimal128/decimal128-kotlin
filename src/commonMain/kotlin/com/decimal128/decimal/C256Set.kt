@@ -2,48 +2,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.bigint.Magia
-
-internal fun c256Set(z: C256, car: IntArray) = c256Set(z, car, Magia.nonZeroLimbLen(car))
-
-internal fun c256Set(z: C256, car: IntArray, carLen: Int) {
-    val carSize = car.size
-
-    val lo0 = if (carSize > 0) car[0].toLong() else 0L
-    val hi0 = if (carSize > 1) car[1].toLong() else 0L
-    val dw0 = (hi0 shl 32) or (lo0 and MASK32L)
-    if (carLen <= 2) {
-        z.c256Set64(dw0)
-        return
-    }
-
-    val lo1 = if (carSize > 2) car[2].toLong() else 0L
-    val hi1 = if (carSize > 3) car[3].toLong() else 0L
-    val dw1 = (hi1 shl 32) or (lo1 and MASK32L)
-    if (carLen <= 4) {
-        z.c256Set128(dw1, dw0)
-        return
-    }
-
-    val lo2 = if (carSize > 4) car[4].toLong() else 0L
-    val hi2 = if (carSize > 5) car[5].toLong() else 0L
-    val dw2 = (hi2 shl 32) or (lo2 and MASK32L)
-    if (carLen <= 6) {
-        z.c256Set192(dw2, dw1, dw0)
-        return
-    }
-
-    val lo3 = if (carSize > 6) car[6].toLong() else 0L
-    val hi3 = if (carSize > 7) car[7].toLong() else 0L
-    val dw3 = (hi3 shl 32) or (lo3 and MASK32L)
-    if (carLen <= 8) {
-        z.c256Set256(dw3, dw2, dw1, dw0)
-        return
-    }
-
-    throw RuntimeException("u256 overflow")
-}
-
 internal fun c256Set(z: C256, x: LongArray, xOff: Int, xLen: Int) {
     z.c256SetZero()
     if (xLen == 0)
