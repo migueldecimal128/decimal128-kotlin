@@ -163,7 +163,7 @@ class TestSqrt{
         delta0Coeff.c256SetShiftLeft(delta0Coeff, max(delta0Exp - 52, 0))
 
         val guess1Coeff = C256()
-        c256SetAddUnscaled(guess1Coeff, guess0Coeff, delta0Coeff)
+        c256SetAddUnscaled(guess1Coeff, guess0Coeff, delta0Coeff, Pentad())
         if (verbose)
             println(" --> guess1Coeff:$guess1Coeff")
 
@@ -184,7 +184,7 @@ class TestSqrt{
         val residue1 = c256SetDiv(delta1, residual1, guess1x2, tmps)
 
         val guess2 = C256()
-        c256SetAddUnscaled(guess2, guess1Coeff, delta1)
+        c256SetAddUnscaled(guess2, guess1Coeff, delta1, Pentad())
         if (verbose)
             println(" --> guess2:$guess2")
 

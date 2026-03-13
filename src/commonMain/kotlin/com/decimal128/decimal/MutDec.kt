@@ -121,8 +121,9 @@ class MutDec() : C256() {
             // roundTowardNegative; under that attribute, the sign of an
             // exact zero sum (or difference) shall be −0.
             val isRoundTowardNegative = ctx.isRoundTowardNegative()
+            val pentad = ctx.tmps.pentad1
             if (xSign == ySign) {
-                c256SetAddUnscaled(z, x, y)
+                c256SetAddUnscaled(z, x, y, pentad)
                 z.sign = xSign
             } else {
                 val cmp = c256UnscaledCompare(x, y)

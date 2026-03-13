@@ -64,7 +64,7 @@ class TestC256AddScaledFullOverlap {
         val coeffZ = C256()
         if (verbose)
             println("${case.biX} * 10**${case.scaleDelta} + ${case.biY} => expected:$expected")
-        c256SetAdd(coeffZ, coeffX, case.scaleDelta, coeffY)
+        c256SetAdd(coeffZ, coeffX, case.scaleDelta, coeffY, Pentad())
         val observed = coeffZ.coeffToBigInteger()
         assertEquals(expected, observed)
     }

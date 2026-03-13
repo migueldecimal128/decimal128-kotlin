@@ -168,7 +168,7 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
     internal inline fun c256ToNewDoubleDouble() = c256ToNewDoubleDouble(this)
 
-    internal inline fun c256Set(dd: DoubleDouble) = c256Set(this, dd)
+    internal inline fun c256Set(dd: DoubleDouble) = c256Set(this, dd, DecContext.current().tmps.pentad1)
 
     internal inline fun c256MutateIncrement(doRoundUp: Boolean) {
         if (doRoundUp)

@@ -2,11 +2,11 @@ package com.decimal128.decimal
 
 import kotlin.math.max
 
-internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256) {
+internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pentad) {
     verify { x.bitLen <= 127 }
     verify { y.bitLen <= 127 }
     when {
-        scaleDelta == 0 -> c256SetAddUnscaled(z, x, y)
+        scaleDelta == 0 -> c256SetAddUnscaled(z, x, y, pentad)
         scaleDelta > 0 -> c256SetAddScaled(z, x, scaleDelta, y)
         else -> c256SetAddScaled(z, y, -scaleDelta, x)
     }
@@ -18,7 +18,7 @@ internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256) {
  * This code is called from FMA, so it x might have 76 digits == 253 bits.
  * y will have been normalized and will have up thru 38 digits == 117 bits
  */
-internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256) {
+internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256, pentad: Pentad) {
 
     verify { x.bitLen <= 253 }
     verify { y.bitLen <= 127 }

@@ -52,7 +52,7 @@ object MagnitudeAddSub {
                         if (shiftLeft > 0)
                             c256SetAddScaled(z, m, shiftLeft, t)
                         else
-                            c256SetAddUnscaled(z, m, t)
+                            c256SetAddUnscaled(z, m, t, ctx.tmps.pentad1)
                         residue
                     }
                 }

@@ -61,7 +61,7 @@ object MagnitudeSqrt {
             coeffDelta0.c256MutateDecrement()
             coeffDelta0.c256SetShiftLeft(coeffDelta0, max(delta0Exp - 52, 0))
 
-            c256SetAddUnscaled(coeffGuess1, coeffGuess0, coeffDelta0)
+            c256SetAddUnscaled(coeffGuess1, coeffGuess0, coeffDelta0, pentad)
             if (verbose)
                 println(" --> guess1Coeff:$coeffGuess1")
 
@@ -93,7 +93,7 @@ object MagnitudeSqrt {
         coeffDelta1.c256Set(ddDelta1)
 
         val coeffGuess2 = C256()
-        c256SetAddUnscaled(coeffGuess2, coeffGuess1, coeffDelta1)
+        c256SetAddUnscaled(coeffGuess2, coeffGuess1, coeffDelta1, pentad)
 
         if (verbose)
             println(" ==> coeffGuess2:$coeffGuess2")

@@ -223,14 +223,14 @@ fun c256ToNewDoubleDouble(x: C256): DoubleDouble {
     return DoubleDouble(dHiBits, dLoBits)
 }
 
-fun c256Set(z: C256, dd: DoubleDouble) {
+fun c256Set(z: C256, dd: DoubleDouble, pentad: Pentad) {
     c256Set(z, dd.hi)
     if (dd.lo == 0.0)
         return
     val uLo = C256()
     uLo.c256Set(dd.lo)
     if (dd.lo > 0)
-        c256SetAddUnscaled(z, z, uLo)
+        c256SetAddUnscaled(z, z, uLo, pentad)
     else
         c256SetSubUnscaled(z, z, uLo)
 }
