@@ -429,6 +429,24 @@ internal /*inline*/ fun umul192x64to192(x2: Long, x1: Long, x0: Long, y0: Long):
     return Triple(p2, p1, p0)
 }
 
+internal /*inline*/ fun umul192x64to192(pentad: Pentad, x2: Long, x1: Long, x0: Long, y0: Long): Pentad {
+    val pp00Hi = unsignedMulHi(x0, y0)
+    val pp00Lo = x0 * y0
+    val p0 = pp00Lo
+
+    val pp10Hi = unsignedMulHi(x1, y0)
+    val pp10Lo = x1 * y0
+    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+
+    val pp20Lo = x2 * y0
+    val p2 = carry1 + pp10Hi + pp20Lo
+
+    pentad.dw0 = p0
+    pentad.dw1 = p1
+    pentad.dw2 = p2
+    return pentad
+}
+
 
 internal /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long): Triple<Long, Long, Long> {
     val pp00Hi = unsignedMulHi(x0, y0)
@@ -445,6 +463,26 @@ internal /*inline*/ fun umul128x128to192(x1: Long, x0: Long, y1:Long, y0: Long):
     val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo
 
     return Triple(p2, p1, p0)
+}
+
+internal /*inline*/ fun umul128x128to192(pentad: Pentad, x1: Long, x0: Long, y1:Long, y0: Long): Pentad {
+    val pp00Hi = unsignedMulHi(x0, y0)
+    val pp00Lo = x0 * y0
+    val p0 = pp00Lo
+
+    val pp01Hi = unsignedMulHi(x0, y1)
+    val pp01Lo = x0 * y1
+    val pp10Hi = unsignedMulHi(x1, y0)
+    val pp10Lo = x1 * y0
+    val (carry1, p1) = sumU64(pp00Hi, pp01Lo, pp10Lo)
+
+    val pp11Lo = x1 * y1
+    val p2 = carry1 + pp01Hi + pp10Hi + pp11Lo
+
+    pentad.dw0 = p0
+    pentad.dw1 = p1
+    pentad.dw2 = p2
+    return pentad
 }
 
 

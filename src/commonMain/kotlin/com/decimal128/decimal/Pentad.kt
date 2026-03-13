@@ -15,6 +15,6 @@ class Pentad {
     var dw3 = 0L
 
     override fun toString(): String {
-        return "[w:${w.toUInt()}${dw3.toULong()},${dw2.toULong()},${dw1.toULong()},${dw0.toULong()}]"
+        return "[w:${w.toUInt()} dw0:${dw0.toULong()} dw1:${dw1.toULong()} dw2:${dw2.toULong()} dw3:${dw3.toULong()}]"
     }
 }

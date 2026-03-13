@@ -15,8 +15,7 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, pentad: Pentad) {
             when {
                 (pow10BitLen <= 64) -> {
                     if (maxBitLen <= 192) {
-                        val (p2, p1, p0) = umul192x64to192(x.dw2, x.dw1, x.dw0, pow10dw0)
-                        z.c256Set192(p2, p1, p0)
+                        z.c256Set192(umul192x64to192(pentad, x.dw2, x.dw1, x.dw0, pow10dw0))
                         return
                     }
                     c256SetMul(z, x, pow10BitLen, pow10dw0, pentad)
@@ -24,8 +23,7 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, pentad: Pentad) {
 
                 (pow10BitLen <= 128) -> {
                     if (maxBitLen <= 192) {
-                        val (p2, p1, p0) = umul128x128to192(x.dw1, x.dw0, pow10dw1, pow10dw0)
-                        z.c256Set192(p2, p1, p0)
+                        z.c256Set192(umul128x128to192(pentad, x.dw1, x.dw0, pow10dw1, pow10dw0))
                         return
                     }
                     c256SetMul(z, x, pow10BitLen, pow10dw1, pow10dw0, pentad)
