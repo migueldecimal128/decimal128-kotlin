@@ -3,8 +3,8 @@ package com.decimal128.decimal
 import kotlin.math.max
 
 internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256) {
-    verify { x.bitLen < 128 }
-    verify { y.bitLen < 128 }
+    verify { x.bitLen <= 127 }
+    verify { y.bitLen <= 127 }
     when {
         scaleDelta == 0 -> c256SetAddUnscaled(z, x, y)
         scaleDelta > 0 -> c256SetAddScaled(z, x, scaleDelta, y)
@@ -12,24 +12,34 @@ internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256) {
     }
 }
 
+/**
+ * Adds 2 coefficients together without scaling.
+ *
+ * This code is called from FMA, so it x might have 76 digits == 253 bits.
+ * y will have been normalized and will have up thru 38 digits == 117 bits
+ */
 internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256) {
-    val maxBitLen = max(x.bitLen, y.bitLen) + 1
 
-    if (maxBitLen < 64) {
-        z.c256Set64(x.dw0 + y.dw0)
+    verify { x.bitLen <= 253 }
+    verify { y.bitLen <= 127 }
+    val maxBitLen = max(x.bitLen, y.bitLen) + 1
+    val x0 = x.dw0
+    val z0 = x.dw0 + y.dw0
+    if (maxBitLen <= 64) {
+        z.c256Set64(z0)
         return
     }
-    val (carry0, p0) = sumU64(x.dw0, y.dw0)
-    if (maxBitLen < 128) {
-        val p1 = x.dw1 + y.dw1 + carry0
-        z.c256Set128(p1, p0)
+    val carry0 = if (unsignedLT(z0, x0)) 1L else 0L
+    if (maxBitLen <= 128) {
+        val z1 = x.dw1 + y.dw1 + carry0
+        z.c256Set128(z1, z0)
         return
     }
-    val (carry1, p1) = sumU64(x.dw1, y.dw1, carry0)
-    val (carry2, p2) = sumU64(x.dw2, y.dw2, carry1)
-    val (carry3, p3) = sumU64(x.dw3, y.dw3, carry2)
+    val (carry1, z1) = sumU64(carry0, x.dw1, y.dw1)
+    val (carry2, z2) = sumU64(carry1, x.dw2, y.dw2)
+    val (carry3, z3) = sumU64(carry2, x.dw3, y.dw3)
     verify { carry3 == 0L }
-    z.c256Set256(p3, p2, p1, p0)
+    z.c256Set256(z3, z2, z1, z0)
 }
 
 internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) =
