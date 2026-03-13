@@ -461,53 +461,10 @@ object D128ParsePrint {
         val iE = signLen + decimalPointLen + printedDigitLen
         utf8[iE] = 'E'.code.toByte()
         utf8[iE + 1] = expSignByte
-        val j = renderTailDigitsBeforeIndex(eExpAbs.toLong(), utf8, utf8.size)
+        val j = IntegerParsePrint.renderTailDigitsBeforeIndex(eExpAbs.toLong(), utf8, utf8.size)
         verify { j == expDigitLen }
         return utf8.decodeToString()
     }
 
 }
 
-private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
-private const val S_U32_DIV_1E1 = 35
-
-private const val M_U32_DIV_1E2 = 0x51EB851FL
-private const val S_U32_DIV_1E2 = 37
-
-private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
-private const val S_U64_DIV_1E4 = 11 // + 64 high
-
-private fun renderTailDigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int): Int {
-    var t = dw
-    var ib = offMaxx
-    while (t >= 1000L) {
-        val t0 = unsignedMulHi(t, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
-        val abcd = t - (t0 * 10000L)
-        t = t0
-        val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-        val cd = abcd - (ab * 100L)
-        val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val b = ab - (a * 10L)
-        val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-        val d = cd - (c * 10L)
-        if (ib - 4 >= 0 && ib <= utf8.size) {
-            utf8[ib - 4] = (a.toInt() + '0'.code).toByte()
-            utf8[ib - 3] = (b.toInt() + '0'.code).toByte()
-            utf8[ib - 2] = (c.toInt() + '0'.code).toByte()
-            utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
-            ib -= 4
-        } else {
-            throw IllegalArgumentException()
-        }
-    }
-    if (t != 0L || dw == 0L) {
-        do {
-            val divTen = (t * 0xCCCCCCCDL) ushr 35
-            val digit = (t - (divTen * 10L)).toInt()
-            utf8[--ib] = ('0'.code + digit).toByte()
-            t = divTen
-        } while (t != 0L)
-    }
-
-    return offMaxx - ib
-}
