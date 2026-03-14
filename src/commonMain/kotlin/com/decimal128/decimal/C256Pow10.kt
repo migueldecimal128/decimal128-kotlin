@@ -140,7 +140,6 @@ internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int 
 internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
     if (bitLen > 128) {
         val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
-        val hiDigitCount = loDigitCount + 1
         val pow10BitLen = pow10BitLen(loDigitCount)
         val bitLenDelta = pow10BitLen - bitLen
         if (bitLenDelta != 0) {
@@ -151,14 +150,17 @@ internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: 
         val p2 = POW10[pow10Offset + 2]
         val p1 = POW10[pow10Offset + 1]
         val p0 = POW10[pow10Offset    ]
-        val cmp3 = unsignedCmp(dw3, p3)
-        val cmp2 = unsignedCmp(dw2, p2)
-        val cmp1 = unsignedCmp(dw1, p1)
+        val cmp3 = unsignedCmp(p3, dw3)
+        if (cmp3 != 0)
+            return loDigitCount + (cmp3 ushr 31)
+        val cmp2 = unsignedCmp(p2, dw2)
+        if (cmp2 != 0)
+            return loDigitCount + (cmp2 ushr 31)
+        val cmp1 = unsignedCmp(p1, dw1)
+        if (cmp1 != 0)
+            return loDigitCount + (cmp1 ushr 31)
         val cmp0 = unsignedCmp(dw0, p0)
-        val cmp32 = if (cmp3 != 0) cmp3 else cmp2
-        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-        val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
-        val ret = if (cmp3210 < 0) loDigitCount else hiDigitCount
+        val ret = loDigitCount + 1 + (cmp0 shr 31)
         return ret
     } else {
         return calcDigitLen128(bitLen, dw1, dw0)
