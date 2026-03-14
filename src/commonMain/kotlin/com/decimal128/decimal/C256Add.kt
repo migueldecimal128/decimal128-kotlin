@@ -74,7 +74,7 @@ internal fun c256MutateIncrement(z: C256) {
     }
     // flag for roundup which occurs during multiplies while enableIndexSet is active
     if (z.digitLen >= 0)
-        z.updateDigitLenBitLen()
+        z.updateLengthsAfterIncrement()
 }
 
 internal fun c256MutateDecrement(z: C256) {
