@@ -3,7 +3,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.Latin1Iterator
-import com.decimal128.bigint.Magia
 import com.decimal128.bigint.StringLatin1Iterator
 import com.decimal128.bigint.intrinsic.unsignedMulHi
 import kotlin.math.max
@@ -68,12 +67,12 @@ internal object IntegerParsePrint {
         do {
             val ibMaxx = off + t.digitLen
             val r = barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            Magia.render9DigitsBeforeIndex(r, utf8, ibMaxx)
+            render9DigitsBeforeIndex(r, utf8, ibMaxx)
         } while (t.bitLen > 128)
         do {
             val ibMaxx = off + t.digitLen
             val r = barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
-            Magia.render9DigitsBeforeIndex(r, utf8, ibMaxx)
+            render9DigitsBeforeIndex(r, utf8, ibMaxx)
         } while (t.bitLen > 64)
         u64ToUtf8(t.digitLen, t.dw0, utf8, off)
         return printDigitLen
@@ -141,7 +140,7 @@ internal object IntegerParsePrint {
             remainingDigits -= 8
         }
         if (remainingDigits > 0) {
-            Magia.renderTailDigitsBeforeIndex(dw0T, utf8, i)
+            renderTailDigitsBeforeIndex(dw0T, utf8, i)
         }
         return digitPrintCount
     }
@@ -159,7 +158,7 @@ internal object IntegerParsePrint {
             digitsRemaining -= 8
         }
         if (digitsRemaining > 0)
-            if (Magia.renderTailDigitsBeforeIndex(dwT, utf8, ich) != digitsRemaining)
+            if (renderTailDigitsBeforeIndex(dwT, utf8, ich) != digitsRemaining)
                 throw IllegalStateException() // rendered digits did not match digitsRemaining
         return digitPrintCount
     }
@@ -313,6 +312,54 @@ internal object IntegerParsePrint {
         throw NumberFormatException("invalid hex integer syntax:$src")
     }
 
+    private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
+    private const val S_U32_DIV_1E1 = 35
+
+    private const val M_U32_DIV_1E2 = 0x51EB851FL
+    private const val S_U32_DIV_1E2 = 37
+
+    private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
+    private const val S_U64_DIV_1E4 = 11 // + 64 high
+
+    // these magic reciprocal constants only work for values up to 10**9 / 10**4
+    private const val M_1E9_DIV_1E4 = 879_609_303L
+    private const val S_1E9_DIV_1E4 = 43
+
+    fun renderTailDigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int): Int {
+        var t = dw
+        var ib = offMaxx
+        while (t >= 1000L) {
+            val t0 = unsignedMulHi(t, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
+            val abcd = t - (t0 * 10000L)
+            t = t0
+            val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
+            val cd = abcd - (ab * 100L)
+            val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+            val b = ab - (a * 10L)
+            val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
+            val d = cd - (c * 10L)
+            if (ib - 4 >= 0 && ib <= utf8.size) {
+                utf8[ib - 4] = (a.toInt() + '0'.code).toByte()
+                utf8[ib - 3] = (b.toInt() + '0'.code).toByte()
+                utf8[ib - 2] = (c.toInt() + '0'.code).toByte()
+                utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
+                ib -= 4
+            } else {
+                throw IllegalArgumentException()
+            }
+        }
+        if (t != 0L || dw == 0L) {
+            do {
+                val divTen = (t * 0xCCCCCCCDL) ushr 35
+                val digit = (t - (divTen * 10L)).toInt()
+                utf8[--ib] = ('0'.code + digit).toByte()
+                t = divTen
+            } while (t != 0L)
+        }
+
+        return offMaxx - ib
+    }
+
     fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
         val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val efgh  = dw - (abcd * 10000L)
@@ -351,49 +398,65 @@ internal object IntegerParsePrint {
         }
     }
 
-    private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
-    private const val S_U32_DIV_1E1 = 35
+    /**
+     * Renders a 9-digit chunk [dw] (0 ≤ [dw] < 1e9) into ASCII digits in [utf8],
+     * ending just before [offMaxx].
+     *
+     * Digits are extracted using reciprocal-multiply division by powers
+     * of 10 to avoid slow hardware division instructions.
+     *
+     * The layout written is:
+     * ```
+     * utf8[offMaxx - 9] .. utf8[offMaxx - 1] = '0'..'9'
+     * ```
+     *
+     * @param dw the 9-digit unsigned long value to render ... `0..999999999`
+     * @param utf8 the output byte buffer for ASCII digits.
+     * @param offMaxx the maximum exclusive offset within [utf8];
+     * digits occupy the range `offMaxx - 9 .. offMaxx - 1`.
+     */
+    fun render9DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
+        check (unsignedLT(dw, 1_000_000_000L))
+        //val abcde = unsignedMulHi(dw, M_U64_DIV_1E4) shr S_U64_DIV_1E4
+        val abcde = (dw * M_1E9_DIV_1E4) ushr S_1E9_DIV_1E4
+        val fghi  = dw - (abcde * 10000L)
 
-    private const val M_U32_DIV_1E2 = 0x51EB851FL
-    private const val S_U32_DIV_1E2 = 37
+        val abc = (abcde * M_U32_DIV_1E2) shr S_U32_DIV_1E2
+        val de = abcde - (abc * 100L)
 
-    private const val M_U64_DIV_1E4 = 0x346DC5D63886594BL
-    private const val S_U64_DIV_1E4 = 11 // + 64 high
+        val fg = (fghi * M_U32_DIV_1E2) shr S_U32_DIV_1E2
+        val hi = fghi - (fg * 100L)
 
-    fun renderTailDigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int): Int {
-        var t = dw
-        var ib = offMaxx
-        while (t >= 1000L) {
-            val t0 = unsignedMulHi(t, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
-            val abcd = t - (t0 * 10000L)
-            t = t0
-            val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
-            val cd = abcd - (ab * 100L)
-            val a = (ab * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-            val b = ab - (a * 10L)
-            val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
-            val d = cd - (c * 10L)
-            if (ib - 4 >= 0 && ib <= utf8.size) {
-                utf8[ib - 4] = (a.toInt() + '0'.code).toByte()
-                utf8[ib - 3] = (b.toInt() + '0'.code).toByte()
-                utf8[ib - 2] = (c.toInt() + '0'.code).toByte()
-                utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
-                ib -= 4
-            } else {
-                throw IllegalArgumentException()
-            }
+        val a = (abc * M_U32_DIV_1E2) shr S_U32_DIV_1E2
+        val bc = abc - (a * 100L)
+
+        val b = (bc * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val c = bc - (b * 10L)
+
+        val d = (de * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val e = de - (d * 10L)
+
+        val f = (fg * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val g = fg - (f * 10L)
+
+        val h = (hi * M_U32_DIV_1E1) shr S_U32_DIV_1E1
+        val i = hi - (h * 10L)
+
+        // Explicit bounds check to enable elimination of individual checks
+        val offMin = offMaxx - 9
+        if (offMin >= 0 && offMaxx <= utf8.size) {
+            utf8[offMaxx - 9] = (a.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 8] = (b.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 7] = (c.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 6] = (d.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 5] = (e.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 4] = (f.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 3] = (g.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 2] = (h.toInt() + '0'.code).toByte()
+            utf8[offMaxx - 1] = (i.toInt() + '0'.code).toByte()
+        } else {
+            throw IndexOutOfBoundsException()
         }
-        if (t != 0L || dw == 0L) {
-            do {
-                val divTen = (t * 0xCCCCCCCDL) ushr 35
-                val digit = (t - (divTen * 10L)).toInt()
-                utf8[--ib] = ('0'.code + digit).toByte()
-                t = divTen
-            } while (t != 0L)
-        }
-
-        return offMaxx - ib
     }
-
 
 }
