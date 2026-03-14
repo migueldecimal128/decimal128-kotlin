@@ -512,7 +512,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long, pentad: Pen
         throw RuntimeException("coeff overflow")
     }
 }
-
+/*
 @Suppress("UNUSED")
 private fun _fma4x4x4(
     f: C256,
@@ -575,7 +575,7 @@ private fun _fma4x4x4(
     }
     throw RuntimeException("coeff multiply overflow")
 }
-
+*/
 private fun _fma4x1x4(
     f: C256,
     maxFusedBitLen: Int,
@@ -635,6 +635,7 @@ private fun _fma4x1x4(
     }
     throw RuntimeException("coeff multiply overflow")
 }
+
 
 private fun _fma3x2x4(
     f: C256,

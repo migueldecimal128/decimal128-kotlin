@@ -44,8 +44,9 @@ fun MutDec.toLong(rounding: DecRounding, ctx: DecContext): Long {
                 )
             }
             // both integral and fractional digits
-            val t = ctx.tmps.mdecArg1
-            val residue = c256SetScaleDownPow10(t, this, fracDigitLen)
+            val tmps = ctx.tmps
+            val t = tmps.mdecArg1
+            val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad1)
             val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
             if (roundUp)
                 c256MutateIncrement(t)

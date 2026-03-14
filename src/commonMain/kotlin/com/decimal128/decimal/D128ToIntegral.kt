@@ -19,17 +19,17 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, ctx: DecCont
     val dw1 = x.dw1;
     val dw0 = x.dw0
     val pow10 = -qExp
-    val tmpPair = ctx.tmps.pentad1
-    tmpPair.dw0 = 0L
-    tmpPair.dw1 = 0L
+    val pentadResult = ctx.tmps.pentad1
+    pentadResult.dw0 = 0L
+    pentadResult.dw1 = 0L
     val digitLen = stealDigitLen(stealX)
     val residue: Residue = when {
         pow10 > digitLen -> LT_HALF
         pow10 == digitLen -> Residue.fromValuePow10(dw1, dw0, digitLen)
-        else -> c128ScaleDownPow10(tmpPair, dw1, dw0, pow10)
+        else -> c128ScaleDownPow10(pentadResult, dw1, dw0, pow10)
     }
     return decRoundAndFinalizeFinite(
-        sign, tmpPair.dw1, tmpPair.dw0,
+        sign, pentadResult.dw1, pentadResult.dw0,
         residue, 0, rounding, ctx, beQuiet
     )
 }

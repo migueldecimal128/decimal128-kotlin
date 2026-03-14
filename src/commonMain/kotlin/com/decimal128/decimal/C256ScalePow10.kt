@@ -48,7 +48,7 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, pentad: Pentad) {
     }
 }
 
-internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int): Residue {
+internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int, pentad: Pentad): Residue {
     if (x.bitLen > 0 && pow10 > 0) {
         val productDigitCount = x.digitLen - pow10
         if (productDigitCount <= 0) {
@@ -56,7 +56,7 @@ internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int): Residue {
             z.c256SetZero()
             return residue
         }
-        return c256SetDivPow10(z, x, pow10)
+        return c256SetDivPow10(z, x, pow10, pentad)
     }
     z.c256Set(x)
     return EXACT

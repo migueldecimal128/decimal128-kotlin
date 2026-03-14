@@ -813,13 +813,14 @@ class Decimal private constructor(
                 var rQ = qExp
                 if (qExp < DECIMAL128_QMAX_6111) {
                     val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
-                    val t = DecContext.current().tmps.mdecArg1
+                    val tmps = DecContext.current().tmps
+                    val t = tmps.mdecArg1
                     t.c256Set128(dw1, dw0)
                     val ntzdActual = c256CountTrailingZeroDigitsDestructive(t)
                     val ntzdNormalized = min(maxNtzdClamp, ntzdActual)
                     if (ntzdNormalized > 0) {
                         t.c256Set128(dw1, dw0)
-                        c256SetDivPow10(t, t, ntzdNormalized)
+                        c256SetDivPow10(t, t, ntzdNormalized, tmps.pentad1)
                         r1 = t.dw1
                         r0 = t.dw0
                         rQ = qExp + ntzdNormalized

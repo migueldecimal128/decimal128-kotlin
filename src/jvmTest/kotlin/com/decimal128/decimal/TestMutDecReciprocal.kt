@@ -126,7 +126,7 @@ class TestMutDecReciprocal{
         c256SetMul(t, divisor, cGuess, tmpDwQuad)
         c256SetSubUnscaled(t, coeff2xS, t)
         c256SetMul(t, t, cGuess, tmpDwQuad)
-        c256SetScaleDownPow10(cGuess, t, scalePow10)
+        c256SetScaleDownPow10(cGuess, t, scalePow10, Pentad())
 
         if (verbose) {
             println("cGuess:$cGuess")
@@ -135,7 +135,7 @@ class TestMutDecReciprocal{
         c256SetMul(t, divisor, cGuess, tmpDwQuad)
         c256SetSubUnscaled(t, coeff2xS, t)
         c256SetMul(t, t, cGuess, tmpDwQuad)
-        c256SetScaleDownPow10(cGuess, t, scalePow10)
+        c256SetScaleDownPow10(cGuess, t, scalePow10, Pentad())
 
         if (verbose) {
             println("cGuess:$cGuess")

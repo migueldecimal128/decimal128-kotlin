@@ -48,7 +48,7 @@ object MagnitudeAddSub {
                         // then do a fused scaling, allowing us to
                         // perform this op without allocating of temp variables
                         val t = if (m === z) MutDec() else z
-                        val residue = c256SetScaleDownPow10(t, n, shiftRight)
+                        val residue = c256SetScaleDownPow10(t, n, shiftRight, pentad)
                         if (shiftLeft > 0)
                             c256SetAddScaled(z, m, shiftLeft, t)
                         else
@@ -138,7 +138,7 @@ object MagnitudeAddSub {
                     // align x by shiftLeftX
                     //
                     val tmpY = MutDec()
-                    val residue = c256SetScaleDownPow10(tmpY, s, shiftSRight)
+                    val residue = c256SetScaleDownPow10(tmpY, s, shiftSRight, pentad)
                     if (shiftMLeft > 0)
                         c256SetSubScaled(z, m, shiftMLeft, tmpY, pentad)
                     else

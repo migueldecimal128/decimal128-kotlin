@@ -41,13 +41,14 @@ private fun paramsIndex(digitCount: Int, pow10: Int): Int {
     return effectiveBase + encodedIndex
 }
 
-internal fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int): Residue {
+internal fun divRangeRecipMulPow10(z: C256, x: C256, pow10: Int, pentad: Pentad): Residue {
     verify { pow10 >= RRMP10_K_MIN }
-    return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10)
+    return _divPow10(z, x.digitLen, x.dw3, x.dw2, x.dw1, x.dw0, pow10, pentad)
 }
 
 private fun _divPow10(
-    z: C256, qDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, kPow10: Int
+    z: C256, qDigitCount: Int, x3: Long, x2: Long, x1: Long, x0: Long, kPow10: Int,
+    pentad: Pentad
 ): Residue {
     require(qDigitCount in RRMP10_Q_MIN..<RRMP10_Q_MAXX)
     require(kPow10 in RRMP10_K_MIN..<RRMP10_K_MAXX)
@@ -92,7 +93,8 @@ private fun _divPow10(
                 z, paramsIndex + 1, mDwordCount,
                 d3, d2, d1, d0,
                 fractionBitLen, stickyBitsPow2,
-                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask,
+                pentad
                 )
 
         (d2 != 0L) ->
@@ -100,7 +102,8 @@ private fun _divPow10(
                 z, paramsIndex + 1, mDwordCount,
                 d2, d1, d0,
                 fractionBitLen, stickyBitsPow2,
-                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask,
+                pentad
             )
 
         (d1 != 0L) ->
@@ -108,7 +111,8 @@ private fun _divPow10(
                 z, paramsIndex + 1, mDwordCount,
                 d1, d0,
                 fractionBitLen, stickyBitsPow2,
-                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask,
+                pentad
             )
 
         (d0 != 0L) ->
@@ -116,7 +120,8 @@ private fun _divPow10(
                 z, paramsIndex + 1, mDwordCount,
                 d0,
                 fractionBitLen, stickyBitsPow2,
-                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask
+                shiftRightNonZeroMask, shiftRight, shiftLeft, halfUlpBitMask, fractionTailMask,
+                pentad
             )
 
         else -> throw RuntimeException("why am I here?")
@@ -137,6 +142,7 @@ private inline fun c256RecipMul256(
     shiftLeft: Int,
     halfUlpBitMask: Long,
     fractionTailMask: Long,
+    pentad: Pentad
 ): Residue {
     var isolatedRoundBit = 0L
     var quotientIndex = 0
@@ -188,7 +194,9 @@ private inline fun c256RecipMul256(
         val pp31_0 = unsignedMulHi(mX, n3)
         val pp30_0 = mX * n3
 
-        val (carry_0, z_0) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
+        sumU64(pentad, pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
+        val carry_0 = pentad.dw1
+        val z_0 = pentad.dw0
         if (fractionBitsRemaining > 0) {
             fractionBitsRemaining -= 64
             val mask =
@@ -235,7 +243,9 @@ private inline fun c256RecipMul256(
         carry_1 = carry_0
         ++mI
     }
-    val (carry1, z1) = sumU64(pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, carry_1)
+    sumU64(pentad, pp31_4, pp30_3, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, carry_1)
+    val carry1 = pentad.dw1
+    val z1 = pentad.dw0
     if (fractionBitsRemaining > 0) {
         fractionBitsRemaining -= 64
         val mask =
@@ -252,7 +262,9 @@ private inline fun c256RecipMul256(
         val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
         quotient[quotientIndex++] = q0
     }
-    val (carry2, z2) = sumU64(pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
+    sumU64(pentad, pp31_3, pp30_2, pp21_2, pp20_1, pp11_1, carry1)
+    val carry2 = pentad.dw1
+    val z2 = pentad.dw0
     if (fractionBitsRemaining > 0) {
         fractionBitsRemaining -= 64
         val mask =
@@ -269,7 +281,9 @@ private inline fun c256RecipMul256(
         val q0 = (z2 shl shiftLeft) or ((z1 ushr shiftRight) and shiftRightNonZeroMask)
         quotient[quotientIndex++] = q0
     }
-    val (carry3, z3) = sumU64(pp31_2, pp30_1, pp21_1, carry2)
+    sumU64(pentad, pp31_2, pp30_1, pp21_1, carry2)
+    val carry3 = pentad.dw1
+    val z3 = pentad.dw0
     if (fractionBitsRemaining > 0) {
         fractionBitsRemaining -= 64
         val mask =
@@ -325,6 +339,7 @@ private inline fun c256RecipMul192(
     shiftLeft: Int,
     halfUlpBitMask: Long,
     fractionTailMask: Long,
+    pentad: Pentad
 ): Residue {
     var isolatedRoundBit = 0L
     var quotientIndex = 0
@@ -364,7 +379,9 @@ private inline fun c256RecipMul192(
         val pp21_0 = unsignedMulHi(mX, n2)
         val pp20_0 = mX * n2
 
-        val (carry_0, z_0) = sumU64(pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
+        sumU64(pentad, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
+        val carry_0 = pentad.dw1
+        val z_0 = pentad.dw0
         if (fractionBitsRemaining > 0) {
             fractionBitsRemaining -= 64
             val mask =
@@ -402,7 +419,9 @@ private inline fun c256RecipMul192(
         carry_1 = carry_0
         ++mI
     }
-    val (carry1, z1) = sumU64(pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, carry_1)
+    sumU64(pentad, pp21_3, pp20_2, pp11_2, pp10_1, pp01_1, carry_1)
+    val carry1 = pentad.dw1
+    val z1 = pentad.dw0
     if (fractionBitsRemaining > 0) {
         fractionBitsRemaining -= 64
         val mask =
@@ -419,7 +438,9 @@ private inline fun c256RecipMul192(
         val q0 = (z1 shl shiftLeft) or ((z_1 ushr shiftRight) and shiftRightNonZeroMask)
         quotient[quotientIndex++] = q0
     }
-    val (carry2, z2) = sumU64(pp21_2, pp20_1, pp11_1, carry1)
+    sumU64(pentad, pp21_2, pp20_1, pp11_1, carry1)
+    val carry2 = pentad.dw1
+    val z2 = pentad.dw0
     if (fractionBitsRemaining > 0) {
         fractionBitsRemaining -= 64
         val mask =
@@ -472,6 +493,7 @@ private inline fun c256RecipMul128(
     shiftLeft: Int,
     halfUlpBitMask: Long,
     fractionTailMask: Long,
+    pentad: Pentad
 ): Residue {
     var isolatedRoundBit = 0L
     var quotientIndex = 0
@@ -501,7 +523,9 @@ private inline fun c256RecipMul128(
         val pp11_0 = unsignedMulHi(mX, n1)
         val pp10_0 = mX * n1
 
-        val (carry_0, z_0) = sumU64(pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
+        sumU64(pentad, pp11_2, pp10_1, pp01_1, pp00_0, carry_1)
+        val carry_0 = pentad.dw1
+        val z_0 = pentad.dw0
         if (fractionBitsRemaining > 0) {
             fractionBitsRemaining -= 64
             val mask =
@@ -532,7 +556,9 @@ private inline fun c256RecipMul128(
         carry_1 = carry_0
         ++mI
     }
-    val (carry1, z1) = sumU64(pp11_2, pp10_1, pp01_1, carry_1)
+    sumU64(pentad, pp11_2, pp10_1, pp01_1, carry_1)
+    val carry1 = pentad.dw1
+    val z1 = pentad.dw0
     if (fractionBitsRemaining > 0) {
         fractionBitsRemaining -= 64
         val mask =
@@ -585,6 +611,7 @@ private inline fun c256RecipMul64(
     shiftLeft: Int,
     halfUlpBitMask: Long,
     fractionTailMask: Long,
+    pentad: Pentad
 ): Residue {
     var isolatedRoundBit = 0L
     var quotientIndex = 0
@@ -606,7 +633,9 @@ private inline fun c256RecipMul64(
         val pp01_0 = unsignedMulHi(mX, n0)
         val pp00_0 = mX * n0
 
-        val (carry_0, z_0) = sumU64(pp01_1, pp00_0, carry_1)
+        sumU64(pentad, pp01_1, pp00_0, carry_1)
+        val carry_0 = pentad.dw1
+        val z_0 = pentad.dw0
         if (fractionBitsRemaining > 0) {
             fractionBitsRemaining -= 64
             val mask =

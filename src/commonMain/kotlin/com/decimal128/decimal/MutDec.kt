@@ -996,7 +996,7 @@ class MutDec() : C256() {
             return ctx.signalInexact(this)
         }
         // integral and fractional digits
-        val residue = c256SetScaleDownPow10(this, x, fracDigitLen)
+        val residue = c256SetScaleDownPow10(this, x, fracDigitLen, ctx.tmps.pentad1)
         type = if (this.c256IsZero()) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         qExp = 0
         sign = xSign
@@ -1065,8 +1065,9 @@ class MutDec() : C256() {
                     )
                 }
                 // both integral and fractional digits
-                val t = ctx.tmps.mdecArg1
-                val residue = c256SetScaleDownPow10(t, this, fracDigitLen)
+                val tmps = ctx.tmps
+                val t = tmps.mdecArg1
+                val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad1)
                 val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                 if (roundUp)
                     c256MutateIncrement(t)
@@ -1262,7 +1263,7 @@ class MutDec() : C256() {
                 if (x.c256IsZero())
                     return setZero(x.sign, qY, ctx)
                 // Scale down by delta positions
-                val residue = c256SetScaleDownPow10(this, x, delta)
+                val residue = c256SetScaleDownPow10(this, x, delta, ctx.tmps.pentad1)
                 type = if (this.bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
                 qExp = qY
                 sign = x.sign
@@ -1335,7 +1336,7 @@ class MutDec() : C256() {
     fun setStripTrailingZeros(x: MutDec, env: DecContext): MutDec =
         setStripTrailingZeros(x, env, maxToStrip = 99)
 
-    fun setStripTrailingZeros(x: MutDec, env: DecContext, maxToStrip: Int): MutDec {
+    fun setStripTrailingZeros(x: MutDec, ctx: DecContext, maxToStrip: Int): MutDec {
         val qX = x.qExp
         when {
             x.isZero() -> return setZero(x.sign)
@@ -1343,7 +1344,8 @@ class MutDec() : C256() {
             qX < NON_FINITE_INF -> {
                 var ctzd = 0
                 var remaining = maxToStrip
-                val t = env.tmps.mdecArg1
+                val tmps = ctx.tmps
+                val t = tmps.mdecArg1
                 var t0 = x
                 var m: Long = 0L
                 while (remaining > 0) {
@@ -1363,15 +1365,15 @@ class MutDec() : C256() {
                 }
                 ctzd += min(countTrailingZeroDigits32(m.toInt()), remaining)
                 // cap when qExp gets clamped
-                ctzd = min(ctzd, env.qMax - qX)
+                ctzd = min(ctzd, ctx.qMax - qX)
                 if (ctzd == 0)
                     return set(x)
-                c256SetScaleDownPow10(this, x, ctzd)
+                c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
                 qExp = qX + ctzd
                 sign = x.sign
                 return this
             }
-            else -> return set(x, env)
+            else -> return set(x, ctx)
         }
     }
 

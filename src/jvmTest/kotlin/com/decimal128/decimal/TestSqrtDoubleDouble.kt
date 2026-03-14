@@ -242,7 +242,7 @@ class TestSqrtDoubleDouble{
                             t = q
                         }
                         if (pow10Count > 0) {
-                            c256SetScaleDownPow10(sqrt, sqrt, pow10Count)
+                            c256SetScaleDownPow10(sqrt, sqrt, pow10Count, Pentad())
                             qZ += pow10Count
                         }
                         break
@@ -253,7 +253,7 @@ class TestSqrtDoubleDouble{
                     }
                 } while (qZ < qPreferred && ntz > 0)
             } else if (c256IsMultipleOf10(sqrt)) {
-                c256SetScaleDownPow10(sqrt, sqrt, 1)
+                c256SetScaleDownPow10(sqrt, sqrt, 1, Pentad())
                 ++qZ
             }
         }
