@@ -11,10 +11,10 @@ internal inline fun pow10BitLen(pow10: Int): Int {
 }
 
 internal fun pow10Offset(pow10: Int): Int {
-    val isHiMask = (MIN_POW10_DIGIT_LEN_192 - 1 - pow10) shr 31
+    val isHiTierMask = (MIN_POW10_DIGIT_LEN_192 - 1 - pow10) shr 31
     val loTier = pow10 shl 1
     val hiTierDelta = (POW10_192_BASE - 4 * MIN_POW10_DIGIT_LEN_192) + loTier
-    return loTier + (hiTierDelta and isHiMask)
+    return loTier + (hiTierDelta and isHiTierMask)
         /*
     val isHiMask = (MIN_POW10_DIGIT_LEN_192 - 1 - pow10) shr 31
     val base = (POW10_192_BASE - 4 * MIN_POW10_DIGIT_LEN_192) and isHiMask
@@ -138,29 +138,30 @@ internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int 
 }
 
 internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
-    return when {
-        bitLen > 192 -> {
-            val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_256)
-            val hiDigitCount = loDigitCount + 1
-            val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
-            val p3 = POW10[pow10Offset + 3]
-            val p2 = POW10[pow10Offset + 2]
-            val p1 = POW10[pow10Offset + 1]
-            val p0 = POW10[pow10Offset    ]
-            val cmp3 = unsignedCmp(dw3, p3)
-            val cmp2 = unsignedCmp(dw2, p2)
-            val cmp1 = unsignedCmp(dw1, p1)
-            val cmp0 = unsignedCmp(dw0, p0)
-            val cmp32 = if (cmp3 != 0) cmp3 else cmp2
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
-            val ret = if (cmp3210 < 0) loDigitCount else hiDigitCount
-            return ret
+    if (bitLen > 128) {
+        val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
+        val hiDigitCount = loDigitCount + 1
+        val pow10BitLen = pow10BitLen(loDigitCount)
+        val bitLenDelta = pow10BitLen - bitLen
+        if (bitLenDelta != 0) {
+            return loDigitCount + (bitLenDelta ushr 31)
         }
-
-        bitLen > 128 -> calcDigitLen192(bitLen, dw2, dw1, dw0)
-        bitLen > 64 -> calcDigitLen128(bitLen, dw1, dw0)
-        else -> calcDigitLen64(bitLen, dw0)
+        val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
+        val p3 = POW10[pow10Offset + 3]
+        val p2 = POW10[pow10Offset + 2]
+        val p1 = POW10[pow10Offset + 1]
+        val p0 = POW10[pow10Offset    ]
+        val cmp3 = unsignedCmp(dw3, p3)
+        val cmp2 = unsignedCmp(dw2, p2)
+        val cmp1 = unsignedCmp(dw1, p1)
+        val cmp0 = unsignedCmp(dw0, p0)
+        val cmp32 = if (cmp3 != 0) cmp3 else cmp2
+        val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+        val cmp3210 = if (cmp32 != 0) cmp32 else cmp10
+        val ret = if (cmp3210 < 0) loDigitCount else hiDigitCount
+        return ret
+    } else {
+        return calcDigitLen128(bitLen, dw1, dw0)
     }
 }
 
