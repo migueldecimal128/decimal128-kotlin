@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.bigint.BigInt
+import org.junit.jupiter.api.Assertions.assertEquals
 import java.io.DataOutputStream
 import java.io.File
 import kotlin.math.min
@@ -11,8 +12,8 @@ class DecGenConstantTables {
     val verbose = false
 
     val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
-    val X_RESOURCE_TABLE_VERSION = 0x0001_D128
-    val X_DWORD_TABLES_SIZE = 986 // DWORD_TABLES_SIZE
+    val X_RESOURCE_TABLE_VERSION = 0x0002_D128
+    val X_DWORD_TABLES_SIZE = 1005 // DWORD_TABLES_SIZE
     val X_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
@@ -25,7 +26,7 @@ class DecGenConstantTables {
         X_BYTE_TABLES_FNV1A = fnv1a(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
-        check(X_DWORD_TABLES_FNV1A == 739413891)
+        check(X_DWORD_TABLES_FNV1A == 177770275)
         check(X_BYTE_TABLES_FNV1A == 1447633196)
         saveConstantTablesAsResource()
     }
@@ -69,10 +70,14 @@ class DecGenConstantTables {
             X_BYTE_TABLES[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
             for (dw in hiPow10.magnitudeToLittleEndianLongArray())
                 X_DWORD_TABLES[j++] = dw
-            if (i < MIN_POW10_DIGIT_LEN_128)
+            if (i < MIN_POW10_DIGIT_LEN_128 ||
+                i in MIN_POW10_DIGIT_LEN_192..<MIN_POW10_DIGIT_LEN_256)
                 ++j
             hiPow10 *= 10
         }
+
+        println("j:$j POW10_DWORD_COUNT:POW10_DWORD_COUNT:$j")
+        assertEquals(POW10_DWORD_COUNT, j)
 
         // initialize powers of 5 that fit in 64 bits
         X_DWORD_TABLES[POW5_64_BASE] = 1L

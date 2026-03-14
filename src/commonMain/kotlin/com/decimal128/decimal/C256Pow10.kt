@@ -11,6 +11,10 @@ internal inline fun pow10BitLen(pow10: Int): Int {
 }
 
 internal fun pow10Offset(pow10: Int): Int {
+    return POW10_BCE and when {
+        pow10 < MIN_POW10_DIGIT_LEN_192 -> 2 * pow10
+        else -> POW10_192_BASE + 4 * (pow10 - MIN_POW10_DIGIT_LEN_192)
+    }
     /*
     val p = pow10 - 1
     val t = (p * 431) ushr 13
@@ -19,11 +23,13 @@ internal fun pow10Offset(pow10: Int): Int {
     val mask = -pow10 shr 31
     return offset and mask
      */
+    /*
     return POW10_BCE and when {
         pow10 < MIN_POW10_DIGIT_LEN_192 -> 2 * pow10
         pow10 < MIN_POW10_DIGIT_LEN_256 -> POW10_192_BASE + 3 * (pow10 - MIN_POW10_DIGIT_LEN_192)
         else -> POW10_256_BASE + 4 * (pow10 - MIN_POW10_DIGIT_LEN_256)
     }
+     */
 }
 
 internal inline fun pow10_64(pow10: Int): Long {

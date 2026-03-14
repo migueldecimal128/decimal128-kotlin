@@ -60,17 +60,18 @@ internal const val DWORD_TABLES_BCE = 1023
  *
  * Powers of 10 that require 64 and 128 bits consume 2 entries each.
  * That is, up thru 10**19 they consume 2 dwords with the hi dword always 0L.
- * This is for simplicity in the simple/common case.
  *
- * Powers of 10 that require 192 bits consume 3 entries each.
- * Powers of 10 that require 256 bits consume 4 entries each.
+ * Powers of 10 that require 192 and 256 bits consume 4 entries each.
+ * Powers of 10 that would fit in 3 entries are zero-padded to consume 4.
+ *
+ * So, there are 2 tiers ... 2 entries and 4 entries.
  */
 internal val POW10 = DWORD_TABLES
 internal const val POW10_BCE = DWORD_TABLES_BCE
 
 internal const val POW10_192_BASE = (POW10_64_COUNT + POW10_128_COUNT) * 2
-internal const val POW10_256_BASE = POW10_192_BASE + POW10_192_COUNT * 3
-// POW10_DWORD_COUNT = 215
+internal const val POW10_256_BASE = POW10_192_BASE + POW10_192_COUNT * 4
+// POW10_DWORD_COUNT = 234
 internal const val POW10_DWORD_COUNT = (POW10_256_BASE + POW10_256_COUNT * 4)
 
 /**
@@ -113,7 +114,7 @@ internal const val RANGE_RECIP_MUL_PARAMS_MAXX = 709
 
 internal const val DWORD_TABLES_SIZE = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
 
-private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 986)
+private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 1005)
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
 internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
@@ -166,10 +167,10 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0001_D128
-internal const val EXPECTED_DWORD_TABLES_SIZE = 986 // DWORD_TABLES_SIZE
+internal const val EXPECTED_TABLE_VERSION = 0x0002_D128
+internal const val EXPECTED_DWORD_TABLES_SIZE = 1005 // DWORD_TABLES_SIZE
 internal const val EXPECTED_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
-internal const val EXPECTED_DWORD_TABLES_FNV1A = 739413891
+internal const val EXPECTED_DWORD_TABLES_FNV1A = 177770275
 internal const val EXPECTED_BYTE_TABLES_FNV1A = 1447633196
 
 // comment this out to prevent loading of the resource table when the class loads
