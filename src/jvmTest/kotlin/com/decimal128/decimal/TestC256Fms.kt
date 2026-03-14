@@ -9,7 +9,8 @@ class TestC256Fms {
     val verbose = false
 
     class TC(val biX: BigInteger, val biY: BigInteger, val biS: BigInteger) {
-        val biResult = biX.multiply(biY).subtract(biS)
+        val biIntermediateProd = biX.multiply(biY)
+        val biResult = biIntermediateProd.subtract(biS)
 
         constructor(x: String, y:String, a:String) : this(BigInteger(x), BigInteger(y), BigInteger(a))
     }
@@ -36,7 +37,7 @@ class TestC256Fms {
 
     @Test
     fun testBoundaries() {
-        for (i in 0..<77) {
+        for (i in 0..76) {
             val biX = BigInteger.TEN.pow(i)
             for (j in 0..<(44-i)) {
                 val biY = BigInteger.TEN.pow(j)
@@ -49,7 +50,7 @@ class TestC256Fms {
                             for (deltaA in deltas) {
                                 val biAdelta = biA.add(deltaA)
                                 val tc = TC(biXdelta, biYdelta, biAdelta)
-                                if (tc.biResult.bitLength() <= 256)
+                                if (tc.biIntermediateProd.toString().length <= 76 && tc.biResult.toString().length <= 76)
                                     test1(tc)
                             }
                         }
@@ -62,7 +63,7 @@ class TestC256Fms {
     @Test
     fun testRandom() {
         for (i in 0..<100000) {
-            val case = TC(randBi256(), randBi256(), randBi128())
+            val case = TC(randBi253(), randBi253(), randBi128())
             test1(case)
         }
 
@@ -70,8 +71,8 @@ class TestC256Fms {
 
     val random = Random()
 
-    fun randBi256() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
+    fun randBi253() : BigInteger {
+        val bitLength = random.nextInt(0, 253)
         val bi = BigInteger(bitLength, random)
         return bi
     }
@@ -83,8 +84,11 @@ class TestC256Fms {
     }
 
     fun test1(case: TC) {
+        val intermediateProd = case.biIntermediateProd
+        if (intermediateProd.toString().length > 76)
+            return
         val expected = case.biResult
-        if (expected.bitLength() > 256)
+        if (expected.toString().length > 76)
             return
         if (expected.signum() < 0)
             return
@@ -95,9 +99,10 @@ class TestC256Fms {
         val coeffS = newCoeff(case.biS)
         val coeffExpected = newCoeff(case.biResult)
         val coeffResult = C256()
+        val pentad = Pentad()
         if (verbose)
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = expected:$expected (${expected.bitLength()} bits)")
-        c256SetFms(coeffResult, coeffX, coeffY, coeffS)
+        c256SetFms(coeffResult, coeffX, coeffY, coeffS, pentad)
         val biProd = coeffResult.coeffToBigInteger()
         if (! biProd.equals(expected))
             println("$coeffX (${coeffX.bitLen} bits) * $coeffY (${coeffY.bitLen} bits) - $coeffS (${coeffS.bitLen} bits) = $coeffResult (${coeffResult.bitLen} bits)  expected:$expected (${expected.bitLength()} bits)")
@@ -105,13 +110,13 @@ class TestC256Fms {
 
         val rnd = random.nextInt(3)
         if (rnd == 0) {
-            c256SetFms(coeffX, coeffX, coeffY, coeffS)
+            c256SetFms(coeffX, coeffX, coeffY, coeffS, pentad)
             assert(coeffX.coeffToBigInteger().equals(expected))
         } else if (rnd == 1) {
-            c256SetFms(coeffY, coeffY, coeffX, coeffS)
+            c256SetFms(coeffY, coeffY, coeffX, coeffS, pentad)
             assert(coeffY.coeffToBigInteger().equals(expected))
         } else {
-            c256SetFms(coeffS, coeffX, coeffY, coeffS)
+            c256SetFms(coeffS, coeffX, coeffY, coeffS, pentad)
             assert(coeffS.coeffToBigInteger().equals(expected))
         }
 

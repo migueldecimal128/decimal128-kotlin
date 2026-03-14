@@ -295,14 +295,22 @@ internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD
 
 
 // returns borrow 0 or 1
-internal inline fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
+internal /*inline*/ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
     val diffAZ = dwA - dwZ
     val borrowAZ = if (unsignedCmp(diffAZ, dwA) > 0) 1L else 0L
     return borrowAZ to diffAZ
 }
 
+internal /*inline*/ fun diffU64(pentad: Pentad, dwA:Long, dwZ:Long) {
+    val diffAZ = dwA - dwZ
+    val borrowAZ = if (unsignedCmp(diffAZ, dwA) > 0) 1L else 0L
 
-internal inline fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
+    pentad.dw1 = borrowAZ
+    pentad.dw0 = diffAZ
+}
+
+
+internal /*inline*/ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
     verify { borrowIn in 0..1 }
     // First subtract b from a:
     val diffAB = dwA - dwB
@@ -310,6 +318,18 @@ internal inline fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair
     val totalDiff = diffAB - borrowIn
     val totalBorrow = if (unsignedLT(diffAB, borrowIn)) 1L else borrow1
     return totalBorrow to totalDiff
+}
+
+internal /*inline*/ fun diffU64withBorrow(pentad: Pentad, dwA: Long, dwB: Long, borrowIn: Long) {
+    verify { borrowIn in 0..1 }
+    // First subtract b from a:
+    val diffAB = dwA - dwB
+    val borrow1 = if (unsignedLT(dwA, dwB)) 1L else 0L
+    val totalDiff = diffAB - borrowIn
+    val totalBorrow = if (unsignedLT(diffAB, borrowIn)) 1L else borrow1
+
+    pentad.dw1 = totalBorrow
+    pentad.dw0 = totalDiff
 }
 
 

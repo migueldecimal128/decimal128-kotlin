@@ -2,8 +2,8 @@ package com.decimal128.decimal
 
 import kotlin.math.max
 
-internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
-    verify { z.c256HasValidLengths() }
+internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256, pentad: Pentad) {
+  verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
     verify { s.c256HasValidLengths() }
@@ -26,7 +26,8 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m0,
                     n0,
-                    s1, s0
+                    s1, s0,
+                    pentad
                 )
 
             (mBitLen <= 128 && sBitLen <= 192) ->
@@ -34,7 +35,8 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m1, m0,
                     n0,
-                    s2, s1, s0
+                    s2, s1, s0,
+                    pentad
                 )
 
             (mBitLen <= 192) ->
@@ -42,7 +44,8 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m2, m1, m0,
                     n0,
-                    s3, s2, s1, s0
+                    s3, s2, s1, s0,
+                    pentad
                 )
 
             else ->
@@ -50,7 +53,8 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m.dw3, m2, m1, m0,
                     n0,
-                    s3, s2, s1, s0
+                    s3, s2, s1, s0,
+                    pentad
                 )
         }
         return
@@ -63,7 +67,8 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m1, m0,
                     n1, n0,
-                    s3, s2, s1, s0
+                    s3, s2, s1, s0,
+                    pentad
                 )
 
             (mBitLen <= 192) ->
@@ -71,7 +76,8 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
                     z, maxFusedBitLen,
                     m2, m1, m0,
                     n1, n0,
-                    s3, s2, s1, s0
+                    s3, s2, s1, s0,
+                    pentad
                 )
 
             else -> throw RuntimeException("U256 overflow")
@@ -113,7 +119,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     x0,
                     p0,
-                    y.dw1, y.dw0
+                    y.dw1, y.dw0,
+                    pentad
                 )
 
             (xBitLen <= 128 && yBitLen <= 192) ->
@@ -121,7 +128,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     x1, x0,
                     p0,
-                    y.dw2, y.dw1, y.dw0
+                    y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             (xBitLen <= 192) ->
@@ -129,7 +137,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p0,
-                    y.dw3, y.dw2, y.dw1, y.dw0
+                    y.dw3, y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             else ->
@@ -137,7 +146,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     x.dw3, x.dw2, x1, x0,
                     p0,
-                    y.dw3, y.dw2, y.dw1, y.dw0
+                    y.dw3, y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
         }
         return
@@ -149,7 +159,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     p1, p0,
                     x0,
-                    y.dw2, y.dw1, y.dw0
+                    y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             (xBitLen <= 128) ->
@@ -157,7 +168,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     x1, x0,
                     p1, p0,
-                    y.dw3, y.dw2, y.dw1, y.dw0
+                    y.dw3, y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             (xBitLen <= 192) ->
@@ -165,7 +177,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     x.dw2, x1, x0,
                     p1, p0,
-                    y.dw3, y.dw2, y.dw1, y.dw0
+                    y.dw3, y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -180,7 +193,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x0,
-                    y.dw3, y.dw2, y.dw1, y.dw0
+                    y.dw3, y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             (xBitLen <= 128) ->
@@ -188,7 +202,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
                     z, maxFusedBitLen,
                     p2, p1, p0,
                     x1, x0,
-                    y.dw3, y.dw2, y.dw1, y.dw0
+                    y.dw3, y.dw2, y.dw1, y.dw0,
+                    pentad
                 )
 
             else -> throw RuntimeException("coeff overflow")
@@ -201,7 +216,8 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad)
             z, maxFusedBitLen,
             p3, p2, p1, p0,
             x0,
-            y.dw3, y.dw2, y.dw1, y.dw0
+            y.dw3, y.dw2, y.dw1, y.dw0,
+            pentad
         )
         return
     } else {
@@ -217,7 +233,9 @@ internal fun c256FusedSubMulPow10(z: C256, x: C256, y: C256, pow10: Int, pentad:
     verify { c256ScaledCompare(x, y, pow10, pentad) >= 0 }
     val y0 = y.dw0
     val y1 = y.dw1
-    val (p1, p0) = pow10_128(pow10)
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val p1 = POW10[pow10Offset + 1]
+    val p0 = POW10[pow10Offset    ]
 
     val pp00Hi = unsignedMulHi(y0, p0)
     val pp00Lo = y0 * p0
@@ -233,32 +251,43 @@ internal fun c256FusedSubMulPow10(z: C256, x: C256, y: C256, pow10: Int, pentad:
 
 // Accumulate properly across all 4 limbs
     val f0 = pp00Lo
-    val (carry1a, sum1a) = sumU64(pp00Hi, pp10Lo)
-    val (carry1b, f1) = sumU64(sum1a, pp01Lo)
-    val carry1 = carry1a + carry1b
+    sumU64(pentad, pp00Hi, pp10Lo, pp01Lo)
+    val carry1 = pentad.dw1
+    val f1 = pentad.dw0
 
-    val (carry2a, sum2a) = sumU64(pp10Hi, pp01Hi, carry1)
-    val (carry2b, f2) = sumU64(sum2a, pp11Lo)
-    val carry2 = carry2a + carry2b
+    sumU64(pentad, carry1, pp10Hi, pp01Hi, pp11Lo)
+    val carry2 = pentad.dw1
+    val f2 = pentad.dw0
 
     val f3 = carry2 + pp11Hi
 
 // Now subtract from x
-    val (borrow0, d0) = diffU64(x.dw0, f0)
-    val (borrow1, d1) = diffU64withBorrow(x.dw1, f1, borrow0)
-    val (borrow2, d2) = diffU64withBorrow(x.dw2, f2, borrow1)
-    val (borrow3, d3) = diffU64withBorrow(x.dw3, f3, borrow2)
+    diffU64(pentad, x.dw0, f0)
+    val borrow0 = pentad.dw1
+    val d0 = pentad.dw0
+    diffU64withBorrow(pentad, x.dw1, f1, borrow0)
+    val borrow1 = pentad.dw1
+    val d1 = pentad.dw0
+    diffU64withBorrow(pentad, x.dw2, f2, borrow1)
+    val borrow2 = pentad.dw1
+    val d2 = pentad.dw0
+    //diffU64withBorrow(pentad, x.dw3, f3, borrow2)
+    //val borrow3 = pentad.dw1
+    //val d3 = pentad.dw0
+    val d3 = x.dw3 - f3 - borrow2
 
     z.c256Set256(d3, d2, d1, d0)
 }
 
+/*
 @Suppress("UNUSED")
 private fun _fms4x4x4(
     f: C256,
     maxFusedBitLen: Int,
     x3: Long, x2: Long, x1: Long, x0: Long,
     y3: Long, y2: Long, y1: Long, y0: Long,
-    s3: Long, s2: Long, s1: Long, s0: Long
+    s3: Long, s2: Long, s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -319,8 +348,7 @@ private fun _fms4x4x4(
     }
     throw RuntimeException("U256 overflow")
 }
-
-// claude
+*/
 
 @Suppress("NOTHING_TO_INLINE")
 private inline fun _fms1x1x2(
@@ -328,7 +356,8 @@ private inline fun _fms1x1x2(
     maxFusedBitLen: Int,
     x0: Long,
     y0: Long,
-    s1: Long, s0: Long
+    s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -337,14 +366,18 @@ private inline fun _fms1x1x2(
         f.c256Set64(f0)
         return
     }
-    val (borrow0, f0) = diffU64(pp00Lo, s0)
+    diffU64(pentad, pp00Lo, s0)
+    val borrow0 = pentad.dw1
+    val f0 = pentad.dw0
     if (maxFusedBitLen <= 128) {
         val f1 = pp00Hi - s1 - borrow0
         f.c256Set128(f1, f0)
         return
     }
     // maxFusedBitLen can be at most 129 (64+64+1); f2 absorbs residual borrow
-    val (borrow1, f1) = diffU64withBorrow(pp00Hi, s1, borrow0)
+    diffU64withBorrow(pentad, pp00Hi, s1, borrow0)
+    val borrow1 = pentad.dw1
+    val f1 = pentad.dw0
     val f2 = -borrow1
     f.c256Set192(f2, f1, f0)
 }
@@ -354,7 +387,8 @@ private fun _fms2x1x3(
     maxFusedBitLen: Int,
     x1: Long, x0: Long,
     y0: Long,
-    s2: Long, s1: Long, s0: Long
+    s2: Long, s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -363,7 +397,9 @@ private fun _fms2x1x3(
         f.c256Set64(f0)
         return
     }
-    val (borrow0, f0) = diffU64(pp00Lo, s0)
+    diffU64(pentad, pp00Lo, s0)
+    val borrow0 = pentad.dw1
+    val f0 = pentad.dw0
     val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     if (maxFusedBitLen <= 128) {
@@ -371,15 +407,23 @@ private fun _fms2x1x3(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1p) = sumU64(pp00Hi, pp10Lo)
-    val (borrow1, f1) = diffU64withBorrow(f1p, s1, borrow0)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val f1p = pentad.dw0
+    diffU64withBorrow(pentad, f1p, s1, borrow0)
+    val borrow1 = pentad.dw1
+    val f1 = pentad.dw0
     if (maxFusedBitLen <= 192) {
         val f2 = carry1 + pp10Hi - s2 - borrow1
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2p) = sumU64(carry1, pp10Hi)
-    val (borrow2, f2) = diffU64withBorrow(f2p, s2, borrow1)
+    sumU64(pentad, carry1, pp10Hi)
+    val carry2 = pentad.dw1
+    val f2p = pentad.dw0
+    diffU64withBorrow(pentad, f2p, s2, borrow1)
+    val borrow2 = pentad.dw1
+    val f2 = pentad.dw0
     // maxFusedBitLen <= 193 (128+64+1); f3 absorbs residual
     val f3 = carry2 - borrow2
     f.c256Set256(f3, f2, f1, f0)
@@ -390,7 +434,8 @@ private fun _fms3x1x4(
     maxFusedBitLen: Int,
     x2: Long, x1: Long, x0: Long,
     y0: Long,
-    s3: Long, s2: Long, s1: Long, s0: Long
+    s3: Long, s2: Long, s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -399,7 +444,9 @@ private fun _fms3x1x4(
         f.c256Set64(f0)
         return
     }
-    val (borrow0, f0) = diffU64(pp00Lo, s0)
+    diffU64(pentad, pp00Lo, s0)
+    val borrow0 = pentad.dw1
+    val f0 = pentad.dw0
     val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     if (maxFusedBitLen <= 128) {
@@ -407,8 +454,12 @@ private fun _fms3x1x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1p) = sumU64(pp00Hi, pp10Lo)
-    val (borrow1, f1) = diffU64withBorrow(f1p, s1, borrow0)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val f1p = pentad.dw0
+    diffU64withBorrow(pentad, f1p, s1, borrow0)
+    val borrow1 = pentad.dw1
+    val f1 = pentad.dw0
     val pp20Hi = unsignedMulHi(x2, y0)
     val pp20Lo = x2 * y0
     if (maxFusedBitLen <= 192) {
@@ -416,21 +467,17 @@ private fun _fms3x1x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2p) = sumU64(carry1, pp10Hi, pp20Lo)
-    val (borrow2, f2) = diffU64withBorrow(f2p, s2, borrow1)
+    sumU64(pentad, carry1, pp10Hi, pp20Lo)
+    val carry2 = pentad.dw1
+    val f2p = pentad.dw0
+    diffU64withBorrow(pentad, f2p, s2, borrow1)
+    val borrow2 = pentad.dw1
+    val f2 = pentad.dw0
 
-    if (maxFusedBitLen <= 256) {
-        val f3 = carry2 + pp20Hi - s3 - borrow2
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    val (carry3, f3p) = sumU64(carry2, pp20Hi)
-    val (borrow3, f3) = diffU64withBorrow(f3p, s3, borrow2)
-    if (carry3 == 0L && borrow3 == 0L) {
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    throw RuntimeException("U256 overflow")
+    verify { maxFusedBitLen <= 256 }
+
+    val f3 = carry2 + pp20Hi - s3 - borrow2
+    f.c256Set256(f3, f2, f1, f0)
 }
 
 private fun _fms4x1x4(
@@ -438,7 +485,8 @@ private fun _fms4x1x4(
     maxFusedBitLen: Int,
     x3: Long, x2: Long, x1: Long, x0: Long,
     y0: Long,
-    s3: Long, s2: Long, s1: Long, s0: Long
+    s3: Long, s2: Long, s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -447,7 +495,9 @@ private fun _fms4x1x4(
         f.c256Set64(f0)
         return
     }
-    val (borrow0, f0) = diffU64(pp00Lo, s0)
+    diffU64(pentad, pp00Lo, s0)
+    val borrow0 = pentad.dw1
+    val f0 = pentad.dw0
     val pp10Hi = unsignedMulHi(x1, y0)
     val pp10Lo = x1 * y0
     if (maxFusedBitLen <= 128) {
@@ -455,8 +505,12 @@ private fun _fms4x1x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1p) = sumU64(pp00Hi, pp10Lo)
-    val (borrow1, f1) = diffU64withBorrow(f1p, s1, borrow0)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val f1p = pentad.dw0
+    diffU64withBorrow(pentad, f1p, s1, borrow0)
+    val borrow1 = pentad.dw1
+    val f1 = pentad.dw0
     val pp20Hi = unsignedMulHi(x2, y0)
     val pp20Lo = x2 * y0
     if (maxFusedBitLen <= 192) {
@@ -464,24 +518,18 @@ private fun _fms4x1x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2p) = sumU64(carry1, pp10Hi, pp20Lo)
-    val (borrow2, f2) = diffU64withBorrow(f2p, s2, borrow1)
-    val pp30Hi = unsignedMulHi(x3, y0)
+    sumU64(pentad, carry1, pp10Hi, pp20Lo)
+    val carry2 = pentad.dw1
+    val f2p = pentad.dw0
+    diffU64withBorrow(pentad, f2p, s2, borrow1)
+    val borrow2 = pentad.dw1
+    val f2 = pentad.dw0
     val pp30Lo = x3 * y0
 
-    if (maxFusedBitLen <= 256) {
-        val f3 = carry2 + pp20Hi + pp30Lo - s3 - borrow2
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    val (carry3, f3p) = sumU64(carry2, pp20Hi, pp30Lo)
-    val (borrow3, f3) = diffU64withBorrow(f3p, s3, borrow2)
-    val (carry4, f4) = sumU64(carry3, pp30Hi)
-    if ((carry4 or f4) == 0L && borrow3 == 0L) {
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    throw RuntimeException("U256 overflow")
+    verify { maxFusedBitLen <= 256 }
+
+    val f3 = carry2 + pp20Hi + pp30Lo - s3 - borrow2
+    f.c256Set256(f3, f2, f1, f0)
 }
 
 private fun _fms2x2x4(
@@ -489,7 +537,8 @@ private fun _fms2x2x4(
     maxFusedBitLen: Int,
     x1: Long, x0: Long,
     y1: Long, y0: Long,
-    s3: Long, s2: Long, s1: Long, s0: Long
+    s3: Long, s2: Long, s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -498,7 +547,9 @@ private fun _fms2x2x4(
         f.c256Set64(f0)
         return
     }
-    val (borrow0, f0) = diffU64(pp00Lo, s0)
+    diffU64(pentad, pp00Lo, s0)
+    val borrow0 = pentad.dw1
+    val f0 = pentad.dw0
     val pp01Hi = unsignedMulHi(x0, y1)
     val pp01Lo = x0 * y1
     val pp10Hi = unsignedMulHi(x1, y0)
@@ -508,8 +559,12 @@ private fun _fms2x2x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1p) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-    val (borrow1, f1) = diffU64withBorrow(f1p, s1, borrow0)
+    sumU64(pentad, pp00Hi, pp01Lo, pp10Lo)
+    val carry1 = pentad.dw1
+    val f1p = pentad.dw0
+    diffU64withBorrow(pentad, f1p, s1, borrow0)
+    val borrow1 = pentad.dw1
+    val f1 = pentad.dw0
     val pp11Hi = unsignedMulHi(x1, y1)
     val pp11Lo = x1 * y1
     if (maxFusedBitLen <= 192) {
@@ -517,21 +572,17 @@ private fun _fms2x2x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2p) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo)
-    val (borrow2, f2) = diffU64withBorrow(f2p, s2, borrow1)
+    sumU64(pentad, carry1, pp01Hi, pp10Hi, pp11Lo)
+    val carry2 = pentad.dw1
+    val f2p = pentad.dw0
+    diffU64withBorrow(pentad, f2p, s2, borrow1)
+    val borrow2 = pentad.dw1
+    val f2 = pentad.dw0
 
-    if (maxFusedBitLen <= 256) {
-        val f3 = carry2 + pp11Hi - s3 - borrow2
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    val (carry3, f3p) = sumU64(carry2, pp11Hi)
-    val (borrow3, f3) = diffU64withBorrow(f3p, s3, borrow2)
-    if (carry3 == 0L && borrow3 == 0L) {
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    throw RuntimeException("U256 overflow")
+    verify { maxFusedBitLen <= 256 }
+
+    val f3 = carry2 + pp11Hi - s3 - borrow2
+    f.c256Set256(f3, f2, f1, f0)
 }
 
 private fun _fms3x2x4(
@@ -539,7 +590,8 @@ private fun _fms3x2x4(
     maxFusedBitLen: Int,
     x2: Long, x1: Long, x0: Long,
     y1: Long, y0: Long,
-    s3: Long, s2: Long, s1: Long, s0: Long
+    s3: Long, s2: Long, s1: Long, s0: Long,
+    pentad: Pentad
 ) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
@@ -548,7 +600,9 @@ private fun _fms3x2x4(
         f.c256Set64(f0)
         return
     }
-    val (borrow0, f0) = diffU64(pp00Lo, s0)
+    diffU64(pentad, pp00Lo, s0)
+    val borrow0 = pentad.dw1
+    val f0 = pentad.dw0
     val pp01Hi = unsignedMulHi(x0, y1)
     val pp01Lo = x0 * y1
     val pp10Hi = unsignedMulHi(x1, y0)
@@ -558,8 +612,12 @@ private fun _fms3x2x4(
         f.c256Set128(f1, f0)
         return
     }
-    val (carry1, f1p) = sumU64(pp00Hi, pp01Lo, pp10Lo)
-    val (borrow1, f1) = diffU64withBorrow(f1p, s1, borrow0)
+    sumU64(pentad, pp00Hi, pp01Lo, pp10Lo)
+    val carry1 = pentad.dw1
+    val f1p = pentad.dw0
+    diffU64withBorrow(pentad, f1p, s1, borrow0)
+    val borrow1 = pentad.dw1
+    val f1 = pentad.dw0
     val pp11Hi = unsignedMulHi(x1, y1)
     val pp11Lo = x1 * y1
     val pp20Hi = unsignedMulHi(x2, y0)
@@ -569,22 +627,17 @@ private fun _fms3x2x4(
         f.c256Set192(f2, f1, f0)
         return
     }
-    val (carry2, f2p) = sumU64(carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo)
-    val (borrow2, f2) = diffU64withBorrow(f2p, s2, borrow1)
+    sumU64(pentad, carry1, pp01Hi, pp10Hi, pp11Lo, pp20Lo)
+    val carry2 = pentad.dw1
+    val f2p = pentad.dw0
+    diffU64withBorrow(pentad, f2p, s2, borrow1)
+    val borrow2 = pentad.dw1
+    val f2 = pentad.dw0
     val pp21Hi = unsignedMulHi(x2, y1)
     val pp21Lo = x2 * y1
 
-    if (maxFusedBitLen <= 256) {
-        val f3 = carry2 + pp11Hi + pp20Hi + pp21Lo - s3 - borrow2
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    val (carry3, f3p) = sumU64(carry2, pp11Hi, pp20Hi, pp21Lo)
-    val (borrow3, f3) = diffU64withBorrow(f3p, s3, borrow2)
-    val (carry4, f4) = sumU64(carry3, pp21Hi)
-    if ((carry4 or f4) == 0L && borrow3 == 0L) {
-        f.c256Set256(f3, f2, f1, f0)
-        return
-    }
-    throw RuntimeException("U256 overflow")
+    verify { maxFusedBitLen <= 256 }
+
+    val f3 = carry2 + pp11Hi + pp20Hi + pp21Lo - s3 - borrow2
+    f.c256Set256(f3, f2, f1, f0)
 }
