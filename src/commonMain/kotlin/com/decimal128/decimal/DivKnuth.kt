@@ -26,7 +26,7 @@ internal fun divKnuth(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArra
     check(knuthD.size == 32)
 
     verify { knuthD[0] == 0 }
-    knuthD[UN + 0] = x.dw0.toInt(); knuthD[UN + 1] = (x.dw0 ushr 32).toInt()
+    knuthD[UN    ] = x.dw0.toInt(); knuthD[UN + 1] = (x.dw0 ushr 32).toInt()
     knuthD[UN + 2] = x.dw1.toInt(); knuthD[UN + 3] = (x.dw1 ushr 32).toInt()
     knuthD[UN + 4] = x.dw2.toInt(); knuthD[UN + 5] = (x.dw2 ushr 32).toInt()
     knuthD[UN + 6] = x.dw3.toInt(); knuthD[UN + 7] = (x.dw3 ushr 32).toInt()
@@ -34,7 +34,7 @@ internal fun divKnuth(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArra
 
     val m = ((x.bitLen - 1) ushr 5) + 1
 
-    knuthD[VN + 0] = y.dw0.toInt(); knuthD[VN + 1] = (y.dw0 ushr 32).toInt()
+    knuthD[VN    ] = y.dw0.toInt(); knuthD[VN + 1] = (y.dw0 ushr 32).toInt()
     knuthD[VN + 2] = y.dw1.toInt(); knuthD[VN + 3] = (y.dw1 ushr 32).toInt()
     knuthD[VN + 4] = y.dw2.toInt(); knuthD[VN + 5] = (y.dw2 ushr 32).toInt()
     knuthD[VN + 6] = y.dw3.toInt(); knuthD[VN + 7] = (y.dw3 ushr 32).toInt()
@@ -59,7 +59,7 @@ internal fun divKnuth(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArra
         // looks funny but this is correct
         // remainder has at most n limbs
         denormalizeRemainderShiftRight(knuthD, n, s)
-        val r0 = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN + 0].toLong() and MASK32L)
+        val r0 = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN    ].toLong() and MASK32L)
         val r1 = (knuthD[UN + 3].toLong() shl 32) or (knuthD[UN + 2].toLong() and MASK32L)
         val r2 = (knuthD[UN + 5].toLong() shl 32) or (knuthD[UN + 4].toLong() and MASK32L)
         val r3 = (knuthD[UN + 7].toLong() shl 32) or (knuthD[UN + 6].toLong() and MASK32L)
@@ -121,7 +121,7 @@ internal fun divKnuth(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArra
             }
         }
     if (quot != null) {
-        val q0 = (knuthD[Q + 1].toLong() shl 32) or (knuthD[Q + 0].toLong() and MASK32L)
+        val q0 = (knuthD[Q + 1].toLong() shl 32) or (knuthD[Q    ].toLong() and MASK32L)
         val q1 = (knuthD[Q + 3].toLong() shl 32) or (knuthD[Q + 2].toLong() and MASK32L)
         val q2 = (knuthD[Q + 5].toLong() shl 32) or (knuthD[Q + 4].toLong() and MASK32L)
         val q3 = (knuthD[Q + 7].toLong() shl 32) or (knuthD[Q + 6].toLong() and MASK32L)
@@ -161,7 +161,7 @@ private inline fun compareRemainderDoubled(x: C256, knuthD: IntArray): Int {
     val y1 = (knuthD[UN + 3].toLong() shl 32) or (knuthD[UN + 2].toLong() and MASK32L)
     if (x.dw1 != y1)
         return unsignedCmp(x.dw1, y1)
-    val y0 = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN + 0].toLong() and MASK32L)
+    val y0 = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN    ].toLong() and MASK32L)
     return unsignedCmp(x.dw0, y0)
 }
 
@@ -177,7 +177,7 @@ internal fun divKnuthDivModX64(quot: C256?, x: C256, y0: Long, knuthD: IntArray)
     check(knuthD.size == 32)
 
     verify { knuthD[0] == 0 }
-    knuthD[UN + 0] = x.dw0.toInt(); knuthD[UN + 1] = (x.dw0 ushr 32).toInt()
+    knuthD[UN    ] = x.dw0.toInt(); knuthD[UN + 1] = (x.dw0 ushr 32).toInt()
     knuthD[UN + 2] = x.dw1.toInt(); knuthD[UN + 3] = (x.dw1 ushr 32).toInt()
     knuthD[UN + 4] = x.dw2.toInt(); knuthD[UN + 5] = (x.dw2 ushr 32).toInt()
     knuthD[UN + 6] = x.dw3.toInt(); knuthD[UN + 7] = (x.dw3 ushr 32).toInt()
@@ -187,7 +187,7 @@ internal fun divKnuthDivModX64(quot: C256?, x: C256, y0: Long, knuthD: IntArray)
 
     val s = y0.countLeadingZeroBits()
 
-    knuthD[VN + 0] = y0.toInt()
+    knuthD[VN    ] = y0.toInt()
     knuthD[VN + 1] = (y0 ushr 32).toInt()
     //val n = 2
 
@@ -202,10 +202,10 @@ internal fun divKnuthDivModX64(quot: C256?, x: C256, y0: Long, knuthD: IntArray)
 
     divKnuthCore(knuthD, m, 2)
 
-    val remainderNormalized = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN + 0].toLong() and MASK32L)
+    val remainderNormalized = (knuthD[UN + 1].toLong() shl 32) or (knuthD[UN    ].toLong() and MASK32L)
     val remainder = remainderNormalized ushr s
     if (quot != null) {
-        val q0 = (knuthD[Q + 1].toLong() shl 32) or (knuthD[Q + 0].toLong() and MASK32L)
+        val q0 = (knuthD[Q + 1].toLong() shl 32) or (knuthD[Q    ].toLong() and MASK32L)
         val q1 = (knuthD[Q + 3].toLong() shl 32) or (knuthD[Q + 2].toLong() and MASK32L)
         val q2 = (knuthD[Q + 5].toLong() shl 32) or (knuthD[Q + 4].toLong() and MASK32L)
         val q3 = (knuthD[Q + 7].toLong() shl 32) or (knuthD[Q + 6].toLong() and MASK32L)

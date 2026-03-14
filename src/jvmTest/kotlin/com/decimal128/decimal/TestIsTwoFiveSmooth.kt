@@ -26,7 +26,7 @@ class TestIsTwoFiveSmooth {
             if (verbose)
                 println("5**$p5 bitLen:$bitLen")
             val offset = 4 * p5
-            POWERS5[offset + 0] = pow5.toLong()
+            POWERS5[offset    ] = pow5.toLong()
             POWERS5[offset + 1] = pow5.shiftRight(64).toLong()
             POWERS5[offset + 2] = pow5.shiftRight(128).toLong()
             POWERS5[offset + 3] = pow5.shiftRight(192).toLong()
@@ -39,7 +39,7 @@ class TestIsTwoFiveSmooth {
         assert(bitLen == 64 - java.lang.Long.numberOfLeadingZeros(dw0))
         val p5 = BIT_LEN_TO_POW5[bitLen].toInt()
         val offset = 4 * p5
-        return (p5 != 0) && POWERS5[offset + 0] == dw0
+        return (p5 != 0) && POWERS5[offset    ] == dw0
     }
 
     fun isPow5_128(bitLen: Int, dw1: Long, dw0: Long): Boolean {
@@ -48,7 +48,7 @@ class TestIsTwoFiveSmooth {
         assert(bitLen == 128 - java.lang.Long.numberOfLeadingZeros(dw1))
         val p5 = BIT_LEN_TO_POW5[bitLen].toInt()
         val offset = 4 * p5
-        return (p5 != 0) && POWERS5[offset + 0] == dw0 && POWERS5[offset + 1] == dw1
+        return (p5 != 0) && POWERS5[offset    ] == dw0 && POWERS5[offset + 1] == dw1
     }
 
     fun isPow5_192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Boolean {
@@ -58,7 +58,7 @@ class TestIsTwoFiveSmooth {
         val p5 = BIT_LEN_TO_POW5[bitLen].toInt()
         val offset = 4 * p5
         return (p5 != 0) &&
-                POWERS5[offset + 0] == dw0 && POWERS5[offset + 1] == dw1 &&
+                POWERS5[offset    ] == dw0 && POWERS5[offset + 1] == dw1 &&
                 POWERS5[offset + 2] == dw2
 
     }
@@ -70,7 +70,7 @@ class TestIsTwoFiveSmooth {
         val p5 = BIT_LEN_TO_POW5[bitLen].toInt()
         val offset = 4 * p5
         return (p5 != 0) &&
-                POWERS5[offset + 0] == dw0 && POWERS5[offset + 1] == dw1 &&
+                POWERS5[offset    ] == dw0 && POWERS5[offset + 1] == dw1 &&
                 POWERS5[offset + 2] == dw2 && POWERS5[offset + 3] == dw3
 
     }
@@ -83,7 +83,7 @@ class TestIsTwoFiveSmooth {
             return bitLen == 1
         val p5 = BIT_LEN_TO_POW5[bitLen].toInt()
         val offset = 4 * p5
-        return (p5 != 0) && POWERS5[offset + 0] == oddPart0
+        return (p5 != 0) && POWERS5[offset    ] == oddPart0
     }
 
     fun isTwoFiveSmooth_128(dw1:Long, dw0: Long): Boolean {
@@ -99,7 +99,7 @@ class TestIsTwoFiveSmooth {
         val p5 = BIT_LEN_TO_POW5[bitLenOdd].toInt()
         val offset = 4 * p5
         return (p5 != 0) &&
-                POWERS5[offset + 0] == oddPart0 && POWERS5[offset + 1] == oddPart1
+                POWERS5[offset    ] == oddPart0 && POWERS5[offset + 1] == oddPart1
     }
 
     fun isTwoFiveSmooth_192(dw2: Long, dw1:Long, dw0: Long): Boolean {
@@ -116,7 +116,7 @@ class TestIsTwoFiveSmooth {
         val p5 = BIT_LEN_TO_POW5[bitLenOdd].toInt()
         val offset = 4 * p5
         return (p5 != 0) &&
-                POWERS5[offset + 0] == oddPart0 && POWERS5[offset + 1] == oddPart1 &&
+                POWERS5[offset    ] == oddPart0 && POWERS5[offset + 1] == oddPart1 &&
                 POWERS5[offset + 2] == oddPart2
     }
 
@@ -135,7 +135,7 @@ class TestIsTwoFiveSmooth {
         val p5 = BIT_LEN_TO_POW5[bitLenOdd].toInt()
         val offset = 4 * p5
         return (p5 != 0) &&
-                POWERS5[offset + 0] == oddPart0 && POWERS5[offset + 1] == oddPart1 &&
+                POWERS5[offset    ] == oddPart0 && POWERS5[offset + 1] == oddPart1 &&
                 POWERS5[offset + 2] == oddPart2 && POWERS5[offset + 3] == oddPart3
     }
 

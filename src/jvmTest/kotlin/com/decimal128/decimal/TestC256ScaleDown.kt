@@ -133,7 +133,7 @@ class TestC256ScaleDown {
         )
 
         for (i in quads.indices step 4) {
-            val dw0 = quads[i + 0]
+            val dw0 = quads[i    ]
             val dw1 = quads[i + 1]
             val dw2 = quads[i + 2]
             val dw3 = quads[i + 3]

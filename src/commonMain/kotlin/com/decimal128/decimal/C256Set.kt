@@ -19,20 +19,20 @@ internal fun c256Set(z: C256, x: LongArray, xOff: Int, xLen: Int) {
         }
 
         1 -> {
-            val c0 = x[xOff + 0]
+            val c0 = x[xOff    ]
             val c1 = nonZeroVal
             z.c256Set128(c1, c0)
         }
 
         2 -> {
-            val c0 = x[xOff + 0]
+            val c0 = x[xOff    ]
             val c1 = x[xOff + 1]
             val c2 = nonZeroVal
             z.c256Set192(c2, c1, c0)
         }
 
         3 -> {
-            val c0 = x[xOff + 0]
+            val c0 = x[xOff    ]
             val c1 = x[xOff + 1]
             val c2 = x[xOff + 2]
             val c3 = nonZeroVal
@@ -157,25 +157,25 @@ internal fun c256SetShiftRight(z: C256, x: LongArray, xOff: Int, xLen: Int, bitC
     when (newLen) {
         0 -> {}
         1 -> {
-            val z0 = x[shiftOff + 0] ushr innerShift
+            val z0 = x[shiftOff    ] ushr innerShift
             z.c256Set64(z0)
         }
 
         2 -> {
-            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff    ] ushr innerShift)
             val z1 = x[shiftOff + 1] ushr innerShift
             z.c256Set128(z1, z0)
         }
 
         3 -> {
-            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff    ] ushr innerShift)
             val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl -innerShift)) or (x[shiftOff + 1] ushr innerShift)
             val z2 = x[shiftOff + 2] ushr innerShift
             z.c256Set192(z2, z1, z0)
         }
 
         4 -> {
-            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff    ] ushr innerShift)
             val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl -innerShift)) or (x[shiftOff + 1] ushr innerShift)
             val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl -innerShift)) or (x[shiftOff + 2] ushr innerShift)
             val z3 = x[shiftOff + 3] ushr innerShift
@@ -183,7 +183,7 @@ internal fun c256SetShiftRight(z: C256, x: LongArray, xOff: Int, xLen: Int, bitC
         }
 
         5 -> {
-            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff + 0] ushr innerShift)
+            val z0 = (innerShiftNonZeroMask and (x[shiftOff + 1] shl -innerShift)) or (x[shiftOff    ] ushr innerShift)
             val z1 = (innerShiftNonZeroMask and (x[shiftOff + 2] shl -innerShift)) or (x[shiftOff + 1] ushr innerShift)
             val z2 = (innerShiftNonZeroMask and (x[shiftOff + 3] shl -innerShift)) or (x[shiftOff + 2] ushr innerShift)
             val z3 = (innerShiftNonZeroMask and (x[shiftOff + 4] shl -innerShift)) or (x[shiftOff + 3] ushr innerShift)

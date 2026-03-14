@@ -93,7 +93,7 @@ internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     val dw0T = dw0 xor Long.MIN_VALUE
     val pow10Offset = (digitCountEstimate shl 1) and POW10_BCE
     val p1 = POW10[pow10Offset + 1] xor Long.MIN_VALUE
-    val p0 = POW10[pow10Offset + 0] xor Long.MIN_VALUE
+    val p0 = POW10[pow10Offset    ] xor Long.MIN_VALUE
 
     val digitLen = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
@@ -107,7 +107,7 @@ internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
     val dw0T = dw0 xor Long.MIN_VALUE
     val pow10Offset = (digitCountEstimate shl 1) and POW10_BCE
     val p1 = POW10[pow10Offset + 1] xor Long.MIN_VALUE
-    val p0 = POW10[pow10Offset + 0] xor Long.MIN_VALUE
+    val p0 = POW10[pow10Offset    ] xor Long.MIN_VALUE
 
     val ret2 = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
@@ -122,7 +122,7 @@ internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int 
             val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
             val p2 = POW10[pow10Offset + 2]
             val p1 = POW10[pow10Offset + 1]
-            val p0 = POW10[pow10Offset + 0]
+            val p0 = POW10[pow10Offset    ]
             val cmp2 = unsignedCmp(dw2, p2)
             val cmp1 = unsignedCmp(dw1, p1)
             val cmp0 = unsignedCmp(dw0, p0)
@@ -146,7 +146,7 @@ internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: 
             val p3 = POW10[pow10Offset + 3]
             val p2 = POW10[pow10Offset + 2]
             val p1 = POW10[pow10Offset + 1]
-            val p0 = POW10[pow10Offset + 0]
+            val p0 = POW10[pow10Offset    ]
             val cmp3 = unsignedCmp(dw3, p3)
             val cmp2 = unsignedCmp(dw2, p2)
             val cmp1 = unsignedCmp(dw1, p1)
@@ -188,7 +188,7 @@ internal fun compareWithHalfPow10_2(dw1: Long, dw0: Long, pow10: Int): Int {
 internal fun compareWithHalfPow10_3(dw2: Long, dw1: Long, dw0: Long, pow10: Int): Int {
     verify { pow10 >= MIN_POW10_DIGIT_LEN_192 && pow10 < MIN_POW10_DIGIT_LEN_256 }
     val pow10Offset = pow10Offset(pow10) and POW10_BCE
-    val pow10Dw0 = POW10[pow10Offset + 0]
+    val pow10Dw0 = POW10[pow10Offset    ]
     val pow10Dw1 = POW10[pow10Offset + 1]
     val pow10Dw2 = POW10[pow10Offset + 2]
     val halfPow10Dw0 = (pow10Dw1 shl -1) or (pow10Dw0 ushr 1)
@@ -206,7 +206,7 @@ internal fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, 
     verify { pow10 >= MIN_POW10_DIGIT_LEN_256 && pow10 <= MAXX_DIGIT_LEN }
     if (pow10 < MAXX_DIGIT_LEN) {
         val pow10Offset = pow10Offset(pow10) and POW10_BCE
-        val pow10Dw0 = POW10[pow10Offset + 0]
+        val pow10Dw0 = POW10[pow10Offset    ]
         val pow10Dw1 = POW10[pow10Offset + 1]
         val pow10Dw2 = POW10[pow10Offset + 2]
         val pow10Dw3 = POW10[pow10Offset + 3]
@@ -233,7 +233,7 @@ internal fun c256IsPowerOf10(x: C256): Boolean {
     val xDigitLen = x.digitLen
     if (xDigitLen > 0) {
         val pow10Offset = pow10Offset(xDigitLen - 1) and POW10_BCE
-        val p0 = POW10[pow10Offset + 0]
+        val p0 = POW10[pow10Offset    ]
         val p1 = POW10[pow10Offset + 1] and ((64 - xBitLen) shr 31).toLong()
         val p2 = POW10[pow10Offset + 2] and ((128 - xBitLen) shr 31).toLong()
         val p3 = POW10[pow10Offset + 3] and ((192 - xBitLen) shr 31).toLong()
@@ -246,7 +246,7 @@ internal fun c256SetPow10(z: C256, pow10: Int) {
     if (pow10 >= 0) {
         val pow10BitLen = pow10BitLen(pow10)
         val pow10Offset = pow10Offset(pow10) and POW10_BCE
-        val p0 = POW10[pow10Offset + 0]
+        val p0 = POW10[pow10Offset    ]
         val p1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
         val p2 = POW10[pow10Offset + 2] and ((128 - pow10BitLen) shr 31).toLong()
         val p3 = POW10[pow10Offset + 3] and ((192 - pow10BitLen) shr 31).toLong()

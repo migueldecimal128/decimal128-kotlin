@@ -2297,7 +2297,7 @@ object Magia {
         val bytes = ByteArray(strLen)
         bytes[0] = '-'.code.toByte()
         val n = if (isNegative) 1 else 0
-        bytes[n + 0] = '0'.code.toByte()
+        bytes[n    ] = '0'.code.toByte()
         bytes[n + 1] = 'x'.code.toByte()
         bytes[n + 2] = '0'.code.toByte()
         var i = 0

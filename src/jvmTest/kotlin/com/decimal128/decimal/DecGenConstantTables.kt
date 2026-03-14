@@ -106,8 +106,8 @@ class DecGenConstantTables {
     }
 
     fun initMagicPow10_64() {
-        X_DWORD_TABLES[MAGIC_POW10_M_BASE + 0] = 1
-        X_BYTE_TABLES[MAGIC_FLAG_AND_SHIFT_BASE + 0] = Byte.MIN_VALUE
+        X_DWORD_TABLES[MAGIC_POW10_M_BASE    ] = 1
+        X_BYTE_TABLES[MAGIC_FLAG_AND_SHIFT_BASE    ] = Byte.MIN_VALUE
         for (k in 1..<MAGIC_POW10_M_MAXX) {
             val d = pow10_64(k)
             val magic = magicu64(d)
