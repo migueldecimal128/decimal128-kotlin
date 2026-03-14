@@ -150,18 +150,18 @@ internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: 
         val p2 = POW10[pow10Offset + 2]
         val p1 = POW10[pow10Offset + 1]
         val p0 = POW10[pow10Offset    ]
-        val cmp3 = unsignedCmp(p3, dw3)
+        val hiDigitCount = loDigitCount + 1
+        val cmp3 = unsignedCmp(dw3, p3)
         if (cmp3 != 0)
-            return loDigitCount + (cmp3 ushr 31)
-        val cmp2 = unsignedCmp(p2, dw2)
+            return hiDigitCount - (cmp3 ushr 31)
+        val cmp2 = unsignedCmp(dw2, p2)
         if (cmp2 != 0)
-            return loDigitCount + (cmp2 ushr 31)
-        val cmp1 = unsignedCmp(p1, dw1)
+            return hiDigitCount - (cmp2 ushr 31)
+        val cmp1 = unsignedCmp(dw1, p1)
         if (cmp1 != 0)
-            return loDigitCount + (cmp1 ushr 31)
+            return hiDigitCount - (cmp1 ushr 31)
         val cmp0 = unsignedCmp(dw0, p0)
-        val ret = loDigitCount + 1 + (cmp0 shr 31)
-        return ret
+        return hiDigitCount - (cmp0 ushr 31)
     } else {
         return calcDigitLen128(bitLen, dw1, dw0)
     }
