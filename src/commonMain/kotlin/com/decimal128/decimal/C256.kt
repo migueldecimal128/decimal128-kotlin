@@ -62,21 +62,22 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         val oldBitLen = this.bitLen
         val dw0 = dw0
         val dw1 = dw1
-        if (oldBitLen <= 128) {
-            val oldDigitLen = this.digitLen
-            val offset = oldDigitLen shl 1
-            if (dw0 == POW10[offset and POW10_BCE] && dw1 == POW10[(offset + 1) and POW10_BCE])
-                this.digitLen = oldDigitLen + 1 // if digitLen rolled over then bitLen did not
-            else if (dw0.countOneBits() + dw1.countOneBits() == 1)
-                this.bitLen = oldBitLen + 1// only one bit is now set
-            verify { bitLen == calcBitLen128(dw1, dw0) && digitLen == calcDigitLen128(bitLen, dw1, dw0) }
-            return
-        }
         val dw2 = dw2
         val dw3 = dw3
-        val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
-        this.digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
-        this.bitLen = bitLen
+        verify { (dw0 or dw1 or dw2 or dw3) != 0L }
+        val popCount = dw0.countOneBits() + dw1.countOneBits() + dw2.countOneBits() + dw3.countOneBits()
+        val bitLenIncrement = 1 - ((1 - popCount) ushr 31)
+        this.bitLen = oldBitLen + bitLenIncrement
+
+        if (oldBitLen <= 128) {
+            val offset = this.digitLen shl 1
+            val matchIfZero = (dw0 - POW10[offset and POW10_BCE]) or (dw1 - POW10[(offset + 1) and POW10_BCE])
+            val digitLenIncrement = 1 - ((matchIfZero or -matchIfZero) ushr 63).toInt()
+            this.digitLen += digitLenIncrement
+            verify { bitLen == calcBitLen128(dw1, dw0) && digitLen == calcDigitLen128(bitLen, dw1, dw0) }
+        } else {
+            calcDigitLen256(this.bitLen, dw3, dw2, dw1, dw0)
+        }
     }
 
     fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
