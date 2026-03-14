@@ -71,15 +71,28 @@ internal fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
     // usually underestimates by 1
     // it is simpler than (((bitLen - 1) * 1233) ushr 12) + 1
     // more importantly, it avoids boundary condition issues
-    // for 128 and 192 bits where they cross from 2->3->4 limbs
-    val digitCountEstimate = (bitLen * 1233) ushr 12
-    val p0 = POW10[(digitCountEstimate shl 1) and POW10_BCE]
-    return digitCountEstimate + 1 - (unsignedCmp(dw0, p0) ushr 31)
+    // for 128 and 192 bits where they cross from 2->4 limbs
+    val loDigitCount = (bitLen * 1233) ushr 12
+    val p0 = POW10[(loDigitCount shl 1) and POW10_BCE]
+    return loDigitCount + 1 - (unsignedCmp(dw0, p0) ushr 31)
 }
 
 internal fun calcDigitLen128(dw1: Long, dw0: Long): Int {
     val bitLen = calcBitLen128(dw1, dw0)
     return calcDigitLen128(bitLen, dw1, dw0)
+}
+
+internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
+    val loDigitCount = (bitLen * 1233) ushr 12
+    val hiDigitCount = loDigitCount + 1
+    val pow10Offset = (loDigitCount shl 1) and POW10_BCE
+    val p1 = POW10[pow10Offset + 1]
+    val p0 = POW10[pow10Offset    ]
+    val cmp1 = unsignedCmp(dw1, p1)
+    if (cmp1 != 0)
+        return hiDigitCount - (cmp1 ushr 31)
+    val cmp0 = unsignedCmp(dw0, p0)
+    return hiDigitCount - (cmp0 ushr 31)
 }
 
 internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
@@ -101,39 +114,30 @@ internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
 }
 
-internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
-    val digitCountEstimate = (bitLen * 1233) ushr 12
-    val dw1T = dw1 xor Long.MIN_VALUE
-    val dw0T = dw0 xor Long.MIN_VALUE
-    val pow10Offset = (digitCountEstimate shl 1) and POW10_BCE
-    val p1 = POW10[pow10Offset + 1] xor Long.MIN_VALUE
-    val p0 = POW10[pow10Offset    ] xor Long.MIN_VALUE
-
-    val ret2 = digitCountEstimate +
-            if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
-    return ret2
-}
-
 internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int {
-    return when {
-        bitLen > 128 -> {
-            val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
-            val hiDigitCount = loDigitCount + 1
-            val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
-            val p2 = POW10[pow10Offset + 2]
-            val p1 = POW10[pow10Offset + 1]
-            val p0 = POW10[pow10Offset    ]
-            val cmp2 = unsignedCmp(dw2, p2)
-            val cmp1 = unsignedCmp(dw1, p1)
-            val cmp0 = unsignedCmp(dw0, p0)
-            val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-            val cmp210 = if (cmp2 != 0) cmp2 else cmp10
-            val ret = if (cmp210 < 0) loDigitCount else hiDigitCount
-            return ret
+    if (bitLen > 128) {
+        val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
+        val pow10BitLen = pow10BitLen(loDigitCount)
+        val bitLenDelta = pow10BitLen - bitLen
+        if (bitLenDelta != 0) {
+            return loDigitCount + (bitLenDelta ushr 31)
         }
+        val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
+        val p2 = POW10[pow10Offset + 2]
+        val p1 = POW10[pow10Offset + 1]
+        val p0 = POW10[pow10Offset    ]
+        val hiDigitCount = loDigitCount + 1
 
-        bitLen > 64 -> calcDigitLen128(bitLen, dw1, dw0)
-        else -> calcDigitLen64(bitLen, dw0)
+        val cmp2 = unsignedCmp(dw2, p2)
+        if (cmp2 != 0)
+            return hiDigitCount - (cmp2 ushr 31)
+        val cmp1 = unsignedCmp(dw1, p1)
+        if (cmp1 != 0)
+            return hiDigitCount - (cmp1 ushr 31)
+        val cmp0 = unsignedCmp(dw0, p0)
+        return hiDigitCount - (cmp0 ushr 31)
+    } else {
+        return calcDigitLen128(bitLen, dw1, dw0)
     }
 }
 
@@ -145,6 +149,7 @@ internal fun calcDigitLen256(bitLen: Int, dw3: Long, dw2: Long, dw1: Long, dw0: 
         if (bitLenDelta != 0) {
             return loDigitCount + (bitLenDelta ushr 31)
         }
+
         val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
         val p3 = POW10[pow10Offset + 3]
         val p2 = POW10[pow10Offset + 2]
