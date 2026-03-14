@@ -67,7 +67,7 @@ internal const val DWORD_TABLES_BCE = 1023
  * So, there are 2 tiers ... 2 entries and 4 entries.
  */
 internal val POW10 = DWORD_TABLES
-internal const val POW10_BCE = DWORD_TABLES_BCE
+internal const val POW10_BCE = 0xFF // POW10_DWORD_COUNT is 234, so this covers all POW10
 
 internal const val POW10_192_BASE = (POW10_64_COUNT + POW10_128_COUNT) * 2
 internal const val POW10_256_BASE = POW10_192_BASE + POW10_192_COUNT * 4

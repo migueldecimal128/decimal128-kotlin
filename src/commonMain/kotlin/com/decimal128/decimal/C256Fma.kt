@@ -99,7 +99,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256, pentad: Pent
     val xBitLen = x.bitLen
     val aBitLen = a.bitLen
     val p10BitLen = pow10BitLen(pow10)
-    val pow10Offset = pow10Offset(pow10)
+    val pow10Offset = pow10Offset(pow10) and POW10_BCE
     val p0 = POW10[pow10Offset + 0]
     val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
     val x0 = x.dw0
@@ -244,7 +244,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long, p
                 128 - a1.countLeadingZeroBits()
             )
     val p10BitLen = pow10BitLen(pow10)
-    val pow10Offset = pow10Offset(pow10)
+    val pow10Offset = pow10Offset(pow10) and POW10_BCE
     val p0 = POW10[pow10Offset + 0]
     val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
     val x0 = x.dw0
@@ -384,7 +384,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long, pentad: Pen
     }
     val aBitLen = 64 - a0.countLeadingZeroBits()
     val p10BitLen = pow10BitLen(pow10)
-    val pow10Offset = pow10Offset(pow10)
+    val pow10Offset = pow10Offset(pow10) and POW10_BCE
     val p0 = POW10[pow10Offset + 0]
     val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
     val x0 = x.dw0

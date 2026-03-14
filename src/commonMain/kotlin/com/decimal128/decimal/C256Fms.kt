@@ -93,7 +93,7 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
     val x1 = x.dw1
     val yBitLen = y.bitLen
     val p10BitLen = pow10BitLen(pow10)
-    val pow10Offset = pow10Offset(pow10)
+    val pow10Offset = pow10Offset(pow10) and POW10_BCE
     val p0 = POW10[pow10Offset + 0]
     val p1 = POW10[pow10Offset + 1] and ((64 - p10BitLen) shr 31).toLong()
     val maxFusedBitLen = xBitLen + p10BitLen

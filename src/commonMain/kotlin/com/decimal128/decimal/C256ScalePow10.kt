@@ -8,7 +8,7 @@ internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, pentad: Pentad) {
     when {
         pow10 > 0 -> {
             val pow10BitLen = pow10BitLen(pow10)
-            val pow10Offset = pow10Offset(pow10)
+            val pow10Offset = pow10Offset(pow10) and POW10_BCE
             val pow10dw0 = POW10[pow10Offset + 0]
             val pow10dw1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
             val maxBitLen = x.bitLen + pow10BitLen

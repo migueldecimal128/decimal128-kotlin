@@ -510,11 +510,11 @@ class MutDec() : C256() {
         qExp = ctx.qMax
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
-        val offset = pow10Offset(ctx.precision)
+        val pow10Offset = pow10Offset(ctx.precision) and POW10_BCE
         if (ctx.precision < MIN_POW10_DIGIT_LEN_128) {
-            super.c256Set64(POW10[offset] - 1)
+            super.c256Set64(POW10[pow10Offset] - 1)
         } else if (ctx.precision < MIN_POW10_DIGIT_LEN_192) {
-            super.c256Set128(POW10[offset + 1], POW10[offset] - 1)
+            super.c256Set128(POW10[pow10Offset + 1], POW10[pow10Offset] - 1)
         } else
             throw IllegalArgumentException()
         verify { validate() }

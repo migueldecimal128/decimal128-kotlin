@@ -70,8 +70,8 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         this.bitLen = oldBitLen + bitLenIncrement
 
         if (oldBitLen <= 128) {
-            val offset = this.digitLen shl 1
-            val matchIfZero = (dw0 - POW10[offset and POW10_BCE]) or (dw1 - POW10[(offset + 1) and POW10_BCE])
+            val offset = (this.digitLen shl 1) and POW10_BCE
+            val matchIfZero = (dw0 - POW10[offset]) or (dw1 - POW10[offset + 1])
             val digitLenIncrement = 1 - ((matchIfZero or -matchIfZero) ushr 63).toInt()
             this.digitLen += digitLenIncrement
             verify { bitLen == calcBitLen128(dw1, dw0) && digitLen == calcDigitLen128(bitLen, dw1, dw0) }

@@ -41,8 +41,9 @@ internal fun c256GTOne(x: C256) = x.bitLen > 1
 internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
     val pow10BitLen = pow10BitLen(pow10Delta)
     val yBitLen = y.bitLen
-    require(yBitLen <= 128)
+    verify { yBitLen <= 127 }
     val xBitLen = x.bitLen
+    verify { xBitLen <= 253 }
     val minYBitLen = yBitLen + pow10BitLen - 1
     val maxYBitLen = yBitLen + pow10BitLen(pow10Delta + 1)
     if (xBitLen < minYBitLen)
@@ -53,7 +54,7 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
     val x1 = x.dw1
     val y0 = y.dw0
     val y1 = y.dw1
-    val pow10Offset = pow10Offset(pow10Delta)
+    val pow10Offset = pow10Offset(pow10Delta) and POW10_BCE
     val p0 = POW10[pow10Offset + 0]
     val p1 = POW10[pow10Offset + 1]
     if (xBitLen <= 128) {

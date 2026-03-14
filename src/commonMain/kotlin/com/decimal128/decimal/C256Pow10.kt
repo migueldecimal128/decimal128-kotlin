@@ -11,37 +11,33 @@ internal inline fun pow10BitLen(pow10: Int): Int {
 }
 
 internal fun pow10Offset(pow10: Int): Int {
-    return POW10_BCE and when {
-        pow10 < MIN_POW10_DIGIT_LEN_192 -> 2 * pow10
-        else -> POW10_192_BASE + 4 * (pow10 - MIN_POW10_DIGIT_LEN_192)
-    }
-    /*
-    val p = pow10 - 1
-    val t = (p * 431) ushr 13
-    val i = p - 19 * t
-    val offset = 1 + 19 * (t * (t + 1) / 2) + i * (t + 1)
-    val mask = -pow10 shr 31
-    return offset and mask
+    val isHiMask = (MIN_POW10_DIGIT_LEN_192 - 1 - pow10) shr 31
+    val loTier = pow10 shl 1
+    val hiTierDelta = (POW10_192_BASE - 4 * MIN_POW10_DIGIT_LEN_192) + loTier
+    return loTier + (hiTierDelta and isHiMask)
+        /*
+    val isHiMask = (MIN_POW10_DIGIT_LEN_192 - 1 - pow10) shr 31
+    val base = (POW10_192_BASE - 4 * MIN_POW10_DIGIT_LEN_192) and isHiMask
+    val shift = 1 - isHiMask
+    return 0xFF and (base + (pow10 shl shift))
      */
     /*
-    return POW10_BCE and when {
-        pow10 < MIN_POW10_DIGIT_LEN_192 -> 2 * pow10
-        pow10 < MIN_POW10_DIGIT_LEN_256 -> POW10_192_BASE + 3 * (pow10 - MIN_POW10_DIGIT_LEN_192)
-        else -> POW10_256_BASE + 4 * (pow10 - MIN_POW10_DIGIT_LEN_256)
-    }
+    return (0xFF) and // hint to the JIT ... actually POW10_DWORD_COUNT == 234
+            if (pow10 < MIN_POW10_DIGIT_LEN_192) pow10 shl 1
+            else (POW10_192_BASE - 4 * MIN_POW10_DIGIT_LEN_192) + (pow10 shl 2)
      */
 }
 
 internal inline fun pow10_64(pow10: Int): Long {
-    return POW10[(2*pow10) and POW10_BCE]
+    return POW10[(pow10 shl 1) and POW10_BCE]
 }
 
 internal inline fun pow10_128_dw0(pow10: Int): Long {
-    return POW10[(2*pow10) and POW10_BCE]
+    return POW10[(pow10 shl 1) and POW10_BCE]
 }
 
 internal inline fun pow10_128_dw1(pow10: Int): Long {
-    return POW10[(2*pow10 + 1) and POW10_BCE]
+    return POW10[((pow10 shl 1) + 1) and POW10_BCE]
 }
 
 internal inline fun pow10_128(pow10: Int): Pair<Long, Long> {
@@ -95,9 +91,9 @@ internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     val digitCountEstimate = (bitLen * 1233) ushr 12
     val dw1T = dw1 xor Long.MIN_VALUE
     val dw0T = dw0 xor Long.MIN_VALUE
-    val pow10Offset = digitCountEstimate shl 1
-    val p1 = POW10[(pow10Offset + 1) and POW10_BCE] xor Long.MIN_VALUE
-    val p0 = POW10[(pow10Offset + 0) and POW10_BCE] xor Long.MIN_VALUE
+    val pow10Offset = (digitCountEstimate shl 1) and POW10_BCE
+    val p1 = POW10[pow10Offset + 1] xor Long.MIN_VALUE
+    val p0 = POW10[pow10Offset + 0] xor Long.MIN_VALUE
 
     val digitLen = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
@@ -109,9 +105,9 @@ internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
     val digitCountEstimate = (bitLen * 1233) ushr 12
     val dw1T = dw1 xor Long.MIN_VALUE
     val dw0T = dw0 xor Long.MIN_VALUE
-    val pow10Offset = digitCountEstimate shl 1
-    val p1 = POW10[(pow10Offset + 1) and POW10_BCE] xor Long.MIN_VALUE
-    val p0 = POW10[(pow10Offset + 0) and POW10_BCE] xor Long.MIN_VALUE
+    val pow10Offset = (digitCountEstimate shl 1) and POW10_BCE
+    val p1 = POW10[pow10Offset + 1] xor Long.MIN_VALUE
+    val p0 = POW10[pow10Offset + 0] xor Long.MIN_VALUE
 
     val ret2 = digitCountEstimate +
             if ((dw1T > p1) or ((dw1T == p1) and (dw0T >= p0))) 1 else 0
