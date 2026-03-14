@@ -128,7 +128,9 @@ private fun _cmp128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long, pen
 
     val pp10Hi = unsignedMulHi(m1, n0)
     val pp10Lo = m1 * n0
-    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val p1 = pentad.dw0
     val cmp1 = unsignedCmp(x1, p1)
     val cmp10 = if (cmp1 != 0) cmp1 else cmp0
     val p2 = carry1 + pp10Hi
@@ -153,7 +155,9 @@ private fun _cmp192x128x64(
     // Limb 1
     val pp10Hi = unsignedMulHi(m1, n0)
     val pp10Lo = m1 * n0
-    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val p1 =pentad.dw0
     val cmp1 = unsignedCmp(x1, p1)
 
     // Limb 2
@@ -185,13 +189,17 @@ private fun _cmp192x192x64(
     // Limb 1: m1 × n0 + carry
     val pp10Hi = unsignedMulHi(m1, n0)
     val pp10Lo = m1 * n0
-    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val p1 = pentad.dw0
     val cmp1 = unsignedCmp(x1, p1)
 
     // Limb 2: m2 × n0 + carry
     val pp20Hi = unsignedMulHi(m2, n0)
     val pp20Lo = m2 * n0
-    val (carry2, p2) = sumU64(pp10Hi, pp20Lo, carry1)
+    sumU64(pentad, pp10Hi, pp20Lo, carry1)
+    val carry2 = pentad.dw1
+    val p2 = pentad.dw0
     val cmp2 = unsignedCmp(x2, p2)
 
     // Limb 3 (overflow check): final carry
@@ -225,16 +233,24 @@ private fun _cmp256x128x128(
     val pp10Lo = m1 * n0
     val pp01Hi = unsignedMulHi(m0, n1)
     val pp01Lo = m0 * n1
-    val (carry1a, sum1a) = sumU64(pp00Hi, pp10Lo)
-    val (carry1b, p1) = sumU64(sum1a, pp01Lo)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1a = pentad.dw1
+    val sum1a = pentad.dw0
+    sumU64(pentad, sum1a, pp01Lo)
+    val carry1b = pentad.dw1
+    val p1 = pentad.dw0
     val carry1 = carry1a + carry1b
     val cmp1 = unsignedCmp(x1, p1)
 
     // Limb 2: m1 × n1 + carries from limb 1
     val pp11Hi = unsignedMulHi(m1, n1)
     val pp11Lo = m1 * n1
-    val (carry2a, sum2a) = sumU64(pp10Hi, pp01Hi, carry1)
-    val (carry2b, p2) = sumU64(sum2a, pp11Lo)
+    sumU64(pentad, pp10Hi, pp01Hi, carry1)
+    val carry2a = pentad.dw1
+    val sum2a = pentad.dw0
+    sumU64(pentad, sum2a, pp11Lo)
+    val carry2b = pentad.dw1
+    val p2 = pentad.dw0
     val carry2 = carry2a + carry2b
     val cmp2 = unsignedCmp(x2, p2)
 
@@ -270,8 +286,12 @@ private fun _cmp256x192x128(
     val pp10Lo = m1 * n0
     val pp01Hi = unsignedMulHi(m0, n1)
     val pp01Lo = m0 * n1
-    val (carry1a, sum1a) = sumU64(pp00Hi, pp10Lo)
-    val (carry1b, p1) = sumU64(sum1a, pp01Lo)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1a = pentad.dw1
+    val sum1a = pentad.dw0
+    sumU64(pentad, sum1a, pp01Lo)
+    val carry1b = pentad.dw1
+    val p1 = pentad.dw0
     val carry1 = carry1a + carry1b
     val cmp1 = unsignedCmp(x1, p1)
 
@@ -280,17 +300,27 @@ private fun _cmp256x192x128(
     val pp20Lo = m2 * n0
     val pp11Hi = unsignedMulHi(m1, n1)
     val pp11Lo = m1 * n1
-    val (carry2a, sum2a) = sumU64(pp10Hi, pp01Hi, carry1)
-    val (carry2b, sum2b) = sumU64(sum2a, pp20Lo)
-    val (carry2c, p2) = sumU64(sum2b, pp11Lo)
+    sumU64(pentad, pp10Hi, pp01Hi, carry1)
+    val carry2a = pentad.dw1
+    val sum2a = pentad.dw0
+    sumU64(pentad, sum2a, pp20Lo)
+    val carry2b = pentad.dw1
+    val sum2b = pentad.dw0
+    sumU64(pentad, sum2b, pp11Lo)
+    val carry2c = pentad.dw0
+    val p2 = pentad.dw1
     val carry2 = carry2a + carry2b + carry2c
     val cmp2 = unsignedCmp(x2, p2)
 
     // Limb 3: m2 × n1 + carries from limb 2
     val pp21Hi = unsignedMulHi(m2, n1)
     val pp21Lo = m2 * n1
-    val (carry3a, sum3a) = sumU64(pp20Hi, pp11Hi, carry2)
-    val (carry3b, p3) = sumU64(sum3a, pp21Lo)
+    sumU64(pentad, pp20Hi, pp11Hi, carry2)
+    val carry3a = pentad.dw1
+    val sum3a = pentad.dw0
+    sumU64(pentad, sum3a, pp21Lo)
+    val carry3b = pentad.dw1
+    val p3 = pentad.dw0
     val carry3 = carry3a + carry3b
     val cmp3 = unsignedCmp(x3, p3)
 
@@ -324,19 +354,25 @@ private fun _cmp256x256x64(
     // Limb 1: m1 × n0 + carry
     val pp10Hi = unsignedMulHi(m1, n0)
     val pp10Lo = m1 * n0
-    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val p1 = pentad.dw0
     val cmp1 = unsignedCmp(x1, p1)
 
     // Limb 2: m2 × n0 + carry
     val pp20Hi = unsignedMulHi(m2, n0)
     val pp20Lo = m2 * n0
-    val (carry2, p2) = sumU64(pp10Hi, pp20Lo, carry1)
+    sumU64(pentad, pp10Hi, pp20Lo, carry1)
+    val carry2 = pentad.dw1
+    val p2 = pentad.dw0
     val cmp2 = unsignedCmp(x2, p2)
 
     // Limb 3: m3 × n0 + carry
     val pp30Hi = unsignedMulHi(m3, n0)
     val pp30Lo = m3 * n0
-    val (carry3, p3) = sumU64(pp20Hi, pp30Lo, carry2)
+    sumU64(pentad, pp20Hi, pp30Lo, carry2)
+    val carry3 = pentad.dw1
+    val p3 = pentad.dw0
     val cmp3 = unsignedCmp(x3, p3)
 
     // Limb 4 (overflow check): final carry
