@@ -42,7 +42,7 @@ object MagnitudeSqrt {
             if (verbose)
                 println(" --> dbl0:$dRadicandScaled doubleGuess0:$dGuess0 coeffGuess0:$coeffGuess0")
 
-            c256SetSqr(coeffGuess0Squared, coeffGuess0)
+            c256SetSqr(coeffGuess0Squared, coeffGuess0, Pentad())
             if (c256UnscaledCompare(coeffRadicandScaled, coeffGuess0Squared) < 0)
                 continue
 
@@ -65,7 +65,7 @@ object MagnitudeSqrt {
             if (verbose)
                 println(" --> guess1Coeff:$coeffGuess1")
 
-            c256SetSqr(coeffGuess1Squared, coeffGuess1)
+            c256SetSqr(coeffGuess1Squared, coeffGuess1, pentad)
             if (verbose)
                 println(" ==> coeffRadicandScaled:$coeffRadicandScaled coeffGuess1Squared:$coeffGuess1Squared")
             if (c256UnscaledCompare(coeffRadicandScaled, coeffGuess1Squared) >= 0)

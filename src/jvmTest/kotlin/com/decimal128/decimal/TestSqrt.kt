@@ -189,7 +189,7 @@ class TestSqrt{
             println(" --> guess2:$guess2")
 
         val guess2Squared = C256()
-        c256SetSqr(guess2Squared, guess2)
+        c256SetSqr(guess2Squared, guess2, Pentad())
         val residual2 = C256()
         c256SetSubUnscaled(residual2, radicandScaled, guess2Squared)
         if (verbose)

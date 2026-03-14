@@ -603,7 +603,7 @@ class MutDec() : C256() {
         val qX = x.qExp
         when {
             qX < MIN_SPECIAL_VALUE -> {
-                c256SetSqr(this, x)
+                c256SetSqr(this, x, ctx.tmps.pentad1)
                 this.type = STEAL_TYPE_FNZ
                 this.qExp = this.qExp shl 1
                 this.sign = false
