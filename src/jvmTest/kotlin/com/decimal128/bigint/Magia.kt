@@ -1372,7 +1372,7 @@ object Magia {
      */
     inline fun newWithSetBit(bitIndex: Int): IntArray {
         if (bitIndex >= 0) {
-            val magia = Magia.newWithBitLen(bitIndex + 1)
+            val magia = newWithBitLen(bitIndex + 1)
             magia[magia.lastIndex] = 1 shl (bitIndex and 0x1F)
             return magia
         }

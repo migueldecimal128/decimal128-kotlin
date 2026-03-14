@@ -68,7 +68,7 @@ class BigIntAccumulator private constructor (
     var magia: IntArray,
     var limbLen: Int,
     var tmp1: IntArray) {
-    constructor() : this(Sign.POSITIVE, IntArray(4), 0, Magia.ZERO)
+    constructor() : this(POSITIVE, IntArray(4), 0, Magia.ZERO)
 
     private inline fun validate() {
         check (limbLen >= 0 &&

@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.bigint.intrinsic.unsignedMulHi
 import kotlin.math.max
 import kotlin.math.min
 

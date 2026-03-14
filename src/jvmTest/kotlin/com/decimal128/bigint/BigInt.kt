@@ -10,6 +10,8 @@ import com.decimal128.bigint.Sign.Companion.NEGATIVE
 import com.decimal128.bigint.Sign.Companion.POSITIVE
 import kotlin.math.absoluteValue
 import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.log2
 import kotlin.math.min
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -635,7 +637,7 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
          *
          * The returned BigInt value will be 2**bitIndex
          *
-         * @throws kotlin.IllegalArgumentException for a negative bitIndex
+         * @throws IllegalArgumentException for a negative bitIndex
          */
         fun withSetBit(bitIndex: Int): BigInt {
             if (bitIndex < 0)
@@ -757,16 +759,16 @@ class BigInt private constructor(internal val sign: Sign, internal val magia: In
             val pi = 3.141592653589793
 
             // n log2 n - n log2 e + 0.5 log2(2πn)
-            val term1 = nn * kotlin.math.log2(nn)
+            val term1 = nn * log2(nn)
             val term2 = -log2e * nn
-            val term3 = 0.5 * kotlin.math.log2(2 * pi * nn)
+            val term3 = 0.5 * log2(2 * pi * nn)
 
             val estimate = term1 + term2 + term3
 
             // Add correction term 1/(12n ln 2)
             val correction = 0.12022644346 / nn
 
-            return kotlin.math.floor(estimate + correction).toULong() + 1u
+            return floor(estimate + correction).toULong() + 1u
         }
 
         /**

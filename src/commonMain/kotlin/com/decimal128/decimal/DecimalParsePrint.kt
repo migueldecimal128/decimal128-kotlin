@@ -1,7 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.bigint.Latin1Iterator
-import com.decimal128.bigint.StringLatin1Iterator
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import kotlin.math.abs
 import kotlin.math.max
