@@ -155,11 +155,12 @@ class MutDec() : C256() {
             val qMax = max(qX, qY)
             verify { qMax < MIN_SPECIAL_VALUE }
             verify { x.bitLen > 0 && y.bitLen > 0 }
+            val pentad = ctx.tmps.pentad1
             val residue: Residue
             if (xSign == ySign) {
                 residue = MagnitudeAddSub.magScaledAdd(z, xSign, x, y, ctx)
             } else {
-                val cmp = x.magnitudeCompareTo(y)
+                val cmp = x.magnitudeCompareTo(y, pentad)
                 when {
                     cmp > 0 ->
                         residue = MagnitudeAddSub.magScaledSub(z, xSign, x, y, ctx)
@@ -846,7 +847,7 @@ class MutDec() : C256() {
         }
 
         // Same sign - compare magnitudes
-        val cmp = magnitudeCompareTo(other)
+        val cmp = magnitudeCompareTo(other, DecContext.current().tmps.pentad1)
         return if (sign) -cmp else cmp
     }
 
@@ -881,16 +882,16 @@ class MutDec() : C256() {
         return if (this.sign) -cmp else cmp
     }
 
-    fun magnitudeCompareTo(other: MutDec) : Int {
+    fun magnitudeCompareTo(other: MutDec, pentad: Pentad) : Int {
         val qMax = max(qExp, other.qExp)
         when {
-            (qMax < MIN_SPECIAL_VALUE) -> return finiteMagnitudeCompareTo(other)
+            (qMax < MIN_SPECIAL_VALUE) -> return finiteMagnitudeCompareTo(other, pentad)
             (qMax == NON_FINITE_INF) -> return infiniteMagnitudeCompareTo(other)
             else -> throw RuntimeException("somebody is a NaN")
         }
     }
 
-    fun finiteMagnitudeCompareTo(other: MutDec) : Int {
+    fun finiteMagnitudeCompareTo(other: MutDec, pentad: Pentad) : Int {
         val thisIsZero = c256IsZero()
         val otherIsZero = other.c256IsZero()
         val eitherIsZero = thisIsZero or otherIsZero
@@ -902,8 +903,8 @@ class MutDec() : C256() {
                 val expDelta = this.qExp - other.qExp
                 val ret = when {
                     expDelta == 0 -> c256UnscaledCompare(this, other)
-                    expDelta > 0 -> -c256ScaledCompare(other, this, expDelta)
-                    else -> c256ScaledCompare(this, other, -expDelta)
+                    expDelta > 0 -> -c256ScaledCompare(other, this, expDelta, pentad)
+                    else -> c256ScaledCompare(this, other, -expDelta, pentad)
                 }
                 return ret
             }
@@ -925,7 +926,7 @@ class MutDec() : C256() {
     fun magnitudeTotalCompareTo(other: MutDec): Int {
         if (this.qExp < NON_FINITE_INF && other.qExp < NON_FINITE_INF) {
             // For finite values, compare by magnitude first
-            val magCmp = magnitudeCompareTo(other)
+            val magCmp = magnitudeCompareTo(other, DecContext.current().tmps.pentad1)
             if (magCmp != 0)
                 return magCmp
 
@@ -961,10 +962,11 @@ class MutDec() : C256() {
             return bothAreZero
         if (! eitherIsZero) {
             val expDelta = this.qExp - other.qExp
+            val pentad = DecContext.current().tmps.pentad1
             return when {
                 expDelta == 0 -> c256UnscaledEQ(this, other)
-                expDelta > 0 -> c256ScaledEQ(other, this, expDelta)
-                else -> c256ScaledEQ(this, other, -expDelta)
+                expDelta > 0 -> c256ScaledEQ(other, this, expDelta, pentad)
+                else -> c256ScaledEQ(this, other, -expDelta, pentad)
             }
         }
         return bothAreZero
@@ -1217,14 +1219,14 @@ class MutDec() : C256() {
     fun minNumMag(x: MutDec, y: MutDec, env: DecContext) = minNumMag_helper(x, y, 0, env)
     fun maxNumMag(x: MutDec, y: MutDec, env: DecContext) = minNumMag_helper(x, y, -1, env)
 
-    private fun minNumMag_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, env: DecContext) {
+    private fun minNumMag_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, ctx: DecContext) {
         val qMax = max(x.qExp, y.qExp)
         when {
             qMax < NON_FINITE_INF -> {
-                val cmp = (x.magnitudeCompareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
+                val cmp = (x.magnitudeCompareTo(y, ctx.tmps.pentad1) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
                 set(if (cmp <= 0) x else y)
             }
-            else -> minNum_helper(x, y, invertCompareZeroOrNeg1, env)
+            else -> minNum_helper(x, y, invertCompareZeroOrNeg1, ctx)
         }
     }
 
@@ -1398,13 +1400,13 @@ class MutDec() : C256() {
         setMinMaxImpl(x, y, MAX_MAG_NUM_OP, env)
 
 
-    fun setMinMaxImpl(x: MutDec, y: MutDec, op: Int, env: DecContext): MutDec {
+    fun setMinMaxImpl(x: MutDec, y: MutDec, op: Int, ctx: DecContext): MutDec {
         val qX = x.qExp
         val qY = y.qExp
         val qMax = max(qX, qY)
         if (qMax <= NON_FINITE_INF) {
             var cmp = if ((op and MAG_MASK) != 0)
-                x.magnitudeCompareTo(y)
+                x.magnitudeCompareTo(y, ctx.tmps.pentad1)
             else
                 x.compareTo(y)
             if (cmp == 0)
@@ -1415,30 +1417,31 @@ class MutDec() : C256() {
             if (qX <= NON_FINITE_INF) {
                 set(x)
                 if (qY == NON_FINITE_SNAN)
-                    env.signalInvalid(this)
+                    ctx.signalInvalid(this)
                 return this
             }
             if (qY <= NON_FINITE_INF) {
                 set(y)
                 if (qX == NON_FINITE_SNAN)
-                    env.signalInvalid(this)
+                    ctx.signalInvalid(this)
                 return this
             }
         }
-        return setNaNOperand(x, y, env)
+        return setNaNOperand(x, y, ctx)
     }
 
-    fun setRemainderNear(x: MutDec, y: MutDec, env: DecContext): MutDec {
+    fun setRemainderNear(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else env.tmps.mdecDiv.set(y)
-        val truncIsOdd: Boolean = setRemTruncImpl(x, yT, env)
+        val yT = if (this !== y) y else ctx.tmps.mdecDiv.set(y)
+        val truncIsOdd: Boolean = setRemTruncImpl(x, yT, ctx)
+        val tmps = ctx.tmps
         if (!isZero() && isFinite()) {
             val rem2 = if (sign) {
-                env.tmps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
+                tmps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
             } else {
-                env.tmps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
+                tmps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
             }
-            val cmp = magnitudeCompareTo(rem2)
+            val cmp = magnitudeCompareTo(rem2, tmps.pentad1)
              if (cmp > 0 || (cmp == 0) && truncIsOdd)
                 this.set(rem2)
         }
@@ -1501,7 +1504,7 @@ class MutDec() : C256() {
     fun compareSignaling754(other: MutDec, env: DecContext): Compare754Result =
         compare754(other, true, env)
 
-    fun compare754(other: MutDec, isSignaling: Boolean, env: DecContext): Compare754Result {
+    fun compare754(other: MutDec, isSignaling: Boolean, ctx: DecContext): Compare754Result {
         val qMax = max(qExp, other.qExp)
         return when {
             qMax < NON_FINITE_INF -> when {
@@ -1517,7 +1520,7 @@ class MutDec() : C256() {
                 }
 
                 else -> {
-                    val cmp = magnitudeCompareTo(other)
+                    val cmp = magnitudeCompareTo(other, ctx.tmps.pentad1)
                     Compare754Result(cmp)
                 }
             }
@@ -1546,7 +1549,7 @@ class MutDec() : C256() {
                     qExp == NON_FINITE_QNAN -> this
                     else -> other
                 }
-                env.operandIsSignalingNaN(guiltyParty)
+                ctx.operandIsSignalingNaN(guiltyParty)
                 IEEE754_UNORDERED
             }
         }

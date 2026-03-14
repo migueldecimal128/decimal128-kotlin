@@ -45,7 +45,7 @@ internal fun c256SetSubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtra
     z.c256Set256(d3, d2, d1, d0)
 }
 
-internal fun c256SetSubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
+internal fun c256SetSubScaled(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pentad) {
     verify { scaleDelta > 0 }
     verify { scaleDelta <= 40 }
     verify { x.digitLen + scaleDelta <= 77 }
@@ -54,12 +54,12 @@ internal fun c256SetSubScaled(z: C256, x: C256, scaleDelta: Int, y: C256) {
     verify { y.c256HasValidLengths() }
     verify { z.c256HasValidLengths() }
 
-    verify { c256ScaledCompare(y, x, scaleDelta) <= 0 }
+    verify { c256ScaledCompare(y, x, scaleDelta, pentad) <= 0 }
 
-    c256FmsPow10(z, x, scaleDelta, y)
+    c256FmsPow10(z, x, scaleDelta, y, pentad)
 }
 
-internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
+internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int, pentad: Pentad) {
     verify { !x.c256IsZero() }
     verify { !y.c256IsZero() }
     verify { scaleDelta > 0 }
@@ -71,7 +71,7 @@ internal fun c256SetSubScaled(z: C256, x: C256, y: C256, scaleDelta: Int) {
     verify { y.c256HasValidLengths() }
     verify { z.c256HasValidLengths() }
 
-    verify { c256ScaledCompare(x, y, scaleDelta) >= 0 }
+    verify { c256ScaledCompare(x, y, scaleDelta, pentad) >= 0 }
 
-    c256FusedSubMulPow10(z, x, y, scaleDelta)
+    c256FusedSubMulPow10(z, x, y, scaleDelta, pentad)
 }

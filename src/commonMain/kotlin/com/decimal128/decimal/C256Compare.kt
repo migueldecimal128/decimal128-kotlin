@@ -15,21 +15,6 @@ internal fun c256UnscaledCompare(x: C256, y: C256): Int {
     return cmp3210
 }
 
-internal fun c256UnscaledCompare(x: C256, y: IntArray): Int {
-    require(y.size >= 8)
-    val y3 = (y[7].toLong() shl 32) or (y[6].toLong() and MASK32L)
-    if (x.dw3 != y3)
-        return unsignedCmp(x.dw3, y3)
-    val y2 = (y[5].toLong() shl 32) or (y[4].toLong() and MASK32L)
-    if (x.dw2 != y2)
-        return unsignedCmp(x.dw2, y2)
-    val y1 = (y[3].toLong() shl 32) or (y[2].toLong() and MASK32L)
-    if (x.dw1 != y1)
-        return unsignedCmp(x.dw1, y1)
-    val y0 = (y[1].toLong() shl 32) or (y[0].toLong() and MASK32L)
-    return unsignedCmp(x.dw0, y0)
-}
-
 internal fun c256UnscaledEQ(x: C256, y: C256): Boolean {
     return ((x.bitLen - y.bitLen).toLong() or
             (x.dw0 - y.dw0) or (x.dw1 - y.dw1) or
@@ -38,7 +23,7 @@ internal fun c256UnscaledEQ(x: C256, y: C256): Boolean {
 
 internal fun c256GTOne(x: C256) = x.bitLen > 1
 
-internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
+internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int, pentad: Pentad): Int {
     val pow10BitLen = pow10BitLen(pow10Delta)
     val yBitLen = y.bitLen
     verify { yBitLen <= 127 }
@@ -63,10 +48,10 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
                 _cmp128x64x64(x1, x0, y0, p0)
 
             yBitLen <= 64 && pow10BitLen <= 128 ->
-                _cmp128x128x64(x1, x0, p1, p0, y0)
+                _cmp128x128x64(x1, x0, p1, p0, y0, pentad)
 
             pow10BitLen <= 64 ->
-                _cmp128x128x64(x1, x0, y1, y0, p0)
+                _cmp128x128x64(x1, x0, y1, y0, p0, pentad)
 
             else -> throw RuntimeException()
         }
@@ -81,10 +66,10 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
                 when {
                     pow10BitLen <= 64 -> throw IllegalStateException()
                     pow10BitLen <= 128 ->
-                        _cmp192x128x64(x2, x1, x0, p1, p0, y0)  // 128×64
+                        _cmp192x128x64(x2, x1, x0, p1, p0, y0, pentad)  // 128×64
                     else -> {
                         verify { pow10BitLen <= 192 }
-                        _cmp192x192x64(x2, x1, x0, p2, p1, p0, y0)  // 192×64
+                        _cmp192x192x64(x2, x1, x0, p2, p1, p0, y0, pentad)  // 192×64
                     }
                 }
             }
@@ -93,12 +78,12 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
                 // Large y: compute y × pow10
                 when {
                     pow10BitLen <= 64 ->
-                        _cmp192x128x64(x2, x1, x0, y1, y0, p0)  // 128×64
+                        _cmp192x128x64(x2, x1, x0, y1, y0, p0, pentad)  // 128×64
                     pow10BitLen <= 128 ->
-                        _cmp256x128x128(0L, x2, x1, x0, y1, y0, p1, p0)  // 128×128
+                        _cmp256x128x128(0L, x2, x1, x0, y1, y0, p1, p0, pentad)  // 128×128
                     else -> {
                         verify { pow10BitLen <= 192 }
-                        _cmp256x192x128(0L, x2, x1, x0, p2, p1, p0, y1, y0)  // 128×192
+                        _cmp256x192x128(0L, x2, x1, x0, p2, p1, p0, y1, y0, pentad)  // 128×192
                     }
                 }
             }
@@ -110,14 +95,14 @@ internal fun c256ScaledCompare(x: C256, y: C256, pow10Delta: Int): Int {
         verify { pow10BitLen > 64 }
         val ret = when {
             pow10BitLen <= 128 ->
-                _cmp256x128x128(x3, x2, x1, x0, y1, y0, p1, p0)
+                _cmp256x128x128(x3, x2, x1, x0, y1, y0, p1, p0, pentad)
 
             pow10BitLen <= 192 ->
-                _cmp256x192x128(x3, x2, x1, x0, p2, p1, p0, y1, y0)
+                _cmp256x192x128(x3, x2, x1, x0, p2, p1, p0, y1, y0, pentad)
 
             else -> { // pow10BitLen <= 256
                 verify { yBitLen <= 64 }
-                _cmp256x256x64(x3, x2, x1, x0, p3, p2, p1, p0, y0)
+                _cmp256x256x64(x3, x2, x1, x0, p3, p2, p1, p0, y0, pentad)
             }
         }
         return ret
@@ -135,7 +120,7 @@ private fun _cmp128x64x64(x1: Long, x0: Long, y0: Long, pow10: Long): Int {
     return cmp10
 }
 
-private fun _cmp128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long): Int {
+private fun _cmp128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long, pentad: Pentad): Int {
     val pp00Hi = unsignedMulHi(m0, n0)
     val pp00Lo = m0 * n0
     val p0 = pp00Lo
@@ -154,7 +139,8 @@ private fun _cmp128x128x64(x1: Long, x0: Long, m1: Long, m0: Long, n0: Long): In
 private fun _cmp192x128x64(
     x2: Long, x1: Long, x0: Long,  // 192-bit x (3 limbs)
     m1: Long, m0: Long,             // 128-bit m (2 limbs)
-    n0: Long                        // 64-bit n (1 limb)
+    n0: Long,                       // 64-bit n (1 limb)
+    pentad: Pentad
 ): Int {
     // Compute m × n (128 × 64 = 192 bits max)
 
@@ -185,7 +171,8 @@ private fun _cmp192x128x64(
 private fun _cmp192x192x64(
     x2: Long, x1: Long, x0: Long,  // 192-bit x (3 limbs)
     m2: Long, m1: Long, m0: Long,  // 192-bit m (3 limbs)
-    n0: Long                        // 64-bit n (1 limb)
+    n0: Long,                      // 64-bit n (1 limb)
+    pentad: Pentad
 ): Int {
     // Compute m × n (192 × 64 = 256 bits max)
 
@@ -222,7 +209,8 @@ private fun _cmp192x192x64(
 private fun _cmp256x128x128(
     x3: Long, x2: Long, x1: Long, x0: Long,  // 256-bit x (4 limbs)
     m1: Long, m0: Long,                       // 128-bit m (2 limbs)
-    n1: Long, n0: Long                        // 128-bit n (2 limbs)
+    n1: Long, n0: Long,                       // 128-bit n (2 limbs)
+    pentad: Pentad
 ): Int {
     // Compute m × n (128 × 128 = 256 bits)
 
@@ -266,7 +254,8 @@ private fun _cmp256x128x128(
 private fun _cmp256x192x128(
     x3: Long, x2: Long, x1: Long, x0: Long,  // 256-bit x (4 limbs)
     m2: Long, m1: Long, m0: Long,             // 192-bit m (3 limbs)
-    n1: Long, n0: Long                        // 128-bit n (2 limbs)
+    n1: Long, n0: Long,                       // 128-bit n (2 limbs)
+    pentad: Pentad
 ): Int {
     // Compute m × n (192 × 128 = 320 bits max, but we only compare 256 bits)
 
@@ -321,7 +310,8 @@ private fun _cmp256x192x128(
 private fun _cmp256x256x64(
     x3: Long, x2: Long, x1: Long, x0: Long,  // 256-bit x (4 limbs)
     m3: Long, m2: Long, m1: Long, m0: Long,  // 256-bit m (4 limbs)
-    n0: Long                                  // 64-bit n (1 limb)
+    n0: Long,                                // 64-bit n (1 limb)
+    pentad: Pentad
 ): Int {
     // Compute m × n (256 × 64 = 320 bits max)
 
@@ -362,7 +352,7 @@ private fun _cmp256x256x64(
     }
 }
 
-internal fun c256ScaledEQ(x: C256, y: C256, pow10Delta: Int): Boolean {
+internal fun c256ScaledEQ(x: C256, y: C256, pow10Delta: Int, pentad: Pentad): Boolean {
     val pow10BitLen = pow10BitLen(pow10Delta)
     val minYBitLen = y.bitLen + pow10BitLen - 1
     val maxYBitLen = y.bitLen + pow10BitLen(pow10Delta + 1)

@@ -82,12 +82,12 @@ internal fun c256SetFms(z: C256, x: C256, y: C256, s: C256) {
 }
 
 
-internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
+internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256, pentad: Pentad) {
     verify { pow10 > 0 }
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
-    verify { c256ScaledCompare(y, x, pow10) <= 0 }
+    verify { c256ScaledCompare(y, x, pow10, pentad) <= 0 }
     val xBitLen = x.bitLen
     val x0 = x.dw0
     val x1 = x.dw1
@@ -209,12 +209,12 @@ internal fun c256FmsPow10(z: C256, x: C256, pow10: Int, y: C256) {
     }
 }
 
-internal fun c256FusedSubMulPow10(z: C256, x: C256, y: C256, pow10: Int) {
+internal fun c256FusedSubMulPow10(z: C256, x: C256, y: C256, pow10: Int, pentad: Pentad) {
     verify { pow10 > 0 }
     verify { z.c256HasValidLengths() }
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
-    verify { c256ScaledCompare(x, y, pow10) >= 0 }
+    verify { c256ScaledCompare(x, y, pow10, pentad) >= 0 }
     val y0 = y.dw0
     val y1 = y.dw1
     val (p1, p0) = pow10_128(pow10)

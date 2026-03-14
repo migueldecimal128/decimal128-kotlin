@@ -13,12 +13,12 @@ object MagnitudeAddSub {
         //    u256AddUnscaled(z, x, y)
         //    return Residue.EXACT
         //}
-        val tmpDwQuad = ctx.tmps.pentad1
         val flipFlop = x.qExp > y.qExp
         val m = if (flipFlop) x else y
         val n = if (flipFlop) y else x
         val qDelta = m.qExp - n.qExp
         verify { qDelta > 0 }
+        val pentad = ctx.tmps.pentad1
         val headroom = ctx.precision - m.digitLen
         val shiftLeft = min(max(headroom, 0), qDelta)
         val qAlign = m.qExp - shiftLeft
@@ -28,7 +28,7 @@ object MagnitudeAddSub {
                 val residue = when {
                     shiftRight == 0 -> {
                         verify { shiftLeft > 0 }
-                        c256SetAddScaled(z, m, shiftLeft, n, tmpDwQuad)
+                        c256SetAddScaled(z, m, shiftLeft, n, pentad)
                         EXACT
                     }
 
@@ -38,7 +38,7 @@ object MagnitudeAddSub {
                             Residue.LT_HALF
                         else
                             Residue.fromValueDecade(n)
-                        c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.pentad1)
+                        c256SetScaleUpPow10(z, m, shiftLeft, pentad)
                         residueT
                     }
 
@@ -52,7 +52,7 @@ object MagnitudeAddSub {
                         if (shiftLeft > 0)
                             c256SetAddScaled(z, m, shiftLeft, t)
                         else
-                            c256SetAddUnscaled(z, m, t, ctx.tmps.pentad1)
+                            c256SetAddUnscaled(z, m, t, pentad)
                         residue
                     }
                 }
@@ -88,9 +88,9 @@ object MagnitudeAddSub {
     fun magScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, ctx: DecContext): Residue {
         verify { !m.isZero() }
         verify { !s.isZero() }
-        verify { m.magnitudeCompareTo(s) > 0 }
+        val pentad = ctx.tmps.pentad1
+        verify { m.magnitudeCompareTo(s, pentad) > 0 }
         verify { m.qExp != s.qExp }
-
         if (m.qExp > s.qExp) {
             val gap = m.qExp - s.qExp
             val headroomWithGuard =
@@ -113,7 +113,7 @@ object MagnitudeAddSub {
             val residue = when {
                 shiftSRight == 0 -> {
                     verify { shiftMLeft > 0 }
-                    c256SetSubScaled(z, m, shiftMLeft, s) // z = (x * 10^shiftXLeft) - y
+                    c256SetSubScaled(z, m, shiftMLeft, s, pentad) // z = (x * 10^shiftXLeft) - y
                     EXACT
                 }
 
@@ -140,7 +140,7 @@ object MagnitudeAddSub {
                     val tmpY = MutDec()
                     val residue = c256SetScaleDownPow10(tmpY, s, shiftSRight)
                     if (shiftMLeft > 0)
-                        c256SetSubScaled(z, m, shiftMLeft, tmpY)
+                        c256SetSubScaled(z, m, shiftMLeft, tmpY, pentad)
                     else
                         c256SetSubUnscaled(z, m, tmpY)
                     if (residue != EXACT)
@@ -162,7 +162,7 @@ object MagnitudeAddSub {
             // 99999e0 - 1e1
             // just adjust y's coefficient and subtract
             val gap = s.qExp - m.qExp
-            c256FusedSubMulPow10(z, m, s, gap)
+            c256FusedSubMulPow10(z, m, s, gap, pentad)
             z.type = STEAL_TYPE_FNZ
             z.qExp = m.qExp
             z.sign = mSign
