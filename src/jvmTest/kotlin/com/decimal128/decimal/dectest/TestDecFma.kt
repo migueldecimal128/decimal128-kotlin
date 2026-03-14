@@ -6,7 +6,7 @@ import com.decimal128.decimal.fmaImpl
 
 class TestDecFma {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testFma() = runTernaryDecimalCtxOp(
@@ -28,7 +28,10 @@ class TestDecFma {
         ::fmaImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqadd3139 fma  1  '0E-39' 1        ->  '1.000000000000000000000000000000000'  Rounded",
+
             "dqfma0900 fma  NaN2  NaN3  NaN5   ->  NaN2",
+
             "rounding: floor",
             "dqadd371720 fma  1   0        0E-19  ->  0E-19",
             "dqadd371721 fma  1  -0        0E-19  -> -0E-19",

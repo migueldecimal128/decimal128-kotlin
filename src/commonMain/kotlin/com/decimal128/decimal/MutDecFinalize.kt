@@ -27,28 +27,22 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
     val qTiny = ctx.qTiny
     val qMax = ctx.qMax
     // Step 1: Fast path: already in valid decimal128 range
-    if (digitLen <= precision &&
-        localQExp >= qTiny && localQExp <= qMax &&
-        inboundResidue == EXACT) {
-        return this
-    }
-// FIXME!!! for goodness sake! looking at qExp to determine type
-    // Step 2: special values
-    if (localQExp >= MIN_SPECIAL_VALUE) {
-        verify { localQExp == NON_FINITE_INF && stealIsINF(type) ||
-                localQExp == NON_FINITE_SNAN && stealIsSNAN(type) ||
-                localQExp == NON_FINITE_QNAN && stealIsQNAN(type) }
+    if (stealIsFNZ(type) && inboundResidue == EXACT &&
+        digitLen <= precision &&
+        localQExp >= qTiny && localQExp <= qMax) {
         return this
     }
 
-    // Step 3: Zero coefficient
-    if (bitLen == 0) {
-        verify { stealIsZER(type) }
+    // Step 2: Zero coefficient
+    if (stealIsZER(type))
         return finalizeZero(inboundResidue, rounding, ctx)
-    }
+
+    // Step 3: special values
+    if (! stealIsFinite(type))
+        return this
+
 
     verify { stealIsFNZ(type) }
-
     // Step 4: Handle underflow
     // Only divert if range truncation exceeds precision truncation,
     // meaning the normal path can't bring qExp into range on its own
@@ -105,6 +99,8 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
 }
 
 private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
+    if (digitLen != 0)
+        println("kilroy was here!")
     verify { digitLen == 0 }
     val qMax = ctx.qMax
     val qTiny = ctx.qTiny

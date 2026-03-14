@@ -91,6 +91,7 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {
+    verify { stealIsFNZ(x.steal) }
     val xSteal = x.steal
     val xQ = stealQexp(xSteal)
     val headroom = ctx.precision - stealDigitLen(xSteal)
@@ -100,6 +101,7 @@ private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decima
     val t = ctx.tmps.mdecBridge1.set(x)
     val r = ctx.tmps.mdecResult
     c256SetScaleUpPow10(r, t, qDelta, ctx.tmps.pentad1)
+    r.type = STEAL_TYPE_FNZ
     r.qExp = xQ - qDelta
     r.sign = x.sign
     return Decimal.from(r.finalize(ctx))
