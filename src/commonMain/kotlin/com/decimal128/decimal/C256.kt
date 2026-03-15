@@ -142,6 +142,14 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         digitLen = calcDigitLen128(bitLen, d1, d0)
     }
 
+    internal /*inline*/ fun c256Set128(pentad: Pentad) {
+        val d1 = pentad.dw1; val d0 = pentad.dw0
+        dw3 = 0L; dw2 = 0L
+        dw1 = d1; dw0 = d0
+        bitLen = calcBitLen128(d1, d0)
+        digitLen = calcDigitLen128(bitLen, d1, d0)
+    }
+
     internal /*inline*/ fun c256Set192(d2: Long, d1: Long, d0: Long) {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0

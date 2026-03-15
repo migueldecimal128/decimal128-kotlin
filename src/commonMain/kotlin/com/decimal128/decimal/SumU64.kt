@@ -2,33 +2,12 @@
 
 package com.decimal128.decimal
 
-internal inline fun sumU64(dwA:Long, dwB:Long) :Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-    return carryAB to sumAB
-}
-
 internal inline fun sumU64(sum: Pentad, dwA:Long, dwB:Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
     sum.dw0 = sumAB
     sum.dw1 = carryAB
-}
-
-internal inline fun sumU64(dwA:ULong, dwB:ULong) :Pair<ULong, ULong> {
-    val sumAB = dwA + dwB
-    val carryAB = if (sumAB < dwA) 1uL else 0uL
-    return carryAB to sumAB
-}
-
-internal inline fun sumU64(dwA:Long, dwB:Long, dwC: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumABC = sumAB + dwC
-    val carryABC = carryAB + if (unsignedLT(sumABC, sumAB)) 1L else 0L
-    return carryABC to sumABC
 }
 
 internal inline fun sumU64(sum: Pentad, dwA:Long, dwB:Long, dwC: Long) {
@@ -42,19 +21,8 @@ internal inline fun sumU64(sum: Pentad, dwA:Long, dwB:Long, dwC: Long) {
     sum.dw1 = carryABC
 }
 
-internal inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumCD = dwC + dwD
-    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
-
-    val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
-    return carryABCD to sumABCD
-}
-
-internal inline fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Long) {
+internal inline fun sumU64(sum: Pentad,
+                           dwA: Long, dwB: Long, dwC: Long, dwD: Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -68,22 +36,8 @@ internal inline fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Lo
     sum.dw1 = carryABCD
 }
 
-internal inline fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumCD = dwC + dwD
-    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
-
-    val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
-
-    val sumABCDE = sumABCD + dwE
-    val carryABCDE = carryABCD + if (unsignedLT(sumABCDE, sumABCD)) 1L else 0L
-    return carryABCDE to sumABCDE
-}
-
-internal inline fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) {
+internal inline fun sumU64(sum: Pentad,
+                           dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -101,25 +55,9 @@ internal inline fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Lo
 }
 
 
-internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumCD = dwC + dwD
-    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
-
-    val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
-
-    val sumEF = dwE + dwF
-    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
-
-    val sumABCDEF = sumABCD + sumEF
-    val carryABCDEF = carryABCD + carryEF + if (unsignedLT(sumABCDEF, sumABCD)) 1L else 0L
-    return carryABCDEF to sumABCDEF
-}
-
-internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long) {
+internal /*inline*/ fun sumU64(sum: Pentad,
+                               dwA: Long, dwB: Long, dwC: Long, dwD: Long,
+                               dwE: Long, dwF: Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -140,28 +78,9 @@ internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD
 }
 
 
-internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumCD = dwC + dwD
-    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
-
-    val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
-
-    val sumEF = dwE + dwF
-    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
-
-    val sumEFG = sumEF + dwG
-    val carryEFG = carryEF + if (unsignedLT(sumEFG, dwG)) 1L else 0L
-
-    val sumABCDEFG = sumABCD + sumEFG
-    val carryABCDEFG = carryABCD + carryEFG + if (unsignedLT(sumABCDEFG, sumABCD)) 1L else 0L
-    return carryABCDEFG to sumABCDEFG
-}
-
-internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long) {
+internal /*inline*/ fun sumU64(sum: Pentad,
+                               dwA: Long, dwB: Long, dwC: Long, dwD: Long,
+                               dwE: Long, dwF: Long, dwG: Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -185,31 +104,9 @@ internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD
 }
 
 
-internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumCD = dwC + dwD
-    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
-
-    val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
-
-    val sumEF = dwE + dwF
-    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
-
-    val sumGH = dwG + dwH
-    val carryGH = if (unsignedLT(sumGH, dwG)) 1L else 0L
-
-    val sumEFGH = sumEF + sumGH
-    val carryEFGH = carryEF + carryGH + if (unsignedLT(sumEFGH, sumEF)) 1L else 0L
-
-    val sumABCDEFGH = sumABCD + sumEFGH
-    val carryABCDEFGH = carryABCD + carryEFGH + if (unsignedLT(sumABCDEFGH, sumABCD)) 1L else 0L
-    return carryABCDEFGH to sumABCDEFGH
-}
-
-internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long) {
+internal /*inline*/ fun sumU64(sum: Pentad,
+                               dwA: Long, dwB: Long, dwC: Long, dwD: Long,
+                               dwE: Long, dwF: Long, dwG: Long, dwH: Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -236,35 +133,9 @@ internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD
 }
 
 
-internal /*inline*/ fun sumU64(dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) : Pair<Long, Long> {
-    val sumAB = dwA + dwB
-    val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
-
-    val sumCD = dwC + dwD
-    val carryCD = if (unsignedLT(sumCD, dwC)) 1L else 0L
-
-    val sumABCD = sumAB + sumCD
-    val carryABCD = carryAB + carryCD + if (unsignedLT(sumABCD, sumAB)) 1L else 0L
-
-    val sumEF = dwE + dwF
-    val carryEF = if (unsignedLT(sumEF, dwE)) 1L else 0L
-
-    val sumGH = dwG + dwH
-    val carryGH = if (unsignedLT(sumGH, dwG)) 1L else 0L
-
-    val sumEFGH = sumEF + sumGH
-    val carryEFGH = carryEF + carryGH + if (unsignedLT(sumEFGH, sumEF)) 1L else 0L
-
-    val sumABCDEFGH = sumABCD + sumEFGH
-    val carryABCDEFGH = carryABCD + carryEFGH + if (unsignedLT(sumABCDEFGH, sumABCD)) 1L else 0L
-
-    val sumABCDEFGHI = sumABCDEFGH + dwI
-    val carryABCDEFGHI = carryABCDEFGH + if (unsignedLT(sumABCDEFGHI, dwI)) 1L else 0L
-
-    return carryABCDEFGHI to sumABCDEFGHI
-}
-
-internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD: Long, dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) {
+internal /*inline*/ fun sumU64(sum: Pentad,
+                               dwA: Long, dwB: Long, dwC: Long, dwD: Long,
+                               dwE: Long, dwF: Long, dwG: Long, dwH: Long, dwI: Long) {
     val sumAB = dwA + dwB
     val carryAB = if (unsignedLT(sumAB, dwA)) 1L else 0L
 
@@ -295,12 +166,6 @@ internal /*inline*/ fun sumU64(sum: Pentad, dwA: Long, dwB: Long, dwC: Long, dwD
 
 
 // returns borrow 0 or 1
-internal /*inline*/ fun diffU64(dwA:Long, dwZ:Long) :Pair<Long, Long> {
-    val diffAZ = dwA - dwZ
-    val borrowAZ = if (unsignedCmp(diffAZ, dwA) > 0) 1L else 0L
-    return borrowAZ to diffAZ
-}
-
 internal /*inline*/ fun diffU64(pentad: Pentad, dwA:Long, dwZ:Long) {
     val diffAZ = dwA - dwZ
     val borrowAZ = if (unsignedCmp(diffAZ, dwA) > 0) 1L else 0L
@@ -309,16 +174,6 @@ internal /*inline*/ fun diffU64(pentad: Pentad, dwA:Long, dwZ:Long) {
     pentad.dw0 = diffAZ
 }
 
-
-internal /*inline*/ fun diffU64withBorrow(dwA:Long, dwB: Long, borrowIn: Long): Pair<Long, Long> {
-    verify { borrowIn in 0..1 }
-    // First subtract b from a:
-    val diffAB = dwA - dwB
-    val borrow1 = if (unsignedLT(dwA, dwB)) 1L else 0L
-    val totalDiff = diffAB - borrowIn
-    val totalBorrow = if (unsignedLT(diffAB, borrowIn)) 1L else borrow1
-    return totalBorrow to totalDiff
-}
 
 internal /*inline*/ fun diffU64withBorrow(pentad: Pentad, dwA: Long, dwB: Long, borrowIn: Long) {
     verify { borrowIn in 0..1 }
@@ -333,75 +188,29 @@ internal /*inline*/ fun diffU64withBorrow(pentad: Pentad, dwA: Long, dwB: Long, 
 }
 
 
-internal inline fun sumU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
-    val s0 = x0 + y0
-    val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
-    val s1 = carry0 + x1 + y1
-    return s1 to s0
-}
-
-internal inline fun sumU128(sum: Pentad, x1: Long, x0: Long, y1: Long, y0: Long) {
+internal inline fun sumU128(sum: Pentad, x1: Long, x0: Long, y1: Long, y0: Long): Pentad {
     val s0 = x0 + y0
     val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
     val s1 = carry0 + x1 + y1
 
     sum.dw0 = s0
     sum.dw1 = s1
+    return sum
 }
 
 
-internal inline fun sumU128U64(x1: Long, x0: Long, y0: Long) : Pair<Long, Long> {
-    val s0 = x0 + y0
-    val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
-    val s1 = carry0 + x1
-    return s1 to s0
-}
-
-internal inline fun sumU128U64(sum: Pentad, x1: Long, x0: Long, y0: Long) {
+internal inline fun sumU128U64(sum: Pentad,
+                               x1: Long, x0: Long, y0: Long): Pentad {
     val s0 = x0 + y0
     val carry0 = if (unsignedLT(s0, x0)) 1L else 0L
     val s1 = carry0 + x1
     sum.dw0 = s0
     sum.dw1 = s1
+    return sum
 }
 
-
-internal inline fun diffU128(x1: Long, x0: Long, y1: Long, y0: Long) : Pair<Long, Long> {
-    val d0 = x0 - y0
-    val borrow0 = if (unsignedLT(x0, y0)) 1L else 0L
-    val d1 = x1 - y1 - borrow0
-    return d1 to d0
-}
-
-
-internal fun umul64x64to128(x0: Long, y0: Long): Pair<Long, Long> {
-    val p0 = x0 * y0
-    val p1 = unsignedMulHi(x0, y0)
-    return p1 to p0
-}
-
-internal inline fun umul128x64to128(x1: Long, x0: Long, y0: Long): Pair<Long, Long> {
-    val pp00Hi = unsignedMulHi(x0, y0)
-    val pp00Lo = x0 * y0
-    val pp10Lo = x1 * y0
-
-    val p0 = pp00Lo
-    val p1 = pp00Hi + pp10Lo
-    return p1 to p0
-}
-
-internal inline fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
-    val pp00Hi = unsignedMulHi(x0, y0)
-    val pp00Lo = x0 * y0
-    val pp10Lo = x1 * y0
-    val pp01Lo = x0 * y1
-
-    val p0 = pp00Lo
-    val p1 = pp00Hi + pp10Lo + pp01Lo
-    return p1 to p0
-}
-
-internal inline fun umul128x128to128(prod: Pentad, x1: Long, x0: Long, y1: Long, y0: Long) {
+internal inline fun umul128x128to128(prod: Pentad,
+                                     x1: Long, x0: Long, y1: Long, y0: Long) {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val pp10Lo = x1 * y0
@@ -414,21 +223,16 @@ internal inline fun umul128x128to128(prod: Pentad, x1: Long, x0: Long, y1: Long,
     prod.dw1 = p1
 }
 
-internal fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
-    val pow10Offet = (pow10 shl 1) and POW10_BCE
-    val pow10Dw1 = POW10[pow10Offet + 1]
-    val pow10Dw0 = POW10[pow10Offet    ]
-    return umul128x128to128(dw1, dw0, pow10Dw1, pow10Dw0)
-}
-
-internal fun umul128xPow10to128(pentad: Pentad, dw1: Long, dw0: Long, pow10: Int) {
-    val pow10Offet = (pow10 shl 1) and POW10_BCE
-    val pow10Dw1 = POW10[pow10Offet + 1]
-    val pow10Dw0 = POW10[pow10Offet    ]
+internal fun umul128xPow10to128(pentad: Pentad,
+                                dw1: Long, dw0: Long, pow10: Int) {
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val pow10Dw1 = POW10[pow10Offset + 1]
+    val pow10Dw0 = POW10[pow10Offset    ]
     umul128x128to128(pentad, dw1, dw0, pow10Dw1, pow10Dw0)
 }
 
-internal /*inline*/ fun umul192x64to192(pentad: Pentad, x2: Long, x1: Long, x0: Long, y0: Long): Pentad {
+internal /*inline*/ fun umul192x64to192(pentad: Pentad,
+                                        x2: Long, x1: Long, x0: Long, y0: Long): Pentad {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
@@ -449,7 +253,8 @@ internal /*inline*/ fun umul192x64to192(pentad: Pentad, x2: Long, x1: Long, x0: 
 }
 
 
-internal /*inline*/ fun umul128x128to192(pentad: Pentad, x1: Long, x0: Long, y1:Long, y0: Long): Pentad {
+internal /*inline*/ fun umul128x128to192(pentad: Pentad,
+                                         x1: Long, x0: Long, y1:Long, y0: Long): Pentad {
     val pp00Hi = unsignedMulHi(x0, y0)
     val pp00Lo = x0 * y0
     val p0 = pp00Lo
@@ -492,7 +297,8 @@ internal /*inline*/ fun usqr96to192(pentad: Pentad, x1: Long, x0: Long) {
     pentad.dw0 = p0
 }
 
-internal fun ucmp128(dw1X: Long, dw0X: Long, dw1Y: Long, dw0Y: Long): Int {
+internal fun ucmp128(dw1X: Long, dw0X: Long,
+                     dw1Y: Long, dw0Y: Long): Int {
     val cmpDw1 = unsignedCmp(dw1X, dw1Y)
     if (cmpDw1 != 0)
         return cmpDw1
@@ -506,7 +312,8 @@ internal inline fun cmp32(x: Int, y: Int): Int {
     return gt - lt
 }
 
-internal fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int, pentad: Pentad): Int {
+internal fun ucmp128ScalePow10(x1: Long, x0: Long,
+                               y1: Long, y0: Long, pow10: Int, pentad: Pentad): Int {
     verify { pow10 in 1..<MIN_POW10_DIGIT_LEN_192 }
     val pow10Offset = (pow10 shl 1) and POW10_BCE
     val p1 = POW10[pow10Offset + 1]
@@ -517,7 +324,8 @@ internal fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: In
     return ucmp128_128x64(x1, x0, p1, p0, y0, pentad)
 }
 
-internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long, pentad: Pentad) : Int {
+internal fun ucmp128_128x64(x1: Long, x0: Long,
+                            y1: Long, y0: Long, z0: Long, pentad: Pentad) : Int {
     val pp00Hi = unsignedMulHi(y0, z0)
     val pp00Lo = y0 * z0
     val p0 = pp00Lo

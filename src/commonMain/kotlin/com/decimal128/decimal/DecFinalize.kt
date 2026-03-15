@@ -201,7 +201,10 @@ private fun decFinalizeClamping(sign: Boolean,
     val qMax = ctx.qMax
     val qExcess = qExp - qMax
     verify { qExcess > 0 && qExcess <= ctx.precision - calcDigitLen128(dw1, dw0) }
-    val (dw1S, dw0S) = umul128xPow10to128(dw1, dw0, qExcess)
+    val pentad = ctx.tmps.pentad1
+    umul128xPow10to128(pentad, dw1, dw0, qExcess)
+    val dw1S = pentad.dw1
+    val dw0S = pentad.dw0
     verify { ctx.decFormat.coeffFits(dw1S, dw0S) }
     // successful clamping does not signal because
     // the returned value is numerically equal

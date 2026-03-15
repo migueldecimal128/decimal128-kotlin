@@ -113,10 +113,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a: C256, pentad: Pent
         umul128x128to128(pentad, x1, x0, p1, p0)
         val f0 = pentad.dw0
         val f1 = pentad.dw1
-        sumU128(pentad, f1, f0, a1, a0)
-        val s0 = pentad.dw0
-        val s1 = pentad.dw1
-        z.c256Set128(s1, s0)
+        z.c256Set128(sumU128(pentad, f1, f0, a1, a0))
         return
     }
     if (p10BitLen <= 64) {
@@ -254,10 +251,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a1: Long, a0: Long, p
         umul128x128to128(pentad, x1, x0, p1, p0)
         val f0 = pentad.dw0
         val f1 = pentad.dw1
-        sumU128(pentad, f1, f0, a1, a0)
-        val s0 = pentad.dw0
-        val s1 = pentad.dw1
-        z.c256Set128(s1, s0)
+        z.c256Set128(sumU128(pentad, f1, f0, a1, a0))
         return
     }
     if (p10BitLen <= 64) {
@@ -394,10 +388,7 @@ internal fun c256SetFmaPow10(z: C256, x: C256, pow10: Int, a0: Long, pentad: Pen
         umul128x128to128(pentad, x1, x0, p1, p0)
         val f0 = pentad.dw0
         val f1 = pentad.dw1
-        sumU128U64(pentad, f1, f0, a0)
-        val s0 = pentad.dw0
-        val s1 = pentad.dw1
-        z.c256Set128(s1, s0)
+        z.c256Set128(sumU128U64(pentad, f1, f0, a0))
         return
     }
     if (p10BitLen <= 64) {
