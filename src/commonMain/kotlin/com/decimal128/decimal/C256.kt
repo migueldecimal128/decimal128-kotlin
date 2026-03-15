@@ -6,7 +6,7 @@ const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
-expect open class C256Rep(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
+expect open class C256Rep() {
     internal var dw3: Long
     internal var dw2: Long
     internal var dw1: Long
@@ -16,26 +16,16 @@ expect open class C256Rep(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
 
 }
 
-open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) :
-C256Rep(dw3, dw2, dw1, dw0) {
+open class C256() :
+C256Rep() {
 
-    //constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
-    //constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
-    constructor(dw0: Long) : this(0L, 0L, 0L, dw0)
-    //constructor(w0: Int) : this(0L, 0L, 0L, w0.toLong() and 0xFFFFFFFFL)
-    constructor() : this(0L, 0L, 0L, 0L)
-    constructor(str: String) : this() {
-        IntegerParsePrint.u256FromString(this, false, str)
-    }
-    constructor(c: C256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
+    companion object {
+        internal operator fun invoke(dw0: Long): C256 = C256().c256Set64(dw0)
+        internal operator fun invoke(dw3: Long, dw2: Long, dw1: Long, dw0: Long): C256 =
+            C256().c256Set256(dw3, dw2, dw1, dw0)
+        internal operator fun invoke(str: String): C256 = C256().c256Set(str)
 
-    init {
-        this.dw3 = dw3
-        this.dw2 = dw2
-        this.dw1 = dw1
-        this.dw0 = dw0
-        this.bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
-        this.digitLen = calcDigitLen256(bitLen, dw3, dw2, dw1, dw0)
+        internal operator fun invoke(c: C256): C256 = C256().c256Set(c)
     }
 
     fun c256SetZero() {
@@ -126,47 +116,53 @@ C256Rep(dw3, dw2, dw1, dw0) {
         updateDigitLenBitLen()
     }
 
-    internal /*inline*/ fun c256Set64(d0: Long) {
+    internal /*inline*/ fun c256Set64(d0: Long): C256 {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
         bitLen = calcBitLen64(d0)
         digitLen = calcDigitLen64(bitLen, d0)
+        return this
     }
 
-    internal /*inline*/ fun c256Set128(d1: Long, d0: Long) {
+    internal /*inline*/ fun c256Set128(d1: Long, d0: Long): C256 {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen128(d1, d0)
         digitLen = calcDigitLen128(bitLen, d1, d0)
+        return this
     }
 
-    internal /*inline*/ fun c256Set128(pentad: Pentad) {
+    internal /*inline*/ fun c256Set128(pentad: Pentad): C256 {
         val d1 = pentad.dw1; val d0 = pentad.dw0
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
         bitLen = calcBitLen128(d1, d0)
         digitLen = calcDigitLen128(bitLen, d1, d0)
+        return this
     }
 
-    internal /*inline*/ fun c256Set192(d2: Long, d1: Long, d0: Long) {
+    internal /*inline*/ fun c256Set192(d2: Long, d1: Long, d0: Long): C256 {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen192(d2, d1, d0)
         digitLen = calcDigitLen192(bitLen, d2, d1, d0)
+        return this
     }
 
-    internal /*inline*/ fun c256Set192(pentad: Pentad) {
+    internal /*inline*/ fun c256Set192(pentad: Pentad): C256 {
         val d2 = pentad.dw2; val d1 = pentad.dw1; val d0 = pentad.dw0
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen192(d2, d1, d0)
         digitLen = calcDigitLen192(bitLen, d2, d1, d0)
+        return this
     }
 
-    internal /*inline*/ fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long) {
+    internal /*inline*/ fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long): C256 {
         dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
         bitLen = calcBitLen256(d3, d2, d1, d0)
         digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
+        return this
     }
 
     fun c256Set(x: C256): C256 {
@@ -178,7 +174,10 @@ C256Rep(dw3, dw2, dw1, dw0) {
     }
 
 
-    internal inline fun c256Set(str: String) = IntegerParsePrint.u256FromString(this, false, str)
+    internal inline fun c256Set(str: String): C256 {
+        IntegerParsePrint.u256FromString(this, false, str)
+        return this
+    }
 
     internal inline fun c256SetShiftRight(x: C256, bitShift: Int) = c256SetShiftRight(this, x, bitShift)
 
