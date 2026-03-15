@@ -8,6 +8,7 @@ import com.decimal128.decimal.DecFlags
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.Pentad
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
 // readtest.c - read tests from stdin
@@ -205,7 +206,11 @@ class IntelCase1 private constructor (
             if (str.startsWith('[')) {
                 if (regexHex64.matches(str) || regexHex32.matches(str))
                     throw IllegalArgumentException("not bid128:$str")
-                val (isValid, dw1, dw0) = D128SerdeBid.parseIntelBidHex(str)
+                val pentad = Pentad()
+                D128SerdeBid.parseIntelBidHex(pentad, str)
+                val isValid = pentad.w == 1
+                val dw1 = pentad.dw1
+                val dw0 = pentad.dw0
                 if (! isValid)
                     throw IllegalArgumentException("something invalid with bid128:$str")
                 val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)

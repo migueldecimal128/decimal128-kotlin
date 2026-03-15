@@ -11,8 +11,8 @@ internal fun c256SetSqr(z: C256, x: C256, pentad: Pentad) {
         }
 
         (xBitLen <= 96) -> {
-            val (p2, p1, p0) = usqr96to192(x.dw1, x.dw0)
-            z.c256Set192(p2, p1, p0)
+            usqr96to192(pentad, x.dw1, x.dw0)
+            z.c256Set192(pentad.dw2, pentad.dw1, pentad.dw0)
         }
 
         (xBitLen <= 128) -> {

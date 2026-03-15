@@ -33,7 +33,11 @@ class TestIntelBidRoundTrip1 {
     fun test1(tc: String) {
         if (verbose)
             println("tc:$tc")
-        val (isValid, dw1, dw0) = D128SerdeBid.parseIntelBidHex(tc)
+        val pentad = Pentad()
+        D128SerdeBid.parseIntelBidHex(pentad, tc)
+        val isValid = pentad.w == 1
+        val dw1 = pentad.dw1
+        val dw0 = pentad.dw0
         assertTrue(isValid)
         val ctx = DecContext.DECIMAL128
         ctx.decFlags.clearAll()

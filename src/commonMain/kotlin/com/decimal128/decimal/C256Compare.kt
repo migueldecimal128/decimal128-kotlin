@@ -375,17 +375,19 @@ internal fun c256ScaledEQ(x: C256, y: C256, pow10Delta: Int, pentad: Pentad): Bo
     val x1 = x.dw1
     val y0 = y.dw0
     val y1 = y.dw1
-    val (pow10dw1, pow10dw0) = pow10_128(pow10Delta)
+    val pow10Offset = (pow10Delta shl 1) and POW10_BCE
+    val dw1Pow10 = POW10[pow10Offset + 1]
+    val dw0Pow10 = POW10[pow10Offset    ]
     if (x.bitLen <= 128) {
         val ret = when {
             y.bitLen <= 64 && pow10BitLen <= 64 ->
-                _EQ128x64x64(x1, x0, y0, pow10dw0)
+                _EQ128x64x64(x1, x0, y0, dw0Pow10)
 
             y.bitLen <= 64 && pow10BitLen <= 128 ->
-                _EQ128x128x64(x1, x0, pow10dw1, pow10dw0, y0, pentad)
+                _EQ128x128x64(x1, x0, dw1Pow10, dw0Pow10, y0, pentad)
 
             y.bitLen <= 128 && pow10BitLen <= 64 ->
-                _EQ128x128x64(x1, x0, y1, y0, pow10dw0, pentad)
+                _EQ128x128x64(x1, x0, y1, y0, dw0Pow10, pentad)
 
             else -> throw RuntimeException()
         }

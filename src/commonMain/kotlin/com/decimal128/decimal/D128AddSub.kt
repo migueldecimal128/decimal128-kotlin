@@ -130,17 +130,17 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
     val nQ = stealQexp(nSteal)
     val qDelta = mQ - nQ
     verify { qDelta >= 0 }
-    val pentad = ctx.tmps.pentad1
     val mDigitLen = stealDigitLen(mSteal)
     val headroom = ctx.precision - mDigitLen
+    val pentad = ctx.tmps.pentad1
     val n1 = n.dw1; val n0 = n.dw0
     var dw1Sum = m.dw1
     var dw0Sum = m.dw0
     val shiftLeft = min(headroom, qDelta)
     if (shiftLeft > 0) {
-        val (dw1T, dw0T) = umul128xPow10to128(dw1Sum, dw0Sum, shiftLeft)
-        dw1Sum = dw1T
-        dw0Sum = dw0T
+        umul128xPow10to128(pentad, dw1Sum, dw0Sum, shiftLeft)
+        dw1Sum = pentad.dw1
+        dw0Sum = pentad.dw0
     }
     val qAlign = mQ - shiftLeft
     val shiftRight = qAlign - nQ
@@ -227,7 +227,10 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
                 if (shiftSRight > sDigitLen) Residue.GT_HALF
                 else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
             verify { residueInverse != EXACT }
-            val (dw1S, dw0S) = umul128xPow10to128(m.dw1, m.dw0, headroomP)
+            val pentad = ctx.tmps.pentad1
+            umul128xPow10to128(pentad, m.dw1, m.dw0, headroomP)
+            val dw1S = pentad.dw1
+            val dw0S = pentad.dw0
             val dw1T = dw1S - if (dw0S == 0L) 1L else 0L
             val dw0T = dw0S - 1
             return decRoundAndFinalizeFinite(sign, dw1T, dw0T, residueInverse, qAlignP, ctx)

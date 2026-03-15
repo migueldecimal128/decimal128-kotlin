@@ -3,7 +3,9 @@ package com.decimal128.decimal
 internal fun d128ScaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negate: Boolean = false): Decimal {
     verify { pow10 > 0 }
     val x0 = x.dw0
-    val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val dw1Pow10 = POW10[pow10Offset + 1]
+    val dw0Pow10 = POW10[pow10Offset    ]
     val p0 = x0 * dw0Pow10
     val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
     return Decimal(xSign, x.qExp() - pow10, p1, p0)
@@ -17,7 +19,9 @@ internal fun d128ScaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negat
 internal fun d128FusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, pow10: Int): Decimal {
     verify { pow10 > 0 }
     verify { n.bitLen() + pow10BitLen(pow10) <= 128 }
-    val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val dw1Pow10 = POW10[pow10Offset + 1]
+    val dw0Pow10 = POW10[pow10Offset    ]
     val n0 = n.dw0
     val p0 = n0 * dw0Pow10
     val p1 = unsignedMulHi(n0, dw0Pow10) + (n0 * dw1Pow10) + (n.dw1 * dw0Pow10)
@@ -36,7 +40,9 @@ internal fun d128FusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, po
 internal fun d128FusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y: Decimal, ctx: DecContext): Decimal {
     verify { pow10 > 0 }
     val x0 = x.dw0
-    val (dw1Pow10, dw0Pow10) = pow10_128(pow10)
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val dw1Pow10 = POW10[pow10Offset + 1]
+    val dw0Pow10 = POW10[pow10Offset    ]
     val p0 = x0 * dw0Pow10
     val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
 

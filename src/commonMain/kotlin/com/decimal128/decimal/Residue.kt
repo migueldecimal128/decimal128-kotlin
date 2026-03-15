@@ -62,7 +62,9 @@ value class Residue internal constructor(val value:Int) {
         }
 
         fun fromValuePow10(dw1: Long, dw0: Long, pow10: Int): Residue {
-            val (dw1P, dw0P) = pow10_128(pow10)
+            val pow10Offset = (pow10 shl 1) and POW10_BCE
+            val dw1P = POW10[pow10Offset + 1]
+            val dw0P = POW10[pow10Offset    ]
             val dw1H = dw1P ushr 1
             val dw0H = (dw1P shl 63) or (dw0P ushr 1)
             val cmp = ucmp128(dw1, dw0, dw1H, dw0H)

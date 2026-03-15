@@ -36,9 +36,10 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     val headroom = min(ctx.precision - stealDigitLen(xSteal), qExp - ctx.qTiny)
     val xSign = stealSignFlag(xSteal)
     if (headroom > 0) {
-        val (dw1T, dw0T) = umul128xPow10to128(dw1, dw0, headroom)
-        dw1 = dw1T
-        dw0 = dw0T
+        val pentad = ctx.tmps.pentad1
+        umul128xPow10to128(pentad, dw1, dw0, headroom)
+        dw1 = pentad.dw1
+        dw0 = pentad.dw0
         qExp -= headroom
     }
     ++dw0
@@ -62,9 +63,10 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     var dw0 = x.dw0
     val headroom = min(ctx.precision - stealDigitLen(xSteal), xQ - ctx.qTiny)
     if (headroom > 0) {
-        val (dw1T, dw0T) = umul128xPow10to128(dw1, dw0, headroom)
-        dw1 = dw1T
-        dw0 = dw0T
+        val pentad = ctx.tmps.pentad1
+        umul128xPow10to128(pentad, dw1, dw0, headroom)
+        dw1 = pentad.dw1
+        dw0 = pentad.dw0
         xQ -= headroom
     }
     // Check if we're at a power of 10 boundary (would lose a digit if decremented)

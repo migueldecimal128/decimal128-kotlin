@@ -510,7 +510,9 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     val qDelta = xQ - yQ
     val qDeltaAbs = abs(qDelta)
     val pow10BitLen = pow10BitLen(qDeltaAbs)
-    val (dw1Pow10, dw0Pow10) = pow10_128(qDeltaAbs)
+    val pow10Offset = (qDeltaAbs shl 1) and POW10_BCE
+    val dw1Pow10 = POW10[pow10Offset + 1]
+    val dw0Pow10 = POW10[pow10Offset    ]
     if (qDelta > 0) {
         // x.qExp is larger
         // scale up x.coefficient
