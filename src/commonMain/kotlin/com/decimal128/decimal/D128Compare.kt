@@ -66,11 +66,11 @@ internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal, pentad: Pentad)
  *
  * @return −1, 0, or +1 indicating the total-order relationship of `x` and `y`.
  */
-internal fun d128CompareTotalOrder(x: Decimal, y: Decimal): Int {
+internal fun d128CompareTotalOrder(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
     if ((xSignMask xor y.signMask) != 0)
         return (xSignMask shl 1) + 1 // return -1 or 1
-    val cmpMag = d128CompareTotalOrderMag(x, y)
+    val cmpMag = d128CompareTotalOrderMag(x, y, pentad)
     return negateForSign(cmpMag, xSignMask)
 }
 
@@ -88,11 +88,11 @@ internal fun d128CompareTotalOrder(x: Decimal, y: Decimal): Int {
  *
  * @return −1, 0, or +1 describing the total-order magnitude relation.
  */
-fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
+fun d128CompareTotalOrderMag(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     val cmp =
         if (signature == FNZ_FNZ) {
-            cmpTotalOrderMagFnzFnz(x, y)
+            cmpTotalOrderMagFnzFnz(x, y, pentad)
         } else when (signature) {
             ZER_ZER -> cmp32(x.qExp(), y.qExp())
             ZER_FNZ,
@@ -134,8 +134,8 @@ fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
  * @return −1, 0, or +1 describing the total-order magnitude relation
  *         between the two finite, non-zero values.
  */
-private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
-    val cmpMag = cmpMagFnzFnz(x, y)
+private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
+    val cmpMag = cmpMagFnzFnz(x, y, pentad)
 
     // If x and y represent the same floating-point datum:
     //  i) If x and y have negative sign,
@@ -151,7 +151,7 @@ private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
     return cmp
 }
 
-private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
+private fun cmpMagFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val xSteal = x.steal; val ySteal = y.steal
     val xQ = stealQexp(xSteal)
     val yQ = stealQexp(ySteal)
@@ -167,9 +167,9 @@ private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
         x.bExpMin() > y.bExpMax() -> 1
         x.bExpMax() < y.bExpMin() -> -1
         xQ == yQ -> ucmp128(x1, x0, y1, y0)
-        xQ > yQ -> -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ)
+        xQ > yQ -> -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ, pentad)
         // x.qExp < y.qExp
-        else -> ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ)
+        else -> ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ, pentad)
     }
     return cmpMag
 }
@@ -224,7 +224,7 @@ private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {
  *
  * @return −1, 0, or +1 describing the Java-style ordering between `x` and `y`.
  */
-internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
+internal fun d128CompareJavaStyle(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val stealX = x.steal
     val stealY = y.steal
     when {
@@ -232,7 +232,7 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
             val xSignMask = stealSignMask(stealX) // 0 or -1 (0xFFFF_FFFF)
             if (xSignMask != stealSignMask(stealY))
                 return (xSignMask shl 1) + 1 // return -1 or 1
-            val cmpMag = cmpNumericMagnitude(x, y)
+            val cmpMag = cmpNumericMagnitude(x, y, pentad)
             return negateForSign(cmpMag, xSignMask)
         }
 
@@ -270,10 +270,10 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
  * @return `true` if `x` and `y` are equal under Java-style rules;
  *         `false` otherwise.
  */
-internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
+internal fun d128EqJavaStyle(x: Decimal, y: Decimal, pentad: Pentad): Boolean {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
+        x.sign == y.sign && cmpMagFnzFnz(x, y, pentad) == 0
     } else when (signature) {
         FNZ_ZER,
         FNZ_INF,
@@ -315,11 +315,11 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
  *
  * @return −1 if `|x| < |y|`, 0 if `|x| == |y|`, or +1 if `|x| > |y|`.
  */
-private fun cmpNumericMagnitude(x: Decimal, y: Decimal): Int {
+private fun cmpNumericMagnitude(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     val cmpMag =
         if (signature == FNZ_FNZ) {
-            cmpMagFnzFnz(x, y)
+            cmpMagFnzFnz(x, y, pentad)
         } else when (signature) {
             ZER_ZER -> 0
             ZER_FNZ,
@@ -365,7 +365,7 @@ internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean, ctx: D
         val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
         val cmp =
             if (xSignMask != y.signMask) (xSignMask shl 1) + 1 // -1 or 1
-            else negateForSign(cmpNumericMagnitude(x, y), xSignMask)
+            else negateForSign(cmpNumericMagnitude(x, y, ctx.tmps.pentad1), xSignMask)
         return Compare754Result(cmp)
     }
     if (isSignaling || x.isSignaling() || y.isSignaling())

@@ -584,7 +584,7 @@ class Decimal private constructor(
      *         this value and [other].
      */
 
-    fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other)
+    fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other, DecContext.current().tmps.pentad1)
 
     fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
 
@@ -597,7 +597,7 @@ class Decimal private constructor(
      *
      * @return −1, 0, or +1 describing the total-order magnitude relation.
      */
-    fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other)
+    fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other, DecContext.current().tmps.pentad1)
 
     fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
 
@@ -633,9 +633,9 @@ class Decimal private constructor(
      * @return −1, 0, or +1 describing the Java-style ordering of this
      *         value relative to [other].
      */
-    fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other)
+    fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other, DecContext.current().tmps.pentad1)
 
-    fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other)
+    fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other, DecContext.current().tmps.pentad1)
 
     /**
      * Compares this decimal128 value with [other] using **Java-style numeric

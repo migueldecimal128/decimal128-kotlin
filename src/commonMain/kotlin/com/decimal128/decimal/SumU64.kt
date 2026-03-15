@@ -506,29 +506,15 @@ internal inline fun cmp32(x: Int, y: Int): Int {
     return gt - lt
 }
 
-internal fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int): Int {
+internal fun ucmp128ScalePow10(x1: Long, x0: Long, y1: Long, y0: Long, pow10: Int, pentad: Pentad): Int {
     verify { pow10 in 1..<MIN_POW10_DIGIT_LEN_192 }
-    val (p1, p0) = pow10_128(pow10)
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val p1 = POW10[pow10Offset + 1]
+    val p0 = POW10[pow10Offset    ]
     if (pow10 < MIN_POW10_DIGIT_LEN_128)
-        return ucmp128_128x64(x1, x0, y1, y0, p0)
+        return ucmp128_128x64(x1, x0, y1, y0, p0, pentad)
     verify { y1 == 0L }
-    return ucmp128_128x64(x1, x0, p1, p0, y0)
-}
-
-internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : Int {
-    val pp00Hi = unsignedMulHi(y0, z0)
-    val pp00Lo = y0 * z0
-    val p0 = pp00Lo
-    val cmp0 = unsignedCmp(x0, p0)
-
-    val pp10Hi = unsignedMulHi(y1, z0)
-    val pp10Lo = y1 * z0
-    val (carry1, p1) = sumU64(pp00Hi, pp10Lo)
-    val cmp1 = unsignedCmp(x1, p1)
-    val cmp10 = if (cmp1 != 0) cmp1 else cmp0
-    val p2 = carry1 + pp10Hi
-    val cmp210 = if (p2 != 0L) -1 else cmp10
-    return cmp210
+    return ucmp128_128x64(x1, x0, p1, p0, y0, pentad)
 }
 
 internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long, pentad: Pentad) : Int {
@@ -542,6 +528,7 @@ internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long, pe
     sumU64(pentad, pp00Hi, pp10Lo)
     val carry1 = pentad.dw1
     val p1 = pentad.dw0
+
     val cmp1 = unsignedCmp(x1, p1)
     val cmp10 = if (cmp1 != 0) cmp1 else cmp0
     val p2 = carry1 + pp10Hi
