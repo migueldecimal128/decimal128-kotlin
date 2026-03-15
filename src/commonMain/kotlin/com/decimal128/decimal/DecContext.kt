@@ -13,7 +13,6 @@ data class DecContext(
     val decPrefs: DecPrefs = DecPrefs.DEFAULT,
     val decTraps: DecTraps? = null,
     val decFlags: DecFlags = DecFlags(),
-    val tmps: DecTmps = DecTmps()
 ) {
     val precision: Int
         get() = decFormat.precision
@@ -30,6 +29,8 @@ data class DecContext(
     val overflow: Boolean
         get() = decFlags.isSet(OVERFLOW)
 
+    internal val tmps: DecTmps = DecTmps()
+
     companion object {
         val DECIMAL64 = DecContext(DecFormat.DECIMAL_64)
         val DECIMAL128 = DecContext(DecFormat.DECIMAL_128)
@@ -45,23 +46,23 @@ data class DecContext(
     }
 
     fun with(newDecFormat: DecFormat) =
-        DecContext(newDecFormat, decRounding, decPrefs, decTraps, decFlags, tmps)
+        DecContext(newDecFormat, decRounding, decPrefs, decTraps, decFlags)
 
     fun with(newDecRounding: DecRounding) =
-        DecContext(decFormat, newDecRounding, decPrefs, decTraps, decFlags, tmps)
+        DecContext(decFormat, newDecRounding, decPrefs, decTraps, decFlags)
 
     fun with(newDecPrefs: DecPrefs) =
-        DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags, tmps)
+        DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags)
 
     fun withNewFlags() =
-        DecContext(decFormat, decRounding, decPrefs, decTraps, DecFlags(), DecTmps())
+        DecContext(decFormat, decRounding, decPrefs, decTraps, DecFlags())
 
     fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTraps)
 
     inline fun <T> compute(block: () -> T ): T = block()
 
     inline fun <T> computeDelayedTrap(block: () -> T): T {
-        val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags(), tmps)
+        val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags())
         val blockVal = blockEnv.compute(block)
         decTraps?.delayedTrap(blockEnv)
         return blockVal

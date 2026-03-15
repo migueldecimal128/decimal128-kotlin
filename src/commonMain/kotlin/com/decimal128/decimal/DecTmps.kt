@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-class DecTmps {
+internal class DecTmps {
     val mdecResult = MutDec()
 
     // these tmps are for bridging from the 128-bit Decimal layer

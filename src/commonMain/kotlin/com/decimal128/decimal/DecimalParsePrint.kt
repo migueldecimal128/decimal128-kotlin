@@ -101,7 +101,7 @@ object DecimalParsePrint {
         return signLen + dotLen + coeffLen + expELen + expSignLen + expLen
     }
 
-    fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int, prefs: DecPrefs, tmp: C256? = null) : Int {
+    private fun decToUtf8(x: MutDec, bytes: ByteArray, off: Int, len: Int, prefs: DecPrefs, tmp: C256? = null) : Int {
         if (off < 0 || len < 0)
             throw IllegalArgumentException()
         val qExp = x.qExp

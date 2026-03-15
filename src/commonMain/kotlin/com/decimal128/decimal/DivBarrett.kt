@@ -2,7 +2,7 @@
 
 package com.decimal128.decimal
 
-fun barrettDivPow10(z: C256, x: C256, pow10: Int): Residue {
+internal fun barrettDivPow10(z: C256, x: C256, pow10: Int): Residue {
     verify { pow10 in 1..<BARRETT_POW10_MAXX }
     val remainder = barrettDivModPow10(z, x, pow10)
     val residue = Residue.residueFromRemainderPow10(remainder, pow10)

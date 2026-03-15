@@ -6,7 +6,18 @@ const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
-open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
+expect open class C256Rep(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
+    internal var dw3: Long
+    internal var dw2: Long
+    internal var dw1: Long
+    internal var dw0: Long
+    internal var bitLen: Int
+    internal var digitLen: Int
+
+}
+
+open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) :
+C256Rep(dw3, dw2, dw1, dw0) {
 
     //constructor(dw2: Long, dw1: Long, dw0: Long) : this(0L, dw2, dw1, dw0)
     //constructor(dw1: Long, dw0: Long) : this(0L, 0L, dw1, dw0)
@@ -17,19 +28,6 @@ open class C256(dw3: Long, dw2: Long, dw1: Long, dw0: Long) {
         IntegerParsePrint.u256FromString(this, false, str)
     }
     constructor(c: C256) : this(c.dw3, c.dw2, c.dw1, c.dw0)
-
-    @JvmField
-    internal var dw3: Long
-    @JvmField
-    internal var dw2: Long
-    @JvmField
-    internal var dw1: Long
-    @JvmField
-    internal var dw0: Long
-    @JvmField
-    internal var bitLen: Int
-    @JvmField
-    internal var digitLen: Int
 
     init {
         this.dw3 = dw3

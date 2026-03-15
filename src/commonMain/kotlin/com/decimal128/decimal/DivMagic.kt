@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-object DivMagic {
+internal object DivMagic {
 
     /**
      * magic division of a ULong by powers of 10 using

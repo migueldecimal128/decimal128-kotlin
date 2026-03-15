@@ -31,7 +31,7 @@ internal fun c256SetMul(z: C256, x: C256, y: C256, pentad: Pentad) {
  * Multiplies a decimal coefficient by a 64-bit unsigned integer (1 limb).
  * Dispatches to [_mulCoeff2x1] or handles inline for 64-bit x.
  */
-fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, pentad: Pentad) {
+internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, pentad: Pentad) {
     val xBitLen = x.bitLen
     verify { xBitLen <= 127 }
     val maxBitLen = xBitLen + yBitLen

@@ -51,7 +51,7 @@ private const val MASK_BITS_1_MOD_4 = MASK_BITS_0_MOD_4 shl 1
 private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
 private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
-fun c256Ctz(x: C256): Int {
+internal fun c256Ctz(x: C256): Int {
     val ntz0 = x.dw0.countTrailingZeroBits()
     val ntz1 = 64 + x.dw1.countTrailingZeroBits()
     val ntz2 = 128 + x.dw2.countTrailingZeroBits()
@@ -62,7 +62,7 @@ fun c256Ctz(x: C256): Int {
     return ntz0123
 }
 
-fun getDwordAtBitIndex(x: C256, bitIndex: Int): Long {
+internal fun getDwordAtBitIndex(x: C256, bitIndex: Int): Long {
     val dwordShift = bitIndex ushr 6
     val innerShift = bitIndex and 0x3F
     val nonZeroMask = (-innerShift shr 31).toLong()
@@ -75,7 +75,7 @@ fun getDwordAtBitIndex(x: C256, bitIndex: Int): Long {
     }
 }
 
-fun isMultipleOfFive64(dw0: Long): Boolean {
+internal fun isMultipleOfFive64(dw0: Long): Boolean {
     val m0 = MASK_BITS_0_MOD_4
     val m1 = MASK_BITS_1_MOD_4
     val m2 = MASK_BITS_2_MOD_4
@@ -91,7 +91,7 @@ fun isMultipleOfFive64(dw0: Long): Boolean {
     return ret
 }
 
-fun isMultipleOfFive128(dw1: Long, dw0: Long): Boolean {
+internal fun isMultipleOfFive128(dw1: Long, dw0: Long): Boolean {
     val m0 = MASK_BITS_0_MOD_4
     val m1 = MASK_BITS_1_MOD_4
     val m2 = MASK_BITS_2_MOD_4
@@ -107,7 +107,7 @@ fun isMultipleOfFive128(dw1: Long, dw0: Long): Boolean {
     return ret
 }
 
-fun isMultipleOfFive192(dw2: Long, dw1: Long, dw0: Long): Boolean {
+internal fun isMultipleOfFive192(dw2: Long, dw1: Long, dw0: Long): Boolean {
     val m0 = MASK_BITS_0_MOD_4
     val m1 = MASK_BITS_1_MOD_4
     val m2 = MASK_BITS_2_MOD_4
@@ -123,7 +123,7 @@ fun isMultipleOfFive192(dw2: Long, dw1: Long, dw0: Long): Boolean {
     return ret
 }
 
-fun isMultipleOfFive256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Boolean {
+internal fun isMultipleOfFive256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Boolean {
     val m0 = MASK_BITS_0_MOD_4
     val m1 = MASK_BITS_1_MOD_4
     val m2 = MASK_BITS_2_MOD_4
@@ -143,13 +143,13 @@ fun isMultipleOfFive256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Boolean {
     return ret
 }
 
-fun c256IsMultipleOf10(x: C256): Boolean {
+internal fun c256IsMultipleOf10(x: C256): Boolean {
     if (x.bitLen < 4 || (x.dw0 and 1L) != 0L)
         return false
     return c256IsMultipleOf5(x)
 }
 
-fun c256IsMultipleOf5(x: C256): Boolean {
+internal fun c256IsMultipleOf5(x: C256): Boolean {
     val bitLen = x.bitLen
     return when {
         bitLen <= 64 -> isMultipleOfFive64(x.dw0)
@@ -159,7 +159,7 @@ fun c256IsMultipleOf5(x: C256): Boolean {
     }
 }
 
-fun c256SetPow2(z: C256, pow2: Int) {
+internal fun c256SetPow2(z: C256, pow2: Int) {
     if (pow2 !in 0..255)
         throw IllegalArgumentException()
     val shifted = 1L shl pow2
@@ -174,7 +174,7 @@ fun c256SetPow2(z: C256, pow2: Int) {
     z.updateDigitLenBitLen(digitLen, bitLen)
 }
 
-fun c256ToFloorDouble(x: C256): Double {
+internal fun c256ToFloorDouble(x: C256): Double {
     val hiBitLen = min(53, x.bitLen)
     val hiBitIndex = x.bitLen - hiBitLen
     val hiBits = getDwordAtBitIndex(x, hiBitIndex)
@@ -182,7 +182,7 @@ fun c256ToFloorDouble(x: C256): Double {
     return dHiBits
 }
 
-fun c256Set(z: C256, d: Double) {
+internal fun c256Set(z: C256, d: Double) {
     val dRaw = d.toRawBits()
     val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
     if (exp <= 63) {
@@ -197,7 +197,7 @@ fun c256Set(z: C256, d: Double) {
     c256SetShiftLeft(z, z, exp - 52)
 }
 
-fun c256ToNewDoubleDouble(x: C256): DoubleDouble {
+internal fun c256ToNewDoubleDouble(x: C256): DoubleDouble {
     val hiBitsLen = min(53, x.bitLen)
     val hiBitsIndex = x.bitLen - hiBitsLen
     val hiBits = getDwordAtBitIndex(x, hiBitsIndex)
@@ -223,7 +223,7 @@ fun c256ToNewDoubleDouble(x: C256): DoubleDouble {
     return DoubleDouble(dHiBits, dLoBits)
 }
 
-fun c256Set(z: C256, dd: DoubleDouble, pentad: Pentad) {
+internal fun c256Set(z: C256, dd: DoubleDouble, pentad: Pentad) {
     c256Set(z, dd.hi)
     if (dd.lo == 0.0)
         return
