@@ -747,7 +747,7 @@ class Decimal private constructor(
 
     /**
      * Returns the smallest representable value greater than this one,
-     * IEEE 754-2019 `nextUp` (§5.3.1).
+     * IEEE 754-2019 §5.3.1 `nextUp`.
      *
      * - For finite values, increments the last digit of the coefficient.
      * - +∞ returns +∞.
@@ -757,7 +757,7 @@ class Decimal private constructor(
 
     /**
      * Returns the largest representable value smaller than this one,
-     * IEEE 754-2019 `nextDown` (§5.3.1).
+     * IEEE 754-2019 §5.3.1 `nextDown`.
      *
      * - For finite values, decrements the last digit of the coefficient.
      * - −∞ returns −∞.
@@ -1195,42 +1195,68 @@ class Decimal private constructor(
     context(decContext: DecContext)
     operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other, decContext)
 
-    inline fun remainderTruncate(other: Decimal): Decimal = rem(other)
-    fun remainderNear(other: Decimal): Decimal = rem(other)
+    fun remainderTruncate(other: Decimal): Decimal = rem(other)
+
+    /**
+     * Returns the IEEE 754-2019 *near-remainder* of `this ÷ other` (§5.3.1).
+     *
+     * The result `r = this − (other × n)`, where `n` is the integer nearest
+     * to the exact quotient, ties broken to even. The magnitude of `r` is
+     * always `≤ |other| / 2`, so unlike `%`, the result can be negative
+     * even when both operands are positive.
+     *
+     * Special cases:
+     * | `this`  | `other` | result |
+     * |---------|---------|--------|
+     * | finite  | ±0      | NaN, signals [DecException.INVALID_OPERATION] |
+     * | ±∞      | any     | NaN, signals [DecException.INVALID_OPERATION] |
+     * | finite  | ±∞      | `this` |
+     * | NaN (either) | — | NaN, signals [DecException.INVALID_OPERATION] |
+     *
+     * The sign of an exact zero result matches the sign of `this`.
+     *
+     * @see remainderTruncate for the `%` operator behavior
+     */
+    fun remainderNear(other: Decimal): Decimal = d128RemNearImpl(this, other)
 
     // ── Rounding ──────────────────────────────────────────────────────────────
 
     /**
      * Rounds to the nearest integer, ties resolved to even (banker's rounding).
-     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTiesToEven`.
+     * Does not signal [DecException.INEXACT].
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven`.
      */
     fun roundToIntegralTiesToEven(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
 
     /**
      * Rounds to the nearest integer, ties resolved away from zero.
-     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTiesToAway`.
+     * Does not signal [DecException.INEXACT].
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway`.
      */
     fun roundToIntegralTiesToAway(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
 
     /**
      * Rounds toward zero (truncation).
-     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTowardZero`.
+     * Does not signal [DecException.INEXACT].
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero`.
      */
     fun roundToIntegralTowardZero(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
 
     /**
      * Rounds toward positive infinity (ceiling).
-     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTowardPositive`.
+     * Does not signal [DecException.INEXACT].
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardPositive`.
      */
     fun roundToIntegralTowardPositive(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
 
     /**
      * Rounds toward negative infinity (floor).
-     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTowardNegative`.
+     * Does not signal [DecException.INEXACT].
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardNegative`.
      */
     fun roundToIntegralTowardNegative(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
@@ -1238,7 +1264,7 @@ class Decimal private constructor(
     /**
      * Rounds to an integer using the rounding mode from [ctx], and **does** signal
      * [DecException.INEXACT] if the value is not already integral.
-     * IEEE 754-2019 `roundToIntegralExact`.
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
      */
     fun roundToIntegralExact(ctx: DecContext) =
         d128RoundToIntegral(this, ctx.decRounding, ctx, beQuiet = false)

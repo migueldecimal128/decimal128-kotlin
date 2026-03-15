@@ -92,7 +92,7 @@ internal fun d128RemTruncImpl(x: Decimal, y: Decimal): Decimal =
 internal fun d128RemTruncImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
     remImpl(isTrunc = true, x, y, ctx)
 
-internal fun remNearImpl(x: Decimal, y: Decimal): Decimal =
+internal fun d128RemNearImpl(x: Decimal, y: Decimal): Decimal =
     remImpl(isTrunc = false, x, y, DecContext.current())
 
 internal fun remNearImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
