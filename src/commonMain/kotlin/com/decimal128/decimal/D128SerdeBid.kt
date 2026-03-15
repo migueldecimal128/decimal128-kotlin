@@ -472,16 +472,6 @@ object D128SerdeBid {
      * @param str the input string in Intel BID128 hex format
      * @return a triple of (isValid, hiWord, loWord)
      */
-    fun parseIntelBidHex(str: String): Triple<Boolean, Long, Long> {
-        if (str.length !in 34..35 ||
-            str[0] != '[' || str[str.lastIndex] != ']' ||
-            str.length == 35 && str[17] != ',')
-            return Triple(false, 0L, 0L)
-        val (isValidHi, bid128Hi) = parseHexDword(str, 1)
-        val (isValidLo, bid128Lo) = parseHexDword(str, (str.length + 1) shr 1)
-        return Triple(isValidHi && isValidLo, bid128Hi, bid128Lo)
-    }
-
     fun parseIntelBidHex(pentad: Pentad, str: String) {
         if (str.length !in 34..35 ||
             str[0] != '[' || str[str.lastIndex] != ']' ||
