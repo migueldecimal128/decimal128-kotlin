@@ -68,7 +68,7 @@ C256Rep() {
         }
     }
 
-    fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
+    internal inline fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
         //this.packedLengths = packLengths(digitLen, bitLen)
         this.digitLen = digitLen
         this.bitLen = bitLen

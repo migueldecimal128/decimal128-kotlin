@@ -60,12 +60,12 @@ internal fun calcMaxDigitLenForBitLen(bitLen: Int): Int {
  * note that the value 0L returns 0
  */
 
-internal fun calcDigitLen64(dw0: Long): Int {
+internal inline fun calcDigitLen64(dw0: Long): Int {
     val bitLen = 64 - dw0.countLeadingZeroBits()
     return calcDigitLen64(bitLen, dw0)
 }
 
-internal fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
+internal inline fun calcDigitLen64(bitLen: Int, dw0: Long): Int {
     // this formula of
     // ((bitLen * 1233) ushr 12)
     // usually underestimates by 1
