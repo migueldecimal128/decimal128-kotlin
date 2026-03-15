@@ -531,6 +531,24 @@ internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long) : 
     return cmp210
 }
 
+internal fun ucmp128_128x64(x1: Long, x0: Long, y1: Long, y0: Long, z0: Long, pentad: Pentad) : Int {
+    val pp00Hi = unsignedMulHi(y0, z0)
+    val pp00Lo = y0 * z0
+    val p0 = pp00Lo
+    val cmp0 = unsignedCmp(x0, p0)
+
+    val pp10Hi = unsignedMulHi(y1, z0)
+    val pp10Lo = y1 * z0
+    sumU64(pentad, pp00Hi, pp10Lo)
+    val carry1 = pentad.dw1
+    val p1 = pentad.dw0
+    val cmp1 = unsignedCmp(x1, p1)
+    val cmp10 = if (cmp1 != 0) cmp1 else cmp0
+    val p2 = carry1 + pp10Hi
+    val cmp210 = if (p2 != 0L) -1 else cmp10
+    return cmp210
+}
+
 private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
 private const val S_U32_DIV_1E1 = 35
 

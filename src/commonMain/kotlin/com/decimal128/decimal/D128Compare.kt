@@ -10,10 +10,10 @@ import com.decimal128.decimal.Decimal.Companion.ZERO
 import com.decimal128.decimal.Decimal.Companion.hasNaN
 import kotlin.math.abs
 
-internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal): Int {
+internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        cmpMagnitudeFnzFnz(x, y)
+        cmpMagnitudeFnzFnz(x, y, pentad)
     } else when (signature) {
         FNZ_INF,
         ZER_FNZ,
@@ -480,7 +480,7 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         return if (xSignMask == 0) POS_ONEe0 else NEG_ONEe0
     val cmpMag =
         if (signature == FNZ_FNZ) {
-            cmpMagnitudeFnzFnz(x, y)
+            cmpMagnitudeFnzFnz(x, y, ctx.tmps.pentad1)
         } else when (signature) {
             ZER_FNZ,
             ZER_INF,
@@ -497,7 +497,7 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return mapToDecimal[(t + 1) and 0x03]
 }
 
-private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
+private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val x1 = x.dw1; val x0 = x.dw0
     val xQ = x.qExp()
     val y1 = y.dw1; val y0 = y.dw0
@@ -517,13 +517,13 @@ private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
         // x.qExp is larger
         // scale up x.coefficient
         if (pow10BitLen <= 64)
-            return -ucmp128_128x64(y1, y0, x1, x0, dw0Pow10)
-        return -ucmp128_128x64(y1, y0, dw1Pow10, dw0Pow10, x0)
+            return -ucmp128_128x64(y1, y0, x1, x0, dw0Pow10, pentad)
+        return -ucmp128_128x64(y1, y0, dw1Pow10, dw0Pow10, x0, pentad)
     } else {
         // scale up y
         if (pow10BitLen <= 64)
-            return ucmp128_128x64(x1, x0, y1, y0, dw0Pow10)
-        return ucmp128_128x64(x1, x0, dw1Pow10, dw0Pow10, y0)
+            return ucmp128_128x64(x1, x0, y1, y0, dw0Pow10, pentad)
+        return ucmp128_128x64(x1, x0, dw1Pow10, dw0Pow10, y0, pentad)
     }
 }
 
@@ -542,7 +542,7 @@ internal fun cmpMagnitudeImpl(x: Decimal, y: Decimal): Decimal =
 fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val signature = binopSignatureOf(x.steal, y.steal)
     val cmp = if (signature == FNZ_FNZ) {
-        cmpMagnitudeFnzFnz(x, y)
+        cmpMagnitudeFnzFnz(x, y, ctx.tmps.pentad1)
     } else when (signature) {
         ZER_ZER,
         INF_INF -> 0
@@ -569,7 +569,7 @@ internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
 fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        cmpTotalOrderMagnitudeFnzFnz(x, y)
+        cmpTotalOrderMagnitudeFnzFnz(x, y, ctx.tmps.pentad1)
     } else when (signature) {
         ZER_ZER -> x.qExp().compareTo(y.qExp())
         ZER_FNZ,
@@ -584,8 +584,8 @@ fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     }
 }
 
-private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
-    val cmp = cmpMagnitudeFnzFnz(x, y)
+private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
+    val cmp = cmpMagnitudeFnzFnz(x, y, pentad)
     if (cmp != 0)
         return cmp
     // If x and y represent the same floating-point datum:
