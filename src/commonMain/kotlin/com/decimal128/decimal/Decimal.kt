@@ -220,8 +220,15 @@ class Decimal private constructor(
         private const val HASH_CODE_NEG_INFINITY = 52414862
         private const val HASH_CODE_NAN = 52594569
 
+        /**
+         * Returns ±0 with the given sign and `qExp = 0`.
+         */
         fun zero(sign: Boolean): Decimal = if (sign) NEG_ZEROe0 else POS_ZEROe0
 
+        /**
+         * Returns ±0 with the given sign, with the quantum exponent clamped
+         * to `[ctx.qTiny, ctx.qMax]`.
+         */
         fun zero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
@@ -232,8 +239,14 @@ class Decimal private constructor(
             return zero
         }
 
+        /**
+         * Returns a `Decimal` with value [n].
+         */
         fun from(n: Int) = from(n.toLong())
 
+        /**
+         * Returns a `Decimal` with value [l].
+         */
         fun from(l: Long): Decimal {
             return when {
                 l == 0L -> ZERO
@@ -248,29 +261,21 @@ class Decimal private constructor(
         }
 
         /**
-         * Parses a decimal128 value from its textual representation.
+         * Parses a `Decimal` from its textual representation using the
+         * strict decimal128 interchange format.
          *
-         * This is a strict, context-free parser for the **decimal128** interchange
-         * format. It accepts only valid decimal128 encodings:
+         * The parser accepts:
+         * - an optional leading sign (`+` or `−`)
+         * - a decimal coefficient of up to **34 significant digits**
+         * - an optional exponent (`E` or `e`) within the decimal128 range
+         * - `"Infinity"`, `"+Infinity"`, `"-Infinity"`
+         * - `"NaN"`, `"sNaN"`, with an optional numeric payload
          *
-         *  • up to 34 decimal digits in the coefficient
-         *  • exponent within the decimal128 range (−6143 to +6144)
-         *  • optional leading sign
-         *  • no rounding is performed; the input must fit exactly
+         * No rounding is performed. Input that would require rounding to fit
+         * in decimal128 is rejected. For rounding-aware parsing, use
+         * `ctx.parse(str)` instead.
          *
-         * The parser produces a fully-formed `Decimal2` value using only the
-         * decimal128 rules. More flexible or environment-dependent parsing
-         * (including rounding, alternate syntaxes, or extended formats) should
-         * be performed via `DecContext.parse()`.
-         *
-         * Any malformed input results in:
-         *  ```
-         *  IllegalArgumentException("invalid decimal format")
-         *  ```
-         *
-         * @param str a textual representation of a decimal128 value
-         * @return the parsed `Decimal2` value
-         * @throws IllegalArgumentException if the text does not encode a valid decimal128
+         * @throws IllegalArgumentException if [str] is not a valid decimal128 value.
          */
         fun from(str: String, ctx: DecContext = DecContext.DECIMAL128) =
             D128ParsePrint.parseDecimal(str, ctx)
@@ -282,8 +287,16 @@ class Decimal private constructor(
             return dec
         }
 
+        /**
+         * Returns a quiet NaN with no payload.
+         * @param sign whether to set the sign bit (has no numeric meaning for NaNs).
+         */
         fun qNaN(sign: Boolean) = if (sign) NEG_QNAN else POS_QNAN
 
+        /**
+         * Returns a quiet NaN with a 128-bit diagnostic payload.
+         * If the payload exceeds 33 digits, the canonical no-payload NaN is returned.
+         */
         fun qNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
             val payloadIsZero = (dw1 or dw0) == 0L
             return when {
@@ -293,8 +306,16 @@ class Decimal private constructor(
             }
         }
 
+        /**
+         * Returns a signaling NaN with no payload.
+         * @param sign whether to set the sign bit.
+         */
         fun sNaN(sign: Boolean) = if (sign) NEG_SNAN else POS_SNAN
 
+        /**
+         * Returns a signaling NaN with a 128-bit diagnostic payload.
+         * If the payload exceeds 33 digits, the canonical no-payload NaN is returned.
+         */
         fun sNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
             val payloadIsZero = (dw1 or dw0) == 0L
             return when {
@@ -304,6 +325,11 @@ class Decimal private constructor(
             }
         }
 
+        /**
+         * Returns a quiet or signaling NaN with no payload.
+         * @param sign whether to set the sign bit.
+         * @param signaling `true` for sNaN, `false` (default) for qNaN.
+         */
         fun NaN(sign: Boolean, signaling: Boolean = false): Decimal {
             return when {
                 !signaling && !sign -> POS_QNAN
@@ -314,33 +340,20 @@ class Decimal private constructor(
         }
 
         /**
-         * Constructs a quiet or signaling NaN with an optional diagnostic payload.
+         * Returns a quiet or signaling NaN with an optional 128-bit diagnostic payload.
          *
-         * The payload is provided as a full 128-bit unsigned integer, split into a
-         * high 64-bit word (`payloadDw1`) and a low 64-bit word (`payloadDw0`). If the
-         * payload is zero, the canonical quiet NaN or signaling NaN (with no payload)
-         * is returned.
+         * The payload is split into a high word ([payloadDw1]) and low word ([payloadDw0]).
+         * If the combined payload is zero, the canonical no-payload NaN is returned.
          *
-         * Decimal128 NaN payloads have a canonical limit of **33 decimal digits**.
-         * If `allowOversizePayload` is `false` and the supplied payload exceeds this
-         * limit, the payload is clamped to the maximal canonical value of
-         * 33 nines.
+         * By default, payloads exceeding 33 decimal digits are clamped to the
+         * canonical maximum (33 nines). Pass `allowOversizePayload = true` to
+         * suppress clamping and accept the full 128-bit payload verbatim.
          *
-         * If `allowOversizePayload` is `true`, oversized payloads are accepted
-         * verbatim, up to the full 128-bit range, and no clamping is performed.
-         *
-         * The `signaling` flag selects between quiet NaN (`qNaN`) and signaling NaN
-         * (`sNaN`); the sign bit is preserved as provided, although it has no numeric
-         * meaning.
-         *
-         * @param sign whether the NaN has its sign bit set
-         * @param signaling whether to construct an `sNaN` instead of a `qNaN`
-         * @param payloadDw1 the high 64 bits of the diagnostic payload
-         * @param payloadDw0 the low 64 bits of the diagnostic payload
-         * @param allowOversizePayload whether payloads longer than the canonical
-         *        33-digit limit should be accepted verbatim rather than clamped
-         *
-         * @return a `Decimal2` representing a quiet or signaling NaN
+         * @param sign whether the NaN sign bit is set.
+         * @param signaling `true` for sNaN, `false` for qNaN.
+         * @param payloadDw1 high 64 bits of the diagnostic payload.
+         * @param payloadDw0 low 64 bits of the diagnostic payload (default 0).
+         * @param allowOversizePayload if `true`, skips payload size validation.
          */
         fun NaN(
             sign: Boolean = false, signaling: Boolean = false,
@@ -1142,18 +1155,18 @@ class Decimal private constructor(
 
     fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other, DecContext.current().tmps.pentad1)
 
+    // ── String Representation ─────────────────────────────────────────────────
+
     /**
-     * Returns the canonical text form of this value.
+     * Returns the canonical decimal text representation of this value.
      *
-     * Formatting is compatible with Java’s `BigDecimal.toString()`,
-     * including the use of an uppercase **'E'** for scientific notation.
+     * Formatting follows the same conventions as Java's `BigDecimal.toString()`:
+     * - Values are rendered with an uppercase `E` exponent when necessary.
+     * - The coefficient is never padded or truncated; all significant digits appear.
+     * - Special values render as `"Infinity"`, `"-Infinity"`, and `"NaN"`.
      *
-     * The exact formatting rules (plain decimal vs scientific notation)
-     * follow the same general conventions as `BigDecimal`: values with
-     * very large or very small exponents may be rendered using an
-     * `E`-notation exponent; others appear as a decimal-point string.
-     *
-     * @return a canonical decimal128 textual representation of this value
+     * The round-trip property holds: `Decimal.from(d.toString()) bitwiseEQ d`
+     * for all canonical values.
      */
     override fun toString(): String = D128ParsePrint.toString(this)
 
