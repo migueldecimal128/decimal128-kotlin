@@ -19,7 +19,7 @@ internal inline fun calcBitLen128(dw1: Long, dw0: Long): Int {
     return bitLen
 }
 
-internal inline fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
+internal fun calcBitLen192(dw2: Long, dw1: Long, dw0: Long): Int {
     val dw2IsZeroMask = ((dw2 or -dw2) shr 63).inv().toInt()
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
     val nlz2 = dw2.countLeadingZeroBits()

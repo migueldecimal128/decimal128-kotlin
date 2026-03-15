@@ -14,6 +14,101 @@ expect open class DecimalRep(steal: Int, dw1: Long, dw0: Long) {
     internal val dw0: Long
 }
 
+/**
+ * An IEEE 754-2019 decimal128 floating-point value.
+ *
+ * `Decimal` represents a 128-bit decimal floating-point number conforming to the
+ * IEEE 754-2019 standard. Unlike binary floating-point (`Double`, `Float`), decimal
+ * floating-point is exact for values that can be expressed as `coefficient × 10^exponent`,
+ * making it appropriate for financial, scientific, and any domain where decimal
+ * rounding behavior matters.
+ *
+ * ## Value Space
+ *
+ * Every finite `Decimal` represents a value of the form:
+ * ```
+ *   (−1)^sign × coefficient × 10^qExp
+ * ```
+ * where:
+ * - **sign** is 0 (positive) or 1 (negative)
+ * - **coefficient** is an integer with up to **34 decimal digits** (0–9999…9999)
+ * - **qExp** (quantum exponent) is an integer in the range **−6176 to +6111**
+ *
+ * In addition to finite values, `Decimal` represents:
+ * - **±Infinity** — overflow sentinel
+ * - **Quiet NaN (qNaN)** — propagating not-a-number, with an optional diagnostic payload
+ * - **Signaling NaN (sNaN)** — trapping not-a-number, with an optional diagnostic payload
+ *
+ * ## Cohorts and Quantum
+ *
+ * The same mathematical value can have multiple representations (a *cohort*).
+ * For example, `1`, `1.0`, and `1.00` are numerically equal but *not* the same
+ * `Decimal` — they have different quantum exponents (`qExp`). Arithmetic operations
+ * and [equals]/[compareTo] compare numerical value, ignoring the quantum.
+ * Use [isSameQuantum] to test whether two values share an exponent.
+ *
+ * ## Arithmetic and Context
+ *
+ * Arithmetic operators (`+`, `-`, `*`, `/`, `%`) are available in two forms:
+ *
+ * - **Context-free** (e.g., `a + b`): uses a default decimal128 context with
+ *   round-half-to-even and no exception trapping.
+ * - **Context-aware** (e.g., `with(ctx) { a + b }`): uses the supplied [DecContext]
+ *   for rounding mode, precision, exponent limits, and exception handling.
+ *
+ * For production use, prefer the context-aware operators so that rounding and
+ * overflow behavior is explicit.
+ *
+ * ## Construction
+ *
+ * Instances are **not** created directly. Use the factory functions on the companion object:
+ *
+ * ```kotlin
+ * Decimal.from(42)                           // from Int
+ * Decimal.from(42L)                          // from Long
+ * Decimal.from("3.14159")                    // from String (decimal128 range, no rounding)
+ * Decimal.from("3.14159", ctx)               // from String with context
+ * Decimal.ZERO                               // canonical +0e0
+ * Decimal.ONE                                // canonical +1e0
+ * Decimal.POS_INFINITY                       // +∞
+ * Decimal.NaN                                // quiet NaN
+ * ```
+ *
+ * ## Predefined Constants
+ *
+ * | Constant | Value |
+ * |---|---|
+ * | [ZERO] / [POS_ZEROe0] | +0 |
+ * | [NEG_ZEROe0] | −0 |
+ * | [ONE] / [POS_ONEe0] | +1 |
+ * | [NEG_ONEe0] | −1 |
+ * | [POS_INFINITY] / [INFINITY] | +∞ |
+ * | [NEG_INFINITY] | −∞ |
+ * | [NaN] / [POS_QNAN] | quiet NaN |
+ * | [NEG_QNAN] | negative quiet NaN |
+ * | [sNaN] / [POS_SNAN] | signaling NaN |
+ * | [NEG_SNAN] | negative signaling NaN |
+ *
+ * ## Equality and Ordering
+ *
+ * [equals] and [compareTo] (used by Kotlin's `<`, `>`, `<=`, `>=`, and sort functions)
+ * follow **Java-style numeric** semantics:
+ * - Cohort members compare as equal (`1.0 == 1.00`)
+ * - `−0 < +0`
+ * - All NaNs compare equal, and greater than every non-NaN
+ *
+ * Use [bitwiseEQ] for exact bitwise identity, including exponent and payload.
+ * Use [compareTotalOrderTo] for the IEEE 754-2019 *totalOrder* predicate.
+ * Use [compareQuiet] / [compareSignaling] variants for full IEEE 754-compliant comparisons.
+ *
+ * ## Thread Safety
+ *
+ * `Decimal` is **immutable**. Instances may be freely shared across threads.
+ * [DecContext] is *not* thread-safe and should be kept thread-local.
+ *
+ * @see DecContext
+ * @see DecRounding
+ */
 class Decimal private constructor(
     steal: Int,
     dw1: Long,
@@ -292,9 +387,16 @@ class Decimal private constructor(
 
     }
 
-    fun precision(): Int = if (isFinite()) stealDigitLen(steal) else Int.MIN_VALUE
-    fun qExponent(): Int = if (isFinite()) stealQexp(steal) else Int.MIN_VALUE
-    fun eExponent(): Int = if (isFinite()) stealEexp(steal) else Int.MIN_VALUE
+    internal fun validate(): Boolean {
+        val bitLen = stealBitLen(steal)
+        if (bitLen != calcBitLen128(dw1, dw0))
+            return false
+        if (stealDigitLen(steal) != calcDigitLen128(bitLen, dw1, dw0))
+            return false;
+        return true
+    }
+
+    // ── Classification ────────────────────────────────────────────────────────
 
     // IEEE754-2019 5.7.2
 
@@ -355,34 +457,40 @@ class Decimal private constructor(
     }
 
     /**
-     * isSignMinus(x) is true if and only if x has negative sign. isSignMinus applies to zeros and NaNs
-     * as well.
+     * Returns `true` if this value is negative (sign bit set).
+     *
+     * Applies to zeros and NaNs as well as finite and infinite values.
+     * Implements IEEE 754-2019 `isSignMinus` (§5.7.2).
      */
     fun isSignMinus(): Boolean = steal < 0 // IEEE754 5.7.2
+
+
+    /** Alias for [isSignMinus]. */
     fun isNegative(): Boolean = steal < 0
 
     /**
-     * isNormal(x) is true if and only if x is normal (not zero, subnormal, infinite, or NaN).
-     * In this implementation, the check for subnormal is hardwired to the
-     * decimal128 `eExp` adjusted (scientific) exponent -6143 and 34 digits.
+     * Returns `true` if this value is a normal finite number — not zero,
+     * subnormal, infinite, or NaN.
+     *
+     * The subnormal threshold is hardwired to the decimal128 minimum adjusted
+     * exponent of −6143, equivalent to `eExp >= −6143` and `digitLen <= 34`.
      */
     fun isNormal(): Boolean = stealIsFNZ(steal) &&
             stealDigitLen(steal) <= 34 &&
             stealEexp(steal) >= -6143
 
     /**
-     * isSubnormal(x) is true if and only if x is subnormal
-     * (not zero, normal, infinite, or NaN).
-     * In this implementation, the check for subnormal is hardwired to the
-     * decimal128 `eExp` adjusted (scientific) exponent -6143.
+     * Returns `true` if this value is subnormal — finite, non-zero, and
+     * below the normal range.
      *
-     * This last test is the same as: `qExp == -6176 && digitLen < 34`
+     * A decimal128 value is subnormal when its adjusted (scientific) exponent
+     * `eExp` is less than −6143. Equivalently: `qExp == −6176 && digitLen < 34`.
      */
     fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealEexp(steal) < -6143
 
     /**
-     * isFinite(x) is true if and only if x is zero, normal, or subnormal
-     * (not infinite or NaN).
+     * Returns `true` if this value is finite — zero, subnormal, or normal.
+     * Returns `false` for infinities and NaNs.
      */
     fun isFinite(): Boolean = stealIsFinite(steal)
 
@@ -393,15 +501,15 @@ class Decimal private constructor(
     fun isFiniteNonZero(): Boolean = stealIsFNZ(steal)
 
     /**
-     * isZero(x) is true if and only if x is ±0.
+     * Returns `true` if this value is ±0.
      *
-     * Recall that in the decimal floating point world, the zero cohort
-     * consists of all valid exponents with the zero coefficient.
-     *
-     * This version tests for Zero, even on oversized coefficients.
+     * In decimal floating-point, zero has an entire cohort of representations
+     * (one per valid exponent). All are considered zero by this predicate,
+     * regardless of the encoded exponent or sign.
      */
     fun isZero(): Boolean = stealIsZER(steal)
 
+    /** Returns `true` if this value is **not** ±0. */
     fun isNotZero() = !isZero()
 
     /**
@@ -414,34 +522,33 @@ class Decimal private constructor(
     fun isCanonicalZero(): Boolean = stealIsZER(steal)
 
     /**
-     * isInfinite(x) is true if and only if x is infinite.
-     *
-     * This includes positiveInfinity and negativeInfinity.
+     * Returns `true` if this value is ±∞.
      */
     fun isInfinite(): Boolean = stealIsINF(steal)
 
     /**
-     * isNaN(x) is true if and only if x is a NaN.
-     *
-     * NaN Not A Number values may be quiet or signaling.
+     * Returns `true` if this value is a NaN (quiet or signaling).
      */
     fun isNaN(): Boolean = stealIsNAN(steal)
 
     /**
-     * isSignaling(x) is true if and only if x is a signaling NaN.
+     * Returns `true` if this value is a *signaling* NaN.
      *
-     * Generally, when sNaN signaling NaN values are encountered during
-     * operations an environment flag is set and trapping to an
-     * optional exception handler may take place.
+     * Signaling NaNs trigger an [DecException.INVALID_OPERATION] exception
+     * (or set the corresponding flag) when they appear as operands to most
+     * arithmetic operations.
      */
     fun isSignaling(): Boolean = stealIsSNAN(steal)
 
     /**
-     * In the context of Decimal128 BID encoding, the only
-     * non-canonical encodings are coeff
-     * - finite: digits > 34
-     * - infinite: non-zero payload/coeff
-     * - NaN: payload digits > 33
+     * Returns `true` if this value is in its canonical encoding.
+     *
+     * Non-canonical encodings can arise from raw bit patterns (e.g., from
+     * interop with Intel BID or DPD formats) and are treated as equivalent
+     * to their canonical form by all arithmetic. The rules are:
+     * - **Finite**: coefficient must have at most 34 digits and `qExp` in −6176..6111
+     * - **Infinity**: coefficient/payload must be zero
+     * - **NaN**: payload must have at most 33 digits
      */
     fun isCanonical(): Boolean {
         val steal = steal
@@ -456,20 +563,23 @@ class Decimal private constructor(
         }
     }
 
+    // ── Quantum and Exponent ──────────────────────────────────────────────────
+
+
     // 5.7.3 Decimal operation
     /**
-     * Returns `true` if this value and [other] have the **same quantum**, i.e.,
-     * if they use the **same encoded exponent (qExp)**,
-     * following IEEE 754-2019 §5.7.3 Decimal2 Operation.
+     * Returns `true` if this value and [other] share the same *quantum* (same
+     * encoded exponent `qExp`), per IEEE 754-2019 §5.7.3.
      *
-     * In IEEE 754-2019 terminology, two decimal numbers have the *same quantum*
-     * when their exponents are identical after encoding. This is a structural
-     * property of the representation, not of numerical value. For example,
-     * `1.230 × 10⁻²` and `12.30 × 10⁻³` are numerically equal but **do not**
-     * have the same quantum because their exponents differ.
+     * Two values have the same quantum when their exponents are identical after
+     * encoding, regardless of whether their numerical values are equal.
+     * For non-finite values: two infinities share a quantum; a NaN shares a
+     * quantum only with another NaN.
      *
-     * This method performs no normalization or coefficient adjustments; it
-     * simply compares the raw `qExp` fields.
+     * ```kotlin
+     * Decimal.from("1.0").isSameQuantum(Decimal.from("2.0"))   // true  (both qExp = -1)
+     * Decimal.from("1.0").isSameQuantum(Decimal.from("1.00"))  // false (qExp -1 vs -2)
+     * ```
      */
     fun isSameQuantum(other: Decimal): Boolean {
         val stealX = steal
@@ -481,13 +591,57 @@ class Decimal private constructor(
         }
     }
 
+    /**
+     * Returns the quantum exponent `qExp` of this finite value, i.e., the power
+     * of ten by which the integer coefficient is scaled.
+     *
+     * Returns [Int.MIN_VALUE] and signals [DecException.INVALID_OPERATION] if
+     * called on a non-finite value.
+     */
+    fun quantumExponent(ctx: DecContext): Int {
+        if (isFinite())
+            return qExp()
+        ctx.signalInvalid()
+        return Int.MIN_VALUE
+    }
+
+    /**
+     * Returns the adjusted (scientific) exponent `eExp`, defined as
+     * `qExp + digitLen − 1`, or [Int.MIN_VALUE] for non-finite values.
+     *
+     * This is the exponent used by [logB] and [isNormal]/[isSubnormal] checks.
+     */
+    fun eExponent(): Int = if (isFinite()) stealEexp(steal) else Int.MIN_VALUE
+
+    /**
+     * Returns the number of significant decimal digits in the coefficient, or
+     * [Int.MIN_VALUE] for non-finite values.
+     */
+    fun precision(): Int = if (isFinite()) stealDigitLen(steal) else Int.MIN_VALUE
+
+
+    // ── Unary Operations ──────────────────────────────────────────────────────
+
+    // ── 5.5 Quiet-computational operations ────────────────────────────────────
+    // -- 5.5.1 Sign bit operations ---------------------------------------------
+    /**
+     * Returns the absolute value of this decimal.
+     *
+     * The sign bit is cleared. For NaNs, the sign is cleared without signaling.
+     */
     fun abs() = if (steal < 0) negate() else this
 
+    /**
+     * Returns this value with its sign bit flipped.
+     *
+     * Negate is exact: no rounding, no exceptions. `−(−x) == x` always.
+     * For NaNs (including sNaNs), the sign bit is toggled without signaling.
+     */
     fun negate(): Decimal {
         val steal = steal
         val newSign = !stealSignFlag(steal)
         when {
-            stealIsZER(steal) -> if (stealQexp(steal) == 0) return zero(newSign)
+            stealIsZER(steal) && stealQexp(steal) == 0 -> return zero(newSign)
             stealIsINF(steal) -> return infinity(newSign)
             stealIsNAN(steal) && stealBitLen(steal) == 0 ->
                     return NaN(newSign, signaling = stealIsSNAN(steal))
@@ -495,19 +649,35 @@ class Decimal private constructor(
         return Decimal(steal xor BIT31, dw1, dw0)
     }
 
+    /**
+     * Returns this value with the sign bit copied from [signDonor].
+     *
+     * This is the IEEE 754-2019 `copySign` operation (§5.5.1). The magnitude
+     * and type of `this` are unchanged; only the sign bit is replaced.
+     * No exceptions are signaled.
+     */
     fun copySign(signDonor: Decimal): Decimal =
         if (this.sign == signDonor.sign) this else this.negate()
 
-    internal fun validate(): Boolean {
-        val bitLen = stealBitLen(steal)
-        if (bitLen != calcBitLen128(dw1, dw0))
-            return false
-        if (stealDigitLen(steal) != calcDigitLen128(bitLen, dw1, dw0))
-            return false;
-        return true
-    }
+    /**
+     * Returns a copy of this value. Because `Decimal` is immutable, this
+     * always returns `this`. Provided for IEEE 754-2019 completeness (§5.5.1).
+     */
+    fun copy(): Decimal = this
 
-    // IEEE754-2008 5.3.3
+    // ── Scaling and Quantum Adjustment ───────────────────────────────────────
+
+    /**
+     * Returns `logB(this)` — the adjusted (scientific) exponent as a `Decimal`,
+     * following IEEE 754-2019 §5.3.3.
+     *
+     * | Input | Result |
+     * |---|---|
+     * | finite non-zero | `Decimal.from(eExp)` |
+     * | ±0 | −∞, signals [DecException.DIVISION_BY_ZERO] |
+     * | ±∞ | +∞ |
+     * | NaN | NaN, signals [DecException.INVALID_OPERATION] |
+     */
     fun logB(ctx: DecContext): Decimal {
         val steal = steal
         return when {
@@ -519,6 +689,13 @@ class Decimal private constructor(
 
     }
 
+    /**
+     * Returns `this × 10^pow10Delta`, rounded as needed within [ctx].
+     *
+     * Equivalent to IEEE 754-2019 `scaleB`. The exponent delta is clamped to
+     * ±100 000 internally to prevent intermediate overflow.
+     * Infinities pass through unchanged; NaNs signal [DecException.INVALID_OPERATION].
+     */
     fun scaleB(pow10Delta: Int, ctx: DecContext): Decimal {
         val steal = steal
         return when {
@@ -533,20 +710,47 @@ class Decimal private constructor(
         }
     }
 
-    fun quantumExponent(ctx: DecContext): Int {
-        if (isFinite())
-            return qExp()
-        ctx.signalInvalid()
-        return Int.MIN_VALUE
-    }
-
-    fun nextUp(ctx: DecContext): Decimal = nextUpOrDown(isUp = true, this, ctx)
-
-    fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
-
+    /**
+     * Returns this value with trailing fractional zeros removed, reducing the
+     * quantum exponent as far as possible without changing the numerical value.
+     *
+     * ```kotlin
+     * Decimal.from("1.200").stripTrailingZeros(ctx)  // → "1.2"
+     * Decimal.from("120").stripTrailingZeros(ctx)    // → "1.2E+2" (or "120" if no trailing zeros)
+     * ```
+     */
     fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZerosImpl(this, ctx)
 
+    /**
+     * Returns this value rescaled so that its quantum exponent equals
+     * `−decimalScale`, rounding if necessary under [ctx].
+     *
+     * `decimalScale` is the number of digits to the right of the decimal point.
+     * For example, `withScale(2, ctx)` produces a value like `1.23`.
+     *
+     * This is equivalent to [quantize] with an implicit quantum of `10^(-decimalScale)`.
+     */
     fun withScale(decimalScale: Int, ctx: DecContext): Decimal = withScale(this, decimalScale, ctx)
+
+    /**
+     * Returns the smallest representable value greater than this one,
+     * IEEE 754-2019 `nextUp` (§5.3.1).
+     *
+     * - For finite values, increments the last digit of the coefficient.
+     * - +∞ returns +∞.
+     * - NaN signals [DecException.INVALID_OPERATION].
+     */
+    fun nextUp(ctx: DecContext): Decimal = nextUpOrDown(isUp = true, this, ctx)
+
+    /**
+     * Returns the largest representable value smaller than this one,
+     * IEEE 754-2019 `nextDown` (§5.3.1).
+     *
+     * - For finite values, decrements the last digit of the coefficient.
+     * - −∞ returns −∞.
+     * - NaN signals [DecException.INVALID_OPERATION].
+     */
+    fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
 
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
@@ -799,10 +1003,6 @@ class Decimal private constructor(
         d128CompareQuiet754(this, other, ctx) != IEEE754_UNORDERED
 
 
-    // this is only provided for IEEE754-2019 completeness.
-    // in an immutable world it serves no purpose
-    fun copy(): Decimal = Decimal(steal, dw1, dw0)
-
     override fun hashCode(): Int {
         val steal = steal
         when {
@@ -882,180 +1082,229 @@ class Decimal private constructor(
     inline fun remainderTruncate(other: Decimal): Decimal = rem(other)
     fun remainderNear(other: Decimal): Decimal = rem(other)
 
+    // ── Rounding ──────────────────────────────────────────────────────────────
+
+    /**
+     * Rounds to the nearest integer, ties resolved to even (banker's rounding).
+     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTiesToEven`.
+     */
     fun roundToIntegralTiesToEven(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
 
+    /**
+     * Rounds to the nearest integer, ties resolved away from zero.
+     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTiesToAway`.
+     */
     fun roundToIntegralTiesToAway(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
 
+    /**
+     * Rounds toward zero (truncation).
+     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTowardZero`.
+     */
     fun roundToIntegralTowardZero(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
 
+    /**
+     * Rounds toward positive infinity (ceiling).
+     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTowardPositive`.
+     */
     fun roundToIntegralTowardPositive(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
 
+    /**
+     * Rounds toward negative infinity (floor).
+     * Does not signal [DecException.INEXACT]. IEEE 754-2019 `roundToIntegralTowardNegative`.
+     */
     fun roundToIntegralTowardNegative(ctx: DecContext) =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
 
+    /**
+     * Rounds to an integer using the rounding mode from [ctx], and **does** signal
+     * [DecException.INEXACT] if the value is not already integral.
+     * IEEE 754-2019 `roundToIntegralExact`.
+     */
     fun roundToIntegralExact(ctx: DecContext) =
         d128RoundToIntegral(this, ctx.decRounding, ctx, beQuiet = false)
 
+    // ── Conversion to Kotlin Integer Types ───────────────────────────────────
+
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTiesToEven`.
-     * Rounds to nearest, ties to even. Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] using round-half-to-even.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongTiesToEven(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTiesToAway`.
-     * Rounds to nearest, ties away from zero. Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] using round-half-away-from-zero.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongTiesToAway(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardZero`.
-     * Rounds toward zero (truncation). Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] by truncating toward zero.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongTowardZero(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardPositive`.
-     * Rounds toward positive infinity (ceiling). Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] by rounding toward positive infinity (ceiling).
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongTowardPositive(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerTowardNegative`.
-     * Rounds toward negative infinity (floor). Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] by rounding toward negative infinity (floor).
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongTowardNegative(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTiesToEven`.
-     * Rounds to nearest, ties to even. Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] using round-half-to-even,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongExactTiesToEven(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTiesToAway`.
-     * Rounds to nearest, ties away from zero. Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] using round-half-away-from-zero.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongExactTiesToAway(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardZero`.
-     * Rounds toward zero (truncation). Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] by truncating toward zero,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongExactTowardZero(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardPositive`.
-     * Rounds toward positive infinity (ceiling). Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] by rounding toward positive infinity,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongExactTowardPositive(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to a [Long] using IEEE 754-2019 `convertToIntegerExactTowardNegative`.
-     * Rounds toward negative infinity (floor). Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Long] by rounding toward negative infinity,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toLongExactTowardNegative(ctx: DecContext) =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTiesToEven`.
-     * Rounds to nearest, ties to even. Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] using round-half-to-even.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntTiesToEven(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTiesToAway`.
-     * Rounds to nearest, ties away from zero. Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] using round-half-away-from-zero.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntTiesToAway(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardZero`.
-     * Rounds toward zero (truncation). Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] by truncating toward zero.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntTowardZero(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardPositive`.
-     * Rounds toward positive infinity (ceiling). Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] by rounding toward positive infinity (ceiling).
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntTowardPositive(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerTowardNegative`.
-     * Rounds toward negative infinity (floor). Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] by rounding toward negative infinity (floor).
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntTowardNegative(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTiesToEven`.
-     * Rounds to nearest, ties to even. Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] using round-half-to-even,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntExactTiesToEven(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTiesToAway`.
-     * Rounds to nearest, ties away from zero. Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] using round-half-away-from-zero.
+     * Does not signal [DecException.INEXACT].
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntExactTiesToAway(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardZero`.
-     * Rounds toward zero (truncation). Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] by truncating toward zero,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntExactTowardZero(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardPositive`.
-     * Rounds toward positive infinity (ceiling). Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] by rounding toward positive infinity,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntExactTowardPositive(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
     /**
-     * Converts this decimal to an [Int] using IEEE 754-2019 `convertToIntegerExactTowardNegative`.
-     * Rounds toward negative infinity (floor). Signals [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE] on overflow, NaN, or infinity.
+     * Converts this decimal to [Int] by rounding toward negative infinity,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
      */
     fun toIntExactTowardNegative(ctx: DecContext) =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
