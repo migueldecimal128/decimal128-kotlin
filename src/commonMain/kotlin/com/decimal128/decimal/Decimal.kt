@@ -752,6 +752,125 @@ class Decimal private constructor(
      */
     fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
 
+    // ── Comparison ────────────────────────────────────────────────────────────
+
+    /**
+     * Compares this decimal128 value with [other] using **Java-style numeric
+     * comparison** semantics. This is the default comparison used by the
+     * Kotlin `Comparable` interface.
+     *
+     * The ordering matches Java’s `Double.compare` / `BigDecimal.compareTo`
+     * behavior:
+     *
+     *  • All **finite non-zero** cohort members compare as **equal**
+     *    (encoding differences such as trailing zeros are ignored).
+     *
+     *  • **−0 < +0**, matching Java’s signed-zero tie-break rule.
+     *
+     *  • Any finite value is less than **+∞**, and greater than **−∞**.
+     *
+     *  • **NaN** compares greater than all non-NaN values, and all NaNs
+     *    compare equal to each other (payload and sNaN/qNaN differences
+     *    are ignored).
+     *
+     * This comparison performs **no IEEE-754 signaling**, and does not
+     * examine **NaN signs** or **NaN payloads**. It is a pure, deterministic,
+     * context-free ordering suitable for sorting, sets, and all Kotlin/Java
+     * comparison operations.
+     *
+     * For IEEE-754–compliant comparisons (quiet/signaling, ordered/unordered,
+     * totalOrder, etc.), use the operations provided by `DecContext`.
+     *
+     * @return −1, 0, or +1 according to Java-style numeric ordering.
+     */
+    override fun compareTo(other: Decimal): Int = compareJavaStyleTo(other)
+
+
+    /**
+     * Java-style numeric equality.
+     *
+     * Returns `true` when both values represent the same number, ignoring the
+     * quantum. Signed zeros are equal. All NaNs are equal to each other.
+     * Equivalent to `compareTo(other) == 0`.
+     */
+    override fun equals(other: Any?): Boolean =
+        other is Decimal && equalsJavaStyle(other)
+
+    /**
+     * Returns a hash code consistent with [equals]:
+     * values in the same numerical cohort produce the same hash code,
+     * all NaNs hash identically, and ±0 hash to distinct constants.
+     */
+    override fun hashCode(): Int {
+        val steal = steal
+        when {
+            stealIsFNZ(steal) -> {
+                val qExp = qExp()
+                var r1 = dw1
+                var r0 = dw0
+                var rQ = qExp
+                if (qExp < DECIMAL128_QMAX_6111) {
+                    val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
+                    val tmps = DecContext.current().tmps
+                    val t = tmps.mdecArg1
+                    t.c256Set128(dw1, dw0)
+                    val ntzdActual = c256CountTrailingZeroDigitsDestructive(t)
+                    val ntzdNormalized = min(maxNtzdClamp, ntzdActual)
+                    if (ntzdNormalized > 0) {
+                        t.c256Set128(dw1, dw0)
+                        c256SetDivPow10(t, t, ntzdNormalized, tmps.pentad1)
+                        r1 = t.dw1
+                        r0 = t.dw0
+                        rQ = qExp + ntzdNormalized
+                    }
+                }
+                val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
+                val hcQExp = rQ * 31 * 31
+                val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
+                val hcDw0 = (r0 xor (r0 shr 32)).toInt()
+                return hcSign + hcQExp + hcDw1 + hcDw0
+            }
+
+            stealIsZER(steal) -> return if (steal < 0) HASH_CODE_NEG_ZERO else HASH_CODE_POS_ZERO
+            stealIsINF(steal) -> return if (steal < 0) HASH_CODE_NEG_INFINITY else HASH_CODE_POS_INFINITY
+            else -> return HASH_CODE_NAN
+        }
+    }
+
+    /**
+     * Returns `true` if and only if this `Decimal` value has the exact same
+     * internal bitwise representation as [other].
+     *
+     * This performs a strict, field-by-field comparison of the underlying
+     * 128-bit Decimal128 value, including:
+     *
+     *  * the sign bit
+     *  * the exponent field (including the encoded NaN/sNaN pattern)
+     *  * the coefficient field (including any NaN payload bits)
+     *
+     * No numeric interpretation is applied. This is therefore stricter than
+     * IEEE 754 *numeric equality*. In particular:
+     *
+     *  * `+0` and `-0` are **not** equal
+     *  * all NaNs are unequal unless every representation bit matches
+     *  * canonical vs non-canonical encodings would differ (although this
+     *    implementation produces only canonical encodings)
+     *
+     * This operator is intended for conformance and regression testing, where
+     * the produced Decimal128 representation must match the expected value
+     * exactly.
+     *
+     * Example:
+     *
+     * ```
+     * assertTrue(observed bitwiseEQ expected)
+     * ```
+     */
+    infix fun bitwiseEQ(other: Decimal): Boolean =
+        ((this.steal - other.steal).toLong() or
+                (this.dw1 - other.dw1) or
+                (this.dw0 - other.dw0)) == 0L
+
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
      * *totalOrder* relation.
@@ -790,20 +909,202 @@ class Decimal private constructor(
 
     fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other, DecContext.current().tmps.pentad1)
 
+    /** Returns `true` if `totalOrder(this, other)` — i.e., `this ≤ other` in total order. */
     fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
 
     /**
-     * Compares the *magnitudes* of two decimal128 values according to the
-     * IEEE-754-2019 totalOrder rules (see §§5.10 and 5.7.2).
+     * Like [compareTotalOrderTo] but compares magnitudes only (ignoring sign).
+     * IEEE 754-2019 `totalOrderMag`.
      *
-     * This handles ordering among zeros, finite non-zero values, infinities,
-     * and NaNs. Sign is *not* considered here.
-     *
-     * @return −1, 0, or +1 describing the total-order magnitude relation.
+     * @return −1, 0, or +1.
      */
     fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other, DecContext.current().tmps.pentad1)
 
+    /** Returns `true` if `totalOrderMag(this, other)` — i.e., `|this| ≤ |other|` in total order. */
     fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
+
+    /**
+     * Compares magnitudes numerically (ignoring sign), without the total-order
+     * tie-breaking on quantum.
+     *
+     * @return −1, 0, or +1.
+     */
+    fun magnitudeCompareTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other, DecContext.current().tmps.pentad1)
+
+    // ── IEEE 754-2019 Comparison Predicates (§5.6.1) ─────────────────────────
+
+    /**
+     * IEEE 754-2019 `compareQuietEqual`: returns `true` if `this == other`
+     * numerically. Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) == IEEE754_EQ
+
+    /**
+     * IEEE 754-2019 `compareQuietNotEqual`: returns `true` if `this ≠ other`.
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietNotEqual(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) != IEEE754_EQ
+
+    /**
+     * IEEE 754-2019 `compareQuietGreater`: returns `true` if `this > other`.
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietGreater(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) == IEEE754_GT
+
+    /**
+     * IEEE 754-2019 `compareQuietNotGreater`: returns `true` if `this` is not greater
+     * than `other` (i.e., less, equal, or unordered).
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietNotGreater(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) != IEEE754_GT
+
+    fun compareQuietGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
+    }
+
+    fun compareQuietLess(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) == IEEE754_LT
+
+    fun compareQuietLessEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
+    }
+
+    fun compareQuietUnordered(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) == IEEE754_UNORDERED
+
+    /**
+     * IEEE 754-2019 `compareQuietLessUnordered`: returns `true` if `this < other`
+     * **or** either operand is NaN.
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietLessUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    /**
+     * IEEE 754-2019 `compareQuietGreaterUnordered`: returns `true` if `this > other`
+     * **or** either operand is NaN.
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    /**
+     * IEEE 754-2019 `compareQuietNotLess`: returns `true` if `this` is not less
+     * than `other`.
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietNotLess(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) != IEEE754_LT
+
+    /**
+     * Returns the full four-valued [Compare754Result] for a quiet comparison.
+     * The result is one of [IEEE754_LT], [IEEE754_EQ], [IEEE754_GT], or [IEEE754_UNORDERED].
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuiet(other: Decimal, ctx: DecContext): Compare754Result =
+        d128CompareQuiet754(this, other, ctx)
+
+    /**
+     * IEEE 754-2019 `compareQuietUnordered`: returns `true` if either operand is NaN.
+     * Does **not** signal on quiet NaN operands.
+     */
+    fun compareQuietOrdered(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareQuiet754(this, other, ctx) != IEEE754_UNORDERED
+
+    /**
+     * IEEE 754-2019 `compareSignalingEqual`: returns `true` if `this == other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN
+     * (quiet or signaling).
+     */
+    fun compareSignalingEqual(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareSignaling754(this, other, ctx) == IEEE754_EQ
+
+    /**
+     * IEEE 754-2019 `compareSignalingGreater`: returns `true` if `this > other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingGreater(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareSignaling754(this, other, ctx) == IEEE754_GT
+
+    /**
+     * IEEE 754-2019 `compareSignalingGreaterEqual`: returns `true` if `this >= other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
+    }
+
+    /**
+     * IEEE 754-2019 `compareSignalingLess`: returns `true` if `this < other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingLess(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareSignaling754(this, other, ctx) == IEEE754_LT
+
+    /**
+     * IEEE 754-2019 `compareSignalingLessEqual`: returns `true` if `this <= other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingLessEqual(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
+    }
+
+    /**
+     * IEEE 754-2019 `compareSignalingNotEqual`: returns `true` if `this ≠ other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingNotEqual(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareSignaling754(this, other, ctx) != IEEE754_EQ
+
+    /**
+     * IEEE 754-2019 `compareSignalingNotGreater`: returns `true` if `this` is
+     * not greater than `other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingNotGreater(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareSignaling754(this, other, ctx) != IEEE754_GT
+
+    /**
+     * IEEE 754-2019 `compareSignalingLessUnordered`: returns `true` if
+     * `this < other` **or** either operand is NaN.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+
+    fun compareSignalingLessUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
+    }
+
+    /**
+     * IEEE 754-2019 `compareSignalingNotLess`: returns `true` if `this` is
+     * not less than `other`.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingNotLess(other: Decimal, ctx: DecContext): Boolean =
+        d128CompareSignaling754(this, other, ctx) != IEEE754_LT
+
+
+    /**
+     * IEEE 754-2019 `compareSignalingGreaterUnordered`: returns `true` if
+     * `this > other` **or** either operand is NaN.
+     * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
+     */
+    fun compareSignalingGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other, ctx)
+        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
+    }
 
     /**
      * Compares this decimal128 value with [other] using **Java-style numeric
@@ -840,204 +1141,6 @@ class Decimal private constructor(
     fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other, DecContext.current().tmps.pentad1)
 
     fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other, DecContext.current().tmps.pentad1)
-
-    /**
-     * Compares this decimal128 value with [other] using **Java-style numeric
-     * comparison** semantics. This is the default comparison used by the
-     * Kotlin `Comparable` interface.
-     *
-     * The ordering matches Java’s `Double.compare` / `BigDecimal.compareTo`
-     * behavior:
-     *
-     *  • All **finite non-zero** cohort members compare as **equal**
-     *    (encoding differences such as trailing zeros are ignored).
-     *
-     *  • **−0 < +0**, matching Java’s signed-zero tie-break rule.
-     *
-     *  • Any finite value is less than **+∞**, and greater than **−∞**.
-     *
-     *  • **NaN** compares greater than all non-NaN values, and all NaNs
-     *    compare equal to each other (payload and sNaN/qNaN differences
-     *    are ignored).
-     *
-     * This comparison performs **no IEEE-754 signaling**, and does not
-     * examine **NaN signs** or **NaN payloads**. It is a pure, deterministic,
-     * context-free ordering suitable for sorting, sets, and all Kotlin/Java
-     * comparison operations.
-     *
-     * For IEEE-754–compliant comparisons (quiet/signaling, ordered/unordered,
-     * totalOrder, etc.), use the operations provided by `DecContext`.
-     *
-     * @return −1, 0, or +1 according to Java-style numeric ordering.
-     */
-    override fun compareTo(other: Decimal): Int = compareJavaStyleTo(other)
-
-    /**
-     * Java-style equality: compares numerical value only.
-     * Signed zeros compare as equal, and all NaNs compare equal to each other.
-     */
-    override fun equals(other: Any?): Boolean =
-        other is Decimal && equalsJavaStyle(other)
-
-    /**
-     * Returns `true` if and only if this `Decimal2` value has the exact same
-     * internal bitwise representation as [other].
-     *
-     * This performs a strict, field-by-field comparison of the underlying
-     * 128-bit Decimal128 value, including:
-     *
-     *  * the sign bit
-     *  * the exponent field (including the encoded NaN/sNaN pattern)
-     *  * the coefficient field (including any NaN payload bits)
-     *
-     * No numeric interpretation is applied. This is therefore stricter than
-     * IEEE 754 *numeric equality*. In particular:
-     *
-     *  * `+0` and `-0` are **not** equal
-     *  * all NaNs are unequal unless every representation bit matches
-     *  * canonical vs non-canonical encodings would differ (although this
-     *    implementation produces only canonical encodings)
-     *
-     * This operator is intended for conformance and regression testing, where
-     * the produced Decimal128 representation must match the expected value
-     * exactly.
-     *
-     * Example:
-     *
-     * ```
-     * assertTrue(observed bitwiseEQ expected)
-     * ```
-     */
-    infix fun bitwiseEQ(other: Decimal): Boolean =
-        ((this.steal - other.steal).toLong() or
-                (this.dw1 - other.dw1) or
-                (this.dw0 - other.dw0)) == 0L
-
-    fun magnitudeCompareTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other, DecContext.current().tmps.pentad1)
-
-    // IEEE754-2019 5.6.1 Comparisons
-
-    fun compareQuiet(other: Decimal, ctx: DecContext): Compare754Result =
-        d128CompareQuiet754(this, other, ctx)
-
-    fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_EQ
-
-    fun compareQuietNotEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_EQ
-
-    fun compareSignalingEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) == IEEE754_EQ
-
-    fun compareSignalingGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) == IEEE754_GT
-
-    fun compareSignalingGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
-        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
-    }
-
-    fun compareSignalingLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) == IEEE754_LT
-
-    fun compareSignalingLessEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
-        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
-    }
-
-    fun compareSignalingNotEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) != IEEE754_EQ
-
-    fun compareSignalingNotGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) != IEEE754_GT
-
-    fun compareSignalingLessUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
-        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
-    }
-
-    fun compareSignalingNotLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) != IEEE754_LT
-
-    fun compareSignalingGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
-        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
-    }
-
-    fun compareQuietGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_GT
-
-    fun compareQuietGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
-        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
-    }
-
-    fun compareQuietLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_LT
-
-    fun compareQuietLessEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
-        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
-    }
-
-    fun compareQuietUnordered(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_UNORDERED
-
-    fun compareQuietNotGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_GT
-
-    fun compareQuietLessUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
-        return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
-    }
-
-    fun compareQuietNotLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_LT
-
-    fun compareQuietGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
-        return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
-    }
-
-    fun compareQuietOrdered(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_UNORDERED
-
-
-    override fun hashCode(): Int {
-        val steal = steal
-        when {
-            stealIsFNZ(steal) -> {
-                val qExp = qExp()
-                var r1 = dw1
-                var r0 = dw0
-                var rQ = qExp
-                if (qExp < DECIMAL128_QMAX_6111) {
-                    val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
-                    val tmps = DecContext.current().tmps
-                    val t = tmps.mdecArg1
-                    t.c256Set128(dw1, dw0)
-                    val ntzdActual = c256CountTrailingZeroDigitsDestructive(t)
-                    val ntzdNormalized = min(maxNtzdClamp, ntzdActual)
-                    if (ntzdNormalized > 0) {
-                        t.c256Set128(dw1, dw0)
-                        c256SetDivPow10(t, t, ntzdNormalized, tmps.pentad1)
-                        r1 = t.dw1
-                        r0 = t.dw0
-                        rQ = qExp + ntzdNormalized
-                    }
-                }
-                val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
-                val hcQExp = rQ * 31 * 31
-                val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
-                val hcDw0 = (r0 xor (r0 shr 32)).toInt()
-                return hcSign + hcQExp + hcDw1 + hcDw0
-            }
-
-            stealIsZER(steal) -> return if (steal < 0) HASH_CODE_NEG_ZERO else HASH_CODE_POS_ZERO
-            stealIsINF(steal) -> return if (steal < 0) HASH_CODE_NEG_INFINITY else HASH_CODE_POS_INFINITY
-            else -> return HASH_CODE_NAN
-        }
-    }
 
     /**
      * Returns the canonical text form of this value.
