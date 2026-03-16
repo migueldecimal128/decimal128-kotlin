@@ -60,15 +60,18 @@ object D128ParsePrint {
      * Error messages are returned as `String` constant values
      * to reduce any performance overhead for failed parse attempts.
      */
-    fun parseDecimalOrErrorString(txt: Latin1Iterator, ctx: DecContext): Any? {
-        var d: Any? = parseFiniteValueText(txt, ctx)
-        if (d is Decimal || d is String)
-            return d
-        d = parseInfinityText(txt)
-        if (d is Decimal)
-            return d
-        d = parseNanText(txt, ctx)
-        return d
+    private fun parseDecimalOrErrorString(txt: Latin1Iterator, ctx: DecContext): Any? {
+        var ch = txt.nextChar()
+        if (ch == '+' || ch == '-')
+            ch = txt.nextChar()
+        txt.reset()
+        val chUpper = (ch.code and 0xFFDF).toChar()
+        when {
+            ch >= '0' && ch <= '9' || ch == '.' -> return parseFiniteValueText(txt, ctx)
+            chUpper == 'I' -> return parseInfinityText(txt)
+            chUpper == 'N' || chUpper == 'S' || chUpper == 'Q' -> return parseNanText(txt)
+            else -> return null
+        }
     }
 
     /**
@@ -106,7 +109,6 @@ object D128ParsePrint {
     }
 
     fun parseInfinityText(txt: Latin1Iterator): Decimal? {
-        txt.reset()
         var ch = txt.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -180,7 +182,6 @@ object D128ParsePrint {
         parseNanText(StringLatin1Iterator(str), ctx)
 
     fun parseNanText(txt: Latin1Iterator, ctx: DecContext = DecContext.DECIMAL128): Decimal? {
-        txt.reset()
         var ch = txt.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -263,7 +264,6 @@ object D128ParsePrint {
         var hasDot = false
         var expSign = false
 
-        txt.reset()
         var ch = txt.nextChar()
         if (ch.code == 0)
             return "empty string"
