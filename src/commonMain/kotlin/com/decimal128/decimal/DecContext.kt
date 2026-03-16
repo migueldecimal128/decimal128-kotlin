@@ -11,7 +11,7 @@ data class DecContext(
     val decFormat: DecFormat = DecFormat.DECIMAL_128,
     val decRounding: DecRounding = DecRounding.ROUND_TIES_TO_EVEN,
     val decPrefs: DecPrefs = DecPrefs.DEFAULT,
-    val decTraps: DecTraps? = null,
+    val decTrapHandlers: DecTrapHandlers? = null,
     val decFlags: DecFlags = DecFlags(),
 ) {
     val precision: Int
@@ -46,71 +46,76 @@ data class DecContext(
     }
 
     fun with(newDecFormat: DecFormat) =
-        DecContext(newDecFormat, decRounding, decPrefs, decTraps, decFlags)
+        DecContext(newDecFormat, decRounding, decPrefs, decTrapHandlers, decFlags)
 
     fun with(newDecRounding: DecRounding) =
-        DecContext(decFormat, newDecRounding, decPrefs, decTraps, decFlags)
+        DecContext(decFormat, newDecRounding, decPrefs, decTrapHandlers, decFlags)
 
     fun with(newDecPrefs: DecPrefs) =
-        DecContext(decFormat, decRounding, newDecPrefs, decTraps, decFlags)
+        DecContext(decFormat, decRounding, newDecPrefs, decTrapHandlers, decFlags)
 
     fun withNewFlags() =
-        DecContext(decFormat, decRounding, decPrefs, decTraps, DecFlags())
+        DecContext(decFormat, decRounding, decPrefs, decTrapHandlers, DecFlags())
 
-    fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTraps)
+    fun withTrapHandler(decTrapHandler: DecTrapHandler?, vararg exceptions: DecException): DecContext {
+        val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withTrapHandler(decTrapHandler, *exceptions)
+        return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags)
+    }
+
+    fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTrapHandlers)
 
     inline fun <T> compute(block: () -> T ): T = block()
 
     inline fun <T> computeDelayedTrap(block: () -> T): T {
         val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags())
         val blockVal = blockEnv.compute(block)
-        decTraps?.delayedTrap(blockEnv)
+        decTrapHandlers?.delayedTrap(blockEnv)
         return blockVal
     }
 
     fun isRoundTowardNegative() = decRounding == ROUND_TOWARD_NEGATIVE
 
     fun hasTrapHandler(decException: DecException) =
-        decTraps?.hasTrapHandler(decException) ?: false
+        decTrapHandlers?.hasTrapHandler(decException) ?: false
 
     fun signal(trapContext: DecExceptionContext): Decimal {
-        require(decTraps != null)
-        return decTraps.signal(trapContext)
+        require(decTrapHandlers != null)
+        return decTrapHandlers.signal(trapContext)
     }
 
     fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, d: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return d
         }
         val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
-        return decTraps.signal(trapContext)
+        return decTrapHandlers.signal(trapContext)
     }
 
     fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, l: Long): Long {
-        if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return l
         }
         val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
-        decTraps.signal(trapContext)
+        decTrapHandlers.signal(trapContext)
         return l
     }
 
     fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, mutDec: MutDec): MutDec {
-        if (decTraps == null || !decTraps.hasTrapHandler(decException))
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException))
             return mutDec
         val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
-        return mutDec.set(decTraps.signal(trapContext))
+        return mutDec.set(decTrapHandlers.signal(trapContext))
     }
 
     fun signal(decException: DecException, decExceptionReason: DecExceptionReason): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(decException)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return Decimal.NaN
         }
         val trapContext = DecExceptionContext(decException, decExceptionReason, "filler", this)
-        return decTraps.signal(trapContext)
+        return decTrapHandlers.signal(trapContext)
     }
 
     fun signal(decExceptionReason: DecExceptionReason): Decimal {
@@ -120,7 +125,7 @@ data class DecContext(
 
     // used by partialCompare when there is a sNaN, but no return value
     fun signalInvalid() {
-        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
             return
         }
@@ -129,7 +134,7 @@ data class DecContext(
     }
 
     fun signalInvalid(mutDec: MutDec): MutDec {
-        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
             return mutDec
         }
@@ -137,7 +142,7 @@ data class DecContext(
     }
 
     fun signalInvalid(dec: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
             return dec
         }
@@ -145,7 +150,7 @@ data class DecContext(
     }
 
     fun signalDivByZero(mutDec: MutDec): MutDec {
-        if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIV_BY_ZERO)) {
             decFlags.set(DIV_BY_ZERO)
             return mutDec
         }
@@ -153,7 +158,7 @@ data class DecContext(
     }
 
     fun signalDivByZero(dec: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(DIV_BY_ZERO)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIV_BY_ZERO)) {
             decFlags.set(DIV_BY_ZERO)
             return dec
         }
@@ -175,56 +180,56 @@ data class DecContext(
         signalParseMalformed(DecExceptionReason.PARSE_BAD_UNDERSCORE)
 
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
-        if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(OVERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)
             decFlags.set(INEXACT)
             return mutDec
         }
-        val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
+        val trap = if (decTrapHandlers.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
     fun signalInexactOverflow(decInfinity: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(OVERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(OVERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)
             decFlags.set(INEXACT)
             return decInfinity
         }
-        val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
+        val trap = if (decTrapHandlers.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
         return signal(trap, OTHER, "whatever", decInfinity)
     }
 
     fun signalRoundedInexact(dec: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return dec
         }
-        val trap = if (decTraps.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
+        val trap = if (decTrapHandlers.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
         return signal(trap, OTHER, "whatever", dec)
     }
 
     fun signalInexactUnderflow(mutDec: MutDec): MutDec {
-        if (decTraps == null || !decTraps.hasTrapHandler(UNDERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(UNDERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(UNDERFLOW)
             decFlags.set(INEXACT)
             return mutDec
         }
-        val trap = if (decTraps.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
+        val trap = if (decTrapHandlers.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
         return signal(trap, OTHER, "whatever", mutDec)
     }
 
     fun signalInexactUnderflow(dec: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(UNDERFLOW) && !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(UNDERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(UNDERFLOW)
             decFlags.set(INEXACT)
             return dec
         }
-        val trap = if (decTraps.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
+        val trap = if (decTrapHandlers.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
         return signal(trap, OTHER, "whatever", dec)
     }
 
     fun signalInexact(mutDec: MutDec): MutDec {
-        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return mutDec
         }
@@ -232,7 +237,7 @@ data class DecContext(
     }
 
     fun signalInexact(dec: Decimal): Decimal {
-        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return dec
         }
@@ -240,7 +245,7 @@ data class DecContext(
     }
 
     fun signalInexact(l: Long): Long {
-        if (decTraps == null || !decTraps.hasTrapHandler(INEXACT)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(INEXACT)
             return l
         }
@@ -248,7 +253,7 @@ data class DecContext(
     }
 
     fun signalInvalid(l: Long): Long {
-        if (decTraps == null || !decTraps.hasTrapHandler(INVALID_OPERATION)) {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
             return l
         }
