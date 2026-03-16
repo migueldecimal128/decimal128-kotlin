@@ -119,7 +119,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppre
         }
     }
     // return signalInvalid
-    ctx.signalInvalid(InvalidOpReason.CONVERT_NON_FINITE_TO_INTEGER)
+    ctx.signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
     return Long.MIN_VALUE
 }
 
@@ -213,6 +213,6 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
         }
     }
     // return signalInvalid
-    ctx.signalInvalid(InvalidOpReason.CONVERT_NON_FINITE_TO_INTEGER, x)
+    ctx.signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER, x)
     return Int.MIN_VALUE
 }

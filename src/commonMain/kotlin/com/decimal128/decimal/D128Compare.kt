@@ -369,7 +369,7 @@ internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean, ctx: D
         return Compare754Result(cmp)
     }
     if (isSignaling || x.isSignaling() || y.isSignaling())
-        ctx.signalInvalid(InvalidOpReason.SNAN_OPERAND)
+        ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND)
     return IEEE754_UNORDERED
 }
 

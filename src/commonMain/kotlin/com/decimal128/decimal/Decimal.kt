@@ -614,7 +614,7 @@ class Decimal private constructor(
     fun quantumExponent(ctx: DecContext): Int {
         if (isFinite())
             return qExp()
-        ctx.signalInvalid(InvalidOpReason.QEXP_OF_NONFINITE, this)
+        ctx.signalInvalid(InvalidOperationReason.QEXP_OF_NON_FINITE, this)
         return Int.MIN_VALUE
     }
 

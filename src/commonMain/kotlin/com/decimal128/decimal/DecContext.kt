@@ -81,7 +81,7 @@ data class DecContext(
         return decTrapHandlers.signal(trapContext)
     }
 
-    fun signal(decException: DecException, d: Decimal, exceptionReason: InvalidOpReason? = null): Decimal {
+    fun signal(decException: DecException, d: Decimal, exceptionReason: InvalidOperationReason? = null): Decimal {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return d
@@ -90,7 +90,7 @@ data class DecContext(
         return decTrapHandlers.signal(trapContext)
     }
 
-    fun signal(decException: DecException, l: Long, exceptionReason: InvalidOpReason? = null): Long {
+    fun signal(decException: DecException, l: Long, exceptionReason: InvalidOperationReason? = null): Long {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return l
@@ -100,14 +100,14 @@ data class DecContext(
         return l
     }
 
-    fun signalMutDec(decException: DecException, mutDec: MutDec, invalidOpReason: InvalidOpReason? = null): MutDec {
+    fun signalMutDec(decException: DecException, mutDec: MutDec, invalidOpReason: InvalidOperationReason? = null): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException))
             return mutDec
         val trapContext = DecExceptionContext(this, decException, invalidOpReason)
         return mutDec.set(decTrapHandlers.signal(trapContext))
     }
 
-    fun signal(decException: DecException, decExceptionReason: InvalidOpReason): Decimal {
+    fun signal(decException: DecException, decExceptionReason: InvalidOperationReason): Decimal {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
             return Decimal.NaN
@@ -116,18 +116,9 @@ data class DecContext(
         return decTrapHandlers.signal(trapContext)
     }
 
-    fun signal(decExceptionReason: InvalidOpReason): Decimal {
+    fun signal(decExceptionReason: InvalidOperationReason): Decimal {
         // TODO
         return Decimal.NaN
-    }
-
-    fun signalInvalid(invalidOpReason: InvalidOpReason) {
-        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
-            decFlags.set(INVALID_OPERATION)
-            return
-        }
-        // provide a dummy value when none was provided ... e.g. by partialCompare
-        signal(INVALID_OPERATION, Decimal.NaN, invalidOpReason)
     }
 
     fun signalInvalid(mutDec: MutDec): MutDec {
@@ -138,7 +129,9 @@ data class DecContext(
         return signalMutDec(INVALID_OPERATION, mutDec)
     }
 
-    fun signalInvalid(invalidOpReason: InvalidOpReason, dec: Decimal): Decimal {
+    fun signalInvalid(invalidOpReason: InvalidOperationReason): Decimal = signalInvalid(invalidOpReason, Decimal.NaN)
+
+    fun signalInvalid(invalidOpReason: InvalidOperationReason, dec: Decimal): Decimal {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
             return dec
@@ -165,16 +158,16 @@ data class DecContext(
     fun signalDivByZero(sign: Boolean): Decimal =
         signalDivByZero(if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY)
 
-    fun signalParseMalformed(reason: InvalidOpReason): Decimal {
+    fun signalParseMalformed(reason: InvalidOperationReason): Decimal {
         if (decPrefs.parseThrowOnMalformed)
             throw NumberFormatException(reason.toString())
         // FIXME - add a flag for parse malformed ?
         //  might assist in debugging cause of a NaN
-        return signalInvalid(InvalidOpReason.PARSE_MALFORMED, Decimal.NaN)
+        return signalInvalid(InvalidOperationReason.PARSE_MALFORMED, Decimal.NaN)
     }
 
     fun signalParseBadUnderscore(): Decimal =
-        signalParseMalformed(InvalidOpReason.PARSE_BAD_UNDERSCORE)
+        signalParseMalformed(InvalidOperationReason.PARSE_BAD_UNDERSCORE)
 
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(OVERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {
@@ -256,7 +249,7 @@ data class DecContext(
         }
         return signal(
             INVALID_OPERATION,
-            l, InvalidOpReason.CONVERT_NON_FINITE_TO_INTEGER
+            l, InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER
         )
     }
 

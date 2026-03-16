@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-enum class InvalidOpReason {
+enum class InvalidOperationReason {
     NAN_OPERAND,       // an operand was a NaN
     SNAN_OPERAND,      // An operand was an sNaN
     MAGNITUDE_SUBTRACTION_OF_INFINITIES, // e.g., (+∞) + (-∞)
@@ -17,7 +17,7 @@ enum class InvalidOpReason {
     PARSE_UNEXPECTED_CHAR,
     NEG_SQUARE_ROOT,        // e.g., sqrt(-1)
     QUANTIZE,           // e.g., quantize(Infinity, finite)
-    QEXP_OF_NONFINITE,
+    QEXP_OF_NON_FINITE,
     CONV_TO_INTEGER,
     CONVERT_NON_FINITE_TO_INTEGER,
     OTHER,
