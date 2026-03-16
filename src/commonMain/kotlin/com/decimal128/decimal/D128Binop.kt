@@ -26,9 +26,9 @@ internal fun nanOperandFound(x: Decimal, y: Decimal,
     if (!alwaysSignal && !isSignaling)
         return theNaN
     if (!theNaN.isSignaling())
-        return ctx.signalInvalid(theNaN)
+        return ctx.signalInvalid(InvalidOpReason.NAN_OPERAND, theNaN)
     val quietedNaN = Decimal.qNaN(stealSignFlag(stealNaN), theNaN.dw1, theNaN.dw0)
-    return ctx.signalInvalid(quietedNaN)
+    return ctx.signalInvalid(InvalidOpReason.SNAN_OPERAND, quietedNaN)
 }
 
 internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
@@ -37,7 +37,7 @@ internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
     if (stealIsQNAN(steal))
         return x
     val quietedNaN = Decimal.qNaN(stealSignFlag(steal), x.dw1, x.dw0)
-    return ctx.signalInvalid(quietedNaN)
+    return ctx.signalInvalid(InvalidOpReason.SNAN_OPERAND, quietedNaN)
 }
 
 internal fun scaleToMinExp(xSteal: Int, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {

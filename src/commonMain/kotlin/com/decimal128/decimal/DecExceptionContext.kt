@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
 data class DecExceptionContext(
+    val ctx: DecContext,
     val exception: DecException,
-    val exceptionReason: DecExceptionReason,
-    val operation: String,
-    val ctx: DecContext) {
+    val exceptionReason: InvalidOpReason? = null
+) {
 }
