@@ -24,16 +24,23 @@ data class DecTrapHandlers(
     }
 
     fun withTrapHandler(handler: DecTrapHandler?, vararg exceptions: DecException): DecTrapHandlers {
-        var result = this
-        for (exception in exceptions)
-            result = when (exception) {
-                DecException.INVALID_OPERATION -> result.copy(invalidOperation = handler)
-                DecException.DIV_BY_ZERO       -> result.copy(divByZero = handler)
-                DecException.OVERFLOW          -> result.copy(overflow = handler)
-                DecException.UNDERFLOW         -> result.copy(underflow = handler)
-                DecException.INEXACT           -> result.copy(inexact = handler)
+        var inv = invalidOperation
+        var div = divByZero
+        var ovf = overflow
+        var unf = underflow
+        var inex = inexact
+
+        for (exception in exceptions) {
+            when (exception) {
+                DecException.INVALID_OPERATION -> inv = handler
+                DecException.DIV_BY_ZERO       -> div = handler
+                DecException.OVERFLOW          -> ovf = handler
+                DecException.UNDERFLOW         -> unf = handler
+                DecException.INEXACT           -> inex = handler
             }
-        return result
+        }
+
+        return DecTrapHandlers(inv, div, ovf, unf, inex)
     }
 
     fun delayedTrap(ctx: DecContext) {
