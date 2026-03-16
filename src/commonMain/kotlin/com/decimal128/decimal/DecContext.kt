@@ -102,7 +102,7 @@ data class DecContext(
         return l
     }
 
-    fun signal(decException: DecException, exceptionReason: DecExceptionReason, operation: String, mutDec: MutDec): MutDec {
+    fun signalMutDec(decException: DecException, exceptionReason: DecExceptionReason, operation: String, mutDec: MutDec): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException))
             return mutDec
         val trapContext = DecExceptionContext(decException, exceptionReason, operation, this)
@@ -130,7 +130,7 @@ data class DecContext(
             return
         }
         // provide a dummy value when none was provided ... e.g. by partialCompare
-        signal(INVALID_OPERATION, OTHER, "whatever", MutDec())
+        signalMutDec(INVALID_OPERATION, OTHER, "whatever", MutDec())
     }
 
     fun signalInvalid(mutDec: MutDec): MutDec {
@@ -138,7 +138,7 @@ data class DecContext(
             decFlags.set(INVALID_OPERATION)
             return mutDec
         }
-        return signal(INVALID_OPERATION, OTHER, "whatever", mutDec)
+        return signalMutDec(INVALID_OPERATION, OTHER, "whatever", mutDec)
     }
 
     fun signalInvalid(dec: Decimal): Decimal {
@@ -150,19 +150,19 @@ data class DecContext(
     }
 
     fun signalDivByZero(mutDec: MutDec): MutDec {
-        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIV_BY_ZERO)) {
-            decFlags.set(DIV_BY_ZERO)
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIVIDE_BY_ZERO)) {
+            decFlags.set(DIVIDE_BY_ZERO)
             return mutDec
         }
-        return signal(DIV_BY_ZERO, OTHER, "whatever", mutDec)
+        return signalMutDec(DIVIDE_BY_ZERO, OTHER, "whatever", mutDec)
     }
 
     fun signalDivByZero(dec: Decimal): Decimal {
-        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIV_BY_ZERO)) {
-            decFlags.set(DIV_BY_ZERO)
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIVIDE_BY_ZERO)) {
+            decFlags.set(DIVIDE_BY_ZERO)
             return dec
         }
-        return signal(DIV_BY_ZERO, OTHER, "whatever", dec)
+        return signal(DIVIDE_BY_ZERO, OTHER, "whatever", dec)
     }
 
     fun signalDivByZero(sign: Boolean): Decimal =
@@ -186,7 +186,7 @@ data class DecContext(
             return mutDec
         }
         val trap = if (decTrapHandlers.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
-        return signal(trap, OTHER, "whatever", mutDec)
+        return signalMutDec(trap, OTHER, "whatever", mutDec)
     }
 
     fun signalInexactOverflow(decInfinity: Decimal): Decimal {
@@ -215,7 +215,7 @@ data class DecContext(
             return mutDec
         }
         val trap = if (decTrapHandlers.hasTrapHandler(UNDERFLOW)) UNDERFLOW else INEXACT
-        return signal(trap, OTHER, "whatever", mutDec)
+        return signalMutDec(trap, OTHER, "whatever", mutDec)
     }
 
     fun signalInexactUnderflow(dec: Decimal): Decimal {
@@ -233,7 +233,7 @@ data class DecContext(
             decFlags.set(INEXACT)
             return mutDec
         }
-        return signal(INEXACT, IS_INEXACT, "whatever", mutDec)
+        return signalMutDec(INEXACT, IS_INEXACT, "whatever", mutDec)
     }
 
     fun signalInexact(dec: Decimal): Decimal {

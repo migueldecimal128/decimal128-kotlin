@@ -110,7 +110,7 @@ class IntelCase1 private constructor (
         if ((flagRegister and 0x01) != 0)
             decFlags.set(DecException.INVALID_OPERATION)
         if ((flagRegister and 0x04) != 0)
-            decFlags.set(DecException.DIV_BY_ZERO)
+            decFlags.set(DecException.DIVIDE_BY_ZERO)
         if ((flagRegister and 0x08) != 0)
             decFlags.set(DecException.OVERFLOW)
         if ((flagRegister and 0x10) != 0)

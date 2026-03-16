@@ -600,7 +600,7 @@ class TestMutDecDectest {
                 when (cond.lowercase()) {
                     "clamped" -> {}
                     "conversion_syntax" -> {}
-                    "division_by_zero" -> exceptionSet.add(DecException.DIV_BY_ZERO)
+                    "division_by_zero" -> exceptionSet.add(DecException.DIVIDE_BY_ZERO)
                     "division_impossible" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "division_undefined" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "inexact" -> exceptionSet.add(DecException.INEXACT)

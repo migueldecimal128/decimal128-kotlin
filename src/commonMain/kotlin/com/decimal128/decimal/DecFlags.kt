@@ -33,7 +33,7 @@ class DecFlags {
     fun signalUnderflow(z: MutDec): MutDec { set(UNDERFLOW); return z }
     fun signalInexactUnderflow(z: MutDec): MutDec { set(INEXACT); set(UNDERFLOW); return z }
     fun signalInexactOverflow(z: MutDec): MutDec { set(INEXACT); set(OVERFLOW); return z}
-    fun signalDivByZero(z: MutDec): MutDec { set(DIV_BY_ZERO); return z }
+    fun signalDivByZero(z: MutDec): MutDec { set(DIVIDE_BY_ZERO); return z }
     fun signalInvalid(z: MutDec): MutDec { set(INVALID_OPERATION); return z }
 
     fun operandIsSignalingNaN(mutDec: MutDec) {
@@ -55,7 +55,7 @@ class DecFlags {
             bytes[ib++] = 'u'.code.toByte()
         if (isSet(OVERFLOW))
             bytes[ib++] = 'o'.code.toByte()
-        if (isSet(DIV_BY_ZERO))
+        if (isSet(DIVIDE_BY_ZERO))
             bytes[ib++] = 'z'.code.toByte()
         if (isSet(INVALID_OPERATION))
             bytes[ib++] = 'i'.code.toByte()

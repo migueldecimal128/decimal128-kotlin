@@ -87,7 +87,7 @@ data class DectestCase1(
 
         private val mapConditionDecException: Map<String, DecException> = mapOf(
             "invalid_operation" to DecException.INVALID_OPERATION,
-            "division_by_zero" to DecException.DIV_BY_ZERO,
+            "division_by_zero" to DecException.DIVIDE_BY_ZERO,
             "overflow" to DecException.OVERFLOW,
             "underflow" to DecException.UNDERFLOW,
             "inexact" to DecException.INEXACT,
