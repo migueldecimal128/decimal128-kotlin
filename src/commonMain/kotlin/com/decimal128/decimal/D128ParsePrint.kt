@@ -65,13 +65,12 @@ object D128ParsePrint {
         if (ch == '+' || ch == '-')
             ch = txt.nextChar()
         txt.reset()
-        val chUpper = (ch.code and 0xFFDF).toChar()
-        when {
-            ch >= '0' && ch <= '9' || ch == '.' -> return parseFiniteValueText(txt, ctx)
-            chUpper == 'I' -> return parseInfinityText(txt)
-            chUpper == 'N' || chUpper == 'S' || chUpper == 'Q' -> return parseNanText(txt)
-            else -> return null
-        }
+        if (ch >= '0' && ch <= '9' || ch == '.')
+            return parseFiniteValueText(txt, ctx)
+        val chLower = (ch.code or 0x20).toChar()
+        if (chLower == 'i')
+            return parseInfinityText(txt)
+        return parseNanText(txt, ctx)
     }
 
     /**
