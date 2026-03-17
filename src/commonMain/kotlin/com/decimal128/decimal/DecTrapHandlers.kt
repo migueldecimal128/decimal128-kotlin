@@ -29,7 +29,7 @@ data class DecTrapHandlers(
         return handler.signal(trapContext)
     }
 
-    fun withTrapHandler(handler: DecTrapHandler?, vararg exceptions: DecException): DecTrapHandlers {
+    fun withTrapHandler(handler: DecTrapHandler?, exceptions: Array<out DecException>): DecTrapHandlers {
         var inv = invalidOperation
         var dbz = divideByZero
         var ovr = overflow
@@ -48,7 +48,7 @@ data class DecTrapHandlers(
         return DecTrapHandlers(inv, dbz, ovr, und, inx)
     }
 
-    fun withThrownException(vararg exceptions: DecException): DecTrapHandlers {
+    fun withThrownException(exceptions: Array<out DecException>): DecTrapHandlers {
         var inv: DecTrapHandler? = invalidOperation
         var dbz: DecTrapHandler? = divideByZero
         var ovf: DecTrapHandler? = overflow

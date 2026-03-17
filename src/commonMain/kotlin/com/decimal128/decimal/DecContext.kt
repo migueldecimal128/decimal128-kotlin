@@ -56,7 +56,12 @@ data class DecContext(
         DecContext(decFormat, decRounding, decPrefs, decTrapHandlers, DecFlags())
 
     fun withTrapHandler(decTrapHandler: DecTrapHandler?, vararg exceptions: DecException): DecContext {
-        val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withTrapHandler(decTrapHandler, *exceptions)
+        val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withTrapHandler(decTrapHandler, exceptions)
+        return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags)
+    }
+
+    fun withThrownException(vararg exceptions: DecException): DecContext {
+        val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withThrownException(exceptions)
         return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags)
     }
 
@@ -86,7 +91,7 @@ data class DecContext(
             decFlags.set(decException)
             return d
         }
-        val trapContext = DecExceptionContext(this, decException, exceptionReason)
+        val trapContext = DecExceptionContext(this, d, decException, exceptionReason)
         return decTrapHandlers.signal(trapContext)
     }
 
@@ -95,7 +100,7 @@ data class DecContext(
             decFlags.set(decException)
             return l
         }
-        val trapContext = DecExceptionContext(this, decException, exceptionReason)
+        val trapContext = DecExceptionContext(this, Decimal.from(l), decException, exceptionReason)
         decTrapHandlers.signal(trapContext)
         return l
     }
@@ -103,7 +108,7 @@ data class DecContext(
     fun signalMutDec(decException: DecException, mutDec: MutDec, invalidOpReason: InvalidOperationReason? = null): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException))
             return mutDec
-        val trapContext = DecExceptionContext(this, decException, invalidOpReason)
+        val trapContext = DecExceptionContext(this, Decimal.from(mutDec), decException, invalidOpReason)
         return mutDec.set(decTrapHandlers.signal(trapContext))
     }
 
@@ -112,13 +117,8 @@ data class DecContext(
             decFlags.set(decException)
             return Decimal.NaN
         }
-        val trapContext = DecExceptionContext(this, decException, decExceptionReason)
+        val trapContext = DecExceptionContext(this, Decimal.NaN, decException, decExceptionReason)
         return decTrapHandlers.signal(trapContext)
-    }
-
-    fun signal(decExceptionReason: InvalidOperationReason): Decimal {
-        // TODO
-        return Decimal.NaN
     }
 
     fun signalInvalid(mutDec: MutDec): MutDec {
