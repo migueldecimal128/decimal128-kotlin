@@ -10,8 +10,7 @@ data class DecContext(
     val decTrapHandlers: DecTrapHandlers?,
     val decFlags: DecFlags
 ) {
-    val precision: Int
-        get() = decFormat.precision
+    val precision: Int = decFormat.precision
 
     internal val tmps: DecTmps = DecTmps()
 
