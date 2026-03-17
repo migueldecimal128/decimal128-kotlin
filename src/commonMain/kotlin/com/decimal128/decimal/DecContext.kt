@@ -14,14 +14,6 @@ data class DecContext(
 ) {
     val precision: Int
         get() = decFormat.precision
-    val qTiny: Int
-        get() = decFormat.qTiny
-    val qMax: Int
-        get() = decFormat.qMax
-    val eMax: Int
-        get() = decFormat.eMax
-    val eMin: Int
-        get() = decFormat.eMin
     val overflow: Boolean
         get() = decFlags.isSet(OVERFLOW)
 
@@ -31,8 +23,6 @@ data class DecContext(
         //val DECIMAL64 = DecContext(DecFormat.DECIMAL_64)
         val DECIMAL128 = DecContext(DecFormat.DECIMAL_128)
         val DECIMAL128_EXTENDED = DecContext(DecFormat.DECIMAL_128_EXTENDED)
-
-        val DECIMAL128_ZERO_NAN_PAYLOAD = DECIMAL128.with(DECIMAL128.decPrefs.copy(parseDiscardNanPayload = true))
 
         val threadLocal = ThreadLocal.withInitial { DecContext(DecFormat.DECIMAL_128) }
         fun current(): DecContext = threadLocal.get()

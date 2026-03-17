@@ -1238,6 +1238,7 @@ class MutDec() : C256() {
     // IEEE754-2008 5.3.2
     fun setQuantize(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // Handle NaN propagation
+        // FIXME -- dispatching on qExp
         val qX = x.qExp
         val qY = y.qExp
         if (qX > NON_FINITE_INF || qY > NON_FINITE_INF)
@@ -1298,17 +1299,20 @@ class MutDec() : C256() {
     }
 
     // IEEE754-2008 5.3.3
-    fun setScaleB(x: MutDec, pow10: Int, env: DecContext): MutDec {
+    fun setScaleB(x: MutDec, pow10: Int, ctx: DecContext): MutDec {
         set(x)
+        // FIXME -- dispatching on qExp
         when {
             qExp < NON_FINITE_INF -> {
                 val p10 = min(max(pow10, -99999), 99999)
                 qExp = capExponentRange(qExp + p10)
-                if (qExp > env.qMax || qExp < env.qTiny)
-                    return finalize(env)
+                if (qExp > Q_MAX || qExp < Q_TINY)
+                    return finalize(ctx)
             }
             qExp == NON_FINITE_INF -> {}
-            else -> setNaNOperand(x, env)
+
+
+            else -> setNaNOperand(x, ctx)
         }
         return this
     }
@@ -1316,6 +1320,7 @@ class MutDec() : C256() {
     // IEEE754-2008 5.3.3
     fun setLogB(x: MutDec, env: DecContext): MutDec {
         val qX = x.qExp
+        // FIXME -- dispatching on qExp
         when {
             x.isZero() -> {
                 setInfinite(sign = true)

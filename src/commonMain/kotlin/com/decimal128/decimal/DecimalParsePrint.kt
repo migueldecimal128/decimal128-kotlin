@@ -345,7 +345,7 @@ object DecimalParsePrint {
         }
     }
 
-    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, env: DecContext): Boolean {
+    fun isFiniteValueText(x: MutDec, src: Latin1Iterator, ctx: DecContext): Boolean {
         var hasCoefficientDigit = false
         var significantDigitCount = 0 // does not count leading zeros
         var leadingFractionalZeroCount = 0  // NEW: track leading zeros after decimal
@@ -468,15 +468,15 @@ object DecimalParsePrint {
         val hasDiscardedNonZero = guardDigit or stickyBits != 0
 
         // FIXME ... make sure that this limiting range and properly scaling subnormal values
-        if (!hasDiscardedNonZero && (qExp >= env.qTiny) && (qExp <= env.qMax))
+        if (!hasDiscardedNonZero && (qExp >= Q_TINY) && (qExp <= Q_MAX))
             return true
         val roundBit = if (guardDigit < 5) 0 else 1
         // if guardDigit > 5 then it is a sticky bit.
         val stickyBit = (-stickyBits or (5 - guardDigit)) ushr 31
         val residue = Residue.fromRoundBitStickBit(roundBit, stickyBit)
-        x.roundAndFinalize(residue, env)
+        x.roundAndFinalize(residue, ctx)
         if (hasDiscardedNonZero)
-            env.signalInexact(x)
+            ctx.signalInexact(x)
         return true
     }
 
