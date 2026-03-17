@@ -428,7 +428,7 @@ class MutDec() : C256() {
 
     fun set(l: Long, qExp: Int, ctx: DecContext): MutDec {
         this.type = if (l == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
-        this.qExp = ctx.capExponentRange(qExp)
+        this.qExp = capExponentRange(qExp)
         this.sign = l < 0
         val mask = l shr 63
         val abs = (l xor mask) - mask
@@ -1231,7 +1231,7 @@ class MutDec() : C256() {
         }
     }
 
-    inline fun capExponentRange(e: Int): Int {
+    internal inline fun capExponentRange(e: Int): Int {
         return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
 

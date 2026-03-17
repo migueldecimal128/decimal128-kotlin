@@ -14,8 +14,6 @@ data class DecContext(
 ) {
     val precision: Int
         get() = decFormat.precision
-    val maxBitLen: Int
-        get() = decFormat.maxBitLen
     val qTiny: Int
         get() = decFormat.qTiny
     val qMax: Int
@@ -256,5 +254,4 @@ data class DecContext(
 
     fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 
-    fun capExponentRange(qExp: Int) = max(min(qExp, qMax), qTiny)
 }

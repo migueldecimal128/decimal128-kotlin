@@ -8,7 +8,6 @@ data class DecFormat(val precision: Int,
                      val qTiny: Int,
                      val eMax: Int,
                      val eMin: Int,
-                     val maxBitLen: Int,
     ) {
 
     companion object {
@@ -19,7 +18,6 @@ data class DecFormat(val precision: Int,
             qTiny = Q_TINY,
             eMax = 6144,
             eMin = -6176,
-            maxBitLen = 113,
         )
 
         val DECIMAL_128_EXTENDED = DecFormat(
@@ -28,7 +26,6 @@ data class DecFormat(val precision: Int,
             qTiny = Q_TINY,
             eMax = 6148,
             eMin = -6180,
-            maxBitLen = 127,
         )
     }
 
@@ -42,7 +39,7 @@ data class DecFormat(val precision: Int,
 
     internal /* inline */ fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean =
         (unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)) &&
-                (qExp >= qTiny && qExp <= qMax)
+                (qExp >= Q_TINY && qExp <= Q_MAX)
 
     internal inline fun coeffIsMaxx(dw1: Long, dw0: Long): Boolean =
         dw1 == this.dw1MaxxCoeff && dw0 == this.dw0MaxxCoeff
