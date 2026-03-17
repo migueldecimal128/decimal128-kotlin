@@ -12,8 +12,6 @@ data class DecContext(
 ) {
     val precision: Int
         get() = decFormat.precision
-    val overflow: Boolean
-        get() = decFlags.isSet(OVERFLOW)
 
     internal val tmps: DecTmps = DecTmps()
 
@@ -83,6 +81,8 @@ data class DecContext(
     }
 
     fun isRoundTowardNegative() = decRounding == ROUND_TOWARD_NEGATIVE
+
+    fun isOverflow(): Boolean = decFlags.isSet(OVERFLOW)
 
     fun hasTrapHandler(decException: DecException) =
         decTrapHandlers?.hasTrapHandler(decException) ?: false

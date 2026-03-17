@@ -122,7 +122,7 @@ class TestFptestDecimal {
 
         if (result != null && result.qExp() in -3104..-3000)
             return true
-        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && ctx.overflow)
+        if (fptest.hasTrap("o") && fptest.expectsSignal("o") && ctx.isOverflow())
             return true
 
         val hasTrapU = fptest.hasTrap("u")
