@@ -12,7 +12,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
         ZER_ZER,
         ZER_FNZ,
         FNZ_ZER -> fmaZeroProd(x, y, a, ctx)
-        ZER_INF -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, Decimal.NaN)
+        ZER_INF -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
 
         FNZ_FNZ -> {
             verify { a.isInfinite() }
@@ -21,7 +21,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
         FNZ_INF, INF_FNZ, INF_INF ->
             fmaInfProd(x.sign xor y.sign, a, ctx)
 
-        INF_ZER -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, Decimal.NaN)
+        INF_ZER -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         //INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
         //INF_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
 
@@ -87,7 +87,7 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     verify { !a.isNaN() }
     if (a.isFinite() || a.sign == infSign)
         return Decimal.infinity(infSign)
-    return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES, Decimal.NaN)
+    return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 
 private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {

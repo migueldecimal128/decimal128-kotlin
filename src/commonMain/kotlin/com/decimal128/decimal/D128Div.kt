@@ -111,7 +111,7 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
         FNZ_ZER,
         INF_ZER,
         INF_FNZ,
-        INF_INF -> ctx.signalInvalid(InvalidOperationReason.DIV_INF_BY_INF, Decimal.NaN)
+        INF_INF -> ctx.signalInvalid(InvalidOperationReason.DIV_INF_BY_INF)
 
         else -> nanOperandFound(x, y, ctx)
     }

@@ -213,6 +213,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
         }
     }
     // return signalInvalid
-    ctx.signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER, x)
+    val d = ctx.signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER, x)
+    // FIXME - do simple check of d and if it is an Int then return it
     return Int.MIN_VALUE
 }
