@@ -226,8 +226,7 @@ object D128ParsePrint {
         } while (ch.code != 0)
         var payloadDw0: Long
         var payloadDw1: Long
-        val nanPayloadPrecision = ctx.decFormat.nanPayloadPrecision
-        if (accumDigitCount > nanPayloadPrecision) {
+        if (accumDigitCount > DecFormat.NAN_PAYLOAD_PRECISION) {
             payloadDw0 = -1
             payloadDw1 = -1
         } else {

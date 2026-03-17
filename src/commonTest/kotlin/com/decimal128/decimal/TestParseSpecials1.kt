@@ -77,22 +77,6 @@ class TestParseSpecials1 {
         val NAN35nines = D128ParsePrint.parseNanText("+NAN99999999999999999999999999999999999")
         assertEquals("NaN", NAN35nines.toString())
 
-        // now, allow oversize payload
-        val NAN34oversize = D128ParsePrint.parseNanText("+NAN1234567890123456789012345678901234",
-            DecContext.DECIMAL128_EXTENDED)
-        assertEquals("NaN1234567890123456789012345678901234", NAN34oversize.toString())
-
-        val NAN35ninesOversize = D128ParsePrint.parseNanText("+NAN99999999999999999999999999999999999",
-            DecContext.DECIMAL128_EXTENDED)
-        assertEquals("NaN99999999999999999999999999999999999", NAN35ninesOversize.toString())
-
-        val NAN128bitsOversize = D128ParsePrint.parseNanText("+NAN340282366920938463463374607431768211455",
-            DecContext.DECIMAL128_EXTENDED)
-        // set payload to zero
-        assertEquals("NaN", NAN128bitsOversize.toString())
-
-
-
     }
 
     val tcsGood = arrayOf(
