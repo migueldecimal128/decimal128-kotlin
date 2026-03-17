@@ -167,7 +167,7 @@ data class DecContext(
     }
 
     fun signalParseBadUnderscore(): Decimal =
-        signalParseMalformed(InvalidOperationReason.PARSE_BAD_UNDERSCORE)
+        signalParseMalformed(InvalidOperationReason.PARSE_INVALID_UNDERSCORE_LOCATION)
 
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(OVERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {

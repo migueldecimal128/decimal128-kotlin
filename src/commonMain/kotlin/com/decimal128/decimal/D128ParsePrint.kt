@@ -3,6 +3,12 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.InvalidOperationReason.PARSE_INVALID_UNDERSCORE_LOCATION
+import com.decimal128.decimal.InvalidOperationReason.PARSE_DOUBLE_DOT
+import com.decimal128.decimal.InvalidOperationReason.PARSE_EMPTY_STRING
+import com.decimal128.decimal.InvalidOperationReason.PARSE_NO_EXPONENT_DIGIT
+import com.decimal128.decimal.InvalidOperationReason.PARSE_UNEXPECTED_CHAR
+import com.decimal128.decimal.InvalidOperationReason.PARSE_VALUE_OUT_OF_RANGE
 import kotlin.math.max
 import kotlin.math.min
 
@@ -36,10 +42,12 @@ object D128ParsePrint {
      */
     fun parseDecimal(str: String, ctx: DecContext = DecContext.DECIMAL128): Decimal {
         val strIterator = StringLatin1Iterator(str)
-        val decOrErrStr = parseDecimalOrErrorString(strIterator, ctx)
-        if (decOrErrStr is Decimal)
-            return decOrErrStr
-        val msg = decOrErrStr ?: ""
+        val decOrReason = parseDecimalOrReason(strIterator, ctx)
+        val msg = when (decOrReason) {
+            is Decimal -> return decOrReason
+            is InvalidOperationReason -> decOrReason.toString()
+            else -> ""
+        }
         if (ctx.decPrefs.parseThrowOnMalformed)
             throw NumberFormatException("invalid decimal format:$msg:'$str'")
         return Decimal.NaN
@@ -60,7 +68,7 @@ object D128ParsePrint {
      * Error messages are returned as `String` constant values
      * to reduce any performance overhead for failed parse attempts.
      */
-    private fun parseDecimalOrErrorString(txt: Latin1Iterator, ctx: DecContext): Any? {
+    private fun parseDecimalOrReason(txt: Latin1Iterator, ctx: DecContext): Any? {
         var ch = txt.nextChar()
         if (ch == '+' || ch == '-')
             ch = txt.nextChar()
@@ -265,7 +273,7 @@ object D128ParsePrint {
 
         var ch = txt.nextChar()
         if (ch.code == 0)
-            return "empty string"
+            return PARSE_EMPTY_STRING
         var chLast = '\u0000'
 
         val sign = ch == '-'
@@ -296,27 +304,27 @@ object D128ParsePrint {
                 }
 
                 '.' -> when {
-                    hasDot -> return "double decimal point"
-                    chLast == '_' -> return "invalid _ placement"
+                    hasDot -> return PARSE_DOUBLE_DOT
+                    chLast == '_' -> return PARSE_INVALID_UNDERSCORE_LOCATION
                     else -> hasDot = true
                 }
 
                 '_' ->
                     if (! hasCoefficientDigit || chLast == '.')
-                        return "invalid _ placement"
+                        return PARSE_INVALID_UNDERSCORE_LOCATION
             }
             chLast = ch
             ch = txt.nextChar()
         }
         if (! hasCoefficientDigit)
-            return null // try other options Infinity, NaN
+            return InvalidOperationReason.PARSE_NO_COEFFICIENT_DIGIT
         // this path has at least one digit
         if (ch == 'E' || ch == 'e') {
             if (chLast == '_')
-                return "invalid _ placement"
+                return PARSE_INVALID_UNDERSCORE_LOCATION
             ch = txt.nextChar()
             if (ch == '_')
-                return "invalid _ placement"
+                return PARSE_INVALID_UNDERSCORE_LOCATION
             if (ch == '+' || ch == '-') {
                 expSign = ch == '-'
                 ch = txt.nextChar()
@@ -333,21 +341,21 @@ object D128ParsePrint {
                     exp = exp * 10 + eDigit
                 } else {
                     if (! hasExpDigit)
-                        return "invalid _ placement"
+                        return PARSE_INVALID_UNDERSCORE_LOCATION
                 }
                 chLast = ch
                 ch = txt.nextChar()
             }
             if (! hasExpDigit)
-                return "E with no exponent digits"
+                return PARSE_NO_EXPONENT_DIGIT
             // clamp exp to 9999 once after the loop
             if (expSignificantDigitCount > 4)
                 exp = 9999
         }
         if (chLast == '_')
-            return "invalid _ placement"
+            return PARSE_INVALID_UNDERSCORE_LOCATION
         if (ch.code != 0)
-            return "invalid"
+            return PARSE_UNEXPECTED_CHAR
         // we have at least one digit
         var dw0T = accum19a
         var dw1T = 0L
@@ -360,7 +368,7 @@ object D128ParsePrint {
             dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
         }
         if (significantDigitCount > precision && ctx.decPrefs.parseThrowOnDigitOverflow)
-            return "coefficient exceeds maximum precision"
+            return InvalidOperationReason.PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
         // at this point, our coeff <= precision digits
         // but we need to deal with residue and rounding
         // rounding rollover could affect the exponent
@@ -373,8 +381,9 @@ object D128ParsePrint {
         if ((dw0T or dw1T) == 0L) // allow any exponent with Zero
             return Decimal.zero(sign, qExp, ctx)
         val dec = decRoundAndFinalizeFinite(sign, dw1T, dw0T, residue, qExp, ctx)
-        if (!dec.isFiniteNonZero() && ctx.decPrefs.parseThrowOnOutOfRange)
-            return "value out of range"
+        if (!dec.isFiniteNonZero() && ctx.decPrefs.parseThrowOnOutOfRange) {
+            return PARSE_VALUE_OUT_OF_RANGE
+        }
         return dec
     }
 

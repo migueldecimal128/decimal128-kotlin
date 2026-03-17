@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 
 class TestParseSpecials1 {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testParseInfinity() {
@@ -118,8 +118,17 @@ class TestParseSpecials1 {
     }
 
     val tcsNull = arrayOf(
+        "+.",
         "", "0_", "+_1", "_-2",
         "6_.02E+23",
+        "123 ",
+        "123..45",
+        "1.2.3",
+        "6.023E+",
+        "6.zero",
+        "+", "-",
+        "+."
+
     )
 
     @Test
@@ -130,7 +139,7 @@ class TestParseSpecials1 {
             val v = D128ParsePrint.parseFiniteValueText(tc)
             if (verbose)
                 println (" => $v")
-            assert(v == null || v is String)
+            assert(v == null || v is InvalidOperationReason)
         }
     }
 
