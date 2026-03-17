@@ -49,7 +49,7 @@ object D128ParsePrint {
         val reason: InvalidOperationReason =
             if (decOrReason is InvalidOperationReason) decOrReason
             else PARSE_MALFORMED
-        if (ctx.decPrefs.parseMalformedReturnsNan) {
+        if (ctx.decPrefs.parseMalformedReturnsNaN) {
             return ctx.signalInvalid(reason)
         }
         throw NumberFormatException("invalid decimal format:$reason:'$str'")
