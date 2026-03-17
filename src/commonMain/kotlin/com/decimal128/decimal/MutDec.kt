@@ -765,7 +765,7 @@ class MutDec() : C256() {
     }
 
     internal fun setDivIntFnzFnz(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        val truncCtx = ctx.copy(decRounding = ROUND_TOWARD_ZERO, decFlags = DecFlags())
+        val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
         this.setDiv(x, y, truncCtx)
         this.setRoundToIntegralExact(this, truncCtx)
 
@@ -1443,7 +1443,7 @@ class MutDec() : C256() {
         val truncIsOdd: Boolean = setRemTruncImpl(x, yT, ctx)
         val tmps = ctx.tmps
         if (!isZero() && isFinite()) {
-            val truncCtx = ctx.copy(decRounding = ROUND_TOWARD_ZERO, decFlags = DecFlags())
+            val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
             val rem2 = if (sign) {
                 tmps.mdecArg1.setAdd(this, yT, truncCtx)  // this + yT
             } else {
@@ -1472,7 +1472,7 @@ class MutDec() : C256() {
                 // setRemainder is an EXACT operation, so we will use a temp
                 // environment so that INEXACT flag/trap does not get signaled.
                 // use INTERNAL_TMP_ENV so that flag-setting
-                val truncCtx = ctx.copy(decRounding = ROUND_TOWARD_ZERO, decFlags = DecFlags())
+                val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
                 val n = ctx.tmps.mdecArg1.setDiv(x, y, truncCtx)
                 if (n.qExp < 0)
                     n.setRoundToIntegralExact(n, truncCtx)

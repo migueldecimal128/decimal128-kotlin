@@ -3,16 +3,16 @@ package com.decimal128.decimal
 import com.decimal128.decimal.DecException.*
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 
-data class DecContext(
-    val decFormat: DecFormat = DecFormat.DECIMAL_128,
-    val decRounding: DecRounding = DecRounding.ROUND_TIES_TO_EVEN,
-    val decPrefs: DecPrefs = DecPrefs.KOTLIN_DEFAULT,
-    val decTrapHandlers: DecTrapHandlers?,
-    val decFlags: DecFlags
+class DecContext internal constructor(
+    internal val decFormat: DecFormat = DecFormat.DECIMAL_128,
+    internal val decRounding: DecRounding = DecRounding.ROUND_TIES_TO_EVEN,
+    internal val decPrefs: DecPrefs = DecPrefs.KOTLIN_DEFAULT,
+    internal val decTrapHandlers: DecTrapHandlers?,
+    internal val decFlags: DecFlags,
+    internal val tmps: DecTmps
+
 ) {
     val precision: Int = decFormat.precision
-
-    internal val tmps: DecTmps = DecTmps()
 
     companion object {
 
@@ -21,7 +21,8 @@ data class DecContext(
             decRounding = DecRounding.ROUND_TIES_TO_EVEN,
             decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
             decTrapHandlers = null,
-            decFlags = DecFlags()
+            decFlags = DecFlags(),
+            tmps = DecTmps()
         )
 
         fun decimal128IEEE(): DecContext = DecContext(
@@ -29,7 +30,8 @@ data class DecContext(
             decRounding = DecRounding.ROUND_TIES_TO_EVEN,
             decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
             decTrapHandlers = null,
-            decFlags = DecFlags()
+            decFlags = DecFlags(),
+            tmps = DecTmps()
         )
 
         fun decimal128Extended(): DecContext = DecContext(
@@ -37,7 +39,8 @@ data class DecContext(
             decRounding = DecRounding.ROUND_TIES_TO_EVEN,
             decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
             decTrapHandlers = null,
-            decFlags = DecFlags()
+            decFlags = DecFlags(),
+            tmps = DecTmps()
         )
 
         val threadLocal = ThreadLocal.withInitial { decimal128Kotlin() }
@@ -49,35 +52,28 @@ data class DecContext(
     }
 
     fun with(newDecFormat: DecFormat) =
-        DecContext(newDecFormat, decRounding, decPrefs, decTrapHandlers, decFlags)
+        DecContext(newDecFormat, decRounding, decPrefs, decTrapHandlers, decFlags, tmps)
 
     fun with(newDecRounding: DecRounding) =
-        DecContext(decFormat, newDecRounding, decPrefs, decTrapHandlers, decFlags)
+        DecContext(decFormat, newDecRounding, decPrefs, decTrapHandlers, decFlags, tmps)
 
     fun with(newDecPrefs: DecPrefs) =
-        DecContext(decFormat, decRounding, newDecPrefs, decTrapHandlers, decFlags)
+        DecContext(decFormat, decRounding, newDecPrefs, decTrapHandlers, decFlags, tmps)
 
-    fun withNewFlags() =
-        DecContext(decFormat, decRounding, decPrefs, decTrapHandlers, DecFlags())
+    fun withRoundingAndNewFlags(decRounding: DecRounding) =
+        DecContext(decFormat, decRounding, decPrefs, decTrapHandlers, DecFlags(), tmps)
 
     fun withTrapHandler(decTrapHandler: DecTrapHandler?, vararg exceptions: DecException): DecContext {
         val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withTrapHandler(decTrapHandler, exceptions)
-        return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags)
+        return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags, tmps)
     }
 
     fun withThrownException(vararg exceptions: DecException): DecContext {
         val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withThrownException(exceptions)
-        return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags)
+        return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags, tmps)
     }
 
     inline fun <T> compute(block: () -> T ): T = block()
-
-    inline fun <T> computeDelayedTrap(block: () -> T): T {
-        val blockEnv = DecContext(decFormat, decRounding, decPrefs, null, DecFlags())
-        val blockVal = blockEnv.compute(block)
-        decTrapHandlers?.delayedTrap(blockEnv)
-        return blockVal
-    }
 
     fun isRoundTowardNegative() = decRounding == ROUND_TOWARD_NEGATIVE
 
@@ -246,5 +242,8 @@ data class DecContext(
     }
 
     fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
+
+    override fun toString(): String =
+        "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 
 }

@@ -3,11 +3,11 @@
 
 package com.decimal128.decimal
 
-data class DecFormat(val precision: Int,
-                     val qMax: Int,
-                     val qTiny: Int,
-                     val eMax: Int,
-                     val eMin: Int,
+class DecFormat private constructor (val precision: Int,
+                                     val qMax: Int,
+                                     val qTiny: Int,
+                                     val eMax: Int,
+                                     val eMin: Int,
     ) {
 
     companion object {
@@ -45,4 +45,9 @@ data class DecFormat(val precision: Int,
         dw1 == this.dw1MaxxCoeff && dw0 == this.dw0MaxxCoeff
 
 
+    override fun toString(): String = when (precision) {
+        34 -> "DECIMAL_128"
+        38 -> "DECIMAL_128_EXTENDED"
+        else -> "DecFormat(precision=$precision)"
+    }
 }
