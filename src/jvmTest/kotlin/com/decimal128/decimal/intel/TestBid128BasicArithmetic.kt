@@ -8,7 +8,7 @@ class TestBid128BasicArithmetic {
     val verbose = false
 
     val decPrefs = DecPrefs().copy(propagatePreferSnan = false)
-    val decContext = DecContext(decPrefs = decPrefs)
+    val decContext = DecContext.decimal128Kotlin().with(decPrefs)
 
     /*****************************************************************************
      *

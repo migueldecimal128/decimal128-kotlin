@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecContext.Companion.DECIMAL128
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
@@ -486,7 +485,7 @@ class MutDec() : C256() {
         return this
     }
 
-    fun set(str: String) = set(str, DECIMAL128)
+    fun set(str: String) = set(str, DecContext.current())
 
     fun set(str: String, ctx: DecContext): MutDec {
         DecimalParsePrint.decFromString(this, str, ctx)
@@ -766,8 +765,9 @@ class MutDec() : C256() {
     }
 
     internal fun setDivIntFnzFnz(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        this.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
-        this.setRoundToIntegralExact(this, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+        val truncCtx = ctx.copy(decRounding = ROUND_TOWARD_ZERO, decFlags = DecFlags())
+        this.setDiv(x, y, truncCtx)
+        this.setRoundToIntegralExact(this, truncCtx)
 
         // Normalize integer toward qExp = 0 using available precision
         if (this.qExp > 0) {
@@ -1443,10 +1443,11 @@ class MutDec() : C256() {
         val truncIsOdd: Boolean = setRemTruncImpl(x, yT, ctx)
         val tmps = ctx.tmps
         if (!isZero() && isFinite()) {
+            val truncCtx = ctx.copy(decRounding = ROUND_TOWARD_ZERO, decFlags = DecFlags())
             val rem2 = if (sign) {
-                tmps.mdecArg1.setAdd(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this + yT
+                tmps.mdecArg1.setAdd(this, yT, truncCtx)  // this + yT
             } else {
-                tmps.mdecArg1.setSub(this, yT, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)  // this - yT
+                tmps.mdecArg1.setSub(this, yT, truncCtx)  // this - yT
             }
             val cmp = magnitudeCompareTo(rem2, tmps.pentad1)
              if (cmp > 0 || (cmp == 0) && truncIsOdd)
@@ -1460,19 +1461,21 @@ class MutDec() : C256() {
         return this
     }
 
-    fun setRemTruncImpl(x: MutDec, y: MutDec, env: DecContext): Boolean {
+    fun setRemTruncImpl(x: MutDec, y: MutDec, ctx: DecContext): Boolean {
         val qX = x.qExp
         val qY = y.qExp
         var quotientIsOdd = false
+        // FIXME - dispatching on qExp
         when {
             qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
                 // Compute n = nearest integer to x/y (ties to even)
                 // setRemainder is an EXACT operation, so we will use a temp
                 // environment so that INEXACT flag/trap does not get signaled.
                 // use INTERNAL_TMP_ENV so that flag-setting
-                val n = env.tmps.mdecArg1.setDiv(x, y, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+                val truncCtx = ctx.copy(decRounding = ROUND_TOWARD_ZERO, decFlags = DecFlags())
+                val n = ctx.tmps.mdecArg1.setDiv(x, y, truncCtx)
                 if (n.qExp < 0)
-                    n.setRoundToIntegralExact(n, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+                    n.setRoundToIntegralExact(n, truncCtx)
 
                 // save xSign ... in case of aliasing this === x
                 val xSign = x.sign
@@ -1480,7 +1483,7 @@ class MutDec() : C256() {
                 // (-n) * y + x
                 n.sign = !n.sign // negate n
                 quotientIsOdd = (n.dw0.toInt() and 1) != 0
-                this.setFma(n, y, x, DecContext.TMP_ENV_ROUND_TOWARD_ZERO)
+                this.setFma(n, y, x, truncCtx)
 
                 if (this.c256IsZero()) {
                     this.qExp = min(qX, qY)
@@ -1488,11 +1491,11 @@ class MutDec() : C256() {
                 }
             }
             qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN -> {
-                setNaNOperand(x, y, env)
+                setNaNOperand(x, y, ctx)
                 return false
             }
             qX == NON_FINITE_INF || y.isZero() -> {
-                env.signalInvalid(setNaN())
+                ctx.signalInvalid(setNaN())
                 return false
             }
             else -> { // qY == NON_FINITE_INF ->

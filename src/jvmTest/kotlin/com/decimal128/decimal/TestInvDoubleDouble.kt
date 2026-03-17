@@ -87,7 +87,7 @@ class TestInvDoubleDouble{
         val dec = MutDec()
         val decInv = MutDec()
         dec.set(tc.bd)
-        val env = DecContext()
+        val env = DecContext.decimal128Kotlin()
         setInv(decInv, dec, env)
         val expected = tc.inv
         //assertEquals(expected.unscaledValue(), decInv.coeffToBigInteger())

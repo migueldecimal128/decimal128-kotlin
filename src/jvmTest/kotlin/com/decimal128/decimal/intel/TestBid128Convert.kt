@@ -15,7 +15,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_rnint",
         Decimal::toLongTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -28,7 +28,7 @@ class TestBid128Convert {
             "bid128_to_int64_rnint 0 [2FFE49F4A966D45CD522088F00000000] 2 00 -- 1.5",
         ),
         Decimal::toLongTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -37,7 +37,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_rninta",
         Decimal::toLongTiesToAway,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -46,7 +46,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_int",
         Decimal::toLongTowardZero,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -55,7 +55,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_ceil",
         Decimal::toLongTowardPositive,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -64,7 +64,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_floor",
         Decimal::toLongTowardNegative,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -73,7 +73,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_xrnint",
         Decimal::toLongExactTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -83,7 +83,7 @@ class TestBid128Convert {
             "bid128_to_int64_xrnint 0 1.0 1 00",
         ),
         Decimal::toLongExactTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -92,7 +92,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_xrninta",
         Decimal::toLongExactTiesToAway,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -101,7 +101,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_xint",
         Decimal::toLongExactTowardZero,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -110,7 +110,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_xceil",
         Decimal::toLongExactTowardPositive,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -119,7 +119,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int64_xfloor",
         Decimal::toLongExactTowardNegative,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -128,7 +128,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_rnint",
         Decimal::toIntTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -140,7 +140,7 @@ class TestBid128Convert {
             "bid128_to_int32_rnint 0 [2FFE314DC6448D9338C15B0A00000000] 1 00 -- 1",
         ),
         Decimal::toIntTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -149,7 +149,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_rninta",
         Decimal::toIntTiesToAway,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -158,7 +158,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_int",
         Decimal::toIntTowardZero,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -167,7 +167,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_ceil",
         Decimal::toIntTowardPositive,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -176,7 +176,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_floor",
         Decimal::toIntTowardNegative,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -185,7 +185,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_xrnint",
         Decimal::toIntExactTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -195,7 +195,7 @@ class TestBid128Convert {
             "bid128_to_int32_xrnint 0 1.0 1 00",
         ),
         Decimal::toIntExactTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -204,7 +204,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_xrninta",
         Decimal::toIntExactTiesToAway,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -213,7 +213,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_xint",
         Decimal::toIntExactTowardZero,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -222,7 +222,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_xceil",
         Decimal::toIntExactTowardPositive,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -231,7 +231,7 @@ class TestBid128Convert {
         "/intel/readtest.in",
         "bid128_to_int32_xfloor",
         Decimal::toIntExactTowardNegative,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 

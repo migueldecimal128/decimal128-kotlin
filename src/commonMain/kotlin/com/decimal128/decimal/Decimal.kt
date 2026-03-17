@@ -229,7 +229,7 @@ class Decimal private constructor(
          * Returns ±0 with the given sign, with the quantum exponent clamped
          * to `[Q_TINY, Q_MAX]`.
          */
-        fun zero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
+        fun zero(sign: Boolean, qExp: Int): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
             val qClamped = max(min(qExp, Q_MAX), Q_TINY)
@@ -277,10 +277,10 @@ class Decimal private constructor(
          *
          * @throws IllegalArgumentException if [str] is not a valid decimal128 value.
          */
-        fun from(str: String, ctx: DecContext = DecContext.DECIMAL128) =
+        fun from(str: String, ctx: DecContext = DecContext.current()) =
             D128ParsePrint.parseDecimal(str, ctx)
 
-        fun from(mutDec: MutDec, ctx: DecContext = DecContext.DECIMAL128): Decimal {
+        fun from(mutDec: MutDec, ctx: DecContext = DecContext.current()): Decimal {
             require(mutDec.digitLen <= ctx.precision)
             require(mutDec.qExp <= Q_MAX || mutDec.qExp >= MIN_SPECIAL_VALUE)
             val dec = Decimal(mutDec.sign, mutDec.qExp, mutDec.dw1, mutDec.dw0)
@@ -373,7 +373,7 @@ class Decimal private constructor(
 
         fun NaN(
             sign: Boolean = false, signaling: Boolean = false,
-            payloadDw1: Long, payloadDw0: Long = 0L, ctx: DecContext
+            payloadDw1: Long, payloadDw0: Long
         ): Decimal {
             if ((payloadDw1 or payloadDw0) == 0L)
                 return NaN(sign, signaling)
@@ -382,7 +382,7 @@ class Decimal private constructor(
             val digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
             if (digitLen > NAN_PAYLOAD_PRECISION)
                 return NaN(sign, signaling)
-            return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0, ctx)
+            return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0)
         }
 
 

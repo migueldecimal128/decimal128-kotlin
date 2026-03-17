@@ -2,15 +2,13 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.DecException.*
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
-import kotlin.math.max
-import kotlin.math.min
 
 data class DecContext(
     val decFormat: DecFormat = DecFormat.DECIMAL_128,
     val decRounding: DecRounding = DecRounding.ROUND_TIES_TO_EVEN,
-    val decPrefs: DecPrefs = DecPrefs.DEFAULT,
-    val decTrapHandlers: DecTrapHandlers? = null,
-    val decFlags: DecFlags = DecFlags(),
+    val decPrefs: DecPrefs = DecPrefs.KOTLIN_DEFAULT,
+    val decTrapHandlers: DecTrapHandlers?,
+    val decFlags: DecFlags
 ) {
     val precision: Int
         get() = decFormat.precision
@@ -20,15 +18,37 @@ data class DecContext(
     internal val tmps: DecTmps = DecTmps()
 
     companion object {
-        //val DECIMAL64 = DecContext(DecFormat.DECIMAL_64)
-        val DECIMAL128 = DecContext(DecFormat.DECIMAL_128)
-        val DECIMAL128_EXTENDED = DecContext(DecFormat.DECIMAL_128_EXTENDED)
 
-        val threadLocal = ThreadLocal.withInitial { DecContext(DecFormat.DECIMAL_128) }
+        fun decimal128Kotlin(): DecContext = DecContext(
+            decFormat = DecFormat.DECIMAL_128,
+            decRounding = DecRounding.ROUND_TIES_TO_EVEN,
+            decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+            decTrapHandlers = null,
+            decFlags = DecFlags()
+        )
+
+        fun decimal128IEEE(): DecContext = DecContext(
+            decFormat = DecFormat.DECIMAL_128,
+            decRounding = DecRounding.ROUND_TIES_TO_EVEN,
+            decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+            decTrapHandlers = null,
+            decFlags = DecFlags()
+        )
+
+        fun decimal128Extended(): DecContext = DecContext(
+            decFormat = DecFormat.DECIMAL_128_EXTENDED,
+            decRounding = DecRounding.ROUND_TIES_TO_EVEN,
+            decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+            decTrapHandlers = null,
+            decFlags = DecFlags()
+        )
+
+        val threadLocal = ThreadLocal.withInitial { decimal128Kotlin() }
+
         fun current(): DecContext = threadLocal.get()
+        fun setCurrent(newDecContext: DecContext) = threadLocal.set(newDecContext)
 
 
-        internal val TMP_ENV_ROUND_TOWARD_ZERO = DECIMAL128.with(DecRounding.ROUND_TOWARD_ZERO)
     }
 
     fun with(newDecFormat: DecFormat) =
@@ -52,8 +72,6 @@ data class DecContext(
         val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withThrownException(exceptions)
         return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags)
     }
-
-    fun deepCopy() = DecContext(decFormat, decRounding, decPrefs, decTrapHandlers)
 
     inline fun <T> compute(block: () -> T ): T = block()
 

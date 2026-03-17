@@ -39,7 +39,7 @@ class TestIntelBidRoundTrip1 {
         val dw1 = pentad.dw1
         val dw0 = pentad.dw0
         assertTrue(isValid)
-        val ctx = DecContext.DECIMAL128
+        val ctx = DecContext.decimal128Kotlin()
         ctx.decFlags.clearAll()
         val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)
         val roundTrip = LongArray(2)

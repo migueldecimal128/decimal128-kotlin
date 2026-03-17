@@ -85,8 +85,8 @@ class TestMutDecReciprocal{
         val dec = MutDec()
         val decInv = MutDec()
         dec.set(tc.bd)
-        val env = DecContext()
-        setInv(decInv, dec, env)
+        val ctx = DecContext.decimal128Kotlin()
+        setInv(decInv, dec, ctx)
         val expected = tc.inv
         //assertEquals(expected.unscaledValue(), decInv.coeffToBigInteger())
         //assertEquals(-expected.scale(), decInv.qExp)

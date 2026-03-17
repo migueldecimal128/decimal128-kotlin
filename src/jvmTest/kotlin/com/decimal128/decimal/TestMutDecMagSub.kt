@@ -15,10 +15,10 @@ class TestMutDecMagSub {
 
     class TC(val bdXraw: BigDecimal, val bdYraw: BigDecimal, val ctx: DecContext) {
         constructor(strA: String, strB: String, rd: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecContext().with(rd))
+                this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin().with(rd))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecContext())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext())
+                this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext.decimal128Kotlin())
 
         val flipFlop = bdXraw.compareTo(bdYraw) >= 0
         val rm = ctx.decRounding.mapToRoundingMode()
@@ -153,7 +153,7 @@ class TestMutDecMagSub {
 
     fun randDecimal128Context(): DecContext {
         val i = random.nextInt(4)
-        val env = DecContext().with(DecRounding.fromValue(i))
+        val env = DecContext.decimal128Kotlin().with(DecRounding.fromValue(i))
         return env
     }
 

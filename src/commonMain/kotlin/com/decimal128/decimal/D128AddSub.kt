@@ -66,7 +66,7 @@ private fun addZeroZero(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: D
             return y
         qMin = yQ
     }
-    return Decimal.zero(isRoundTowardNegative, qMin, ctx)
+    return Decimal.zero(isRoundTowardNegative, qMin)
 }
 
 private fun addInfInf(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal =
@@ -90,7 +90,7 @@ private inline fun addFnzFnzUnscaled(xSteal: Int, x: Decimal, ySteal: Int, y: De
     return when {
         (cmp > 0) -> unscaledSub(xSign, x, y)
         (cmp < 0) -> unscaledSub(ySign, y, x)
-        else -> Decimal.zero(ctx.isRoundTowardNegative(), x.qExp(), ctx)
+        else -> Decimal.zero(ctx.isRoundTowardNegative(), x.qExp())
     }
 }
 
@@ -116,7 +116,7 @@ private inline fun addFnzFnzScaled(xSteal: Int, x: Decimal, ySteal: Int, y: Deci
     return when {
         cmpMag > 0 -> subFnzScaledMagnitude(xSign, x, y, ctx)
         cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
-        else -> Decimal.zero(false, min(stealQexp(xSteal), stealQexp(ySteal)), ctx)
+        else -> Decimal.zero(false, min(stealQexp(xSteal), stealQexp(ySteal)))
     }
 }
 

@@ -72,7 +72,7 @@ class TestFptestDecimal {
         val format = fptest.format
         val operands = fptest.decOperands()
         val ctx = when (format) {
-            "d128" -> DecContext(DecFormat.DECIMAL_128, fptest.roundingDirection())
+            "d128" -> DecContext.decimal128Kotlin().with(fptest.roundingDirection())
             "d64"  -> return; // skip // DecContext(DecFormat.DECIMAL_64,  fptest.roundingDirection())
             else   -> throw IllegalStateException("unknown format: $format")
         }
@@ -282,7 +282,7 @@ class TestFptestDecimal {
         fun result(): Decimal? {
             if (result == "#")
                 return null
-            val env = DecContext()
+            val env = DecContext.decimal128Kotlin()
             return when (result) {
                 "Q"  -> Decimal.POS_QNAN
                 "S"  -> Decimal.POS_SNAN
@@ -292,7 +292,7 @@ class TestFptestDecimal {
 
         fun decOperands(): ArrayList<Decimal> {
             val ret = ArrayList<Decimal>(operands.size)
-            val ctx = DecContext()
+            val ctx = DecContext.decimal128Kotlin()
             for (t in operands) {
                 val d = when (t) {
                     "Q"  -> Decimal.POS_QNAN

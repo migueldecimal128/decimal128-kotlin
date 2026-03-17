@@ -746,7 +746,7 @@ class TestMutDecDectest {
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
-        val env = DecContext().with(decRoundings[roundingIndex])
+        val env = DecContext.decimal128Kotlin().with(decRoundings[roundingIndex])
         return env
     }
 

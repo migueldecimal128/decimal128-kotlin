@@ -36,7 +36,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_round_integral_nearest_even",
         Decimal::roundToIntegralTiesToEven,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -45,7 +45,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_round_integral_nearest_away",
         Decimal::roundToIntegralTiesToAway,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -54,7 +54,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_round_integral_negative",
         Decimal::roundToIntegralTowardNegative,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -63,7 +63,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_round_integral_positive",
         Decimal::roundToIntegralTowardPositive,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -72,7 +72,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_round_integral_zero",
         Decimal::roundToIntegralTowardZero,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -81,7 +81,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_round_integral_exact",
         Decimal::roundToIntegralExact,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -90,7 +90,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_nextup",
         Decimal::nextUp,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -100,7 +100,7 @@ class TestBid128Arith2 {
             "bid128_nextup 0 [782d2f94d69006ec,2196c0c64c5c5d60] [78000000000000000000000000000000] 00",
         ),
         Decimal::nextUp,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 
@@ -109,7 +109,7 @@ class TestBid128Arith2 {
         "/intel/readtest.in",
         "bid128_nextdown",
         Decimal::nextDown,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
 

@@ -16,7 +16,7 @@ class TestDecTrapHandlers {
         val z = ONE / ZERO
         assertTrue(z.isInfinite())
 
-        val catchCtx = DecContext.DECIMAL128.withThrownException(DecException.DIVIDE_BY_ZERO)
+        val catchCtx = DecContext.decimal128Kotlin().withThrownException(DecException.DIVIDE_BY_ZERO)
 
         assertThrows<DivideByZeroException> {
             with (catchCtx) {

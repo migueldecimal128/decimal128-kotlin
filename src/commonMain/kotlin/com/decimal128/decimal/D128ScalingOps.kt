@@ -46,7 +46,7 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
         }
     }
     if (stealIsZER(xSteal))
-        return Decimal.zero(x.sign, -decimalScale, ctx)
+        return Decimal.zero(x.sign, -decimalScale)
     if (stealIsINF(xSteal))
         return x
     verify { stealIsNAN(xSteal) }

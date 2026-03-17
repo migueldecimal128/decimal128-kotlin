@@ -71,7 +71,7 @@ class TestEncodeDecodeDpd128 {
         val dpd128LE = ByteArray(16)
         require (jnaBidDpdShim.d128_dpd_le_from_string(str, dpd128LE) == 0)
 
-        val d = MutDec().set(str, DecContext.DECIMAL128)
+        val d = MutDec().set(str, DecContext.decimal128Kotlin())
         val dpdLeBytes = d.encodeLittleEndianBytesDpd128()
         if (verbose) {
             println(" dpd128LE:${dpd128LE.spacedHex()}")

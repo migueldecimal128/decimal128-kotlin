@@ -13,10 +13,10 @@ class TestMutDecMagMul {
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecContext) {
         constructor(strA: String, strB: String, decRounding: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecContext().with(decRounding))
+                this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin().with(decRounding))
         constructor(strA: String, strB: String) :
-                this(BigDecimal(strA), BigDecimal(strB), DecContext())
-        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext())
+                this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin())
+        constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext.decimal128Kotlin())
 
         val rm = ctx.decRounding.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
@@ -77,7 +77,7 @@ class TestMutDecMagMul {
 
     fun randDecimal128Context(): DecContext {
         val i = random.nextInt(5)
-        val env = DecContext().with(DecRounding.fromValue(i))
+        val env = DecContext.decimal128Kotlin().with(DecRounding.fromValue(i))
         return env
     }
 

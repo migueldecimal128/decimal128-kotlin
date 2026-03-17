@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecContext.Companion.DECIMAL128
+import com.decimal128.decimal.DecContext.Companion.decimal128Kotlin
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -10,7 +10,7 @@ class TestContextOperators {
 
     @Test
     fun test1() {
-        with(DECIMAL128) {
+        with(decimal128Kotlin()) {
             val a = Decimal.from("2")
             val b = Decimal.from(3)
             val c = Decimal.from(4)
@@ -24,7 +24,7 @@ class TestContextOperators {
             assertEquals("-1", "$e")
         }
 
-        DECIMAL128.context {
+        decimal128Kotlin().context {
             val e = Decimal.from(5)
             val f = Decimal.from(6)
             val g = Decimal.from(7)

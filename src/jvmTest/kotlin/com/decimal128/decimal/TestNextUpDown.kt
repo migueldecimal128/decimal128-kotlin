@@ -59,7 +59,7 @@ class TestNextUpDown {
         val n = newMutDec(bd)
         val up = MutDec()
         val down = MutDec()
-        val env = DecContext()
+        val env = DecContext.decimal128Kotlin()
         up.setNextUp(n, env)
         down.setNextDown(n, env)
 

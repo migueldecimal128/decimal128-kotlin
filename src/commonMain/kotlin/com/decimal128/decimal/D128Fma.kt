@@ -76,7 +76,7 @@ private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): De
     if (a.isZero()) {
         val fmaSign =
             (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
-        return Decimal.zero(fmaSign, min(prodQ, a.qExp()), ctx)
+        return Decimal.zero(fmaSign, min(prodQ, a.qExp()))
     }
     if (a.isFiniteNonZero() && prodQ < a.qExp())
         return rescaleToMinQExpImpl(a, prodQ, ctx)

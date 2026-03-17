@@ -1,8 +1,6 @@
 package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
-import com.decimal128.decimal.DecContext.Companion.DECIMAL128
-import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.assertTrue
@@ -29,7 +27,7 @@ object IntelRunner1 {
         cases.forEach { tc ->
             if (verbose)
                 println(tc.text)
-            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
+            val ctx = DecContext.decimal128Kotlin().with(tc.decRounding())
             val op1 = tc.op1Bid128(ctx)
             if (verbose)
                 println("op1:$op1 decFlags:${ctx.decFlags}")
@@ -81,7 +79,7 @@ object IntelRunner1 {
                           allowNonCanonical: Boolean,
                           verbose: Boolean = false ) {
         cases.forEach { tc ->
-            val ctx = DECIMAL128.withNewFlags()
+            val ctx = DecContext.decimal128Kotlin()
             val op1 = tc.op1Bid128(ctx)
             if (verbose) {
                 println(tc.text)
@@ -357,7 +355,7 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val ctx = DECIMAL128
+            val ctx = DecContext.decimal128Kotlin()
             ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(ctx)
             val op2 = tc.op2Bid128(ctx)
@@ -402,7 +400,7 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val ctx = DECIMAL128
+            val ctx = DecContext.decimal128Kotlin()
             ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(ctx)
             val op2 = tc.op2Bid128(ctx)
@@ -447,7 +445,7 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
+            val ctx = DecContext.decimal128Kotlin().with(tc.decRounding())
             ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(ctx)
             val op2 = tc.op2Int()
@@ -492,7 +490,7 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
+            val ctx = DecContext.decimal128Kotlin().with(tc.decRounding())
             ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(ctx)
             if (verbose)
@@ -536,7 +534,7 @@ object IntelRunner1 {
             if (verbose) {
                 println("test:${tc.text}")
             }
-            val ctx = DECIMAL128.withNewFlags().with(tc.decRounding())
+            val ctx = DecContext.decimal128Kotlin().with(tc.decRounding())
             ctx.decFlags.clearAll()
             val op1 = tc.op1Bid128(ctx)
             val op2 = tc.op2Bid128(ctx)

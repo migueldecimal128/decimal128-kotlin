@@ -13,7 +13,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_equal",
         Decimal::compareQuietEqual,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -22,7 +22,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_greater",
         Decimal::compareQuietGreater,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -31,7 +31,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_greater_equal",
         Decimal::compareQuietGreaterEqual,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -40,7 +40,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_less",
         Decimal::compareQuietLess,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -49,7 +49,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_less_equal",
         Decimal::compareQuietLessEqual,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -58,7 +58,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_less_unordered",
         Decimal::compareQuietLessUnordered,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -67,7 +67,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_not_equal",
         Decimal::compareQuietNotEqual,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -76,7 +76,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_not_greater",
         Decimal::compareQuietNotGreater,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -85,7 +85,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_not_less",
         Decimal::compareQuietNotLess,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -94,7 +94,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_ordered",
         Decimal::compareQuietOrdered,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -103,7 +103,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_quiet_unordered",
         Decimal::compareQuietUnordered,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -112,7 +112,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_greater",
         Decimal::compareSignalingGreater,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -121,7 +121,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_greater_equal",
         Decimal::compareSignalingGreaterEqual,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -130,7 +130,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_greater_unordered",
         Decimal::compareSignalingGreaterUnordered,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -139,7 +139,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_less",
         Decimal::compareSignalingLess,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -148,7 +148,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_less_equal",
         Decimal::compareSignalingLessEqual,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -157,7 +157,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_less_unordered",
         Decimal::compareSignalingLessUnordered,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -166,7 +166,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_not_greater",
         Decimal::compareSignalingNotGreater,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 
@@ -175,7 +175,7 @@ class TestBid128Comparison {
         "/intel/readtest.in",
         "bid128_signaling_not_less",
         Decimal::compareSignalingNotLess,
-        DecContext.DECIMAL128,
+        DecContext.decimal128Kotlin(),
         verbose = verbose
     )
 

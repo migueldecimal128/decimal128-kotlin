@@ -247,7 +247,7 @@ class TestSqrt{
         }
         sqrt.type = if (sqrt.c256IsZero()) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
         sqrt.qExp = qZ
-        sqrt.roundAndFinalize(residue2, DecContext())
+        sqrt.roundAndFinalize(residue2, DecContext.decimal128Kotlin())
 
         if (verbose)
             println(" --> sqrt:$sqrt")

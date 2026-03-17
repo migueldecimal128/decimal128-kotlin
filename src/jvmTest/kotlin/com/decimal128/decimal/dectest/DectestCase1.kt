@@ -101,7 +101,7 @@ data class DectestCase1(
             require(dectestEnv.maxExp == 6144)
             require(dectestEnv.minExp == -6143)
             require(dectestEnv.rounding != null)
-            val decContext = DecContext(decRounding = dectestEnv.rounding)
+            val decContext = DecContext.decimal128Kotlin().with(dectestEnv.rounding)
             return decContext
         }
 

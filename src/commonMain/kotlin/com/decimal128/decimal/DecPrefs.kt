@@ -18,7 +18,7 @@ data class DecPrefs(
 
     val parseCollapseSNaN: Boolean = false,
     val parseDiscardNanPayload: Boolean = false,
-    val parseMalformedReturnsNaN: Boolean = false,
+    val parseMalformedSignalsInvalidOperation: Boolean = false,
     val parseThrowOnDigitOverflow: Boolean = false,
     val parseThrowOnOutOfRange: Boolean = false,
 
@@ -28,7 +28,7 @@ data class DecPrefs(
     val propagatePreferSnan: Boolean = true,
 ) {
     companion object {
-        val DEFAULT = DecPrefs()
+        val KOTLIN_DEFAULT = DecPrefs()
     }
 
     enum class PrintStyle { AUTO, ALWAYS_SCIENTIFIC, INTEGER_COEFFICIENT}

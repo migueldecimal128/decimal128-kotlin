@@ -1,7 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecContext.Companion.DECIMAL128
-import org.junit.jupiter.api.Test
+import com.decimal128.decimal.DecContext.Companion.decimal128Kotlin
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 
 
@@ -61,7 +60,7 @@ class TestEncodeDecodeBid128 {
 
     fun test1(str: String) {
 
-        val DECIMAL128_ZERO_NAN_PAYLOAD = DECIMAL128.with(DECIMAL128.decPrefs.copy(parseDiscardNanPayload = true))
+        val DECIMAL128_ZERO_NAN_PAYLOAD = decimal128Kotlin().with(DecPrefs.KOTLIN_DEFAULT.copy(parseDiscardNanPayload = true))
 
         if (verbose)
             println(str)

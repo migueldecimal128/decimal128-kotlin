@@ -17,7 +17,7 @@ internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     } else when (signature) {
         ZER_ZER,
         ZER_FNZ,
-        FNZ_ZER -> Decimal.zero(prodSignFlag, prodExp, ctx)
+        FNZ_ZER -> Decimal.zero(prodSignFlag, prodExp)
 
         ZER_INF,
         INF_ZER -> ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)

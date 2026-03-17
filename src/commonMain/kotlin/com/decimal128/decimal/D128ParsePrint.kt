@@ -41,7 +41,7 @@ object D128ParsePrint {
      * @throws IllegalArgumentException if the input is not a valid finite
      *         decimal128 text form or would require rounding.
      */
-    fun parseDecimal(str: String, ctx: DecContext = DecContext.DECIMAL128): Decimal {
+    fun parseDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
         val strIterator = StringLatin1Iterator(str)
         val decOrReason = parseDecimalOrReason(strIterator, ctx)
         if (decOrReason is Decimal)
@@ -49,7 +49,7 @@ object D128ParsePrint {
         val reason: InvalidOperationReason =
             if (decOrReason is InvalidOperationReason) decOrReason
             else PARSE_MALFORMED
-        if (ctx.decPrefs.parseMalformedReturnsNaN) {
+        if (ctx.decPrefs.parseMalformedSignalsInvalidOperation) {
             return ctx.signalInvalid(reason)
         }
         throw NumberFormatException("invalid decimal format:$reason:'$str'")
@@ -80,7 +80,7 @@ object D128ParsePrint {
         val chLower = (ch.code or 0x20).toChar()
         if (chLower == 'i')
             return parseInfinityText(txt)
-        return parseNanText(txt, ctx)
+        return parseNanText(txt)
     }
 
     /**
@@ -187,10 +187,10 @@ object D128ParsePrint {
      *
      * @return the parsed NaN value, or `null` if the string is not a NaN form.
      */
-    fun parseNanText(str: String, ctx: DecContext = DecContext.DECIMAL128) =
-        parseNanText(StringLatin1Iterator(str), ctx)
+    fun parseNanText(str: String) =
+        parseNanText(StringLatin1Iterator(str))
 
-    fun parseNanText(txt: Latin1Iterator, ctx: DecContext = DecContext.DECIMAL128): Decimal? {
+    fun parseNanText(txt: Latin1Iterator): Decimal? {
         var ch = txt.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -240,7 +240,7 @@ object D128ParsePrint {
                 payloadDw1 += if (unsignedLT(payloadDw0, accum19b)) 1L else 0L
             }
         }
-        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0, ctx)
+        return Decimal.NaN(sign, hasS, payloadDw1, payloadDw0)
     }
 
     /**
@@ -260,7 +260,7 @@ object D128ParsePrint {
      * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String, ctx: DecContext = DecContext.DECIMAL128): Any? =
+    fun parseFiniteValueText(str: String, ctx: DecContext = DecContext.current()): Any? =
         parseFiniteValueText(StringLatin1Iterator(str), ctx)
 
     fun parseFiniteValueText(txt: Latin1Iterator, ctx: DecContext): Any? {
@@ -380,7 +380,7 @@ object D128ParsePrint {
         val signedExp = if (expSign) -exp else exp
         val qExp = signedExp - fractionalDigitCount + max(0, significantDigitCount - precision)
         if ((dw0T or dw1T) == 0L) // allow any exponent with Zero
-            return Decimal.zero(sign, qExp, ctx)
+            return Decimal.zero(sign, qExp)
         val dec = decRoundAndFinalizeFinite(sign, dw1T, dw0T, residue, qExp, ctx)
         if (!dec.isFiniteNonZero() && ctx.decPrefs.parseThrowOnOutOfRange) {
             return PARSE_VALUE_OUT_OF_RANGE

@@ -11,8 +11,8 @@ class TestMutDecMagFinalize {
 
     class TC(val bdA: BigDecimal, val ctx: DecContext) {
         constructor(str: String, ctx: DecContext) : this(BigDecimal(str), ctx)
-        constructor(str: String) : this(str, DecContext())
-        constructor(bdA: BigDecimal) : this(bdA, DecContext())
+        constructor(str: String) : this(str, DecContext.decimal128Kotlin())
+        constructor(bdA: BigDecimal) : this(bdA, DecContext.decimal128Kotlin())
     }
 
     val cases = arrayOf(

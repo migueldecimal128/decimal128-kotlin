@@ -263,7 +263,7 @@ class TestFptestRead {
                 return null
             val dec = MutDec()
             //val ctx = DecContext()
-            val env = DecContext()
+            val env = DecContext.decimal128Kotlin()
             when (result) {
                 "Q" -> dec.setNaN(env)
                 "S" -> dec.setSNaN(env)
@@ -275,7 +275,7 @@ class TestFptestRead {
         fun decOperands(): ArrayList<MutDec> {
             val ret = ArrayList<MutDec>(operands.size)
             //val ctx = DecContext()
-            val env = DecContext()
+            val env = DecContext.decimal128Kotlin()
             for (t in operands) {
                 val d = MutDec()
                 when (t) {
@@ -317,7 +317,7 @@ class TestFptestRead {
         val format = fptest.format
         val operands = fptest.decOperands()
         val ctx = when {
-            format == "d128" -> DecContext(DecFormat.DECIMAL_128, fptest.roundingDirection())
+            format == "d128" -> DecContext.decimal128Kotlin().with(fptest.roundingDirection())
             format == "d64" -> return // DecContext(DecFormat.DECIMAL_64, fptest.roundingDirection())
             else -> throw IllegalStateException()
         }

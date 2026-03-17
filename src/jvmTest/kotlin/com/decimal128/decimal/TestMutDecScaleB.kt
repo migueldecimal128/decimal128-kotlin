@@ -10,7 +10,7 @@ class TestMutDecScaleB {
     val verbose = false
 
     class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecContext) {
-        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecContext())
+        constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecContext.decimal128Kotlin())
         val expected =
             bdToIeeeDecimal128(bd.scaleByPowerOfTen(pow10),
                         ctx.decRounding.mapToRoundingMode())

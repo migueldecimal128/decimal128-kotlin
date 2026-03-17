@@ -56,7 +56,7 @@ private const val BYTE_MINUS = '-'.code.toByte()
 object DecimalParsePrint {
 
     fun decToString(x: MutDec, ctx: DecContext? = null) : String {
-        val prefs = ctx?.decPrefs ?: DecPrefs.DEFAULT
+        val prefs = ctx?.decPrefs ?: DecPrefs.KOTLIN_DEFAULT
         val printLen = calcPrintLen(x, prefs)
         val bytes = ctx?.tmps?.bytesPrint ?: ByteArray(MAX_DEC38_CHAR_LEN)
         //val cb = decToUtf8(x, bytes, 0, MAX_DEC38_CHAR_LEN, prefs, env?.decTemps?.c256Print)
