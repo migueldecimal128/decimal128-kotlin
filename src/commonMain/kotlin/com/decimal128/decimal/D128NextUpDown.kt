@@ -83,13 +83,13 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     return Decimal(x.sign, xQ, dw1, dw0)
 }
 
-fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
+internal fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
     val qExp = ctx.qMax
     val dwHi = ctx.decFormat.dw1MaxxCoeff
     val dwLo = ctx.decFormat.dw0MaxxCoeff - 1L
     return Decimal(sign, qExp, dwHi, dwLo)
 }
 
-fun minFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal =
+internal fun minFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal =
     Decimal(sign, ctx.qTiny, 0L, 1L)
 
