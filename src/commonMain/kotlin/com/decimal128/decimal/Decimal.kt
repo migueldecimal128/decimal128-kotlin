@@ -227,12 +227,12 @@ class Decimal private constructor(
 
         /**
          * Returns ±0 with the given sign, with the quantum exponent clamped
-         * to `[ctx.qTiny, ctx.qMax]`.
+         * to `[Q_TINY, Q_MAX]`.
          */
         fun zero(sign: Boolean, qExp: Int, ctx: DecContext): Decimal {
             if (qExp == 0)
                 return if (sign) NEG_ZEROe0 else POS_ZEROe0
-            val qClamped = max(min(qExp, ctx.qMax), ctx.qTiny)
+            val qClamped = max(min(qExp, Q_MAX), Q_TINY)
             val signBit = if (sign) 1 else 0
             val steal = stealEncodeZER(signBit, qClamped)
             val zero = Decimal(steal, 0L, 0L)
@@ -282,7 +282,7 @@ class Decimal private constructor(
 
         fun from(mutDec: MutDec, ctx: DecContext = DecContext.DECIMAL128): Decimal {
             require(mutDec.digitLen <= ctx.precision)
-            require(mutDec.qExp <= ctx.qMax || mutDec.qExp >= MIN_SPECIAL_VALUE)
+            require(mutDec.qExp <= Q_MAX || mutDec.qExp >= MIN_SPECIAL_VALUE)
             val dec = Decimal(mutDec.sign, mutDec.qExp, mutDec.dw1, mutDec.dw0)
             return dec
         }

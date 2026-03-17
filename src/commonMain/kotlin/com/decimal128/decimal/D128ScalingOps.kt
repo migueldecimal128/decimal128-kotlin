@@ -25,7 +25,7 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
         val qDelta = xQ - qDesired
         when {
             qDelta > 0 -> { // add fractional zeros
-                val headroom = min(ctx.precision - xDigitLen, xQ - ctx.qTiny)
+                val headroom = min(ctx.precision - xDigitLen, xQ - Q_TINY)
                 if (qDelta <= headroom) {
                     val pentad = ctx.tmps.pentad1
                     umul128xPow10to128(pentad, x.dw1, x.dw0, qDelta)

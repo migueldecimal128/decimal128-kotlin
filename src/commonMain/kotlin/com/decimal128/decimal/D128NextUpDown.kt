@@ -33,7 +33,7 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     var qExp = stealQexp(xSteal)
     var dw1 = x.dw1
     var dw0 = x.dw0
-    val headroom = min(ctx.precision - stealDigitLen(xSteal), qExp - ctx.qTiny)
+    val headroom = min(ctx.precision - stealDigitLen(xSteal), qExp - Q_TINY)
     val xSign = stealSignFlag(xSteal)
     if (headroom > 0) {
         val pentad = ctx.tmps.pentad1
@@ -49,7 +49,7 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
         dw1 = ctx.decFormat.dw1MinFullPrecisionCoeff
         dw0 = ctx.decFormat.dw0MinFullPrecisionCoeff
         ++qExp
-        if (qExp > ctx.qMax)
+        if (qExp > Q_MAX)
             return Decimal.infinity(xSign)
     }
     return Decimal(xSign, qExp, dw1, dw0)
@@ -61,7 +61,7 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     var xQ = stealQexp(xSteal)
     var dw1 = x.dw1
     var dw0 = x.dw0
-    val headroom = min(ctx.precision - stealDigitLen(xSteal), xQ - ctx.qTiny)
+    val headroom = min(ctx.precision - stealDigitLen(xSteal), xQ - Q_TINY)
     if (headroom > 0) {
         val pentad = ctx.tmps.pentad1
         umul128xPow10to128(pentad, dw1, dw0, headroom)
@@ -72,7 +72,7 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     // Check if we're at a power of 10 boundary (would lose a digit if decremented)
     if (dw0 == ctx.decFormat.dw0MinFullPrecisionCoeff &&
         dw1 == ctx.decFormat.dw1MinFullPrecisionCoeff &&
-        xQ > ctx.qTiny) {
+        xQ > Q_TINY) {
         // Set to 10^precision - 1 and decrement exponent
         dw1 = ctx.decFormat.dw1MaxxCoeff
         dw0 = ctx.decFormat.dw0MaxxCoeff
@@ -84,12 +84,12 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
 }
 
 internal fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
-    val qExp = ctx.qMax
+    val qExp = Q_MAX
     val dwHi = ctx.decFormat.dw1MaxxCoeff
     val dwLo = ctx.decFormat.dw0MaxxCoeff - 1L
     return Decimal(sign, qExp, dwHi, dwLo)
 }
 
 internal fun minFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal =
-    Decimal(sign, ctx.qTiny, 0L, 1L)
+    Decimal(sign, Q_TINY, 0L, 1L)
 

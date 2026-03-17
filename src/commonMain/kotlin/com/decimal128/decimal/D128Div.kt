@@ -17,7 +17,7 @@ internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
             ZER_ZER -> divZeroZero(x, y, ctx)
             ZER_FNZ -> zero(resultSign, x.qExp() - y.qExp(), ctx)
             ZER_INF,
-            FNZ_INF -> zero(resultSign, ctx.qTiny, ctx)
+            FNZ_INF -> zero(resultSign, Q_TINY, ctx)
 
             FNZ_ZER -> divFnzZero(x, y, ctx)
 

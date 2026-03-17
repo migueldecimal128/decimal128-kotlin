@@ -289,7 +289,7 @@ class MutDec() : C256() {
     fun setZero(sign: Boolean = false, qExp: Int = 0, ctx: DecContext): MutDec {
         c256SetZero()
         this.type = STEAL_TYPE_ZER
-        this.qExp = max(min(qExp, ctx.qMax), ctx.qTiny)
+        this.qExp = max(min(qExp, Q_MAX), Q_TINY)
         this.sign = sign
         verify { validate() }
         return this
@@ -508,7 +508,7 @@ class MutDec() : C256() {
 
     fun setMaxFiniteMagnitude(ctx: DecContext): MutDec {
         type = STEAL_TYPE_FNZ
-        qExp = ctx.qMax
+        qExp = Q_MAX
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
         val pow10Offset = pow10Offset(ctx.precision) and POW10_BCE
@@ -524,14 +524,14 @@ class MutDec() : C256() {
 
     fun setMinFiniteMagnitude(ctx: DecContext): MutDec {
         type = STEAL_TYPE_FNZ
-        qExp = ctx.qTiny
+        qExp = Q_TINY
         super.c256SetOne()
         return this
     }
 
     fun setMinZeroMagnitude(ctx: DecContext): MutDec {
         type = STEAL_TYPE_ZER
-        qExp = ctx.qTiny
+        qExp = Q_TINY
         super.c256SetZero()
         return this
     }
@@ -720,7 +720,7 @@ class MutDec() : C256() {
 
                     else -> {
                         setZero(quotientSign)
-                        qExp = ctx.qTiny
+                        qExp = Q_TINY
                     }
                 }
             }
@@ -1136,9 +1136,9 @@ class MutDec() : C256() {
             sign == false -> {
                 // nextUp is not an arithmetic operation and
                 // therefore flags do not get set
-                verify { qExp <= ctx.qMax }
+                verify { qExp <= Q_MAX }
                 mutateNextAwayFromZero(ctx)
-                if (qExp > ctx.qMax)
+                if (qExp > Q_MAX)
                     setInfinite(sign = false)
             }
             else -> mutateNextTowardZero(ctx)
@@ -1164,9 +1164,9 @@ class MutDec() : C256() {
             }
 
             sign -> {
-                verify { qExp <= ctx.qMax }
+                verify { qExp <= Q_MAX }
                 mutateNextAwayFromZero(ctx)
-                if (qExp > ctx.qMax)
+                if (qExp > Q_MAX)
                     setInfinite(sign = true)
             }
 
@@ -1176,7 +1176,7 @@ class MutDec() : C256() {
     }
 
     private fun mutateNextAwayFromZero(ctx: DecContext) {
-        val headroom = min(ctx.precision - digitLen, qExp - ctx.qTiny)
+        val headroom = min(ctx.precision - digitLen, qExp - Q_TINY)
         if (headroom > 0) {
             c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
             this.qExp -= headroom
@@ -1190,7 +1190,7 @@ class MutDec() : C256() {
 
     private fun mutateNextTowardZero(ctx: DecContext) {
         val headroom =
-            min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - ctx.qTiny)
+            min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - Q_TINY)
         if (headroom > 0) {
             c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
             this.qExp -= headroom
@@ -1365,7 +1365,7 @@ class MutDec() : C256() {
                 }
                 ctzd += min(countTrailingZeroDigits32(m.toInt()), remaining)
                 // cap when qExp gets clamped
-                ctzd = min(ctzd, ctx.qMax - qX)
+                ctzd = min(ctzd, Q_MAX - qX)
                 if (ctzd == 0)
                     return set(x)
                 c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
