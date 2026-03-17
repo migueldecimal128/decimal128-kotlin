@@ -738,13 +738,15 @@ class TestMutDecDectest {
     }
 
     fun buildenv(): DecContext? {
-        // relax this requirement
-        // require (minExponent == -(maxExponent - 1))
+        // going forward, we only support Decimal128
+        if (precision != 34)
+            return null
+        if (maxExponent != 6144)
+            return null
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
-        val fmt = DecFormat(precision, maxExponent)
-        val env = DecContext().with(fmt).with(decRoundings[roundingIndex])
+        val env = DecContext().with(decRoundings[roundingIndex])
         return env
     }
 

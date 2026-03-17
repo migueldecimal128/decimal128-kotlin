@@ -4,34 +4,37 @@
 package com.decimal128.decimal
 
 data class DecFormat(val precision: Int,
+                     val qMax: Int,
+                     val qTiny: Int,
                      val eMax: Int,
-                     val eMin: Int
+                     val eMin: Int,
+                     val maxBitLen: Int,
     ) {
-    constructor(precision: Int,
-                eMax: Int
-        ) : this(precision, eMax, -(eMax - 1))
 
     companion object {
-        /* drop DECIMAL_64 DecFormat from internal use
 
-        val DECIMAL_64 = DecFormat(16, 384)
-        init {
-            verify { DECIMAL_64.maxBitLen == 54 }
-        }
-         */
-        val DECIMAL_128 = DecFormat(34, 6144)
-        init {
-            verify { DECIMAL_128.maxBitLen == 113 }
-        }
-        val DECIMAL_128_EXTENDED = DecFormat(38, 6144)
-        init {
-            verify { DECIMAL_128_EXTENDED.maxBitLen == 127 }
-        }
+        internal const val Q_MAX = 6111
+        internal const val Q_TINY = -6176
+
+        val DECIMAL_128 = DecFormat(
+            precision = 34,
+            qMax = Q_MAX,
+            qTiny = Q_TINY,
+            eMax = 6144,
+            eMin = -6176,
+            maxBitLen = 113,
+        )
+
+        val DECIMAL_128_EXTENDED = DecFormat(
+            precision = 38,
+            qMax = Q_MAX,
+            qTiny = Q_TINY,
+            eMax = 6148,
+            eMin = -6180,
+            maxBitLen = 127,
+        )
     }
 
-    val qMax: Int = eMax - (precision - 1)
-    val qTiny: Int = eMin - (precision - 1)
-    val maxBitLen: Int = pow10BitLen(precision)
     val dw0MaxxCoeff: Long = pow10_128_dw0(precision)
     val dw1MaxxCoeff: Long = pow10_128_dw1(precision)
     val dw0MinFullPrecisionCoeff:Long = pow10_128_dw0(precision - 1)
