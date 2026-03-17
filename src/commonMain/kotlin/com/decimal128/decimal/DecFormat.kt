@@ -13,10 +13,6 @@ data class DecFormat(val precision: Int,
 
     companion object {
 
-        internal const val Q_MAX = 6111
-        internal const val Q_TINY = -6176
-        internal const val NAN_PAYLOAD_PRECISION = 33
-
         val DECIMAL_128 = DecFormat(
             precision = 34,
             qMax = Q_MAX,

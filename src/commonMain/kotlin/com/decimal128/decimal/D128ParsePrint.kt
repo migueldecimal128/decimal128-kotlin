@@ -226,7 +226,7 @@ object D128ParsePrint {
         } while (ch.code != 0)
         var payloadDw0: Long
         var payloadDw1: Long
-        if (accumDigitCount > DecFormat.NAN_PAYLOAD_PRECISION) {
+        if (accumDigitCount > NAN_PAYLOAD_PRECISION) {
             payloadDw0 = -1
             payloadDw1 = -1
         } else {

@@ -173,7 +173,7 @@ class Decimal private constructor(
                 when {
                     qExp < NON_FINITE_INF -> digitLen < ctx.precision
                     qExp == NON_FINITE_INF -> digitLen == 0
-                    else -> digitLen <= DecFormat.NAN_PAYLOAD_PRECISION
+                    else -> digitLen <= NAN_PAYLOAD_PRECISION
                 }
             }
             val steal = stealRaw(sign, qExp, dw1, dw0)
@@ -380,7 +380,7 @@ class Decimal private constructor(
             val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
             val bitLen = calcBitLen128(payloadDw1, payloadDw0)
             val digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
-            if (digitLen > DecFormat.NAN_PAYLOAD_PRECISION)
+            if (digitLen > NAN_PAYLOAD_PRECISION)
                 return NaN(sign, signaling)
             return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0, ctx)
         }

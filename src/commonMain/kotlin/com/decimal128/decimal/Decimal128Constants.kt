@@ -10,6 +10,12 @@ internal const val MAX_DEC34_CHAR_LEN = 1 /*sign*/ + 34 /*coefficient*/ + 1 /*do
 
 internal const val MAX_DEC38_CHAR_LEN = 1 /*sign*/ + 38 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
 
+internal const val Q_MAX = 6111
+internal const val Q_TINY = -6176
+internal const val NAN_PAYLOAD_PRECISION = 33
+
+
+
 // Automatically generated ... but not any more
 
 internal const val POW10_64_COUNT = 20          // 0x00000014 2E+1
