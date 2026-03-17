@@ -158,17 +158,6 @@ data class DecContext(
     fun signalDivByZero(sign: Boolean): Decimal =
         signalDivByZero(if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY)
 
-    fun signalParseMalformed(reason: InvalidOperationReason): Decimal {
-        if (decPrefs.parseThrowOnMalformed)
-            throw NumberFormatException(reason.toString())
-        // FIXME - add a flag for parse malformed ?
-        //  might assist in debugging cause of a NaN
-        return signalInvalid(InvalidOperationReason.PARSE_MALFORMED, Decimal.NaN)
-    }
-
-    fun signalParseBadUnderscore(): Decimal =
-        signalParseMalformed(InvalidOperationReason.PARSE_INVALID_UNDERSCORE_LOCATION)
-
     fun signalInexactOverflow(mutDec: MutDec): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(OVERFLOW) && !decTrapHandlers.hasTrapHandler(INEXACT)) {
             decFlags.set(OVERFLOW)

@@ -6,6 +6,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.InvalidOperationReason.PARSE_INVALID_UNDERSCORE_LOCATION
 import com.decimal128.decimal.InvalidOperationReason.PARSE_DOUBLE_DOT
 import com.decimal128.decimal.InvalidOperationReason.PARSE_EMPTY_STRING
+import com.decimal128.decimal.InvalidOperationReason.PARSE_MALFORMED
 import com.decimal128.decimal.InvalidOperationReason.PARSE_NO_EXPONENT_DIGIT
 import com.decimal128.decimal.InvalidOperationReason.PARSE_UNEXPECTED_CHAR
 import com.decimal128.decimal.InvalidOperationReason.PARSE_VALUE_OUT_OF_RANGE
@@ -43,14 +44,15 @@ object D128ParsePrint {
     fun parseDecimal(str: String, ctx: DecContext = DecContext.DECIMAL128): Decimal {
         val strIterator = StringLatin1Iterator(str)
         val decOrReason = parseDecimalOrReason(strIterator, ctx)
-        val msg = when (decOrReason) {
-            is Decimal -> return decOrReason
-            is InvalidOperationReason -> decOrReason.toString()
-            else -> ""
+        if (decOrReason is Decimal)
+            return decOrReason
+        val reason: InvalidOperationReason =
+            if (decOrReason is InvalidOperationReason) decOrReason
+            else PARSE_MALFORMED
+        if (ctx.decPrefs.parseMalformedReturnsNan) {
+            return ctx.signalInvalid(reason)
         }
-        if (ctx.decPrefs.parseThrowOnMalformed)
-            throw NumberFormatException("invalid decimal format:$msg:'$str'")
-        return Decimal.NaN
+        throw NumberFormatException("invalid decimal format:$reason:'$str'")
     }
 
     /**

@@ -18,7 +18,7 @@ data class DecPrefs(
 
     val parseCollapseSNaN: Boolean = false,
     val parseDiscardNanPayload: Boolean = false,
-    val parseThrowOnMalformed: Boolean = true,
+    val parseMalformedReturnsNan: Boolean = false,
     val parseThrowOnDigitOverflow: Boolean = false,
     val parseThrowOnOutOfRange: Boolean = false,
 
