@@ -12,10 +12,13 @@ data class DecFormat(val precision: Int,
         ) : this(precision, eMax, -(eMax - 1))
 
     companion object {
+        /* drop DECIMAL_64 DecFormat from internal use
+
         val DECIMAL_64 = DecFormat(16, 384)
         init {
             verify { DECIMAL_64.maxBitLen == 54 }
         }
+         */
         val DECIMAL_128 = DecFormat(34, 6144)
         init {
             verify { DECIMAL_128.maxBitLen == 113 }

@@ -9,7 +9,7 @@ class TestContextParams1 {
 
     @Test
     fun testContextA() {
-        val contexts = arrayOf(DecContext.DECIMAL128, DecContext.DECIMAL128_EXTENDED, DecContext.DECIMAL64)
+        val contexts = arrayOf(DecContext.DECIMAL128, DecContext.DECIMAL128_EXTENDED)
         for (ctx in contexts) {
             with(ctx) {
                 val a = "1.0".toDecimal()

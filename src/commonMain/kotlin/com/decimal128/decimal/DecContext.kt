@@ -30,7 +30,7 @@ data class DecContext(
     internal val tmps: DecTmps = DecTmps()
 
     companion object {
-        val DECIMAL64 = DecContext(DecFormat.DECIMAL_64)
+        //val DECIMAL64 = DecContext(DecFormat.DECIMAL_64)
         val DECIMAL128 = DecContext(DecFormat.DECIMAL_128)
         val DECIMAL128_EXTENDED = DecContext(DecFormat.DECIMAL_128_EXTENDED)
 
