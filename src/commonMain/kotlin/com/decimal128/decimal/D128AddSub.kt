@@ -25,7 +25,7 @@ internal fun d128AddSubImpl(x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext
     return if (signature == FNZ_FNZ) {
         addFnzFnz(xSteal, x, ySteal, y, ctx)
     } else when (signature) {
-        ZER_ZER -> addZeroZero(xSteal, x, ySteal, y, ctx)
+        ZER_ZER -> addZerZer(xSteal, x, ySteal, y, ctx)
         ZER_FNZ -> scaleToMinExp(ySteal, y, stealQexp(xSteal), ctx)
         ZER_INF, FNZ_INF -> Decimal.infinity(stealSignFlag(ySteal))
 
@@ -40,7 +40,7 @@ internal fun d128AddSubImpl(x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext
     }
 }
 
-private fun addZeroZero(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
+private fun addZerZer(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
     // Both operands are zero. This is where the special rules apply.
     // IEEE754-2019 6.3 The sign bit
     // However, under all rounding-direction attributes,
