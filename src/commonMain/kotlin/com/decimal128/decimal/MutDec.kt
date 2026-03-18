@@ -181,6 +181,8 @@ class MutDec() : C256() {
     }
 
     internal fun setNaN(x: MutDec, ctx: DecContext): MutDec {
+        // FIXME -- remove ctx from call
+        // FIXME -- shouldn't this be copying the payload x.coeff
         val q = x.qExp
         verify { q >= NON_FINITE_QNAN }
         setZero()
