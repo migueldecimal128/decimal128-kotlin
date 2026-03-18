@@ -10,53 +10,23 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
         return fmaFnzFnzFinite(z, x, y, a, ctx)
     if (a.isNaN())
         return fmaNanAddend(z, x, y, a, ctx)
-    val qX = x.qExp
-    val qY = y.qExp
-    val qA = a.qExp
-    val qMaxXY = max(qX, qY)
-    val qMaxXYA = max(qMaxXY, qA)
-
-    val productSign = x.sign xor y.sign
-    when {
-        signatureXY == ZER_FNZ || signatureXY == FNZ_ZER || signatureXY == ZER_ZER ->
-            fmaZeroProd(z, x, y, a, ctx)
-        qMaxXYA < MIN_SPECIAL_VALUE -> {
-            val aT = if (z === a) ctx.tmps.mdecArg1.set(a) else a
-            // multiply without roundAndFinalize .. remains exact
-            c256SetMul(z, x, y, ctx.tmps.pentad1)
-            z.type = if (z.bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
-            z.qExp = x.qExp + y.qExp
-            z.sign = productSign
-            // roundAndFinalize takes place here in z.setAdd
-            z.setAdd(z, aT, ctx)
+    when (signatureXY) {
+        ZER_FNZ,
+        FNZ_ZER,
+        ZER_ZER -> fmaZeroProd(z, x, y, a, ctx)
+        ZER_INF,
+        INF_ZER -> {
+            z.setNaN()
+            ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
         }
-
-        qMaxXYA == NON_FINITE_INF -> when {
-            // addend is infinite
-            (qA == NON_FINITE_INF) -> {
-                if ((qMaxXY < NON_FINITE_INF) || (productSign == a.sign))
-                    z.set(a)
-                else {
-                    z.setNaNSignalInvalid(ctx)
-                }
-            }
-            // if we are here then one of the product terms is INF
-            // and the other is ZERO
-            (x.isZero() || y.isZero()) -> {
-                verify { qMaxXY == NON_FINITE_INF }
-                z.setNaNSignalInvalid(ctx)
-            }
-
-            else ->
-                z.setInfinite(productSign)
+        FNZ_FNZ -> {
+            verify { a.isInfinite() }
+            z.setInfinite(a.sign)
         }
-
-        else -> {
-            if (qX == qMaxXYA)
-                z.setNaNOperand(x, y, ctx)
-            else
-                z.setNaNOperand(y, a, ctx)
-        }
+        FNZ_INF,
+        INF_FNZ,
+        INF_INF -> fmaInfProd(z, x.sign xor y.sign, a, ctx)
+        else -> z.setNaNOperand(x, y, ctx)
     }
     return z
 }
@@ -112,6 +82,16 @@ private fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecCont
         return setScaleToMinQexp(z, a.sign, a, prodQ, ctx)
     return z.set(a)
 }
+
+private fun fmaInfProd(z: MutDec, infSign: Boolean, a: MutDec, ctx: DecContext): MutDec {
+    verify { !a.isNaN() }
+    if (a.isFinite() || a.sign == infSign)
+        return z.setInfinite(infSign)
+    z.setNaN()
+    return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES, z)
+}
+
+
 internal fun mutDecFmdFnzFnzFnz(z:MutDec, x: MutDec, y: MutDec, d: MutDec, ctx: DecContext): MutDec {
     verify { max(max(x.qExp, y.qExp), d.qExp) < MIN_SPECIAL_VALUE &&
             (x.digitLen * y.digitLen * d.digitLen) != 0 }
