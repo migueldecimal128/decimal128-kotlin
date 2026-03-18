@@ -124,6 +124,11 @@ class DecContext internal constructor(
         return signalMutDec(INVALID_OPERATION, mutDec, invalidOpReason)
     }
 
+    fun setNanSignalInvalid(z: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
+        z.setNaN()
+        return signalInvalid(invalidOpReason, z)
+    }
+
     fun signalInvalid(invalidOpReason: InvalidOperationReason): Decimal = signalInvalid(invalidOpReason, Decimal.NaN)
 
     fun signalInvalid(invalidOpReason: InvalidOperationReason, dec: Decimal): Decimal {

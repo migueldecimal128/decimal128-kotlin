@@ -446,56 +446,7 @@ class MutDec() : C256() {
         return this.roundAndFinalize(residue, ctx)
     }
 
-    fun setDiv(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        val qY = y.qExp
-        val quotientSign = x.sign xor y.sign
-        val qMaxXY = max(qX, qY)
-        when {
-            qMaxXY < MIN_SPECIAL_VALUE -> {
-                when {
-                    (y.bitLen > 0) && (x.bitLen > 0) -> {
-                        val residue = MagnitudeDiv.magDivFnzFnz(this, quotientSign, x, y, ctx)
-                        roundAndFinalize(residue, ctx)
-                    }
-                    (y.bitLen > 0) -> {
-                        // x is zero
-                        val qPreferred = x.qExp - y.qExp
-                        setZero(quotientSign, qPreferred, ctx)
-                    }
-                    (x.bitLen > 0) -> {
-                        // finite division by zero
-                        setInfinite(quotientSign)
-                        return ctx.signalDivByZero(this)
-                    }
-                    else -> {
-                        // zero divided by zero
-                        setNaN(ctx)
-                        return ctx.signalInvalid(this)
-                    }
-                }
-            }
-            qMaxXY == NON_FINITE_INF -> {
-                when {
-                    (qX == NON_FINITE_INF && qY == NON_FINITE_INF) -> {
-                        setNaN(ctx)
-                        return ctx.signalInvalid(this)
-                    }
-
-                    (qX == NON_FINITE_INF) -> {
-                        setInfinite(quotientSign)
-                    }
-
-                    else -> {
-                        setZero(quotientSign)
-                        qExp = Q_TINY
-                    }
-                }
-            }
-            else -> setNaNOperand(x, y, ctx)
-        }
-        return this
-    }
+    fun setDiv(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecDivImpl(this, x, y, ctx)
 
     fun setDivInt(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         val qX = x.qExp

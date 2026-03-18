@@ -14,7 +14,7 @@ internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     } else {
         val resultSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
         when (signature) {
-            ZER_ZER -> divZeroZero(x, y, ctx)
+            ZER_ZER -> divZerZer(x, y, ctx)
             ZER_FNZ -> zero(resultSign, x.qExp() - y.qExp())
             ZER_INF,
             FNZ_INF -> zero(resultSign, Q_TINY)
@@ -30,7 +30,7 @@ internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     }
 }
 
-private fun divZeroZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
+private fun divZerZer(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
     ctx.signalInvalid(InvalidOperationReason.DIV_ZERO_BY_ZERO)
 
 private fun divInfInf(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
@@ -63,7 +63,7 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return if (signature == FNZ_FNZ) {
         divIntFnzFnz(x, y, ctx)
     } else when (signature) {
-        ZER_ZER -> divZeroZero(x, y, ctx)
+        ZER_ZER -> divZerZer(x, y, ctx)
         ZER_FNZ,
         ZER_INF,
         FNZ_INF -> Decimal.zero(x.sign xor y.sign)
