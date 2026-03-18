@@ -40,6 +40,7 @@ internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
     return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
 }
 
+// FIXME -- merge with FMA rescaleToMinQExpImpl
 internal fun scaleToMinExp(xSteal: Int, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {
     val xQ = stealQexp(xSteal)
     if (xQ <= otherExp)

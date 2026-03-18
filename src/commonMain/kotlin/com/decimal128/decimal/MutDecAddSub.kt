@@ -24,8 +24,8 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
                 }
                 z.setInfinite(ySign)
             }
-            FNZ_ZER -> return setScaleToMinExp(z, x.sign, x, y.qExp, ctx)
-            ZER_FNZ -> return setScaleToMinExp(z, ySign, y, x.qExp, ctx)
+            FNZ_ZER -> return setScaleToMinQexp(z, x.sign, x, y.qExp, ctx)
+            ZER_FNZ -> return setScaleToMinQexp(z, ySign, y, x.qExp, ctx)
             else -> z.setNaNOperand(x, y, ctx)
         }
     }
@@ -120,7 +120,7 @@ private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecC
     return z.setZero(sign, min(x.qExp, y.qExp), ctx)
 }
 
-private fun setScaleToMinExp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: Int, ctx: DecContext): MutDec {
+internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: Int, ctx: DecContext): MutDec {
     val xQ = x.qExp
     val delta = xQ - otherExp
     val headroom = max(0, ctx.precision - x.digitLen)

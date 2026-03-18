@@ -93,6 +93,7 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 
+// FIXME -- merge with D128AddSub scaleToMinExp
 private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {
     verify { stealIsFNZ(x.steal) }
     val xSteal = x.steal

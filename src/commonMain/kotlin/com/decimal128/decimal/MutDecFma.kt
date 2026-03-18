@@ -2,6 +2,7 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.MagnitudeDiv.magDivFnzFnz
 import kotlin.math.max
+import kotlin.math.min
 
 internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
     val signatureXY = binopSignatureOf(x.type, y.type)
@@ -17,6 +18,8 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
 
     val productSign = x.sign xor y.sign
     when {
+        signatureXY == ZER_FNZ || signatureXY == FNZ_ZER || signatureXY == ZER_ZER ->
+            fmaZeroProd(z, x, y, a, ctx)
         qMaxXYA < MIN_SPECIAL_VALUE -> {
             val aT = if (z === a) ctx.tmps.mdecArg1.set(a) else a
             // multiply without roundAndFinalize .. remains exact
@@ -91,6 +94,24 @@ private fun fmaNanAddend(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecCon
     return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, z)
 }
 
+private fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+    val stealX = x.type
+    val stealY = y.type
+    val stealA = a.type
+    verify { stealIsZER(stealX) || stealIsZER(stealY) }
+    verify { !stealIsNAN(stealA) }
+    val prodSign = x.sign xor y.sign
+    val prodQ = x.qExp + y.qExp
+    val aQ = a.qExp
+    if (stealIsZER(stealA)) {
+        val fmaSign =
+            (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
+        return z.setZero(fmaSign, min(prodQ, aQ), ctx)
+    }
+    if (stealIsFNZ(stealA) && prodQ < aQ)
+        return setScaleToMinQexp(z, a.sign, a, prodQ, ctx)
+    return z.set(a)
+}
 internal fun mutDecFmdFnzFnzFnz(z:MutDec, x: MutDec, y: MutDec, d: MutDec, ctx: DecContext): MutDec {
     verify { max(max(x.qExp, y.qExp), d.qExp) < MIN_SPECIAL_VALUE &&
             (x.digitLen * y.digitLen * d.digitLen) != 0 }
