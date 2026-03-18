@@ -450,25 +450,6 @@ class MutDec() : C256() {
 
     fun setDivInt(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecDivIntImpl(this, x, y, ctx)
 
-    internal fun setDivIntFiniteFnz(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
-        this.setDiv(x, y, truncCtx)
-        this.setRoundToIntegralExact(this, truncCtx)
-
-        // Normalize integer toward qExp = 0 using available precision
-        if (this.qExp > 0) {
-            if (!this.isZero()) {
-                val headroom = ctx.precision - this.digitLen
-                if (headroom < this.qExp)
-                    return ctx.signalInvalid(setNaN())
-                c256SetScaleUpPow10(this, this, this.qExp, ctx.tmps.pentad1)
-            }
-            qExp = 0
-        }
-        return this
-
-    }
-
     fun setReciprocal(x: MutDec, ctx: DecContext): MutDec {
         val qX = x.qExp
         val quotientSign = x.sign

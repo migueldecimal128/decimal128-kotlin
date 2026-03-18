@@ -42,7 +42,7 @@ internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext):
     return z
 }
 
-private fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
     val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
     z.setDiv(x, y, truncCtx)
     z.setRoundToIntegralExact(z, truncCtx)
