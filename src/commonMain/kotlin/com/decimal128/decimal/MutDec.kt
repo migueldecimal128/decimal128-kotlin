@@ -180,7 +180,7 @@ class MutDec() : C256() {
         throw RuntimeException("sNaN operand")
     }
 
-    private fun setNaN(x: MutDec, ctx: DecContext) {
+    internal fun setNaN(x: MutDec, ctx: DecContext): MutDec {
         val q = x.qExp
         verify { q >= NON_FINITE_QNAN }
         setZero()
@@ -188,6 +188,7 @@ class MutDec() : C256() {
         qExp = NON_FINITE_QNAN
         //FIXME - see IEEE754r 6.2
         verify { validate() }
+        return this
     }
 
     internal fun setNaN(ctx: DecContext) {
@@ -416,22 +417,7 @@ class MutDec() : C256() {
     // IEEE754-2008 5.4.1
     fun setMul(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecMulImpl(this, x, y, ctx)
 
-    fun setSquare(x: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        when {
-            qX < MIN_SPECIAL_VALUE -> {
-                c256SetSqr(this, x, ctx.tmps.pentad1)
-                this.type = STEAL_TYPE_FNZ
-                this.qExp = this.qExp shl 1
-                this.sign = false
-                return finalize(ctx)            }
-            qX == NON_FINITE_INF -> {
-                setInfinite(false)
-            }
-            else -> setNaN(x, ctx)
-        }
-        return this
-    }
+    fun setSquare(x: MutDec, ctx: DecContext): MutDec = mutDecSqrImpl(this, x, ctx)
 
     // IEEE754-2008 5.4.1
     fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
