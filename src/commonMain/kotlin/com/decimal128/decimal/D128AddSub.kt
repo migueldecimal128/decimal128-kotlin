@@ -26,10 +26,10 @@ internal fun d128AddSubImpl(x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext
         addFnzFnz(xSteal, x, ySteal, y, ctx)
     } else when (signature) {
         ZER_ZER -> addZerZer(xSteal, x, ySteal, y, ctx)
-        ZER_FNZ -> scaleToMinExp(ySteal, y, stealQexp(xSteal), ctx)
+        ZER_FNZ -> scaleToMinQExp(ySteal, y, stealQexp(xSteal), ctx)
         ZER_INF, FNZ_INF -> Decimal.infinity(stealSignFlag(ySteal))
 
-        FNZ_ZER -> scaleToMinExp(xSteal, x, stealQexp(ySteal), ctx)
+        FNZ_ZER -> scaleToMinQExp(xSteal, x, stealQexp(ySteal), ctx)
         //FNZ_INF -> y
 
         INF_ZER, INF_FNZ -> x

@@ -82,7 +82,7 @@ private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): De
         return Decimal.zero(fmaSign, min(prodQ, stealQexp(stealA)))
     }
     if (stealIsFNZ(stealA) && prodQ < stealQexp(stealA))
-        return rescaleToMinQExpImpl(a, prodQ, ctx)
+        return scaleToMinQExp(stealA, a, prodQ, ctx)
     return a
 }
 
@@ -93,20 +93,3 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 
-// FIXME -- merge with D128AddSub scaleToMinExp
-private fun rescaleToMinQExpImpl(x: Decimal, qNew: Int, ctx: DecContext): Decimal {
-    verify { stealIsFNZ(x.steal) }
-    val xSteal = x.steal
-    val xQ = stealQexp(xSteal)
-    val headroom = ctx.precision - stealDigitLen(xSteal)
-    val qDelta = min(xQ - qNew, headroom)
-    if (qDelta <= 0)
-        return x
-    val t = ctx.tmps.mdecBridge1.set(x)
-    val r = ctx.tmps.mdecResult
-    c256SetScaleUpPow10(r, t, qDelta, ctx.tmps.pentad1)
-    r.type = STEAL_TYPE_FNZ
-    r.qExp = xQ - qDelta
-    r.sign = x.sign
-    return Decimal.from(r.finalize(ctx))
-}
