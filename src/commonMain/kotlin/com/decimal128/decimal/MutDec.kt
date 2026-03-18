@@ -452,34 +452,7 @@ class MutDec() : C256() {
 
     fun setReciprocal(x: MutDec, ctx: DecContext): MutDec = mutDecReciprocalImpl(this, x, ctx)
 
-    fun setSqrt(x: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        when {
-            x.sign -> {
-                setNaN(ctx)
-                return ctx.signalInvalid(this)
-            }
-            qX < MIN_SPECIAL_VALUE -> {
-                when {
-                    (x.bitLen > 0) -> {
-                        val residue = MagnitudeSqrt.magSqrt(this, x, ctx.tmps.pentad1)
-                        this.sign = false
-                        roundAndFinalize(residue, ctx)
-                    }
-                    else -> {
-                        // sqrt of zero
-                        setZero(false)
-                        qExp = qX shr 1
-                    }
-                }
-            }
-            qX == NON_FINITE_INF -> {
-                setInfinite(false)
-            }
-            else -> setNaN(x, ctx)
-        }
-        return this
-    }
+    fun setSqrt(x: MutDec, ctx: DecContext): MutDec = mutDecSqrtImpl(this, x, ctx)
 
     fun compareTo(other: MutDec) : Int {
         val qMax = max(qExp, other.qExp)

@@ -43,3 +43,34 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     return z.setNaN(x, ctx)
 }
 
+internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+    val qX = x.qExp
+    when (stealType(x.type)) {
+        STEAL_TYPE_FNZ -> {
+            if (! x.sign) {
+                val residue = MagnitudeSqrt.magSqrt(z, x, ctx.tmps.pentad1)
+                z.sign = false
+                z.roundAndFinalize(residue, ctx)
+            } else {
+                ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
+            }
+        }
+        STEAL_TYPE_ZER -> {
+            // IEEE754-2019 6.3 p.50
+            // Except that squareRoot(−0) shall be −0,
+            // every numeric squareRoot result shall have a positive sign.
+            z.setZero(false)
+            z.qExp = qX shr 1
+        }
+        STEAL_TYPE_INF -> {
+            if (! x.sign) {
+                z.setInfinite(false)
+            } else {
+                ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_INFINITY)
+            }
+        }
+        else -> z.setNaNOperand(x, ctx)
+    }
+    return z
+
+}
