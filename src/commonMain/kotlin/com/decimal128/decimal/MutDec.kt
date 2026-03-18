@@ -150,7 +150,7 @@ class MutDec() : C256() {
         return this
     }
 
-    private fun setNaNOperand(x: MutDec, ctx: DecContext): MutDec {
+    internal fun setNaNOperand(x: MutDec, ctx: DecContext): MutDec {
         val xQ = x.qExp
         verify { xQ >= NON_FINITE_QNAN }
         this.set(x)
@@ -181,7 +181,7 @@ class MutDec() : C256() {
     }
 
     internal fun setNaN(x: MutDec, ctx: DecContext): MutDec {
-        // FIXME -- remove ctx from call
+        // FIXME -- remove ctx from call NO! signal
         // FIXME -- shouldn't this be copying the payload x.coeff
         val q = x.qExp
         verify { q >= NON_FINITE_QNAN }
@@ -450,21 +450,7 @@ class MutDec() : C256() {
 
     fun setDivInt(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecDivIntImpl(this, x, y, ctx)
 
-    fun setReciprocal(x: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        val quotientSign = x.sign
-        when {
-            qX < MIN_SPECIAL_VALUE -> {
-                val residue = MagnitudeInv.magInv(this, quotientSign, x, ctx)
-                roundAndFinalize(residue, ctx)
-            }
-            qX == NON_FINITE_INF -> {
-                setZero(quotientSign)
-            }
-            else -> setNaN(x, ctx)
-        }
-        return this
-    }
+    fun setReciprocal(x: MutDec, ctx: DecContext): MutDec = mutDecReciprocalImpl(this, x, ctx)
 
     fun setSqrt(x: MutDec, ctx: DecContext): MutDec {
         val qX = x.qExp
