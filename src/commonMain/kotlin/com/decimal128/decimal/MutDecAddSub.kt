@@ -7,19 +7,25 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
     verify { x.digitLen <= 76 } // x is allowed more digits because of FMA
     verify { y.digitLen <= 38 }
     val qMax = max(x.qExp, y.qExp)
+    val binopSignature = binopSignatureOf(x.type, y.type)
     when {
+        binopSignature == ZER_ZER -> return addZerZer(z, x, ySign, y, ctx)
+        binopSignature == INF_ZER -> return z.setInfinite(x.sign)
+        binopSignature == ZER_INF -> return z.setInfinite(ySign)
+        binopSignature == INF_INF -> {
+            if (x.sign != ySign) {
+                z.setNaN(ctx)
+                return ctx.signalInvalid(z)
+            }
+            return z.setInfinite(ySign)
+        }
+        binopSignature == INF_FNZ -> return z.setInfinite(x.sign)
+        binopSignature == FNZ_INF -> return z.setInfinite(ySign)
+
         qMax < NON_FINITE_INF -> {
             val qMin = min(x.qExp, y.qExp)
             when {
-                x.bitLen == 0 && y.bitLen == 0 -> {
-                    // IEEE 754: Handle sign of -0 + -0 = -0
-                    val sign = if (x.sign == ySign) {
-                        ySign  // Both same sign → use that sign
-                    } else {
-                        ctx.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
-                    }
-                    z.setZero(sign, qMin, ctx)
-                }
+//                x.bitLen == 0 && y.bitLen == 0 -> addZerZer(z, x, ySign, y, ctx)
 
                 y.bitLen == 0 && x.qExp == qMin -> {
                     z.set(x)
@@ -53,26 +59,26 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
                     c256SetScaleUpPow10(z, y, shiftLeft, ctx.tmps.pentad1)
                 }
 
-                else -> addFnzImpl(z, x, ySign, y, ctx)
+                else -> addFnzFnz(z, x, ySign, y, ctx)
 //                        x.qExp == y.qExp -> unscaledAddFnzImpl(z, x, ySign, y, ctx)
 //                        else -> scaledAddFnzImpl(z, x, ySign, y, ctx)
             }
         }
 
-        qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, ctx)
+//        qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, ctx)
         else -> z.setNaNOperand(x, y, ctx)
     }
     return z
 }
 
-private fun addFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private fun addFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     return if (x.qExp == y.qExp)
-        unscaledAddFnzImpl(z, x, ySign, y, ctx)
+        unscaledAddFnzFnz(z, x, ySign, y, ctx)
     else
-        scaledAddFnzImpl(z, x, ySign, y, ctx)
+        scaledAddFnzFnz(z, x, ySign, y, ctx)
 }
 
-private fun unscaledAddFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.bitLen > 0 && y.bitLen > 0 }  // Optional: could remove in production
     verify { x.qExp == y.qExp }
     val xSign = x.sign
@@ -112,7 +118,7 @@ private fun unscaledAddFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, 
     return z.finalize(ctx)
 }
 
-private fun scaledAddFnzImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     val qX = x.qExp
     val qY = y.qExp
     verify { qX != qY }
@@ -154,4 +160,14 @@ private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx
         z.setInfinite(if (qX == NON_FINITE_INF) x.sign else ySign)
         return z
     }
+}
+
+private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+    // IEEE 754: Handle sign of -0 + -0 = -0
+    val sign = if (x.sign == ySign) {
+        ySign  // Both same sign → use that sign
+    } else {
+        ctx.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
+    }
+    return z.setZero(sign, min(x.qExp, y.qExp), ctx)
 }

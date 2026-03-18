@@ -476,7 +476,7 @@ class MutDec() : C256() {
                 val aT = if (this === a) ctx.tmps.mdecArg1.set(a) else a
                 // multiply without roundAndFinalize .. remains exact
                 c256SetMul(this, x, y, ctx.tmps.pentad1)
-                this.type = STEAL_TYPE_FNZ
+                this.type = if (bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
                 this.qExp = x.qExp + y.qExp
                 this.sign = productSign
                 // roundAndFinalize takes place here
