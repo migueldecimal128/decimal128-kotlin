@@ -318,6 +318,8 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqcan502 subtract  0E+6144 #77ffcff3fcff3fcffffcff3fcff3fcff         -> #f7ffcff3fcff3fcff3fcff3fcff3fcff",
+        "dqfma0300  fma   9e+6144    10   0         -> Infinity  Overflow Inexact Rounded",
         "dqadd7781 add -Inf  -1000  -> -Infinity",
         "dqrmn083 remaindernear  0.00E+9       1  -> 0",
         "dqqua716 quantize  0.099E-6143 10e-6144  ->   1E-6144   Inexact Rounded Subnormal",

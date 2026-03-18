@@ -6,67 +6,28 @@ import kotlin.math.min
 internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.digitLen <= 76 } // x is allowed more digits because of FMA
     verify { y.digitLen <= 38 }
-    val qMax = max(x.qExp, y.qExp)
     val binopSignature = binopSignatureOf(x.type, y.type)
-    when {
-        binopSignature == ZER_ZER -> return addZerZer(z, x, ySign, y, ctx)
-        binopSignature == INF_ZER -> return z.setInfinite(x.sign)
-        binopSignature == ZER_INF -> return z.setInfinite(ySign)
-        binopSignature == INF_INF -> {
-            if (x.sign != ySign) {
-                z.setNaN(ctx)
-                return ctx.signalInvalid(z)
+    if (binopSignature == FNZ_FNZ) {
+        addFnzFnz(z, x, ySign, y, ctx)
+    }else {
+        val xSign = x.sign
+        when (binopSignature) {
+            ZER_ZER -> addZerZer(z, x, ySign, y, ctx)
+            INF_ZER,
+            INF_FNZ -> z.setInfinite(xSign)
+            ZER_INF,
+            FNZ_INF -> z.setInfinite(ySign)
+            INF_INF -> {
+                if (x.sign != ySign) {
+                    z.setNaN(ctx)
+                    return ctx.signalInvalid(z)
+                }
+                z.setInfinite(ySign)
             }
-            return z.setInfinite(ySign)
+            FNZ_ZER -> return setScaleToMinExp(z, x.sign, x, y.qExp, ctx)
+            ZER_FNZ -> return setScaleToMinExp(z, ySign, y, x.qExp, ctx)
+            else -> z.setNaNOperand(x, y, ctx)
         }
-        binopSignature == INF_FNZ -> return z.setInfinite(x.sign)
-        binopSignature == FNZ_INF -> return z.setInfinite(ySign)
-
-        qMax < NON_FINITE_INF -> {
-            val qMin = min(x.qExp, y.qExp)
-            when {
-//                x.bitLen == 0 && y.bitLen == 0 -> addZerZer(z, x, ySign, y, ctx)
-
-                y.bitLen == 0 && x.qExp == qMin -> {
-                    z.set(x)
-                    z.finalize(ctx)
-                }
-
-                y.bitLen == 0 -> {
-                    val gap = x.qExp - y.qExp
-                    val headroom = ctx.precision - x.digitLen
-                    // FMA adding 0 will lead to -headroom
-                    val shiftLeft = max(0, min(headroom, gap))
-                    z.type = STEAL_TYPE_FNZ
-                    z.qExp = x.qExp - shiftLeft
-                    z.sign = x.sign
-                    c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
-                    // we could be here because of FMA, so need to finalize
-                    z.finalize(ctx)
-                }
-
-                x.bitLen == 0 && y.qExp == qMin -> {
-                    z.set(y)
-                    z.sign = ySign
-                }
-
-                x.bitLen == 0 -> {
-                    val gap = y.qExp - x.qExp
-                    val headroom = ctx.precision - y.digitLen
-                    val shiftLeft = min(headroom, gap)
-                    z.qExp = y.qExp - shiftLeft
-                    z.sign = ySign
-                    c256SetScaleUpPow10(z, y, shiftLeft, ctx.tmps.pentad1)
-                }
-
-                else -> addFnzFnz(z, x, ySign, y, ctx)
-//                        x.qExp == y.qExp -> unscaledAddFnzImpl(z, x, ySign, y, ctx)
-//                        else -> scaledAddFnzImpl(z, x, ySign, y, ctx)
-            }
-        }
-
-//        qMax == NON_FINITE_INF -> infiniteAddImpl(z, x, ySign, y, ctx)
-        else -> z.setNaNOperand(x, y, ctx)
     }
     return z
 }
@@ -149,19 +110,6 @@ private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx
     return z.roundAndFinalize(residue, ctx)
 }
 
-private fun infiniteAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
-    val qX = x.qExp
-    val qY = y.qExp
-    verify { qX == NON_FINITE_INF || qY == NON_FINITE_INF }
-    if (qX == qY && x.sign != ySign) {
-        z.setNaN(ctx)
-        return ctx.signalInvalid(z)
-    } else {
-        z.setInfinite(if (qX == NON_FINITE_INF) x.sign else ySign)
-        return z
-    }
-}
-
 private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     // IEEE 754: Handle sign of -0 + -0 = -0
     val sign = if (x.sign == ySign) {
@@ -170,4 +118,20 @@ private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecC
         ctx.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
     }
     return z.setZero(sign, min(x.qExp, y.qExp), ctx)
+}
+
+private fun setScaleToMinExp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: Int, ctx: DecContext): MutDec {
+    val xQ = x.qExp
+    val delta = xQ - otherExp
+    val headroom = max(0, ctx.precision - x.digitLen)
+    if (delta <= 0 || headroom == 0) {
+        z.set(x)
+    } else {
+        val shiftLeft = min(headroom, delta)
+        c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
+        z.type = STEAL_TYPE_FNZ
+        z.qExp = xQ - shiftLeft
+    }
+    z.sign = xSign
+    return z.finalize(ctx)
 }
