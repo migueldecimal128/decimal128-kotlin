@@ -1,9 +1,8 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.roundAndFinalize
-import kotlin.math.max
+import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 
-fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
     val binopSignature = binopSignatureOf(x.type, y.type)
     val quotientSign = x.sign xor y.sign
     if (binopSignature == FNZ_FNZ)
@@ -18,6 +17,73 @@ fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         INF_FNZ -> z.setInfinite(quotientSign)
         INF_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_INF_BY_INF)
         else -> z.setNaNOperand(x, y, ctx)
+    }
+    return z
+}
+
+internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    val binopSignature = binopSignatureOf(x.type, y.type)
+    val qX = x.qExp
+    val qY = y.qExp
+    val quotientSign = x.sign xor y.sign
+
+    when {
+        binopSignature == ZER_ZER -> return ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
+        binopSignature == INF_INF -> return ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_INF_BY_INF)
+        binopSignature == FNZ_INF ||
+        binopSignature == ZER_FNZ ||
+        binopSignature == ZER_INF -> return z.setZero(quotientSign)
+        binopSignature == INF_ZER ||
+        binopSignature == INF_FNZ -> return z.setInfinite(quotientSign)
+        binopSignature == FNZ_ZER -> return ctx.signalDivByZero(z.setInfinite(quotientSign))
+        binopSignature == FNZ_FNZ -> return setDivIntFiniteFnz(z, x, y, ctx)
+
+        qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
+
+            return setDivIntFiniteFnz(z, x, y, ctx)
+        }
+
+        qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN ->
+            return z.setNaNOperand(x, y, ctx)
+
+        (x.isZero() && y.isZero()) ||
+                (qX == NON_FINITE_INF && qY == NON_FINITE_INF) ->
+            return ctx.signalInvalid(z.setNaN())
+
+        y.isZero() -> {
+            z.setInfinite(x.sign xor y.sign)
+            if (qX < NON_FINITE_INF)
+                ctx.signalDivByZero(z)
+            return z
+        }
+
+
+        qX == NON_FINITE_INF ->
+            return z.setInfinite(x.sign xor y.sign)
+
+        else -> {
+            verify { qY == NON_FINITE_INF }
+            return z.setZero(x.sign xor y.sign)
+        }
+
+    }
+}
+
+private fun setDivIntFiniteFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
+    z.setDiv(x, y, truncCtx)
+    z.setRoundToIntegralExact(z, truncCtx)
+    // Normalize integer toward qExp = 0 using available precision
+    val zQ = z.qExp
+    verify { zQ >= 0 }
+    if (zQ > 0) {
+        if (!z.isZero()) { // truncation could generate z == 0
+            val headroom = ctx.precision - z.digitLen
+            if (headroom < zQ) // 1234567890123456789012345678901234 / .000000001
+                return ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_INT_OVERFLOWS_COEFFICIENT)
+            c256SetScaleUpPow10(z, z, zQ, ctx.tmps.pentad1)
+        }
+        z.qExp = 0
     }
     return z
 }

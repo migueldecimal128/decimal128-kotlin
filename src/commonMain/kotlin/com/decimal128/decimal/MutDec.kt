@@ -448,43 +448,9 @@ class MutDec() : C256() {
 
     fun setDiv(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecDivImpl(this, x, y, ctx)
 
-    fun setDivInt(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        val qY = y.qExp
+    fun setDivInt(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecDivIntImpl(this, x, y, ctx)
 
-        when {
-            qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
-
-                return setDivIntFnzFnz(x, y, ctx)
-            }
-
-            qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN ->
-                return setNaNOperand(x, y, ctx)
-
-            (x.isZero() && y.isZero()) ||
-                    (qX == NON_FINITE_INF && qY == NON_FINITE_INF) ->
-                return ctx.signalInvalid(setNaN())
-
-            y.isZero() -> {
-                setInfinite(x.sign xor y.sign)
-                if (qX < NON_FINITE_INF)
-                    ctx.signalDivByZero(this)
-                return this
-            }
-
-
-            qX == NON_FINITE_INF ->
-                return setInfinite(x.sign xor y.sign)
-
-            else -> {
-                verify { qY == NON_FINITE_INF }
-                return setZero(x.sign xor y.sign)
-            }
-
-        }
-    }
-
-    internal fun setDivIntFnzFnz(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    internal fun setDivIntFiniteFnz(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
         this.setDiv(x, y, truncCtx)
         this.setRoundToIntegralExact(this, truncCtx)

@@ -20,7 +20,7 @@ enum class InvalidOperationReason {
     NEG_SQUARE_ROOT,        // e.g., sqrt(-1)
     QUANTIZE,           // e.g., quantize(Infinity, finite)
     QEXP_OF_NON_FINITE,
-    CONV_TO_INTEGER,
+    DIV_INT_OVERFLOWS_COEFFICIENT, // 9999999999999999999999999999999999 / .0000000000000001
     CONVERT_NON_FINITE_TO_INTEGER,
     OTHER,
 }

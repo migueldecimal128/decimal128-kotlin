@@ -82,7 +82,7 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.tmps.mdecBridge1.set(x)
     val divisor = ctx.tmps.mdecBridge2.set(y)
-    val quotient = ctx.tmps.mdecResult.setDivIntFnzFnz(dividend, divisor, ctx)
+    val quotient = ctx.tmps.mdecResult.setDivIntFiniteFnz(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
 
