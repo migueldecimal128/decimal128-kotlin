@@ -15,10 +15,7 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
         FNZ_ZER,
         ZER_ZER -> fmaZeroProd(z, x, y, a, ctx)
         ZER_INF,
-        INF_ZER -> {
-            z.setNaN()
-            ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
-        }
+        INF_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         FNZ_FNZ -> {
             verify { a.isInfinite() }
             z.setInfinite(a.sign)
@@ -87,8 +84,7 @@ private fun fmaInfProd(z: MutDec, infSign: Boolean, a: MutDec, ctx: DecContext):
     verify { !a.isNaN() }
     if (a.isFinite() || a.sign == infSign)
         return z.setInfinite(infSign)
-    z.setNaN()
-    return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES, z)
+    return ctx.setNanSignalInvalid(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 
 

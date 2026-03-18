@@ -17,10 +17,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
         ZER_FNZ,
         ZER_ZER -> z.setZero(productSign, productQExp, ctx)
         INF_ZER,
-        ZER_INF -> {
-            z.setNaN()
-            ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
-        }
+        ZER_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         INF_FNZ,
         FNZ_INF,
         INF_INF -> z.setInfinite(productSign)
