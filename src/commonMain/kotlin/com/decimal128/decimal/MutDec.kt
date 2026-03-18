@@ -408,42 +408,13 @@ class MutDec() : C256() {
     }
 
     // IEEE754-2008 5.4.1
-    fun setAdd(x: MutDec, y: MutDec, ctx: DecContext) = mutDecAddImpl(this, x, y.sign, y, ctx)
+    fun setAdd(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecAddImpl(this, x, y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun setSub(x: MutDec, y: MutDec, ctx: DecContext) = mutDecAddImpl(this, x, !y.sign, y, ctx)
+    fun setSub(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecAddImpl(this, x, !y.sign, y, ctx)
 
     // IEEE754-2008 5.4.1
-    fun setMul(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        val qY = y.qExp
-        val productSign = x.sign xor y.sign
-        val qMaxXY = max(qX, qY)
-        when {
-            qMaxXY < MIN_SPECIAL_VALUE -> {
-                if (x.isZero() || y.isZero()) {
-                    c256SetZero()
-                    this.type = STEAL_TYPE_ZER
-                } else {
-                    c256SetMul(this, x, y, ctx.tmps.pentad1)
-                    this.type = STEAL_TYPE_FNZ
-                }
-                this.qExp = x.qExp + y.qExp
-                this.sign = productSign
-                return finalize(ctx)
-            }
-            qMaxXY == NON_FINITE_INF -> {
-                if (x.isZero() || y.isZero()) {
-                    setNaN()
-                    return ctx.signalInvalid(this)
-                } else {
-                    setInfinite(productSign)
-                }
-            }
-            else -> setNaNOperand(x, y, ctx)
-        }
-        return this
-    }
+    fun setMul(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecMulImpl(this, x, y, ctx)
 
     fun setSquare(x: MutDec, ctx: DecContext): MutDec {
         val qX = x.qExp
