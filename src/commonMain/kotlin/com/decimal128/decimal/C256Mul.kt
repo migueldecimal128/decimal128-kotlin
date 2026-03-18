@@ -6,6 +6,7 @@ package com.decimal128.decimal
 /**
  * Multiplies two decimal coefficients, each at most 127 bits (38 digits).
  * Fast path for both operands <= 64 bits. Maximum product is 254 bits.
+ * Properly defends against aliasing.
  */
 internal fun c256SetMul(z: C256, x: C256, y: C256, pentad: Pentad) {
     val xBitLen = x.bitLen

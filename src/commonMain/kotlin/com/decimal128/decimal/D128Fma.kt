@@ -51,7 +51,7 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
     val stealX = x.steal
     val stealY = y.steal
     val stealA = a.steal
-    verify { stealIsNAN(stealX) or stealIsNAN(stealY) or stealIsNAN(stealA) }
+    verify { stealIsNAN(a.steal) }
     val hasSNAN = stealIsSNAN(stealX) or stealIsSNAN(stealY) or stealIsSNAN(stealA)
     val targetNAN = if (hasSNAN) STEAL_NAN_SNAN else STEAL_NAN_QNAN
     val theNAN =
@@ -69,16 +69,19 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
 }
 
 private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-    verify { x.isZero() || y.isZero() }
-    verify { !a.isNaN() }
-    val prodSign = x.sign xor y.sign
-    val prodQ = x.qExp() + y.qExp()
-    if (a.isZero()) {
+    val stealX = x.steal
+    val stealY = y.steal
+    val stealA = a.steal
+    verify { stealIsZER(stealX) || stealIsZER(stealY) }
+    verify { !stealIsNAN(stealA) }
+    val prodSign = stealSignFlag(stealX) xor stealSignFlag(stealY)
+    val prodQ = stealQexp(stealX) + stealQexp(stealY)
+    if (stealIsZER(stealA)) {
         val fmaSign =
-            (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
-        return Decimal.zero(fmaSign, min(prodQ, a.qExp()))
+            (prodSign and stealSignFlag(stealA)) or ((prodSign xor stealSignFlag(stealA)) and ctx.isRoundTowardNegative())
+        return Decimal.zero(fmaSign, min(prodQ, stealQexp(stealA)))
     }
-    if (a.isFiniteNonZero() && prodQ < a.qExp())
+    if (stealIsFNZ(stealA) && prodQ < stealQexp(stealA))
         return rescaleToMinQExpImpl(a, prodQ, ctx)
     return a
 }

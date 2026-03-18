@@ -116,7 +116,7 @@ class DecContext internal constructor(
         return signalMutDec(INVALID_OPERATION, mutDec)
     }
 
-    fun signalInvalid(mutDec: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
+    fun signalInvalid(invalidOpReason: InvalidOperationReason, mutDec: MutDec): MutDec {
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
             return mutDec

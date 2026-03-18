@@ -201,6 +201,14 @@ class MutDec() : C256() {
         verify { validate() }
     }
 
+    internal fun quietSNaN() {
+        verify { isSignaling() }
+        // FIXME -- this use of qExp has to stop
+        verify { type == STEAL_NAN_SNAN }
+        type = STEAL_NAN_QNAN
+        qExp = NON_FINITE_QNAN
+    }
+
     internal fun setNaNSignalInvalid(ctx: DecContext) {
         setNaN(ctx)
         ctx.signalInvalid(this)
@@ -422,52 +430,7 @@ class MutDec() : C256() {
     fun setSquare(x: MutDec, ctx: DecContext): MutDec = mutDecSqrImpl(this, x, ctx)
 
     // IEEE754-2008 5.4.1
-    fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        val qY = y.qExp
-        val qA = a.qExp
-        val qMaxXY = max(qX, qY)
-        val qMaxXYA = max(qMaxXY, qA)
-        val productSign = x.sign xor y.sign
-        when {
-            qMaxXYA < MIN_SPECIAL_VALUE -> {
-                // FIXME -- this tmp should be pulled from ctx.decTmps
-                val aT = if (this === a) ctx.tmps.mdecArg1.set(a) else a
-                // multiply without roundAndFinalize .. remains exact
-                c256SetMul(this, x, y, ctx.tmps.pentad1)
-                this.type = if (bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
-                this.qExp = x.qExp + y.qExp
-                this.sign = productSign
-                // roundAndFinalize takes place here
-                this.setAdd(this, aT, ctx)
-            }
-            qMaxXYA == NON_FINITE_INF -> when {
-                // addend is infinite
-                (qA == NON_FINITE_INF) -> {
-                    if ((qMaxXY < NON_FINITE_INF) || (productSign == a.sign))
-                        this.set(a)
-                    else {
-                        this.setNaNSignalInvalid(ctx)
-                    }
-                }
-                // if we are here then one of the product terms is INF
-                // and the other is ZERO
-                (x.isZero() || y.isZero()) -> {
-                    verify { qMaxXY == NON_FINITE_INF }
-                    setNaNSignalInvalid(ctx)
-                }
-                else ->
-                    setInfinite(productSign)
-            }
-            else -> {
-                if (qX == qMaxXYA)
-                    this.setNaNOperand(x, y, ctx)
-                else
-                    this.setNaNOperand(y, a, ctx)
-            }
-        }
-        return this
-    }
+    fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec = mutDecFmaImpl(this, x, y, a, ctx)
 
     internal fun setFmdFnzFnzFnz(x: MutDec, y: MutDec, d: MutDec, ctx: DecContext): MutDec {
         verify { max(max(x.qExp, y.qExp), d.qExp) < MIN_SPECIAL_VALUE &&

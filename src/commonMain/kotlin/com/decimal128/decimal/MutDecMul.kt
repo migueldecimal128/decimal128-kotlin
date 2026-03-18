@@ -1,8 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.finalize
-import kotlin.math.max
-
 internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
     val qX = x.qExp
     val qY = y.qExp
@@ -22,7 +19,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
         INF_ZER,
         ZER_INF -> {
             z.setNaN()
-            ctx.signalInvalid(z, InvalidOperationReason.MUL_ZERO_BY_INFINITY)
+            ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
         }
         INF_FNZ,
         FNZ_INF,
@@ -48,3 +45,4 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         return z.setInfinite(false)
     return z.setNaN(x, ctx)
 }
+
