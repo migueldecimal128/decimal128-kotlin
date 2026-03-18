@@ -116,6 +116,14 @@ class DecContext internal constructor(
         return signalMutDec(INVALID_OPERATION, mutDec)
     }
 
+    fun signalInvalid(mutDec: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
+        if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
+            decFlags.set(INVALID_OPERATION)
+            return mutDec
+        }
+        return signalMutDec(INVALID_OPERATION, mutDec, invalidOpReason)
+    }
+
     fun signalInvalid(invalidOpReason: InvalidOperationReason): Decimal = signalInvalid(invalidOpReason, Decimal.NaN)
 
     fun signalInvalid(invalidOpReason: InvalidOperationReason, dec: Decimal): Decimal {
