@@ -1267,11 +1267,14 @@ class MutDec() : C256() {
     override fun toString(): String = toString(toEngineeringExp = false)
 
     fun toString(toEngineeringExp: Boolean): String {
-        return when {
-            qExp == 0 -> IntegerParsePrint.int256ToString(sign, this)
-            qExp >= MIN_SPECIAL_VALUE -> toSpecialValueString()
-            qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
-            else -> toScientificString(toEngineeringExp)
+        return if (isFinite()) {
+            when {
+                qExp == 0 -> IntegerParsePrint.int256ToString(sign, this)
+                qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
+                else -> toScientificString(toEngineeringExp)
+            }
+        } else {
+            toSpecialValueString()
         }
     }
 

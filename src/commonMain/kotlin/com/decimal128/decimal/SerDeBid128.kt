@@ -43,14 +43,15 @@ internal fun encodeBigEndianBid128(d: MutDec, bigEndianBytes: ByteArray): ByteAr
 }
 
 @Suppress("NOTHING_TO_INLINE")
-private inline fun encodeSignAndGCombinationFieldBid128(sign: Boolean, qExp: Int, mostSigBits4: Int): Long {
+private inline fun encodeSignAndGCombinationFieldBid128(type: Int, sign: Boolean, qExp: Int, mostSigBits4: Int): Long {
     require(mostSigBits4 in 0..9)
     val decimal128 = DecFormat.DECIMAL_128
     val signBit = if (sign) 1L shl 63 else 0L
-    val gCombinationField = when {
-        qExp < MIN_SPECIAL_VALUE -> {
-            require(qExp in decimal128.qTiny..decimal128.qMax)
-            val biasedQExp = qExp - decimal128.qTiny // remember qTiny is negative
+    val gCombinationField = when (stealType(type)) {
+        STEAL_TYPE_ZER,
+        STEAL_TYPE_FNZ -> {
+            require(qExp in Q_TINY..Q_MAX)
+            val biasedQExp = qExp - Q_TINY // remember qTiny is negative
             verify { (biasedQExp and 0x3000) != 0x3000 }
             if ((mostSigBits4 and 0x08) == 0)
                 (biasedQExp shl 3) or mostSigBits4
@@ -58,9 +59,9 @@ private inline fun encodeSignAndGCombinationFieldBid128(sign: Boolean, qExp: Int
                 0x18000 or (biasedQExp shl 1) or (mostSigBits4 and 1)
         }
 
-        qExp == NON_FINITE_INF -> 0b11110 shl 12
-        qExp == NON_FINITE_QNAN -> 0b111110 shl 11
-        qExp == NON_FINITE_SNAN -> 0b111111 shl 11
+        STEAL_TYPE_INF -> 0b11110 shl 12
+        STEAL_NAN_QNAN -> 0b111110 shl 11
+        STEAL_NAN_SNAN -> 0b111111 shl 11
         else -> throw RuntimeException("unrecognized")
     }
     val signCombo = signBit or (gCombinationField.toLong() shl 46)
@@ -69,7 +70,7 @@ private inline fun encodeSignAndGCombinationFieldBid128(sign: Boolean, qExp: Int
 
 internal fun encodeBid128Hi(d: MutDec): Long {
     val mostSignificant3 = (d.dw1 ushr (110 - 64)).toInt() and 0x07
-    val signCombo = encodeSignAndGCombinationFieldBid128(d.sign, d.qExp, mostSignificant3)
+    val signCombo = encodeSignAndGCombinationFieldBid128(d.type, d.sign, d.qExp, mostSignificant3)
     val significand110Hi = d.dw1 and ((1L shl (110 - 64)) - 1L)
     val bidDecimal128Hi = signCombo or significand110Hi
     return bidDecimal128Hi

@@ -164,7 +164,7 @@ private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, byt
         declets5Hi = declets6FromBin(binHi)
     }
     val declets6Lo = declets6FromBin(binLo)
-    val signCombo = encodeSignAndGCombinationFieldDpd128(d.sign, d.qExp, mostSigBcd4)
+    val signCombo = encodeSignAndGCombinationFieldDpd128(d.type, d.sign, d.qExp, mostSigBcd4)
     val dpdLo = (declets5Hi shl 60) or declets6Lo
     val dpdHi = signCombo or (declets5Hi ushr 4)
     if (longs != null) {
@@ -184,14 +184,14 @@ private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, byt
     }
 }
 
-internal fun encodeSignAndGCombinationFieldDpd128(sign: Boolean, qExp: Int, mostSigBcd4: Int): Long {
+private fun encodeSignAndGCombinationFieldDpd128(type: Int, sign: Boolean, qExp: Int, mostSigBcd4: Int): Long {
     require(mostSigBcd4 in 0..9)
-    val decimal128 = DecFormat.DECIMAL_128
     val signBit = if (sign) 1L shl 63 else 0L
-    val gCombinationField = when {
-        qExp < MIN_SPECIAL_VALUE -> {
-            require(qExp in decimal128.qTiny..decimal128.qMax)
-            val biasedQExp = qExp - decimal128.qTiny // remember qTiny is negative
+    val gCombinationField = when (type) {
+        STEAL_TYPE_ZER,
+        STEAL_TYPE_FNZ -> {
+            require(qExp in Q_TINY..Q_MAX)
+            val biasedQExp = qExp - Q_TINY // remember qTiny is negative
             val biasedQExpLo12 = biasedQExp and 0xFFF
             val biasedQExpHi2 = biasedQExp ushr 12
             verify { biasedQExpHi2 in 0..2 }
@@ -201,10 +201,9 @@ internal fun encodeSignAndGCombinationFieldDpd128(sign: Boolean, qExp: Int, most
                 (biasedQExpHi2 shl 15) or (mostSigBcd4 shl 12)
                     ) or biasedQExpLo12
         }
-
-        qExp == NON_FINITE_INF -> 0b11110 shl 12
-        qExp == NON_FINITE_QNAN -> 0b111110 shl 11
-        qExp == NON_FINITE_SNAN -> 0b111111 shl 11
+        STEAL_TYPE_INF -> 0b11110 shl 12
+        STEAL_NAN_QNAN -> 0b111110 shl 11
+        STEAL_NAN_SNAN -> 0b111111 shl 11
         else -> throw RuntimeException("unrecognized")
     }
     val signCombo = signBit or (gCombinationField.toLong() shl 46)
