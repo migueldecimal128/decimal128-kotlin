@@ -464,7 +464,7 @@ class MutDec() : C256() {
     }
 
     fun finiteCompareTo(other: MutDec): Int {
-        verify { qExp < NON_FINITE_INF && other.qExp < NON_FINITE_INF }
+        verify { isFinite() && other.isFinite() }
         if (sign != other.sign) {
             if (this.isZero() && other.isZero())
                 return 0
@@ -929,15 +929,13 @@ class MutDec() : C256() {
         set(x)
         // FIXME -- dispatching on qExp
         when {
-            qExp < NON_FINITE_INF -> {
+            isFinite() -> {
                 val p10 = min(max(pow10, -99999), 99999)
                 qExp = capExponentRange(qExp + p10)
                 if (qExp > Q_MAX || qExp < Q_TINY)
                     return finalize(ctx)
             }
-            qExp == NON_FINITE_INF -> {}
-
-
+            isInfinite() -> {}
             else -> setNaNOperand(x, ctx)
         }
         return this
@@ -1362,23 +1360,14 @@ class MutDec() : C256() {
     }
 
     private fun toSpecialValueString() : String {
-        var nanStr = "NaN"
-        when {
-            qExp == NON_FINITE_INF -> {
-                return if (sign) "-Infinity" else "Infinity"
+        if (isInfinite()) return if (sign) "-Infinity" else "Infinity"
+        verify { isNaN() }
+        val nanStr =
+            if (isSignaling()) {
+                if (sign) "-sNaN" else "sNaN"
+            } else {
+                if (sign) "-NaN" else "NaN"
             }
-
-            qExp == NON_FINITE_QNAN -> {
-                if (sign)
-                    nanStr = "-NaN"
-            }
-
-            qExp == NON_FINITE_SNAN -> {
-                nanStr = if (sign) "-sNaN" else "sNaN"
-            }
-
-            else -> throw RuntimeException("?que? $qExp")
-        }
         if (c256IsZero())
             return nanStr
         val utf8 = ByteArray(nanStr.length + digitLen)
@@ -1389,7 +1378,7 @@ class MutDec() : C256() {
     }
 
     fun toDebugString() : String {
-        if (qExp < MIN_SPECIAL_VALUE) {
+        if (isFinite()) {
             val printLen = calcDebugPrintLength()
             val utf8 = ByteArray(printLen)
             val i = IntegerParsePrint.int256ToUtf8(sign, this, utf8, 0)

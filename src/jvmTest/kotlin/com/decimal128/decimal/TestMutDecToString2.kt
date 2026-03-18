@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 
 class TestMutDecToString2 {
 
-    val verbose = false
+    val verbose = true
 
     val tcs = arrayOf(
+        "NaN",
         "-sNaN123456789012345678901234567890",
         "-9",
         "6.02E23",

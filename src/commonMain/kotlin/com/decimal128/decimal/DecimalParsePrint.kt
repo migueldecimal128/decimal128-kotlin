@@ -72,8 +72,8 @@ object DecimalParsePrint {
 
     private fun calcPrintLen(md: MutDec, prefs: DecPrefs): Int {
         return when {
-            md.qExp < NON_FINITE_INF -> calcPrintLenFinite(md, prefs)
-            md.qExp == NON_FINITE_INF -> calcPrintLenInfinite(md, prefs)
+            md.isFinite() -> calcPrintLenFinite(md, prefs)
+            md.isInfinite() -> calcPrintLenInfinite(md, prefs)
             else -> calcPrintLenNaN(md, prefs)
         }
     }
