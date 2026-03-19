@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class TestDecTrapHandlers {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun TestInvalidOperation() {

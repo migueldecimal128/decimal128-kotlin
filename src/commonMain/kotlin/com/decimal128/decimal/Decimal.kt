@@ -807,7 +807,7 @@ class Decimal private constructor(
      * Equivalent to `compareTo(other) == 0`.
      */
     override fun equals(other: Any?): Boolean =
-        other is Decimal && equalsJavaStyle(other)
+        other is Decimal && eqJavaStyle(other)
 
     /**
      * Returns a hash code consistent with [equals]:
@@ -1153,7 +1153,7 @@ class Decimal private constructor(
      */
     fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other)
 
-    fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other)
+    fun eqJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other)
 
     // ── String Representation ─────────────────────────────────────────────────
 

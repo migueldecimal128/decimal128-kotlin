@@ -40,7 +40,11 @@ internal object IntegerParsePrint {
     fun int256ToString(sign: Boolean, c: C256): String {
         val signMask = if (sign) -1L else 0L
         return if (c.bitLen <= 63) {
-            ((c.dw0 xor signMask) - signMask).toString()
+            if (c.bitLen == 0) {
+                if (sign) "-0" else "0"
+            } else {
+                ((c.dw0 xor signMask) - signMask).toString()
+            }
         } else {
             val sign01 = -signMask.toInt()
             int256ToStringImpl(sign01, c)

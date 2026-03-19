@@ -35,6 +35,42 @@ internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec): Int {
     return cmp
 }
 
+internal fun mutDecCompareJavaStyle(x: MutDec, y: MutDec): Int {
+    val stealX = x.type
+    val stealY = y.type
+    when {
+        !stealHasNAN(stealX, stealY) -> {
+            val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
+            if (xSignMask != y.signMask)
+                return (xSignMask shl 1) + 1 // return -1 or 1
+            val cmpMag = cmpNumericMagnitude(x, y)
+            return negateForSign(cmpMag, xSignMask)
+        }
+
+        !stealIsNAN(stealX) -> return -1
+        !stealIsNAN(stealY) -> return 1
+        else -> return 0
+    }
+}
+
+internal fun mutDecEqJavaStyle(x: MutDec, y: MutDec): Boolean {
+    val signature = binopSignatureOf(x.type, y.type)
+    return if (signature == FNZ_FNZ) {
+        x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
+    } else when (signature) {
+        FNZ_ZER,
+        FNZ_INF,
+        INF_ZER,
+        ZER_FNZ,
+        ZER_INF,
+        INF_FNZ -> false
+        ZER_ZER -> true
+        INF_INF -> x.sign == y.sign
+        else -> x.isNaN() && y.isNaN()
+    }
+}
+
+
 private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
     val cmpMag = cmpMagFnzFnz(x, y)
 
@@ -89,3 +125,24 @@ private fun cmpTotalOrderMagnitudeNanFound(x: MutDec, y: MutDec): Int {
         else -> -1
     }
 }
+
+private fun cmpNumericMagnitude(x: MutDec, y: MutDec): Int {
+    val signature = binopSignatureOf(x.type, y.type)
+    val cmpMag =
+        if (signature == FNZ_FNZ) {
+            cmpMagFnzFnz(x, y)
+        } else when (signature) {
+            ZER_ZER -> 0
+            ZER_FNZ,
+            ZER_INF,
+            FNZ_INF -> -1
+
+            FNZ_ZER,
+            INF_ZER,
+            INF_FNZ -> 1
+            INF_INF -> 0
+            else -> throw IllegalStateException()
+        }
+    return cmpMag
+}
+

@@ -26,7 +26,7 @@ internal const val NON_FINITE_SNAN = 16382
 const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
 
-class MutDec() : C256() {
+class MutDec() : C256(), Comparable<MutDec> {
     var type: Int = STEAL_TYPE_ZER
     var sign = false
     var qExp = 0
@@ -460,15 +460,6 @@ class MutDec() : C256() {
 
     fun setSqrt(x: MutDec, ctx: DecContext): MutDec = mutDecSqrtImpl(this, x, ctx)
 
-    fun compareTo(other: MutDec) : Int {
-        val qMax = max(qExp, other.qExp)
-        when {
-            (qMax < MIN_SPECIAL_VALUE) -> return finiteCompareTo(other)
-            (qMax == NON_FINITE_INF) -> return infiniteCompareTo(other)
-            else -> throw RuntimeException("somebody is a NaN")
-        }
-    }
-
     fun finiteCompareTo(other: MutDec): Int {
         verify { isFinite() && other.isFinite() }
         if (sign != other.sign) {
@@ -500,8 +491,10 @@ class MutDec() : C256() {
     // FIXME this is not the best, but is OK for now for testing
     fun partialCompareTo(other: MutDec, ctx: DecContext): MutDec {
         val md = MutDec()
+        if (this.isZero() && other.isZero())
+            return md.setZero(false)
         if (this.qExp < NON_FINITE_QNAN && other.qExp < NON_FINITE_QNAN)
-            return md.set(compareTo(other))
+            return md.set(compareJavaStyleTo(other))
         md.setNaNOperand(this, other, ctx)
         return md
     }
@@ -569,6 +562,10 @@ class MutDec() : C256() {
         }
         return bothAreZero
     }
+
+    fun compareJavaStyleTo(other: MutDec) : Int = mutDecCompareJavaStyle(this, other)
+
+    fun eqJavaStyleTo(other: MutDec) : Boolean = mutDecEqJavaStyle(this, other)
 
     fun setRoundToIntegral(x: MutDec, rounding: DecRounding, ctx: DecContext): MutDec {
         if (x.qExp >= 0) // this handles all special values as well
@@ -1161,26 +1158,10 @@ class MutDec() : C256() {
         }
     }
 
-    override fun equals(other: Any?) : Boolean {
-        if (other is MutDec) {
-            val qMax = max(qExp, other.qExp)
-            return when {
-                qMax < NON_FINITE_INF -> when {
-                    c256IsZero() -> other.c256IsZero()
-                    other.c256IsZero() -> false
-                    else -> sign == other.sign && magnitudeEQ(other)
-                }
+    override fun compareTo(other: MutDec): Int = mutDecCompareJavaStyle(this, other)
 
-                qMax == NON_FINITE_INF -> when {
-                    qExp == NON_FINITE_INF && other.qExp == NON_FINITE_INF -> return sign == other.sign
-                    else -> false
-                }
-                // FIXME ... and ... Why haven't my unit tests flushed out this case?
-                else -> throw RuntimeException("somebody is a NaN")
-            }
-        }
-        return false
-    }
+    override fun equals(other: Any?) : Boolean =
+        other is MutDec && eqJavaStyleTo(other)
 
     fun exactlyEQ(other: MutDec): Boolean {
         return dw0 == other.dw0 && dw1 == other.dw1 &&

@@ -11,8 +11,8 @@ import kotlin.test.assertEquals
 
 class TestMutDecDectest {
 
-    private val veryVerbose = true
-    private val verbose = true
+    private val veryVerbose = false
+    private val verbose = false
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -81,6 +81,10 @@ class TestMutDecDectest {
     )
 
     val ignoredCases = arrayOf(
+        // figure out what to do about these
+        // it isn't clear what colishaw means about "compare" with
+        // respect to comparing signed zeros
+
         "dqabs526 abs  -NaN22  -> -NaN22",
         "dqabs527 abs -sNaN33  -> -NaN33 Invalid_operation",
         "dqabs523 abs  sNaN    ->  NaN   Invalid_operation",
