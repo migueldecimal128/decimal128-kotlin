@@ -12,8 +12,8 @@ import kotlin.test.assertEquals
 
 class TestMutDecDectest {
 
-    private val veryVerbose = false
-    private val verbose = false
+    private val veryVerbose = true
+    private val verbose = true
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -318,6 +318,7 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqcot002 comparetotal  -2  -1  -> -1",
         "dqfma0902 fma  0     0     NaN5   ->  NaN5",
 
         "dqcan502 subtract  0E+6144 #77ffcff3fcff3fcffffcff3fcff3fcff         -> #f7ffcff3fcff3fcff3fcff3fcff3fcff",
@@ -648,7 +649,7 @@ class TestMutDecDectest {
                 //"remainder" -> Decimal2.newMod(op1, op2, ctx)
                 "compare" -> op1.partialCompareTo(op2, env)
                 "comparesig" -> op1.partialCompareTo(op2, env)
-                "comparetotal" -> MutDec().set(op1.totalCompareTo(op2))
+                "comparetotal" -> MutDec().set(op1.compareTotalOrderTo(op2))
                 "comparetotmag" -> MutDec().set(op1.magnitudeTotalCompareTo(op2))
                 "copy" -> MutDec().set(op1)
                 "copyabs" -> MutDec().setAbs(op1)

@@ -36,8 +36,11 @@ class MutDec() : C256() {
     fun bExpMin(): Int = calcBExpMin(bitLen, qExp)
     fun bExpMax(): Int = calcBExpMax(bitLen, qExp)
 
-    val signMask = if (sign) -1 else 0
-    val signBit = if (sign) 1 else 0
+    val signMask: Int
+        get() = if (sign) -1 else 0
+    val signBit: Int
+        get() = if (sign) 1 else 0
+
     companion object {
 
         fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
@@ -503,13 +506,7 @@ class MutDec() : C256() {
         return md
     }
 
-    fun totalCompareTo(other: MutDec): Int {
-        if (this.sign != other.sign) {
-            return if (this.sign) -1 else 1
-        }
-        val cmp = magnitudeTotalCompareTo(other)
-        return if (this.sign) -cmp else cmp
-    }
+    fun compareTotalOrderTo(other: MutDec): Int = mutDecCompareTotalOrder(this, other)
 
     fun magnitudeCompareTo(other: MutDec, pentad: Pentad) : Int {
         val qMax = max(qExp, other.qExp)
@@ -1044,7 +1041,7 @@ class MutDec() : C256() {
             else
                 x.compareTo(y)
             if (cmp == 0)
-                cmp = x.totalCompareTo(y)
+                cmp = x.compareTotalOrderTo(y)
             return set(if ((cmp >= 0) xor ((op and MAX_MASK) == 0)) x else y)
         }
         if ((op and NUM_MASK) != 0) {
@@ -1255,9 +1252,7 @@ class MutDec() : C256() {
     fun isCanonical() = true
     fun radix() = 10
 
-    fun totalOrder(x: MutDec) {
-        throw RuntimeException("not impl")
-    }
+    fun isTotalOrder(other: MutDec): Boolean = compareTotalOrderTo(other) <= 0
 
     // 5.7.3 Decimal2 operation
     fun sameQuantum(x: MutDec): Boolean =

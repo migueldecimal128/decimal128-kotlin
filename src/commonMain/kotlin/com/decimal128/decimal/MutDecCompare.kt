@@ -3,11 +3,11 @@
 
 package com.decimal128.decimal
 
-internal fun mutDecCompareTotalOrder(x: MutDec, y: MutDec, pentad: Pentad): Int {
+internal fun mutDecCompareTotalOrder(x: MutDec, y: MutDec): Int {
     val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
-    if ((xSignMask xor y.signMask) != 0)
+    if (xSignMask != y.signMask)
         return (xSignMask shl 1) + 1 // return -1 or 1
-    val cmpMag = mutDecCompareTotalOrderMag(x, y, pentad)
+    val cmpMag = mutDecCompareTotalOrderMag(x, y)
     return negateForSign(cmpMag, xSignMask)
 }
 
@@ -15,11 +15,11 @@ private inline fun negateForSign(cmp: Int, signMask: Int) =
     (cmp xor signMask) - signMask
 
 
-internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec, pentad: Pentad): Int {
+internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec): Int {
     val signature = binopSignatureOf(x.type, y.type)
     val cmp =
         if (signature == FNZ_FNZ) {
-            cmpTotalOrderMagFnzFnz(x, y, pentad)
+            cmpTotalOrderMagFnzFnz(x, y)
         } else when (signature) {
             ZER_ZER -> cmp32(x.qExp, y.qExp)
             ZER_FNZ,
@@ -35,8 +35,8 @@ internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec, pentad: Pentad): I
     return cmp
 }
 
-private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec, pentad: Pentad): Int {
-    val cmpMag = cmpMagFnzFnz(x, y, pentad)
+private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
+    val cmpMag = cmpMagFnzFnz(x, y)
 
     // If x and y represent the same floating-point datum:
     //  i) If x and y have negative sign,
@@ -52,7 +52,7 @@ private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec, pentad: Pentad):
     return cmp
 }
 
-private fun cmpMagFnzFnz(x: MutDec, y: MutDec, pentad: Pentad): Int {
+private fun cmpMagFnzFnz(x: MutDec, y: MutDec): Int {
     val xQ = x.qExp
     val yQ = y.qExp
     val xE = x.eExp
@@ -69,6 +69,7 @@ private fun cmpMagFnzFnz(x: MutDec, y: MutDec, pentad: Pentad): Int {
     val y1 = y.dw1
     if (xQ == yQ)
         return ucmp128(x1, x0, y1, y0)
+    val pentad = DecContext.current().tmps.pentad1
     if (xQ > yQ)
         return -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ, pentad)
     return ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ, pentad)
