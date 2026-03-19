@@ -501,15 +501,15 @@ class DecGenConstantTables {
                     // RRMP10_ENCODE_BASE_INTERCEPT
                     // growth is step-wise linear after the x-intercept
                     i < 768 -> 0
-                    (i - 768) < 128 * 1 -> 56 * 1
-                    (i - 768) < 128 * 2 -> 56 * 2
-                    (i - 768) < 128 * 3 -> 56 * 3
-                    (i - 768) < 128 * 4 -> 56 * 4
-                    (i - 768) < 128 * 5 -> 56 * 5
-                    (i - 768) < 128 * 6 -> 56 * 6
-                    (i - 768) < 128 * 7 -> 56 * 7
-                    (i - 768) < 128 * 8 -> 56 * 8
-                    (i - 768) < 128 * 9 -> 56 * 9
+                    (i - 768) < 128 * 1 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 1
+                    (i - 768) < 128 * 2 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 2
+                    (i - 768) < 128 * 3 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 3
+                    (i - 768) < 128 * 4 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 4
+                    (i - 768) < 128 * 5 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 5
+                    (i - 768) < 128 * 6 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 6
+                    (i - 768) < 128 * 7 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 7
+                    (i - 768) < 128 * 8 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 8
+                    (i - 768) < 128 * 9 -> RRMP10_ENCODE_BLOCK_MULTIPLIER * 9
                     else -> 0
                 }
                 val diff = value - base
