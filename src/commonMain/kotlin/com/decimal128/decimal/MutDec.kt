@@ -549,35 +549,7 @@ class MutDec() : C256() {
         return qExp.compareTo(other.qExp)
     }
 
-    fun magnitudeTotalCompareTo(other: MutDec): Int {
-        if (this.qExp < NON_FINITE_INF && other.qExp < NON_FINITE_INF) {
-            // For finite values, compare by magnitude first
-            val magCmp = magnitudeCompareTo(other, DecContext.current().tmps.pentad1)
-            if (magCmp != 0)
-                return magCmp
-
-            // Same numeric value - order by exponent (lower exponent first)
-            return this.qExp.compareTo(other.qExp)
-        }
-
-        // At least one is non-finite
-        return when {
-            this.qExp < NON_FINITE_INF -> -1  // this is finite, other is inf/NaN
-            other.qExp < NON_FINITE_INF -> 1  // other is finite, this is inf/NaN
-
-            // Both are non-finite
-            this.qExp == NON_FINITE_INF && other.qExp == NON_FINITE_INF -> 0  // Both infinity
-            this.qExp == NON_FINITE_INF -> -1  // this is inf, other is NaN (inf < NaN)
-            other.qExp == NON_FINITE_INF -> 1   // other is inf, this is NaN
-
-            // Both are NaN - but need to reverse: sNaN < qNaN in totalOrder
-            this.qExp == NON_FINITE_SNAN && other.qExp == NON_FINITE_QNAN -> -1  // sNaN < qNaN
-            this.qExp == NON_FINITE_QNAN && other.qExp == NON_FINITE_SNAN -> 1   // qNaN > sNaN
-
-            // Both same NaN type - compare payloads
-            else -> c256UnscaledCompare(this, other)
-        }
-    }
+    fun compareTotalOrderMagTo(other: MutDec): Int = mutDecCompareTotalOrderMag(this, other)
 
     fun magnitudeEQ(other: MutDec) : Boolean {
         val thisIsZero = this.c256IsZero()

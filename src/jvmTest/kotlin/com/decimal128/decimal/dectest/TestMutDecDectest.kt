@@ -2,7 +2,6 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
-import com.decimal128.decimal.DecFormat
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.MutDec
 import org.junit.jupiter.api.Test
@@ -650,7 +649,7 @@ class TestMutDecDectest {
                 "compare" -> op1.partialCompareTo(op2, env)
                 "comparesig" -> op1.partialCompareTo(op2, env)
                 "comparetotal" -> MutDec().set(op1.compareTotalOrderTo(op2))
-                "comparetotmag" -> MutDec().set(op1.magnitudeTotalCompareTo(op2))
+                "comparetotmag" -> MutDec().set(op1.compareTotalOrderMagTo(op2))
                 "copy" -> MutDec().set(op1)
                 "copyabs" -> MutDec().setAbs(op1)
                 "copynegate" -> MutDec().setNegate(op1)
