@@ -447,7 +447,7 @@ class DecGenConstantTables {
         val offsetIndex = offsetIndex(digitCount, pow10)
         val baseMask = (RRMP10_ENCODE_BASE_INTERCEPT - offsetIndex) shr 31
         val block = (offsetIndex - (RRMP10_ENCODE_BASE_INTERCEPT - 128)) ushr 7
-        val base = (block shl 6) - (block shl 3)  // base = block * 56
+        val base = block * RRMP10_ENCODE_BLOCK_MULTIPLIER
         val effectiveBase = base and baseMask
         val encodedIndex = paramsIndex - effectiveBase
         verify { encodedIndex in 0..255 }
