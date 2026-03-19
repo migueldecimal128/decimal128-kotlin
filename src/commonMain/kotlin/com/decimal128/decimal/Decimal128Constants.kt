@@ -173,11 +173,11 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0004_D128
+internal const val EXPECTED_TABLE_VERSION = 0x0005_D128
 internal const val EXPECTED_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
-internal const val EXPECTED_BYTE_TABLES_SIZE = 1985 // BYTE_TABLES_SIZE
+internal const val EXPECTED_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
 internal const val EXPECTED_DWORD_TABLES_FNV1A = -814824830
-internal const val EXPECTED_BYTE_TABLES_FNV1A = -1897637880
+internal const val EXPECTED_BYTE_TABLES_FNV1A = 1962445448
 
 // comment this out to prevent loading of the resource table when the class loads
 val loadResourceTable = loadResourceTable()

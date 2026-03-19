@@ -13,9 +13,9 @@ class DecGenConstantTables {
     val verbose = true
 
     val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
-    val X_RESOURCE_TABLE_VERSION = 0x0004_D128
+    val X_RESOURCE_TABLE_VERSION = 0x0005_D128
     val X_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
-    val X_BYTE_TABLES_SIZE = 1985 // BYTE_TABLES_SIZE
+    val X_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
 
@@ -29,17 +29,14 @@ class DecGenConstantTables {
             println("X_BYTE_TABLES_SIZE:$X_BYTE_TABLES_SIZE")
         }
         assertEquals(X_DWORD_TABLES_SIZE, calc_DWORD_TABLES_size())
-        // BYTE_TABLES contains rows that are padded to 32,
-        // so there is an empty entry at the end
-        // hence, subtract 1
-        assertEquals(X_BYTE_TABLES_SIZE-1, calc_BYTE_TABLES_size())
+        assertEquals(X_BYTE_TABLES_SIZE, calc_BYTE_TABLES_size())
 
         X_DWORD_TABLES_FNV1A = fnv1a(X_DWORD_TABLES)
         X_BYTE_TABLES_FNV1A = fnv1a(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
-        check(X_DWORD_TABLES_FNV1A == -814824830)
-        check(X_BYTE_TABLES_FNV1A == -1897637880)
+        assertEquals(-814824830, X_DWORD_TABLES_FNV1A)
+        assertEquals(1962445448, X_BYTE_TABLES_FNV1A)
         saveConstantTablesAsResource()
     }
 
@@ -484,6 +481,9 @@ class DecGenConstantTables {
                 storeParamsIndex(q, k, paramsIndex)
             }
         }
+
+        val maxOffsetIndex = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT
+        X_BYTE_TABLES[RRMP10_LOOKUP_BASE + maxOffsetIndex] = -128
 
         if (RANGE_RECIP_PARAMS.size != iRRP) {
             println("RANGE_RECIP_PARAMS.size should be $iRRP")
