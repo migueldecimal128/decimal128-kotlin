@@ -920,7 +920,7 @@ class Decimal private constructor(
      *         this value and [other].
      */
 
-    fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other, DecContext.current().tmps.pentad1)
+    fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other)
 
     /** Returns `true` if `totalOrder(this, other)` — i.e., `this ≤ other` in total order. */
     fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
@@ -931,7 +931,7 @@ class Decimal private constructor(
      *
      * @return −1, 0, or +1.
      */
-    fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other, DecContext.current().tmps.pentad1)
+    fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other)
 
     /** Returns `true` if `totalOrderMag(this, other)` — i.e., `|this| ≤ |other|` in total order. */
     fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
@@ -1151,9 +1151,9 @@ class Decimal private constructor(
      * @return −1, 0, or +1 describing the Java-style ordering of this
      *         value relative to [other].
      */
-    fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other, DecContext.current().tmps.pentad1)
+    fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other)
 
-    fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other, DecContext.current().tmps.pentad1)
+    fun equalsJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other)
 
     // ── String Representation ─────────────────────────────────────────────────
 
