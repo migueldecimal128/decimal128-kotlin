@@ -13,9 +13,9 @@ class DecGenConstantTables {
     val verbose = true
 
     val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
-    val X_RESOURCE_TABLE_VERSION = 0x0005_D128
-    val X_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
-    val X_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
+    val X_RESOURCE_TABLE_VERSION = 0x0006_D128
+    val X_DWORD_TABLES_SIZE = 939 // DWORD_TABLES_SIZE
+    val X_BYTE_TABLES_SIZE = 1922 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
 
@@ -35,8 +35,8 @@ class DecGenConstantTables {
         X_BYTE_TABLES_FNV1A = fnv1a(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
-        assertEquals(-814824830, X_DWORD_TABLES_FNV1A)
-        assertEquals(1962445448, X_BYTE_TABLES_FNV1A)
+        assertEquals(185718703, X_DWORD_TABLES_FNV1A)
+        assertEquals(-1298083103, X_BYTE_TABLES_FNV1A)
         saveConstantTablesAsResource()
     }
 
@@ -466,7 +466,7 @@ class DecGenConstantTables {
     }
 
     private var iRRP = 1
-    private val RANGE_RECIP_PARAMS = LongArray(709)
+    private val RANGE_RECIP_PARAMS = LongArray(647)
 
     private fun serializeTable() {
         for (q in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {

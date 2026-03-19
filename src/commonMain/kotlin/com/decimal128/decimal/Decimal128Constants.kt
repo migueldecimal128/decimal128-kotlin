@@ -162,23 +162,23 @@ internal const val RRMP10_Q_MIN = POW10_64_COUNT
 // which would lead to at most a 76 digit product.
 // This would shrink the table by two rows *and* by 2 columns
 // since it would reduce K_MAXX by 2
-internal const val RRMP10_Q_MAXX = 79 // exclusive
+internal const val RRMP10_Q_MAXX = 77 // exclusive
 internal const val RRMP10_K_MIN = BARRETT_POW10_MAXX
 internal const val RRMP10_K_MAXX = RRMP10_Q_MAXX - 34
 
 internal const val RRMP10_ENCODE_BASE_INTERCEPT = 768
-internal const val RRMP10_ENCODE_BLOCK_MULTIPLIER = 56
+internal const val RRMP10_ENCODE_BLOCK_MULTIPLIER = 52
 internal const val RRMP10_LOOKUP_ROW_SIZE = 32 // K_MAXX - K_MIN
 internal const val RRMP10_LOOKUP_SHIFT = 5
 internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0005_D128
-internal const val EXPECTED_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
-internal const val EXPECTED_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
-internal const val EXPECTED_DWORD_TABLES_FNV1A = -814824830
-internal const val EXPECTED_BYTE_TABLES_FNV1A = 1962445448
+internal const val EXPECTED_TABLE_VERSION = 0x0006_D128
+internal const val EXPECTED_DWORD_TABLES_SIZE = 939 // DWORD_TABLES_SIZE
+internal const val EXPECTED_BYTE_TABLES_SIZE = 1922 // BYTE_TABLES_SIZE
+internal const val EXPECTED_DWORD_TABLES_FNV1A = 185718703
+internal const val EXPECTED_BYTE_TABLES_FNV1A = -1298083103
 
 // comment this out to prevent loading of the resource table when the class loads
 val loadResourceTable = loadResourceTable()
@@ -278,9 +278,10 @@ private fun fnv1a(longs: LongArray): Int {
 internal const val RRMP10_LOOKUP_BASE = MAGIC_FLAG_AND_SHIFT_BASE + MAGIC_FLAG_AND_SHIFT_MAXX
 internal const val RRMP10_LOOKUP_MAXX = RRMP10_LOOKUP_TABLE_SIZE
 
-internal const val BYTE_TABLES_SIZE = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX
+internal const val BYTES_TABLE_TERMINATOR = 1
+internal const val BYTE_TABLES_SIZE = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX + BYTES_TABLE_TERMINATOR
 
-private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == 1985)
+private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == 1922)
 
 /*
 // minBitCount:0  maxBitCount:64

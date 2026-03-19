@@ -183,7 +183,7 @@ class TestReduce {
                     pow10 = min(random.nextInt(30), random.nextInt(30))
                 } while (pow10 == 0)
                 bi = randBi().multiply(BigInteger.TEN.pow(pow10))
-            } while (bi.bitLength() > 256)
+            } while (bi.toString().length > 76)
             val case = TC(bi)
             test1(case)
         }
