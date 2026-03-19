@@ -43,7 +43,7 @@ class TestMutDecMagFinalize {
 
     @Test
     fun testRandom() {
-        for (i in 0..<100) {
+        for (i in 0..<10000) {
             val case = TC(randBd())
             test1(case)
         }
@@ -53,8 +53,11 @@ class TestMutDecMagFinalize {
     val random = Random()
 
     fun randBd() : BigDecimal {
-        val bitLength = random.nextInt(0, 256)
-        val bi = BigInteger(bitLength, random)
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         val exp = random.nextInt(12400) - 6200
         val bd = BigDecimal(bi).scaleByPowerOfTen(exp)
         return bd

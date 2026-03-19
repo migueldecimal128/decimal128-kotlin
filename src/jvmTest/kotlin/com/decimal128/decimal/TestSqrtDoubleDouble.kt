@@ -75,7 +75,7 @@ class TestSqrtDoubleDouble{
 
     @Test
     fun testRandom() {
-        for (i in 0..<1000) {
+        for (i in 0..<10000) {
             val tc = TC(randBd())
             test1(tc)
         }

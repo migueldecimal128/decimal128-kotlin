@@ -199,24 +199,24 @@ fun loadResourceTable() {
     dis.use {
         // read and verify header
         val version = dis.readInt()
-        if (version != EXPECTED_TABLE_VERSION)
-            throw RuntimeException("decimal128_tables.bin version mismatch: expected 0x${EXPECTED_TABLE_VERSION.toString(16)}, got 0x${version.toString(16)}")
+        check(version == EXPECTED_TABLE_VERSION)
+        { "decimal128_tables.bin version mismatch: expected 0x${EXPECTED_TABLE_VERSION.toString(16)}, got 0x${version.toString(16)}" }
 
         val dwordTablesSize = dis.readInt()
-        if (dwordTablesSize != EXPECTED_DWORD_TABLES_SIZE)
-            throw RuntimeException("decimal128_tables.bin dword table size mismatch: expected $EXPECTED_DWORD_TABLES_SIZE, got $dwordTablesSize")
+        check(dwordTablesSize == EXPECTED_DWORD_TABLES_SIZE)
+        { "decimal128_tables.bin dword table size mismatch: expected $EXPECTED_DWORD_TABLES_SIZE, got $dwordTablesSize" }
 
         val byteTablesSize = dis.readInt()
-        if (byteTablesSize != EXPECTED_BYTE_TABLES_SIZE)
-            throw RuntimeException("decimal128_tables.bin byte table size mismatch: expected $EXPECTED_BYTE_TABLES_SIZE, got $byteTablesSize")
+        check(byteTablesSize == EXPECTED_BYTE_TABLES_SIZE)
+        { "decimal128_tables.bin byte table size mismatch: expected $EXPECTED_BYTE_TABLES_SIZE, got $byteTablesSize" }
 
         val headerDwordFnv1a = dis.readInt()
-        if (headerDwordFnv1a != EXPECTED_DWORD_TABLES_FNV1A)
-            throw RuntimeException("decimal128_tables.bin HEADER headerDwordFnv1a mismatch")
+        check(headerDwordFnv1a == EXPECTED_DWORD_TABLES_FNV1A)
+        { "decimal128_tables.bin HEADER headerDwordFnv1a mismatch" }
 
         val headerByteFnv1a = dis.readInt()
-        if (headerByteFnv1a != EXPECTED_BYTE_TABLES_FNV1A)
-            throw RuntimeException("decimal128_tables.bin HEADER headerByteFnv1a mismatch")
+        check(headerByteFnv1a == EXPECTED_BYTE_TABLES_FNV1A)
+        { "decimal128_tables.bin HEADER headerByteFnv1a mismatch" }
 
         // read dword table
         for (i in 0..<dwordTablesSize)

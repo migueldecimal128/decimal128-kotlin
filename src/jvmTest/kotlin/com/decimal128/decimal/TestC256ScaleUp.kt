@@ -68,7 +68,7 @@ class TestC256ScaleUp {
 
     @Test
     fun testRandom() {
-        for (i in 0..<1000) {
+        for (i in 0..<10000) {
             val bi = randBi()
             val pow10 = randPow(bi)
             val case = TC(bi, pow10)
