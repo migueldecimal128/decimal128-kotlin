@@ -131,17 +131,16 @@ internal const val BARRETT_POW10_MAX = BARRETT_POW10_MAXX - 1
  * BYTE_TABLES is a single allocated array of 2k bytes that is used to store
  * multiple single-byte tables.
  *
- * - POW10_BITLEN_MINUS_1 is a direct lookup of the number of bits required
- *   to store a power of 10. 10**0 requires 1 bit. 10**77 requires 256 bits.
- *   We subtract 1 and store it in a byte, adding 1 upon lookup.
+ * - POW10_BITLEN is a direct lookup of the number of bits required
+ *   to store a power of 10. 10**0 requires 1 bit. 10**76 requires 253 bits.
  *
  * - MAGIC_FLAG_AND_SHIFT
  */
 internal val BYTE_TABLES = ByteArray(2048)
 internal const val BYTE_TABLES_BCE = 2047 // 0x7FF
 
-internal val POW10_BITLEN_MINUS_1 = BYTE_TABLES
-internal const val POW10_BITLEN_MINUS_1_BCE = BYTE_TABLES_BCE
+internal val POW10_BITLEN = BYTE_TABLES
+internal const val POW10_BITLEN_BCE = BYTE_TABLES_BCE
 
 internal const val POW10_BITLEN_COUNT = MAXX_DIGIT_LEN
 
@@ -174,11 +173,11 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0003_D128
+internal const val EXPECTED_TABLE_VERSION = 0x0004_D128
 internal const val EXPECTED_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
 internal const val EXPECTED_BYTE_TABLES_SIZE = 1985 // BYTE_TABLES_SIZE
 internal const val EXPECTED_DWORD_TABLES_FNV1A = -814824830
-internal const val EXPECTED_BYTE_TABLES_FNV1A = -1626459601
+internal const val EXPECTED_BYTE_TABLES_FNV1A = -1897637880
 
 // comment this out to prevent loading of the resource table when the class loads
 val loadResourceTable = loadResourceTable()

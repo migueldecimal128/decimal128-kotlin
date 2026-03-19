@@ -13,7 +13,7 @@ class DecGenConstantTables {
     val verbose = true
 
     val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
-    val X_RESOURCE_TABLE_VERSION = 0x0003_D128
+    val X_RESOURCE_TABLE_VERSION = 0x0004_D128
     val X_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
     val X_BYTE_TABLES_SIZE = 1985 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
@@ -39,7 +39,7 @@ class DecGenConstantTables {
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
         check(X_DWORD_TABLES_FNV1A == -814824830)
-        check(X_BYTE_TABLES_FNV1A == -1626459601)
+        check(X_BYTE_TABLES_FNV1A == -1897637880)
         saveConstantTablesAsResource()
     }
 
@@ -95,7 +95,7 @@ class DecGenConstantTables {
         var hiPow10 = BigInt.Companion.ONE
         var j = 0
         for (i in 0..<MAXX_DIGIT_LEN) {
-            X_BYTE_TABLES[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
+            X_BYTE_TABLES[i] = hiPow10.magnitudeBitLen().toByte()
             for (dw in hiPow10.magnitudeToLittleEndianLongArray())
                 X_DWORD_TABLES[j++] = dw
             if (i < MIN_POW10_DIGIT_LEN_128 ||
