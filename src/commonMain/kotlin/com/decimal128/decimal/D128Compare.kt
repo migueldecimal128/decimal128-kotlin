@@ -157,21 +157,21 @@ private fun cmpMagFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val yQ = stealQexp(ySteal)
     val xE = stealEexp(xSteal)
     val yE = stealEexp(ySteal)
+    if (xE != yE)
+        return ((xE - yE) shr 31) or 1
+    if (x.bExpMin() > y.bExpMax())
+        return 1
+    if (x.bExpMax() < y.bExpMin())
+        return -1
     val x0 = x.dw0
     val x1 = x.dw1
     val y0 = y.dw0
     val y1 = y.dw1
-    val cmpMag = when {
-        xE > yE -> 1
-        xE < yE -> -1
-        x.bExpMin() > y.bExpMax() -> 1
-        x.bExpMax() < y.bExpMin() -> -1
-        xQ == yQ -> ucmp128(x1, x0, y1, y0)
-        xQ > yQ -> -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ, pentad)
-        // x.qExp < y.qExp
-        else -> ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ, pentad)
-    }
-    return cmpMag
+    if (xQ == yQ)
+        return ucmp128(x1, x0, y1, y0)
+    if (xQ > yQ)
+        return -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ, pentad)
+    return ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ, pentad)
 }
 
 private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {

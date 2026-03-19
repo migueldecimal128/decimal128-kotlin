@@ -33,6 +33,9 @@ class MutDec() : C256() {
     val eExp: Int
         get() = qExp + digitLen - 1
 
+    fun bExpMin(): Int = calcBExpMin(bitLen, qExp)
+    fun bExpMax(): Int = calcBExpMax(bitLen, qExp)
+
     val signMask = if (sign) -1 else 0
     val signBit = if (sign) 1 else 0
     companion object {

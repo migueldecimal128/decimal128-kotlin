@@ -9,7 +9,7 @@ import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 
 class TestDecNoncomputational {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAbs() = runUnaryDecimalOp(
@@ -107,6 +107,15 @@ class TestDecNoncomputational {
         skipCases = arrayOf(
             "dqcot9990 comparetotal 10  # -> NaN Invalid_operation",
             "dqcot9991 comparetotal  # 10 -> NaN Invalid_operation",
+        )
+    )
+
+    @Test
+    fun testTotalOrderCases() = runBinaryIntOp(
+        Decimal::compareTotalOrderTo,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqcot122 comparetotal   8      7.0    -> 1",
         )
     )
 
