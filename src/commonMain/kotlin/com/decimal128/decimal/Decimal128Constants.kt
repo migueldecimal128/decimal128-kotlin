@@ -167,6 +167,7 @@ internal const val RRMP10_K_MIN = BARRETT_POW10_MAXX
 internal const val RRMP10_K_MAXX = RRMP10_Q_MAXX - 34
 
 internal const val RRMP10_ENCODE_BASE_INTERCEPT = 768
+internal const val RRMP10_ENCODE_BLOCK_MULTIPLIER = 56
 internal const val RRMP10_LOOKUP_ROW_SIZE = 32 // K_MAXX - K_MIN
 internal const val RRMP10_LOOKUP_SHIFT = 5
 internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl RRMP10_LOOKUP_SHIFT
