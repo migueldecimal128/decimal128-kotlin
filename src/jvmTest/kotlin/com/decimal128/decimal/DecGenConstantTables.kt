@@ -6,15 +6,16 @@ import java.io.DataOutputStream
 import java.io.File
 import kotlin.math.min
 import kotlin.test.Test
+import kotlin.test.fail
 
 class DecGenConstantTables {
 
-    val verbose = false
+    val verbose = true
 
     val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
-    val X_RESOURCE_TABLE_VERSION = 0x0002_D128
-    val X_DWORD_TABLES_SIZE = 1005 // DWORD_TABLES_SIZE
-    val X_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
+    val X_RESOURCE_TABLE_VERSION = 0x0003_D128
+    val X_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
+    val X_BYTE_TABLES_SIZE = 1985 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
 
@@ -22,12 +23,23 @@ class DecGenConstantTables {
     @Test
     fun generateConstantTables() {
         initializeTables()
+
+        if (verbose) {
+            println("X_DWORD_TABLES_SIZE:$X_DWORD_TABLES_SIZE")
+            println("X_BYTE_TABLES_SIZE:$X_BYTE_TABLES_SIZE")
+        }
+        assertEquals(X_DWORD_TABLES_SIZE, calc_DWORD_TABLES_size())
+        // BYTE_TABLES contains rows that are padded to 32,
+        // so there is an empty entry at the end
+        // hence, subtract 1
+        assertEquals(X_BYTE_TABLES_SIZE-1, calc_BYTE_TABLES_size())
+
         X_DWORD_TABLES_FNV1A = fnv1a(X_DWORD_TABLES)
         X_BYTE_TABLES_FNV1A = fnv1a(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
-        check(X_DWORD_TABLES_FNV1A == 177770275)
-        check(X_BYTE_TABLES_FNV1A == 1447633196)
+        check(X_DWORD_TABLES_FNV1A == -814824830)
+        check(X_BYTE_TABLES_FNV1A == -1626459601)
         saveConstantTablesAsResource()
     }
 
@@ -62,6 +74,22 @@ class DecGenConstantTables {
 
     val X_DWORD_TABLES = LongArray(1024)
     val X_BYTE_TABLES = ByteArray(2048)
+
+    fun calc_DWORD_TABLES_size(): Int {
+        for (i in X_DWORD_TABLES.size - 1 downTo 0) {
+            if (X_DWORD_TABLES[i] != 0L)
+                return i + 1
+        }
+        fail("What? X_DWORD_TABLES is empty")
+    }
+
+    fun calc_BYTE_TABLES_size(): Int {
+        for (i in X_BYTE_TABLES.size - 1 downTo 0) {
+            if (X_BYTE_TABLES[i].toInt() != 0)
+                return i + 1
+        }
+        fail("What? X_BYTE_TABLES is empty")
+    }
 
     private fun initPow10Pow5() {
         var hiPow10 = BigInt.Companion.ONE

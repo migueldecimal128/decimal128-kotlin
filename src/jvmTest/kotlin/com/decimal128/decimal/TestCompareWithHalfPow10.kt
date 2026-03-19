@@ -35,7 +35,7 @@ class TestCompareWithHalfPow10 {
         TC("5000000000000000000"),
         TC("5000000000000000001"),
         TC(ONE.shiftLeft(64).subtract(ONE)),
-        TC(ONE.shiftLeft(256).subtract(ONE)),
+        TC(ONE.shiftLeft(253).subtract(ONE)),
         )
 
     @Test
@@ -56,8 +56,11 @@ class TestCompareWithHalfPow10 {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
-        val bi = BigInteger(bitLength, random)
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
 

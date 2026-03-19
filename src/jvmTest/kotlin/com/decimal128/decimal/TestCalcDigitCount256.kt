@@ -45,9 +45,9 @@ class TestCalcDigitCount256 {
     fun test1Random() {
         var bi = BigInteger.ZERO
         do {
-            val bitLength = random.nextInt(193, 257)
+            val bitLength = random.nextInt(193, 254)
             bi = BigInteger(bitLength, random)
-        } while (bi.bitLength() < 193)
+        } while (bi.bitLength() < 193 || bi.toString().length > 76)
         test1(bi)
     }
 

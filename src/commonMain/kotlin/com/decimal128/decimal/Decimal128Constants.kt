@@ -24,7 +24,9 @@ internal const val POW10_128_COUNT = 19          // 0x00000013 19
 
 internal const val POW10_192_COUNT = 19          // 0x00000013 19
 
-internal const val POW10_256_COUNT = 20          // 0x00000014 2E+1
+// actually, 20 powers of 10 fit in 193..256 bits,
+// but we are stopping a 76 digits in 193..253
+internal const val POW10_256_COUNT = 19          // 0x00000014 2E+1
 
 internal const val MIN_POW10_DIGIT_LEN_128 = 20          // 0x00000014 2E+1
 
@@ -32,9 +34,8 @@ internal const val MIN_POW10_DIGIT_LEN_192 = 39          // 0x00000027 39
 
 internal const val MIN_POW10_DIGIT_LEN_256 = 58          // 0x0000003A 58
 
-internal const val MAX_DIGIT_LEN = 77          // 0x0000004D 77
-// 256-bit coefficient handles all 77 digit integers
-internal const val MAXX_DIGIT_LEN = 78          // 0x0000004E 78
+// 253-bit coefficient handles all 76 digit integers
+internal const val MAXX_DIGIT_LEN = 77          // 0x0000004D 77
 
 
 /**
@@ -120,7 +121,7 @@ internal const val RANGE_RECIP_MUL_PARAMS_MAXX = 709
 
 internal const val DWORD_TABLES_SIZE = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
 
-private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 1005)
+private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 1001)
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
 internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
@@ -173,11 +174,11 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0002_D128
-internal const val EXPECTED_DWORD_TABLES_SIZE = 1005 // DWORD_TABLES_SIZE
-internal const val EXPECTED_BYTE_TABLES_SIZE = 1986 // BYTE_TABLES_SIZE
-internal const val EXPECTED_DWORD_TABLES_FNV1A = 177770275
-internal const val EXPECTED_BYTE_TABLES_FNV1A = 1447633196
+internal const val EXPECTED_TABLE_VERSION = 0x0003_D128
+internal const val EXPECTED_DWORD_TABLES_SIZE = 1001 // DWORD_TABLES_SIZE
+internal const val EXPECTED_BYTE_TABLES_SIZE = 1985 // BYTE_TABLES_SIZE
+internal const val EXPECTED_DWORD_TABLES_FNV1A = -814824830
+internal const val EXPECTED_BYTE_TABLES_FNV1A = -1626459601
 
 // comment this out to prevent loading of the resource table when the class loads
 val loadResourceTable = loadResourceTable()
@@ -279,7 +280,7 @@ internal const val RRMP10_LOOKUP_MAXX = RRMP10_LOOKUP_TABLE_SIZE
 
 internal const val BYTE_TABLES_SIZE = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX
 
-private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == 1986)
+private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == 1985)
 
 /*
 // minBitCount:0  maxBitCount:64
