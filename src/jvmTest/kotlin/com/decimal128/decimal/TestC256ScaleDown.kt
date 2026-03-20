@@ -120,16 +120,16 @@ class TestC256ScaleDown {
     fun testBinaryBoundaries() {
         val quads = longArrayOf( // littleEndian order
             (1L shl 62), 0, 0, 0,
-            -1, -1, -1, -1,
+            -1, -1, -1, (1L shl 63) - 1,
             -1, 0, 0,0,
             -1, -1, 0, 0,
             -1, -1, -1, 0,
-            -1, -1, -1, -1,
+            -1, -1, -1, (1L shl 63) - 1,
             1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,
             0, 0, 0, 1,
-            0, 0, 0, (1L shl 62),
+            0, 0, 0, (1L shl 63) - 1,
         )
 
         for (i in quads.indices step 4) {
@@ -182,20 +182,21 @@ class TestC256ScaleDown {
         return randPow
     }
 
-    fun randBi() : BigInteger {
-        while (true) {
-            val bitLength = random.nextInt(0, 257)
-            val bi = BigInteger(bitLength, random)
-            if (bi.toString().length < RRMP10_Q_MAXX)
-                return bi
-        }
+    fun randBi_76() : BigInteger {
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
+        return bi
     }
 
+    fun randBi() : BigInteger = randBi_76()
 
 
     fun test1(case: TC) {
         val expected = case.biExpected
-        if (expected.bitLength() > 256) {
+        if (expected.bitLength() > 255) {
             println("product would overflow ... skipped")
             return
         }

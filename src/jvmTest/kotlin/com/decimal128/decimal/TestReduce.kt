@@ -146,7 +146,7 @@ class TestReduce {
 
     val tcs = arrayOf(
         TC("123456789123456789123456789123456789123456789"),
-        TC(FIVE.pow(110)),
+        TC(FIVE.pow(109)),
         TC("12345678901234567890123456789123456789123456789123456789123456891"),
         TC("12345678989012345600"),
         TC("14600000000000000000"), // 14600000000000000000
@@ -163,8 +163,8 @@ class TestReduce {
         TC(6),
         TC(25),
         TC(625),
-        TC(FIVE.pow(110)),
-        TC(FIVE.pow(110).add(ONE)),
+        TC(FIVE.pow(109)),
+        TC(FIVE.pow(109).add(ONE)),
     )
 
     @Test
@@ -192,12 +192,16 @@ class TestReduce {
 
     val random = Random()
 
-    fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
-        val bi = BigInteger(bitLength, random)
+    fun randBi_76() : BigInteger {
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
 
+    fun randBi() : BigInteger = randBi_76()
 
     fun test1(tc: TC) {
         val bi = tc.bi

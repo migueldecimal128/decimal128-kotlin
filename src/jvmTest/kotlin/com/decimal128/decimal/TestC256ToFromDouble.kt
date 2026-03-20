@@ -16,7 +16,7 @@ class TestC256ToFromDouble {
     val tcs = arrayOf(
         TC("1"),
         TC("1000"),
-        TC(BigInteger.ONE.shiftLeft(255).toString()),
+        TC(BigInteger.ONE.shiftLeft(252).toString()),
     )
 
     @Test

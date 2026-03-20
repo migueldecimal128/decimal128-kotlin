@@ -72,8 +72,11 @@ class TestC256Fms {
     val random = Random()
 
     fun randBi253() : BigInteger {
-        val bitLength = random.nextInt(0, 253)
-        val bi = BigInteger(bitLength, random)
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
 

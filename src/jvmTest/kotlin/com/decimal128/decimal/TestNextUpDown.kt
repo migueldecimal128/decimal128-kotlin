@@ -6,7 +6,7 @@ import java.math.BigDecimal
 
 class TestNextUpDown {
 
-    val verbose = true
+    val verbose = false
 
     val tcs = arrayOf(
         BigDecimal("-1e-6176"),

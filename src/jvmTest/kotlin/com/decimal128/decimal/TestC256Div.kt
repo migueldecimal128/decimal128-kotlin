@@ -29,7 +29,7 @@ class TestC256Div {
         TC(ONE.shiftLeft(128), ONE.shiftLeft(32)),
         TC(ONE.shiftLeft(191), ONE.shiftLeft(32)),
         TC(ONE.shiftLeft(192), ONE.shiftLeft(32)),
-        TC(ONE.shiftLeft(255), ONE.shiftLeft(32)),
+        TC(ONE.shiftLeft(252), ONE.shiftLeft(32)),
         TC("99999999999", "9999999999"),
         TC(ONE.shiftLeft(33), ONE.shiftLeft(32)),
         TC(ONE.shiftLeft(62), ONE.shiftLeft(32)),
@@ -59,7 +59,7 @@ class TestC256Div {
                     for (deltaY in deltas) {
                         val biB = biY.add(deltaY)
                         val tc = TC(biA, biB)
-                        if (tc.biResult.bitLength() <= 256)
+                        if (tc.biResult.toString().length <= 76)
                             test1(tc)
                     }
                 }
@@ -79,8 +79,11 @@ class TestC256Div {
     val random = Random()
 
     fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
-        val bi = BigInteger(bitLength, random)
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
 

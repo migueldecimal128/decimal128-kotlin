@@ -303,11 +303,16 @@ class TestSimpleRecipMulDivSmallPow10 {
 
     val random = Random()
 
-    fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
-        val bi = BigInteger(bitLength, random)
+    fun randBi_76() : BigInteger {
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
+
+    fun randBi() : BigInteger = randBi_76()
 
     fun test1Random() {
         val bi = randBi()

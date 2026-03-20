@@ -36,11 +36,22 @@ class TestC256RoundTrip {
     fun testRandomRoundTrip() {
         val random = Random()
         for (i in 0..<10000) {
-            val bitLength = random.nextInt(0, 257)
-            val biRandom = BigInteger(bitLength, random)
+            val biRandom = randBi_76()
             test1(biRandom)
         }
 
     }
+
+    val random = Random()
+
+    fun randBi_76() : BigInteger {
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
+        return bi
+    }
+
 
 }

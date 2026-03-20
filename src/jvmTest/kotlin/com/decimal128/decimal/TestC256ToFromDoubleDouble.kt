@@ -13,9 +13,21 @@ class TestC256ToFromDoubleDouble {
     }
 
     val tcs = arrayOf(
+        // FIXME - The following case generates an unscaled addition where the
+        //  addend has > 127 bits.
+        //  This comes from a double-double where hi double has 76 digits
+        //  and the lo double has 60 (?).
+        //  Unclear to me whether this is a valid test or not.
+        //  If I end up using DoubleDouble with > 38 digits then I should
+        //  be able to extend the unscaledAdd code so that it allows for
+        //  an added of > 38 digits.
+        //  Currently it allows a 76 digit augend due to FMA, but I had
+        //  completely forgotten about Double and DoubleDouble conversions.
+        // TC(BigInteger.TEN.pow(76).subtract(BigInteger.ONE).toString()),
+
         TC("1"),
         TC("1000"),
-        TC(BigInteger.ONE.shiftLeft(255).toString()),
+        TC(BigInteger.ONE.shiftLeft(252).toString()),
         TC("123456789012345678901234567890"),
         TC("12345678901234567890123456789012"),
     )

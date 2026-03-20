@@ -7,17 +7,33 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 expect open class C256Rep() {
-    internal var dw3: Long
-    internal var dw2: Long
-    internal var dw1: Long
+    internal var digitLenX: Short
+    internal var bitLenX: Short
     internal var dw0: Long
-    internal var bitLen: Int
-    internal var digitLen: Int
+    internal var dw1: Long
+    internal var dw2: Long
+    internal var dw3: Long
 
 }
 
 open class C256() :
 C256Rep() {
+
+    internal var bitLen: Int
+        get() = this.bitLenX.toInt()
+        set(value) {
+            if (value !in 0..255)
+                println("kilroy was here! binLen.set($value)")
+            verify { value in 0..255 }
+            this.bitLenX = (value and 0xFF).toShort()
+        }
+
+    internal var digitLen: Int
+        get() = this.digitLenX.toInt()
+        set(value) {
+            //verify { value in 0..76 || value == 111 }
+            this.digitLenX = (value and 0x7F) .toShort()
+        }
 
     companion object {
         internal operator fun invoke(dw0: Long): C256 = C256().c256Set64(dw0)
@@ -94,8 +110,7 @@ C256Rep() {
     }
 
     internal inline operator fun set(index: Int, value: Long) {
-        //check(packedLengths.toInt() == -1)
-        verify { bitLen == -1 }
+        verify { digitLen == 111 }
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -106,13 +121,13 @@ C256Rep() {
     }
 
     internal inline fun c256EnableIndexSetAndZeroOut() {
-        bitLen = -1
+        digitLen = 111
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
     internal inline fun c256DisableIndexSetAndUpdateLengths() {
         //check(packedLengths.toInt() == -1)
-        verify { bitLen == -1 }
+        verify { digitLen == 111 }
         updateDigitLenBitLen()
     }
 
@@ -213,7 +228,7 @@ C256Rep() {
     open fun toHexString() = IntegerParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() =
-        if (bitLen == -1)
+        if (digitLen == 111)
             "MutDec \uD83D\uDEA7 under construction \uD83D\uDEA7"
         else
             IntegerParsePrint.int256ToString(false, this)

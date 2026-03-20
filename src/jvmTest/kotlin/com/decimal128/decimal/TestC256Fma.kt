@@ -64,15 +64,20 @@ class TestC256Fma {
 
     val random = Random()
 
-    fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 255)
-        val bi = BigInteger(bitLength, random)
+    fun randBi_76() : BigInteger {
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
 
+    fun randBi() : BigInteger = randBi_76()
+
     fun test1(case: TC) {
         val expected = case.biProduct
-        if (expected.bitLength() > 256)
+        if (expected.toString().length > 76)
             return
         val coeffX = newCoeff(case.biX)
         val coeffY = newCoeff(case.biY)

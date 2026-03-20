@@ -16,7 +16,7 @@ internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pent
  * Adds 2 coefficients together without scaling.
  *
  * This code is called from FMA, so it x might have 76 digits == 253 bits.
- * y will have been normalized and will have up thru 38 digits == 117 bits
+ * y will have been normalized and will have up thru 38 digits == 127 bits
  */
 internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256, pentad: Pentad) {
     verify { x.bitLen <= 253 }

@@ -27,7 +27,7 @@ class TestC256BitLength {
         TC(ONE.shiftLeft(128)),
         TC(ONE.shiftLeft(192).subtract(ONE)),
         TC(ONE.shiftLeft(192)),
-        TC(ONE.shiftLeft(256).subtract(ONE)),
+        TC(ONE.shiftLeft(253).subtract(ONE)),
         )
 
     @Test
@@ -50,12 +50,12 @@ class TestC256BitLength {
             }
         }
 
-        for (i in 0..255) {
+        for (i in 0..252) {
             val bi = ONE.shiftLeft(i)
             val tc = TC(bi)
             test1(tc)
         }
-        for (i in 0..256) {
+        for (i in 0..253) {
             val bi = ONE.shiftLeft(i).subtract(ONE)
             val tc = TC(bi)
             test1(tc)
@@ -73,11 +73,16 @@ class TestC256BitLength {
 
     val random = Random()
 
-    fun randBi() : BigInteger {
-        val bitLength = random.nextInt(0, 256)
-        val bi = BigInteger(bitLength, random)
+    fun randBi_76() : BigInteger {
+        var bi: BigInteger
+        do {
+            val bitLength = random.nextInt(0, 254)
+            bi = BigInteger(bitLength, random)
+        } while (bi.toString().length > 76)
         return bi
     }
+
+    fun randBi() : BigInteger = randBi_76()
 
     fun test1(case: TC) {
         val expected = case.bitLength
