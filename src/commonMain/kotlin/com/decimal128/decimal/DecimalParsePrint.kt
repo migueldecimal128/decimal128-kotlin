@@ -341,7 +341,7 @@ object DecimalParsePrint {
             isNanText(x, src, maxPayloadDigitLen, env.parseDiscardNanPayload()) -> return
             isValidBidHexText(x, src) -> return
             isValidDpdHexText(x, src) -> return
-            else -> x.setNaN(if (env.parseDiscardNanPayload()) 0 else NAN_INVALID_SYNTAX, env)
+            else -> x.setNaN()
         }
     }
 
