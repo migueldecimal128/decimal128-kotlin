@@ -493,7 +493,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val md = MutDec()
         if (this.isZero() && other.isZero())
             return md.setZero(false)
-        if (this.qExp < NON_FINITE_QNAN && other.qExp < NON_FINITE_QNAN)
+        if (! isNaN() && !other.isNaN())
             return md.set(compareJavaStyleTo(other))
         md.setNaNOperand(this, other, ctx)
         return md

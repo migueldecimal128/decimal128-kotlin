@@ -13,7 +13,7 @@ import kotlin.math.abs
 internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal, pentad: Pentad): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        cmpMagnitudeFnzFnz(x, y, pentad)
+        cmpMagFnzFnz(x, y)
     } else when (signature) {
         FNZ_INF,
         ZER_FNZ,
@@ -481,7 +481,7 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         return if (xSignMask == 0) POS_ONEe0 else NEG_ONEe0
     val cmpMag =
         if (signature == FNZ_FNZ) {
-            cmpMagnitudeFnzFnz(x, y, ctx.tmps.pentad1)
+            cmpMagFnzFnz(x, y)
         } else when (signature) {
             ZER_FNZ,
             ZER_INF,
@@ -496,36 +496,6 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         }
     val t = (cmpMag xor xSignMask) - xSignMask
     return mapToDecimal[(t + 1) and 0x03]
-}
-
-private fun cmpMagnitudeFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
-    val x1 = x.dw1; val x0 = x.dw0
-    val xQ = x.qExp()
-    val y1 = y.dw1; val y0 = y.dw0
-    val yQ = y.qExp()
-    if (xQ == yQ)
-        return ucmp128(x1, x0, y1, y0)
-    val cmpSci = x.eExp().compareTo(y.eExp())
-    if (cmpSci != 0)
-        return cmpSci
-    val qDelta = xQ - yQ
-    val qDeltaAbs = abs(qDelta)
-    val pow10BitLen = pow10BitLen(qDeltaAbs)
-    val pow10Offset = (qDeltaAbs shl 1) and POW10_BCE
-    val dw1Pow10 = POW10[pow10Offset + 1]
-    val dw0Pow10 = POW10[pow10Offset    ]
-    if (qDelta > 0) {
-        // x.qExp is larger
-        // scale up x.coefficient
-        if (pow10BitLen <= 64)
-            return -ucmp128_128x64(y1, y0, x1, x0, dw0Pow10, pentad)
-        return -ucmp128_128x64(y1, y0, dw1Pow10, dw0Pow10, x0, pentad)
-    } else {
-        // scale up y
-        if (pow10BitLen <= 64)
-            return ucmp128_128x64(x1, x0, y1, y0, dw0Pow10, pentad)
-        return ucmp128_128x64(x1, x0, dw1Pow10, dw0Pow10, y0, pentad)
-    }
 }
 
 internal fun cmpSignalingImpl(x: Decimal, y: Decimal): Decimal =
@@ -543,7 +513,7 @@ internal fun cmpMagnitudeImpl(x: Decimal, y: Decimal): Decimal =
 fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val signature = binopSignatureOf(x.steal, y.steal)
     val cmp = if (signature == FNZ_FNZ) {
-        cmpMagnitudeFnzFnz(x, y, ctx.tmps.pentad1)
+        cmpMagFnzFnz(x, y)
     } else when (signature) {
         ZER_ZER,
         INF_INF -> 0
@@ -560,17 +530,17 @@ fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return mapToDecimal[(cmp + 1) and 0x03]
 }
 
-internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
+internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal): Int {
     if (x.sign != y.sign)
         return if (x.sign) -1 else 1
     val negateMask = -x.signBit // 0 or -1
-    return (cmpTotalOrderMagnitudeImpl(x, y, ctx) xor negateMask) - negateMask
+    return (cmpTotalOrderMagnitudeImpl(x, y) xor negateMask) - negateMask
 }
 
-fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
+fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        cmpTotalOrderMagnitudeFnzFnz(x, y, ctx.tmps.pentad1)
+        cmpTotalOrderMagnitudeFnzFnz(x, y)
     } else when (signature) {
         ZER_ZER -> x.qExp().compareTo(y.qExp())
         ZER_FNZ,
@@ -585,8 +555,8 @@ fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Int {
     }
 }
 
-private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal, pentad: Pentad): Int {
-    val cmp = cmpMagnitudeFnzFnz(x, y, pentad)
+private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
+    val cmp = cmpMagFnzFnz(x, y)
     if (cmp != 0)
         return cmp
     // If x and y represent the same floating-point datum:
@@ -602,7 +572,7 @@ internal fun d128MaxImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128MaxImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (Decimal.neitherIsNaN(x, y))
-        return if (cmpTotalOrderImpl(x, y, ctx) >= 0) x else y
+        return if (cmpTotalOrderImpl(x, y) >= 0) x else y
     return nanOperandFound(x, y, ctx)
 }
 
@@ -611,7 +581,7 @@ internal fun d128MaxNumImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128MaxNumImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (Decimal.neitherIsNaN(x, y))
-        return if (cmpTotalOrderImpl(x, y, ctx) >= 0) x else y
+        return if (cmpTotalOrderImpl(x, y) >= 0) x else y
     if (!x.isSignaling() && !y.isSignaling()) {
         if (!x.isNaN())
             return x
@@ -626,7 +596,7 @@ internal fun d128MinImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128MinImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (Decimal.neitherIsNaN(x, y))
-        return if (cmpTotalOrderImpl(x, y, ctx) <= 0) x else y
+        return if (cmpTotalOrderImpl(x, y) <= 0) x else y
     return nanOperandFound(x, y, ctx)
 }
 
@@ -635,7 +605,7 @@ internal fun d128MinNumImpl(x: Decimal, y: Decimal): Decimal =
 
 internal fun d128MinNumImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     if (Decimal.neitherIsNaN(x, y))
-        return if (cmpTotalOrderImpl(x, y, ctx) <= 0) x else y
+        return if (cmpTotalOrderImpl(x, y) <= 0) x else y
     if (!x.isSignaling() && !y.isSignaling()) {
         if (!x.isNaN())
             return x

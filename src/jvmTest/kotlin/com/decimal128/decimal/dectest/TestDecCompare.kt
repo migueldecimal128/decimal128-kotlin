@@ -6,6 +6,7 @@ import com.decimal128.decimal.cmpTotalOrderImpl
 import com.decimal128.decimal.cmpTotalOrderMagnitudeImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntCtxOp
+import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
 import org.junit.jupiter.api.Test
 
 class TestDecCompare {
@@ -54,7 +55,7 @@ class TestDecCompare {
     )
 
     @Test
-    fun testCompareTotalOrder() = runBinaryIntCtxOp(
+    fun testCompareTotalOrder() = runBinaryIntOp(
         "dqCompareTotal.decTest",
         "comparetotal",
         ::cmpTotalOrderImpl,
@@ -65,7 +66,7 @@ class TestDecCompare {
     )
 
     @Test
-    fun testCompareTotalOrderCases() = runBinaryIntCtxOp(
+    fun testCompareTotalOrderCases() = runBinaryIntOp(
         ::cmpTotalOrderImpl,
         verbose = verbose,
         cases = arrayOf(
@@ -74,7 +75,7 @@ class TestDecCompare {
     )
 
     @Test
-    fun testCompareTotalOrderMagnitude() = runBinaryIntCtxOp(
+    fun testCompareTotalOrderMagnitude() = runBinaryIntOp(
         "dqCompareTotalMag.decTest",
         "comparetotmag",
         ::cmpTotalOrderMagnitudeImpl,
@@ -85,7 +86,7 @@ class TestDecCompare {
     )
 
     @Test
-    fun testCompareTotalOrderMagnitudeCases() = runBinaryIntCtxOp(
+    fun testCompareTotalOrderMagnitudeCases() = runBinaryIntOp(
         ::cmpTotalOrderImpl,
         verbose = verbose,
         cases = arrayOf(
