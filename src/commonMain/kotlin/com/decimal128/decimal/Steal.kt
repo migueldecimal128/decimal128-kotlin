@@ -130,3 +130,19 @@ internal fun stealRaw(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Int {
         else -> throw IllegalArgumentException()
     }
 }
+
+internal fun stealWithPackedLengths(oldSteal: Int, packedLengths: Int): Int =
+    (oldSteal and
+            ((STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT) or
+                    (STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT)).inv()) or packedLengths
+
+internal fun stealWithBitLen(oldSteal: Int, bitLen: Int): Int =
+    (oldSteal and (STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT).inv()) or
+            (bitLen shl STEAL_BITLEN_SHIFT)
+
+internal fun stealWithDigitLen(oldSteal: Int, digitLen: Int): Int =
+    (oldSteal and (STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT).inv()) or
+            (digitLen shl STEAL_DIGITLEN_SHIFT)
+
+internal fun stealPackLengths(digitLen: Int, bitLen: Int) =
+    (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)

@@ -128,7 +128,8 @@ class TestReduce {
     class TC(val bi: BigInteger) {
         constructor(str: String) : this(BigInteger(str))
         constructor(l: Long) : this(BigInteger.valueOf(l))
-        val bitLen = run {val bitLen = bi.bitLength(); require(bitLen <= 256); bitLen}
+        val digitLen = bi.toString().length
+        val bitLen = bi.bitLength()
         val reductionPow10 = run {
             if (bitLen == 0)
                 0
@@ -204,6 +205,11 @@ class TestReduce {
     fun randBi() : BigInteger = randBi_76()
 
     fun test1(tc: TC) {
+        if (tc.digitLen > 76) {
+            if (verbose)
+                println("case would overflow 76 digits:$tc")
+            return
+        }
         val bi = tc.bi
         val bitLen = tc.bitLen
         val expected = tc.reductionPow10

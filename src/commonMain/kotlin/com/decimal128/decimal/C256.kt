@@ -31,7 +31,9 @@ C256Rep() {
     internal var digitLen: Int
         get() = this.digitLenX.toInt()
         set(value) {
-            //verify { value in 0..76 || value == 111 }
+            if (! (value in 0..76 || value == 111))
+                println("kilroy was here! digitLen.set($value)")
+            verify { value in 0..76 || value == 111 }
             this.digitLenX = (value and 0x7F) .toShort()
         }
 

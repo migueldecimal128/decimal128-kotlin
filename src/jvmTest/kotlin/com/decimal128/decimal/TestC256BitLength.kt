@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.math.BigInteger.ONE
+import java.math.BigInteger.TEN
 import java.util.*
 
 class TestC256BitLength {
@@ -11,6 +12,7 @@ class TestC256BitLength {
     val verbose = false
 
     class TC(val biA: BigInteger) {
+        val digitLength = biA.toString().length
         val bitLength = biA.bitLength()
         constructor(a: String) : this(BigInteger(a))
     }
@@ -27,7 +29,7 @@ class TestC256BitLength {
         TC(ONE.shiftLeft(128)),
         TC(ONE.shiftLeft(192).subtract(ONE)),
         TC(ONE.shiftLeft(192)),
-        TC(ONE.shiftLeft(253).subtract(ONE)),
+        TC(TEN.pow(76).subtract(ONE))
         )
 
     @Test
@@ -41,12 +43,13 @@ class TestC256BitLength {
     @Test
     fun testBoundaries() {
         for (i in 0..<77) {
-            val biX = BigInteger.TEN.pow(i)
+            val biX = TEN.pow(i)
             for (deltaX in deltas) {
                 val biA = biX.add(deltaX)
-                val tc = TC(biA)
-                if (tc.bitLength <= 256)
+                if (biA.toString().length <= 76) {
+                    val tc = TC(biA)
                     test1(tc)
+                }
             }
         }
 
@@ -85,9 +88,9 @@ class TestC256BitLength {
     fun randBi() : BigInteger = randBi_76()
 
     fun test1(case: TC) {
-        val expected = case.bitLength
-        if (expected > 256)
+        if (case.digitLength > 76)
             return
+        val expected = case.bitLength
         val coeffA = newCoeff(case.biA)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) bitLength expected:$expected")

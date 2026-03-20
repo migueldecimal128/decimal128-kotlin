@@ -10,6 +10,7 @@ class TestC256Mul {
 
     class TC(val biA: BigInteger, val biB: BigInteger) {
         val biProduct = biA.multiply(biB)
+        val prodDigitLen = biProduct.toString().length
 
         constructor(a: String, b:String) : this(BigInteger(a), BigInteger(b))
     }
@@ -94,9 +95,12 @@ class TestC256Mul {
     }
 
     fun test1(case: TC) {
-        val expected = case.biProduct
-        if (expected.bitLength() > 256)
+        if (case.prodDigitLen > 76) {
+            if (verbose)
+                println("case would overflow 76 digits:$case")
             return
+        }
+        val expected = case.biProduct
         val coeffA = newCoeff(case.biA)
         val coeffB = newCoeff(case.biB)
         val coeffC = C256()
