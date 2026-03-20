@@ -942,7 +942,7 @@ class Decimal private constructor(
      *
      * @return −1, 0, or +1.
      */
-    fun magnitudeCompareTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other, DecContext.current().tmps.pentad1)
+    fun magnitudeCompareTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other)
 
     // ── IEEE 754-2019 Comparison Predicates (§5.6.1) ─────────────────────────
 

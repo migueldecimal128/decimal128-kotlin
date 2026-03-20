@@ -8,9 +8,8 @@ import com.decimal128.decimal.Decimal.Companion.NaN
 import com.decimal128.decimal.Decimal.Companion.POS_ONEe0
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import com.decimal128.decimal.Decimal.Companion.hasNaN
-import kotlin.math.abs
 
-internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal, pentad: Pentad): Int {
+internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
         cmpMagFnzFnz(x, y)
