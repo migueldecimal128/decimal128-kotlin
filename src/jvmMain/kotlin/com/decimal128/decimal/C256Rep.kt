@@ -2,9 +2,7 @@ package com.decimal128.decimal
 
 actual open class C256Rep {
     @JvmField
-    internal actual var digitLenX: Short = 0
-    @JvmField
-    internal actual var bitLenX: Short = 0
+    internal actual var steal: Int = 0
     @JvmField
     internal actual var dw0:Long = 0L
     @JvmField

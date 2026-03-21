@@ -7,8 +7,7 @@ const val PRECISION_34 = 34
 private const val SIGNBIT = Long.MIN_VALUE
 
 expect open class C256Rep() {
-    internal var digitLenX: Short
-    internal var bitLenX: Short
+    internal var steal: Int
     internal var dw0: Long
     internal var dw1: Long
     internal var dw2: Long
@@ -20,21 +19,21 @@ open class C256() :
 C256Rep() {
 
     internal var bitLen: Int
-        get() = this.bitLenX.toInt()
+        get() = stealBitLen(steal)
         set(value) {
             if (value !in 0..255)
                 println("kilroy was here! binLen.set($value)")
             verify { value in 0..255 }
-            this.bitLenX = (value and 0xFF).toShort()
+            this.steal = stealWithBitLen(steal, value)
         }
 
     internal var digitLen: Int
-        get() = this.digitLenX.toInt()
+        get() = stealDigitLen(steal)
         set(value) {
             if (! (value in 0..76 || value == 111))
                 println("kilroy was here! digitLen.set($value)")
             verify { value in 0..76 || value == 111 }
-            this.digitLenX = (value and 0x7F) .toShort()
+            this.steal = stealWithDigitLen(steal, value)
         }
 
     companion object {
@@ -48,15 +47,16 @@ C256Rep() {
 
     fun c256SetZero() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L;
-        updateDigitLenBitLen(0, 0)
+        steal = steal and STEAL_PACKED_LENGTHS_MASK.inv()
     }
 
     fun c256SetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L;
-        updateDigitLenBitLen(1, 1)
+        steal = stealWithPackedLengths(steal,
+            (1 shl STEAL_DIGITLEN_SHIFT) or (1 shl STEAL_BITLEN_SHIFT))
     }
 
-    internal inline fun c256IsZero() = bitLen == 0
+    internal inline fun c256IsZero() = steal and STEAL_PACKED_LENGTHS_MASK == 0
 
     fun updateDigitLenBitLen() {
         val bitLen = calcBitLen256(dw3, dw2, dw1, dw0)
@@ -65,7 +65,7 @@ C256Rep() {
     }
 
     fun updateLengthsAfterIncrement() {
-        val oldBitLen = this.bitLen
+        val oldSteal = steal
         val dw0 = dw0
         val dw1 = dw1
         val dw2 = dw2
@@ -73,13 +73,17 @@ C256Rep() {
         verify { (dw0 or dw1 or dw2 or dw3) != 0L }
         val popCount = dw0.countOneBits() + dw1.countOneBits() + dw2.countOneBits() + dw3.countOneBits()
         val bitLenIncrement = 1 - ((1 - popCount) ushr 31)
-        this.bitLen = oldBitLen + bitLenIncrement
+        val newBitLen = stealBitLen(oldSteal) + bitLenIncrement
 
-        if (oldBitLen <= 128) {
-            val offset = (this.digitLen shl 1) and POW10_BCE
+        if (newBitLen <= 128) {
+            val oldDigitLen = stealDigitLen(oldSteal)
+            val offset = (oldDigitLen shl 1) and POW10_BCE
             val matchIfZero = (dw0 - POW10[offset]) or (dw1 - POW10[offset + 1])
             val digitLenIncrement = 1 - ((matchIfZero or -matchIfZero) ushr 63).toInt()
-            this.digitLen += digitLenIncrement
+            if ((bitLenIncrement or digitLenIncrement) == 0)
+                return
+            val newDigitLen = oldDigitLen + digitLenIncrement
+            steal = stealWithDigitLenBitLen(oldSteal, newDigitLen, newBitLen)
             verify { bitLen == calcBitLen128(dw1, dw0) && digitLen == calcDigitLen128(bitLen, dw1, dw0) }
         } else {
             calcDigitLen256(this.bitLen, dw3, dw2, dw1, dw0)
@@ -87,9 +91,7 @@ C256Rep() {
     }
 
     internal inline fun updateDigitLenBitLen(digitLen: Int, bitLen: Int) {
-        //this.packedLengths = packLengths(digitLen, bitLen)
-        this.digitLen = digitLen
-        this.bitLen = bitLen
+        this.steal = stealWithDigitLenBitLen(steal, digitLen, bitLen)
     }
 
     internal fun c256HasValidLengths(): Boolean {

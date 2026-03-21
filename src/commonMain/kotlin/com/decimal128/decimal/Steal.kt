@@ -80,6 +80,8 @@ internal const val STEAL_DIGITLEN_UNSHIFTED_MASK = STEAL_DIGITLEN_MASK shl STEAL
 internal inline fun stealDigitLen(steal: Int) =
     (steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK
 
+internal const val STEAL_PACKED_LENGTHS_MASK = 0x7FFF_0000
+
 internal const val STEAL_QEXP_DECODE_SHL = 16
 internal const val STEAL_QEXP_DECODE_SHR = 18
 internal const val STEAL_QEXP_ENCODE_SHL = 2
@@ -136,12 +138,17 @@ internal fun stealWithPackedLengths(oldSteal: Int, packedLengths: Int): Int =
             ((STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT) or
                     (STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT)).inv()) or packedLengths
 
+internal fun stealWithDigitLenBitLen(oldSteal: Int, digitLen: Int, bitLen: Int) =
+    (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or
+            (digitLen shl STEAL_DIGITLEN_SHIFT) or
+            (bitLen shl STEAL_BITLEN_SHIFT)
+
 internal fun stealWithBitLen(oldSteal: Int, bitLen: Int): Int =
-    (oldSteal and (STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT).inv()) or
+    (oldSteal and STEAL_BITLEN_UNSHIFTED_MASK.inv()) or
             (bitLen shl STEAL_BITLEN_SHIFT)
 
 internal fun stealWithDigitLen(oldSteal: Int, digitLen: Int): Int =
-    (oldSteal and (STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT).inv()) or
+    (oldSteal and STEAL_DIGITLEN_UNSHIFTED_MASK.inv()) or
             (digitLen shl STEAL_DIGITLEN_SHIFT)
 
 internal fun stealPackLengths(digitLen: Int, bitLen: Int) =
