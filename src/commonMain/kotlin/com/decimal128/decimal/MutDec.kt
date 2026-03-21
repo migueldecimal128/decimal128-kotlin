@@ -419,7 +419,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun isNegative() = sign
 
     fun isNumber() : Boolean {
-        return qExp <= NON_FINITE_INF
+        return stealType(steal) != STEAL_TYPE_NAN
     }
 
     // IEEE754-2008 5.4.1
@@ -443,34 +443,6 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun setReciprocal(x: MutDec, ctx: DecContext): MutDec = mutDecReciprocalImpl(this, x, ctx)
 
     fun setSqrt(x: MutDec, ctx: DecContext): MutDec = mutDecSqrtImpl(this, x, ctx)
-
-    fun finiteCompareTo(other: MutDec): Int {
-        verify { isFinite() && other.isFinite() }
-        if (sign != other.sign) {
-            if (this.isZero() && other.isZero())
-                return 0
-            // At least one is non-zero, signs differ
-            return if (sign) -1 else 1
-        }
-
-        // Same sign - compare magnitudes
-        val cmp = compareNumericMagnitudeTo(other, DecContext.current().tmps.pentad1)
-        return if (sign) -cmp else cmp
-    }
-
-    fun infiniteCompareTo(other: MutDec): Int {
-        verify { this.qExp <= NON_FINITE_INF && other.qExp <= NON_FINITE_INF }
-        verify { this.qExp == NON_FINITE_INF || other.qExp == NON_FINITE_INF }
-        return when {
-            (sign != other.sign) -> if (sign) -1 else 1
-            (qExp == NON_FINITE_INF) -> {
-                if (other.qExp == NON_FINITE_INF) 0
-                else if (sign) -1 else 1
-            }
-
-            else -> if (sign) 1 else -1
-        }
-    }
 
     // FIXME this is not the best, but is OK for now for testing
     fun partialCompareTo(other: MutDec, ctx: DecContext): MutDec {
