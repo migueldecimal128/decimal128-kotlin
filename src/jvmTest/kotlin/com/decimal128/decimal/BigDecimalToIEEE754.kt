@@ -130,7 +130,7 @@ private fun underflowsToZero(rm: RoundingMode, sign: Boolean): Boolean {
 
 fun bdIsFinite(bd: BigDecimal) : Boolean {
     val eExp = -bd.scale()
-    return eExp < MIN_SPECIAL_VALUE
+    return eExp < INFINITY_SCALE
 }
 
 fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): String {

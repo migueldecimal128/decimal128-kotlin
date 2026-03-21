@@ -80,13 +80,11 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
 }
 
 private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+    verify { x.isFiniteNonZero() && y.isFiniteNonZero()}
     val qX = x.qExp
     val qY = y.qExp
     verify { qX != qY }
     val xSign = x.sign
-    val qMax = max(qX, qY)
-    verify { qMax < MIN_SPECIAL_VALUE }
-    verify { x.bitLen > 0 && y.bitLen > 0 }
     val pentad = ctx.tmps.pentad1
     val residue: Residue
     if (xSign == ySign) {

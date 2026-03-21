@@ -282,9 +282,12 @@ class Decimal private constructor(
 
         fun from(mutDec: MutDec, ctx: DecContext = DecContext.current()): Decimal {
             require(mutDec.digitLen <= ctx.precision)
-            require(mutDec.qExp <= Q_MAX || mutDec.qExp >= MIN_SPECIAL_VALUE)
-            val dec = Decimal(mutDec.sign, mutDec.qExp, mutDec.dw1, mutDec.dw0)
-            return dec
+            return when (mutDec.type) {
+                STEAL_TYPE_FNZ -> Decimal(mutDec.sign, mutDec.qExp, mutDec.dw1, mutDec.dw0)
+                STEAL_TYPE_ZER -> zero(mutDec.sign, mutDec.qExp)
+                STEAL_TYPE_INF -> infinity(mutDec.sign)
+                else -> NaN(mutDec.sign, mutDec.isSignaling(), mutDec.dw1, mutDec.dw0)
+            }
         }
 
         /**

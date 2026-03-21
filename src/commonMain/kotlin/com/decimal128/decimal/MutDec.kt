@@ -12,7 +12,6 @@ import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val MIN_SPECIAL_VALUE = 16380
 internal const val NON_FINITE_INF = 16380
 internal const val NON_FINITE_QNAN = 16381
 internal const val NON_FINITE_SNAN = 16382
@@ -914,6 +913,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 if (ctzd == 0)
                     return set(x)
                 c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
+                type = STEAL_TYPE_FNZ
                 qExp = qX + ctzd
                 sign = x.sign
                 return this

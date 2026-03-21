@@ -87,17 +87,3 @@ private fun fmaInfProd(z: MutDec, infSign: Boolean, a: MutDec, ctx: DecContext):
     return ctx.setNanSignalInvalid(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 
-
-internal fun mutDecFmdFnzFnzFnz(z:MutDec, x: MutDec, y: MutDec, d: MutDec, ctx: DecContext): MutDec {
-    verify { max(max(x.qExp, y.qExp), d.qExp) < MIN_SPECIAL_VALUE &&
-            (x.digitLen * y.digitLen * d.digitLen) != 0 }
-    val resultSign = x.sign xor y.sign xor d.sign
-
-    val pT = ctx.tmps.mdecFusedProduct
-
-    // raw multiply without roundAndFinalize ... remains exact
-    c256SetMul(pT, x, y, ctx.tmps.pentad1)
-    pT.qExp = x.qExp + y.qExp
-    val residue = magDivFnzFnz(z, resultSign, pT, d, ctx)
-    return z.roundAndFinalize(residue, ctx)
-}

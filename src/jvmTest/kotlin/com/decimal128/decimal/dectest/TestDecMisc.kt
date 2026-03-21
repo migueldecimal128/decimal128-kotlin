@@ -11,7 +11,7 @@ import com.decimal128.decimal.fmaImpl
 
 class TestDecMisc {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testLogB() = runUnaryDecimalCtxOp(
@@ -120,6 +120,15 @@ class TestDecMisc {
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
+        )
+    )
+
+    @Test
+    fun testReduceCases() = runUnaryDecimalCtxOp(
+        Decimal::stripTrailingZeros,
+        verbose = verbose,
+        cases = arrayOf(
+            "dqred003 reduce '1.00'   -> '1'",
         )
     )
 
