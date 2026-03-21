@@ -1026,6 +1026,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 this.setFma(n, y, x, truncCtx)
 
                 if (this.c256IsZero()) {
+                    this.type = STEAL_TYPE_ZER
                     this.qExp = min(qX, qY)
                     this.sign = xSign
                 }

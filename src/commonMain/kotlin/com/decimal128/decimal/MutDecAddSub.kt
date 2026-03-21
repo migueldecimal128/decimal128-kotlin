@@ -72,6 +72,7 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
 
             else -> {
                 z.c256SetZero()
+                z.type = STEAL_TYPE_ZER
                 z.sign = isRoundTowardNegative
             }
         }

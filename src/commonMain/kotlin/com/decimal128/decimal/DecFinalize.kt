@@ -3,6 +3,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import com.decimal128.decimal.Residue.Companion.EXACT
 
 internal inline fun decFinalizeFinite(sign: Boolean,
@@ -25,7 +26,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     // Step 1: Fast path: already in valid decimal128 range
     val decFormat = ctx.decFormat
     if (inboundResidue == EXACT && decFormat.coeffQexpFit(dw1In, dw0In, qExpIn))
-        return Decimal(sign, qExpIn, dw1In, dw0In)
+        return decimalFinite(sign, qExpIn, dw1In, dw0In)
 
     // Step 2: special values ... no applicable here ... only Finite
 

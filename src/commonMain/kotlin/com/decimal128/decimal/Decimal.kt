@@ -4,6 +4,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Ieee754Class.*
+import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
@@ -141,9 +142,23 @@ class Decimal private constructor(
 
         private const val BIT31 = Int.MIN_VALUE
 
-        internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
-            verify { qExp >= -16384 && qExp <= 16383 }
-            val steal = stealRaw(sign, qExp, dw1, dw0)
+        internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal =
+            decimalFinite(sign, qExp, dw1, dw0)
+
+        internal fun decimalFinite(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
+            verify { qExp >= Q_TINY && qExp <= Q_MAX }
+            val signBit = if (sign) 1 else 0
+            val steal = if (dw1 or dw0 != 0L)
+                stealEncodeFNZ(signBit, qExp, dw1, dw0)
+            else
+                stealEncodeZER(signBit, qExp)
+            return Decimal(steal, dw1, dw0)
+        }
+
+        internal fun decimalFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Decimal {
+            verify { qExp >= Q_TINY && qExp <= Q_MAX }
+            verify { dw0 or dw1 != 0L }
+            val steal = stealEncodeFNZ(signBit, qExp, dw1, dw0)
             return Decimal(steal, dw1, dw0)
         }
 
@@ -250,13 +265,21 @@ class Decimal private constructor(
         fun from(l: Long): Decimal {
             return when {
                 l == 0L -> ZERO
-                l < 0L -> Decimal(sign = true, 0, 0L, -l)
                 l == 1L -> ONE
-                else -> Decimal(sign = false, 0, 0L, l)
+                else -> {
+                    val signMask = (l shr 63)
+                    decimalFNZ((l ushr 63).toInt(), 0, 0L, (l xor signMask) - signMask)
+                }
             }
         }
 
+        fun fromBID(dwHi: Long, dwLo: Long): Decimal {
+            // just do this thru MutDec.setBID()
+            TODO()
+        }
+
         fun fromDPD(dwHi: Long, dwLo: Long): Decimal {
+            // just do this thru MutDec.setDPD()
             TODO()
         }
 
@@ -283,7 +306,7 @@ class Decimal private constructor(
         fun from(mutDec: MutDec, ctx: DecContext = DecContext.current()): Decimal {
             require(mutDec.digitLen <= ctx.precision)
             return when (mutDec.type) {
-                STEAL_TYPE_FNZ -> Decimal(mutDec.sign, mutDec.qExp, mutDec.dw1, mutDec.dw0)
+                STEAL_TYPE_FNZ -> decimalFNZ(mutDec.signBit, mutDec.qExp, mutDec.dw1, mutDec.dw0)
                 STEAL_TYPE_ZER -> zero(mutDec.sign, mutDec.qExp)
                 STEAL_TYPE_INF -> infinity(mutDec.sign)
                 else -> NaN(mutDec.sign, mutDec.isSignaling(), mutDec.dw1, mutDec.dw0)

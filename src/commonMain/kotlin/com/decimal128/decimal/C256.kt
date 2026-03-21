@@ -21,8 +21,6 @@ C256Rep() {
     internal var bitLen: Int
         get() = stealBitLen(steal)
         set(value) {
-            if (value !in 0..255)
-                println("kilroy was here! binLen.set($value)")
             verify { value in 0..255 }
             this.steal = stealWithBitLen(steal, value)
         }
@@ -30,8 +28,6 @@ C256Rep() {
     internal var digitLen: Int
         get() = stealDigitLen(steal)
         set(value) {
-            if (! (value in 0..76 || value == 111))
-                println("kilroy was here! digitLen.set($value)")
             verify { value in 0..76 || value == 111 }
             this.steal = stealWithDigitLen(steal, value)
         }
