@@ -89,7 +89,7 @@ object MagnitudeAddSub {
         verify { !m.isZero() }
         verify { !s.isZero() }
         val pentad = ctx.tmps.pentad1
-        verify { m.magnitudeCompareTo(s, pentad) > 0 }
+        verify { m.compareNumericMagnitudeTo(s, pentad) > 0 }
         verify { m.qExp != s.qExp }
         if (m.qExp > s.qExp) {
             val gap = m.qExp - s.qExp

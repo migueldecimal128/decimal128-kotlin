@@ -938,11 +938,11 @@ class Decimal private constructor(
 
     /**
      * Compares magnitudes numerically (ignoring sign), without the total-order
-     * tie-breaking on quantum.
+     * tie-breaking on quantum
      *
      * @return −1, 0, or +1.
      */
-    fun magnitudeCompareTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other)
+    fun compareNumericMagnitudeTo(other: Decimal): Int = d128CompareNumericMagnitude(this, other)
 
     // ── IEEE 754-2019 Comparison Predicates (§5.6.1) ─────────────────────────
 

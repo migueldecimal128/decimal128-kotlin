@@ -112,7 +112,7 @@ private inline fun addFnzFnzScaled(xSteal: Int, x: Decimal, ySteal: Int, y: Deci
     if (xSign == ySign)
         return addFnzScaledMagnitudes(ySign, x, y, ctx)
     // signs differ ... subtract scaled magnitudes
-    val cmpMag = x.magnitudeCompareTo(y)
+    val cmpMag = x.compareNumericMagnitudeTo(y)
     return when {
         cmpMag > 0 -> subFnzScaledMagnitude(xSign, x, y, ctx)
         cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
@@ -183,7 +183,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
  * Otherwise, use wide 256-bit ALU
  */
 private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
-    verify { m.magnitudeCompareTo(s) > 0 }
+    verify { m.compareNumericMagnitudeTo(s) > 0 }
     verify { s.isNotZero() }
     verify { m.qExp() != s.qExp() }
 

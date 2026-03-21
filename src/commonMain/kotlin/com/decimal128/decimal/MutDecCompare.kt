@@ -11,10 +11,6 @@ internal fun mutDecCompareTotalOrder(x: MutDec, y: MutDec): Int {
     return negateForSign(cmpMag, xSignMask)
 }
 
-private inline fun negateForSign(cmp: Int, signMask: Int) =
-    (cmp xor signMask) - signMask
-
-
 internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec): Int {
     val signature = binopSignatureOf(x.type, y.type)
     val cmp =
@@ -33,6 +29,24 @@ internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec): Int {
             else -> cmpTotalOrderMagnitudeNanFound(x, y)
         }
     return cmp
+}
+
+internal fun mutDecCompareNumericMagnitude(x: MutDec, y: MutDec, pentad: Pentad): Int {
+    val signature = binopSignatureOf(x.type, y.type)
+    return if (signature == FNZ_FNZ) {
+        cmpMagFnzFnz(x, y)
+    } else when (signature) {
+        FNZ_INF,
+        ZER_FNZ,
+        ZER_INF -> -1
+
+        FNZ_ZER,
+        INF_FNZ,
+        INF_ZER -> 1
+        INF_INF,
+        ZER_ZER -> 0
+        else -> throw IllegalArgumentException("NaN found")
+    }
 }
 
 internal fun mutDecCompareJavaStyle(x: MutDec, y: MutDec): Int {
@@ -58,6 +72,7 @@ internal fun mutDecEqJavaStyle(x: MutDec, y: MutDec): Boolean {
     return if (signature == FNZ_FNZ) {
         x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
     } else when (signature) {
+        // FIXME ... come up with a branchless way to do this
         FNZ_ZER,
         FNZ_INF,
         INF_ZER,
@@ -69,6 +84,10 @@ internal fun mutDecEqJavaStyle(x: MutDec, y: MutDec): Boolean {
         else -> x.isNaN() && y.isNaN()
     }
 }
+
+private inline fun negateForSign(cmp: Int, signMask: Int) =
+    (cmp xor signMask) - signMask
+
 
 
 private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
@@ -99,16 +118,14 @@ private fun cmpMagFnzFnz(x: MutDec, y: MutDec): Int {
         return 1
     if (x.bExpMax() < y.bExpMin())
         return -1
-    val x0 = x.dw0
-    val x1 = x.dw1
-    val y0 = y.dw0
-    val y1 = y.dw1
-    if (xQ == yQ)
-        return ucmp128(x1, x0, y1, y0)
+    val qDelta = xQ - yQ
+    if (qDelta == 0)
+        return c256UnscaledCompare(x, y)
     val pentad = DecContext.current().tmps.pentad1
-    if (xQ > yQ)
-        return -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ, pentad)
-    return ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ, pentad)
+    return if (qDelta > 0)
+        -c256ScaledCompare(y, x, qDelta, pentad)
+    else
+        c256ScaledCompare(x, y, -qDelta, pentad)
 }
 
 private fun cmpTotalOrderMagnitudeNanFound(x: MutDec, y: MutDec): Int {
@@ -132,6 +149,8 @@ private fun cmpNumericMagnitude(x: MutDec, y: MutDec): Int {
         if (signature == FNZ_FNZ) {
             cmpMagFnzFnz(x, y)
         } else when (signature) {
+            // FIXME ... come up with a branchless way to do this
+            //  ... after eliminating NAN_FOUND
             ZER_ZER -> 0
             ZER_FNZ,
             ZER_INF,

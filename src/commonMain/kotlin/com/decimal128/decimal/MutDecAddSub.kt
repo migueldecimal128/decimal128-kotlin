@@ -92,7 +92,7 @@ private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx
     if (xSign == ySign) {
         residue = MagnitudeAddSub.magScaledAdd(z, xSign, x, y, ctx)
     } else {
-        val cmp = x.magnitudeCompareTo(y, pentad)
+        val cmp = x.compareNumericMagnitudeTo(y, pentad)
         when {
             cmp > 0 ->
                 residue = MagnitudeAddSub.magScaledSub(z, xSign, x, y, ctx)
