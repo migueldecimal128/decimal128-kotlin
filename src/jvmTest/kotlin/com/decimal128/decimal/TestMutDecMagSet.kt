@@ -24,6 +24,8 @@ class TestMutDecMagSet {
     }
 
     val cases = arrayOf(
+        TC("9.9999999999999999999999999999999995E+6144"), // overflow to Infinity
+
         TC("1e6144"),
 
         TC("9.9999999999999999999999999999999995E+6144"), // overflow to Infinity
@@ -136,7 +138,9 @@ class TestMutDecMagSet {
         val biCoeff = dec.coeffToBigInteger()
         if (verbose)
             println("coeff:$biCoeff + expQ:${dec.qExp}")
-        if ((biRounded != biCoeff && expRounded != NON_FINITE_INF) || expRounded != dec.qExp) {
+        if (dec.isInfinite() && expRounded == BIG_DECIMAL_INFINITY_SCALE)
+            return
+        if ((biRounded != biCoeff && expRounded != BIG_DECIMAL_INFINITY_SCALE) || expRounded != dec.qExp) {
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")
             println("coeff:$biCoeff + expQ:${dec.qExp}")
             assertEquals(biRounded, biCoeff)

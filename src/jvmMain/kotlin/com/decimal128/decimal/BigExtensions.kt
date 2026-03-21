@@ -62,18 +62,35 @@ fun newMutDec(bd: BigDecimal, ctx: DecContext): MutDec {
 fun MutDec.set(bd: BigDecimal) = this.set(bd, DecContext.current())
 
 fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
-    this.u256Set(bd.abs().unscaledValue())
-    this.qExp = -bd.scale()
-    this.type = when {
-        bd.compareTo(BigDecimal.ZERO) == 0 -> STEAL_TYPE_ZER
-        this.qExp < 16380 -> STEAL_TYPE_FNZ
-        this.qExp == 16380 -> STEAL_TYPE_INF
-        this.qExp == 16381 -> STEAL_NAN_QNAN
-        this.qExp == 16382 -> STEAL_NAN_SNAN
-        else -> throw IllegalStateException()
+    val qBd = -bd.scale()
+    val sign = bd.signum() < 0
+    when {
+        qBd == 99999 -> this.setInfinite(sign)
+        qBd == 100000 -> this.setNaN(isSignaling = false, sign = sign, 0L, 0L)
+        qBd == 100001 -> this.setNaN(isSignaling = true, sign = sign, 0L, 0L)
+        else -> {
+            this.type = if (bd.compareTo(BigDecimal.ZERO) == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+            this.qExp = capExponentRange(qBd)
+            this.sign = sign
+            this.u256Set(bd.abs().unscaledValue())
+            this.finalize(ctx)
+        }
     }
-    this.sign = bd.signum() < 0
-    this.finalize(ctx)
+}
+
+fun MutDec.EQ(bd: BigDecimal): Boolean {
+    val bdQ = -bd.scale()
+    val bdSign = bd.signum() < 0
+    when {
+        bdQ in Q_TINY..Q_MAX -> {
+            return this.isFinite() && this.sign == bdSign && this.qExp == bdQ &&
+                    bd.unscaledValue().compareTo(this.coeffToBigInteger()) == 0
+        }
+        bdQ == 99999 -> return this.isInfinite() && this.sign == bdSign
+        bdQ == 100000 -> return this.isNaN() && !this.isSignaling() && this.sign == bdSign
+        bdQ == 100001 -> return this.isNaN() && this.isSignaling() && this.sign == bdSign
+        else -> throw RuntimeException("unrecognized BigDecimal qExp")
+    }
 }
 
 fun MutDec.set(bi: BigInteger, ctx: DecContext) {
@@ -130,6 +147,5 @@ private val ROUNDING_MODE_MAP = arrayOf(RoundingMode.HALF_EVEN, RoundingMode.HAL
     RoundingMode.DOWN, RoundingMode.CEILING, RoundingMode.FLOOR)
 
 fun DecRounding.mapToRoundingMode() = ROUNDING_MODE_MAP[value]
-
 
 

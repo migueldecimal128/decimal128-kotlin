@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -95,9 +96,7 @@ class TestMutDecMagMul {
         val decB = newMutDec(bdB)
         val decP = MutDec()
         decP.setMul(decA, decB, env)
-        if (decP.qExp != NON_FINITE_INF)
-            assertEquals(expected.unscaledValue(), decP.coeffToBigInteger())
-        assertEquals(-expected.scale(), decP.qExp)
+        assertTrue(decP.EQ(expected))
     }
 
 }

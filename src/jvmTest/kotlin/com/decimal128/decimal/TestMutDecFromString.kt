@@ -19,6 +19,8 @@ class TestMutDecFromString {
     }
 
     val tcs = arrayOf(
+        TC("0.000000"),
+        TC("0"),
         TC("1e9999"),
 
         TC("1631964395413992086E-18"),
@@ -33,7 +35,6 @@ class TestMutDecFromString {
         TC("9e1"),
         TC("1631964395413992086E-18"),
         TC("99e2"),
-        TC("0"),
         TC("4.9355924106324532159349E-2908"),
         TC("3.38E-5899"),
         TC("0.000000"),

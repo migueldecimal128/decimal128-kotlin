@@ -7,7 +7,7 @@ import java.math.BigDecimal.ONE
 
 class TestMutDecScaleB {
 
-    val verbose = false
+    val verbose = true
 
     class TC(val bd: BigDecimal, val pow10: Int, val ctx: DecContext) {
         constructor(bd: BigDecimal, pow10: Int) : this(bd, pow10, DecContext.decimal128Kotlin())
@@ -49,7 +49,7 @@ class TestMutDecScaleB {
                 if (s.isFinite())
                     BigDecimal(s.toString())
                 else
-                    BigDecimal("1E+16380")
+                    BigDecimal("1E+99999")
                 )
         assertEquals(expected, observed)
     }

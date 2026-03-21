@@ -12,14 +12,14 @@ private const val EMAX  =  6144
 private const val QTINY = EMIN - (P34 - 1) // -6176
 private const val QMAX  = EMAX - (P34 - 1) // 6111
 
-const val INFINITY_SCALE = 16380
+const val BIG_DECIMAL_INFINITY_SCALE = 99999
 // Note: Cannot make the coefficient of INFINITY == ZERO because
 // we need to represent NEG_INFINITY and BigDecimal does not
 // support negative zero -0
-private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(INFINITY_SCALE)
+private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(BIG_DECIMAL_INFINITY_SCALE)
 private val NEG_INFINITY_SURROGATE = POS_INFINITY_SURROGATE.negate()
-private const val QNAN_SCALE = 16381
-private const val SNAN_SCALE = 16382
+private const val QNAN_SCALE = 100000
+private const val SNAN_SCALE = 100001
 private val MAX_FINITE =
     BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
 private val NEG_MAX_FINITE = MAX_FINITE.negate()
@@ -36,7 +36,7 @@ fun strToBdIeeeDecimal128(str: String, rm: RoundingMode): BigDecimal {
 fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     val q = -bd.scale()
     when {
-        q == INFINITY_SCALE -> return if (bd.signum() < 0) NEG_INFINITY_SURROGATE else POS_INFINITY_SURROGATE
+        q == BIG_DECIMAL_INFINITY_SCALE -> return if (bd.signum() < 0) NEG_INFINITY_SURROGATE else POS_INFINITY_SURROGATE
         q in QNAN_SCALE..SNAN_SCALE -> return bd
     }
     if (bd.signum() == 0) {
@@ -130,7 +130,7 @@ private fun underflowsToZero(rm: RoundingMode, sign: Boolean): Boolean {
 
 fun bdIsFinite(bd: BigDecimal) : Boolean {
     val eExp = -bd.scale()
-    return eExp < INFINITY_SCALE
+    return eExp < BIG_DECIMAL_INFINITY_SCALE
 }
 
 fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): String {
@@ -139,11 +139,16 @@ fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): Str
     val isNeg = bd.signum() < 0
     val magnitude = decimal128.unscaledValue().abs()
     return when {
-        q < NON_FINITE_INF && !toEngineeringExp -> decimal128.toString()
+        q in QTINY..QMAX -> {
+            if (!toEngineeringExp)
+                decimal128.toString()
+            else
+                decimal128.toEngineeringString()
+        }
         q < NON_FINITE_INF -> decimal128.toEngineeringString()
-        q == NON_FINITE_INF -> if (isNeg) "-Inf" else "Inf"
-        q == NON_FINITE_QNAN -> (if (isNeg) "-NaN" else "NaN") + if (magnitude.bitLength() == 0) "" else magnitude
-        q == NON_FINITE_SNAN -> (if (isNeg) "-sNaN" else "sNaN") + if (magnitude.bitLength() == 0) "" else magnitude
+        q == BIG_DECIMAL_INFINITY_SCALE -> if (isNeg) "-Inf" else "Inf"
+        q == QNAN_SCALE -> (if (isNeg) "-NaN" else "NaN") + if (magnitude.bitLength() == 0) "" else magnitude
+        q == SNAN_SCALE -> (if (isNeg) "-sNaN" else "sNaN") + if (magnitude.bitLength() == 0) "" else magnitude
         else -> throw RuntimeException("invalid exponent for ieee754r decimal128")
     }
 }
