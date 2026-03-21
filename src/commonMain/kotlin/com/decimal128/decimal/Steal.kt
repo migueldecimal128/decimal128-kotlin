@@ -69,12 +69,14 @@ internal inline fun stealIsSNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK
 
 
 internal const val STEAL_BITLEN_SHIFT = 2
-internal const val STEAL_BITLEN_MASK = 0x1FF
-internal const val STEAL_BITLEN_UNSHIFTED_MASK = 0x1FF shl STEAL_BITLEN_SHIFT
-internal inline fun stealBitLen(steal: Int) = (steal ushr STEAL_BITLEN_SHIFT) and STEAL_BITLEN_MASK
+internal const val STEAL_BITLEN_MASK = 0xFF
+internal const val STEAL_BITLEN_UNSHIFTED_MASK = STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT
+internal inline fun stealBitLen(steal: Int) =
+    (steal ushr STEAL_BITLEN_SHIFT) and STEAL_BITLEN_MASK
 
-internal const val STEAL_DIGITLEN_SHIFT = 11
+internal const val STEAL_DIGITLEN_SHIFT = 10
 internal const val STEAL_DIGITLEN_MASK = 0x3F
+internal const val STEAL_DIGITLEN_UNSHIFTED_MASK = STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT
 internal inline fun stealDigitLen(steal: Int) =
     (steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK
 
