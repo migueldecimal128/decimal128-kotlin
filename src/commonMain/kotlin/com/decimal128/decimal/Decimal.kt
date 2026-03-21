@@ -325,7 +325,8 @@ class Decimal private constructor(
             return when {
                 payloadIsZero && sign -> NEG_SNAN
                 payloadIsZero -> POS_SNAN
-                else -> Decimal(sign, NON_FINITE_QNAN, dw1, dw0)
+                else -> Decimal(
+                    stealEncodeSNAN(if (sign) 1 else 0, dw1, dw0), dw1, dw0)
             }
         }
 
