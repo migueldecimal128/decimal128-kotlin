@@ -541,6 +541,20 @@ class MutDec() : C256(), Comparable<MutDec> {
         val bitLen = bitLen
         val digitLen = digitLen
         val dw0 = dw0
+        val stealType = stealType(steal)
+        if (stealType != STEAL_TYPE_FNZ) when (stealType(steal)) {
+            STEAL_TYPE_ZER -> return 0L
+            STEAL_TYPE_INF -> {
+                val ret = if (sign) Long.MIN_VALUE else Long.MAX_VALUE
+                ctx.signalInvalid(this)
+                return ret
+            }
+            STEAL_TYPE_NAN -> {
+                val ret = Long.MIN_VALUE
+                ctx.signalInvalid(this)
+                return ret
+            }
+        }
         when {
             qExp == 0 -> {
                 if (bitLen < 64)
@@ -550,14 +564,6 @@ class MutDec() : C256(), Comparable<MutDec> {
                 ctx.signalInvalid(this)
                 return Long.MAX_VALUE - signMask
             }
-            qExp >= NON_FINITE_INF -> {
-                val ret =
-                    if (qExp == NON_FINITE_INF && !sign) Long.MAX_VALUE
-                    else Long.MIN_VALUE
-                ctx.signalInvalid(this)
-                return ret
-            }
-            bitLen == 0 -> return 0L
             qExp < 0 -> {
                 val fracDigitLen = -qExp
                 if (fracDigitLen >= digitLen) {
