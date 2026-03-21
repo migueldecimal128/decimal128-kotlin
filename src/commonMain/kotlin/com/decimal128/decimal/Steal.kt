@@ -61,8 +61,8 @@ internal inline fun stealSignBit(steal: Int): Int = steal ushr 31
 internal inline fun stealSignMask(steal: Int): Int = steal shr 31
 
 internal const val STEAL_NAN_MASK      = 0b111
-internal const val STEAL_NAN_SNAN      = 0b011
-internal const val STEAL_NAN_QNAN      = 0b111
+internal const val STEAL_NAN_SNAN      = 0b111
+internal const val STEAL_NAN_QNAN      = 0b011
 
 internal inline fun stealIsQNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_QNAN
 internal inline fun stealIsSNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_SNAN
