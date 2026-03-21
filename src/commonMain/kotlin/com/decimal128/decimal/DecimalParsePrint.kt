@@ -5,9 +5,10 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-private const val SPECIAL_NAMES =
-    ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16) or
-            ('s'.code.toLong() shl 24) or ('N'.code.toLong() shl 32) or ('a'.code.toLong() shl 40) or ('N'.code.toLong() shl 48)
+private const val SPECIAL_NAME_INF =
+    ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16)
+private const val SPECIAL_NAME_NAN =
+    ('N'.code.toLong() shl 0) or ('a'.code.toLong() shl 8) or ('N'.code.toLong() shl 16)
 
 private const val UPPER_CASE_MASK = ('a'.code - 'A'.code).inv()
 
@@ -111,16 +112,20 @@ object DecimalParsePrint {
         bytes[off] = signByte
         var exp = qExp
         var ib = off + if (x.sign) 1 else 0
-        if (qExp >= NON_FINITE_INF) {
-            val isSNaN = if (qExp == NON_FINITE_SNAN) 1 else 0
-            val shift = ((NON_FINITE_INF - qExp) shr 31) and (32 - (isSNaN shl 3))
-            val chars = SPECIAL_NAMES ushr shift
-            bytes[off + 1] = chars.toByte()
-            bytes[off + 2] = (chars ushr  8).toByte()
-            bytes[off + 3 + isSNaN] = (chars ushr 24).toByte()
-            bytes[off + 3] = (chars ushr 16).toByte()
-            ib = 4 + isSNaN
-            if (qExp == NON_FINITE_INF || x.c256IsZero())
+        if (! x.isFinite()) {
+            val chars =
+                if (x.isInfinite()) {
+                    SPECIAL_NAME_INF
+                } else {
+                    if (x.isSignaling())
+                        bytes[ib++] = 's'.code.toByte()
+                    SPECIAL_NAME_NAN
+                }
+            bytes[ib    ] = chars.toByte()
+            bytes[ib + 1] = (chars ushr  8).toByte()
+            bytes[ib + 2] = (chars ushr 16).toByte()
+            ib += 3
+            if (x.isInfinite() || x.c256IsZero())
                 return ib - off
             // drop thru to add NaN payload
             exp = 0
