@@ -27,15 +27,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     if (inboundResidue == EXACT && decFormat.coeffQexpFit(dw1In, dw0In, qExpIn))
         return Decimal(sign, qExpIn, dw1In, dw0In)
 
-    // Step 2: special values
-    /* NOT APPLICABLE because we are only dealing with Finite
-    if (qExp >= MIN_SPECIAL_VALUE) {
-        return if (qExp ==NON_FINITE_INF)
-            Decimal.infinity(sign)
-        else
-            Decimal.NaN(sign, qExp == NON_FINITE_SNAN, dw1, dw0)
-    }
-     */
+    // Step 2: special values ... no applicable here ... only Finite
 
     // Step 3: zero coefficient
     if ((dw1In or dw0In) == 0L)
