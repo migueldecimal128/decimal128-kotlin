@@ -60,29 +60,29 @@ internal inline fun stealSignFlag(steal: Int): Boolean = steal < 0
 internal inline fun stealSignBit(steal: Int): Int = steal ushr 31
 internal inline fun stealSignMask(steal: Int): Int = steal shr 31
 
-internal const val STEAL_NAN_MASK      = 0x0002_0003
-internal const val STEAL_NAN_SNAN      = 0x0000_0003
-internal const val STEAL_NAN_QNAN      = 0x0002_0003
+internal const val STEAL_NAN_MASK      = 0b111
+internal const val STEAL_NAN_SNAN      = 0b011
+internal const val STEAL_NAN_QNAN      = 0b111
 
 internal inline fun stealIsQNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_QNAN
 internal inline fun stealIsSNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_SNAN
 
 
-internal const val STEAL_BITLEN_SHIFT = 2
+internal const val STEAL_BITLEN_SHIFT = 16
 internal const val STEAL_BITLEN_MASK = 0xFF
 internal const val STEAL_BITLEN_UNSHIFTED_MASK = STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT
 internal inline fun stealBitLen(steal: Int) =
     (steal ushr STEAL_BITLEN_SHIFT) and STEAL_BITLEN_MASK
 
-internal const val STEAL_DIGITLEN_SHIFT = 10
-internal const val STEAL_DIGITLEN_MASK = 0x3F
+internal const val STEAL_DIGITLEN_SHIFT = 24
+internal const val STEAL_DIGITLEN_MASK = 0x7F
 internal const val STEAL_DIGITLEN_UNSHIFTED_MASK = STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT
 internal inline fun stealDigitLen(steal: Int) =
     (steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK
 
-internal const val STEAL_QEXP_DECODE_SHL = 1
+internal const val STEAL_QEXP_DECODE_SHL = 16
 internal const val STEAL_QEXP_DECODE_SHR = 18
-internal const val STEAL_QEXP_ENCODE_SHL = 17
+internal const val STEAL_QEXP_ENCODE_SHL = 2
 internal const val STEAL_QEXP_ENCODE_MASK = 0x3FFF
 internal inline fun stealQexp(steal: Int) =
     (steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR
@@ -94,8 +94,6 @@ internal inline fun stealEexp(steal: Int): Int {
             ((steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK) -
             (-(steal and STEAL_BITLEN_UNSHIFTED_MASK) ushr 31)
 }
-
-
 
 internal inline fun stealEncodeZER(signBit: Int, qExp: Int) =
     (signBit shl 31) or
