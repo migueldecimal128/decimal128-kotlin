@@ -28,18 +28,23 @@ const val CAPPED_EXP_MAX = 7000
 
 class MutDec() : C256(), Comparable<MutDec> {
     var type: Int = STEAL_TYPE_ZER
-    var sign = false
+    var sign: Boolean
+        get() = stealSignFlag(steal)
+        set(value) {
+            steal = stealWithSignFlag(steal, value)
+        }
+    val signMask: Int
+        get() = stealSignMask(steal)
+    val signBit: Int
+        get() = stealSignBit(steal)
+
+
     var qExp = 0
     val eExp: Int
         get() = qExp + digitLen - 1
 
     fun bExpMin(): Int = calcBExpMin(bitLen, qExp)
     fun bExpMax(): Int = calcBExpMax(bitLen, qExp)
-
-    val signMask: Int
-        get() = if (sign) -1 else 0
-    val signBit: Int
-        get() = if (sign) 1 else 0
 
     companion object {
 
