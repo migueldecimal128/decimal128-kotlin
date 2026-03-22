@@ -112,6 +112,51 @@ internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     return stealPackLengths(digitLen, bitLen)
 }
 
+internal fun calcStealPackedLengths256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Int {
+    if ((dw3 or dw2) != 0L) {
+        val dw3IsZeroMask = ((dw3 or -dw3) shr 63).inv().toInt()
+        val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
+        val dw23 = dw2 or dw3
+        val dw23IsZeroMask = ((dw23 or -dw23) shr 63).inv().toInt()
+
+        val nlz3 = dw3.countLeadingZeroBits()
+        val nlz2 = dw2.countLeadingZeroBits()
+        val nlz1 = dw1.countLeadingZeroBits()
+        val nlz0 = dw0.countLeadingZeroBits()
+        val nlz23 = nlz3 + (nlz2 and dw3IsZeroMask)
+        val nlz10 = nlz1 + (nlz0 and dw1IsZeroMask)
+        val bitLen = 256 - nlz23 - (nlz10 and dw23IsZeroMask)
+
+        val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)
+        val pow10BitLen = pow10BitLen(loDigitCount)
+        val bitLenDelta = pow10BitLen - bitLen
+
+        val digitLen = if (bitLenDelta != 0) {
+            loDigitCount + (bitLenDelta ushr 31)
+        } else {
+            val pow10Offset = pow10Offset(loDigitCount) and POW10_BCE
+            val p3 = POW10[pow10Offset + 3]
+            val p2 = POW10[pow10Offset + 2]
+            val p1 = POW10[pow10Offset + 1]
+            val p0 = POW10[pow10Offset]
+            val hiDigitCount = loDigitCount + 1
+            var cmp: Int
+            cmp = unsignedCmp(dw3, p3)
+            if (cmp == 0) {
+                cmp = unsignedCmp(dw2, p2)
+                if (cmp == 0) {
+                    cmp = unsignedCmp(dw1, p1)
+                    if (cmp == 0)
+                        cmp = unsignedCmp(dw0, p0)
+                }
+            }
+            hiDigitCount - (cmp ushr 31)
+        }
+        return stealPackLengths(digitLen, bitLen)
+    }
+    return calcStealPackedLengths128(dw1, dw0)
+}
+
 internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int {
     if (bitLen > 128) {
         val loDigitCount = max((bitLen * 1233) ushr 12, MIN_POW10_DIGIT_LEN_192)

@@ -21,7 +21,7 @@ C256Rep() {
     internal var bitLen: Int
         get() = stealBitLen(steal)
         set(value) {
-            verify { value in 0..255 }
+            verify { value in 0..253 }
             this.steal = stealWithBitLen(steal, value)
         }
 
@@ -31,6 +31,16 @@ C256Rep() {
             verify { value in 0..76 || value == 111 }
             this.steal = stealWithDigitLen(steal, value)
         }
+
+    internal fun setPackedLengths(packedLengths: Int) {
+        this.steal = stealWithPackedLengths(steal, packedLengths)
+    }
+
+    internal fun setDigitLenBitLen(digitLen: Int, bitLen: Int) {
+        verify { digitLen in 0..76 }
+        verify { bitLen in 0..253 }
+        this.steal = stealWithDigitLenBitLen(steal, digitLen, bitLen)
+    }
 
     companion object {
         internal operator fun invoke(dw0: Long): C256 = C256().c256Set64(dw0)
@@ -133,16 +143,14 @@ C256Rep() {
     internal /*inline*/ fun c256Set64(d0: Long): C256 {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
-        bitLen = calcBitLen64(d0)
-        digitLen = calcDigitLen64(bitLen, d0)
+        setPackedLengths(calcStealPackedLengths128(0L, d0))
         return this
     }
 
     internal /*inline*/ fun c256Set128(d1: Long, d0: Long): C256 {
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
-        bitLen = calcBitLen128(d1, d0)
-        digitLen = calcDigitLen128(bitLen, d1, d0)
+        setPackedLengths(calcStealPackedLengths128(d1, d0))
         return this
     }
 
@@ -150,16 +158,14 @@ C256Rep() {
         val d1 = pentad.dw1; val d0 = pentad.dw0
         dw3 = 0L; dw2 = 0L
         dw1 = d1; dw0 = d0
-        bitLen = calcBitLen128(d1, d0)
-        digitLen = calcDigitLen128(bitLen, d1, d0)
+        setPackedLengths(calcStealPackedLengths128(d1, d0))
         return this
     }
 
     internal /*inline*/ fun c256Set192(d2: Long, d1: Long, d0: Long): C256 {
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen192(d2, d1, d0)
-        digitLen = calcDigitLen192(bitLen, d2, d1, d0)
+        setPackedLengths(calcStealPackedLengths256(0L, d2, d1, d0))
         return this
     }
 
@@ -167,23 +173,20 @@ C256Rep() {
         val d2 = pentad.dw2; val d1 = pentad.dw1; val d0 = pentad.dw0
         dw3 = 0L
         dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen192(d2, d1, d0)
-        digitLen = calcDigitLen192(bitLen, d2, d1, d0)
+        setPackedLengths(calcStealPackedLengths256(0L, d2, d1, d0))
         return this
     }
 
     internal /*inline*/ fun c256Set256(d3: Long, d2: Long, d1: Long, d0: Long): C256 {
         dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
-        bitLen = calcBitLen256(d3, d2, d1, d0)
-        digitLen = calcDigitLen256(bitLen, d3, d2, d1, d0)
+        setPackedLengths(calcStealPackedLengths256(d3, d2, d1, d0))
         return this
     }
 
     fun c256Set(x: C256): C256 {
-        dw3 = x.dw3; dw2 = x.dw2; dw1 = x.dw1; dw0 = x.dw0
-        //packedLengths = x.packedLengths
-        bitLen = x.bitLen
-        digitLen = x.digitLen
+        val d3 = x.dw3; val d2 = x.dw2; val d1 = x.dw1; val d0 = x.dw0
+        dw3 = d3; dw2 = d2; dw1 = d1; dw0 = d0
+        setPackedLengths(calcStealPackedLengths256(d3, d2, d1, d0))
         return this
     }
 
