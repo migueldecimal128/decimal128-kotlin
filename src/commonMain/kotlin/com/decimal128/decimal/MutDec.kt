@@ -635,7 +635,13 @@ class MutDec() : C256(), Comparable<MutDec> {
      * operations. Therefore, flags are not set when they roll
      * over to Infinity
      */
-    fun setNextUp(x: MutDec, ctx: DecContext): MutDec {
+    fun setNextUp(x: MutDec, ctx: DecContext): MutDec =
+        setNextUpOrDown(isUp = true, x, ctx)
+
+    fun setNextDown(x: MutDec, ctx: DecContext): MutDec =
+        setNextUpOrDown(isUp = false, x, ctx)
+
+    fun setNextUp_x(x: MutDec, ctx: DecContext): MutDec {
         set(x)
         when (type) {
             STEAL_TYPE_FNZ -> {
@@ -667,7 +673,40 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    fun setNextDown(x: MutDec, ctx: DecContext): MutDec {
+    private fun setNextUpOrDown(isUp: Boolean, x: MutDec, ctx: DecContext): MutDec {
+        set(x)
+        val xSign = x.sign
+        when (type) {
+            STEAL_TYPE_FNZ -> {
+                if (sign == isUp) {
+                    mutateNextTowardZero(ctx)
+                } else {
+                    verify { qExp <= Q_MAX }
+                    mutateNextAwayFromZero(ctx)
+                    if (qExp > Q_MAX)
+                        setInfinite(sign = xSign)
+                }
+            }
+            STEAL_TYPE_ZER -> {
+                setMinFiniteMagnitude(ctx)
+                sign = !isUp
+            }
+            STEAL_TYPE_INF -> {
+                if (xSign == isUp)
+                    setMaxFiniteMagnitude(ctx)
+            }
+            else -> {
+                if (isSignaling()) {
+                    ctx.signalInvalid(this)
+                    this.type = STEAL_NAN_QNAN
+                    this.qExp = NON_FINITE_QNAN
+                }
+            }
+        }
+        return this
+    }
+
+    fun setNextDown_x(x: MutDec, ctx: DecContext): MutDec {
         set(x)
         when {
             qExp == NON_FINITE_SNAN -> {

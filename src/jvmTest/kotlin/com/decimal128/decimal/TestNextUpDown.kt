@@ -9,6 +9,7 @@ class TestNextUpDown {
     val verbose = true
 
     val tcs = arrayOf(
+        BigDecimal("9999999999999999999999999999999999e6111"),
         BigDecimal("1e-6176"),
         BigDecimal("-1e-6176"),
         BigDecimal("-9999999999999999999999999999999999e6111"),
