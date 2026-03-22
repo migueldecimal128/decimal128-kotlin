@@ -109,7 +109,7 @@ internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     val cmp1 = unsignedCmp(dw1, p1)
     val digitLen = hiDigitCount - ((if (cmp1 != 0) cmp1 else unsignedCmp(dw0, p0)) ushr 31)
 
-    return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
+    return stealPackLengths(digitLen, bitLen)
 }
 
 internal fun calcDigitLen192(bitLen: Int, dw2: Long, dw1: Long, dw0: Long): Int {

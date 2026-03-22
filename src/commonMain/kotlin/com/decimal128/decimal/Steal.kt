@@ -17,8 +17,8 @@ b1: isNonZero/isNaN
 b0: isNonFinite
  */
 internal const val STEAL_SIGN = Int.MIN_VALUE
-internal const val STEAL_NONFINITE_BIT = 0x0000_0001
-internal const val STEAL_IS_ZERO_BIT   = 0x0000_0002
+private const val STEAL_NONFINITE_BIT = 0x0000_0001
+private const val STEAL_IS_ZERO_BIT   = 0x0000_0002
 
 internal const val STEAL_TYPE_MASK     = 0x0000_0003
 
@@ -68,24 +68,24 @@ internal inline fun stealIsQNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK
 internal inline fun stealIsSNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_SNAN
 
 
-internal const val STEAL_BITLEN_SHIFT = 16
-internal const val STEAL_BITLEN_MASK = 0xFF
-internal const val STEAL_BITLEN_UNSHIFTED_MASK = STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT
+private const val STEAL_BITLEN_SHIFT = 16
+private const val STEAL_BITLEN_MASK = 0xFF
+private const val STEAL_BITLEN_UNSHIFTED_MASK = STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT
 internal inline fun stealBitLen(steal: Int) =
     (steal ushr STEAL_BITLEN_SHIFT) and STEAL_BITLEN_MASK
 
-internal const val STEAL_DIGITLEN_SHIFT = 24
-internal const val STEAL_DIGITLEN_MASK = 0x7F
-internal const val STEAL_DIGITLEN_UNSHIFTED_MASK = STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT
+private const val STEAL_DIGITLEN_SHIFT = 24
+private const val STEAL_DIGITLEN_MASK = 0x7F
+private const val STEAL_DIGITLEN_UNSHIFTED_MASK = STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT
 internal inline fun stealDigitLen(steal: Int) =
     (steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK
 
 internal const val STEAL_PACKED_LENGTHS_MASK = 0x7FFF_0000
 
-internal const val STEAL_QEXP_DECODE_SHL = 16
-internal const val STEAL_QEXP_DECODE_SHR = 18
-internal const val STEAL_QEXP_ENCODE_SHL = 2
-internal const val STEAL_QEXP_ENCODE_MASK = 0x3FFF
+private const val STEAL_QEXP_DECODE_SHL = 16
+private const val STEAL_QEXP_DECODE_SHR = 18
+private const val STEAL_QEXP_ENCODE_SHL = 2
+private const val STEAL_QEXP_ENCODE_MASK = 0x3FFF
 internal inline fun stealQexp(steal: Int) =
     (steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR
 

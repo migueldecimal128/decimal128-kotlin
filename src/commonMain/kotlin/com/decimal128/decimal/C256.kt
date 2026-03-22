@@ -48,8 +48,7 @@ C256Rep() {
 
     fun c256SetOne() {
         dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 1L;
-        steal = stealWithPackedLengths(steal,
-            (1 shl STEAL_DIGITLEN_SHIFT) or (1 shl STEAL_BITLEN_SHIFT))
+        steal = stealWithPackedLengths(steal, stealPackLengths(1, 1))
     }
 
     internal inline fun c256IsZero() = steal and STEAL_PACKED_LENGTHS_MASK == 0
