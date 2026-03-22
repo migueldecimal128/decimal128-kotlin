@@ -102,13 +102,22 @@ internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     val bitLen = 128 - nlz1 - (nlz0 and dw1IsZeroMask)
 
     val loDigitCount = (bitLen * 1233) ushr 12
-    val hiDigitCount = loDigitCount + 1
-    val pow10Offset = (loDigitCount shl 1) and POW10_BCE
-    val p1 = POW10[pow10Offset + 1]
-    val p0 = POW10[pow10Offset    ]
-    val cmp1 = unsignedCmp(dw1, p1)
-    val digitLen = hiDigitCount - ((if (cmp1 != 0) cmp1 else unsignedCmp(dw0, p0)) ushr 31)
+    val pow10BitLen = pow10BitLen(loDigitCount)
+    val bitLenDelta = pow10BitLen - bitLen
 
+    val digitLen = if (bitLenDelta != 0) {
+        loDigitCount + (bitLenDelta ushr 31)
+    } else {
+        val hiDigitCount = loDigitCount + 1
+        val pow10Offset = (loDigitCount shl 1) and POW10_BCE
+        val p1 = POW10[pow10Offset + 1]
+        val p0 = POW10[pow10Offset]
+        var cmp = unsignedCmp(dw1, p1)
+        if (cmp == 0) {
+            cmp = unsignedCmp(dw0, p0)
+        }
+        hiDigitCount - (cmp ushr 31)
+    }
     return stealPackLengths(digitLen, bitLen)
 }
 
