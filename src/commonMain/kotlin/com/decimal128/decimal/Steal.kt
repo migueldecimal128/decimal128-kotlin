@@ -19,7 +19,7 @@ b0: isNonFinite
 private const val STEAL_NONFINITE_BIT = 0x0000_0001
 private const val STEAL_IS_ZERO_BIT   = 0x0000_0002
 
-internal const val STEAL_TYP_MASK     = 0x0000_0003
+private const val STEAL_TYP_MASK     = 0x0000_0003
 
 internal const val STEAL_TYP_FNZ      = 0x0000_0000
 internal const val STEAL_TYP_ZER      = STEAL_IS_ZERO_BIT
