@@ -637,30 +637,32 @@ class MutDec() : C256(), Comparable<MutDec> {
      */
     fun setNextUp(x: MutDec, ctx: DecContext): MutDec {
         set(x)
-        when {
-            qExp == NON_FINITE_SNAN -> {
-                ctx.signalInvalid(this)
-                qExp = NON_FINITE_QNAN
+        when (type) {
+            STEAL_TYPE_FNZ -> {
+                if (sign == false) {
+                    verify { qExp <= Q_MAX }
+                    mutateNextAwayFromZero(ctx)
+                    if (qExp > Q_MAX)
+                        setInfinite(sign = false)
+                } else {
+                    mutateNextTowardZero(ctx)
+                }
             }
-            qExp == NON_FINITE_QNAN -> {}
-
-            qExp == NON_FINITE_INF -> {
-                if (sign)
-                    setMaxFiniteMagnitude(ctx)
-            }
-            c256IsZero() -> {
+            STEAL_TYPE_ZER -> {
                 setMinFiniteMagnitude(ctx)
                 sign = false
             }
-            sign == false -> {
-                // nextUp is not an arithmetic operation and
-                // therefore flags do not get set
-                verify { qExp <= Q_MAX }
-                mutateNextAwayFromZero(ctx)
-                if (qExp > Q_MAX)
-                    setInfinite(sign = false)
+            STEAL_TYPE_INF -> {
+                if (sign)
+                    setMaxFiniteMagnitude(ctx)
             }
-            else -> mutateNextTowardZero(ctx)
+            else -> {
+                if (isSignaling()) {
+                    ctx.signalInvalid(this)
+                    this.type = STEAL_NAN_QNAN
+                    this.qExp = NON_FINITE_QNAN
+                }
+            }
         }
         return this
     }

@@ -321,6 +321,7 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqnextp153 nextplus  sNaN    ->  NaN   Invalid_operation",
         "dqrem1120  remainder  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  0.765432109876543210987654321098768",
         "dqcot002 comparetotal  -2  -1  -> -1",
         "dqfma0902 fma  0     0     NaN5   ->  NaN5",
