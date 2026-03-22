@@ -136,9 +136,7 @@ internal fun stealWithSignFlag(oldSteal: Int, signFlag: Boolean) =
     (oldSteal and 0x7FFF_FFFF) or (if (signFlag) Int.MIN_VALUE else 0)
 
 internal fun stealWithPackedLengths(oldSteal: Int, packedLengths: Int): Int =
-    (oldSteal and
-            ((STEAL_DIGITLEN_MASK shl STEAL_DIGITLEN_SHIFT) or
-                    (STEAL_BITLEN_MASK shl STEAL_BITLEN_SHIFT)).inv()) or packedLengths
+    (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or packedLengths
 
 internal fun stealWithDigitLenBitLen(oldSteal: Int, digitLen: Int, bitLen: Int) =
     (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or
