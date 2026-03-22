@@ -143,7 +143,7 @@ C256Rep() {
     internal /*inline*/ fun c256Set64(d0: Long): C256 {
         dw3 = 0L; dw2 = 0L; dw1 = 0L
         dw0 = d0
-        setPackedLengths(calcStealPackedLengths128(0L, d0))
+        setPackedLengths(calcStealPackedLengths64(d0))
         return this
     }
 

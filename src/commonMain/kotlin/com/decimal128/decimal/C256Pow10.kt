@@ -95,6 +95,16 @@ internal fun calcDigitLen128(bitLen: Int, dw1: Long, dw0: Long): Int {
     return hiDigitCount - (cmp0 ushr 31)
 }
 
+internal fun calcStealPackedLengths64(dw0: Long): Int {
+    val bitLen = 64 - dw0.countLeadingZeroBits()
+
+    val loDigitCount = (bitLen * 1233) ushr 12
+    val p0 = POW10[(loDigitCount shl 1) and POW10_BCE]
+    val digitLen = loDigitCount + 1 - (unsignedCmp(dw0, p0) ushr 31)
+
+    return stealPackLengths(digitLen, bitLen)
+}
+
 internal fun calcStealPackedLengths128(dw1: Long, dw0: Long): Int {
     val dw1IsZeroMask = ((dw1 or -dw1) shr 63).inv().toInt()
     val nlz1 = dw1.countLeadingZeroBits()
