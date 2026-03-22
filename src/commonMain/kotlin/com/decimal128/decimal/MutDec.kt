@@ -641,38 +641,6 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun setNextDown(x: MutDec, ctx: DecContext): MutDec =
         setNextUpOrDown(isUp = false, x, ctx)
 
-    fun setNextUp_x(x: MutDec, ctx: DecContext): MutDec {
-        set(x)
-        when (type) {
-            STEAL_TYPE_FNZ -> {
-                if (sign == false) {
-                    verify { qExp <= Q_MAX }
-                    mutateNextAwayFromZero(ctx)
-                    if (qExp > Q_MAX)
-                        setInfinite(sign = false)
-                } else {
-                    mutateNextTowardZero(ctx)
-                }
-            }
-            STEAL_TYPE_ZER -> {
-                setMinFiniteMagnitude(ctx)
-                sign = false
-            }
-            STEAL_TYPE_INF -> {
-                if (sign)
-                    setMaxFiniteMagnitude(ctx)
-            }
-            else -> {
-                if (isSignaling()) {
-                    ctx.signalInvalid(this)
-                    this.type = STEAL_NAN_QNAN
-                    this.qExp = NON_FINITE_QNAN
-                }
-            }
-        }
-        return this
-    }
-
     private fun setNextUpOrDown(isUp: Boolean, x: MutDec, ctx: DecContext): MutDec {
         set(x)
         val xSign = x.sign
@@ -706,35 +674,6 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    fun setNextDown_x(x: MutDec, ctx: DecContext): MutDec {
-        set(x)
-        when {
-            qExp == NON_FINITE_SNAN -> {
-                ctx.signalInvalid(this)
-                qExp = NON_FINITE_QNAN
-            }
-            qExp == NON_FINITE_QNAN -> { }
-            qExp == NON_FINITE_INF -> {
-                if (sign == false)
-                    setMaxFiniteMagnitude(ctx)
-            }
-            c256IsZero() -> {
-                setMinFiniteMagnitude(ctx)
-                sign = true
-            }
-
-            sign -> {
-                verify { qExp <= Q_MAX }
-                mutateNextAwayFromZero(ctx)
-                if (qExp > Q_MAX)
-                    setInfinite(sign = true)
-            }
-
-            else -> mutateNextTowardZero(ctx)
-        }
-        return this
-    }
-
     private fun mutateNextAwayFromZero(ctx: DecContext) {
         val headroom = min(ctx.precision - digitLen, qExp - Q_TINY)
         if (headroom > 0) {
@@ -764,16 +703,16 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun maxNum(x: MutDec, y: MutDec, ctx: DecContext) = minNum_helper(x, y, -1, ctx)
 
     private fun minNum_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, ctx: DecContext) {
-        val qMax = max(x.qExp, y.qExp)
         when {
-            qMax <= NON_FINITE_INF -> {
+            x.isNumber() && y.isNumber() -> {
                 val cmp = (x.compareTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
                 set(if (cmp <= 0) x else y)
+                return
             }
-            qMax == NON_FINITE_QNAN -> {
-                set(if (x.qExp == NON_FINITE_QNAN) x else y)
-            }
-            else -> throw RuntimeException("somebody is a sNaN")
+            x.isSignaling() || y.isSignaling() ->
+                throw RuntimeException("somebody is a sNaN")
+            x.isNaN() -> set(x)
+            else -> set(y)
         }
     }
 
@@ -781,13 +720,14 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun maxNumMag(x: MutDec, y: MutDec, env: DecContext) = minNumMag_helper(x, y, -1, env)
 
     private fun minNumMag_helper(x: MutDec, y: MutDec, invertCompareZeroOrNeg1: Int, ctx: DecContext) {
-        val qMax = max(x.qExp, y.qExp)
         when {
-            qMax < NON_FINITE_INF -> {
+            x.isSignaling() || y.isSignaling() -> throw RuntimeException("somebody is a sNaN")
+            x.isNaN() -> set(x)
+            y.isNaN() -> set(y)
+            else -> {
                 val cmp = (x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
                 set(if (cmp <= 0) x else y)
             }
-            else -> minNum_helper(x, y, invertCompareZeroOrNeg1, ctx)
         }
     }
 
