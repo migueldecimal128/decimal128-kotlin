@@ -103,7 +103,7 @@ internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDe
             } else {
                 d.c256Set64(binLo)
             }
-            d.type = if ((binHi or binLo) == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+            d.type = if ((binHi or binLo) == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
             d.qExp = qExp
             d.sign = sign
         }
@@ -188,8 +188,8 @@ private fun encodeSignAndGCombinationFieldDpd128(type: Int, sign: Boolean, qExp:
     require(mostSigBcd4 in 0..9)
     val signBit = if (sign) 1L shl 63 else 0L
     val gCombinationField = when (type) {
-        STEAL_TYPE_ZER,
-        STEAL_TYPE_FNZ -> {
+        STEAL_TYP_ZER,
+        STEAL_TYP_FNZ -> {
             require(qExp in Q_TINY..Q_MAX)
             val biasedQExp = qExp - Q_TINY // remember qTiny is negative
             val biasedQExpLo12 = biasedQExp and 0xFFF
@@ -201,7 +201,7 @@ private fun encodeSignAndGCombinationFieldDpd128(type: Int, sign: Boolean, qExp:
                 (biasedQExpHi2 shl 15) or (mostSigBcd4 shl 12)
                     ) or biasedQExpLo12
         }
-        STEAL_TYPE_INF -> 0b11110 shl 12
+        STEAL_TYP_INF -> 0b11110 shl 12
         STEAL_NAN_QNAN -> 0b111110 shl 11
         STEAL_NAN_SNAN -> 0b111111 shl 11
         else -> throw RuntimeException("unrecognized")

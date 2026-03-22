@@ -43,7 +43,7 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
     verify { x.bitLen > 0 && y.bitLen > 0 }  // Optional: could remove in production
     verify { x.qExp == y.qExp }
     val xSign = x.sign
-    z.type = STEAL_TYPE_FNZ
+    z.type = STEAL_TYP_FNZ
     z.qExp = x.qExp
     // IEEE754-2019 6.3 The sign bit
     // When the sum of two operands with opposite signs
@@ -72,7 +72,7 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
 
             else -> {
                 z.c256SetZero()
-                z.type = STEAL_TYPE_ZER
+                z.type = STEAL_TYP_ZER
                 z.sign = isRoundTowardNegative
             }
         }
@@ -128,7 +128,7 @@ internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: I
     } else {
         val shiftLeft = min(headroom, delta)
         c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
-        z.type = STEAL_TYPE_FNZ
+        z.type = STEAL_TYP_FNZ
         z.qExp = xQ - shiftLeft
     }
     z.sign = xSign

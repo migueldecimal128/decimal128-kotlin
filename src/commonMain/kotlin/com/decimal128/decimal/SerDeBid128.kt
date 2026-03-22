@@ -47,9 +47,9 @@ private inline fun encodeSignAndGCombinationFieldBid128(type: Int, sign: Boolean
     require(mostSigBits4 in 0..9)
     val decimal128 = DecFormat.DECIMAL_128
     val signBit = if (sign) 1L shl 63 else 0L
-    val gCombinationField = when (stealType(type)) {
-        STEAL_TYPE_ZER,
-        STEAL_TYPE_FNZ -> {
+    val gCombinationField = when (stealTyp(type)) {
+        STEAL_TYP_ZER,
+        STEAL_TYP_FNZ -> {
             require(qExp in Q_TINY..Q_MAX)
             val biasedQExp = qExp - Q_TINY // remember qTiny is negative
             verify { (biasedQExp and 0x3000) != 0x3000 }
@@ -59,7 +59,7 @@ private inline fun encodeSignAndGCombinationFieldBid128(type: Int, sign: Boolean
                 0x18000 or (biasedQExp shl 1) or (mostSigBits4 and 1)
         }
 
-        STEAL_TYPE_INF -> 0b11110 shl 12
+        STEAL_TYP_INF -> 0b11110 shl 12
         STEAL_NAN_QNAN -> 0b111110 shl 11
         STEAL_NAN_SNAN -> 0b111111 shl 11
         else -> throw RuntimeException("unrecognized")

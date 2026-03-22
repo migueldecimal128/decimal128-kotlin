@@ -20,7 +20,7 @@ const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
 
 class MutDec() : C256(), Comparable<MutDec> {
-    var type: Int = STEAL_TYPE_ZER
+    var type: Int = STEAL_TYP_ZER
     var sign: Boolean
         get() = stealSignFlag(steal)
         set(value) {
@@ -90,19 +90,19 @@ class MutDec() : C256(), Comparable<MutDec> {
         if (digitLen != calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
             return false;
         when (type) {
-            STEAL_TYPE_ZER -> {
+            STEAL_TYP_ZER -> {
                 if (bitLen > 0)
                     return false
                 if (qExp >= NON_FINITE_INF)
                     return false
             }
-            STEAL_TYPE_FNZ -> {
+            STEAL_TYP_FNZ -> {
                 if (bitLen == 0)
                     return false
                 if (qExp >= NON_FINITE_INF)
                     return false
             }
-            STEAL_TYPE_INF -> {
+            STEAL_TYP_INF -> {
                 if (bitLen != 0)
                     return false
                 if (qExp != NON_FINITE_INF)
@@ -129,7 +129,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setZero(sign: Boolean): MutDec {
         c256SetZero()
-        this.type = STEAL_TYPE_ZER
+        this.type = STEAL_TYP_ZER
         this.qExp = 0
         this.sign = sign
         verify { validate() }
@@ -138,7 +138,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setZero(sign: Boolean = false, qExp: Int = 0, ctx: DecContext): MutDec {
         c256SetZero()
-        this.type = STEAL_TYPE_ZER
+        this.type = STEAL_TYP_ZER
         this.qExp = max(min(qExp, Q_MAX), Q_TINY)
         this.sign = sign
         verify { validate() }
@@ -147,7 +147,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setOne(sign: Boolean = false): MutDec {
         c256SetOne()
-        this.type = STEAL_TYPE_FNZ
+        this.type = STEAL_TYP_FNZ
         this.qExp = 0
         this.sign = sign
         verify { validate() }
@@ -258,7 +258,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         //  Changing the coefficient to one would make negation slightly
         //  easier, but isn't worth doing
         this.c256SetZero()
-        this.type = STEAL_TYPE_INF
+        this.type = STEAL_TYP_INF
         this.qExp = NON_FINITE_INF
         this.sign = sign
         verify { validate() }
@@ -268,7 +268,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun set(n: Int): MutDec = set(n.toLong())
 
     fun set(l: Long): MutDec {
-        this.type = if (l == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+        this.type = if (l == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
         this.qExp = 0
         this.sign = l < 0
         val mask = l shr 63
@@ -279,7 +279,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setUnsigned(ul: Long): MutDec {
-        this.type = if (ul == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+        this.type = if (ul == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
         this.qExp = 0
         this.sign = false
         c256Set64(ul)
@@ -288,7 +288,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun set(l: Long, qExp: Int, ctx: DecContext): MutDec {
-        this.type = if (l == 0L) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+        this.type = if (l == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
         this.qExp = capExponentRange(qExp)
         this.sign = l < 0
         val mask = l shr 63
@@ -338,7 +338,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val xSteal = x.steal
         this.dw1 = x.dw1
         this.dw0 = x.dw0
-        this.type = xSteal and (if (x.isNaN()) STEAL_NAN_MASK else STEAL_TYPE_MASK)
+        this.type = stealTyp(xSteal)
         this.bitLen = stealBitLen(xSteal)
         this.digitLen = stealDigitLen(xSteal)
         this.qExp = stealQexp(xSteal)
@@ -368,7 +368,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setMaxFiniteMagnitude(ctx: DecContext): MutDec {
-        type = STEAL_TYPE_FNZ
+        type = STEAL_TYP_FNZ
         qExp = Q_MAX
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
@@ -384,14 +384,14 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setMinFiniteMagnitude(ctx: DecContext): MutDec {
-        type = STEAL_TYPE_FNZ
+        type = STEAL_TYP_FNZ
         qExp = Q_TINY
         super.c256SetOne()
         return this
     }
 
     fun setMinZeroMagnitude(ctx: DecContext): MutDec {
-        type = STEAL_TYPE_ZER
+        type = STEAL_TYP_ZER
         qExp = Q_TINY
         super.c256SetZero()
         return this
@@ -419,7 +419,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun isNegative() = sign
 
     fun isNumber() : Boolean {
-        return stealType(steal) != STEAL_TYPE_NAN
+        return stealTyp(steal) != STEAL_TYP_NAN
     }
 
     // IEEE754-2008 5.4.1
@@ -510,7 +510,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
         // integral and fractional digits
         val residue = c256SetScaleDownPow10(this, x, fracDigitLen, ctx.tmps.pentad1)
-        type = if (this.c256IsZero()) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+        type = if (this.c256IsZero()) STEAL_TYP_ZER else STEAL_TYP_FNZ
         qExp = 0
         sign = xSign
         return roundAndFinalize(residue, rounding, ctx)
@@ -541,15 +541,15 @@ class MutDec() : C256(), Comparable<MutDec> {
         val bitLen = bitLen
         val digitLen = digitLen
         val dw0 = dw0
-        val stealType = stealType(steal)
-        if (stealType != STEAL_TYPE_FNZ) when (stealType(steal)) {
-            STEAL_TYPE_ZER -> return 0L
-            STEAL_TYPE_INF -> {
+        val stealType = stealTyp(steal)
+        if (stealType != STEAL_TYP_FNZ) when (stealTyp(steal)) {
+            STEAL_TYP_ZER -> return 0L
+            STEAL_TYP_INF -> {
                 val ret = if (sign) Long.MIN_VALUE else Long.MAX_VALUE
                 ctx.signalInvalid(this)
                 return ret
             }
-            STEAL_TYPE_NAN -> {
+            STEAL_TYP_NAN -> {
                 val ret = Long.MIN_VALUE
                 ctx.signalInvalid(this)
                 return ret
@@ -645,7 +645,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         set(x)
         val xSign = x.sign
         when (type) {
-            STEAL_TYPE_FNZ -> {
+            STEAL_TYP_FNZ -> {
                 if (sign == isUp) {
                     mutateNextTowardZero(ctx)
                 } else {
@@ -655,11 +655,11 @@ class MutDec() : C256(), Comparable<MutDec> {
                         setInfinite(sign = xSign)
                 }
             }
-            STEAL_TYPE_ZER -> {
+            STEAL_TYP_ZER -> {
                 setMinFiniteMagnitude(ctx)
                 sign = !isUp
             }
-            STEAL_TYPE_INF -> {
+            STEAL_TYP_INF -> {
                 if (xSign == isUp)
                     setMaxFiniteMagnitude(ctx)
             }
@@ -696,7 +696,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
         c256MutateDecrement()
         if (c256IsZero())
-            type = STEAL_TYPE_ZER
+            type = STEAL_TYP_ZER
     }
 
     fun minNum(x: MutDec, y: MutDec, ctx: DecContext) = minNum_helper(x, y, 0, ctx)
@@ -765,7 +765,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     return setZero(x.sign, qY, ctx)
                 // Scale down by delta positions
                 val residue = c256SetScaleDownPow10(this, x, delta, ctx.tmps.pentad1)
-                type = if (this.bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+                type = if (this.bitLen == 0) STEAL_TYP_ZER else STEAL_TYP_FNZ
                 qExp = qY
                 sign = x.sign
                 if (residue != Residue.EXACT)
@@ -855,7 +855,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     val divPow10 = min(9, remaining)
                     val divisor = pow10_64(divPow10)
                     m = DivDirect.divModX32(t, t0, divisor)
-                    t.type = if (t.bitLen == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+                    t.type = if (t.bitLen == 0) STEAL_TYP_ZER else STEAL_TYP_FNZ
                     if (m != 0L)
                         break
                     t0 = t
@@ -872,7 +872,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 if (ctzd == 0)
                     return set(x)
                 c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
-                type = STEAL_TYPE_FNZ
+                type = STEAL_TYP_FNZ
                 qExp = qX + ctzd
                 sign = x.sign
                 return this
@@ -985,7 +985,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 this.setFma(n, y, x, truncCtx)
 
                 if (this.c256IsZero()) {
-                    this.type = STEAL_TYPE_ZER
+                    this.type = STEAL_TYP_ZER
                     this.qExp = min(qX, qY)
                     this.sign = xSign
                 }

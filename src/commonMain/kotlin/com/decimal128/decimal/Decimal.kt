@@ -4,7 +4,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Ieee754Class.*
-import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
@@ -306,9 +305,9 @@ class Decimal private constructor(
         fun from(mutDec: MutDec, ctx: DecContext = DecContext.current()): Decimal {
             require(mutDec.digitLen <= ctx.precision)
             return when (mutDec.type) {
-                STEAL_TYPE_FNZ -> decimalFNZ(mutDec.signBit, mutDec.qExp, mutDec.dw1, mutDec.dw0)
-                STEAL_TYPE_ZER -> zero(mutDec.sign, mutDec.qExp)
-                STEAL_TYPE_INF -> infinity(mutDec.sign)
+                STEAL_TYP_FNZ -> decimalFNZ(mutDec.signBit, mutDec.qExp, mutDec.dw1, mutDec.dw0)
+                STEAL_TYP_ZER -> zero(mutDec.sign, mutDec.qExp)
+                STEAL_TYP_INF -> infinity(mutDec.sign)
                 else -> NaN(mutDec.sign, mutDec.isSignaling(), mutDec.dw1, mutDec.dw0)
             }
         }
@@ -477,18 +476,18 @@ class Decimal private constructor(
     fun ieeeClass(ctx: DecContext): Ieee754Class {
         val steal = steal
         val sign = stealSignFlag(steal)
-        val type = stealType(steal)
+        val type = stealTyp(steal)
         return when (type) {
-            STEAL_TYPE_FNZ -> {
+            STEAL_TYP_FNZ -> {
                 if (stealEexp(steal) < ctx.decFormat.eMin) {
                     if (sign) negativeSubnormal else positiveSubnormal
                 }
                 if (sign) negativeNormal else positiveNormal
             }
-            STEAL_TYPE_INF -> {
+            STEAL_TYP_INF -> {
                 if (sign) negativeInfinity else positiveInfinity
             }
-            STEAL_TYPE_ZER -> {
+            STEAL_TYP_ZER -> {
                 if (sign) negativeZero else positiveZero
             }
             else -> {

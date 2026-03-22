@@ -69,7 +69,7 @@ fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
         qBd == 100000 -> this.setNaN(isSignaling = false, sign = sign, 0L, 0L)
         qBd == 100001 -> this.setNaN(isSignaling = true, sign = sign, 0L, 0L)
         else -> {
-            this.type = if (bd.compareTo(BigDecimal.ZERO) == 0) STEAL_TYPE_ZER else STEAL_TYPE_FNZ
+            this.type = if (bd.compareTo(BigDecimal.ZERO) == 0) STEAL_TYP_ZER else STEAL_TYP_FNZ
             this.qExp = capExponentRange(qBd)
             this.sign = sign
             this.u256Set(bd.abs().unscaledValue())

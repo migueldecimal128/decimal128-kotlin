@@ -8,7 +8,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     val binopSignature = binopSignatureOf(x.type, y.type)
     if (binopSignature == FNZ_FNZ) {
         c256SetMul(z, x, y, ctx.tmps.pentad1)
-        z.type = STEAL_TYPE_FNZ
+        z.type = STEAL_TYP_FNZ
         z.qExp = productQExp
         z.sign = productSign
         z.finalize(ctx)
@@ -29,24 +29,24 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
 internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val type = x.type
     val qExp = x.qExp shl 1
-    if (type == STEAL_TYPE_FNZ) {
+    if (type == STEAL_TYP_FNZ) {
         c256SetSqr(z, x, ctx.tmps.pentad1)
-        z.type = STEAL_TYPE_FNZ
+        z.type = STEAL_TYP_FNZ
         z.qExp = qExp
         z.sign = false
         return z.finalize(ctx)
     }
-    if (type == STEAL_TYPE_ZER)
+    if (type == STEAL_TYP_ZER)
         return z.setZero(false, qExp, ctx)
-    if (type == STEAL_TYPE_INF)
+    if (type == STEAL_TYP_INF)
         return z.setInfinite(false)
     return z.setNaN(x, ctx)
 }
 
 internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val qX = x.qExp
-    when (stealType(x.type)) {
-        STEAL_TYPE_FNZ -> {
+    when (stealTyp(x.type)) {
+        STEAL_TYP_FNZ -> {
             if (! x.sign) {
                 val residue = MagnitudeSqrt.magSqrt(z, x, ctx.tmps.pentad1)
                 z.sign = false
@@ -55,14 +55,14 @@ internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
                 ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
             }
         }
-        STEAL_TYPE_ZER -> {
+        STEAL_TYP_ZER -> {
             // IEEE754-2019 6.3 p.50
             // Except that squareRoot(−0) shall be −0,
             // every numeric squareRoot result shall have a positive sign.
             z.setZero(false)
             z.qExp = qX shr 1
         }
-        STEAL_TYPE_INF -> {
+        STEAL_TYP_INF -> {
             if (! x.sign) {
                 z.setInfinite(false)
             } else {

@@ -57,7 +57,7 @@ object MagnitudeDiv {
                 ++qZ
             }
         }
-        z.type = STEAL_TYPE_FNZ
+        z.type = STEAL_TYP_FNZ
         z.qExp = qZ
         z.sign = sign
         return residue

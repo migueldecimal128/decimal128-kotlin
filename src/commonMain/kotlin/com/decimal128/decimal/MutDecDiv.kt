@@ -63,13 +63,13 @@ internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): 
 
 internal fun mutDecReciprocalImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val quotientSign = x.sign
-    when (stealType(x.type)) {
-        STEAL_TYPE_FNZ -> {
+    when (stealTyp(x.type)) {
+        STEAL_TYP_FNZ -> {
             val residue = MagnitudeInv.magInv(z, quotientSign, x, ctx)
             z.roundAndFinalize(residue, ctx)
         }
-        STEAL_TYPE_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
-        STEAL_TYPE_INF -> z.setZero(quotientSign)
+        STEAL_TYP_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
+        STEAL_TYP_INF -> z.setZero(quotientSign)
         else -> z.setNaNOperand(x, ctx)
     }
     return z

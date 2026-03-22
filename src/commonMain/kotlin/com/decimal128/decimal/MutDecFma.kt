@@ -1,7 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.MagnitudeDiv.magDivFnzFnz
-import kotlin.math.max
 import kotlin.math.min
 
 internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
@@ -33,7 +31,7 @@ private fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
     // multiply without roundAndFinalize .. remains exact
     c256SetMul(z, x, y, ctx.tmps.pentad1)
     verify { z.bitLen != 0 }
-    z.type = STEAL_TYPE_FNZ
+    z.type = STEAL_TYP_FNZ
     z.qExp = x.qExp + y.qExp
     z.sign = x.sign xor y.sign
     // roundAndFinalize takes place here in z.setAdd
