@@ -889,7 +889,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun setRemainderNear(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // avoid aliasing issues
         val yT = if (this !== y) y else ctx.tmps.mdecDiv.set(y)
-        val truncIsOdd: Boolean = setRemTruncImpl(x, yT, ctx)
+        val truncIsOdd: Boolean = mutDecSetRemTruncImpl(this, x, yT, ctx)
         val tmps = ctx.tmps
         if (!isZero() && isFinite()) {
             val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
@@ -906,57 +906,9 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setRemainderTruncate(x: MutDec, y: MutDec, env: DecContext): MutDec {
-        setRemTruncImpl(x, y, env)
+        mutDecSetRemTruncImpl(this, x, y, env)
         return this
     }
-
-    fun setRemTruncImpl(x: MutDec, y: MutDec, ctx: DecContext): Boolean {
-        val qX = x.qExp
-        val qY = y.qExp
-        var quotientIsOdd = false
-        // FIXME - dispatching on qExp
-        when {
-            qX < NON_FINITE_INF && qY < NON_FINITE_INF && !y.isZero() -> {
-                // Compute n = nearest integer to x/y (ties to even)
-                // setRemainder is an EXACT operation, so we will use a temp
-                // environment so that INEXACT flag/trap does not get signaled.
-                // use INTERNAL_TMP_ENV so that flag-setting
-                val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
-                val n = ctx.tmps.mdecArg1.setDiv(x, y, truncCtx)
-                if (n.qExp < 0)
-                    n.setRoundToIntegralExact(n, truncCtx)
-
-                // save xSign ... in case of aliasing this === x
-                val xSign = x.sign
-                // Compute r = x - n*y
-                // (-n) * y + x
-                n.sign = !n.sign // negate n
-                quotientIsOdd = (n.dw0.toInt() and 1) != 0
-                this.setFma(n, y, x, truncCtx)
-
-                if (this.c256IsZero()) {
-                    this.type = STEAL_TYP_ZER
-                    this.qExp = min(qX, qY)
-                    this.sign = xSign
-                }
-            }
-            qX >= NON_FINITE_QNAN || qY >= NON_FINITE_QNAN -> {
-                setNaNOperand(x, y, ctx)
-                return false
-            }
-            qX == NON_FINITE_INF || y.isZero() -> {
-                ctx.signalInvalid(setNaN())
-                return false
-            }
-            else -> { // qY == NON_FINITE_INF ->
-                verify { qY == NON_FINITE_INF }
-                set(x)
-            }
-        }
-        return quotientIsOdd
-    }
-
-
 
     fun compareQuiet754(other: MutDec, env: DecContext): Compare754Result =
         compare754(other, false, env)

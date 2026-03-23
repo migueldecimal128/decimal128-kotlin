@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class TestDecBasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
@@ -146,6 +146,7 @@ class TestDecBasicArithmetic {
         ::d128RemTruncImpl,
         verbose = verbose,
         cases = arrayOf(
+            "dqrem240 remainder  1E+2  1.00  ->  0.00",
             "dqrem145 remainder   0.5  2.01  ->  0.50",
             "dqrem131 remainder  0     -1   ->  0",
             "dqrem107 remainder  0.0001  0   -> NaN Invalid_operation",

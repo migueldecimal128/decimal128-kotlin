@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import kotlin.math.min
 
 internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
     val binopSignature = binopSignatureOf(x.type, y.type)
@@ -74,3 +75,48 @@ internal fun mutDecReciprocalImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec
     return z
 }
 
+fun mutDecSetRemTruncImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean {
+    val binopSignature = binopSignatureOf(x.type, y.type)
+    if (binopSignature == FNZ_FNZ) {
+        return setRemTruncFnzFnz(z, x, y, ctx)
+    } else {
+        when (binopSignature) {
+            ZER_FNZ -> z.setZero(x.sign, min(x.qExp, y.qExp))
+
+            FNZ_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_BY_ZERO_IN_REMAINDER_OP)
+            ZER_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
+
+            INF_ZER,
+            INF_FNZ,
+            INF_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.INF_NUMERATOR_IN_REMAINDER_OP)
+            ZER_INF,
+            FNZ_INF -> z.set(x)
+            else -> z.setNaNOperand(x, y, ctx)
+        }
+    }
+    return false
+}
+
+fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean {
+    verify { x.bitLen != 0 && y.bitLen != 0 }
+    // Compute n = nearest integer to x/y (ties to even)
+    // setRemainder is an EXACT operation, so we will use a temp
+    // environment so that INEXACT flag/trap does not get signaled.
+    // use INTERNAL_TMP_ENV so that flag-setting
+    val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
+    val n = ctx.tmps.mdecArg1.setDiv(x, y, truncCtx)
+    if (n.qExp < 0)
+        n.setRoundToIntegralExact(n, truncCtx)
+
+    // save xSign ... in case of aliasing this === x
+    val xSign = x.sign
+    // Compute r = x - n*y
+    // (-n) * y + x
+    n.sign = !n.sign // negate n
+    val quotientIsOdd = (n.dw0.toInt() and 1) != 0
+    z.setFma(n, y, x, truncCtx)
+    if (z.isZero())
+        z.setZero(x.sign, min(x.qExp, y.qExp))
+
+    return quotientIsOdd
+}
