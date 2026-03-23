@@ -84,8 +84,13 @@ internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, rounding: DecRo
     }
 }
 
-internal fun MutDec.roundAndFinalizeZero(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
+internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
+                                         inboundResidue: Residue, rounding: DecRounding,
+                                         ctx: DecContext): MutDec {
     verify { digitLen == 0 }
+    this.sign = sign
+    this.type = STEAL_TYP_ZER
+    this.qExp = max(min(qExp, Q_MAX), Q_TINY) // clamped
 
     // If we had a non-zero residue, the result is inexact
     // This can happen in quantize operations where a non-zero value rounds to zero
@@ -94,20 +99,17 @@ internal fun MutDec.roundAndFinalizeZero(inboundResidue: Residue, rounding: DecR
         val roundUp = inboundResidue.ulpRoundUp(rounding.negate(sign), 0L)
         if (roundUp) {
             c256SetOne()
-            return when {
-                qExp > Q_MAX -> finalizeOverflow(sign, rounding, ctx)
-                qExp < Q_TINY -> finalizeUnderflowRegion(sign, qExp, inboundResidue, rounding, ctx)
-                else -> ctx.signalInexact(this)
+            this.type = STEAL_TYP_FNZ
+            when {
+                qExp > Q_MAX -> return finalizeOverflow(sign, rounding, ctx)
+                qExp < Q_TINY -> return finalizeUnderflowRegion(sign, qExp, inboundResidue, rounding, ctx)
             }
         }
         // Rounding confirms zero, but it's still inexact
-        // Now clamp the exponent
-        qExp = max(min(qExp, Q_MAX), Q_TINY)
         return ctx.signalInexact(this)
     }
 
-    // Exact zero - just clamp exponent
-    qExp = max(min(qExp, Q_MAX), Q_TINY)
+    // Exact zero
     return this
 }
 

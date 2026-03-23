@@ -772,7 +772,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 if (this.bitLen == 0) {
                     type = STEAL_TYP_ZER
                     if (residue != Residue.EXACT)
-                        roundAndFinalizeZero(residue, ctx.decRounding, ctx)
+                        roundAndFinalizeZero(sign, qExp, residue, ctx.decRounding, ctx)
                     return this
                 }
                 type = STEAL_TYP_FNZ
