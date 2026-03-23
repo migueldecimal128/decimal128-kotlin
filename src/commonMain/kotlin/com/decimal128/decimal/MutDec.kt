@@ -795,11 +795,12 @@ class MutDec() : C256(), Comparable<MutDec> {
     // IEEE754-2008 5.3.3
     fun setScaleB(x: MutDec, pow10: Int, ctx: DecContext): MutDec {
         set(x)
-        // FIXME -- dispatching on qExp
+        val xSign = x.sign
         when {
             isFinite() -> {
-                val p10 = min(max(pow10, -99999), 99999)
-                return finalizeFinite(sign, capExponentRange(qExp + p10), ctx)
+                val p10 = min(max(pow10, -100_000), 100_000)
+                val target = x.qExp + p10
+                return if (x.bitLen == 0) setZero(xSign, target) else finalizeFnz(xSign, target, ctx)
             }
             isInfinite() -> {}
             else -> setNaNOperand(x, ctx)

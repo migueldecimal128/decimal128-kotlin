@@ -8,7 +8,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     val binopSignature = binopSignatureOf(x.type, y.type)
     if (binopSignature == FNZ_FNZ) {
         c256SetMul(z, x, y, ctx.tmps.pentad1)
-        z.finalizeFinite(productSign, productQExp, ctx)
+        z.finalizeFnz(productSign, productQExp, ctx)
     } else when (binopSignature) {
         FNZ_ZER,
         ZER_FNZ,
@@ -28,7 +28,7 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val qExp = x.qExp shl 1
     if (type == STEAL_TYP_FNZ) {
         c256SetSqr(z, x, ctx.tmps.pentad1)
-        return z.finalizeFinite(false, qExp, ctx)
+        return z.finalizeFnz(false, qExp, ctx)
     }
     if (type == STEAL_TYP_ZER)
         return z.setZero(qExp = qExp)

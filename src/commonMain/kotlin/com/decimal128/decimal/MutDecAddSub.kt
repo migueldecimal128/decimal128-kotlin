@@ -75,7 +75,7 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
             }
         }
     }
-    return z.finalizeFinite(zSign, xQ, ctx)
+    return z.finalizeFnz(zSign, xQ, ctx)
 }
 
 private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
@@ -128,5 +128,5 @@ internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: I
         c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
         zQ -= shiftLeft
     }
-    return z.finalizeFinite(xSign, zQ, ctx)
+    return z.finalizeFnz(xSign, zQ, ctx)
 }

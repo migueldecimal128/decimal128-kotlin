@@ -4,14 +4,28 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun MutDec.finalizeFinite(sign: Boolean, inboundQExp: Int, ctx: DecContext) =
-    roundAndFinalizeFinite(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
+internal fun MutDec.finalizeFnz(sign: Boolean, inboundQExp: Int, ctx: DecContext): MutDec {
+    verify { bitLen != 0 }
+    val precision = ctx.precision
+    // Step 1: Fast path: already in valid decimal128 range
+    if (digitLen <= precision &&
+        inboundQExp >= Q_TINY && inboundQExp <= Q_MAX) {
+        this.sign = sign
+        this.type = STEAL_TYP_FNZ
+        this.qExp = inboundQExp
+        return this
+    }
+    return roundAndFinalizeFinite(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
+}
+
 
 internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int, inboundResidue: Residue, ctx: DecContext) =
     roundAndFinalizeFinite(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
 
-internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext) =
-    roundAndFinalizeFinite(sign, qExp, inboundResidue, ctx.decRounding, ctx)
+internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext): MutDec{
+    verify { qExp >= -8000 && qExp <= 8000 }
+    return roundAndFinalizeFinite(sign, qExp, inboundResidue, ctx.decRounding, ctx)
+}
 
 /**
  * Main entry point - implements the DAG structure:

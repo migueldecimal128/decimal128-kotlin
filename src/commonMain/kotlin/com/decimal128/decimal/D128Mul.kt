@@ -54,7 +54,7 @@ private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val n = tmps.mdecBridge2.set(y)
     val p = tmps.mdecResult
     c256SetMul(p, m, n, tmps.pentad1)
-    p.finalizeFinite(
+    p.finalizeFnz(
         stealSignFlag(xSteal) xor stealSignFlag(ySteal),
         stealQexp(xSteal) + stealQexp(ySteal), ctx)
     val d = Decimal.from(p)
