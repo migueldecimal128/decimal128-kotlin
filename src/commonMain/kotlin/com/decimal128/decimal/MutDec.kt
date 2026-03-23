@@ -740,11 +740,11 @@ class MutDec() : C256(), Comparable<MutDec> {
         val xSign = x.sign
         val qX = x.qExp
         val qY = y.qExp
-        if (qX > NON_FINITE_INF || qY > NON_FINITE_INF)
+        if (x.isNaN() || y.isNaN())
             return setNaNOperand(x, y, ctx)
         // Handle infinity cases
-        if (qX == NON_FINITE_INF || qY == NON_FINITE_INF) {
-            if (qX == NON_FINITE_INF && qY == NON_FINITE_INF)
+        if (x.isInfinite() || y.isInfinite()) {
+            if (x.isInfinite() && y.isInfinite())
                 return set(x)
             this.setNaN()
             ctx.signalInvalid(this)
@@ -811,17 +811,16 @@ class MutDec() : C256(), Comparable<MutDec> {
     // IEEE754-2008 5.3.3
     fun setLogB(x: MutDec, env: DecContext): MutDec {
         val qX = x.qExp
-        // FIXME -- dispatching on qExp
-        when {
-            x.isZero() -> {
+        when (x.type) {
+            STEAL_TYP_ZER -> {
                 setInfinite(sign = true)
                 env.signalDivByZero(this)
             }
-            qX < NON_FINITE_INF -> {
+            STEAL_TYP_FNZ -> {
                 val logB = qX + x.digitLen - 1
                 set(logB)
             }
-            qX == NON_FINITE_INF ->
+            STEAL_TYP_INF ->
                 setInfinite()
             else ->
                 setNaNOperand(x, env)
@@ -833,11 +832,12 @@ class MutDec() : C256(), Comparable<MutDec> {
         setStripTrailingZeros(x, env, maxToStrip = 99)
 
     fun setStripTrailingZeros(x: MutDec, ctx: DecContext, maxToStrip: Int): MutDec {
-        val qX = x.qExp
+        val xSign = x.sign
+        val xQ = x.qExp
         when {
-            x.isZero() -> return setZero(x.sign)
+            x.isZero() -> return setZero(xSign)
             maxToStrip <= 0 -> return set(x)
-            qX < NON_FINITE_INF -> {
+            x.isFinite() -> {
                 var ctzd = 0
                 var remaining = maxToStrip
                 val tmps = ctx.tmps
@@ -855,18 +855,18 @@ class MutDec() : C256(), Comparable<MutDec> {
                     ctzd += divPow10
                     remaining -= divPow10
                     if (remaining == 0) {
-                        t0.qExp = qX + maxToStrip
+                        t0.qExp = xQ + maxToStrip
                         return set(t0)
                     }
                 }
                 ctzd += min(countTrailingZeroDigits32(m.toInt()), remaining)
                 // cap when qExp gets clamped
-                ctzd = min(ctzd, Q_MAX - qX)
+                ctzd = min(ctzd, Q_MAX - xQ)
                 if (ctzd == 0)
                     return set(x)
                 c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
                 type = STEAL_TYP_FNZ
-                qExp = qX + ctzd
+                qExp = xQ + ctzd
                 sign = x.sign
                 return this
             }
