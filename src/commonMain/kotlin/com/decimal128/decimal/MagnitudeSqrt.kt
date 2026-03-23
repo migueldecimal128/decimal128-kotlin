@@ -302,5 +302,5 @@ fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext): MutDec {
             ++qZ
         }
     }
-    return sqrt.roundAndFinalizeFinite(false, qZ, residue2, ctx)
+    return sqrt.roundAndFinalizeFnz(false, qZ, residue2, ctx)
 }

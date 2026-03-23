@@ -5,7 +5,7 @@ import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     val decPrefs = DecPrefs().copy(propagatePreferSnan = false)
     val decContext = DecContext.decimal128Kotlin().with(decPrefs)

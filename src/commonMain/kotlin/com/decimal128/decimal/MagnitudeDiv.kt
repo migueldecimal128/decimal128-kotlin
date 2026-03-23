@@ -118,5 +118,5 @@ fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecCont
             ++qZ
         }
     }
-    return z.roundAndFinalizeFinite(sign, qZ, residue, ctx)
+    return z.roundAndFinalizeFnz(sign, qZ, residue, ctx)
 }

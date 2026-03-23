@@ -407,7 +407,7 @@ object DecimalParsePrint {
         // if guardDigit > 5 then it is a sticky bit.
         val stickyBit = (-stickyBits or (5 - guardDigit)) ushr 31
         val residue = Residue.fromRoundBitStickBit(roundBit, stickyBit)
-        x.roundAndFinalizeFinite(sign, qExp, residue, ctx)
+        x.roundAndFinalizeFnz(sign, qExp, residue, ctx)
         if (hasDiscardedNonZero)
             ctx.signalInexact(x)
         return true

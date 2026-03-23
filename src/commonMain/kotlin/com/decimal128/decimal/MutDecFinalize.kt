@@ -15,18 +15,30 @@ internal fun MutDec.finalizeFnz(sign: Boolean, inboundQExp: Int, ctx: DecContext
         this.qExp = inboundQExp
         return this
     }
-    return roundAndFinalizeFinite(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
+    return roundAndFinalizeFnz(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
 }
 
 
-internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int, inboundResidue: Residue, ctx: DecContext) =
-    roundAndFinalizeFinite(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
+internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int, inboundResidue: Residue, ctx: DecContext): MutDec {
+    verify { bitLen != 0 }
+    return roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
+}
 
 internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext): MutDec{
+    verify { bitLen != 0 }
     verify { qExp >= -8000 && qExp <= 8000 }
-    return roundAndFinalizeFinite(sign, qExp, inboundResidue, ctx.decRounding, ctx)
+    return roundAndFinalizeFnz(sign, qExp, inboundResidue, ctx.decRounding, ctx)
 }
 
+internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
+                                           inboundResidue: Residue, rounding: DecRounding,
+                                           ctx: DecContext): MutDec {
+    return if (bitLen != 0)
+        roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, rounding, ctx)
+    else
+        roundAndFinalizeZero(sign, inboundQExp, inboundResidue, rounding, ctx)
+
+}
 /**
  * Main entry point - implements the DAG structure:
  * 1. Normalize coefficient length (accumulate residue)
@@ -35,11 +47,10 @@ internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext
  * 4. Check final bounds
  * 5. Signal once with all flags
  */
-internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
-                                           inboundResidue: Residue, rounding: DecRounding,
-                                           ctx: DecContext): MutDec {
-    if (bitLen == 0)
-        return roundAndFinalizeZero(sign, inboundQExp, inboundResidue, rounding, ctx)
+internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
+                                        inboundResidue: Residue, rounding: DecRounding,
+                                        ctx: DecContext): MutDec {
+    verify { bitLen != 0 }
     this.sign = sign
     this.type = STEAL_TYP_FNZ
     val precision = ctx.precision

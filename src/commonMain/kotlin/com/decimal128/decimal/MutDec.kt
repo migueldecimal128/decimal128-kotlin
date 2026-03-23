@@ -512,7 +512,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
         // integral and fractional digits
         val residue = c256SetScaleDownPow10(this, x, fracDigitLen, ctx.tmps.pentad1)
-        return roundAndFinalizeFinite(xSign, 0, residue, rounding, ctx)
+        return roundAndFinalizeFnz(xSign, 0, residue, rounding, ctx)
     }
 
     fun setRoundToIntegralTiesToEven(x: MutDec, ctx: DecContext) =
