@@ -6,7 +6,7 @@ internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     val binopSignature = binopSignatureOf(x.type, y.type)
     val quotientSign = x.sign xor y.sign
     if (binopSignature == FNZ_FNZ)
-        z.roundAndFinalizeFnz(MagnitudeDiv.magDivFnzFnz(z, quotientSign, x, y, ctx), ctx)
+        return mutDecDivFnzFnz(z, quotientSign, x, y, ctx)
     else when (binopSignature) {
         ZER_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
         ZER_FNZ -> z.setZero(quotientSign, x.qExp - y.qExp)
@@ -65,8 +65,7 @@ internal fun mutDecReciprocalImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec
     val quotientSign = x.sign
     when (stealTyp(x.type)) {
         STEAL_TYP_FNZ -> {
-            val residue = MagnitudeInv.magInv(z, quotientSign, x, ctx)
-            z.roundAndFinalizeFnz(residue, ctx)
+            return mutDecInv(z, quotientSign, x, ctx)
         }
         STEAL_TYP_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
         STEAL_TYP_INF -> z.setZero(quotientSign)

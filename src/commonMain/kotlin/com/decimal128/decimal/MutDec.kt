@@ -9,7 +9,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
-import com.decimal128.decimal.roundAndFinalizeFnz
 import kotlin.math.max
 import kotlin.math.min
 

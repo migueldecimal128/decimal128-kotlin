@@ -4,9 +4,11 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun MutDec.finalizeFinite(sign: Boolean, inboundQExp: Int, ctx: DecContext) = roundAndFinalizeFinite(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
+internal fun MutDec.finalizeFinite(sign: Boolean, inboundQExp: Int, ctx: DecContext) =
+    roundAndFinalizeFinite(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
 
-private fun MutDec.finalizeFnz(ctx: DecContext) = roundAndFinalizeFinite(sign, qExp, Residue.EXACT, ctx.decRounding, ctx)
+internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int, inboundResidue: Residue, ctx: DecContext) =
+    roundAndFinalizeFinite(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
 
 internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext) =
     roundAndFinalizeFinite(sign, qExp, inboundResidue, ctx.decRounding, ctx)

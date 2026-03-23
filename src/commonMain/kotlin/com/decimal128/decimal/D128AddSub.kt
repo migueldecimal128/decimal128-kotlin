@@ -246,7 +246,7 @@ private fun fullWidthSub(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext)
     val arg2 = decTmps.mdecBridge2.set(s)
     val mdecDiff = decTmps.mdecResult
     val residue = MagnitudeAddSub.magScaledSub(mdecDiff, sign, arg1, arg2, ctx)
-    mdecDiff.roundAndFinalizeFnz(residue, ctx)
+    mdecDiff.roundAndFinalizeFinite(sign, mdecDiff.qExp, residue, ctx)
     val diff = Decimal.from(mdecDiff)
     return diff
 }

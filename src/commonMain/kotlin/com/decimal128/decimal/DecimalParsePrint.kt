@@ -395,20 +395,19 @@ object DecimalParsePrint {
             x.setZero(sign, qExp)
             return true
         }
-        x.sign = sign
-        x.type = STEAL_TYP_FNZ
-        x.qExp = qExp
-
         val hasDiscardedNonZero = guardDigit or stickyBits != 0
 
-        // FIXME ... make sure that this limiting range and properly scaling subnormal values
-        if (!hasDiscardedNonZero && (qExp >= Q_TINY) && (qExp <= Q_MAX))
+        if (!hasDiscardedNonZero && (qExp >= Q_TINY) && (qExp <= Q_MAX)) {
+            x.sign = sign
+            x.type = STEAL_TYP_FNZ
+            x.qExp = qExp
             return true
+        }
         val roundBit = if (guardDigit < 5) 0 else 1
         // if guardDigit > 5 then it is a sticky bit.
         val stickyBit = (-stickyBits or (5 - guardDigit)) ushr 31
         val residue = Residue.fromRoundBitStickBit(roundBit, stickyBit)
-        x.roundAndFinalizeFnz(residue, ctx)
+        x.roundAndFinalizeFinite(sign, qExp, residue, ctx)
         if (hasDiscardedNonZero)
             ctx.signalInexact(x)
         return true

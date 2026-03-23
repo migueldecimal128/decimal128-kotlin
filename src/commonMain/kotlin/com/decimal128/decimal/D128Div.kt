@@ -50,9 +50,8 @@ private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.tmps.mdecBridge1.set(x)
     val divisor = ctx.tmps.mdecBridge2.set(y)
     val quotient = ctx.tmps.mdecResult
-    val residue = MagnitudeDiv.magDivFnzFnz(quotient, x.sign xor y.sign, dividend, divisor, ctx)
-    quotient.roundAndFinalizeFnz(residue, ctx)
-    return Decimal.from(quotient, ctx)
+    val qSign = x.sign xor y.sign
+    return Decimal.from(mutDecDivFnzFnz(quotient, qSign, dividend, divisor, ctx), ctx)
 }
 
 internal fun divIntImpl(x: Decimal, y: Decimal): Decimal =
