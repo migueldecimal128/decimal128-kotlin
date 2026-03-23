@@ -41,10 +41,10 @@ private fun addFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecC
 
 private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.bitLen > 0 && y.bitLen > 0 }  // Optional: could remove in production
-    verify { x.qExp == y.qExp }
+    val xQ = x.qExp
+    verify { xQ == y.qExp }
     val xSign = x.sign
-    z.type = STEAL_TYP_FNZ
-    z.qExp = x.qExp
+    var zSign: Boolean
     // IEEE754-2019 6.3 The sign bit
     // When the sum of two operands with opposite signs
     // (or the difference of two operands with like signs) is
@@ -56,26 +56,26 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
     val pentad = ctx.tmps.pentad1
     if (xSign == ySign) {
         c256SetAddUnscaled(z, x, y, pentad)
-        z.sign = xSign
+        zSign = xSign
     } else {
         val cmp = c256UnscaledCompare(x, y)
         when {
             (cmp > 0) -> {
                 c256SetSubUnscaled(z, x, y)
-                z.sign = if (z.bitLen > 0) xSign else isRoundTowardNegative
+                zSign = if (z.bitLen > 0) xSign else isRoundTowardNegative
             }
 
             (cmp < 0) -> {
                 c256SetSubUnscaled(z, y, x)
-                z.sign = if (z.bitLen > 0) ySign else isRoundTowardNegative
+                zSign = if (z.bitLen > 0) ySign else isRoundTowardNegative
             }
 
             else -> {
-                return z.setZero(isRoundTowardNegative, x.qExp)
+                return z.setZero(isRoundTowardNegative, xQ)
             }
         }
     }
-    return z.finalizeFnz(ctx)
+    return z.finalizeFinite(zSign, xQ, ctx)
 }
 
 private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
@@ -118,17 +118,15 @@ private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecC
 }
 
 internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: Int, ctx: DecContext): MutDec {
-    val xQ = x.qExp
-    val delta = xQ - otherExp
+    var zQ = x.qExp
+    val delta = zQ - otherExp
     val headroom = max(0, ctx.precision - x.digitLen)
     if (delta <= 0 || headroom == 0) {
-        z.set(x)
+        z.c256Set(x)
     } else {
         val shiftLeft = min(headroom, delta)
         c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
-        z.type = STEAL_TYP_FNZ
-        z.qExp = xQ - shiftLeft
+        zQ -= shiftLeft
     }
-    z.sign = xSign
-    return z.finalizeFnz(ctx)
+    return z.finalizeFinite(xSign, zQ, ctx)
 }

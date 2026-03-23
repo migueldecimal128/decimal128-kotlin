@@ -71,11 +71,8 @@ fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
         bd.compareTo(BigDecimal.ZERO) == 0 ->
             this.setZero(sign, qBd) // always false since BigDecimal does not support -0.0
         else -> {
-            this.type = STEAL_TYP_FNZ
-            this.qExp = capExponentRange(qBd)
-            this.sign = sign
             this.u256Set(bd.abs().unscaledValue())
-            this.finalizeFnz(ctx)
+            this.finalizeFinite(sign, capExponentRange(qBd), ctx)
         }
     }
 }

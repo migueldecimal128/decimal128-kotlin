@@ -513,10 +513,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
         // integral and fractional digits
         val residue = c256SetScaleDownPow10(this, x, fracDigitLen, ctx.tmps.pentad1)
-        type = if (this.c256IsZero()) STEAL_TYP_ZER else STEAL_TYP_FNZ
-        qExp = 0
-        sign = xSign
-        return roundAndFinalizeFnz(residue, rounding, ctx)
+        return roundAndFinalizeFinite(xSign, 0, residue, rounding, ctx)
     }
 
     fun setRoundToIntegralTiesToEven(x: MutDec, ctx: DecContext) =
@@ -803,9 +800,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         when {
             isFinite() -> {
                 val p10 = min(max(pow10, -99999), 99999)
-                qExp = capExponentRange(qExp + p10)
-                if (qExp > Q_MAX || qExp < Q_TINY)
-                    return finalizeFnz(ctx)
+                return finalizeFinite(sign, capExponentRange(qExp + p10), ctx)
             }
             isInfinite() -> {}
             else -> setNaNOperand(x, ctx)

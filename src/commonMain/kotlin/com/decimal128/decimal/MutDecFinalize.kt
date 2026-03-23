@@ -4,85 +4,12 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun MutDec.finalizeFnz(ctx: DecContext) = roundAndFinalizeFnz(Residue.EXACT, ctx.decRounding, ctx)
+internal fun MutDec.finalizeFinite(sign: Boolean, inboundQExp: Int, ctx: DecContext) = roundAndFinalizeFinite(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
+
+private fun MutDec.finalizeFnz(ctx: DecContext) = roundAndFinalizeFinite(sign, qExp, Residue.EXACT, ctx.decRounding, ctx)
 
 internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext) =
-    roundAndFinalizeFnz(inboundResidue, ctx.decRounding, ctx)
-
-/**
- * Main entry point - implements the DAG structure:
- * 1. Normalize coefficient length (accumulate residue)
- * 2. Apply rounding (may increment coefficient)
- * 3. Handle rollover if needed
- * 4. Check final bounds
- * 5. Signal once with all flags
- */
-internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
-    val type = type
-    verify { type == STEAL_TYP_FNZ }
-    var localQExp = qExp
-    val precision = ctx.precision
-    // Step 1: Fast path: already in valid decimal128 range
-    if (stealIsFNZ(type) && inboundResidue == EXACT &&
-        digitLen <= precision &&
-        localQExp >= Q_TINY && localQExp <= Q_MAX) {
-        return this
-    }
-
-    // Step 4: Handle underflow
-    // Only divert if range truncation exceeds precision truncation,
-    // meaning the normal path can't bring qExp into range on its own
-    val rangeTruncationNeeded = Q_TINY - localQExp
-    val precisionTruncationNeeded = max(0, digitLen - precision)
-    if (rangeTruncationNeeded > precisionTruncationNeeded) {
-        return finalizeUnderflowRegion(sign, qExp, inboundResidue, rounding, ctx)
-    }
-
-    // Step 5: Normalize coefficient length to <= precision, accumulating residue
-    var totalResidue = inboundResidue
-    if (precisionTruncationNeeded > 0) {
-        val truncationResidue =
-            c256SetScaleDownPow10(this, this, precisionTruncationNeeded, ctx.tmps.pentad1)
-        localQExp += precisionTruncationNeeded
-        totalResidue = truncationResidue.merge(inboundResidue)
-        verify { digitLen == precision }
-    }
-
-    // Step 6: Apply rounding ... might increment coefficient
-    val applyRounding = totalResidue != EXACT
-    if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
-        // Step 6.1: increment
-        c256MutateIncrement()
-
-        // Step 6.2: Handle rollover if increment caused overflow to new digit
-        if (digitLen > precision) {
-            verify { digitLen == precision + 1 }
-            // Rolling over means the result is divisible by 10, so no residue
-            val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad1)
-            verify { rolloverResidue == EXACT }
-            ++localQExp
-            verify { digitLen == precision }
-        }
-    }
-
-    // Step 7: Check final bounds
-    // qExp >= qTiny is guaranteed by steps 3/4/5
-    // digitLen <= precision is guaranteed by steps 4/5
-    verify { localQExp >= Q_TINY }
-    verify { digitLen <= precision }
-    this.qExp = localQExp
-    return when {
-        localQExp > Q_MAX -> {
-            val qExcess = localQExp - Q_MAX
-            if (digitLen + qExcess <= precision)
-                finalizeClamping(sign, localQExp, ctx)
-            else
-                finalizeOverflow(sign, rounding, ctx)
-        }
-        applyRounding -> ctx.signalInexact(this)
-        else -> this
-    }
-}
+    roundAndFinalizeFinite(sign, qExp, inboundResidue, ctx.decRounding, ctx)
 
 /**
  * Main entry point - implements the DAG structure:
