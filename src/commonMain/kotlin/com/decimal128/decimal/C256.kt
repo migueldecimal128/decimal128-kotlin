@@ -28,12 +28,6 @@ C256Rep() {
         this.steal = stealWithPackedLengths(steal, packedLengths)
     }
 
-    internal fun setDigitLenBitLen(digitLen: Int, bitLen: Int) {
-        verify { digitLen in 0..76 }
-        verify { bitLen in 0..253 }
-        this.steal = stealWithDigitLenBitLen(steal, digitLen, bitLen)
-    }
-
     companion object {
         internal operator fun invoke(dw0: Long): C256 = C256().c256Set64(dw0)
         internal operator fun invoke(dw3: Long, dw2: Long, dw1: Long, dw0: Long): C256 =
