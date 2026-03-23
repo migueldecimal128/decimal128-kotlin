@@ -886,37 +886,6 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun setMaximumMagnitudeNumber(x: MutDec, y: MutDec, env: DecContext): MutDec =
         mutDecSetMinMaxImpl(this, x, y, MAX_MAG_NUM_OP, env)
 
-
-    fun setMinMaxImpl(x: MutDec, y: MutDec, op: Int, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        val qY = y.qExp
-        val qMax = max(qX, qY)
-        if (qMax <= NON_FINITE_INF) {
-            var cmp = if ((op and MAG_MASK) != 0)
-                x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1)
-            else
-                x.compareTo(y)
-            if (cmp == 0)
-                cmp = x.compareTotalOrderTo(y)
-            return set(if ((cmp >= 0) xor ((op and MAX_MASK) == 0)) x else y)
-        }
-        if ((op and NUM_MASK) != 0) {
-            if (qX <= NON_FINITE_INF) {
-                set(x)
-                if (qY == NON_FINITE_SNAN)
-                    ctx.signalInvalid(this)
-                return this
-            }
-            if (qY <= NON_FINITE_INF) {
-                set(y)
-                if (qX == NON_FINITE_SNAN)
-                    ctx.signalInvalid(this)
-                return this
-            }
-        }
-        return setNaNOperand(x, y, ctx)
-    }
-
     fun setRemainderNear(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // avoid aliasing issues
         val yT = if (this !== y) y else ctx.tmps.mdecDiv.set(y)
