@@ -367,8 +367,9 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    fun setMaxFiniteMagnitude(ctx: DecContext): MutDec {
+    fun setMaxFiniteMagnitude(sign: Boolean, ctx: DecContext): MutDec {
         type = STEAL_TYP_FNZ
+        this.sign = sign
         qExp = Q_MAX
         // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
         // 10000000000000000000000000000000000 (10**34)
@@ -383,15 +384,17 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    fun setMinFiniteMagnitude(ctx: DecContext): MutDec {
+    fun setMinFiniteMagnitude(sign: Boolean, ctx: DecContext): MutDec {
         type = STEAL_TYP_FNZ
+        this.sign = sign
         qExp = Q_TINY
         super.c256SetOne()
         return this
     }
 
-    fun setMinZeroMagnitude(ctx: DecContext): MutDec {
+    fun setMinZeroMagnitude(sign: Boolean, ctx: DecContext): MutDec {
         type = STEAL_TYP_ZER
+        this.sign = sign
         qExp = Q_TINY
         super.c256SetZero()
         return this
@@ -656,12 +659,11 @@ class MutDec() : C256(), Comparable<MutDec> {
                 }
             }
             STEAL_TYP_ZER -> {
-                setMinFiniteMagnitude(ctx)
-                sign = !isUp
+                setMinFiniteMagnitude(!isUp, ctx)
             }
             STEAL_TYP_INF -> {
                 if (xSign == isUp)
-                    setMaxFiniteMagnitude(ctx)
+                    setMaxFiniteMagnitude(xSign, ctx)
             }
             else -> {
                 if (isSignaling()) {

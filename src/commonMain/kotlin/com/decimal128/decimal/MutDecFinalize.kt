@@ -118,7 +118,7 @@ private fun MutDec.finalizeOverflow(rounding: DecRounding, ctx: DecContext): Mut
     if (rounding.overflowsToInfinity(sign)) {
         setInfinite(sign)
     } else {
-        setMaxFiniteMagnitude(ctx)
+        setMaxFiniteMagnitude(sign, ctx)
     }
     return ctx.signalInexactOverflow(this)
 }
@@ -138,8 +138,8 @@ private fun MutDec.finalizeUnderflowRegion(
             // Result is swamped - becomes zero or min finite
             // This is always inexact
             ctx.signalInexactUnderflow(
-                if (rounding.underflowsToZero(sign)) setMinZeroMagnitude(ctx)
-                else setMinFiniteMagnitude(ctx))
+                if (rounding.underflowsToZero(sign)) setMinZeroMagnitude(sign, ctx)
+                else setMinFiniteMagnitude(sign, ctx))
         }
         truncationNeeded == digitLen -> {
             // Exactly on the underflow boundary - round to decide
@@ -164,10 +164,10 @@ private fun MutDec.finalizeUnderflowBoundary(
     val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
 
     return if (roundUp) {
-        setMinFiniteMagnitude(ctx)
+        setMinFiniteMagnitude(sign, ctx)
         ctx.signalInexactUnderflow(this)
     } else {
-        setMinZeroMagnitude(ctx)
+        setMinZeroMagnitude(sign, ctx)
         ctx.signalInexactUnderflow(this)
     }
 }
