@@ -75,7 +75,7 @@ internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, rounding: DecRo
         localQExp > Q_MAX -> {
             val qExcess = localQExp - Q_MAX
             if (digitLen + qExcess <= precision)
-                finalizeClamping(ctx)
+                finalizeClamping(sign, localQExp, ctx)
             else
                 finalizeOverflow(sign, rounding, ctx)
         }
@@ -207,14 +207,12 @@ private fun MutDec.finalizeSubnormal(
     return ctx.signalInexactUnderflow(this)
 }
 
-private fun MutDec.finalizeClamping(ctx: DecContext): MutDec {
-    verify { type == STEAL_TYP_FNZ }
+private fun MutDec.finalizeClamping(sign: Boolean, qExp: Int, ctx: DecContext): MutDec {
     val qExcess = qExp - Q_MAX
     verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
-
     c256SetScaleUpPow10(this, this, qExcess, ctx.tmps.pentad1)
-    qExp -= qExcess
-    verify { qExp == Q_MAX }
-
+    this.sign = sign
+    this.type = STEAL_TYP_FNZ
+    this.qExp = Q_MAX
     return this
 }
