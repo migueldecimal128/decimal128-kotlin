@@ -23,12 +23,14 @@ internal class DecTmps {
     //
     val pentad1 = Pentad()
     val pentad2 = Pentad()
-    
+
+    val c256 = C256()
+
     val knuthD = IntArray(32)
 
     // printing must have dedicated tmps because toString()
     // will be called during debugging and we don't want to
     // overwrite another tmp when stepping through code.
-    val c256Print = C256()
-    val bytesPrint = ByteArray(MAX_DEC38_CHAR_LEN)
+    val c256PrintOnly = C256()
+    val bytesPrintOnly = ByteArray(MAX_DEC38_CHAR_LEN)
 }
