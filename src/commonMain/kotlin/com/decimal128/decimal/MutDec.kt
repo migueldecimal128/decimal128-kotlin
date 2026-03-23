@@ -59,18 +59,6 @@ class MutDec() : C256(), Comparable<MutDec> {
         fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
             decodeBigEndianDpd128(MutDec(), bigEndianBytes)
 
-        private const val MAX_MASK = 1
-        private const val MAG_MASK = 2
-        private const val NUM_MASK = 4
-
-        private const val MIN_OP = 0
-        private const val MAX_OP = MAX_MASK
-        private const val MIN_MAG_OP = MAG_MASK
-        private const val MAX_MAG_OP = MAX_MASK or MAG_MASK
-        private const val MIN_NUM_OP = NUM_MASK
-        private const val MAX_NUM_OP = MAX_MASK or NUM_MASK
-        private const val MIN_MAG_NUM_OP = MAG_MASK or NUM_MASK
-        private const val MAX_MAG_NUM_OP = MAX_MASK or MAG_MASK or NUM_MASK
 
         private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
         private const val S_U32_DIV_1E1 = 35
@@ -875,28 +863,28 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setMinimum(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MIN_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MIN_OP, env)
 
     fun setMinimumMagnitude(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MIN_MAG_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MIN_MAG_OP, env)
 
     fun setMinimumNumber(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MIN_NUM_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MIN_NUM_OP, env)
 
     fun setMinimumMagnitudeNumber(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MIN_MAG_NUM_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MIN_MAG_NUM_OP, env)
 
     fun setMaximum(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MAX_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MAX_OP, env)
 
     fun setMaximumMagnitude(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MAX_MAG_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MAX_MAG_OP, env)
 
     fun setMaximumNumber(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MAX_NUM_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MAX_NUM_OP, env)
 
     fun setMaximumMagnitudeNumber(x: MutDec, y: MutDec, env: DecContext): MutDec =
-        setMinMaxImpl(x, y, MAX_MAG_NUM_OP, env)
+        mutDecSetMinMaxImpl(this, x, y, MAX_MAG_NUM_OP, env)
 
 
     fun setMinMaxImpl(x: MutDec, y: MutDec, op: Int, ctx: DecContext): MutDec {

@@ -108,6 +108,8 @@ class TestMutDecDectest {
 
         // dectest was done before ieee754-2019, which redefined this
         // note that Colishaw decTest is using "max" for "maximumNumber"
+        // see IEEE754-2019 9.6 Minimum and maximum operations page 69
+        // pay close attention to NaN treatment
         "dqmax161 max  sNaN -Inf   ->  NaN  Invalid_operation",
         "dqmax162 max  sNaN -1000  ->  NaN  Invalid_operation",
         "dqmax163 max  sNaN -1     ->  NaN  Invalid_operation",
@@ -321,6 +323,9 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqmax161 max  sNaN -Inf   ->  -Inf  Invalid_operation",
+
+        "dqmxg091 maxmag  Inf  -1000  ->  Infinity",
         "dqqua716 quantize  0.099E-6143 10e-6144  ->   1E-6144   Inexact Rounded Subnormal",
         "dqnextp153 nextplus  sNaN    ->  NaN   Invalid_operation",
         "dqrem1120  remainder  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  0.765432109876543210987654321098768",
@@ -375,6 +380,7 @@ class TestMutDecDectest {
         // max == maximumNumber
         // behavior of sNaN treatment changed from
         // IEEE754-2008 => IEEE754-2019
+        // see IEEE754-2019 9.6 page 69
         "dqmax161 max  sNaN -Inf   ->  -Inf  Invalid_operation",
         "dqmax162 max  sNaN -1000  ->  -1000  Invalid_operation",
 

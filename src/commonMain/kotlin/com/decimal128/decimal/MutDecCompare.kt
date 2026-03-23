@@ -3,6 +3,8 @@
 
 package com.decimal128.decimal
 
+import kotlin.math.max
+
 internal fun mutDecCompareTotalOrder(x: MutDec, y: MutDec): Int {
     val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
     if (xSignMask != y.signMask)
@@ -163,5 +165,46 @@ private fun cmpNumericMagnitude(x: MutDec, y: MutDec): Int {
             else -> throw IllegalStateException()
         }
     return cmpMag
+}
+
+internal const val MAX_MASK = 1
+internal const val MAG_MASK = 2
+internal const val NUM_MASK = 4
+
+internal const val MIN_OP = 0
+internal const val MAX_OP = MAX_MASK
+internal const val MIN_MAG_OP = MAG_MASK
+internal const val MAX_MAG_OP = MAX_MASK or MAG_MASK
+internal const val MIN_NUM_OP = NUM_MASK
+internal const val MAX_NUM_OP = MAX_MASK or NUM_MASK
+internal const val MIN_MAG_NUM_OP = MAG_MASK or NUM_MASK
+internal const val MAX_MAG_NUM_OP = MAX_MASK or MAG_MASK or NUM_MASK
+
+internal fun mutDecSetMinMaxImpl(z: MutDec, x: MutDec, y: MutDec, op: Int, ctx: DecContext): MutDec {
+    if (!x.isNaN() && !y.isNaN()) {
+        var cmp = if ((op and MAG_MASK) != 0)
+            x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1)
+        else
+            x.compareTo(y)
+        if (cmp == 0)
+            cmp = x.compareTotalOrderTo(y)
+        return z.set(if ((cmp >= 0) xor ((op and MAX_MASK) == 0)) x else y)
+
+    }
+    if ((op and NUM_MASK) != 0) {
+        if (!x.isNaN()) {
+            z.set(x)
+            if (y.isSignaling())
+                ctx.signalInvalid(z)
+            return z
+        }
+        if (!y.isNaN()) {
+            z.set(y)
+            if (x.isSignaling())
+                ctx.signalInvalid(z)
+            return z
+        }
+    }
+    return z.setNaNOperand(x, y, ctx)
 }
 
