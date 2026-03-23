@@ -339,8 +339,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         this.dw1 = x.dw1
         this.dw0 = x.dw0
         this.type = stealTyp(xSteal)
-        this.bitLen = stealBitLen(xSteal)
-        this.digitLen = stealDigitLen(xSteal)
+        this.steal = stealWithDigitLenBitLen(steal, stealDigitLen(xSteal), stealBitLen(xSteal))
         this.qExp = stealQexp(xSteal)
         this.sign = stealSignFlag(xSteal)
         verify { validate() }

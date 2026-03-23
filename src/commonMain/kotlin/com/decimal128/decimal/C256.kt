@@ -18,19 +18,11 @@ expect open class C256Rep() {
 open class C256() :
 C256Rep() {
 
-    internal var bitLen: Int
+    internal val bitLen: Int
         get() = stealBitLen(steal)
-        set(value) {
-            verify { value in 0..253 }
-            this.steal = stealWithBitLen(steal, value)
-        }
 
-    internal var digitLen: Int
+    internal val digitLen: Int
         get() = stealDigitLen(steal)
-        set(value) {
-            verify { value in 0..76 || value == 111 }
-            this.steal = stealWithDigitLen(steal, value)
-        }
 
     internal fun setPackedLengths(packedLengths: Int) {
         this.steal = stealWithPackedLengths(steal, packedLengths)
@@ -119,7 +111,7 @@ C256Rep() {
     }
 
     internal inline operator fun set(index: Int, value: Long) {
-        verify { digitLen == 111 }
+        verify { bitLen == 255 }
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -130,13 +122,13 @@ C256Rep() {
     }
 
     internal inline fun c256EnableIndexSetAndZeroOut() {
-        digitLen = 111
+        steal = stealWithDigitLenBitLen(steal, 31, 255)
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
     internal inline fun c256DisableIndexSetAndUpdateLengths() {
         //check(packedLengths.toInt() == -1)
-        verify { digitLen == 111 }
+        verify { bitLen == 255 }
         updateDigitLenBitLen()
     }
 
@@ -230,7 +222,7 @@ C256Rep() {
     open fun toHexString() = IntegerParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() =
-        if (digitLen == 111)
+        if (bitLen == 255)
             "MutDec \uD83D\uDEA7 under construction \uD83D\uDEA7"
         else
             IntegerParsePrint.int256ToString(false, this)
