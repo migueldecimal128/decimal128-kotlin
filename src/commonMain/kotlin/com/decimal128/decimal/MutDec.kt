@@ -935,19 +935,16 @@ class MutDec() : C256(), Comparable<MutDec> {
     // 5.7.2 General operations
 
     fun valueClass(): Ieee754Class {
-        return when {
-            qExp == NON_FINITE_SNAN -> signalingNaN
-            qExp == NON_FINITE_QNAN -> quietNaN
-            qExp == NON_FINITE_INF ->
-                return if (sign == false) positiveInfinity else negativeInfinity
-            c256IsZero() ->
-                return if (sign == false) positiveZero else negativeZero
-            sciExp() < -6143 ->
-                return if (sign == false) positiveSubnormal else negativeSubnormal
-            sign == false ->
-                return positiveNormal
-            else ->
-                negativeNormal
+        when (type) {
+            STEAL_TYP_FNZ -> {
+                if (sciExp() >= -6143)
+                    return if (sign) negativeNormal else positiveNormal
+                return if (sign) negativeSubnormal else positiveSubnormal
+            }
+            STEAL_TYP_ZER -> return if (sign) negativeZero else positiveZero
+            STEAL_TYP_INF -> return if (sign) negativeInfinity else positiveInfinity
+            else -> // STEAL_TYP_NAN
+                return if (isSignaling()) signalingNaN else quietNaN
         }
     }
 
@@ -966,9 +963,19 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun isTotalOrder(other: MutDec): Boolean = compareTotalOrderTo(other) <= 0
 
     // 5.7.3 Decimal2 operation
-    fun sameQuantum(x: MutDec): Boolean =
-        (this.qExp == x.qExp) ||
-                (this.qExp >= NON_FINITE_QNAN && x.qExp >= NON_FINITE_QNAN)
+    fun sameQuantum(x: MutDec): Boolean {
+        val binopSignature = binopSignatureOf(this.type, x.type)
+        return when (binopSignature) {
+            ZER_ZER,
+            FNZ_ZER,
+            ZER_FNZ,
+            FNZ_FNZ -> this.qExp == x.qExp
+            NAN_NAN,
+            INF_INF -> true
+
+            else -> false
+        }
+    }
 
     // FIXME ... implement this so that there are fewer memory allocations
     override fun toString(): String = toString(toEngineeringExp = false)
