@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class TestDecBasicArithmetic {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(

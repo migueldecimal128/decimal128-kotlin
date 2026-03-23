@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import kotlin.math.max
 import kotlin.math.min
 
 internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
@@ -119,4 +120,43 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
         z.setZero(x.sign, min(x.qExp, y.qExp))
 
     return quotientIsOdd
+}
+
+fun mutDecCompare754Impl(x: MutDec, y: MutDec, isSignaling: Boolean, ctx: DecContext): Compare754Result {
+    val binopSignature = binopSignatureOf(x.type, y.type)
+    if (binopSignature == FNZ_FNZ) {
+        return Compare754Result(x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1))
+    }
+    val xSign = x.sign
+    val ySign = y.sign
+    return when (binopSignature) {
+        ZER_ZER -> IEEE754_EQ
+
+        ZER_FNZ -> if (ySign) IEEE754_LT else IEEE754_GT
+        FNZ_ZER -> if (xSign) IEEE754_GT else IEEE754_LT
+
+        INF_INF -> when {
+            xSign == ySign -> IEEE754_EQ
+            xSign -> IEEE754_LT
+            else -> IEEE754_GT
+        }
+
+        INF_FNZ,
+        INF_ZER -> if (xSign) IEEE754_LT else IEEE754_GT
+        FNZ_INF,
+        ZER_INF -> if (ySign) IEEE754_GT else IEEE754_LT
+
+        else -> { // NAN_FOUND
+            if (isSignaling) {
+                val guiltyParty = when {
+                    x.qExp == NON_FINITE_SNAN -> x
+                    y.qExp == NON_FINITE_SNAN -> y
+                    x.qExp == NON_FINITE_QNAN -> x
+                    else -> y
+                }
+                ctx.operandIsSignalingNaN(guiltyParty)
+            }
+            IEEE754_UNORDERED
+        }
+    }
 }

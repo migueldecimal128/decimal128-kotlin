@@ -911,61 +911,10 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun compareQuiet754(other: MutDec, env: DecContext): Compare754Result =
-        compare754(other, false, env)
+        mutDecCompare754Impl(this, other, false, env)
 
     fun compareSignaling754(other: MutDec, env: DecContext): Compare754Result =
-        compare754(other, true, env)
-
-    fun compare754(other: MutDec, isSignaling: Boolean, ctx: DecContext): Compare754Result {
-        val qMax = max(qExp, other.qExp)
-        return when {
-            qMax < NON_FINITE_INF -> when {
-                c256IsZero() -> when {
-                    other.c256IsZero() -> IEEE754_EQ
-                    other.sign -> IEEE754_LT
-                    else -> IEEE754_GT
-                }
-
-                other.c256IsZero() -> when {
-                    sign -> IEEE754_GT
-                    else -> IEEE754_LT
-                }
-
-                else -> {
-                    val cmp = compareNumericMagnitudeTo(other, ctx.tmps.pentad1)
-                    Compare754Result(cmp)
-                }
-            }
-
-            qMax == NON_FINITE_INF -> when {
-                qExp == NON_FINITE_INF -> when {
-                    other.qExp == NON_FINITE_INF -> when {
-                        sign == other.sign -> IEEE754_EQ
-                        sign == false -> IEEE754_GT
-                        else -> IEEE754_LT
-                    }
-
-                    sign == false -> IEEE754_GT
-                    else -> IEEE754_LT
-                }
-
-                other.sign == false -> IEEE754_LT
-                else -> IEEE754_GT
-            }
-
-            !isSignaling && qMax == NON_FINITE_QNAN -> IEEE754_UNORDERED
-            else -> {
-                val guiltyParty = when {
-                    qExp == NON_FINITE_SNAN -> this
-                    other.qExp == NON_FINITE_SNAN -> other
-                    qExp == NON_FINITE_QNAN -> this
-                    else -> other
-                }
-                ctx.operandIsSignalingNaN(guiltyParty)
-                IEEE754_UNORDERED
-            }
-        }
-    }
+        mutDecCompare754Impl(this, other, true, env)
 
     override fun compareTo(other: MutDec): Int = mutDecCompareJavaStyle(this, other)
 
