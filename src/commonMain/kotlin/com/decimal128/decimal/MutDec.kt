@@ -741,6 +741,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun setQuantize(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // Handle NaN propagation
         // FIXME -- dispatching on qExp
+        val xSign = x.sign
         val qX = x.qExp
         val qY = y.qExp
         if (qX > NON_FINITE_INF || qY > NON_FINITE_INF)
@@ -764,24 +765,15 @@ class MutDec() : C256(), Comparable<MutDec> {
                 // Target exponent is larger: need to scale coefficient DOWN
                 // This means truncating with rounding
                 if (x.c256IsZero())
-                    return setZero(x.sign, qY)
+                    return setZero(xSign, qY)
                 // Scale down by delta positions
                 val residue = c256SetScaleDownPow10(this, x, delta, ctx.tmps.pentad1)
-                sign = x.sign
-                qExp = qY
-                if (this.bitLen == 0) {
-                    type = STEAL_TYP_ZER
-                    if (residue != Residue.EXACT)
-                        roundAndFinalizeZero(sign, qExp, residue, ctx.decRounding, ctx)
-                    return this
-                }
-                type = STEAL_TYP_FNZ
-                return roundAndFinalizeFnz(residue, ctx.decRounding, ctx)
+                return roundAndFinalizeFinite(xSign, qY, residue, ctx.decRounding, ctx)
             }
 
             else -> {  // delta < 0
                 if (x.c256IsZero())
-                    return setZero(x.sign, qY)
+                    return setZero(xSign, qY)
 
                 // Target exponent is smaller: need to scale coefficient UP
                 val scaleAmount = -delta
@@ -797,7 +789,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 // Scale up coefficient
                 c256SetScaleUpPow10(this, x, scaleAmount, ctx.tmps.pentad1)
                 this.qExp = qY
-                this.sign = x.sign
+                this.sign = xSign
                 verify { digitLen <= ctx.precision }
                 return this
             }

@@ -84,6 +84,86 @@ internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, rounding: DecRo
     }
 }
 
+/**
+ * Main entry point - implements the DAG structure:
+ * 1. Normalize coefficient length (accumulate residue)
+ * 2. Apply rounding (may increment coefficient)
+ * 3. Handle rollover if needed
+ * 4. Check final bounds
+ * 5. Signal once with all flags
+ */
+internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
+                                           inboundResidue: Residue, rounding: DecRounding,
+                                           ctx: DecContext): MutDec {
+    if (bitLen == 0)
+        return roundAndFinalizeZero(sign, inboundQExp, inboundResidue, rounding, ctx)
+    this.sign = sign
+    this.type = STEAL_TYP_FNZ
+    val precision = ctx.precision
+    // Step 1: Fast path: already in valid decimal128 range
+    if (inboundResidue == EXACT &&
+        digitLen <= precision &&
+        inboundQExp >= Q_TINY && inboundQExp <= Q_MAX) {
+        this.qExp = inboundQExp
+        return this
+    }
+
+    // Step 4: Handle underflow
+    // Only divert if range truncation exceeds precision truncation,
+    // meaning the normal path can't bring qExp into range on its own
+    val rangeTruncationNeeded = Q_TINY - inboundQExp
+    val precisionTruncationNeeded = max(0, digitLen - precision)
+    if (rangeTruncationNeeded > precisionTruncationNeeded) {
+        return finalizeUnderflowRegion(sign, inboundQExp, inboundResidue, rounding, ctx)
+    }
+
+    // Step 5: Normalize coefficient length to <= precision, accumulating residue
+    var adjustedQExp = inboundQExp
+    var totalResidue = inboundResidue
+    if (precisionTruncationNeeded > 0) {
+        val truncationResidue =
+            c256SetScaleDownPow10(this, this, precisionTruncationNeeded, ctx.tmps.pentad1)
+        adjustedQExp += precisionTruncationNeeded
+        totalResidue = truncationResidue.merge(inboundResidue)
+        verify { digitLen == precision }
+    }
+
+    // Step 6: Apply rounding ... might increment coefficient
+    val applyRounding = totalResidue != EXACT
+    if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
+        // Step 6.1: increment
+        c256MutateIncrement()
+
+        // Step 6.2: Handle rollover if increment caused overflow to new digit
+        if (digitLen > precision) {
+            verify { digitLen == precision + 1 }
+            // Rolling over means the result is divisible by 10, so no residue
+            val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad1)
+            verify { rolloverResidue == EXACT }
+            ++adjustedQExp
+            verify { digitLen == precision }
+        }
+    }
+
+    // Step 7: Check final bounds
+    // qExp >= qTiny is guaranteed by steps 3/4/5
+    // digitLen <= precision is guaranteed by steps 4/5
+    verify { adjustedQExp >= Q_TINY }
+    verify { digitLen <= precision }
+    this.qExp = adjustedQExp
+    return when {
+        adjustedQExp > Q_MAX -> {
+            val qExcess = adjustedQExp - Q_MAX
+            if (digitLen + qExcess <= precision)
+                finalizeClamping(sign, adjustedQExp, ctx)
+            else
+                finalizeOverflow(sign, rounding, ctx)
+        }
+        applyRounding -> ctx.signalInexact(this)
+        else -> this
+    }
+}
+
 internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
                                          inboundResidue: Residue, rounding: DecRounding,
                                          ctx: DecContext): MutDec {
