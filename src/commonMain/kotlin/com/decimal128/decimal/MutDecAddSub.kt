@@ -71,13 +71,11 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
             }
 
             else -> {
-                z.c256SetZero()
-                z.type = STEAL_TYP_ZER
-                z.sign = isRoundTowardNegative
+                return z.setZero(isRoundTowardNegative, x.qExp)
             }
         }
     }
-    return z.finalize(ctx)
+    return z.finalizeFnz(ctx)
 }
 
 private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
@@ -101,12 +99,12 @@ private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx
             else -> {
                 // Magnitudes are equal and signs opposite → exact cancellation
                 // IEEE 754: sign is +0 except when rounding toward negative
-                z.setZero(ctx.isRoundTowardNegative(), min(qX, qY), ctx)
+                z.setZero(ctx.isRoundTowardNegative(), min(qX, qY))
                 return z // I don't think I need to finalize in this case
             }
         }
     }
-    return z.roundAndFinalize(residue, ctx)
+    return z.roundAndFinalizeFnz(residue, ctx)
 }
 
 private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
@@ -116,7 +114,7 @@ private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecC
     } else {
         ctx.isRoundTowardNegative()  // Different signs → +0 except roundTowardNegative
     }
-    return z.setZero(sign, min(x.qExp, y.qExp), ctx)
+    return z.setZero(sign, min(x.qExp, y.qExp))
 }
 
 internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: Int, ctx: DecContext): MutDec {
@@ -132,5 +130,5 @@ internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: I
         z.qExp = xQ - shiftLeft
     }
     z.sign = xSign
-    return z.finalize(ctx)
+    return z.finalizeFnz(ctx)
 }

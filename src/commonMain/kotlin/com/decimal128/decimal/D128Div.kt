@@ -51,7 +51,7 @@ private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val divisor = ctx.tmps.mdecBridge2.set(y)
     val quotient = ctx.tmps.mdecResult
     val residue = MagnitudeDiv.magDivFnzFnz(quotient, x.sign xor y.sign, dividend, divisor, ctx)
-    quotient.roundAndFinalize(residue, ctx)
+    quotient.roundAndFinalizeFnz(residue, ctx)
     return Decimal.from(quotient, ctx)
 }
 

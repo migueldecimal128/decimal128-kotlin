@@ -4,13 +4,10 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun MutDec.finalize(ctx: DecContext) = roundAndFinalize(Residue.EXACT, ctx.decRounding, ctx)
+internal fun MutDec.finalizeFnz(ctx: DecContext) = roundAndFinalizeFnz(Residue.EXACT, ctx.decRounding, ctx)
 
-internal fun MutDec.roundAndFinalize(inboundResidue: Residue, ctx: DecContext) =
-    roundAndFinalizeDAG(inboundResidue, ctx.decRounding, ctx)
-
-internal fun MutDec.roundAndFinalize(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext) =
-    roundAndFinalizeDAG(inboundResidue, rounding, ctx)
+internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext) =
+    roundAndFinalizeFnz(inboundResidue, ctx.decRounding, ctx)
 
 /**
  * Main entry point - implements the DAG structure:
@@ -20,9 +17,10 @@ internal fun MutDec.roundAndFinalize(inboundResidue: Residue, rounding: DecRound
  * 4. Check final bounds
  * 5. Signal once with all flags
  */
-private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
-    var localQExp = qExp
+internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
     val type = type
+    verify { type == STEAL_TYP_FNZ }
+    var localQExp = qExp
     val precision = ctx.precision
     // Step 1: Fast path: already in valid decimal128 range
     if (stealIsFNZ(type) && inboundResidue == EXACT &&
@@ -31,16 +29,6 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
         return this
     }
 
-    // Step 2: Zero coefficient
-    if (stealIsZER(type))
-        return finalizeZero(inboundResidue, rounding, ctx)
-
-    // Step 3: special values
-    if (! stealIsFinite(type))
-        return this
-
-
-    verify { stealIsFNZ(type) }
     // Step 4: Handle underflow
     // Only divert if range truncation exceeds precision truncation,
     // meaning the normal path can't bring qExp into range on its own
@@ -96,7 +84,7 @@ private fun MutDec.roundAndFinalizeDAG(inboundResidue: Residue, rounding: DecRou
     }
 }
 
-private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
+internal fun MutDec.roundAndFinalizeZero(inboundResidue: Residue, rounding: DecRounding, ctx: DecContext): MutDec {
     verify { digitLen == 0 }
 
     // If we had a non-zero residue, the result is inexact
@@ -118,7 +106,7 @@ private fun MutDec.finalizeZero(inboundResidue: Residue, rounding: DecRounding, 
         return ctx.signalInexact(this)
     }
 
-    // Exact zero - clamp exponent
+    // Exact zero - just clamp exponent
     qExp = max(min(qExp, Q_MAX), Q_TINY)
     return this
 }

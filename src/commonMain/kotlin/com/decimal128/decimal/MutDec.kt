@@ -9,6 +9,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
+import com.decimal128.decimal.roundAndFinalizeFnz
 import kotlin.math.max
 import kotlin.math.min
 
@@ -136,7 +137,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    fun setZero(sign: Boolean = false, qExp: Int = 0, ctx: DecContext): MutDec {
+    fun setZero(sign: Boolean = false, qExp: Int = 0): MutDec {
         c256SetZero()
         this.type = STEAL_TYP_ZER
         this.qExp = max(min(qExp, Q_MAX), Q_TINY)
@@ -512,7 +513,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         type = if (this.c256IsZero()) STEAL_TYP_ZER else STEAL_TYP_FNZ
         qExp = 0
         sign = xSign
-        return roundAndFinalize(residue, rounding, ctx)
+        return roundAndFinalizeFnz(residue, rounding, ctx)
     }
 
     fun setRoundToIntegralTiesToEven(x: MutDec, ctx: DecContext) =
@@ -761,20 +762,24 @@ class MutDec() : C256(), Comparable<MutDec> {
                 // Target exponent is larger: need to scale coefficient DOWN
                 // This means truncating with rounding
                 if (x.c256IsZero())
-                    return setZero(x.sign, qY, ctx)
+                    return setZero(x.sign, qY)
                 // Scale down by delta positions
                 val residue = c256SetScaleDownPow10(this, x, delta, ctx.tmps.pentad1)
-                type = if (this.bitLen == 0) STEAL_TYP_ZER else STEAL_TYP_FNZ
-                qExp = qY
                 sign = x.sign
-                if (residue != Residue.EXACT)
-                    roundAndFinalize(residue, ctx.decRounding, ctx)
-                return this
+                qExp = qY
+                if (this.bitLen == 0) {
+                    type = STEAL_TYP_ZER
+                    if (residue != Residue.EXACT)
+                        roundAndFinalizeZero(residue, ctx.decRounding, ctx)
+                    return this
+                }
+                type = STEAL_TYP_FNZ
+                return roundAndFinalizeFnz(residue, ctx.decRounding, ctx)
             }
 
             else -> {  // delta < 0
                 if (x.c256IsZero())
-                    return setZero(x.sign, qY, ctx)
+                    return setZero(x.sign, qY)
 
                 // Target exponent is smaller: need to scale coefficient UP
                 val scaleAmount = -delta
@@ -806,7 +811,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 val p10 = min(max(pow10, -99999), 99999)
                 qExp = capExponentRange(qExp + p10)
                 if (qExp > Q_MAX || qExp < Q_TINY)
-                    return finalize(ctx)
+                    return finalizeFnz(ctx)
             }
             isInfinite() -> {}
             else -> setNaNOperand(x, ctx)

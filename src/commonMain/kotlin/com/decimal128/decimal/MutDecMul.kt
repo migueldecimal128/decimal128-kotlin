@@ -11,11 +11,11 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
         z.type = STEAL_TYP_FNZ
         z.qExp = productQExp
         z.sign = productSign
-        z.finalize(ctx)
+        z.finalizeFnz(ctx)
     } else when (binopSignature) {
         FNZ_ZER,
         ZER_FNZ,
-        ZER_ZER -> z.setZero(productSign, productQExp, ctx)
+        ZER_ZER -> z.setZero(productSign, productQExp)
         INF_ZER,
         ZER_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         INF_FNZ,
@@ -34,10 +34,10 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         z.type = STEAL_TYP_FNZ
         z.qExp = qExp
         z.sign = false
-        return z.finalize(ctx)
+        return z.finalizeFnz(ctx)
     }
     if (type == STEAL_TYP_ZER)
-        return z.setZero(false, qExp, ctx)
+        return z.setZero(qExp = qExp)
     if (type == STEAL_TYP_INF)
         return z.setInfinite(false)
     return z.setNaN(x, ctx)
@@ -50,7 +50,7 @@ internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
             if (! x.sign) {
                 val residue = MagnitudeSqrt.magSqrt(z, x, ctx.tmps.pentad1)
                 z.sign = false
-                z.roundAndFinalize(residue, ctx)
+                z.roundAndFinalizeFnz(residue, ctx)
             } else {
                 ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
             }

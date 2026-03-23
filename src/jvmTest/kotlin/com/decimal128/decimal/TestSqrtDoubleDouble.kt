@@ -259,7 +259,7 @@ class TestSqrtDoubleDouble{
         }
         sqrt.type = if (sqrt.c256IsZero()) STEAL_TYP_ZER else STEAL_TYP_FNZ
         sqrt.qExp = qZ
-        sqrt.roundAndFinalize(residue2, DecContext.decimal128Kotlin())
+        sqrt.roundAndFinalizeFnz(residue2, DecContext.decimal128Kotlin())
 
         if (verbose)
             println(" --> sqrt:$sqrt")

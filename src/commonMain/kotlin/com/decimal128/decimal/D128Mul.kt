@@ -57,7 +57,7 @@ private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     p.type = STEAL_TYP_FNZ
     p.qExp = stealQexp(xSteal) + stealQexp(ySteal)
     p.sign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
-    p.finalize(ctx)
+    p.finalizeFnz(ctx)
     val d = Decimal.from(p)
     return d
 }

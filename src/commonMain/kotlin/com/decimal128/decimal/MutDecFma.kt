@@ -71,7 +71,7 @@ private fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecCont
     if (stealIsZER(stealA)) {
         val fmaSign =
             (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
-        return z.setZero(fmaSign, min(prodQ, aQ), ctx)
+        return z.setZero(fmaSign, min(prodQ, aQ))
     }
     if (stealIsFNZ(stealA) && prodQ < aQ)
         return setScaleToMinQexp(z, a.sign, a, prodQ, ctx)

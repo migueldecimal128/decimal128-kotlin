@@ -375,14 +375,13 @@ object DecimalParsePrint {
             hasExp && !hasExpDigit)
             return false
 
-        // we have at least one digit
+        // we have at least one digit ... but it might be all zeros
         val coeffDigitCount = min(34, significantDigitCount)
         x.c256Set64(coeff19)
         if (coeffDigitCount > 19) {
             val pow10 = coeffDigitCount - 19
             c256SetFmaPow10(x, x, pow10, coeff34)
         }
-        x.sign = sign
 
         if (expSignificantDigitCount > 4 || exp > 6200)
             exp = 6666
@@ -392,7 +391,12 @@ object DecimalParsePrint {
         val totalDigitsAfterDecimal = leadingFractionalZeroCount + fractionalDigitCount
         val qExp = signedExp - totalDigitsAfterDecimal + discardedDigitCount
 
-        x.type = if ((coeff19 or coeff34) == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
+        if (significantDigitCount == 0) {
+            x.setZero(sign, qExp)
+            return true
+        }
+        x.sign = sign
+        x.type = STEAL_TYP_FNZ
         x.qExp = qExp
 
         val hasDiscardedNonZero = guardDigit or stickyBits != 0
@@ -404,7 +408,7 @@ object DecimalParsePrint {
         // if guardDigit > 5 then it is a sticky bit.
         val stickyBit = (-stickyBits or (5 - guardDigit)) ushr 31
         val residue = Residue.fromRoundBitStickBit(roundBit, stickyBit)
-        x.roundAndFinalize(residue, ctx)
+        x.roundAndFinalizeFnz(residue, ctx)
         if (hasDiscardedNonZero)
             ctx.signalInexact(x)
         return true
