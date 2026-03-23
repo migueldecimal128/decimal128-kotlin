@@ -143,7 +143,7 @@ private fun MutDec.finalizeUnderflowRegion(
         }
         truncationNeeded == digitLen -> {
             // Exactly on the underflow boundary - round to decide
-            finalizeUnderflowBoundary(residue, rounding, ctx)
+            finalizeUnderflowBoundary(sign, residue, rounding, ctx)
         }
         else -> {
             // truncationNeeded < digitLen (and > 0)
@@ -154,6 +154,7 @@ private fun MutDec.finalizeUnderflowRegion(
 }
 
 private fun MutDec.finalizeUnderflowBoundary(
+    sign: Boolean,
     inboundResidue: Residue,
     rounding: DecRounding,
     ctx: DecContext
@@ -163,13 +164,9 @@ private fun MutDec.finalizeUnderflowBoundary(
     val totalResidue = scaleResidue.merge(inboundResidue)
     val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
 
-    return if (roundUp) {
-        setMinFiniteMagnitude(sign, ctx)
-        ctx.signalInexactUnderflow(this)
-    } else {
-        setMinZeroMagnitude(sign, ctx)
-        ctx.signalInexactUnderflow(this)
-    }
+    return ctx.signalInexactUnderflow(
+        if (roundUp) setMinFiniteMagnitude(sign, ctx)
+        else setMinZeroMagnitude(sign, ctx))
 }
 
 private fun MutDec.finalizeSubnormal(
