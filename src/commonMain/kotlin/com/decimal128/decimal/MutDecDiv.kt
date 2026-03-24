@@ -149,9 +149,9 @@ fun mutDecCompare754Impl(x: MutDec, y: MutDec, isSignaling: Boolean, ctx: DecCon
         else -> { // NAN_FOUND
             if (isSignaling) {
                 val guiltyParty = when {
-                    x.qExp == NON_FINITE_SNAN -> x
-                    y.qExp == NON_FINITE_SNAN -> y
-                    x.qExp == NON_FINITE_QNAN -> x
+                    x.isSignaling() -> x
+                    y.isSignaling() -> y
+                    x.isNaN() -> x
                     else -> y
                 }
                 ctx.operandIsSignalingNaN(guiltyParty)

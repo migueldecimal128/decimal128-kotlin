@@ -837,9 +837,10 @@ class Decimal private constructor(
         other is Decimal && eqJavaStyle(other)
 
     /**
-     * Returns a hash code consistent with [equals]:
-     * values in the same numerical cohort produce the same hash code,
+     * Returns a hash code consistent with `compareTo(other) == 0`.
+     * Values in the same numerical cohort produce the same hash code,
      * all NaNs hash identically, and ±0 hash to distinct constants.
+     * This is unlike [BigDecimal.equals] which also requires the same scale.
      */
     override fun hashCode(): Int {
         val steal = steal
