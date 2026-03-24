@@ -428,7 +428,7 @@ object D128SerdeBid {
             }
             // if the top 5 bits are 0b11110 then Infinity
             (combination shr (w5 - 5)) == 0b11110 ->
-                return Decimal.infinityNonCanonical(sign, 0L,  infPayload)
+                return Decimal.infinityNonCanonical(sign, 0L, infPayload)
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN

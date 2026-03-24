@@ -158,37 +158,6 @@ class Decimal private constructor(
             return Decimal(steal, dw1, dw0)
         }
 
-        /*
-        // FIXME - eliminate this
-        internal operator fun invoke(
-            sign: Boolean, qExp: Int,
-            digitLen: Int, bitLen: Int,
-            dw1: Long, dw0: Long,
-            allowNonCanonical: Boolean = false
-        ): Decimal {
-            verify { bitLen == calcBitLen128(dw1, dw0) }
-            verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
-            verify { digitLen <= 38 }
-            verify { digitLen <= 34 || allowNonCanonical }
-            val steal = stealRaw(sign, qExp, dw1, dw0)
-            return Decimal(steal, dw1, dw0)
-        }
-
-         */
-
-        internal operator fun invoke(
-            sign: Boolean, qExp: Int,
-            dw1: Long, dw0: Long,
-            allowNonCanonical: Boolean = false
-        ): Decimal {
-            verify {
-                val digitLen = calcDigitLen128(dw1, dw0)
-                digitLen <= 34 || (allowNonCanonical && digitLen <= 38)
-            }
-            val steal = stealRaw(sign, qExp, dw1, dw0)
-            return Decimal(steal, dw1, dw0)
-        }
-
         val POS_ZEROe0 = Decimal(stealEncodeZER(0, 0), 0L, 0L)
         val NEG_ZEROe0 = Decimal(stealEncodeZER(1, 0), 0L, 0L)
         val ZERO = POS_ZEROe0
@@ -369,11 +338,10 @@ class Decimal private constructor(
 
         fun infinity(signBit: Int) = if ((signBit and 1) != 0) NEG_INFINITY else POS_INFINITY
 
-        fun infinityNonCanonical(sign: Boolean, dw1: Long, dw0: Long): Decimal =
-            if ((dw1 or dw0) == 0L)
-                infinity(sign)
-            else
-                Decimal(sign, NON_FINITE_INF, dw1, dw0, allowNonCanonical = true)
+        fun infinityNonCanonical(sign: Boolean, dw1: Long, dw0: Long): Decimal {
+            // 2026-03-24 ... removing support for non-canonical encodings of Infinity
+            return if (sign) NEG_INFINITY else POS_INFINITY
+        }
 
         internal fun hasNaN(x: Decimal, y: Decimal): Boolean = stealHasNAN(x.steal, y.steal)
 
