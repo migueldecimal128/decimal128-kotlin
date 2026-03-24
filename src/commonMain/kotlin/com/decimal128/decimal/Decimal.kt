@@ -161,8 +161,8 @@ class Decimal private constructor(
         val POS_ZEROe0 = Decimal(stealEncodeZER(0, 0), 0L, 0L)
         val NEG_ZEROe0 = Decimal(stealEncodeZER(1, 0), 0L, 0L)
         val ZERO = POS_ZEROe0
-        val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, 0L, 1L), 0L, 1L)
-        val NEG_ONEe0 = Decimal(stealEncodeFNZ(1, 0, 0L, 1L), 0L, 1L)
+        val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, PACKED_LENGTHS_1_1), 0L, 1L)
+        val NEG_ONEe0 = Decimal(stealEncodeFNZ(1, 0, PACKED_LENGTHS_1_1), 0L, 1L)
         val ONE = POS_ONEe0
         val POS_INFINITY = Decimal(stealEncodeINF(0), 0L, 0L)
         val NEG_INFINITY = Decimal(stealEncodeINF(1), 0L, 0L)

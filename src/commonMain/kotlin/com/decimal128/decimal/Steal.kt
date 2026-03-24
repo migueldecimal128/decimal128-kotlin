@@ -181,6 +181,8 @@ internal fun stealWithDigitLenBitLen(oldSteal: Int, digitLen: Int, bitLen: Int):
             (bitLen shl STEAL_BITLEN_SHIFT)
 }
 
+internal const val PACKED_LENGTHS_1_1 = (1 shl STEAL_DIGITLEN_SHIFT) or (1 shl STEAL_BITLEN_SHIFT)
+
 internal fun stealPackLengths(digitLen: Int, bitLen: Int): Int {
     verify { digitLen >= 0 && digitLen <= 76 && bitLen >= 0 && bitLen <= 253 }
     return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)

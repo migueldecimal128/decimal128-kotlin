@@ -118,28 +118,24 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun setZero() = setZero(false)
 
     fun setZero(sign: Boolean): MutDec {
-        c256SetZero()
-        this.type = STEAL_TYP_ZER
-        this.qExp = 0
-        this.sign = sign
+        this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L; this.dw0 = 0L
+        this.steal = stealEncodeZER(if (sign) 1 else 0, 0)
         verify { validate() }
         return this
     }
 
     fun setZero(sign: Boolean = false, qExp: Int = 0): MutDec {
-        c256SetZero()
-        this.type = STEAL_TYP_ZER
-        this.qExp = max(min(qExp, Q_MAX), Q_TINY)
-        this.sign = sign
+        val qExpCapped = max(min(qExp, Q_MAX), Q_TINY)
+        this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L; this.dw0 = 0L
+        this.steal = stealEncodeZER(if (sign) 1 else 0, qExpCapped)
         verify { validate() }
         return this
     }
 
     fun setOne(sign: Boolean = false): MutDec {
-        c256SetOne()
-        this.type = STEAL_TYP_FNZ
-        this.qExp = 0
-        this.sign = sign
+        this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L
+        this.dw0 = 1L
+        this.steal = stealEncodeFNZ(if (sign) 1 else 0, 0, PACKED_LENGTHS_1_1)
         verify { validate() }
         return this
     }
@@ -280,7 +276,9 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun set(x: MutDec): MutDec {
-        this.dw3 = x.dw3; this.dw2 = x.dw2; this.dw1 = x.dw1; this.dw0 = x.dw0;
+        verify { (x.dw3 or x.dw2) == 0L }
+        this.dw3 = 0L; this.dw2 = 0L
+        this.dw1 = x.dw1; this.dw0 = x.dw0;
         this.steal = x.steal
         verify { validate() }
         return this
@@ -301,22 +299,16 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun set(xMagnitude: MutDec, sign: Boolean): MutDec {
-        c256Set(xMagnitude)
-        this.type = xMagnitude.type
-        this.qExp = xMagnitude.qExp
-        this.sign = sign
+        set(xMagnitude)
+        this.steal = stealWithSignFlag(steal, sign)
         verify { validate() }
         return this
     }
 
     fun set(x: Decimal): MutDec {
-        val xSteal = x.steal
-        this.dw1 = x.dw1
-        this.dw0 = x.dw0
-        this.type = stealTyp(xSteal)
-        this.steal = stealWithDigitLenBitLen(steal, stealDigitLen(xSteal), stealBitLen(xSteal))
-        this.qExp = stealQExp(xSteal)
-        this.sign = stealSignFlag(xSteal)
+        this.steal = x.steal
+        this.dw3 = 0L; this.dw2 = 0L
+        this.dw1 = x.dw1; this.dw0 = x.dw0
         verify { validate() }
         return this
     }
@@ -342,18 +334,14 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setMaxFiniteMagnitude(sign: Boolean, ctx: DecContext): MutDec {
-        type = STEAL_TYP_FNZ
-        this.sign = sign
-        qExp = Q_MAX
-        // 0x378D8E6400000000uL.toLong(), 0x0001ED09BEAD87C0uL.toLong(),
-        // 10000000000000000000000000000000000 (10**34)
-        val pow10Offset = pow10Offset(ctx.precision) and POW10_BCE
-        if (ctx.precision < MIN_POW10_DIGIT_LEN_128) {
-            super.c256Set64(POW10[pow10Offset] - 1)
-        } else if (ctx.precision < MIN_POW10_DIGIT_LEN_192) {
-            super.c256Set128(POW10[pow10Offset + 1], POW10[pow10Offset] - 1)
-        } else
-            throw IllegalArgumentException()
+        val precision = ctx.precision
+        verify { precision == 34 || precision == 38 }
+        val pow10Offset = (precision shl 1) and POW10_BCE
+        this.dw3 = 0L; this.dw2 = 0L
+        this.dw1 = POW10[pow10Offset + 1]
+        this.dw0 = POW10[pow10Offset    ] - 1
+        val bitLen = pow10BitLen(precision)
+        this.steal = stealEncodeFNZ(if (sign) 1 else 0, Q_MAX, stealPackLengths(precision, bitLen))
         verify { validate() }
         return this
     }
