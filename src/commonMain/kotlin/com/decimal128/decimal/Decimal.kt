@@ -158,7 +158,7 @@ class Decimal private constructor(
             return Decimal(steal, dw1, dw0)
         }
 
-
+        /*
         // FIXME - eliminate this
         internal operator fun invoke(
             sign: Boolean, qExp: Int,
@@ -173,6 +173,8 @@ class Decimal private constructor(
             val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(steal, dw1, dw0)
         }
+
+         */
 
         internal operator fun invoke(
             sign: Boolean, qExp: Int,
@@ -337,27 +339,29 @@ class Decimal private constructor(
          * @param sign whether to set the sign bit.
          * @param signaling `true` for sNaN, `false` (default) for qNaN.
          */
-        fun NaN(sign: Boolean, signaling: Boolean = false): Decimal {
-            return when {
+        fun NaN(sign: Boolean, signaling: Boolean = false): Decimal =
+            when {
                 !signaling && !sign -> POS_QNAN
                 !signaling && sign -> NEG_QNAN
                 sign -> NEG_SNAN
                 else -> POS_SNAN
             }
-        }
 
         fun NaN(
             sign: Boolean = false, signaling: Boolean = false,
             payloadDw1: Long, payloadDw0: Long
         ): Decimal {
-            if ((payloadDw1 or payloadDw0) == 0L)
-                return NaN(sign, signaling)
-            val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-            val bitLen = calcBitLen128(payloadDw1, payloadDw0)
-            val digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
-            if (digitLen > NAN_PAYLOAD_PRECISION)
-                return NaN(sign, signaling)
-            return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0)
+            if ((payloadDw1 or payloadDw0) != 0L) {
+                val digitLen = calcDigitLen128(payloadDw1, payloadDw0)
+                if (digitLen <= NAN_PAYLOAD_PRECISION) {
+                    val signBit = if (sign) 1 else 0
+                    val steal =
+                        if (signaling) stealEncodeSNAN(signBit, payloadDw1, payloadDw0)
+                        else stealEncodeQNAN(signBit, payloadDw1, payloadDw0)
+                    return Decimal(steal, payloadDw1, payloadDw0)
+                }
+            }
+            return NaN(sign, signaling)
         }
 
 
