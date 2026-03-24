@@ -135,13 +135,10 @@ private fun cmpTotalOrderMagnitudeNanFound(x: MutDec, y: MutDec): Int {
     return when {
         !x.isNaN() -> -1
         !y.isNaN() -> 1
-        // if both are the same NaN, then compare payloads
-
-        (x.type and STEAL_NAN_MASK) == (y.type and STEAL_NAN_MASK) ->
+        x.isSignaling() xor y.isSignaling() -> // exactly one isSignaling()
+            if (x.isSignaling()) -1 else 1
+        else -> // if both are the same NaN, then compare payloads
             ucmp128(x.dw1, x.dw0, y.dw1, y.dw0)
-        // qNaN sorts higher than sNaN
-        stealIsQNAN(x.type) -> 1
-        else -> -1
     }
 }
 

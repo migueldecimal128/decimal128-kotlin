@@ -20,7 +20,13 @@ const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
 
 class MutDec() : C256(), Comparable<MutDec> {
-    var type: Int = STEAL_TYP_ZER
+    private var typByte: Byte = STEAL_TYP_FNZ.toByte()
+    var type: Int
+        get() = typByte.toInt()
+        set(value) {
+            verify { value in 0..3 }
+            typByte = value.toByte()
+        }
     var sign: Boolean
         get() = stealSignFlag(steal)
         set(value) {
@@ -96,15 +102,10 @@ class MutDec() : C256(), Comparable<MutDec> {
                 if (qExp != NON_FINITE_INF)
                     return false
             }
-            STEAL_NAN_SNAN -> {
-                if (qExp != NON_FINITE_SNAN)
+            STEAL_TYP_NAN -> {
+                if (qExp != NON_FINITE_SNAN && qExp != NON_FINITE_QNAN)
                     return false
             }
-            STEAL_NAN_QNAN -> {
-                if (qExp != NON_FINITE_QNAN)
-                    return false
-            }
-            else -> return false
         }
         return true
     }
@@ -195,9 +196,6 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     internal fun quietSNaN() {
         verify { isSignaling() }
-        // FIXME -- this use of qExp has to stop
-        verify { type == STEAL_NAN_SNAN }
-        type = STEAL_NAN_QNAN
         qExp = NON_FINITE_QNAN
     }
 
@@ -226,7 +224,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
         this.sign = sign
-        this.type = if (isSignaling) STEAL_NAN_SNAN else STEAL_NAN_QNAN
+        this.type = STEAL_TYP_NAN
         this.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
         c256Set128(payloadHi and ((1L shl (110 - 64)) - 1L), payloadLo)
         verify { validate() }
@@ -234,7 +232,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setSNaN(ctx: DecContext) {
         setZero()
-        this.type = STEAL_NAN_SNAN
+        this.type = STEAL_TYP_NAN
         qExp = NON_FINITE_SNAN
         verify { validate() }
     }
@@ -959,6 +957,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun isSubnormal() = qExp < NON_FINITE_INF && sciExp() < -6143
     fun isInfinite() = qExp == NON_FINITE_INF
     fun isNaN() = qExp in NON_FINITE_QNAN..NON_FINITE_SNAN
+    fun isNaN(signaling: Boolean) = qExp == (if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN)
     fun isSignaling() = qExp == NON_FINITE_SNAN
     fun isCanonical() = true
     fun radix() = 10

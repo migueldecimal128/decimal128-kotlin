@@ -323,6 +323,9 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqfma0905 fma  0     0     sNaN3  ->  NaN3 Invalid_operation",
+        "dqfma0900 fma  NaN2  NaN3  NaN5   ->  NaN2",
+        "dqfma0903 fma  sNaN1 sNaN2 sNaN3  ->  NaN1 Invalid_operation",
         "dqmax161 max  sNaN -Inf   ->  -Inf  Invalid_operation",
 
         "dqmxg091 maxmag  Inf  -1000  ->  Infinity",

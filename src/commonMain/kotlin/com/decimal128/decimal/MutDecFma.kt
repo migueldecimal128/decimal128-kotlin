@@ -39,24 +39,24 @@ private fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
 }
 
 private fun fmaNanAddend(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
-    val stealX = x.type
-    val stealY = y.type
-    val stealA = a.type
-    verify { stealIsNAN(stealA) }
-    val hasSNAN = stealIsSNAN(stealX) or stealIsSNAN(stealY) or stealIsSNAN(stealA)
+    verify { a.isNaN() }
+    val hasSNAN = x.isSignaling() or y.isSignaling() or a.isSignaling()
     val targetNAN = if (hasSNAN) STEAL_NAN_SNAN else STEAL_NAN_QNAN
     val theNAN =
-        if ((stealX and STEAL_NAN_MASK) == targetNAN) x
-        else if ((stealY and STEAL_NAN_MASK) == targetNAN) y
+        if (x.isNaN(hasSNAN)) x
+        else if (y.isNaN(hasSNAN)) y
         else a
+    verify { theNAN.isNaN(hasSNAN) }
     z.set(theNAN)
-    if (!hasSNAN) {
-        if ((stealIsZER(stealX) and stealIsINF(stealY)) or (stealIsINF(stealX) and stealIsZER(stealY)))
-            return ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
-        return z
+    if (z.isSignaling()) {
+        z.quietSNaN()
+        return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, z)
     }
-    z.quietSNaN()
-    return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, z)
+    if (theNAN === a) {
+        if (x.isZero() && y.isInfinite() || x.isInfinite() && y.isZero())
+            return ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
+    }
+    return z
 }
 
 private fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
