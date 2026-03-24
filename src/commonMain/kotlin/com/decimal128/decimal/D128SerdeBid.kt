@@ -433,8 +433,8 @@ object D128SerdeBid {
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
                 val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
-                val payload = min(coeffT, payloadMax)
-                return Decimal.NaN(sign, isSignaling, payload)
+                val payloadDw0 = min(coeffT, payloadMax)
+                return Decimal.NaN(sign, isSignaling, 0L, payloadDw0)
             }
             else -> {
                 // all possible cases were covered above

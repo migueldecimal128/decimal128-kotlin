@@ -158,6 +158,8 @@ class Decimal private constructor(
             return Decimal(steal, dw1, dw0)
         }
 
+
+        // FIXME - eliminate this
         internal operator fun invoke(
             sign: Boolean, qExp: Int,
             digitLen: Int, bitLen: Int,
@@ -342,38 +344,6 @@ class Decimal private constructor(
                 sign -> NEG_SNAN
                 else -> POS_SNAN
             }
-        }
-
-        /**
-         * Returns a quiet or signaling NaN with an optional 128-bit diagnostic payload.
-         *
-         * The payload is split into a high word ([payloadDw1]) and low word ([payloadDw0]).
-         * If the combined payload is zero, the canonical no-payload NaN is returned.
-         *
-         * By default, payloads exceeding 33 decimal digits are clamped to the
-         * canonical maximum (33 nines). Pass `allowOversizePayload = true` to
-         * suppress clamping and accept the full 128-bit payload verbatim.
-         *
-         * @param sign whether the NaN sign bit is set.
-         * @param signaling `true` for sNaN, `false` for qNaN.
-         * @param payloadDw1 high 64 bits of the diagnostic payload.
-         * @param payloadDw0 low 64 bits of the diagnostic payload (default 0).
-         * @param allowOversizePayload if `true`, skips payload size validation.
-         */
-        fun NaN(
-            sign: Boolean = false, signaling: Boolean = false,
-            payloadDw1: Long, payloadDw0: Long = 0L, allowOversizePayload: Boolean = false
-        ): Decimal {
-            // FIXME - this routine is only used by Intel BID
-            //  should use the following with the ctx
-            if ((payloadDw1 or payloadDw0) == 0L)
-                return NaN(sign, signaling)
-            val qExp = if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-            val bitLen = calcBitLen128(payloadDw1, payloadDw0)
-            val digitLen = calcDigitLen128(bitLen, payloadDw1, payloadDw0)
-            if (digitLen > 33 && !allowOversizePayload)
-                return NaN(sign, signaling)
-            return Decimal(sign, qExp, digitLen, bitLen, payloadDw1, payloadDw0, allowOversizePayload)
         }
 
         fun NaN(
