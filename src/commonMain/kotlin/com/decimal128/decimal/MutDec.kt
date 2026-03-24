@@ -20,12 +20,11 @@ const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
 
 class MutDec() : C256(), Comparable<MutDec> {
-    private var typByte: Byte = STEAL_TYP_FNZ.toByte()
     var type: Int
-        get() = typByte.toInt()
+        get() = stealTyp(steal)
         set(value) {
             verify { value in 0..3 }
-            typByte = value.toByte()
+            steal = stealWithTyp(steal, value)
         }
     var sign: Boolean
         get() = stealSignFlag(steal)

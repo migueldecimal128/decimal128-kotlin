@@ -134,6 +134,9 @@ internal inline fun stealEncodeQNAN(signBit: Int, payloadDw1: Long, payloadDw0: 
 internal fun stealWithSignFlag(oldSteal: Int, signFlag: Boolean) =
     (oldSteal and 0x7FFF_FFFF) or (if (signFlag) Int.MIN_VALUE else 0)
 
+internal fun stealWithTyp(oldSteal: Int, typ: Int) =
+    (oldSteal and STEAL_TYP_MASK.inv()) or typ
+
 internal fun stealWithPackedLengths(oldSteal: Int, packedLengths: Int): Int =
     (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or packedLengths
 
