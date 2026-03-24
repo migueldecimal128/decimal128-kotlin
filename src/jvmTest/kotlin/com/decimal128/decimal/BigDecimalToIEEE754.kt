@@ -18,8 +18,8 @@ const val BIG_DECIMAL_INFINITY_SCALE = 99999
 // support negative zero -0
 private val POS_INFINITY_SURROGATE = BigDecimal.ONE.scaleByPowerOfTen(BIG_DECIMAL_INFINITY_SCALE)
 private val NEG_INFINITY_SURROGATE = POS_INFINITY_SURROGATE.negate()
-private const val QNAN_SCALE = 100000
-private const val SNAN_SCALE = 100001
+private const val BIG_DECIMAL_QNAN_SCALE = 100000
+private const val BIG_DEICMAL_SNAN_SCALE = 100001
 private val MAX_FINITE =
     BigDecimal.ONE.scaleByPowerOfTen(34).subtract(BigDecimal.ONE).scaleByPowerOfTen(6144-33)
 private val NEG_MAX_FINITE = MAX_FINITE.negate()
@@ -37,7 +37,7 @@ fun bdToIeeeDecimal128(bd: BigDecimal, rm: RoundingMode): BigDecimal {
     val q = -bd.scale()
     when {
         q == BIG_DECIMAL_INFINITY_SCALE -> return if (bd.signum() < 0) NEG_INFINITY_SURROGATE else POS_INFINITY_SURROGATE
-        q in QNAN_SCALE..SNAN_SCALE -> return bd
+        q in BIG_DECIMAL_QNAN_SCALE..BIG_DEICMAL_SNAN_SCALE -> return bd
     }
     if (bd.signum() == 0) {
         val boundedQ = max(min(q, 6111), -6176)
@@ -150,10 +150,10 @@ fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): Str
             else
                 decimal128.toEngineeringString()
         }
-        q < NON_FINITE_INF -> decimal128.toEngineeringString()
+        q < BIG_DECIMAL_INFINITY_SCALE -> decimal128.toEngineeringString()
         q == BIG_DECIMAL_INFINITY_SCALE -> if (isNeg) "-Inf" else "Inf"
-        q == QNAN_SCALE -> (if (isNeg) "-NaN" else "NaN") + if (magnitude.bitLength() == 0) "" else magnitude
-        q == SNAN_SCALE -> (if (isNeg) "-sNaN" else "sNaN") + if (magnitude.bitLength() == 0) "" else magnitude
+        q == BIG_DECIMAL_QNAN_SCALE -> (if (isNeg) "-NaN" else "NaN") + if (magnitude.bitLength() == 0) "" else magnitude
+        q == BIG_DEICMAL_SNAN_SCALE -> (if (isNeg) "-sNaN" else "sNaN") + if (magnitude.bitLength() == 0) "" else magnitude
         else -> throw RuntimeException("invalid exponent for ieee754r decimal128")
     }
 }
