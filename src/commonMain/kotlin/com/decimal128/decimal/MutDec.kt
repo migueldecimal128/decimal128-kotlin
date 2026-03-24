@@ -12,9 +12,8 @@ import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val NON_FINITE_INF = 8189
-internal const val NON_FINITE_QNAN = 8190
-internal const val NON_FINITE_SNAN = 8191
+internal const val NON_FINITE_QNAN = 0
+internal const val NON_FINITE_SNAN = 1
 
 const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
@@ -153,21 +152,19 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     internal fun setNaNOperand(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        val xQ = x.qExp
-        val yQ = y.qExp
-        val maxQ = max(xQ, yQ)
-        verify { maxQ >= NON_FINITE_QNAN }
-        this.set(if (maxQ == xQ) x else y)
-        this.type = STEAL_NAN_QNAN
-        this.qExp = NON_FINITE_QNAN
-        if (maxQ == NON_FINITE_SNAN)
-            ctx.signalInvalid(this)
+        verify { x.isNaN() || y.isNaN()}
+        val theNaN = when {
+            x.isSignaling() || !y.isNaN() -> x
+            y.isSignaling() || !x.isNaN()-> y
+            else -> x // both are qNaNs ... choose x
+        }
+        set(theNaN)
+        if (isSignaling()) {
+            quietSNaN()
+            ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
+        }
         verify { validate() }
         return this
-    }
-
-    private fun sNaNOperand() {
-        throw RuntimeException("sNaN operand")
     }
 
     internal fun setNaN(x: MutDec, ctx: DecContext): MutDec {

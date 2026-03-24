@@ -11,8 +11,8 @@ import kotlin.test.assertEquals
 
 class TestMutDecDectest {
 
-    private val veryVerbose = false
-    private val verbose = false
+    private val veryVerbose = true
+    private val verbose = true
 
     private val prefix = "src/jvmTest/resources/dectest/"
 
@@ -323,6 +323,8 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqadd7882 add -NaN26    NaN28 -> -NaN26",
+        "dqadd7830 add -Inf  NaN    ->  NaN",
         "dqfma0905 fma  0     0     sNaN3  ->  NaN3 Invalid_operation",
         "dqfma0900 fma  NaN2  NaN3  NaN5   ->  NaN2",
         "dqfma0903 fma  sNaN1 sNaN2 sNaN3  ->  NaN1 Invalid_operation",
