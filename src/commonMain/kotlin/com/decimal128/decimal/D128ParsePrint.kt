@@ -394,7 +394,7 @@ object D128ParsePrint {
             val qExp = stealQExp(stealX)
             return when {
                 qExp == 0 -> toIntegerString(x)
-                qExp < 0 && stealEexp(stealX) >= -6 -> toDecimalPointString(x)
+                qExp < 0 && stealSciExp(stealX) >= -6 -> toDecimalPointString(x)
                 else -> toNormalizedScientificString(x)
             }
         }
@@ -448,7 +448,7 @@ object D128ParsePrint {
 
     private fun toNormalizedScientificString(x: Decimal): String {
         val xSteal = x.steal
-        val eExp = stealEexp(xSteal)
+        val eExp = stealSciExp(xSteal)
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
         val signLen = stealSignBit(xSteal)
         val xDigitLen = stealDigitLen(xSteal)

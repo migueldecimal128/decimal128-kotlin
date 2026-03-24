@@ -52,8 +52,29 @@ internal inline fun stealHasINF(stealX: Int, stealY: Int) =
 internal inline fun stealHasNAN(stealX: Int, stealY: Int) =
     stealIsNAN(stealX) or stealIsNAN(stealY)
 
-internal inline fun stealIsFinite(steal: Int): Boolean  = (steal and STEAL_NONFINITE_BIT) == 0
+internal inline fun stealIsFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) == 0
 internal inline fun stealNotFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) != 0
+internal inline fun stealIsNormal(steal: Int): Boolean {
+    if (! stealIsFNZ(steal))
+        return false
+    val qExp = stealQExp(steal)
+    if (qExp >= -6143)
+        return true
+    val digitLen = stealDigitLen(steal)
+    val eExp = qExp + digitLen - 1
+    return eExp >= -6143
+}
+
+internal inline fun stealIsSubnormal(steal: Int): Boolean {
+    if (! stealIsFNZ(steal))
+        return false
+    val qExp = stealQExp(steal)
+    if (qExp >= -6143)
+        return false
+    val digitLen = stealDigitLen(steal)
+    val eExp = qExp + digitLen - 1
+    return eExp < -6143
+}
 
 internal inline fun stealSignFlag(steal: Int): Boolean = steal < 0
 internal inline fun stealSignBit(steal: Int): Int = steal ushr 31
@@ -92,7 +113,7 @@ internal inline fun stealQExp(steal: Int) =
 internal inline fun stealWithQExp(oldSteal: Int, qExp: Int) =
     (oldSteal and STEAL_QEXP_MASK_UNSHIFTED.inv()) or ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL)
 
-internal inline fun stealEexp(steal: Int): Int {
+internal inline fun stealSciExp(steal: Int): Int {
     // eExp = qExp + (digitLen - (-digitLen ushr 31))
     // eExp = qExp + (digitLen - (-bitLen ushr 31))
     return ((steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR) +
@@ -113,6 +134,15 @@ internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long
     return (signBit shl 31) or
             ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
             calcStealPackedLengths128(dw1, dw0) or
+            STEAL_TYP_FNZ
+}
+
+internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, packedLengths: Int): Int {
+    verify { qExp >= Q_TINY && qExp <= Q_MAX }
+    verify { packedLengths != 0 }
+    return (signBit shl 31) or
+            ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
+            packedLengths or
             STEAL_TYP_FNZ
 }
 

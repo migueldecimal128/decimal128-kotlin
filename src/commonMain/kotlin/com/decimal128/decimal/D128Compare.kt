@@ -154,8 +154,8 @@ private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
     val xSteal = x.steal; val ySteal = y.steal
     val xQ = stealQExp(xSteal)
     val yQ = stealQExp(ySteal)
-    val xE = stealEexp(xSteal)
-    val yE = stealEexp(ySteal)
+    val xE = stealSciExp(xSteal)
+    val yE = stealSciExp(ySteal)
     if (xE != yE)
         return ((xE - yE) shr 31) or 1
     if (x.bExpMin() > y.bExpMax())

@@ -126,7 +126,7 @@ class Decimal private constructor(
 
     internal inline fun qExp(): Int = stealQExp(steal)
 
-    internal inline fun eExp(): Int = stealEexp(steal)
+    internal inline fun eExp(): Int = stealSciExp(steal)
 
     // the lower/upper bound of the normalized binary exponent interval
     // what is the range of binary exponents given a decimal with
@@ -401,7 +401,7 @@ class Decimal private constructor(
         val type = stealTyp(steal)
         return when (type) {
             STEAL_TYP_FNZ -> {
-                if (stealEexp(steal) < ctx.decFormat.eMin) {
+                if (stealSciExp(steal) < ctx.decFormat.eMin) {
                     if (sign) negativeSubnormal else positiveSubnormal
                 }
                 if (sign) negativeNormal else positiveNormal
@@ -439,7 +439,7 @@ class Decimal private constructor(
      */
     fun isNormal(): Boolean = stealIsFNZ(steal) &&
             stealDigitLen(steal) <= 34 &&
-            stealEexp(steal) >= -6143
+            stealSciExp(steal) >= -6143
 
     /**
      * Returns `true` if this value is subnormal — finite, non-zero, and
@@ -448,7 +448,7 @@ class Decimal private constructor(
      * A decimal128 value is subnormal when its adjusted (scientific) exponent
      * `eExp` is less than −6143. Equivalently: `qExp == −6176 && digitLen < 34`.
      */
-    fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealEexp(steal) < -6143
+    fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealSciExp(steal) < -6143
 
     /**
      * Returns `true` if this value is finite — zero, subnormal, or normal.
@@ -573,7 +573,7 @@ class Decimal private constructor(
      *
      * This is the exponent used by [logB] and [isNormal]/[isSubnormal] checks.
      */
-    fun eExponent(): Int = if (isFinite()) stealEexp(steal) else Int.MIN_VALUE
+    fun eExponent(): Int = if (isFinite()) stealSciExp(steal) else Int.MIN_VALUE
 
     /**
      * Returns the number of significant decimal digits in the coefficient, or
@@ -644,7 +644,7 @@ class Decimal private constructor(
         val steal = steal
         return when {
             stealIsZER(steal) -> ctx.signalDivByZero(NEG_INFINITY)
-            stealIsFNZ(steal) -> from(stealEexp(steal))
+            stealIsFNZ(steal) -> from(stealSciExp(steal))
             stealIsINF(steal) -> POS_INFINITY
             else -> nanOperandFound(this, ctx)
         }

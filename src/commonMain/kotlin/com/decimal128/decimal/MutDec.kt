@@ -90,19 +90,17 @@ class MutDec() : C256(), Comparable<MutDec> {
             STEAL_TYP_ZER -> {
                 if (bitLen > 0)
                     return false
-                if (qExp >= NON_FINITE_INF)
+                if (qExp < Q_TINY || qExp > Q_MAX)
                     return false
             }
             STEAL_TYP_FNZ -> {
                 if (bitLen == 0)
                     return false
-                if (qExp >= NON_FINITE_INF)
+                if (qExp < Q_TINY || qExp > Q_MAX)
                     return false
             }
             STEAL_TYP_INF -> {
                 if (bitLen != 0)
-                    return false
-                if (qExp != NON_FINITE_INF)
                     return false
             }
             STEAL_TYP_NAN -> {
@@ -115,7 +113,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     // if the digitLen is non-zero then subtract 1
     // if digitLen == 0 then sciExp stays 0 ... 0e0
-    fun sciExp() = qExp + (digitLen - (-digitLen ushr 31))
+    fun sciExp() = stealSciExp(steal)
 
     fun setZero() = setZero(false)
 
@@ -247,9 +245,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         //  Changing the coefficient to one would make negation slightly
         //  easier, but isn't worth doing
         this.c256SetZero()
-        this.type = STEAL_TYP_INF
-        this.qExp = NON_FINITE_INF
-        this.sign = sign
+        this.steal = stealEncodeINF(if (sign) 1 else 0)
         verify { validate() }
         return this
     }
@@ -257,58 +253,48 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun set(n: Int): MutDec = set(n.toLong())
 
     fun set(l: Long): MutDec {
-        this.type = if (l == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
-        this.qExp = 0
-        this.sign = l < 0
-        val mask = l shr 63
-        val abs = (l xor mask) - mask
-        c256Set64(abs)
-        verify { validate() }
+        if (l != 0L) {
+            val signBit = (l ushr 63).toInt()
+            val mask = l shr 63
+            val abs = (l xor mask) - mask
+            this.dw3 = 0; this.dw2 = 0; this.dw1 = 0
+            this.dw0 = abs
+            this.steal = stealEncodeFNZ(signBit, qExp = 0, calcStealPackedLengths64(abs))
+            verify { validate() }
+        } else {
+            setZero()
+        }
         return this
     }
 
     fun setUnsigned(ul: Long): MutDec {
-        this.type = if (ul == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
-        this.qExp = 0
-        this.sign = false
-        c256Set64(ul)
-        verify { validate() }
-        return this
-    }
-
-    fun set(l: Long, qExp: Int, ctx: DecContext): MutDec {
-        this.type = if (l == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
-        this.qExp = capExponentRange(qExp)
-        this.sign = l < 0
-        val mask = l shr 63
-        val abs = (l xor mask) - mask
-        c256Set64(abs)
-        verify { validate() }
+        if (ul != 0L) {
+            this.dw3 = 0; this.dw2 = 0; this.dw1 = 0
+            this.dw0 = ul
+            this.steal = stealEncodeFNZ(signBit = 0, qExp = 0, calcStealPackedLengths64(ul))
+            verify { validate() }
+        } else {
+            setZero()
+        }
         return this
     }
 
     fun set(x: MutDec): MutDec {
-        if (this !== x) {
-            c256Set(x)
-            this.type = x.type
-            this.qExp = x.qExp
-            this.sign = x.sign
-        }
+        this.dw3 = x.dw3; this.dw2 = x.dw2; this.dw1 = x.dw1; this.dw0 = x.dw0;
+        this.steal = x.steal
         verify { validate() }
         return this
     }
 
     fun set(x: MutDec, ctx: DecContext): MutDec {
-        if (this !== x) {
-            c256Set(x)
-            this.type = x.type
-            this.qExp = x.qExp
-            this.sign = x.sign
-            if (qExp == NON_FINITE_SNAN) {
-                this.type = STEAL_NAN_QNAN
-                qExp = NON_FINITE_QNAN
-                ctx.signalInvalid(this)
-            }
+        val xSteal = x.steal
+        this.dw3 = x.dw3; this.dw2 = x.dw2; this.dw1 = x.dw1; this.dw0 = x.dw0;
+        this.steal = xSteal
+        if (stealIsFNZ(xSteal))
+            return finalizeFnz(stealSignFlag(steal), stealQExp(steal), ctx)
+        if (stealIsSNAN(xSteal)) {
+            quietSNaN()
+            ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
         }
         verify { validate() }
         return this
@@ -952,16 +938,16 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
     }
 
-    fun isSignMinus() = sign
-    fun isNormal() = qExp < NON_FINITE_INF && sciExp() >= -6143
-    fun isFinite() = qExp < NON_FINITE_INF
-    fun isZero() = qExp < NON_FINITE_INF && c256IsZero()
-    fun isFiniteNonZero() = qExp < NON_FINITE_INF && !c256IsZero()
-    fun isSubnormal() = qExp < NON_FINITE_INF && sciExp() < -6143
-    fun isInfinite() = qExp == NON_FINITE_INF
-    fun isNaN() = qExp in NON_FINITE_QNAN..NON_FINITE_SNAN
-    fun isNaN(signaling: Boolean) = qExp == (if (signaling) NON_FINITE_SNAN else NON_FINITE_QNAN)
-    fun isSignaling() = qExp == NON_FINITE_SNAN
+    fun isSignMinus() = stealSignFlag(steal)
+    fun isNormal() = stealIsNormal(steal)
+    fun isFinite() = stealIsFinite(steal)
+    fun isZero() = stealIsZER(steal)
+    fun isFiniteNonZero() = stealIsFNZ(steal)
+    fun isSubnormal() = stealIsSubnormal(steal)
+    fun isInfinite() = stealIsINF(steal)
+    fun isNaN() = stealIsNAN(steal)
+    fun isNaN(signaling: Boolean) = (if (signaling) stealIsSNAN(steal) else stealIsQNAN(steal))
+    fun isSignaling() = stealIsSNAN(steal)
     fun isCanonical() = true
     fun radix() = 10
 
