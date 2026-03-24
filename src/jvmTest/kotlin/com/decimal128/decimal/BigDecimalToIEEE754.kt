@@ -133,6 +133,11 @@ fun bdIsFinite(bd: BigDecimal) : Boolean {
     return eExp < BIG_DECIMAL_INFINITY_SCALE
 }
 
+fun bdIsInfinite(bd: BigDecimal) : Boolean {
+    val eExp = -bd.scale()
+    return eExp == BIG_DECIMAL_INFINITY_SCALE
+}
+
 fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): String {
     val decimal128 = bdToIeeeDecimal128(bd, RoundingMode.HALF_EVEN)
     val q = -decimal128.scale()

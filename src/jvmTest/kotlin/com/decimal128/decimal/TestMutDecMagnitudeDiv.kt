@@ -24,7 +24,8 @@ class TestMutDecMagnitudeDiv {
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
         val bdBIsFinite = bdIsFinite(bdB)
         val bdDiv = bdA.divide(bdB, MathContext(70, rm))
-        val bdP = bdToIeeeDecimal128(bdDiv, rm)
+        val bdQ = bdToIeeeDecimal128(bdDiv, rm)
+        val bdQIsInfinite = bdIsInfinite(bdQ)
     }
 
     val cases = arrayOf(
@@ -92,7 +93,7 @@ class TestMutDecMagnitudeDiv {
     fun test1(tc: TC) {
         val bdA = tc.bdA
         val bdB = tc.bdB
-        val expected = tc.bdP
+        val expected = tc.bdQ
         val env = tc.ctx
         val rm = env.decRounding.mapToRoundingMode()
 
@@ -107,18 +108,21 @@ class TestMutDecMagnitudeDiv {
             println("magQ:$decQ")
         val biExpected = expected.unscaledValue()
         val qExpExpected = -expected.scale()
+        val expectInfinite = tc.bdQIsInfinite
         val biObserved = decQ.coeffToBigInteger()
         val qExpObserved = decQ.qExp
-        if (decQ.isInfinite() && qExpExpected == BIG_DECIMAL_INFINITY_SCALE)
-            return
-        if (verbose || qExpExpected != qExpObserved ||
-            (biExpected != biObserved && qExpExpected != BIG_DECIMAL_INFINITY_SCALE)) {
+        val observedInfinite = decQ.isInfinite()
+        if (verbose || expectInfinite != observedInfinite ||
+            !expectInfinite && qExpExpected != qExpObserved) {
             println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")
+            println(" => expectInfinite:$expectInfinite observedInfinite:$observedInfinite")
             println(" => qExpExpected:$qExpExpected qExpObserved:$qExpObserved")
             println(" => biExpected:$biExpected biObserved:$biObserved")
         }
-        if (qExpExpected != NON_FINITE_INF)
-            assertEquals(biExpected, biObserved)
+        assertEquals(expectInfinite, observedInfinite)
+        if (expectInfinite)
+            return
+        assertEquals(biExpected, biObserved)
         assertEquals(qExpExpected, qExpObserved)
     }
 }

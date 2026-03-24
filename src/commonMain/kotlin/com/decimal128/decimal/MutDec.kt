@@ -577,12 +577,15 @@ class MutDec() : C256(), Comparable<MutDec> {
                 val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                 if (roundUp)
                     c256MutateIncrement(t)
+                t.type = STEAL_TYP_FNZ
                 t.qExp = 0
                 t.sign = sign
-                // recursive call now that t.qExp == 0
-                // where tail recursion when I need it?
-                // even better ... GOTO
-                return t.toLong(rounding, ctx)
+                if (t.bitLen < 64)
+                    return (t.dw0 xor signMask) - signMask
+                if (t.dw0 == Long.MIN_VALUE && sign)
+                    return Long.MIN_VALUE
+                ctx.signalInvalid(t)
+                return Long.MAX_VALUE - signMask
             }
             else -> {
                 if (digitLen + qExp <= 19) {
