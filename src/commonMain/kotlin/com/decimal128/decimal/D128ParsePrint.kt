@@ -391,7 +391,7 @@ object D128ParsePrint {
     fun toString(x: Decimal): String {
         val stealX = x.steal
         if (stealIsFinite(stealX)) {
-            val qExp = stealQexp(stealX)
+            val qExp = stealQExp(stealX)
             return when {
                 qExp == 0 -> toIntegerString(x)
                 qExp < 0 && stealEexp(stealX) >= -6 -> toDecimalPointString(x)
@@ -428,7 +428,7 @@ object D128ParsePrint {
 
     private fun toDecimalPointString(x: Decimal): String {
         val xSteal = x.steal
-        val xQ = stealQexp(xSteal)
+        val xQ = stealQExp(xSteal)
         val xDigitLen = stealDigitLen(xSteal)
         val digitsRightOfDecimal = -xQ
         val leadingZeroCount = max(1 + digitsRightOfDecimal - xDigitLen, 0)

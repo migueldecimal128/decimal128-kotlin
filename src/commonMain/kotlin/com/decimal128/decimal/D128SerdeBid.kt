@@ -173,7 +173,7 @@ object D128SerdeBid {
         val signBitLong = stealSignBit(steal).toLong() shl 63
         val gCombinationField = when {
             stealIsFinite(steal) -> {
-                val qExp = stealQexp(steal)
+                val qExp = stealQExp(steal)
                 verify { qExp in QTINY_Neg6176..QMAX_6111 }
                 val biasedQExp = qExp - QTINY_Neg6176 // remember qTiny is negative
                 verify { (biasedQExp and 0x3000) != 0x3000 }

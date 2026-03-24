@@ -9,7 +9,7 @@ internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
 internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val xSteal = x.steal; val ySteal = y.steal
     val prodSignFlag = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
-    val prodExp = stealQexp(xSteal) + stealQexp(ySteal)
+    val prodExp = stealQExp(xSteal) + stealQExp(ySteal)
     val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
         val prodBitLen = stealBitLen(xSteal) + stealBitLen(ySteal)
@@ -56,7 +56,7 @@ private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     c256SetMul(p, m, n, tmps.pentad1)
     p.finalizeFnz(
         stealSignFlag(xSteal) xor stealSignFlag(ySteal),
-        stealQexp(xSteal) + stealQexp(ySteal), ctx)
+        stealQExp(xSteal) + stealQExp(ySteal), ctx)
     val d = Decimal.from(p)
     return d
 }

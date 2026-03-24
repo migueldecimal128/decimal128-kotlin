@@ -12,9 +12,9 @@ import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal const val NON_FINITE_INF = 16380
-internal const val NON_FINITE_QNAN = 16381
-internal const val NON_FINITE_SNAN = 16382
+internal const val NON_FINITE_INF = 8189
+internal const val NON_FINITE_QNAN = 8190
+internal const val NON_FINITE_SNAN = 8191
 
 const val CAPPED_EXP_MIN = -7000
 const val CAPPED_EXP_MAX = 7000
@@ -37,7 +37,11 @@ class MutDec() : C256(), Comparable<MutDec> {
         get() = stealSignBit(steal)
 
 
-    var qExp = 0
+    var qExp: Int
+        get() = stealQExp(steal)
+        set(value) {
+            steal = stealWithQExp(steal, value)
+        }
     val eExp: Int
         get() = qExp + digitLen - 1
 
@@ -325,7 +329,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         this.dw0 = x.dw0
         this.type = stealTyp(xSteal)
         this.steal = stealWithDigitLenBitLen(steal, stealDigitLen(xSteal), stealBitLen(xSteal))
-        this.qExp = stealQexp(xSteal)
+        this.qExp = stealQExp(xSteal)
         this.sign = stealSignFlag(xSteal)
         verify { validate() }
         return this

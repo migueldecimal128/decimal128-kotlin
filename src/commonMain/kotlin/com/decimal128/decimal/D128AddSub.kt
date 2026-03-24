@@ -27,10 +27,10 @@ internal fun d128AddSubImpl(x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext
         addFnzFnz(xSteal, x, ySteal, y, ctx)
     } else when (signature) {
         ZER_ZER -> addZerZer(xSteal, x, ySteal, y, ctx)
-        ZER_FNZ -> scaleToMinQExp(ySteal, y, stealQexp(xSteal), ctx)
+        ZER_FNZ -> scaleToMinQExp(ySteal, y, stealQExp(xSteal), ctx)
         ZER_INF, FNZ_INF -> Decimal.infinity(stealSignFlag(ySteal))
 
-        FNZ_ZER -> scaleToMinQExp(xSteal, x, stealQexp(ySteal), ctx)
+        FNZ_ZER -> scaleToMinQExp(xSteal, x, stealQExp(ySteal), ctx)
         //FNZ_INF -> y
 
         INF_ZER, INF_FNZ -> x
@@ -48,8 +48,8 @@ private fun addZerZer(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: Dec
     // when x is zero, x + x and x − (−x) have the sign of x.
     val xSign = stealSignFlag(xSteal)
     val ySign = stealSignFlag(ySteal)
-    val xQ = stealQexp(xSteal)
-    val yQ = stealQexp(ySteal)
+    val xQ = stealQExp(xSteal)
+    val yQ = stealQExp(ySteal)
     if (xSign == ySign) {
         // Rule: x + x = x. Preserves the sign of zero. (-0) + (-0) = -0.
         return if (xQ <= yQ) x else y // return min qExp
@@ -77,7 +77,7 @@ private fun addInfInf(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: Dec
         ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 
 private inline fun addFnzFnz(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext) =
-    if (stealQexp(xSteal) == stealQexp(ySteal))
+    if (stealQExp(xSteal) == stealQExp(ySteal))
         addFnzFnzUnscaled(xSteal, x, ySteal, y, ctx)
     else
         addFnzFnzScaled(xSteal, x, ySteal, y, ctx)
@@ -117,7 +117,7 @@ private inline fun addFnzFnzScaled(xSteal: Int, x: Decimal, ySteal: Int, y: Deci
     return when {
         cmpMag > 0 -> subFnzScaledMagnitude(xSign, x, y, ctx)
         cmpMag < 0 -> subFnzScaledMagnitude(ySign, y, x, ctx)
-        else -> Decimal.zero(false, min(stealQexp(xSteal), stealQexp(ySteal)))
+        else -> Decimal.zero(false, min(stealQExp(xSteal), stealQExp(ySteal)))
     }
 }
 
@@ -127,8 +127,8 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
     val n = if (flip) y else x
     val mSteal = m.steal
     val nSteal = n.steal
-    val mQ = stealQexp(mSteal)
-    val nQ = stealQexp(nSteal)
+    val mQ = stealQExp(mSteal)
+    val nQ = stealQExp(nSteal)
     val qDelta = mQ - nQ
     verify { qDelta >= 0 }
     val mDigitLen = stealDigitLen(mSteal)
@@ -190,8 +190,8 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
 
     val mSteal = m.steal
     val sSteal = s.steal
-    val qM = stealQexp(mSteal)
-    val qS = stealQexp(sSteal)
+    val qM = stealQExp(mSteal)
+    val qS = stealQExp(sSteal)
     val precision = ctx.precision
 
     if (qM < qS) {

@@ -41,7 +41,7 @@ internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
 }
 
 internal fun scaleToMinQExp(xSteal: Int, x: Decimal, otherExp: Int, ctx: DecContext): Decimal {
-    val xQ = stealQexp(xSteal)
+    val xQ = stealQExp(xSteal)
     if (xQ <= otherExp)
         return if (x.steal == xSteal) x else x.negate()
     val delta = xQ - otherExp

@@ -75,13 +75,13 @@ private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): De
     verify { stealIsZER(stealX) || stealIsZER(stealY) }
     verify { !stealIsNAN(stealA) }
     val prodSign = stealSignFlag(stealX) xor stealSignFlag(stealY)
-    val prodQ = stealQexp(stealX) + stealQexp(stealY)
+    val prodQ = stealQExp(stealX) + stealQExp(stealY)
     if (stealIsZER(stealA)) {
         val fmaSign =
             (prodSign and stealSignFlag(stealA)) or ((prodSign xor stealSignFlag(stealA)) and ctx.isRoundTowardNegative())
-        return Decimal.zero(fmaSign, min(prodQ, stealQexp(stealA)))
+        return Decimal.zero(fmaSign, min(prodQ, stealQExp(stealA)))
     }
-    if (stealIsFNZ(stealA) && prodQ < stealQexp(stealA))
+    if (stealIsFNZ(stealA) && prodQ < stealQExp(stealA))
         return scaleToMinQExp(stealA, a, prodQ, ctx)
     return a
 }

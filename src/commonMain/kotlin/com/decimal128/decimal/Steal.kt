@@ -85,8 +85,12 @@ private const val STEAL_QEXP_DECODE_SHL = 16
 private const val STEAL_QEXP_DECODE_SHR = 18
 private const val STEAL_QEXP_ENCODE_SHL = 2
 private const val STEAL_QEXP_ENCODE_MASK = 0x3FFF
-internal inline fun stealQexp(steal: Int) =
+private const val STEAL_QEXP_MASK_UNSHIFTED = STEAL_QEXP_ENCODE_MASK shl STEAL_QEXP_ENCODE_SHL
+internal inline fun stealQExp(steal: Int) =
     (steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR
+
+internal inline fun stealWithQExp(oldSteal: Int, qExp: Int) =
+    (oldSteal and STEAL_QEXP_MASK_UNSHIFTED.inv()) or ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL)
 
 internal inline fun stealEexp(steal: Int): Int {
     // eExp = qExp + (digitLen - (-digitLen ushr 31))

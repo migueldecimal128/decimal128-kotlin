@@ -10,7 +10,7 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, ctx: DecCont
             return nanOperandFound(x, ctx)
         return x
     }
-    val qExp = stealQexp(stealX)
+    val qExp = stealQExp(stealX)
     if (qExp >= 0)
         return x
     val sign = stealSignFlag(stealX)
@@ -51,7 +51,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppre
     if (stealIsFinite(steal)) {
         val signMaskLong = stealSignMask(steal).toLong()
         val sign = stealSignFlag(steal)
-        val qExp = stealQexp(steal)
+        val qExp = stealQExp(steal)
         val bitLen = stealBitLen(steal)
         val digitLen = stealDigitLen(steal)
         val dw0 = x.dw0
@@ -141,7 +141,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
     if (stealIsFinite(steal)) {
         val signMask = stealSignMask(steal)
         val sign = stealSignFlag(steal)
-        val qExp = stealQexp(steal)
+        val qExp = stealQExp(steal)
         val bitLen = stealBitLen(steal)
         val digitLen = stealDigitLen(steal)
         val dw0 = x.dw0

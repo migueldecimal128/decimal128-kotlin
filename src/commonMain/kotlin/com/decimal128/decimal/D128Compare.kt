@@ -152,8 +152,8 @@ private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
 
 private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
     val xSteal = x.steal; val ySteal = y.steal
-    val xQ = stealQexp(xSteal)
-    val yQ = stealQexp(ySteal)
+    val xQ = stealQExp(xSteal)
+    val yQ = stealQExp(ySteal)
     val xE = stealEexp(xSteal)
     val yE = stealEexp(ySteal)
     if (xE != yE)

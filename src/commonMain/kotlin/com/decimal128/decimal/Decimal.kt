@@ -124,7 +124,7 @@ class Decimal private constructor(
     internal val signMask: Int
         get() = steal shr 31
 
-    internal inline fun qExp(): Int = stealQexp(steal)
+    internal inline fun qExp(): Int = stealQExp(steal)
 
     internal inline fun eExp(): Int = stealEexp(steal)
 
@@ -132,9 +132,9 @@ class Decimal private constructor(
     // what is the range of binary exponents given a decimal with
     // bitLen bits in the coeff and qExp
     internal fun bExpMin(): Int =
-        calcBExpMin(stealBitLen(steal), stealQexp(steal))
+        calcBExpMin(stealBitLen(steal), stealQExp(steal))
     internal fun bExpMax(): Int =
-        calcBExpMax(stealBitLen(steal), stealQexp(steal))
+        calcBExpMax(stealBitLen(steal), stealQExp(steal))
 
 
     companion object {
@@ -514,7 +514,7 @@ class Decimal private constructor(
      */
     fun isCanonical(): Boolean {
         val steal = steal
-        val qExp = stealQexp(steal)
+        val qExp = stealQExp(steal)
         val digitLen = stealDigitLen(steal)
         verify { digitLen == calcDigitLen128(dw1, dw0) }
         return when {
@@ -547,7 +547,7 @@ class Decimal private constructor(
         val stealX = steal
         val stealY = other.steal
         return when {
-            stealIsFinite(stealX) -> stealIsFinite(stealY) && stealQexp(stealX) == stealQexp(stealY)
+            stealIsFinite(stealX) -> stealIsFinite(stealY) && stealQExp(stealX) == stealQExp(stealY)
             stealIsINF(stealX) -> stealIsINF(stealY)
             else -> stealIsNAN(stealY)
         }
@@ -603,7 +603,7 @@ class Decimal private constructor(
         val steal = steal
         val newSign = !stealSignFlag(steal)
         when {
-            stealIsZER(steal) && stealQexp(steal) == 0 -> return zero(newSign)
+            stealIsZER(steal) && stealQExp(steal) == 0 -> return zero(newSign)
             stealIsINF(steal) -> return infinity(newSign)
             stealIsNAN(steal) && stealBitLen(steal) == 0 ->
                     return NaN(newSign, signaling = stealIsSNAN(steal))

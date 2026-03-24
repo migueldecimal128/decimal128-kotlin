@@ -20,7 +20,7 @@ internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int
 internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal {
     val xSteal = x.steal
     if (stealIsFNZ(xSteal)) {
-        val xQ = stealQexp(xSteal)
+        val xQ = stealQExp(xSteal)
         val xDigitLen = stealDigitLen(xSteal)
         val qDesired = -decimalScale
         val qDelta = xQ - qDesired
