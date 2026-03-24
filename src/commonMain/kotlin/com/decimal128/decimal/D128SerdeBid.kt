@@ -2,6 +2,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFNZ
 import kotlin.math.min
 
 /**
@@ -324,7 +325,7 @@ object D128SerdeBid {
         //  non-canonical and the value used for c is zero.
         if ((dw1 or dw0) == 0L || dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
             return Decimal.zero(sign, qExp) // use ctx? ... let's be safe
-        return Decimal(sign, qExp, dw1, dw0)
+        return decimalFNZ(sign, qExp, dw1, dw0)
     }
 
     fun decodeBid64(bid64: Long, allowNonCanonical: Boolean = false): Decimal {
@@ -446,7 +447,7 @@ object D128SerdeBid {
         //  non-canonical and the value used for c is zero.
         if (dw0 > coeffMax)
             return Decimal.zero(sign, qExp)
-        return Decimal(sign, qExp, 0L, dw0)
+        return decimalFNZ(sign, qExp, 0L, dw0)
     }
 
 

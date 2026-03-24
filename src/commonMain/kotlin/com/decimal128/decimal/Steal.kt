@@ -107,6 +107,13 @@ internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long
             calcStealPackedLengths128(dw1, dw0) or
             STEAL_TYP_FNZ
 
+internal fun stealEncodeFinite(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Int =
+    if ((dw1 or dw0) != 0L)
+        stealEncodeFNZ(signBit, qExp, dw1, dw0)
+    else
+        stealEncodeZER(signBit, qExp)
+
+
 internal inline fun stealEncodeINF(signBit: Int) =
     (signBit shl 31) or STEAL_TYP_INF
 

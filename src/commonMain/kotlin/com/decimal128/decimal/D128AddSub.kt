@@ -3,6 +3,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
@@ -261,6 +262,6 @@ private fun unscaledSub(sign: Boolean, x: Decimal, y: Decimal): Decimal {
     val d0 = x0 - y.dw0
     val carry0 = if (unsignedCmp(d0, x0) > 0) 1L else 0L
     val d1 = x.dw1 - y.dw1 - carry0
-    val diff = Decimal(sign, x.qExp(), d1, d0)
+    val diff = decimalFinite(sign, x.qExp(), d1, d0)
     return diff
 }

@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFNZ
+import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import kotlin.math.min
 
 internal fun nextUpOrDown(isUp: Boolean, x: Decimal, ctx: DecContext): Decimal {
@@ -34,7 +36,7 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     var dw1 = x.dw1
     var dw0 = x.dw0
     val headroom = min(ctx.precision - stealDigitLen(xSteal), qExp - Q_TINY)
-    val xSign = stealSignFlag(xSteal)
+    val xSignBit = stealSignBit(xSteal)
     if (headroom > 0) {
         val pentad = ctx.tmps.pentad1
         umul128xPow10to128(pentad, dw1, dw0, headroom)
@@ -50,9 +52,9 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
         dw0 = ctx.decFormat.dw0MinFullPrecisionCoeff
         ++qExp
         if (qExp > Q_MAX)
-            return Decimal.infinity(xSign)
+            return Decimal.infinity(xSignBit)
     }
-    return Decimal(xSign, qExp, dw1, dw0)
+    return decimalFNZ(xSignBit, qExp, dw1, dw0)
 }
 
 internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
@@ -80,16 +82,16 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     }
     dw1 -= if (dw0 == 0L) 1L else 0L
     --dw0
-    return Decimal(x.sign, xQ, dw1, dw0)
+    return decimalFinite(x.sign, xQ, dw1, dw0)
 }
 
 internal fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
     val qExp = Q_MAX
     val dwHi = ctx.decFormat.dw1MaxxCoeff
     val dwLo = ctx.decFormat.dw0MaxxCoeff - 1L
-    return Decimal(sign, qExp, dwHi, dwLo)
+    return decimalFNZ(if (sign) 1 else 0, qExp, dwHi, dwLo)
 }
 
 internal fun minFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal =
-    Decimal(sign, Q_TINY, 0L, 1L)
+    decimalFNZ(if (sign) 1 else 0, Q_TINY, 0L, 1L)
 

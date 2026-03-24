@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFNZ
 import kotlin.math.min
 
 internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int = 99): Decimal {
@@ -29,7 +30,7 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
                 if (qDelta <= headroom) {
                     val pentad = ctx.tmps.pentad1
                     umul128xPow10to128(pentad, x.dw1, x.dw0, qDelta)
-                    return Decimal(x.sign, xQ - qDelta, pentad.dw1, pentad.dw0)
+                    return decimalFNZ(x.sign, xQ - qDelta, pentad.dw1, pentad.dw0)
                 }
                 return ctx.signalInvalid(InvalidOperationReason.UNABLE_TO_SCALE)
             }

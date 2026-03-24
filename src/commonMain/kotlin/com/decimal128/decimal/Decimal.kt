@@ -141,18 +141,15 @@ class Decimal private constructor(
 
         private const val BIT31 = Int.MIN_VALUE
 
-        internal operator fun invoke(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal =
-            decimalFinite(sign, qExp, dw1, dw0)
-
         internal fun decimalFinite(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= Q_TINY && qExp <= Q_MAX }
             val signBit = if (sign) 1 else 0
-            val steal = if (dw1 or dw0 != 0L)
-                stealEncodeFNZ(signBit, qExp, dw1, dw0)
-            else
-                stealEncodeZER(signBit, qExp)
+            val steal = stealEncodeFinite(signBit, qExp, dw1, dw0)
             return Decimal(steal, dw1, dw0)
         }
+
+        internal inline fun decimalFNZ(signFlag: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal =
+            decimalFNZ(if (signFlag) 1 else 0, qExp, dw1, dw0)
 
         internal fun decimalFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= Q_TINY && qExp <= Q_MAX }
@@ -171,25 +168,6 @@ class Decimal private constructor(
             verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
             verify { digitLen <= 38 }
             verify { digitLen <= 34 || allowNonCanonical }
-            val steal = stealRaw(sign, qExp, dw1, dw0)
-            return Decimal(steal, dw1, dw0)
-        }
-
-        internal operator fun invoke(
-            sign: Boolean, qExp: Int,
-            digitLen: Int, bitLen: Int,
-            dw1: Long, dw0: Long,
-            ctx: DecContext
-        ): Decimal {
-            verify { bitLen == calcBitLen128(dw1, dw0) }
-            verify { digitLen == calcDigitLen128(bitLen, dw1, dw0) }
-            verify {
-                when {
-                    qExp < NON_FINITE_INF -> digitLen < ctx.precision
-                    qExp == NON_FINITE_INF -> digitLen == 0
-                    else -> digitLen <= NAN_PAYLOAD_PRECISION
-                }
-            }
             val steal = stealRaw(sign, qExp, dw1, dw0)
             return Decimal(steal, dw1, dw0)
         }
@@ -414,6 +392,8 @@ class Decimal private constructor(
 
 
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
+
+        fun infinity(signBit: Int) = if ((signBit and 1) != 0) NEG_INFINITY else POS_INFINITY
 
         fun infinityNonCanonical(sign: Boolean, dw1: Long, dw0: Long): Decimal =
             if ((dw1 or dw0) == 0L)

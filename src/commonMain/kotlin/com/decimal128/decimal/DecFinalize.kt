@@ -3,6 +3,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFNZ
 import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import com.decimal128.decimal.Residue.Companion.EXACT
 
@@ -88,7 +89,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
         else
             decFinalizeOverflow(sign, rounding, ctx, beQuiet)
     }
-    val ret = Decimal(sign, qExp, dw1, dw0)
+    val ret = decimalFNZ(sign, qExp, dw1, dw0)
     return if (!applyRounding || beQuiet) ret else ctx.signalInexact(ret)
 }
 
@@ -103,7 +104,7 @@ private fun decFinalizeZero(sign: Boolean,
             qExp < Q_TINY ->
                 return decFinalizeUnderflowRegion(sign, dw1 = 0L, dw0 = 1L,
                     residue, qExp, rounding, ctx, beQuiet)
-            else -> z = Decimal(sign, qExp, dw1 = 0L, dw0 = 1L)
+            else -> z = decimalFNZ(sign, qExp, dw1 = 0L, dw0 = 1L)
         }
     } else {
         z = Decimal.zero(sign, qExp)
@@ -184,7 +185,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
             ++qExpT
         }
     }
-    val z = Decimal(sign, qExpT, dw1T, dw0T)
+    val z = decimalFNZ(sign, qExpT, dw1T, dw0T)
     // IEEE 754 7.5: If the rounded result is exact, no underflow flag
     return if (totalResidue == EXACT || beQuiet) z else ctx.signalInexactUnderflow(z)
 }
@@ -201,7 +202,7 @@ private fun decFinalizeClamping(sign: Boolean,
     verify { ctx.decFormat.coeffFits(dw1S, dw0S) }
     // successful clamping does not signal because
     // the returned value is numerically equal
-    return Decimal(sign, qMax, dw1S, dw0S)
+    return decimalFNZ(sign, qMax, dw1S, dw0S)
 }
 
 private fun decFinalizeOverflow(sign: Boolean, rounding: DecRounding,

@@ -1,5 +1,8 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Decimal.Companion.decimalFNZ
+import com.decimal128.decimal.Decimal.Companion.decimalFinite
+
 internal fun d128ScaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negate: Boolean = false): Decimal {
     verify { pow10 > 0 }
     val x0 = x.dw0
@@ -8,7 +11,7 @@ internal fun d128ScaleCoeffUpPow10(xSign: Boolean, x: Decimal, pow10: Int, negat
     val dw0Pow10 = POW10[pow10Offset    ]
     val p0 = x0 * dw0Pow10
     val p1 = unsignedMulHi(x0, dw0Pow10) + (x0 * dw1Pow10) + (x.dw1 * dw0Pow10)
-    return Decimal(xSign, x.qExp() - pow10, p1, p0)
+    return decimalFNZ(xSign, x.qExp() - pow10, p1, p0)
 }
 
 /**
@@ -29,7 +32,7 @@ internal fun d128FusedSubtractMulPow10(sign: Boolean, m: Decimal, n: Decimal, po
     val d0 = m.dw0 - p0
     val borrow0 = if (unsignedLT(m.dw0, d0)) 1L else 0L
     val d1 = m.dw1 - p1 - borrow0
-    return Decimal(sign, m.qExp(), d1, d0)
+    return decimalFinite(sign, m.qExp(), d1, d0)
 }
 
 /**
