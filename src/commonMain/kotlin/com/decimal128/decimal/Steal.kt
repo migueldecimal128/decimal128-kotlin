@@ -96,16 +96,21 @@ internal inline fun stealEexp(steal: Int): Int {
             (-(steal and STEAL_BITLEN_UNSHIFTED_MASK) ushr 31)
 }
 
-internal inline fun stealEncodeZER(signBit: Int, qExp: Int) =
-    (signBit shl 31) or
+internal inline fun stealEncodeZER(signBit: Int, qExp: Int): Int {
+    verify { qExp >= Q_TINY && qExp <= Q_MAX }
+    return (signBit shl 31) or
             ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
             STEAL_TYP_ZER
+}
 
-internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long) =
-    (signBit shl 31) or
+internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Int {
+    verify { qExp >= Q_TINY && qExp <= Q_MAX }
+    verify { (dw1 or dw0) != 0L }
+    return (signBit shl 31) or
             ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
             calcStealPackedLengths128(dw1, dw0) or
             STEAL_TYP_FNZ
+}
 
 internal fun stealEncodeFinite(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Int =
     if ((dw1 or dw0) != 0L)
@@ -126,37 +131,20 @@ internal inline fun stealEncodeSNAN(signBit: Int, payloadDw1: Long, payloadDw0: 
 internal inline fun stealEncodeQNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
     (signBit shl 31) or calcStealPackedLengths128(payloadDw1, payloadDw0) or STEAL_NAN_QNAN
 
-internal fun stealRaw(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Int {
-    val signBit = if (sign) 1 else 0
-    return when {
-        qExp < NON_FINITE_INF   ->
-            if ((dw1 or dw0) == 0L) stealEncodeZER(signBit, qExp)
-            else stealEncodeFNZ(signBit, qExp, dw1, dw0)
-        qExp == NON_FINITE_INF  -> stealEncodeINF(signBit)
-        qExp == NON_FINITE_SNAN -> stealEncodeSNAN(signBit, dw1, dw0)
-        qExp == NON_FINITE_QNAN -> stealEncodeQNAN(signBit, dw1, dw0)
-        else -> throw IllegalArgumentException()
-    }
-}
-
 internal fun stealWithSignFlag(oldSteal: Int, signFlag: Boolean) =
     (oldSteal and 0x7FFF_FFFF) or (if (signFlag) Int.MIN_VALUE else 0)
 
 internal fun stealWithPackedLengths(oldSteal: Int, packedLengths: Int): Int =
     (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or packedLengths
 
-internal fun stealWithDigitLenBitLen(oldSteal: Int, digitLen: Int, bitLen: Int) =
-    (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or
+internal fun stealWithDigitLenBitLen(oldSteal: Int, digitLen: Int, bitLen: Int): Int {
+    verify { digitLen >= 0 && digitLen <= 76 && bitLen >= 0 && bitLen <= 253 }
+    return (oldSteal and STEAL_PACKED_LENGTHS_MASK.inv()) or
             (digitLen shl STEAL_DIGITLEN_SHIFT) or
             (bitLen shl STEAL_BITLEN_SHIFT)
+}
 
-internal fun stealWithBitLen(oldSteal: Int, bitLen: Int): Int =
-    (oldSteal and STEAL_BITLEN_UNSHIFTED_MASK.inv()) or
-            (bitLen shl STEAL_BITLEN_SHIFT)
-
-internal fun stealWithDigitLen(oldSteal: Int, digitLen: Int): Int =
-    (oldSteal and STEAL_DIGITLEN_UNSHIFTED_MASK.inv()) or
-            (digitLen shl STEAL_DIGITLEN_SHIFT)
-
-internal fun stealPackLengths(digitLen: Int, bitLen: Int) =
-    (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
+internal fun stealPackLengths(digitLen: Int, bitLen: Int): Int {
+    verify { digitLen >= 0 && digitLen <= 76 && bitLen >= 0 && bitLen <= 253 }
+    return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
+}

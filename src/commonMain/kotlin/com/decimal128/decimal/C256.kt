@@ -105,7 +105,7 @@ C256Rep() {
     }
 
     internal inline operator fun set(index: Int, value: Long) {
-        verify { bitLen == 255 }
+        verify { digitLen == 0 && bitLen == 253 }
         when (index) {
             0 -> dw0 = value
             1 -> dw1 = value
@@ -116,13 +116,13 @@ C256Rep() {
     }
 
     internal inline fun c256EnableIndexSetAndZeroOut() {
-        steal = stealWithDigitLenBitLen(steal, 31, 255)
+        steal = stealWithDigitLenBitLen(steal, 0, 253)
         dw0 = 0L; dw1 = 0L; dw2 = 0L; dw3 = 0L
     }
 
     internal inline fun c256DisableIndexSetAndUpdateLengths() {
         //check(packedLengths.toInt() == -1)
-        verify { bitLen == 255 }
+        verify { digitLen == 0 && bitLen == 253 }
         updateDigitLenBitLen()
     }
 
@@ -216,7 +216,7 @@ C256Rep() {
     open fun toHexString() = IntegerParsePrint.int256ToHexString(false, this)
     //override fun toString() = coeffToBigInteger().toString()
     override fun toString() =
-        if (bitLen == 255)
+        if (digitLen == 0 && bitLen == 253)
             "MutDec \uD83D\uDEA7 under construction \uD83D\uDEA7"
         else
             IntegerParsePrint.int256ToString(false, this)
