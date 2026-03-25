@@ -1,10 +1,12 @@
 package com.decimal128.decimal
 
 internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-    val qX = x.qExp
-    val qY = y.qExp
-    val productQExp = qX + qY
-    val productSign = x.sign xor y.sign
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val xQ = stealQExp(xSteal)
+    val yQ = stealQExp(ySteal)
+    val productQExp = xQ + yQ
+    val productSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
     val binopSignature = binopSignatureOf(x.type, y.type)
     if (binopSignature == FNZ_FNZ) {
         c256SetMul(z, x, y, ctx.tmps.pentad1)
@@ -24,24 +26,27 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
 }
 
 internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
-    val type = x.type
-    val qExp = x.qExp shl 1
-    if (type == STEAL_TYP_FNZ) {
+    val xSteal = x.steal
+    val typ = stealTyp(xSteal)
+    val sqrQExp = stealQExp(xSteal) shl 1
+    if (typ == STEAL_TYP_FNZ) {
         c256SetSqr(z, x, ctx.tmps.pentad1)
-        return z.finalizeFnz(false, qExp, ctx)
+        return z.finalizeFnz(false, sqrQExp, ctx)
     }
-    if (type == STEAL_TYP_ZER)
-        return z.setZero(false, qExp)
-    if (type == STEAL_TYP_INF)
+    if (typ == STEAL_TYP_ZER)
+        return z.setZero(false, sqrQExp)
+    if (typ == STEAL_TYP_INF)
         return z.setInfinite(false)
-    return z.setNaN()
+    return z.setNaNOperand(x, ctx)
 }
 
 internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
-    val qX = x.qExp
-    when (stealTyp(x.type)) {
+    val xSteal = x.steal
+    val xQ = stealQExp(xSteal)
+    val xSign = stealSignFlag(xSteal)
+    when (stealTyp(x.steal)) {
         STEAL_TYP_FNZ -> {
-            if (! x.sign) {
+            if (! xSign) {
                 return mutDecSqrtPosFnz(z, x, ctx)
             } else {
                 ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
@@ -51,10 +56,10 @@ internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
             // IEEE754-2019 6.3 p.50
             // Except that squareRoot(−0) shall be −0,
             // every numeric squareRoot result shall have a positive sign.
-            z.setZero(false, qX shr 1)
+            z.setZero(false, xQ shr 1)
         }
         STEAL_TYP_INF -> {
-            if (! x.sign) {
+            if (! xSign) {
                 z.setInfinite(false)
             } else {
                 ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_INFINITY)
