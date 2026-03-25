@@ -25,7 +25,7 @@ internal fun nanOperandFound(x: Decimal, y: Decimal,
     val isSignaling = stealIsSNAN(stealX) or stealIsSNAN(stealY)
     if (!alwaysSignal && !isSignaling)
         return theNaN
-    if (!theNaN.isSignaling())
+    if (!isSignaling)
         return ctx.signalInvalid(InvalidOperationReason.NAN_OPERAND, theNaN)
     val quietedNaN = Decimal.qNaN(stealSignFlag(stealNaN), theNaN.dw1, theNaN.dw0)
     return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, quietedNaN)

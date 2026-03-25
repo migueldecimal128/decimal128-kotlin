@@ -151,20 +151,22 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    internal fun setNaNOperand(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-        verify { x.isNaN() || y.isNaN()}
-        val theNaN = when {
-            x.isSignaling() || !y.isNaN() -> x
-            y.isSignaling() || !x.isNaN()-> y
-            else -> x // both are qNaNs ... choose x
-        }
+    internal fun setNaNOperand(x: MutDec, y: MutDec, ctx: DecContext, alwaysSignal: Boolean = false): MutDec {
+        val stealX = x.steal
+        val stealY = y.steal
+        verify { stealHasNAN(stealX, stealY) }
+        val preferSnan = ctx.decPrefs.propagatePreferSnan
+        val takeY = !stealIsNAN(stealX) || (preferSnan && stealIsSNAN(stealY) && !stealIsSNAN(stealX))
+        val theNaN = if (takeY) y else x
         set(theNaN)
-        if (isSignaling()) {
-            quietSNaN()
-            ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
-        }
-        verify { validate() }
-        return this
+        verify { stealIsNAN(this.steal) }
+        val isSignaling = stealIsSNAN(stealX) or stealIsSNAN(stealY)
+        if (!alwaysSignal && !isSignaling)
+            return this
+        if (!isSignaling)
+            return ctx.signalInvalid(InvalidOperationReason.NAN_OPERAND, this)
+        quietSNaN()
+        return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
     }
 
     internal fun setNaN(x: MutDec, ctx: DecContext): MutDec {
