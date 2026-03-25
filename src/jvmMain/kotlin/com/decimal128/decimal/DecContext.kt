@@ -3,9 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecException.*
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
-
 actual class DecContext actual constructor(decFormat: DecFormat,
                                            decRounding: DecRounding,
                                            decPrefs: DecPrefs,
@@ -42,10 +39,7 @@ actual class DecContext actual constructor(decFormat: DecFormat,
 
     }
 
-    actual fun <T> context(block: DecContext.() -> T): T {
-        val result = this.block()
-        return result
-    }
+    actual fun <T> context(block: DecContext.() -> T): T = block()
 
     override fun toString(): String =
         "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
