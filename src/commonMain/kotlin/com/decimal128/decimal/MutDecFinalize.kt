@@ -125,9 +125,8 @@ internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
                                          inboundResidue: Residue, rounding: DecRounding,
                                          ctx: DecContext): MutDec {
     verify { digitLen == 0 }
-    this.sign = sign
-    this.type = STEAL_TYP_ZER
-    this.qExp = max(min(qExp, Q_MAX), Q_TINY) // clamped
+    val qExpCapped = max(min(qExp, Q_MAX), Q_TINY)
+    this.steal = stealEncodeZER(sign, qExpCapped)
 
     // If we had a non-zero residue, the result is inexact
     // This can happen in quantize operations where a non-zero value rounds to zero
@@ -136,7 +135,7 @@ internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
         val roundUp = inboundResidue.ulpRoundUp(rounding.negate(sign), 0L)
         if (roundUp) {
             c256SetOne()
-            this.type = STEAL_TYP_FNZ
+            this.steal = stealEncodeFNZ(sign, qExpCapped, PACKED_LENGTHS_1_1)
             when {
                 qExp > Q_MAX -> return finalizeOverflow(sign, rounding, ctx)
                 qExp < Q_TINY -> return finalizeUnderflowRegion(sign, qExp, inboundResidue, rounding, ctx)
@@ -169,6 +168,7 @@ private fun MutDec.finalizeUnderflowRegion(
     verify { qExp < Q_TINY }
 
     val truncationNeeded = Q_TINY - qExp
+    val digitLen = stealDigitLen(this.steal)
 
     return when {
         truncationNeeded > digitLen -> {
@@ -217,10 +217,9 @@ private fun MutDec.finalizeSubnormal(
 
     // Scale down to fit in subnormal range
     val scaleResidue = c256SetScaleDownPow10(this, this, truncationNeeded, ctx.tmps.pentad1)
-    this.type = STEAL_TYP_FNZ
-    this.sign = sign
-    this.qExp = Q_TINY
-    verify { digitLen > 0 && digitLen < ctx.precision }
+    this.steal = stealEncodeFNZ(sign, Q_TINY, stealPackedLengths(this.steal))
+    val precision = ctx.precision
+    verify { digitLen > 0 && digitLen < precision }
 
     val totalResidue = scaleResidue.merge(inboundResidue)
 
@@ -235,8 +234,8 @@ private fun MutDec.finalizeSubnormal(
         c256MutateIncrement()
 
         // Check if rounding caused rollover into precision range
-        if (digitLen > ctx.precision) {
-            verify { digitLen == ctx.precision + 1 }
+        if (digitLen > precision) {
+            verify { digitLen == precision + 1 }
             val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad1)
             verify { rolloverResidue == EXACT }
             this.qExp = Q_TINY + 1
@@ -250,8 +249,6 @@ private fun MutDec.finalizeClamping(sign: Boolean, qExp: Int, ctx: DecContext): 
     val qExcess = qExp - Q_MAX
     verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
     c256SetScaleUpPow10(this, this, qExcess, ctx.tmps.pentad1)
-    this.sign = sign
-    this.type = STEAL_TYP_FNZ
-    this.qExp = Q_MAX
+    this.steal = stealEncodeFNZ(sign, Q_MAX, stealPackedLengths(this.steal))
     return this
 }
