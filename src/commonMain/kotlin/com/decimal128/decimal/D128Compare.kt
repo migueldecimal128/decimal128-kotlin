@@ -66,8 +66,8 @@ internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal): Int {
  * @return −1, 0, or +1 indicating the total-order relationship of `x` and `y`.
  */
 internal fun d128CompareTotalOrder(x: Decimal, y: Decimal): Int {
-    val xSignMask = x.signMask() // 0 or -1 (0xFFFF_FFFF)
-    if ((xSignMask xor y.signMask()) != 0)
+    val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
+    if ((xSignMask xor y.signMask) != 0)
         return (xSignMask shl 1) + 1 // return -1 or 1
     val cmpMag = d128CompareTotalOrderMag(x, y)
     return negateForSign(cmpMag, xSignMask)
@@ -93,7 +93,7 @@ fun d128CompareTotalOrderMag(x: Decimal, y: Decimal): Int {
         if (signature == FNZ_FNZ) {
             cmpTotalOrderMagFnzFnz(x, y)
         } else when (signature) {
-            ZER_ZER -> cmp32(x.qExp(), y.qExp())
+            ZER_ZER -> cmp32(x.qExp, y.qExp)
             ZER_FNZ,
             ZER_INF,
             FNZ_INF -> -1
@@ -144,7 +144,7 @@ private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
 
     // of course, we are comparing magnitude so assume signs are equal
     // and that return value may be negated because of sign.
-    val cmpExp = cmp32(x.qExp(), y.qExp())
+    val cmpExp = cmp32(x.qExp, y.qExp)
     val cmpMagIsZeroMask = (cmpMag or -cmpMag).inv()
     val cmp = cmpMag or (cmpExp and cmpMagIsZeroMask)
     return cmp
@@ -268,7 +268,7 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
 internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        x.signBit() == y.signBit() && cmpMagFnzFnz(x, y) == 0
+        x.signBit == y.signBit && cmpMagFnzFnz(x, y) == 0
     } else when (signature) {
         FNZ_ZER,
         FNZ_INF,
@@ -277,7 +277,7 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
         ZER_INF,
         INF_FNZ -> false
         ZER_ZER -> true
-        INF_INF -> x.signBit() == y.signBit()
+        INF_INF -> x.signBit == y.signBit
         else -> x.isNaN() && y.isNaN()
     }
 }
@@ -357,9 +357,9 @@ internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean, ctx: D
         // Comparisons shall ignore the sign of zero (so +0 = −0).
         if (x.isZero() && y.isZero())
             return IEEE754_EQ
-        val xSignMask = x.signMask() // 0 or -1 (0xFFFF_FFFF)
+        val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
         val cmp =
-            if (xSignMask != y.signMask()) (xSignMask shl 1) + 1 // -1 or 1
+            if (xSignMask != y.signMask) (xSignMask shl 1) + 1 // -1 or 1
             else negateForSign(cmpNumericMagnitude(x, y), xSignMask)
         return Compare754Result(cmp)
     }
@@ -470,8 +470,8 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val signature = binopSignatureOf(x.steal, y.steal)
     if (signature == ZER_ZER)
         return ZERO
-    val xSignMask = x.signMask()
-    if (xSignMask != y.signMask())
+    val xSignMask = x.signMask
+    if (xSignMask != y.signMask)
         return if (xSignMask == 0) POS_ONEe0 else NEG_ONEe0
     val cmpMag =
         if (signature == FNZ_FNZ) {
@@ -525,9 +525,9 @@ fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal): Int {
-    if (x.signFlag() != y.signFlag())
-        return if (x.signFlag()) -1 else 1
-    val negateMask = -x.signBit() // 0 or -1
+    if (x.signFlag != y.signFlag)
+        return if (x.signFlag) -1 else 1
+    val negateMask = -x.signBit // 0 or -1
     return (cmpTotalOrderMagnitudeImpl(x, y) xor negateMask) - negateMask
 }
 
@@ -536,7 +536,7 @@ fun cmpTotalOrderMagnitudeImpl(x: Decimal, y: Decimal): Int {
     return if (signature == FNZ_FNZ) {
         cmpTotalOrderMagnitudeFnzFnz(x, y)
     } else when (signature) {
-        ZER_ZER -> x.qExp().compareTo(y.qExp())
+        ZER_ZER -> x.qExp.compareTo(y.qExp)
         ZER_FNZ,
         ZER_INF,
         FNZ_INF -> -1
@@ -558,7 +558,7 @@ private fun cmpTotalOrderMagnitudeFnzFnz(x: Decimal, y: Decimal): Int {
     //    totalOrder(x, y) is true if and only if the exponent of x ≥ the exponent of y
     //  ii) otherwise,
     //    totalOrder(x, y) is true if and only if the exponent of x ≤ the exponent of y.
-    return x.qExp().compareTo(y.qExp())
+    return x.qExp.compareTo(y.qExp)
 }
 
 internal fun d128MaxImpl(x: Decimal, y: Decimal): Decimal =

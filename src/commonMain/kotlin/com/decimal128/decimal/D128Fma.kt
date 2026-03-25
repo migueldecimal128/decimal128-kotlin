@@ -19,7 +19,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
             a
         }
         FNZ_INF, INF_FNZ, INF_INF ->
-            fmaInfProd(x.signFlag() xor y.signFlag(), a, ctx)
+            fmaInfProd(x.signFlag xor y.signFlag, a, ctx)
 
         INF_ZER -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         //INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
@@ -64,7 +64,7 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
             return ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, theNAN)
         return theNAN
     }
-    val quietedNaN = Decimal.qNaN(theNAN.signFlag(), theNAN.dw1, theNAN.dw0)
+    val quietedNaN = Decimal.qNaN(theNAN.signFlag, theNAN.dw1, theNAN.dw0)
     return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
 }
 
@@ -88,7 +88,7 @@ private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): De
 
 private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     verify { !a.isNaN() }
-    if (a.isFinite() || a.signFlag() == infSign)
+    if (a.isFinite() || a.signFlag == infSign)
         return Decimal.infinity(infSign)
     return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }

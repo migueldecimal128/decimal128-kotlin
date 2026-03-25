@@ -82,7 +82,7 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     }
     dw1 -= if (dw0 == 0L) 1L else 0L
     --dw0
-    return decimalFinite(x.signFlag(), xQ, dw1, dw0)
+    return decimalFinite(x.signFlag, xQ, dw1, dw0)
 }
 
 internal fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
