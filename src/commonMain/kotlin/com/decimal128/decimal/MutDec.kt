@@ -385,25 +385,6 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun compareTotalOrderMagTo(other: MutDec): Int = mutDecCompareTotalOrderMag(this, other)
 
-    fun magnitudeEQ(other: MutDec) : Boolean {
-        val thisIsZero = this.c256IsZero()
-        val otherIsZero = other.c256IsZero()
-        val bothAreZero = thisIsZero and otherIsZero
-        val eitherIsZero = thisIsZero or otherIsZero
-        if (this.sciExp() != other.sciExp())
-            return bothAreZero
-        if (! eitherIsZero) {
-            val expDelta = this.qExp - other.qExp
-            val pentad = DecContext.current().tmps.pentad1
-            return when {
-                expDelta == 0 -> c256UnscaledEQ(this, other)
-                expDelta > 0 -> c256ScaledEQ(other, this, expDelta, pentad)
-                else -> c256ScaledEQ(this, other, -expDelta, pentad)
-            }
-        }
-        return bothAreZero
-    }
-
     fun compareJavaStyleTo(other: MutDec) : Int = mutDecCompareJavaStyle(this, other)
 
     fun eqJavaStyleTo(other: MutDec) : Boolean = mutDecEqJavaStyle(this, other)
