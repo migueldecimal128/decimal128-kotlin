@@ -128,7 +128,8 @@ class TestMutDecMagSub {
     @Test
     fun testBigDecimalAddZero() {
         val s0 = BigDecimal("0e-1").add(BigDecimal("0e-10"))
-        println(s0)
+        if (verbose)
+            println("BigDecimalAddZero: $s0")
     }
 
     @Test

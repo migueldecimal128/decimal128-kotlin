@@ -101,7 +101,8 @@ class DecGenConstantTables {
             hiPow10 *= 10
         }
 
-        println("j:$j POW10_DWORD_COUNT:POW10_DWORD_COUNT:$j")
+        if (verbose)
+            println("j:$j POW10_DWORD_COUNT:POW10_DWORD_COUNT:$j")
         assertEquals(POW10_DWORD_COUNT, j)
 
         // initialize powers of 5 that fit in 64 bits
