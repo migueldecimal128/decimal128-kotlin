@@ -395,8 +395,8 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun compareTotalOrderTo(other: MutDec): Int = mutDecCompareTotalOrder(this, other)
 
-    fun compareNumericMagnitudeTo(other: MutDec, pentad: Pentad) : Int =
-        mutDecCompareNumericMagnitude(this, other, pentad)
+    fun compareNumericMagnitudeTo(other: MutDec) : Int =
+        mutDecCompareNumericMagnitude(this, other)
 
     fun compareTotalOrderMagTo(other: MutDec): Int = mutDecCompareTotalOrderMag(this, other)
 
@@ -653,7 +653,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             x.isNaN() -> set(x)
             y.isNaN() -> set(y)
             else -> {
-                val cmp = (x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
+                val cmp = (x.compareNumericMagnitudeTo(y) xor invertCompareZeroOrNeg1) - invertCompareZeroOrNeg1
                 set(if (cmp <= 0) x else y)
             }
         }
@@ -844,7 +844,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             } else {
                 rem2.setSub(this, yT, truncCtx)  // this - yT
             }
-            val cmp = compareNumericMagnitudeTo(rem2, tmps.pentad1)
+            val cmp = compareNumericMagnitudeTo(rem2)
             if (cmp > 0 || (cmp == 0) && truncIsOdd)
                 this.set(rem2)
         }

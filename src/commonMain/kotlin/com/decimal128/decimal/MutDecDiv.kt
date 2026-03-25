@@ -1,7 +1,6 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
-import kotlin.math.max
 import kotlin.math.min
 
 internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
@@ -125,7 +124,7 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
 fun mutDecCompare754Impl(x: MutDec, y: MutDec, isSignaling: Boolean, ctx: DecContext): Compare754Result {
     val binopSignature = binopSignatureOf(x.type, y.type)
     if (binopSignature == FNZ_FNZ) {
-        return Compare754Result(x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1))
+        return Compare754Result(x.compareNumericMagnitudeTo(y))
     }
     val xSign = x.sign
     val ySign = y.sign

@@ -3,8 +3,6 @@
 
 package com.decimal128.decimal
 
-import kotlin.math.max
-
 internal fun mutDecCompareTotalOrder(x: MutDec, y: MutDec): Int {
     val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
     if (xSignMask != y.signMask)
@@ -14,12 +12,14 @@ internal fun mutDecCompareTotalOrder(x: MutDec, y: MutDec): Int {
 }
 
 internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec): Int {
-    val signature = binopSignatureOf(x.type, y.type)
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val signature = binopSignatureOf(xSteal, ySteal)
     val cmp =
         if (signature == FNZ_FNZ) {
             cmpTotalOrderMagFnzFnz(x, y)
         } else when (signature) {
-            ZER_ZER -> cmp32(x.qExp, y.qExp)
+            ZER_ZER -> cmp32(stealQExp(xSteal), stealQExp(ySteal))
             ZER_FNZ,
             ZER_INF,
             FNZ_INF -> -1
@@ -33,8 +33,8 @@ internal fun mutDecCompareTotalOrderMag(x: MutDec, y: MutDec): Int {
     return cmp
 }
 
-internal fun mutDecCompareNumericMagnitude(x: MutDec, y: MutDec, pentad: Pentad): Int {
-    val signature = binopSignatureOf(x.type, y.type)
+internal fun mutDecCompareNumericMagnitude(x: MutDec, y: MutDec): Int {
+    val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
         cmpMagFnzFnz(x, y)
     } else when (signature) {
@@ -52,27 +52,29 @@ internal fun mutDecCompareNumericMagnitude(x: MutDec, y: MutDec, pentad: Pentad)
 }
 
 internal fun mutDecCompareJavaStyle(x: MutDec, y: MutDec): Int {
-    val stealX = x.type
-    val stealY = y.type
+    val xSteal = x.steal
+    val ySteal = y.steal
     when {
-        !stealHasNAN(stealX, stealY) -> {
-            val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
-            if (xSignMask != y.signMask)
+        !stealHasNAN(xSteal, ySteal) -> {
+            val xSignMask = stealSignMask(xSteal) // 0 or -1 (0xFFFF_FFFF)
+            if (xSignMask != stealSignMask(ySteal))
                 return (xSignMask shl 1) + 1 // return -1 or 1
             val cmpMag = cmpNumericMagnitude(x, y)
             return negateForSign(cmpMag, xSignMask)
         }
 
-        !stealIsNAN(stealX) -> return -1
-        !stealIsNAN(stealY) -> return 1
+        !stealIsNAN(xSteal) -> return -1
+        !stealIsNAN(ySteal) -> return 1
         else -> return 0
     }
 }
 
 internal fun mutDecEqJavaStyle(x: MutDec, y: MutDec): Boolean {
-    val signature = binopSignatureOf(x.type, y.type)
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
-        x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
+        stealSignBit(xSteal) == stealSignBit(ySteal) && cmpMagFnzFnz(x, y) == 0
     } else when (signature) {
         // FIXME ... come up with a branchless way to do this
         FNZ_ZER,
@@ -82,8 +84,8 @@ internal fun mutDecEqJavaStyle(x: MutDec, y: MutDec): Boolean {
         ZER_INF,
         INF_FNZ -> false
         ZER_ZER -> true
-        INF_INF -> x.sign == y.sign
-        else -> x.isNaN() && y.isNaN()
+        INF_INF -> stealSignBit(xSteal) == stealSignBit(ySteal)
+        else -> stealBothNAN(xSteal, ySteal)
     }
 }
 
@@ -93,6 +95,7 @@ private inline fun negateForSign(cmp: Int, signMask: Int) =
 
 
 private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
+    verify { x.isFiniteNonZero() && y.isFiniteNonZero() }
     val cmpMag = cmpMagFnzFnz(x, y)
 
     // If x and y represent the same floating-point datum:
@@ -110,15 +113,17 @@ private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
 }
 
 private fun cmpMagFnzFnz(x: MutDec, y: MutDec): Int {
-    val xQ = x.qExp
-    val yQ = y.qExp
-    val xE = x.eExp
-    val yE = y.eExp
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val xQ = stealQExp(xSteal)
+    val yQ = stealQExp(ySteal)
+    val xE = stealSciExp(xSteal)
+    val yE = stealSciExp(ySteal)
     if (xE != yE)
         return ((xE - yE) shr 31) or 1
-    if (x.bExpMin() > y.bExpMax())
+    if (stealBExpMin(xSteal) > stealBExpMax(ySteal))
         return 1
-    if (x.bExpMax() < y.bExpMin())
+    if (stealBExpMax(xSteal) < stealBExpMin(ySteal))
         return -1
     val qDelta = xQ - yQ
     if (qDelta == 0)
@@ -180,7 +185,7 @@ internal const val MAX_MAG_NUM_OP = MAX_MASK or MAG_MASK or NUM_MASK
 internal fun mutDecSetMinMaxImpl(z: MutDec, x: MutDec, y: MutDec, op: Int, ctx: DecContext): MutDec {
     if (!x.isNaN() && !y.isNaN()) {
         var cmp = if ((op and MAG_MASK) != 0)
-            x.compareNumericMagnitudeTo(y, ctx.tmps.pentad1)
+            x.compareNumericMagnitudeTo(y)
         else
             x.compareTo(y)
         if (cmp == 0)

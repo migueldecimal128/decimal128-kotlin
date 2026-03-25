@@ -125,6 +125,12 @@ internal inline fun stealSciExp(steal: Int): Int {
             (-(steal and STEAL_BITLEN_UNSHIFTED_MASK) ushr 31)
 }
 
+internal fun stealBExpMin(steal: Int): Int =
+    calcBExpMin(stealBitLen(steal), stealQExp(steal))
+
+internal fun stealBExpMax(steal: Int): Int =
+    calcBExpMax(stealBitLen(steal), stealQExp(steal))
+
 internal inline fun stealEncodeZER(sign: Boolean, qExp: Int): Int =
     stealEncodeZER(if (sign) 1 else 0, qExp)
 
