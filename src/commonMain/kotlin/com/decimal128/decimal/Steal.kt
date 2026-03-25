@@ -235,3 +235,15 @@ internal inline fun clampQExponentRange(q: Int): Int {
     return min(max(q, CLAMPED_EXP_MIN), CLAMPED_EXP_MAX)
 }
 
+internal fun stealCompareMagnitudeFnzFnz(xSteal: Int, ySteal: Int): Int {
+    verify { binopSignatureOf(xSteal, ySteal) == FNZ_FNZ }
+    val xE = stealSciExp(xSteal)
+    val yE = stealSciExp(ySteal)
+    if (xE != yE)
+        return ((xE - yE) shr 31) or 1
+    if (stealBExpMin(xSteal) > stealBExpMax(ySteal))
+        return 1
+    if (stealBExpMax(xSteal) < stealBExpMin(ySteal))
+        return -1
+    return 0
+}

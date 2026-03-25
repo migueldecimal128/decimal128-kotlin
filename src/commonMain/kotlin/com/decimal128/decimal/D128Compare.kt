@@ -152,26 +152,21 @@ private inline fun cmpTotalOrderMagFnzFnz(x: Decimal, y: Decimal): Int {
 
 private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
     val xSteal = x.steal; val ySteal = y.steal
-    val xQ = stealQExp(xSteal)
-    val yQ = stealQExp(ySteal)
-    val xE = stealSciExp(xSteal)
-    val yE = stealSciExp(ySteal)
-    if (xE != yE)
-        return ((xE - yE) shr 31) or 1
-    if (stealBExpMin(xSteal) > stealBExpMax(ySteal))
-        return 1
-    if (stealBExpMax(xSteal) < stealBExpMin(ySteal))
-        return -1
+    val cmpSteal = stealCompareMagnitudeFnzFnz(xSteal, ySteal)
+    if (cmpSteal != 0)
+        return cmpSteal
     val x0 = x.dw0
     val x1 = x.dw1
     val y0 = y.dw0
     val y1 = y.dw1
-    if (xQ == yQ)
+    val qDelta = stealQExp(xSteal) - stealQExp(ySteal)
+    if (qDelta == 0)
         return ucmp128(x1, x0, y1, y0)
     val pentad = DecContext.current().tmps.pentad1
-    if (xQ > yQ)
-        return -ucmp128ScalePow10(y1, y0, x1, x0, xQ - yQ, pentad)
-    return ucmp128ScalePow10(x1, x0, y1, y0, yQ - xQ, pentad)
+    return if (qDelta > 0)
+        -ucmp128ScalePow10(y1, y0, x1, x0, qDelta, pentad)
+    else
+        ucmp128ScalePow10(x1, x0, y1, y0, -qDelta, pentad)
 }
 
 private fun cmpTotalOrderMagnitudeNanFound(x: Decimal, y: Decimal): Int {

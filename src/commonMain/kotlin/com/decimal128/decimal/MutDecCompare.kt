@@ -96,17 +96,10 @@ private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
 private fun cmpMagFnzFnz(x: MutDec, y: MutDec): Int {
     val xSteal = x.steal
     val ySteal = y.steal
-    val xQ = stealQExp(xSteal)
-    val yQ = stealQExp(ySteal)
-    val xE = stealSciExp(xSteal)
-    val yE = stealSciExp(ySteal)
-    if (xE != yE)
-        return ((xE - yE) shr 31) or 1
-    if (stealBExpMin(xSteal) > stealBExpMax(ySteal))
-        return 1
-    if (stealBExpMax(xSteal) < stealBExpMin(ySteal))
-        return -1
-    val qDelta = xQ - yQ
+    val cmpSteal = stealCompareMagnitudeFnzFnz(xSteal, ySteal)
+    if (cmpSteal != 0)
+        return cmpSteal
+    val qDelta = stealQExp(xSteal) - stealQExp(ySteal)
     if (qDelta == 0)
         return c256UnscaledCompare(x, y)
     val pentad = DecContext.current().tmps.pentad1
