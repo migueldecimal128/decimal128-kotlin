@@ -117,16 +117,11 @@ class Decimal private constructor(
 
     internal fun bitLen(): Int = stealBitLen(steal)
 
-    internal val sign: Boolean
-        get() = steal < 0
-    internal val signBit: Int
-        get() = steal ushr 31
-    internal val signMask: Int
-        get() = steal shr 31
+    internal inline fun signFlag(): Boolean = steal < 0
+    internal inline fun signBit(): Int = steal ushr 31
+    internal inline fun signMask(): Int = steal shr 31
 
     internal inline fun qExp(): Int = stealQExp(steal)
-
-    internal inline fun eExp(): Int = stealSciExp(steal)
 
     // the lower/upper bound of the normalized binary exponent interval
     // what is the range of binary exponents given a decimal with
@@ -619,7 +614,7 @@ class Decimal private constructor(
      * No exceptions are signaled.
      */
     fun copySign(signDonor: Decimal): Decimal =
-        if (this.sign == signDonor.sign) this else this.negate()
+        if (this.signBit() == signDonor.signBit()) this else this.negate()
 
     /**
      * Returns a copy of this value. Because `Decimal` is immutable, this
@@ -664,7 +659,7 @@ class Decimal private constructor(
             stealIsFinite(steal) -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
                 val qNew = qExp() + pow10DeltaCapped
-                decFinalizeFinite(sign, dw1, dw0, qNew, ctx)
+                decFinalizeFinite(signFlag(), dw1, dw0, qNew, ctx)
             }
 
             stealIsINF(steal) -> this
@@ -787,7 +782,7 @@ class Decimal private constructor(
                         rQ = qExp + ntzdNormalized
                     }
                 }
-                val hcSign = if (sign) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
+                val hcSign = if (signFlag()) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
                 val hcQExp = rQ * 31 * 31
                 val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
                 val hcDw0 = (r0 xor (r0 shr 32)).toInt()

@@ -422,7 +422,7 @@ object D128ParsePrint {
         val digitLen = stealDigitLen(xSteal)
         val utf8 = ByteArray(stealSignBit(xSteal) + digitLen)
         utf8[0] = '-'.code.toByte() // will be overwritten if positive
-        IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, x.signBit)
+        IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, x.signBit())
         return utf8.decodeToString()
     }
 

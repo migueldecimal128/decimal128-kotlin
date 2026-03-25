@@ -63,7 +63,7 @@ private fun addZerZer(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: Dec
             return x
     } else {
         // yes, this should be y.sign, not ySign
-        if (y.sign == isRoundTowardNegative)
+        if (y.signFlag() == isRoundTowardNegative)
             return y
         qMin = yQ
     }

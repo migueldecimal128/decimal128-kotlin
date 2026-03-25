@@ -66,8 +66,8 @@ internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal): Int {
  * @return −1, 0, or +1 indicating the total-order relationship of `x` and `y`.
  */
 internal fun d128CompareTotalOrder(x: Decimal, y: Decimal): Int {
-    val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
-    if ((xSignMask xor y.signMask) != 0)
+    val xSignMask = x.signMask() // 0 or -1 (0xFFFF_FFFF)
+    if ((xSignMask xor y.signMask()) != 0)
         return (xSignMask shl 1) + 1 // return -1 or 1
     val cmpMag = d128CompareTotalOrderMag(x, y)
     return negateForSign(cmpMag, xSignMask)
@@ -268,7 +268,7 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
 internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
     val signature = binopSignatureOf(x.steal, y.steal)
     return if (signature == FNZ_FNZ) {
-        x.sign == y.sign && cmpMagFnzFnz(x, y) == 0
+        x.signBit() == y.signBit() && cmpMagFnzFnz(x, y) == 0
     } else when (signature) {
         FNZ_ZER,
         FNZ_INF,
@@ -277,7 +277,7 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
         ZER_INF,
         INF_FNZ -> false
         ZER_ZER -> true
-        INF_INF -> x.sign == y.sign
+        INF_INF -> x.signBit() == y.signBit()
         else -> x.isNaN() && y.isNaN()
     }
 }
@@ -357,9 +357,9 @@ internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean, ctx: D
         // Comparisons shall ignore the sign of zero (so +0 = −0).
         if (x.isZero() && y.isZero())
             return IEEE754_EQ
-        val xSignMask = x.signMask // 0 or -1 (0xFFFF_FFFF)
+        val xSignMask = x.signMask() // 0 or -1 (0xFFFF_FFFF)
         val cmp =
-            if (xSignMask != y.signMask) (xSignMask shl 1) + 1 // -1 or 1
+            if (xSignMask != y.signMask()) (xSignMask shl 1) + 1 // -1 or 1
             else negateForSign(cmpNumericMagnitude(x, y), xSignMask)
         return Compare754Result(cmp)
     }
@@ -470,8 +470,8 @@ internal fun cmpImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val signature = binopSignatureOf(x.steal, y.steal)
     if (signature == ZER_ZER)
         return ZERO
-    val xSignMask = x.signMask
-    if (xSignMask != y.signMask)
+    val xSignMask = x.signMask()
+    if (xSignMask != y.signMask())
         return if (xSignMask == 0) POS_ONEe0 else NEG_ONEe0
     val cmpMag =
         if (signature == FNZ_FNZ) {
@@ -525,9 +525,9 @@ fun cmpMagnitudeImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 internal fun cmpTotalOrderImpl(x: Decimal, y: Decimal): Int {
-    if (x.sign != y.sign)
-        return if (x.sign) -1 else 1
-    val negateMask = -x.signBit // 0 or -1
+    if (x.signFlag() != y.signFlag())
+        return if (x.signFlag()) -1 else 1
+    val negateMask = -x.signBit() // 0 or -1
     return (cmpTotalOrderMagnitudeImpl(x, y) xor negateMask) - negateMask
 }
 

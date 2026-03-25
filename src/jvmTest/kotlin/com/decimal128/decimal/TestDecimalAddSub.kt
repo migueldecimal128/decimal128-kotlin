@@ -99,7 +99,7 @@ class TestDecimalAddSub {
             if (verbose)
                 println("decimalS:$decimalS")
             assertEquals(expected.abs().unscaledValue(), decimalS.coeffToBigInteger())
-            assertEquals(expected.signum() < 0, decimalS.sign)
+            assertEquals(expected.signum() < 0, decimalS.signFlag())
             assertEquals(-expected.scale(), decimalS.qExp())
         }
     }

@@ -30,7 +30,7 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
                 if (qDelta <= headroom) {
                     val pentad = ctx.tmps.pentad1
                     umul128xPow10to128(pentad, x.dw1, x.dw0, qDelta)
-                    return decimalFNZ(x.sign, xQ - qDelta, pentad.dw1, pentad.dw0)
+                    return decimalFNZ(x.signFlag(), xQ - qDelta, pentad.dw1, pentad.dw0)
                 }
                 return ctx.signalInvalid(InvalidOperationReason.UNABLE_TO_SCALE)
             }
@@ -47,7 +47,7 @@ internal fun withScale(x: Decimal, decimalScale: Int, ctx: DecContext): Decimal 
         }
     }
     if (stealIsZER(xSteal))
-        return Decimal.zero(x.sign, -decimalScale)
+        return Decimal.zero(x.signFlag(), -decimalScale)
     if (stealIsINF(xSteal))
         return x
     verify { stealIsNAN(xSteal) }

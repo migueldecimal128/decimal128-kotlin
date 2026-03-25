@@ -37,7 +37,7 @@ private fun divInfInf(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
     ctx.signalInvalid(InvalidOperationReason.DIV_INF_BY_INF)
 
 private fun divFnzZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val r = if (x.sign xor y.sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
+    val r = if (x.signFlag() xor y.signFlag()) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
     return ctx.signalDivByZero(r)
 }
 
@@ -50,7 +50,7 @@ private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.tmps.mdecBridge1.set(x)
     val divisor = ctx.tmps.mdecBridge2.set(y)
     val quotient = ctx.tmps.mdecResult
-    val qSign = x.sign xor y.sign
+    val qSign = x.signFlag() xor y.signFlag()
     return Decimal.from(mutDecDivFnzFnz(quotient, qSign, dividend, divisor, ctx), ctx)
 }
 
@@ -65,12 +65,12 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         ZER_ZER -> divZerZer(x, y, ctx)
         ZER_FNZ,
         ZER_INF,
-        FNZ_INF -> Decimal.zero(x.sign xor y.sign)
+        FNZ_INF -> Decimal.zero(x.signFlag() xor y.signFlag())
 
         FNZ_ZER -> divFnzZero(x, y, ctx)
 
         INF_ZER,
-        INF_FNZ -> Decimal.infinity(x.sign xor y.sign)
+        INF_FNZ -> Decimal.infinity(x.signFlag() xor y.signFlag())
         INF_INF -> divInfInf(x, y, ctx)
 
         else -> nanOperandFound(x, y, ctx)
@@ -102,7 +102,7 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
     return if (signature == FNZ_FNZ) {
         remFnzFnz(isTrunc, x, y, ctx)
     } else when (signature) {
-        ZER_FNZ -> zero(x.sign, min(x.qExp(), y.qExp()))
+        ZER_FNZ -> zero(x.signFlag(), min(x.qExp(), y.qExp()))
         FNZ_INF,
         ZER_INF -> x
 
