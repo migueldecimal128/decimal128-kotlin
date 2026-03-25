@@ -438,82 +438,85 @@ class MutDec() : C256(), Comparable<MutDec> {
         setRoundToIntegral(x, ctx.decRounding, ctx)
 
     fun convertToLong(rounding: DecRounding, ctx: DecContext): Long {
-        val signMask = signMask.toLong()
-        val sign = sign
-        val qExp = qExp
-        val bitLen = bitLen
-        val digitLen = digitLen
+        val steal = steal
+        val signMask = stealSignMask(steal).toLong()
+        val sign = stealSignFlag(steal)
+        val qExp = stealQExp(steal)
+        val bitLen = stealBitLen(steal)
+        val digitLen = stealDigitLen(steal)
         val dw0 = dw0
-        val stealType = stealTyp(steal)
-        if (stealType != STEAL_TYP_FNZ) when (stealTyp(steal)) {
+        when (stealTyp(steal)) {
+            STEAL_TYP_FNZ -> when {
+                qExp == 0 -> {
+                    if (bitLen < 64)
+                        return (dw0 xor signMask) - signMask
+                    if (dw0 == Long.MIN_VALUE && sign)
+                        return Long.MIN_VALUE
+                    ctx.signalInvalid(this)
+                    return Long.MAX_VALUE - signMask
+                }
+
+                qExp < 0 -> {
+                    val fracDigitLen = -qExp
+                    if (fracDigitLen >= digitLen) {
+                        // all fractional digits
+                        val residue: Residue
+                        if (fracDigitLen > digitLen)
+                            residue = Residue.LT_HALF
+                        else {
+                            residue = Residue.fromValueDecade(this)
+                            verify { residue != Residue.EXACT }
+                        }
+                        val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                        return ctx.signalInexact(
+                            if (!roundUp)
+                                0L
+                            else
+                                -signMask
+                        )
+                    }
+                    // both integral and fractional digits
+                    val tmps = ctx.tmps
+                    val t = tmps.mdecArg1
+                    val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad1)
+                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    if (roundUp)
+                        c256MutateIncrement(t)
+                    val tSteal = stealEncodeFNZ(sign, 0, stealPackedLengths(t.steal))
+                    t.steal = tSteal
+                    if (stealBitLen(tSteal) < 64)
+                        return (t.dw0 xor signMask) - signMask
+                    if (t.dw0 == Long.MIN_VALUE && sign)
+                        return Long.MIN_VALUE
+                    ctx.signalInvalid(t)
+                    return Long.MAX_VALUE - signMask
+                }
+
+                else -> {
+                    if (digitLen + qExp <= 19) {
+                        val result = dw0 * pow10_64(qExp)
+                        if (result > 0)
+                            return (result xor signMask) - signMask
+                        // Long.MIN_VALUE && sign is not possible ...
+                        // ... because we just multiplied by 10**qExp
+                        // ... so the value ends in 0
+                        // ... but Long.MIN_VALUE ends in 8
+                    }
+                    return ctx.signalInvalid(Long.MAX_VALUE - signMask)
+                }
+            }
+
             STEAL_TYP_ZER -> return 0L
             STEAL_TYP_INF -> {
                 val ret = if (sign) Long.MIN_VALUE else Long.MAX_VALUE
                 ctx.signalInvalid(this)
                 return ret
             }
-            STEAL_TYP_NAN -> {
-                val ret = Long.MIN_VALUE
-                ctx.signalInvalid(this)
-                return ret
-            }
-        }
-        when {
-            qExp == 0 -> {
-                if (bitLen < 64)
-                    return (dw0 xor signMask) - signMask
-                if (dw0 == Long.MIN_VALUE && sign)
-                    return Long.MIN_VALUE
-                ctx.signalInvalid(this)
-                return Long.MAX_VALUE - signMask
-            }
-            qExp < 0 -> {
-                val fracDigitLen = -qExp
-                if (fracDigitLen >= digitLen) {
-                    // all fractional digits
-                    val residue: Residue
-                    if (fracDigitLen > digitLen)
-                        residue = Residue.LT_HALF
-                    else {
-                        residue = Residue.fromValueDecade(this)
-                        verify { residue != Residue.EXACT }
-                    }
-                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
-                    return ctx.signalInexact(
-                        if (!roundUp)
-                            0L
-                        else
-                            -signMask
-                    )
-                }
-                // both integral and fractional digits
-                val tmps = ctx.tmps
-                val t = tmps.mdecArg1
-                val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad1)
-                val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
-                if (roundUp)
-                    c256MutateIncrement(t)
-                t.type = STEAL_TYP_FNZ
-                t.qExp = 0
-                t.sign = sign
-                if (t.bitLen < 64)
-                    return (t.dw0 xor signMask) - signMask
-                if (t.dw0 == Long.MIN_VALUE && sign)
-                    return Long.MIN_VALUE
-                ctx.signalInvalid(t)
-                return Long.MAX_VALUE - signMask
-            }
-            else -> {
-                if (digitLen + qExp <= 19) {
-                    val result = dw0 * pow10_64(qExp)
-                    if (result > 0)
-                        return (result xor signMask) - signMask
-                    // Long.MIN_VALUE && sign is not possible ...
-                    // ... because we just multiplied by 10**qExp
-                    // ... so the value ends in 0
-                    // ... but Long.MIN_VALUE ends in 8
-                }
-                return ctx.signalInvalid(Long.MAX_VALUE - signMask)
+
+            else -> { // STEAL_TYP_NAN
+                verify { isNaN() }
+                ctx.signalInvalid(InvalidOperationReason.NAN_OPERAND, this)
+                return Long.MIN_VALUE
             }
         }
     }
@@ -549,7 +552,8 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     private fun setNextUpOrDown(isUp: Boolean, x: MutDec, ctx: DecContext): MutDec {
         set(x)
-        val xSign = x.sign
+        val steal = steal
+        val sign = stealSignFlag(steal)
         when (type) {
             STEAL_TYP_FNZ -> {
                 if (sign == isUp) {
@@ -558,21 +562,20 @@ class MutDec() : C256(), Comparable<MutDec> {
                     verify { qExp <= Q_MAX }
                     mutateNextAwayFromZero(ctx)
                     if (qExp > Q_MAX)
-                        setInfinite(sign = xSign)
+                        setInfinite(sign)
                 }
             }
             STEAL_TYP_ZER -> {
                 setMinFiniteMagnitude(!isUp, ctx)
             }
             STEAL_TYP_INF -> {
-                if (xSign == isUp)
-                    setMaxFiniteMagnitude(xSign, ctx)
+                if (sign == isUp)
+                    setMaxFiniteMagnitude(sign, ctx)
             }
             else -> {
-                if (isSignaling()) {
-                    ctx.signalInvalid(this)
-                    this.type = STEAL_NAN_QNAN
-                    this.qExp = NON_FINITE_QNAN
+                if (stealIsSNAN(steal)) {
+                    quietSNaN()
+                    ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
                 }
             }
         }
@@ -580,15 +583,20 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     private fun mutateNextAwayFromZero(ctx: DecContext) {
-        val headroom = min(ctx.precision - digitLen, qExp - Q_TINY)
+        val precision = ctx.precision
+        val steal = steal
+        val qExp = stealQExp(steal)
+        val headroom = min(precision - stealDigitLen(steal), qExp - Q_TINY)
         if (headroom > 0) {
             c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
-            this.qExp -= headroom
+            this.qExp = qExp - headroom
         }
+        // note that this could have changed digitLen ...
+        // ... so don't steal digitLen from the local steal
         c256MutateIncrement()
-        if (digitLen > ctx.precision) { // rolled up a decade
-            c256SetPow10(this, ctx.precision - 1)
-            ++this.qExp
+        if (digitLen > precision) { // rolled up a decade
+            c256SetPow10(this, precision - 1)
+            this.qExp = qExp + 1
         }
     }
 
@@ -601,7 +609,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
         c256MutateDecrement()
         if (c256IsZero())
-            type = STEAL_TYP_ZER
+            steal = stealWithTyp(steal, STEAL_TYP_ZER)
     }
 
     fun minNum(x: MutDec, y: MutDec, ctx: DecContext) = minNum_helper(x, y, 0, ctx)

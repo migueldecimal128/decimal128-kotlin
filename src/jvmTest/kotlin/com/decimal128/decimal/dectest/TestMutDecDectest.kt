@@ -323,6 +323,7 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqnextm193 nextminus  -9.999999999999999999999999999999999E+6144  -> -Infinity",
         "dqcan616 tointegralx  #7e010ff3fcff3fcff3fcff3fcff3fcff  -> #7c000ff3fcff3fcff3fcff3fcff3fcff  Invalid_operation",
         "dqadd7882 add -NaN26    NaN28 -> -NaN26",
         "dqadd7830 add -Inf  NaN    ->  NaN",
