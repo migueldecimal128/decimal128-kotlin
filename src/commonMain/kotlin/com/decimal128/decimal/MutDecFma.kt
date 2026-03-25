@@ -44,9 +44,9 @@ private inline fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ct
     // the 14 bits allocated in the steal.
     // slight overflow/underflow are not a problem.
     // the add/sub will fix it or finalize will take care of it.
-    val zQ = clampExponentRange(stealQExp(xSteal) + stealQExp(ySteal))
+    val zQ = clampQExponentRange(stealQExp(xSteal) + stealQExp(ySteal))
     val zSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
-    z.steal = stealEncodeFNZ_noQExpBoundsCheckForFMA(zSign, zQ, stealPackedLengths(z.steal))
+    z.steal = stealEncodeFNZ_looseQExpBoundsCheck(zSign, zQ, stealPackedLengths(z.steal))
     // roundAndFinalize takes place here in z.setAdd
     return mutDecAddImpl(z, z, aT.sign, aT, ctx)
 }

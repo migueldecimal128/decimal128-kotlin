@@ -168,7 +168,7 @@ internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, packedLengths: Int):
             STEAL_TYP_FNZ
 }
 
-internal inline fun stealEncodeFNZ_noQExpBoundsCheckForFMA(sign: Boolean, qExp: Int, packedLengths: Int): Int {
+internal inline fun stealEncodeFNZ_looseQExpBoundsCheck(sign: Boolean, qExp: Int, packedLengths: Int): Int {
     verify { qExp >= -8192 && qExp <= 8191 }
     verify { packedLengths != 0 }
     return (if (sign) Int.MIN_VALUE else 0) or
@@ -231,7 +231,7 @@ internal fun stealPackLengths(digitLen: Int, bitLen: Int): Int {
     return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
 }
 
-internal inline fun clampExponentRange(e: Int): Int {
-    return min(max(e, CLAMPED_EXP_MIN), CLAMPED_EXP_MAX)
+internal inline fun clampQExponentRange(q: Int): Int {
+    return min(max(q, CLAMPED_EXP_MIN), CLAMPED_EXP_MAX)
 }
 

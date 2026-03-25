@@ -5,27 +5,30 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal fun MutDec.finalizeFnz(sign: Boolean, inboundQExp: Int, ctx: DecContext): MutDec {
-    verify { bitLen != 0 }
+    val steal = steal
+    val digitLen = stealDigitLen(steal)
+    verify { digitLen != 0 }
     val precision = ctx.precision
     // Step 1: Fast path: already in valid decimal128 range
     if (digitLen <= precision &&
         inboundQExp >= Q_TINY && inboundQExp <= Q_MAX) {
-        this.sign = sign
-        this.type = STEAL_TYP_FNZ
-        this.qExp = inboundQExp
+        this.steal = stealEncodeFNZ(sign, inboundQExp, stealPackedLengths(steal))
         return this
     }
-    return roundAndFinalizeFnz(sign, inboundQExp, Residue.EXACT, ctx.decRounding, ctx)
+    return roundAndFinalizeFnz(sign, inboundQExp, EXACT, ctx.decRounding, ctx)
 }
 
 
-internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int, inboundResidue: Residue, ctx: DecContext): MutDec {
-    verify { bitLen != 0 }
-    return roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
-}
+internal inline fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
+                                               inboundResidue: Residue, ctx: DecContext): MutDec =
+    roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
+
 
 internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext): MutDec{
-    verify { bitLen != 0 }
+    val steal = steal
+    val sign = stealSignFlag(steal)
+    val qExp = stealQExp(steal)
+    verify { stealBitLen(steal) != 0 }
     verify { qExp >= -8000 && qExp <= 8000 }
     return roundAndFinalizeFnz(sign, qExp, inboundResidue, ctx.decRounding, ctx)
 }
@@ -33,7 +36,7 @@ internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext
 internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
                                            inboundResidue: Residue, rounding: DecRounding,
                                            ctx: DecContext): MutDec {
-    return if (bitLen != 0)
+    return if (stealBitLen(steal) != 0)
         roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, rounding, ctx)
     else
         roundAndFinalizeZero(sign, inboundQExp, inboundResidue, rounding, ctx)
@@ -50,15 +53,15 @@ internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
 internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
                                         inboundResidue: Residue, rounding: DecRounding,
                                         ctx: DecContext): MutDec {
-    verify { bitLen != 0 }
-    this.sign = sign
-    this.type = STEAL_TYP_FNZ
+    verify { stealPackedLengths(steal) != 0 }
+    this.steal =
+        stealEncodeFNZ_looseQExpBoundsCheck(sign,
+            clampQExponentRange(inboundQExp), stealPackedLengths(steal))
     val precision = ctx.precision
     // Step 1: Fast path: already in valid decimal128 range
     if (inboundResidue == EXACT &&
-        digitLen <= precision &&
+        stealDigitLen(steal) <= precision &&
         inboundQExp >= Q_TINY && inboundQExp <= Q_MAX) {
-        this.qExp = inboundQExp
         return this
     }
 
@@ -66,7 +69,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
     // Only divert if range truncation exceeds precision truncation,
     // meaning the normal path can't bring qExp into range on its own
     val rangeTruncationNeeded = Q_TINY - inboundQExp
-    val precisionTruncationNeeded = max(0, digitLen - precision)
+    val precisionTruncationNeeded = max(0, stealDigitLen(this.steal) - precision)
     if (rangeTruncationNeeded > precisionTruncationNeeded) {
         return finalizeUnderflowRegion(sign, inboundQExp, inboundResidue, rounding, ctx)
     }
@@ -79,7 +82,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
             c256SetScaleDownPow10(this, this, precisionTruncationNeeded, ctx.tmps.pentad1)
         adjustedQExp += precisionTruncationNeeded
         totalResidue = truncationResidue.merge(inboundResidue)
-        verify { digitLen == precision }
+        verify { stealDigitLen(this.steal) == precision }
     }
 
     // Step 6: Apply rounding ... might increment coefficient
@@ -89,13 +92,13 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
         c256MutateIncrement()
 
         // Step 6.2: Handle rollover if increment caused overflow to new digit
-        if (digitLen > precision) {
-            verify { digitLen == precision + 1 }
+        if (stealDigitLen(this.steal) > precision) {
+            verify { stealDigitLen(this.steal) == precision + 1 }
             // Rolling over means the result is divisible by 10, so no residue
             val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad1)
             verify { rolloverResidue == EXACT }
             ++adjustedQExp
-            verify { digitLen == precision }
+            verify { stealDigitLen(this.steal) == precision }
         }
     }
 
@@ -103,12 +106,12 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
     // qExp >= qTiny is guaranteed by steps 3/4/5
     // digitLen <= precision is guaranteed by steps 4/5
     verify { adjustedQExp >= Q_TINY }
-    verify { digitLen <= precision }
+    verify { stealDigitLen(this.steal) <= precision }
     this.qExp = adjustedQExp
     return when {
         adjustedQExp > Q_MAX -> {
             val qExcess = adjustedQExp - Q_MAX
-            if (digitLen + qExcess <= precision)
+            if (stealDigitLen(this.steal) + qExcess <= precision)
                 finalizeClamping(sign, adjustedQExp, ctx)
             else
                 finalizeOverflow(sign, rounding, ctx)

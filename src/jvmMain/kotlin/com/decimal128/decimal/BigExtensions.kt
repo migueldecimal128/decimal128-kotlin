@@ -72,7 +72,7 @@ fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
             this.setZero(sign, qBd) // always false since BigDecimal does not support -0.0
         else -> {
             this.u256Set(bd.abs().unscaledValue())
-            this.finalizeFnz(sign, clampExponentRange(qBd), ctx)
+            this.finalizeFnz(sign, clampQExponentRange(qBd), ctx)
         }
     }
 }
