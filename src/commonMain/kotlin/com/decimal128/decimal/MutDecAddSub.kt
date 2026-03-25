@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import kotlin.math.max
@@ -6,11 +9,16 @@ import kotlin.math.min
 internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.digitLen <= 76 } // x is allowed more digits because of FMA
     verify { y.digitLen <= 38 }
-    val binopSignature = binopSignatureOf(x.type, y.type)
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val binopSignature = binopSignatureOf(xSteal, ySteal)
     if (binopSignature == FNZ_FNZ) {
-        addFnzFnz(z, x, ySign, y, ctx)
+        if (stealQExp(xSteal) == stealQExp(ySteal))
+            unscaledAddFnzFnz(z, x, ySign, y, ctx)
+        else
+            scaledAddFnzFnz(z, x, ySign, y, ctx)
     }else {
-        val xSign = x.sign
+        val xSign = stealSignFlag(xSteal)
         when (binopSignature) {
             ZER_ZER -> addZerZer(z, x, ySign, y, ctx)
             INF_ZER,
@@ -18,31 +26,25 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
             ZER_INF,
             FNZ_INF -> z.setInfinite(ySign)
             INF_INF -> {
-                if (x.sign != ySign) {
+                if (xSign != ySign) {
                     return ctx.setNanSignalInvalid(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
                 }
                 z.setInfinite(ySign)
             }
-            FNZ_ZER -> return setScaleToMinQexp(z, x.sign, x, y.qExp, ctx)
-            ZER_FNZ -> return setScaleToMinQexp(z, ySign, y, x.qExp, ctx)
+            FNZ_ZER -> return setScaleToMinQexp(z, xSign, x, stealQExp(ySteal), ctx)
+            ZER_FNZ -> return setScaleToMinQexp(z, ySign, y, stealQExp(xSteal), ctx)
             else -> z.setNaNOperand(x, y, ctx)
         }
     }
     return z
 }
 
-private fun addFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
-    return if (x.qExp == y.qExp)
-        unscaledAddFnzFnz(z, x, ySign, y, ctx)
-    else
-        scaledAddFnzFnz(z, x, ySign, y, ctx)
-}
-
-private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
-    verify { x.bitLen > 0 && y.bitLen > 0 }  // Optional: could remove in production
-    val xQ = x.qExp
-    verify { xQ == y.qExp }
-    val xSign = x.sign
+private inline fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val xQ = stealQExp(xSteal)
+    verify { xQ == stealQExp(ySteal) }
+    val xSign = stealSignFlag(xSteal)
     var zSign: Boolean
     // IEEE754-2019 6.3 The sign bit
     // When the sum of two operands with opposite signs
@@ -77,13 +79,12 @@ private fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, c
     return z.finalizeFnz(zSign, xQ, ctx)
 }
 
-private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private inline fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.isFiniteNonZero() && y.isFiniteNonZero()}
     val qX = x.qExp
     val qY = y.qExp
     verify { qX != qY }
     val xSign = x.sign
-    val pentad = ctx.tmps.pentad1
     val residue: Residue
     if (xSign == ySign) {
         residue = MagnitudeAddSub.magScaledAdd(z, xSign, x, y, ctx)
@@ -106,7 +107,7 @@ private fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx
     return z.roundAndFinalizeFnz(residue, ctx)
 }
 
-private fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private inline fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     // IEEE 754: Handle sign of -0 + -0 = -0
     val sign = if (x.sign == ySign) {
         ySign  // Both same sign → use that sign
