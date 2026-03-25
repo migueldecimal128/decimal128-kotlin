@@ -9,6 +9,8 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
+import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
+import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_RESULT_WOULD_EXCEED_PRECISION
 import kotlin.math.max
 import kotlin.math.min
 
@@ -169,7 +171,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
     }
 
-    internal fun setNaN(x: MutDec, ctx: DecContext): MutDec {
+    internal fun setNaN(x: MutDec): MutDec {
         // FIXME -- remove ctx from call NO! signal
         // FIXME -- shouldn't this be copying the payload x.coeff
         val q = x.qExp
@@ -195,26 +197,9 @@ class MutDec() : C256(), Comparable<MutDec> {
         qExp = NON_FINITE_QNAN
     }
 
-    internal fun setNaNSignalInvalid(ctx: DecContext) {
-        setNaN(ctx)
-        ctx.signalInvalid(this)
-        verify { validate() }
-    }
-
-    internal fun setNaN(payload: Int, ctx: DecContext) {
-        sign = false
-        c256Set64(payload.toLong())
-        type = STEAL_NAN_QNAN
-        qExp = NON_FINITE_QNAN
-        //FIXME - see IEEE754r 6.2
-        verify { validate() }
-    }
-
     internal fun setNaN(): MutDec {
-        setZero()
-        type = STEAL_NAN_QNAN
-        qExp = NON_FINITE_QNAN
-        verify { validate() }
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L
+        steal = STEAL_NAN_QNAN
         return this
     }
 
@@ -711,9 +696,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         if (x.isInfinite() || y.isInfinite()) {
             if (x.isInfinite() && y.isInfinite())
                 return set(x)
-            this.setNaN()
-            ctx.signalInvalid(this)
-            return this
+            return ctx.setNanSignalInvalid(this, QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE)
         }
 
         // Both are finite
@@ -742,9 +725,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
                 // Check if result would exceed precision
                 if (resultDigitLen > ctx.precision) {
-                    this.setNaN()
-                    ctx.signalInvalid(this)
-                    return this
+                    return ctx.setNanSignalInvalid(this, QUANTIZE_RESULT_WOULD_EXCEED_PRECISION)
                 }
 
                 // Scale up coefficient

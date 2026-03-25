@@ -34,7 +34,7 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         return z.setZero(qExp = qExp)
     if (type == STEAL_TYP_INF)
         return z.setInfinite(false)
-    return z.setNaN(x, ctx)
+    return z.setNaN()
 }
 
 internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
