@@ -3,6 +3,9 @@
 
 package com.decimal128.decimal
 
+import kotlin.math.max
+import kotlin.math.min
+
 /*
 STEAL == Sign Type Exponent And Lengths
  */
@@ -104,6 +107,9 @@ internal inline fun stealDigitLen(steal: Int) =
 
 internal const val STEAL_PACKED_LENGTHS_MASK = 0x7FFF_0000
 
+private const val CLAMPED_EXP_MIN = -7000
+private const val CLAMPED_EXP_MAX = 7000
+
 private const val STEAL_QEXP_DECODE_SHL = 16
 private const val STEAL_QEXP_DECODE_SHR = 18
 private const val STEAL_QEXP_ENCODE_SHL = 2
@@ -162,6 +168,15 @@ internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, packedLengths: Int):
             STEAL_TYP_FNZ
 }
 
+internal inline fun stealEncodeFNZ_noQExpBoundsCheckForFMA(sign: Boolean, qExp: Int, packedLengths: Int): Int {
+    verify { qExp >= -8192 && qExp <= 8191 }
+    verify { packedLengths != 0 }
+    return (if (sign) Int.MIN_VALUE else 0) or
+            ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
+            packedLengths or
+            STEAL_TYP_FNZ
+}
+
 internal fun stealEncodeFinite(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Int =
     if ((dw1 or dw0) != 0L)
         stealEncodeFNZ(signBit, qExp, dw1, dw0)
@@ -215,3 +230,8 @@ internal fun stealPackLengths(digitLen: Int, bitLen: Int): Int {
     verify { digitLen >= 0 && digitLen <= 76 && bitLen >= 0 && bitLen <= 253 }
     return (digitLen shl STEAL_DIGITLEN_SHIFT) or (bitLen shl STEAL_BITLEN_SHIFT)
 }
+
+internal inline fun clampExponentRange(e: Int): Int {
+    return min(max(e, CLAMPED_EXP_MIN), CLAMPED_EXP_MAX)
+}
+

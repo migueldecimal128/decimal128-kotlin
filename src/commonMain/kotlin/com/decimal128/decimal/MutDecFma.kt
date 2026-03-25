@@ -1,12 +1,18 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import kotlin.math.min
 
 internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
-    val signatureXY = binopSignatureOf(x.type, y.type)
-    if (signatureXY == FNZ_FNZ && a.isFinite())
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val aSteal = a.steal
+    val signatureXY = binopSignatureOf(xSteal, ySteal)
+    if (signatureXY == FNZ_FNZ && stealIsFinite(aSteal))
         return fmaFnzFnzFinite(z, x, y, a, ctx)
-    if (a.isNaN())
+    if (stealIsNAN(aSteal))
         return fmaNanAddend(z, x, y, a, ctx)
     when (signatureXY) {
         ZER_FNZ,
@@ -26,22 +32,31 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
     return z
 }
 
-private fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+private inline fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
     val aT = if (z === a) ctx.tmps.mdecArg1.set(a) else a
     // multiply without roundAndFinalize .. remains exact
     c256SetMul(z, x, y, ctx.tmps.pentad1)
-    verify { z.bitLen != 0 }
-    z.type = STEAL_TYP_FNZ
-    z.qExp = x.qExp + y.qExp
-    z.sign = x.sign xor y.sign
+    verify { stealBitLen(z.steal) != 0 }
+    // since finalize is not called yet, we must clamp
+    // the exponent to a representable range that does not overflow
+    // the 14 bits allocated in the steal.
+    // slight overflow/underflow are not a problem.
+    // the add/sub will fix it or finalize will take care of it.
+    val zQ = clampExponentRange(stealQExp(xSteal) + stealQExp(ySteal))
+    val zSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
+    z.steal = stealEncodeFNZ_noQExpBoundsCheckForFMA(zSign, zQ, stealPackedLengths(z.steal))
     // roundAndFinalize takes place here in z.setAdd
     return mutDecAddImpl(z, z, aT.sign, aT, ctx)
 }
 
-private fun fmaNanAddend(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
-    verify { a.isNaN() }
-    val hasSNAN = x.isSignaling() or y.isSignaling() or a.isSignaling()
-    val targetNAN = if (hasSNAN) STEAL_NAN_SNAN else STEAL_NAN_QNAN
+private inline fun fmaNanAddend(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val aSteal = a.steal
+    verify { stealIsNAN(aSteal) }
+    val hasSNAN = stealIsSNAN(xSteal) or stealIsSNAN(ySteal) or stealIsSNAN(aSteal)
     val theNAN =
         if (x.isNaN(hasSNAN)) x
         else if (y.isNaN(hasSNAN)) y
@@ -53,34 +68,37 @@ private fun fmaNanAddend(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecCon
         return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, z)
     }
     if (theNAN === a) {
-        if (x.isZero() && y.isInfinite() || x.isInfinite() && y.isZero())
+        if ((stealIsZER(xSteal) and stealIsINF(ySteal)) or
+            (stealIsINF(xSteal) and stealIsZER(ySteal)))
             return ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
     }
     return z
 }
 
-private fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
-    val stealX = x.type
-    val stealY = y.type
-    val stealA = a.type
-    verify { stealIsZER(stealX) || stealIsZER(stealY) }
-    verify { !stealIsNAN(stealA) }
-    val prodSign = x.sign xor y.sign
-    val prodQ = x.qExp + y.qExp
-    val aQ = a.qExp
-    if (stealIsZER(stealA)) {
+private inline fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val aSteal = a.steal
+    val aSign = stealSignFlag(aSteal)
+    val aQ = stealQExp(aSteal)
+    val prodSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
+    val prodQ = stealQExp(xSteal) + stealQExp(ySteal)
+    verify { stealIsZER(xSteal) || stealIsZER(ySteal) }
+    verify { !stealIsNAN(aSteal) }
+    if (stealIsZER(aSteal)) {
         val fmaSign =
-            (prodSign and a.sign) or ((prodSign xor a.sign) and ctx.isRoundTowardNegative())
+            (prodSign and aSign) or ((prodSign xor aSign) and ctx.isRoundTowardNegative())
         return z.setZero(fmaSign, min(prodQ, aQ))
     }
-    if (stealIsFNZ(stealA) && prodQ < aQ)
-        return setScaleToMinQexp(z, a.sign, a, prodQ, ctx)
+    if (stealIsFNZ(aSteal) && prodQ < aQ)
+        return setScaleToMinQexp(z, aSign, a, prodQ, ctx)
     return z.set(a)
 }
 
-private fun fmaInfProd(z: MutDec, infSign: Boolean, a: MutDec, ctx: DecContext): MutDec {
-    verify { !a.isNaN() }
-    if (a.isFinite() || a.sign == infSign)
+private inline fun fmaInfProd(z: MutDec, infSign: Boolean, a: MutDec, ctx: DecContext): MutDec {
+    val aSteal = a.steal
+    verify { !stealIsNAN(aSteal) }
+    if (stealIsFinite(aSteal) || stealSignFlag(aSteal) == infSign)
         return z.setInfinite(infSign)
     return ctx.setNanSignalInvalid(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }

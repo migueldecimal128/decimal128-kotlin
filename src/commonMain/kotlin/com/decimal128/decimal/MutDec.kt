@@ -19,9 +19,6 @@ import kotlin.math.min
 internal const val NON_FINITE_QNAN = 0
 internal const val NON_FINITE_SNAN = 1
 
-const val CAPPED_EXP_MIN = -7000
-const val CAPPED_EXP_MAX = 7000
-
 class MutDec() : C256(), Comparable<MutDec> {
     var type: Int
         get() = stealTyp(steal)
@@ -657,10 +654,6 @@ class MutDec() : C256(), Comparable<MutDec> {
                 set(if (cmp <= 0) x else y)
             }
         }
-    }
-
-    internal inline fun capExponentRange(e: Int): Int {
-        return min(max(e, CAPPED_EXP_MIN), CAPPED_EXP_MAX)
     }
 
     // IEEE754-2008 5.3.2

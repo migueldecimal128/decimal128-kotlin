@@ -323,6 +323,7 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqfma0305  fma   1e-6176    0.1  0         -> 0E-6176 Underflow Subnormal Inexact Rounded Clamped",
         "dqcom013 compare   0   0  -> 0",
         "dqnextm193 nextminus  -9.999999999999999999999999999999999E+6144  -> -Infinity",
         "dqcan616 tointegralx  #7e010ff3fcff3fcff3fcff3fcff3fcff  -> #7c000ff3fcff3fcff3fcff3fcff3fcff  Invalid_operation",
