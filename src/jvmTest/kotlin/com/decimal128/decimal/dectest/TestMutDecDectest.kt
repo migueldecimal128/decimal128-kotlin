@@ -4,6 +4,7 @@ import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.MutDec
+import com.decimal128.decimal.with
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.EnumSet
