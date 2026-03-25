@@ -224,3 +224,29 @@ fun DecContext.getFptestExceptionsString() = decFlags.getFptestExceptionsString(
 fun DecContext.parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 
 
+internal fun decContextDecimal128Kotlin(): DecContext = DecContext(
+    decFormat = DecFormat.DECIMAL_128,
+    decRounding = DecRounding.ROUND_TIES_TO_EVEN,
+    decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+    decTrapHandlers = null,
+    decFlags = DecFlags(),
+    decTmps = DecTmps()
+)
+
+internal fun decContextDecimal128IEEE(): DecContext = DecContext(
+    decFormat = DecFormat.DECIMAL_128,
+    decRounding = DecRounding.ROUND_TIES_TO_EVEN,
+    decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+    decTrapHandlers = null,
+    decFlags = DecFlags(),
+    decTmps = DecTmps()
+)
+
+internal fun decContextDecimal128Extended38(): DecContext = DecContext(
+    decFormat = DecFormat.DECIMAL_128_EXTENDED,
+    decRounding = DecRounding.ROUND_TIES_TO_EVEN,
+    decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+    decTrapHandlers = null,
+    decFlags = DecFlags(),
+    decTmps = DecTmps()
+)
