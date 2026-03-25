@@ -19,8 +19,7 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
             FNZ_INF -> z.setInfinite(ySign)
             INF_INF -> {
                 if (x.sign != ySign) {
-                    z.setNaN(ctx)
-                    return ctx.signalInvalid(z)
+                    return ctx.setNanSignalInvalid(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
                 }
                 z.setInfinite(ySign)
             }

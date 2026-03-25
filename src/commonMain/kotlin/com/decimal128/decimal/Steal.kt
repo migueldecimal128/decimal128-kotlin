@@ -84,6 +84,8 @@ internal const val STEAL_NAN_MASK      = 0b111
 internal const val STEAL_NAN_SNAN      = 0b111
 internal const val STEAL_NAN_QNAN      = 0b011
 
+internal const val STEAL_SIGNALING_SHL = 2
+
 internal inline fun stealIsQNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_QNAN
 internal inline fun stealIsSNAN(steal: Int): Boolean = (steal and STEAL_NAN_MASK) == STEAL_NAN_SNAN
 
@@ -121,6 +123,9 @@ internal inline fun stealSciExp(steal: Int): Int {
             (-(steal and STEAL_BITLEN_UNSHIFTED_MASK) ushr 31)
 }
 
+internal inline fun stealEncodeZER(sign: Boolean, qExp: Int): Int =
+    stealEncodeZER(if (sign) 1 else 0, qExp)
+
 internal inline fun stealEncodeZER(signBit: Int, qExp: Int): Int {
     verify { qExp >= Q_TINY && qExp <= Q_MAX }
     return (signBit shl 31) or
@@ -136,6 +141,9 @@ internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long
             calcStealPackedLengths128(dw1, dw0) or
             STEAL_TYP_FNZ
 }
+
+internal inline fun stealEncodeFNZ(sign: Boolean, qExp: Int, packedLengths: Int) =
+    stealEncodeFNZ(if (sign) 1 else 0, qExp, packedLengths)
 
 internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, packedLengths: Int): Int {
     verify { qExp >= Q_TINY && qExp <= Q_MAX }
@@ -159,14 +167,23 @@ internal inline fun stealEncodeINF(signBit: Int) =
 // FIXME - do I allow non-canonical encodings ...
 //  ... e.g. link INF + coeff ... at this point I think not
 
+internal inline fun stealEncodeNAN(signBit: Int, signalingBit: Int, payloadDw1: Long, payloadDw0: Long) =
+    (signBit shl 31) or
+            calcStealPackedLengths128(payloadDw1, payloadDw0) or
+            (signalingBit shl STEAL_SIGNALING_SHL) or STEAL_TYP_NAN
+
 internal inline fun stealEncodeSNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
     (signBit shl 31) or calcStealPackedLengths128(payloadDw1, payloadDw0) or STEAL_NAN_SNAN
 
 internal inline fun stealEncodeQNAN(signBit: Int, payloadDw1: Long, payloadDw0: Long): Int =
     (signBit shl 31) or calcStealPackedLengths128(payloadDw1, payloadDw0) or STEAL_NAN_QNAN
 
-internal fun stealWithSignFlag(oldSteal: Int, signFlag: Boolean) =
+internal inline fun stealWithSignFlag(oldSteal: Int, signFlag: Boolean) =
     (oldSteal and 0x7FFF_FFFF) or (if (signFlag) Int.MIN_VALUE else 0)
+
+internal inline fun stealWithNegation(oldSteal: Int) = oldSteal xor Int.MIN_VALUE
+
+internal inline fun stealWithAbsValue(oldSteal: Int) = oldSteal and 0x7FFF_FFFF
 
 internal fun stealWithTyp(oldSteal: Int, typ: Int) =
     (oldSteal and STEAL_TYP_MASK.inv()) or typ

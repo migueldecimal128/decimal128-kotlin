@@ -172,7 +172,7 @@ private fun MutDec.finalizeUnderflowRegion(
             // Result is swamped - becomes zero or min finite
             // This is always inexact
             ctx.signalInexactUnderflow(
-                if (rounding.underflowsToZero(sign)) setMinZeroMagnitude(sign, ctx)
+                if (rounding.underflowsToZero(sign)) setZeroWithQTiny(sign)
                 else setMinFiniteMagnitude(sign, ctx))
         }
         truncationNeeded == digitLen -> {
@@ -200,7 +200,7 @@ private fun MutDec.finalizeUnderflowBoundary(
 
     return ctx.signalInexactUnderflow(
         if (roundUp) setMinFiniteMagnitude(sign, ctx)
-        else setMinZeroMagnitude(sign, ctx))
+        else setZeroWithQTiny(sign))
 }
 
 private fun MutDec.finalizeSubnormal(

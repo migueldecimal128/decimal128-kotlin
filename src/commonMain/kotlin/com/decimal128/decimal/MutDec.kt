@@ -120,35 +120,37 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setZero(sign: Boolean): MutDec {
         this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L; this.dw0 = 0L
-        this.steal = stealEncodeZER(if (sign) 1 else 0, 0)
+        this.steal = stealEncodeZER(sign, 0)
         verify { validate() }
         return this
     }
 
-    fun setZero(sign: Boolean = false, qExp: Int = 0): MutDec {
+    fun setZero(sign: Boolean, qExp: Int): MutDec {
         val qExpCapped = max(min(qExp, Q_MAX), Q_TINY)
         this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L; this.dw0 = 0L
-        this.steal = stealEncodeZER(if (sign) 1 else 0, qExpCapped)
+        this.steal = stealEncodeZER(sign, qExpCapped)
         verify { validate() }
         return this
     }
+
+    internal inline fun setZeroWithQTiny(sign: Boolean): MutDec = setZero(sign, Q_TINY)
 
     fun setOne(sign: Boolean = false): MutDec {
         this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L
         this.dw0 = 1L
-        this.steal = stealEncodeFNZ(if (sign) 1 else 0, 0, PACKED_LENGTHS_1_1)
+        this.steal = stealEncodeFNZ(sign, 0, PACKED_LENGTHS_1_1)
         verify { validate() }
         return this
     }
 
     internal fun setNaNOperand(x: MutDec, ctx: DecContext): MutDec {
-        val xQ = x.qExp
-        verify { xQ >= NON_FINITE_QNAN }
+        val stealX = x.steal
+        verify { stealIsNAN(stealX) }
         this.set(x)
-        this.type = STEAL_NAN_QNAN
-        this.qExp = NON_FINITE_QNAN
-        if (xQ == NON_FINITE_SNAN)
+        if (stealIsSNAN(stealX)) {
+            quietSNaN()
             ctx.signalInvalid(this)
+        }
         verify { validate() }
         return this
     }
@@ -171,19 +173,6 @@ class MutDec() : C256(), Comparable<MutDec> {
         return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
     }
 
-    internal fun setNaN(x: MutDec): MutDec {
-        // FIXME -- remove ctx from call NO! signal
-        // FIXME -- shouldn't this be copying the payload x.coeff
-        val q = x.qExp
-        verify { q >= NON_FINITE_QNAN }
-        setZero()
-        type = STEAL_NAN_QNAN
-        qExp = NON_FINITE_QNAN
-        //FIXME - see IEEE754r 6.2
-        verify { validate() }
-        return this
-    }
-
     internal fun setNaN(ctx: DecContext) {
         setZero()
         sign = false
@@ -204,27 +193,21 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
-        this.sign = sign
-        this.type = STEAL_TYP_NAN
-        this.qExp = if (isSignaling) NON_FINITE_SNAN else NON_FINITE_QNAN
-        c256Set128(payloadHi and ((1L shl (110 - 64)) - 1L), payloadLo)
+        this.dw3 = 0L; this.dw2 = 0L
+        this.dw1 = payloadHi
+        this.dw0 = payloadLo
+        this.steal = stealEncodeNAN(if (sign) 1 else 0, if (isSignaling) 1 else 0, payloadHi, payloadLo)
         verify { validate() }
     }
 
-    fun setSNaN(ctx: DecContext) {
-        setZero()
-        this.type = STEAL_TYP_NAN
-        qExp = NON_FINITE_SNAN
-        verify { validate() }
+    fun setSNaN(): MutDec {
+        dw3 = 0L; dw2 = 0L; dw1 = 0L; dw0 = 0L
+        steal = STEAL_NAN_SNAN
+        return this
     }
 
     fun setInfinite(sign: Boolean = false): MutDec {
-        // NOTE miguel 2025-09-30
-        //  Infinity must have coefficient zero (not one) because that is
-        //  what is required for BID and DPD encoding.
-        //  Changing the coefficient to one would make negation slightly
-        //  easier, but isn't worth doing
-        this.c256SetZero()
+        this.dw3 = 0L; this.dw2 = 0L; this.dw1 = 0L; this.dw0 = 0L
         this.steal = stealEncodeINF(if (sign) 1 else 0)
         verify { validate() }
         return this
@@ -325,35 +308,26 @@ class MutDec() : C256(), Comparable<MutDec> {
         this.dw1 = POW10[pow10Offset + 1]
         this.dw0 = POW10[pow10Offset    ] - 1
         val bitLen = pow10BitLen(precision)
-        this.steal = stealEncodeFNZ(if (sign) 1 else 0, Q_MAX, stealPackLengths(precision, bitLen))
+        this.steal = stealEncodeFNZ(sign, Q_MAX, stealPackLengths(precision, bitLen))
         verify { validate() }
         return this
     }
 
     fun setMinFiniteMagnitude(sign: Boolean, ctx: DecContext): MutDec {
-        type = STEAL_TYP_FNZ
-        this.sign = sign
-        qExp = Q_TINY
-        super.c256SetOne()
-        return this
-    }
-
-    fun setMinZeroMagnitude(sign: Boolean, ctx: DecContext): MutDec {
-        type = STEAL_TYP_ZER
-        this.sign = sign
-        qExp = Q_TINY
-        super.c256SetZero()
+        this.dw3 = 0L; this.dw2 = 0L; this.dw1 = 0L
+        this.dw0 = 1L
+        this.steal = stealEncodeFNZ(sign, Q_TINY, PACKED_LENGTHS_1_1)
         return this
     }
 
     fun setNegate(x: MutDec) = set(x).mutateNegate()
 
     // NOTE
-    //  that Colishaw's GDAS and Dectest require more complex handling
-    //  of negate than what seems to be dictated by IEEE754-2019 ...
-    //  which would simply be a sign change
+    //  Colishaw's GDAS and Dectest require more complex handling
+    //  of negate than what is dictated by IEEE754-2019 ...
+    //  which is simply a sign change as a non-computational operation
     fun mutateNegate(): MutDec {
-        this.sign = !this.sign
+        this.steal = stealWithNegation(steal)
         return this
     }
 
@@ -361,11 +335,11 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun mutateAbs(): MutDec {
         // IEEE differs from GDAS/Colishaw
-        this.sign = false
+        this.steal = stealWithAbsValue(steal)
         return this
     }
 
-    fun isNegative() = sign
+    fun isNegative() = stealSignFlag(steal)
 
     fun isNumber() : Boolean {
         return stealTyp(steal) != STEAL_TYP_NAN
@@ -396,11 +370,11 @@ class MutDec() : C256(), Comparable<MutDec> {
     // FIXME this is not the best, but is OK for now for testing
     fun partialCompareTo(other: MutDec, ctx: DecContext): MutDec {
         val md = MutDec()
-        if (this.isZero() && other.isZero())
-            return md.setZero(false)
-        if (! isNaN() && !other.isNaN())
-            return md.set(compareJavaStyleTo(other))
-        md.setNaNOperand(this, other, ctx)
+        if (!this.isZero() || !other.isZero()) {
+            if (!isNaN() && !other.isNaN())
+                return md.set(compareJavaStyleTo(other))
+            md.setNaNOperand(this, other, ctx)
+        }
         return md
     }
 
@@ -755,12 +729,12 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     // IEEE754-2008 5.3.3
-    fun setLogB(x: MutDec, env: DecContext): MutDec {
+    fun setLogB(x: MutDec, ctx: DecContext): MutDec {
         val qX = x.qExp
         when (x.type) {
             STEAL_TYP_ZER -> {
                 setInfinite(sign = true)
-                env.signalDivByZero(this)
+                ctx.signalDivByZero(this)
             }
             STEAL_TYP_FNZ -> {
                 val logB = qX + x.digitLen - 1
@@ -769,7 +743,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             STEAL_TYP_INF ->
                 setInfinite()
             else ->
-                setNaNOperand(x, env)
+                setNaNOperand(x, ctx)
         }
         return this
     }

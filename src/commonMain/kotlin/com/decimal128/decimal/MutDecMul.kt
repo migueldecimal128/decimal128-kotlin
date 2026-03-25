@@ -31,7 +31,7 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         return z.finalizeFnz(false, qExp, ctx)
     }
     if (type == STEAL_TYP_ZER)
-        return z.setZero(qExp = qExp)
+        return z.setZero(false, qExp)
     if (type == STEAL_TYP_INF)
         return z.setInfinite(false)
     return z.setNaN()
