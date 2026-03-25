@@ -134,20 +134,17 @@ internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: I
 }
 
 private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
-    verify { x.qExp != y.qExp } // the unscaled case should have been caught earlier
-    //if (x.qExp == y.qExp) {
-    //    z.qExp = x.qExp
-    //    u256AddUnscaled(z, x, y)
-    //    return Residue.EXACT
-    //}
-    val flipFlop = x.qExp > y.qExp
+    verify { stealQExp(x.steal) != stealQExp(y.steal) } // the unscaled case should have been caught earlier
+
+    val flipFlop = stealQExp(x.steal) > stealQExp(y.steal)
     val m = if (flipFlop) x else y
     val n = if (flipFlop) y else x
     val mSteal = m.steal
     val nSteal = n.steal
     val mQ = stealQExp(mSteal)
-    val mDigitLen = stealDigitLen(mSteal)
     val nQ = stealQExp(nSteal)
+
+    val mDigitLen = stealDigitLen(mSteal)
     val nDigitLen = stealDigitLen(nSteal)
     val qDelta = mQ - nQ
     verify { qDelta > 0 }
@@ -157,6 +154,7 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
     val qAlign = mQ - shiftLeft
     when {
         (mDigitLen > 0 && nDigitLen > 0) -> {
+            verify { m.isFiniteNonZero() && n.isFiniteNonZero()}
             val shiftRight = qAlign - nQ
             val residue = when {
                 shiftRight == 0 -> {
@@ -189,27 +187,22 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
                     residue
                 }
             }
-            z.type = STEAL_TYP_FNZ
-            z.qExp = qAlign
-            z.sign = sign
+            z.steal = stealEncodeFNZ(sign, qAlign, stealPackedLengths(z.steal))
             return residue
         }
         // one of the two is zero
         // return the value of the non-zero (if any), scaled to the smaller exponent
         (mDigitLen > 0) -> {
-            z.type = STEAL_TYP_FNZ
-            z.qExp = qAlign
+            verify { m.isFinite() }
             c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.pentad1)
-            z.sign = sign
+            z.steal = stealEncodeFNZ(sign, qAlign, stealPackedLengths(z.steal))
             return EXACT
         }
 
         else -> {
+            verify { stealTyp(mSteal) == STEAL_TYP_ZER }
             // if m == 0 then return n ... n != 0 and n == 0
-            z.c256Set(n)
-            z.type = n.type
-            z.qExp = n.qExp
-            z.sign = sign
+            z.set(n)
             return EXACT
         }
     }

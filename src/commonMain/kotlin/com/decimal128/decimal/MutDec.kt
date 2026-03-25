@@ -20,33 +20,28 @@ internal const val NON_FINITE_QNAN = 0
 internal const val NON_FINITE_SNAN = 1
 
 class MutDec() : C256(), Comparable<MutDec> {
-    var type: Int
-        get() = stealTyp(steal)
+    internal var type: Int
+        inline get() = stealTyp(steal)
         set(value) {
             verify { value in 0..3 }
             steal = stealWithTyp(steal, value)
         }
-    var sign: Boolean
-        get() = stealSignFlag(steal)
+    internal var sign: Boolean
+        inline get() = stealSignFlag(steal)
         set(value) {
             steal = stealWithSignFlag(steal, value)
         }
-    val signMask: Int
-        get() = stealSignMask(steal)
-    val signBit: Int
-        get() = stealSignBit(steal)
+    internal val signMask: Int
+        inline get() = stealSignMask(steal)
+    internal val signBit: Int
+        inline get() = stealSignBit(steal)
 
 
-    var qExp: Int
-        get() = stealQExp(steal)
+    internal var qExp: Int
+        inline get() = stealQExp(steal)
         set(value) {
             steal = stealWithQExp(steal, value)
         }
-    val eExp: Int
-        get() = qExp + digitLen - 1
-
-    fun bExpMin(): Int = calcBExpMin(bitLen, qExp)
-    fun bExpMax(): Int = calcBExpMax(bitLen, qExp)
 
     companion object {
 

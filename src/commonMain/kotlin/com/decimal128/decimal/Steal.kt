@@ -160,18 +160,9 @@ internal inline fun stealEncodeFNZ(sign: Boolean, qExp: Int, packedLengths: Int)
     stealEncodeFNZ(if (sign) 1 else 0, qExp, packedLengths)
 
 internal inline fun stealEncodeFNZ(signBit: Int, qExp: Int, packedLengths: Int): Int {
-    verify { qExp >= Q_TINY && qExp <= Q_MAX }
-    verify { packedLengths != 0 }
-    return (signBit shl 31) or
-            ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
-            packedLengths or
-            STEAL_TYP_FNZ
-}
-
-internal inline fun stealEncodeFNZ_looseQExpBoundsCheck(sign: Boolean, qExp: Int, packedLengths: Int): Int {
     verify { qExp >= -8192 && qExp <= 8191 }
     verify { packedLengths != 0 }
-    return (if (sign) Int.MIN_VALUE else 0) or
+    return (signBit shl 31) or
             ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL) or
             packedLengths or
             STEAL_TYP_FNZ

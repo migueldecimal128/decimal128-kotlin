@@ -55,7 +55,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
                                         ctx: DecContext): MutDec {
     verify { stealPackedLengths(steal) != 0 }
     this.steal =
-        stealEncodeFNZ_looseQExpBoundsCheck(sign,
+        stealEncodeFNZ(sign,
             clampQExponentRange(inboundQExp), stealPackedLengths(steal))
     val precision = ctx.precision
     // Step 1: Fast path: already in valid decimal128 range
