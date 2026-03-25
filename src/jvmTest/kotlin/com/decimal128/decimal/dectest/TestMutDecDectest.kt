@@ -323,6 +323,7 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqcan616 tointegralx  #7e010ff3fcff3fcff3fcff3fcff3fcff  -> #7c000ff3fcff3fcff3fcff3fcff3fcff  Invalid_operation",
         "dqadd7882 add -NaN26    NaN28 -> -NaN26",
         "dqadd7830 add -Inf  NaN    ->  NaN",
         "dqfma0905 fma  0     0     sNaN3  ->  NaN3 Invalid_operation",

@@ -390,16 +390,18 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun eqJavaStyleTo(other: MutDec) : Boolean = mutDecEqJavaStyle(this, other)
 
     fun setRoundToIntegral(x: MutDec, rounding: DecRounding, ctx: DecContext): MutDec {
-        if (x.qExp >= 0) // this handles all special values as well
+        val xSteal = x.steal
+        if (!stealIsFinite(xSteal) || stealQExp(xSteal) >= 0)
             return set(x, ctx)
-        val xSign = x.sign
-        if (x.c256IsZero())
+        val xSign = stealSignFlag(xSteal)
+        if (stealIsZER(xSteal))
             return setZero(xSign)
-        val fracDigitLen = -x.qExp
-        if (fracDigitLen >= x.digitLen) {
+        val digitLen = stealDigitLen(xSteal)
+        val fracDigitLen = -stealQExp(xSteal)
+        if (fracDigitLen >= digitLen) {
             // all fractional digits
             val residue: Residue
-            if (fracDigitLen > x.digitLen)
+            if (fracDigitLen > digitLen)
                 residue = Residue.LT_HALF
             else {
                 residue = Residue.fromValueDecade(x)
