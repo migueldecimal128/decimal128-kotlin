@@ -4,13 +4,15 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import kotlin.math.min
 
 internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-    val binopSignature = binopSignatureOf(x.type, y.type)
-    val quotientSign = x.sign xor y.sign
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val quotientSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
+    val binopSignature = binopSignatureOf(xSteal, ySteal)
     if (binopSignature == FNZ_FNZ)
         return mutDecDivFnzFnz(z, quotientSign, x, y, ctx)
     else when (binopSignature) {
         ZER_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
-        ZER_FNZ -> z.setZero(quotientSign, x.qExp - y.qExp)
+        ZER_FNZ -> z.setZero(quotientSign, stealQExp(xSteal) - stealQExp(ySteal))
         ZER_INF,
         FNZ_INF -> z.setZero(quotientSign, Q_TINY)
         FNZ_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
@@ -23,7 +25,10 @@ internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
 }
 
 internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-    val binopSignature = binopSignatureOf(x.type, y.type)
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val quotientSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
+    val binopSignature = binopSignatureOf(xSteal, ySteal)
     if (binopSignature == FNZ_FNZ) {
         setDivIntFnzFnz(z, x, y, ctx)
     } else {
@@ -76,12 +81,14 @@ internal fun mutDecReciprocalImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec
 }
 
 fun mutDecSetRemTruncImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean {
-    val binopSignature = binopSignatureOf(x.type, y.type)
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val binopSignature = binopSignatureOf(x.steal, y.steal)
     if (binopSignature == FNZ_FNZ) {
         return setRemTruncFnzFnz(z, x, y, ctx)
     } else {
         when (binopSignature) {
-            ZER_FNZ -> z.setZero(x.sign, min(x.qExp, y.qExp))
+            ZER_FNZ -> z.setZero(stealSignFlag(xSteal), min(stealQExp(xSteal), stealQExp(ySteal)))
 
             FNZ_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_BY_ZERO_IN_REMAINDER_OP)
             ZER_ZER -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
@@ -122,12 +129,14 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
 }
 
 fun mutDecCompare754Impl(x: MutDec, y: MutDec, isSignaling: Boolean, ctx: DecContext): Compare754Result {
-    val binopSignature = binopSignatureOf(x.type, y.type)
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val binopSignature = binopSignatureOf(xSteal, ySteal)
     if (binopSignature == FNZ_FNZ) {
         return Compare754Result(x.compareNumericMagnitudeTo(y))
     }
-    val xSign = x.sign
-    val ySign = y.sign
+    val xSign = stealSignFlag(xSteal)
+    val ySign = stealSignFlag(ySteal)
     return when (binopSignature) {
         ZER_ZER -> IEEE754_EQ
 
@@ -148,14 +157,71 @@ fun mutDecCompare754Impl(x: MutDec, y: MutDec, isSignaling: Boolean, ctx: DecCon
         else -> { // NAN_FOUND
             if (isSignaling) {
                 val guiltyParty = when {
-                    x.isSignaling() -> x
-                    y.isSignaling() -> y
-                    x.isNaN() -> x
-                    else -> y
+                    stealIsSNAN(xSteal) -> x
+                    stealIsSNAN(ySteal) or !stealIsNAN(xSteal)-> y
+                    else -> x
                 }
                 ctx.operandIsSignalingNaN(guiltyParty)
             }
             IEEE754_UNORDERED
         }
     }
+}
+
+fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val tmps = ctx.tmps
+    val numeratorScale = ctx.precision + 1 - (stealDigitLen(xSteal) - stealDigitLen(ySteal))
+    val scaledNumerator = tmps.mdecArg1
+    val pentad = tmps.pentad1
+    c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, pentad)
+    val residue = when {
+        (stealBitLen(ySteal) <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)
+        else -> c256SetDiv(z, scaledNumerator, y, tmps)
+    }
+    val qPreferred = stealQExp(xSteal) - stealQExp(ySteal)
+    var qZ = qPreferred - numeratorScale
+    var ntz = z.dw0.countTrailingZeroBits()
+    if (residue == Residue.EXACT && qZ < qPreferred && ntz > 0) {
+        if (qZ + 1 < qPreferred) {
+            val quot = C256()
+            do {
+                val deltaQ = qPreferred - qZ
+                val chunk = min(min(9, deltaQ), ntz)
+                val chunkRemainder = barrettDivModPow10(quot, z, chunk)
+                // FIXME -- the stripTrailingZeros code uses a faster way to
+                //  countTrailingZeroDigits
+                if (chunkRemainder > 0) {
+                    var pow10Count = 0
+                    var t = chunkRemainder
+                    val M = 0xCCCCCCCCCCCCCCCDuL.toLong()
+                    val S = 3
+                    while (true) {
+                        // val q = t / 10
+                        // val r = t % 10
+                        val q = unsignedMulHi(t, M) ushr S
+                        val r = t - (q * 10)
+                        if (r != 0L)
+                            break
+                        ++pow10Count
+                        t = q
+                    }
+                    if (pow10Count > 0) {
+                        c256SetScaleDownPow10(z, z, pow10Count, pentad)
+                        qZ += pow10Count
+                    }
+                    break
+                } else {
+                    z.c256Set(quot)
+                    ntz -= chunk
+                    qZ += chunk
+                }
+            } while (qZ < qPreferred && ntz > 0)
+        } else if (c256IsMultipleOf10(z)) {
+            c256SetScaleDownPow10(z, z, 1, pentad)
+            ++qZ
+        }
+    }
+    return z.roundAndFinalizeFnz(sign, qZ, residue, ctx)
 }
