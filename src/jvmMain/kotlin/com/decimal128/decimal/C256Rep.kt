@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 actual open class C256Rep {
     @JvmField
-    internal actual var steal: Int = 0
+    internal actual var steal: Int = STEAL_TYP_ZER
     @JvmField
     internal actual var dw0:Long = 0L
     @JvmField

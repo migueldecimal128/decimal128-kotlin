@@ -116,6 +116,8 @@ internal inline fun stealWithQExp(oldSteal: Int, qExp: Int) =
     (oldSteal and STEAL_QEXP_MASK_UNSHIFTED.inv()) or ((qExp and STEAL_QEXP_ENCODE_MASK) shl STEAL_QEXP_ENCODE_SHL)
 
 internal inline fun stealSciExp(steal: Int): Int {
+    // if the digitLen is non-zero then subtract 1
+    // if digitLen == 0 then sciExp stays 0 ... 0e0
     // eExp = qExp + (digitLen - (-digitLen ushr 31))
     // eExp = qExp + (digitLen - (-bitLen ushr 31))
     return ((steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR) +

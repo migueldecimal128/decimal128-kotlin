@@ -112,6 +112,19 @@ class MutDec() : C256(), Comparable<MutDec> {
         return true
     }
 
+    fun isSignMinus() = stealSignFlag(steal)
+    fun isNormal() = stealIsNormal(steal)
+    fun isFinite() = stealIsFinite(steal)
+    fun isZero() = stealIsZER(steal)
+    fun isFiniteNonZero() = stealIsFNZ(steal)
+    fun isSubnormal() = stealIsSubnormal(steal)
+    fun isInfinite() = stealIsINF(steal)
+    fun isNaN() = stealIsNAN(steal)
+    fun isNaN(signaling: Boolean) = (if (signaling) stealIsSNAN(steal) else stealIsQNAN(steal))
+    fun isSignaling() = stealIsSNAN(steal)
+    fun isCanonical() = true
+    fun radix() = 10
+
     // if the digitLen is non-zero then subtract 1
     // if digitLen == 0 then sciExp stays 0 ... 0e0
     fun sciExp() = stealSciExp(steal)
@@ -651,90 +664,96 @@ class MutDec() : C256(), Comparable<MutDec> {
     // IEEE754-2008 5.3.2
     fun setQuantize(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // Handle NaN propagation
-        // FIXME -- dispatching on qExp
-        val xSign = x.sign
-        val qX = x.qExp
-        val qY = y.qExp
-        if (x.isNaN() || y.isNaN())
-            return setNaNOperand(x, y, ctx)
-        // Handle infinity cases
-        if (x.isInfinite() || y.isInfinite()) {
-            if (x.isInfinite() && y.isInfinite())
-                return set(x)
-            return ctx.setNanSignalInvalid(this, QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE)
-        }
+        val xSteal = x.steal
+        val ySteal = y.steal
+        val binopSignature = binopSignatureOf(xSteal, ySteal)
+        when (binopSignature) {
+            ZER_ZER,
+            FNZ_ZER,
+            ZER_FNZ,
+            FNZ_FNZ -> {
+                // Both are finite
+                val xSign = stealSignFlag(xSteal)
+                val pentad = ctx.tmps.pentad1
 
-        // Both are finite
-        val delta = qY - qX
+                val xQ = stealQExp(xSteal)
+                val yQ = stealQExp(ySteal)
+                val delta = yQ - xQ
 
-        when {
-            delta == 0 -> return set(x)
+                when {
+                    delta == 0 -> return set(x)
 
-            delta > 0 -> {
-                // Target exponent is larger: need to scale coefficient DOWN
-                // This means truncating with rounding
-                if (x.c256IsZero())
-                    return setZero(xSign, qY)
-                // Scale down by delta positions
-                val residue = c256SetScaleDownPow10(this, x, delta, ctx.tmps.pentad1)
-                return roundAndFinalizeFinite(xSign, qY, residue, ctx.decRounding, ctx)
-            }
+                    delta > 0 -> {
+                        // Target exponent is larger: need to scale coefficient DOWN
+                        // This means truncating with rounding
+                        if (x.c256IsZero())
+                            return setZero(xSign, yQ)
+                        // Scale down by delta positions
+                        val residue = c256SetScaleDownPow10(this, x, delta, pentad)
+                        return roundAndFinalizeFinite(xSign, yQ, residue, ctx.decRounding, ctx)
+                    }
 
-            else -> {  // delta < 0
-                if (x.c256IsZero())
-                    return setZero(xSign, qY)
+                    else -> {  // delta < 0
+                        if (stealIsZER(xSteal))
+                            return setZero(xSign, yQ)
 
-                // Target exponent is smaller: need to scale coefficient UP
-                val scaleAmount = -delta
-                val resultDigitLen = x.digitLen + scaleAmount
+                        // Target exponent is smaller: need to scale coefficient UP
+                        val scaleAmount = -delta
+                        val resultDigitLen = x.digitLen + scaleAmount
 
-                // Check if result would exceed precision
-                if (resultDigitLen > ctx.precision) {
-                    return ctx.setNanSignalInvalid(this, QUANTIZE_RESULT_WOULD_EXCEED_PRECISION)
+                        // Check if result would exceed precision
+                        if (resultDigitLen > ctx.precision) {
+                            return ctx.setNanSignalInvalid(this, QUANTIZE_RESULT_WOULD_EXCEED_PRECISION)
+                        }
+
+                        // Scale up coefficient
+                        c256SetScaleUpPow10(this, x, scaleAmount, pentad)
+                        this.steal = stealEncodeFNZ(xSign, yQ, stealPackedLengths(this.steal))
+                        verify { digitLen <= ctx.precision }
+                        return this
+                    }
                 }
-
-                // Scale up coefficient
-                c256SetScaleUpPow10(this, x, scaleAmount, ctx.tmps.pentad1)
-                this.qExp = qY
-                this.sign = xSign
-                verify { digitLen <= ctx.precision }
-                return this
             }
+            INF_INF -> return set(x)
+            INF_ZER,
+            ZER_INF,
+            INF_FNZ,
+            FNZ_INF -> return ctx.setNanSignalInvalid(this, QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE)
+            else -> // NAN_FOUND
+                return setNaNOperand(x, y, ctx)
+
         }
     }
 
     // IEEE754-2008 5.3.3
     fun setScaleB(x: MutDec, pow10: Int, ctx: DecContext): MutDec {
         set(x)
-        val xSign = x.sign
+        val steal = steal
+        val xSign = stealSignFlag(steal)
         when {
-            isFinite() -> {
+            stealIsFinite(steal) -> {
                 val p10 = min(max(pow10, -100_000), 100_000)
-                val target = x.qExp + p10
-                return if (x.bitLen == 0) setZero(xSign, target) else finalizeFnz(xSign, target, ctx)
+                val targetQ = x.qExp + p10
+                return (
+                        if (x.bitLen == 0) setZero(xSign, targetQ)
+                        else finalizeFnz(xSign, targetQ, ctx))
             }
-            isInfinite() -> {}
-            else -> setNaNOperand(x, ctx)
+            stealIsNAN(steal) -> setNaNOperand(x, ctx)
         }
         return this
     }
 
     // IEEE754-2008 5.3.3
     fun setLogB(x: MutDec, ctx: DecContext): MutDec {
-        val qX = x.qExp
-        when (x.type) {
+        val xSteal = x.steal
+        when (stealTyp(xSteal)) {
             STEAL_TYP_ZER -> {
                 setInfinite(sign = true)
                 ctx.signalDivByZero(this)
             }
-            STEAL_TYP_FNZ -> {
-                val logB = qX + x.digitLen - 1
-                set(logB)
-            }
-            STEAL_TYP_INF ->
-                setInfinite()
-            else ->
-                setNaNOperand(x, ctx)
+            STEAL_TYP_FNZ -> set(stealSciExp(xSteal))
+            STEAL_TYP_INF -> setInfinite()
+            else -> setNaNOperand(x, ctx)
         }
         return this
     }
@@ -743,42 +762,43 @@ class MutDec() : C256(), Comparable<MutDec> {
         setStripTrailingZeros(x, env, maxToStrip = 99)
 
     fun setStripTrailingZeros(x: MutDec, ctx: DecContext, maxToStrip: Int): MutDec {
-        val xSign = x.sign
-        val xQ = x.qExp
+        val xSteal = x.steal
+        val xSign = stealSignFlag(xSteal)
+        val xQ = stealQExp(xSteal)
         when {
-            x.isZero() -> return setZero(xSign)
+            stealIsZER(xSteal) -> return setZero(xSign)
             maxToStrip <= 0 -> return set(x)
-            x.isFinite() -> {
+            stealIsFinite(xSteal) -> {
                 var ctzd = 0
                 var remaining = maxToStrip
                 val tmps = ctx.tmps
                 val t = tmps.mdecArg1
                 var t0 = x
-                var m: Long = 0L
+                var modulo: Long = 0L
                 while (remaining > 0) {
                     val divPow10 = min(9, remaining)
                     val divisor = pow10_64(divPow10)
-                    m = DivDirect.divModX32(t, t0, divisor)
+                    modulo = DivDirect.divModX32(t, t0, divisor)
                     t.type = if (t.bitLen == 0) STEAL_TYP_ZER else STEAL_TYP_FNZ
-                    if (m != 0L)
+                    if (modulo != 0L)
                         break
+                    // the modulo was all zeros
                     t0 = t
                     ctzd += divPow10
                     remaining -= divPow10
                     if (remaining == 0) {
+                        // we have fully satisfied maxToStrip ... so we are done
                         t0.qExp = xQ + maxToStrip
                         return set(t0)
                     }
                 }
-                ctzd += min(countTrailingZeroDigits32(m.toInt()), remaining)
+                ctzd += min(countTrailingZeroDigits32(modulo.toInt()), remaining)
                 // cap when qExp gets clamped
                 ctzd = min(ctzd, Q_MAX - xQ)
                 if (ctzd == 0)
                     return set(x)
                 c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
-                type = STEAL_TYP_FNZ
-                qExp = xQ + ctzd
-                sign = x.sign
+                this.steal = stealEncodeFNZ(xSign, xQ + ctzd, stealPackedLengths(this.steal))
                 return this
             }
             else -> return set(x, ctx)
@@ -813,16 +833,17 @@ class MutDec() : C256(), Comparable<MutDec> {
         // avoid aliasing issues
         val yT = if (this !== y) y else ctx.tmps.mdecDiv.set(y)
         val truncIsOdd: Boolean = mutDecSetRemTruncImpl(this, x, yT, ctx)
-        val tmps = ctx.tmps
-        if (!isZero() && isFinite()) {
+        if (isFiniteNonZero()) {
+            val tmps = ctx.tmps
+            val rem2 = tmps.mdecArg1
             val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
-            val rem2 = if (sign) {
-                tmps.mdecArg1.setAdd(this, yT, truncCtx)  // this + yT
+            if (sign) {
+                rem2.setAdd(this, yT, truncCtx)  // this + yT
             } else {
-                tmps.mdecArg1.setSub(this, yT, truncCtx)  // this - yT
+                rem2.setSub(this, yT, truncCtx)  // this - yT
             }
             val cmp = compareNumericMagnitudeTo(rem2, tmps.pentad1)
-             if (cmp > 0 || (cmp == 0) && truncIsOdd)
+            if (cmp > 0 || (cmp == 0) && truncIsOdd)
                 this.set(rem2)
         }
         return this
@@ -847,42 +868,30 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun exactlyEQ(other: MutDec): Boolean {
         return dw0 == other.dw0 && dw1 == other.dw1 &&
                 dw2 == other.dw2 && dw3 == other.dw3 &&
-                qExp == other.qExp && sign == other.sign
+                steal == other.steal
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()  // includes sign + coefficient
-        result = 31 * result + qExp
-        return result
+        throw UnsupportedOperationException("hashCode() not supported")
     }
-    // 5.7.2 General operations
 
+    // 5.7.2 General operations
     fun valueClass(): Ieee754Class {
-        when (type) {
+        val steal = steal
+        val sign = stealSignFlag(steal)
+        when (stealTyp(steal)) {
             STEAL_TYP_FNZ -> {
-                if (sciExp() >= -6143)
+                if (stealSciExp(steal) >= -6143)
                     return if (sign) negativeNormal else positiveNormal
                 return if (sign) negativeSubnormal else positiveSubnormal
             }
             STEAL_TYP_ZER -> return if (sign) negativeZero else positiveZero
             STEAL_TYP_INF -> return if (sign) negativeInfinity else positiveInfinity
             else -> // STEAL_TYP_NAN
-                return if (isSignaling()) signalingNaN else quietNaN
+                return if (stealIsSNAN(steal)) signalingNaN else quietNaN
         }
     }
 
-    fun isSignMinus() = stealSignFlag(steal)
-    fun isNormal() = stealIsNormal(steal)
-    fun isFinite() = stealIsFinite(steal)
-    fun isZero() = stealIsZER(steal)
-    fun isFiniteNonZero() = stealIsFNZ(steal)
-    fun isSubnormal() = stealIsSubnormal(steal)
-    fun isInfinite() = stealIsINF(steal)
-    fun isNaN() = stealIsNAN(steal)
-    fun isNaN(signaling: Boolean) = (if (signaling) stealIsSNAN(steal) else stealIsQNAN(steal))
-    fun isSignaling() = stealIsSNAN(steal)
-    fun isCanonical() = true
-    fun radix() = 10
 
     fun isTotalOrder(other: MutDec): Boolean = compareTotalOrderTo(other) <= 0
 
