@@ -398,9 +398,7 @@ object DecimalParsePrint {
         val hasDiscardedNonZero = guardDigit or stickyBits != 0
 
         if (!hasDiscardedNonZero && (qExp >= Q_TINY) && (qExp <= Q_MAX)) {
-            x.sign = sign
-            x.type = STEAL_TYP_FNZ
-            x.qExp = qExp
+            x.steal = stealEncodeFNZ(sign, qExp, stealPackedLengths(x.steal))
             return true
         }
         val roundBit = if (guardDigit < 5) 0 else 1
