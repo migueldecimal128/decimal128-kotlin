@@ -410,7 +410,7 @@ object D128ParsePrint {
         for (i in nanStr.indices)
             utf8[i] = nanStr[i].code.toByte()
         IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, nanStr.length)
-        return String(utf8)
+        return utf8.decodeToString()
     }
 
     private fun toIntegerString(x: Decimal): String {

@@ -33,7 +33,7 @@ class testMultiplyX1u64 {
         product: LongArray, productOff: Int,
         multiplicand: LongArray, multiplicandOff: Int, multiplicandLen: Int,
         multiplier: Long) {
-        val uMultiplier = multiplier.toLong() and 0xFFFFFFFFL // Treat as unsigned
+        val uMultiplier = multiplier and 0xFFFFFFFFL // Treat as unsigned
 
         var carry = 0L
         for (i in 0..<multiplicandLen) {

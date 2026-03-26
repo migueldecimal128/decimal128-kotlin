@@ -2,6 +2,7 @@
 
 package com.decimal128.decimal
 
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -186,7 +187,7 @@ internal fun c256Set(z: C256, d: Double) {
     val dRaw = d.toRawBits()
     val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023
     if (exp <= 63) {
-        z.c256Set64(Math.abs(d).toLong())
+        z.c256Set64(abs(d).toLong())
         return
     }
     if (exp > 255) {

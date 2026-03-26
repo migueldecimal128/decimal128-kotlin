@@ -76,7 +76,7 @@ class StringLatin1Iterator(private val s: String, off: Int, len: Int) : Latin1It
     override fun getCharAt(i: Int) = s[i]
 
     /** Returns the full string representation of this iterator. */
-    override fun toString() = s.toString()
+    override fun toString() = s
 }
 
 /**

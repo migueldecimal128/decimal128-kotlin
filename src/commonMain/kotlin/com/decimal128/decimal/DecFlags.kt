@@ -59,7 +59,7 @@ class DecFlags {
             bytes[ib++] = 'z'.code.toByte()
         if (isSet(INVALID_OPERATION))
             bytes[ib++] = 'i'.code.toByte()
-        return String(bytes, 0, ib)
+        return bytes.decodeToString(0, ib)
     }
 
     fun getSetExceptions(): Set<DecException> {
