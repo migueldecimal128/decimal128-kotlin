@@ -71,7 +71,7 @@ kotlin {
 
     jvm { }
 
-    //macosArm64 { }
+    macosArm64 { }
 
 
     sourceSets {
