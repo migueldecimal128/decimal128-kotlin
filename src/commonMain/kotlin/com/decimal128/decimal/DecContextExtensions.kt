@@ -223,6 +223,7 @@ fun DecContext.getFptestExceptionsString() = decFlags.getFptestExceptionsString(
 
 fun DecContext.parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 
+fun <T> DecContext.context(block: context(DecContext) () -> T): T = block(this)
 
 internal fun decContextDecimal128Kotlin(): DecContext = DecContext(
     decFormat = DecFormat.DECIMAL_128,

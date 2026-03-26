@@ -1395,6 +1395,7 @@ class Decimal private constructor(
 }
 
 fun String.toDecimal(): Decimal = Decimal.from(this, DecContext.current())
+
 context(ctx: DecContext)
 fun String.toDecimal(): Decimal = Decimal.from(this, ctx)
 

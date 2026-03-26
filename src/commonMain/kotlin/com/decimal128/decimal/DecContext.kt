@@ -29,5 +29,4 @@ expect class DecContext(decFormat: DecFormat,
         fun current(): DecContext
         fun setCurrent(newDecContext: DecContext)
     }
-    fun <T> context(block: DecContext.() -> T): T
 }

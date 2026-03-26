@@ -60,8 +60,8 @@ object D128SerdeBid {
 
         val iLS = offset + if (isLittleEndian) 0 else 1
         val iMS = offset + if (isLittleEndian) 1 else 0
-        longs[iLS] = bid128Lo.toLong()
-        longs[iMS] = bid128Hi.toLong()
+        longs[iLS] = bid128Lo
+        longs[iMS] = bid128Hi
     }
 
     /**
@@ -351,7 +351,7 @@ object D128SerdeBid {
         }
         // 1 + 13 + 50 == 64
         // 1 bit for the sign
-        val sign = bid64.toLong() < 0L
+        val sign = bid64 < 0L
         // w5 bit combination field ... for bid64 0x1FFF
         val combination = ((bid64 and 0x7FFF_FFFF_FFFF_FFFFL) shr t).toInt()
         // t bits for the coefficient
@@ -383,9 +383,9 @@ object D128SerdeBid {
         }
         // 1 + 11 + 20 == 32
         // 1 bit for the sign
-        val sign = bid32.toInt() < 0
+        val sign = bid32 < 0
         // w5 bit combination field ... for bid64 0x1FFF
-        val combination = ((bid32 and 0x7FFF_FFFF) shr t).toInt()
+        val combination = (bid32 and 0x7FFF_FFFF) shr t
         // t bits for the coefficient
         val coeffT = (bid32 and ((1 shl t) - 1)).toLong()
 

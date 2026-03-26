@@ -39,8 +39,6 @@ actual class DecContext actual constructor(decFormat: DecFormat,
 
     }
 
-    actual fun <T> context(block: DecContext.() -> T): T = block()
-
     override fun toString(): String =
         "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 }

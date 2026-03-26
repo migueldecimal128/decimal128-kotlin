@@ -14,7 +14,7 @@ class TestContextParams1 {
     fun testContextA() {
         val contexts = arrayOf(decimal128Kotlin(), decimal128IEEE(), decimal128Extended38())
         for (ctx in contexts) {
-            with(ctx) {
+            ctx.context {
                 val a = "1.0".toDecimal()
                 val b = "3.0".toDecimal()
                 val c = a / b

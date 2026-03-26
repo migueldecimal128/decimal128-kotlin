@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id("maven-publish")
     id("signing")
-    kotlin("multiplatform") version "2.2.0"
+    kotlin("multiplatform") version "2.3.10"
     id("org.jetbrains.dokka") version "2.0.0"
 }
 
@@ -63,6 +63,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
@@ -74,7 +75,6 @@ kotlin {
 
     sourceSets {
         all {
-            languageSettings.enableLanguageFeature("ContextParameters")
         }
 	    val commonMain by getting
 	    val commonTest by getting
