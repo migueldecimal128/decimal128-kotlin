@@ -12,10 +12,12 @@ class DecGenConstantTables {
 
     val verbose = false
 
-    val resourcePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
+    val resourceFilePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
+    val staticConstPath = "src/commonMain/resources/com/decimal128/decimal/Decimal128Tables.kt"
+
     val X_RESOURCE_TABLE_VERSION = 0x0006_D128
-    val X_DWORD_TABLES_SIZE = 939 // DWORD_TABLES_SIZE
-    val X_BYTE_TABLES_SIZE = 1922 // BYTE_TABLES_SIZE
+    val X_DWORD_TABLES_COUNT = 939 // DWORD_TABLES_COUNT
+    val X_BYTE_TABLES_COUNT = 1922 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
 
@@ -25,41 +27,84 @@ class DecGenConstantTables {
         initializeTables()
 
         if (verbose) {
-            println("X_DWORD_TABLES_SIZE:$X_DWORD_TABLES_SIZE")
-            println("X_BYTE_TABLES_SIZE:$X_BYTE_TABLES_SIZE")
+            println("X_DWORD_TABLES_SIZE:$X_DWORD_TABLES_COUNT")
+            println("X_BYTE_TABLES_SIZE:$X_BYTE_TABLES_COUNT")
         }
-        assertEquals(X_DWORD_TABLES_SIZE, calc_DWORD_TABLES_size())
-        assertEquals(X_BYTE_TABLES_SIZE, calc_BYTE_TABLES_size())
+        assertEquals(X_DWORD_TABLES_COUNT, calc_DWORD_TABLES_size())
+        assertEquals(X_BYTE_TABLES_COUNT, calc_BYTE_TABLES_size())
 
-        X_DWORD_TABLES_FNV1A = fnv1a(X_DWORD_TABLES)
-        X_BYTE_TABLES_FNV1A = fnv1a(X_BYTE_TABLES)
+        X_DWORD_TABLES_FNV1A = fnv1aHash(X_DWORD_TABLES)
+        X_BYTE_TABLES_FNV1A = fnv1aHash(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
         assertEquals(185718703, X_DWORD_TABLES_FNV1A)
         assertEquals(-1298083103, X_BYTE_TABLES_FNV1A)
-        saveConstantTablesAsResource()
+        saveTablesAsResourceFile()
+        saveTablesAsStaticConstSourceCode()
     }
 
-    fun saveConstantTablesAsResource() {
+    fun saveTablesAsResourceFile() {
         val tableHeader = intArrayOf(
             X_RESOURCE_TABLE_VERSION,
-            X_DWORD_TABLES_SIZE,
-            X_BYTE_TABLES_SIZE,
+            X_DWORD_TABLES_COUNT,
+            X_BYTE_TABLES_COUNT,
             X_DWORD_TABLES_FNV1A,
             X_BYTE_TABLES_FNV1A,
         )
-        val file = File(resourcePath)
+        val file = File(resourceFilePath)
         file.parentFile.mkdirs()
         val dos = DataOutputStream(file.outputStream().buffered())
         dos.use {
             for (n in tableHeader)
                 dos.writeInt(n)
-            for (i in 0..<X_DWORD_TABLES_SIZE)
+            for (i in 0..<X_DWORD_TABLES_COUNT)
                 dos.writeLong(X_DWORD_TABLES[i])
-            for (i in 0..<X_BYTE_TABLES_SIZE)
+            for (i in 0..<X_BYTE_TABLES_COUNT)
                 dos.writeByte(X_BYTE_TABLES[i].toInt())
         }
     }
+
+    fun saveTablesAsStaticConstSourceCode() {
+        val longsLiteral = X_DWORD_TABLES.toList().chunked(8).
+                joinToString(",\n    ") { chunk ->
+                    chunk.joinToString(",") {
+                        if (it == Long.MIN_VALUE)
+                            "Long.MIN_VALUE"
+                        else
+                            "${it}L"
+                    }
+                }
+
+        val bytesLiteral = X_BYTE_TABLES.toList().chunked(32).
+                joinToString(",\n    ") { chunk ->
+                    chunk.joinToString(",") { "${it}" }
+                }
+        File(staticConstPath).writeText("""
+            |// SPDX-License-Identifier: MIT
+            |
+            |// auto-generated code
+            |package com.decimal128.decimal
+            |
+            |internal val xDWORD_TABLES = longArrayOf(
+            |    $longsLiteral
+            |)
+            |
+            |private val verifyDwordTablesSize = check(DWORD_TABLES.size == DWORD_TABLES_SIZE_POW_2)
+            |
+            |internal val xBYTE_TABLES = byteArrayOf(
+            |    $bytesLiteral
+            |)
+            |
+            |private val verifyByteTablesSize = check(BYTE_TABLES.size == BYTE_TABLES_SIZE_POW_2)
+            |
+            |private const val xEXPECTED_DWORD_TABLES_FNV1A = $EXPECTED_DWORD_TABLES_FNV1A
+            |private const val xEXPECTED_BYTE_TABLES_FNV1A = $EXPECTED_BYTE_TABLES_FNV1A
+            |private val verifyFnv1aChecksums = 
+            |    check(fnv1aHash(DWORD_TABLES) == xEXPECTED_DWORD_TABLES_FNV1A &&
+            |          fnv1aHash(BYTE_TABLES) == xEXPECTED_BYTE_TABLES_FNV1A) { "tables FNV1A checksum mismatch" }
+        """.trimMargin())
+    }
+
 
 
     fun initializeTables() {
@@ -547,7 +592,7 @@ class DecGenConstantTables {
     private val FNV_OFFSET_BASIS = -0x7ee3ad4b // 2166136261 as signed Int
     private val FNV_PRIME = 16777619
 
-    private fun fnv1a(bytes: ByteArray): Int {
+    private fun fnv1aHash(bytes: ByteArray): Int {
         var hash = FNV_OFFSET_BASIS
         for (b in bytes) {
             hash = hash xor (b.toInt() and 0xff)
@@ -556,7 +601,7 @@ class DecGenConstantTables {
         return hash
     }
 
-    private fun fnv1a(longs: LongArray): Int {
+    private fun fnv1aHash(longs: LongArray): Int {
         var hash = FNV_OFFSET_BASIS
         for (value in longs) {
             // Process the 8 bytes within the Long

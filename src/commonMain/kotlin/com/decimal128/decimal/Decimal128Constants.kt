@@ -1,14 +1,12 @@
 package com.decimal128.decimal
 
-import java.io.DataInputStream
-
 internal const val MASK16L = 0x0000_0000_0000_FFFFL
 internal const val MASK32L = 0x0000_0000_FFFF_FFFFL
 internal const val MASK48L = 0x0000_FFFF_FFFF_FFFFL
 
 internal const val MAX_DEC34_CHAR_LEN = 1 /*sign*/ + 34 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
-
 internal const val MAX_DEC38_CHAR_LEN = 1 /*sign*/ + 38 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
+internal const val MAX_DEC76_CHAR_LEN = 1 /*sign*/ + 76 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
 
 internal const val Q_MAX = 6111
 internal const val Q_TINY = -6176
@@ -50,7 +48,8 @@ internal const val MAXX_DIGIT_LEN = 77          // 0x0000004D 77
  * - Params for general range reciprocal division with sufficient precision for rounding
  *
  */
-internal val DWORD_TABLES = LongArray(1024)
+internal const val DWORD_TABLES_SIZE_POW_2 = 1024
+expect internal val DWORD_TABLES: LongArray
 
 /**
  * Bounds Check Elimination BCE is performed by masking the array
@@ -59,7 +58,7 @@ internal val DWORD_TABLES = LongArray(1024)
  * There are some entries avail at the end that are wasted, but eliminating
  * bounds checking through masking is a net win for size and performance.
  */
-internal const val DWORD_TABLES_BCE = 1023
+internal const val DWORD_TABLES_BCE = DWORD_TABLES_SIZE_POW_2 - 1
 
 /**
  * POW10 table is the primary and first entry in DWORD_TABLES.
@@ -136,8 +135,9 @@ internal const val BARRETT_POW10_MAX = BARRETT_POW10_MAXX - 1
  *
  * - MAGIC_FLAG_AND_SHIFT
  */
-internal val BYTE_TABLES = ByteArray(2048)
-internal const val BYTE_TABLES_BCE = 2047 // 0x7FF
+internal const val BYTE_TABLES_SIZE_POW_2 = 2048
+expect internal val BYTE_TABLES: ByteArray
+internal const val BYTE_TABLES_BCE = BYTE_TABLES_SIZE_POW_2 - 1 // 0x7FF
 
 internal val POW10_BITLEN = BYTE_TABLES
 internal const val POW10_BITLEN_BCE = BYTE_TABLES_BCE
@@ -175,94 +175,14 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
 internal const val EXPECTED_TABLE_VERSION = 0x0006_D128
-internal const val EXPECTED_DWORD_TABLES_SIZE = 939 // DWORD_TABLES_SIZE
-internal const val EXPECTED_BYTE_TABLES_SIZE = 1922 // BYTE_TABLES_SIZE
+internal const val EXPECTED_DWORD_TABLES_COUNT = 939
+internal const val EXPECTED_BYTE_TABLES_COUNT = 1922 // BYTE_TABLES_SIZE
 internal const val EXPECTED_DWORD_TABLES_FNV1A = 185718703
 internal const val EXPECTED_BYTE_TABLES_FNV1A = -1298083103
 
-// comment this out to prevent loading of the resource table when the class loads
-val loadResourceTable = loadResourceTable()
-private var resourceLoadAttempted = false
-private var resourceLoadSuccessful = false
+expect fun loadDecimal128ConstantTables()
+private val loadEmUp = loadDecimal128ConstantTables()
 
-fun loadResourceTable() {
-    if (resourceLoadAttempted)
-        return
-    resourceLoadAttempted = true
-    val stream = object {}.javaClass.getResourceAsStream(RESOURCE_TABLE_PATHNAME)
-        if (stream == null) {
-            println("resource not found:$RESOURCE_TABLE_PATHNAME")
-            return
-        }
-
-    val dis = DataInputStream(stream.buffered())
-    dis.use {
-        // read and verify header
-        val version = dis.readInt()
-        check(version == EXPECTED_TABLE_VERSION)
-        { "decimal128_tables.bin version mismatch: expected 0x${EXPECTED_TABLE_VERSION.toString(16)}, got 0x${version.toString(16)}" }
-
-        val dwordTablesSize = dis.readInt()
-        check(dwordTablesSize == EXPECTED_DWORD_TABLES_SIZE)
-        { "decimal128_tables.bin dword table size mismatch: expected $EXPECTED_DWORD_TABLES_SIZE, got $dwordTablesSize" }
-
-        val byteTablesSize = dis.readInt()
-        check(byteTablesSize == EXPECTED_BYTE_TABLES_SIZE)
-        { "decimal128_tables.bin byte table size mismatch: expected $EXPECTED_BYTE_TABLES_SIZE, got $byteTablesSize" }
-
-        val headerDwordFnv1a = dis.readInt()
-        check(headerDwordFnv1a == EXPECTED_DWORD_TABLES_FNV1A)
-        { "decimal128_tables.bin HEADER headerDwordFnv1a mismatch" }
-
-        val headerByteFnv1a = dis.readInt()
-        check(headerByteFnv1a == EXPECTED_BYTE_TABLES_FNV1A)
-        { "decimal128_tables.bin HEADER headerByteFnv1a mismatch" }
-
-        // read dword table
-        for (i in 0..<dwordTablesSize)
-            DWORD_TABLES[i] = dis.readLong()
-
-        // read byte table
-        for (i in 0..<byteTablesSize)
-            BYTE_TABLES[i] = dis.readByte()
-
-        // verify checksums
-        val actualDwordFnv1a = fnv1a(DWORD_TABLES)
-        if (actualDwordFnv1a != EXPECTED_DWORD_TABLES_FNV1A)
-            throw RuntimeException("decimal128_tables.bin ACTUAL actualDwordFnv1a mismatch")
-
-        val actualByteFnv1a = fnv1a(BYTE_TABLES)
-        if (actualByteFnv1a != EXPECTED_BYTE_TABLES_FNV1A)
-            throw RuntimeException("decimal128_tables.bin ACTUAL headerByteFnv1a mismatch")
-
-        resourceLoadSuccessful = true
-    }
-}
-
-private const val FNV_OFFSET_BASIS = -0x7ee3ad4b // 2166136261 as signed Int
-private const val FNV_PRIME = 16777619
-
-private fun fnv1a(bytes: ByteArray): Int {
-    var hash = FNV_OFFSET_BASIS
-    for (b in bytes) {
-        hash = hash xor (b.toInt() and 0xff)
-        hash *= FNV_PRIME
-    }
-    return hash
-}
-
-private fun fnv1a(longs: LongArray): Int {
-    var hash = FNV_OFFSET_BASIS
-    for (value in longs) {
-        // Process the 8 bytes within the Long
-        for (i in 0..7) {
-            val byte = ((value shr (i * 8)) and 0xFF).toInt()
-            hash = hash xor byte
-            hash *= FNV_PRIME
-        }
-    }
-    return hash
-}
 
 
 /**
