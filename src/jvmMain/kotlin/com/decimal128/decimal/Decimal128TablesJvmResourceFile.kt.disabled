@@ -3,16 +3,16 @@ package com.decimal128.decimal
 import java.io.DataInputStream
 
 @JvmField
-actual val DWORD_TABLES: LongArray = LongArray(DWORD_TABLES_SIZE_POW_2)
+internal actual val DWORD_TABLES: LongArray = LongArray(DWORD_TABLES_SIZE_POW_2)
 
 @JvmField
-actual val POW10: LongArray = DWORD_TABLES
+internal actual val POW10: LongArray = DWORD_TABLES
 
 @JvmField
-actual val BYTE_TABLES: ByteArray = ByteArray(BYTE_TABLES_SIZE_POW_2)
+internal actual val BYTE_TABLES: ByteArray = ByteArray(BYTE_TABLES_SIZE_POW_2)
 
 
-actual fun loadDecimal128ConstantTables() {
+internal actual fun loadDecimal128ConstantTables() {
     loadResourceTable()
 }
 

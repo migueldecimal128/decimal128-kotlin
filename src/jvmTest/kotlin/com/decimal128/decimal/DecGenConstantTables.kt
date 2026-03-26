@@ -85,23 +85,24 @@ class DecGenConstantTables {
             |// auto-generated code
             |package com.decimal128.decimal
             |
-            |internal val xDWORD_TABLES = longArrayOf(
+            |internal actual val DWORD_TABLES = longArrayOf(
             |    $longsLiteral
             |)
             |
-            |private val verifyDwordTablesSize = check(DWORD_TABLES.size == DWORD_TABLES_SIZE_POW_2)
-            |
-            |internal val xBYTE_TABLES = byteArrayOf(
+            |internal actual val BYTE_TABLES = byteArrayOf(
             |    $bytesLiteral
             |)
             |
+            |private val verifyDwordTablesSize = check(DWORD_TABLES.size == DWORD_TABLES_SIZE_POW_2)
             |private val verifyByteTablesSize = check(BYTE_TABLES.size == BYTE_TABLES_SIZE_POW_2)
             |
-            |private const val xEXPECTED_DWORD_TABLES_FNV1A = $EXPECTED_DWORD_TABLES_FNV1A
-            |private const val xEXPECTED_BYTE_TABLES_FNV1A = $EXPECTED_BYTE_TABLES_FNV1A
             |private val verifyFnv1aChecksums = 
-            |    check(fnv1aHash(DWORD_TABLES) == xEXPECTED_DWORD_TABLES_FNV1A &&
-            |          fnv1aHash(BYTE_TABLES) == xEXPECTED_BYTE_TABLES_FNV1A) { "tables FNV1A checksum mismatch" }
+            |    check(fnv1aHash(DWORD_TABLES) == $EXPECTED_DWORD_TABLES_FNV1A &&
+            |          fnv1aHash(BYTE_TABLES) == $EXPECTED_BYTE_TABLES_FNV1A) { "tables FNV1A checksum mismatch" }
+            |
+            |internal actual val POW10: LongArray = DWORD_TABLES
+            |
+            |internal actual fun loadDecimal128ConstantTables() {}
         """.trimMargin())
     }
 

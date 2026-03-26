@@ -49,7 +49,7 @@ internal const val MAXX_DIGIT_LEN = 77          // 0x0000004D 77
  *
  */
 internal const val DWORD_TABLES_SIZE_POW_2 = 1024
-expect internal val DWORD_TABLES: LongArray
+internal expect val DWORD_TABLES: LongArray
 
 /**
  * Bounds Check Elimination BCE is performed by masking the array
@@ -72,7 +72,7 @@ internal const val DWORD_TABLES_BCE = DWORD_TABLES_SIZE_POW_2 - 1
  *
  * So, there are 2 tiers ... 2 entries and 4 entries.
  */
-expect internal val POW10: LongArray
+internal expect val POW10: LongArray
 internal const val POW10_BCE = 0xFF // POW10_DWORD_COUNT is 234, so this covers all POW10
 
 internal const val POW10_192_BASE = (POW10_64_COUNT + POW10_128_COUNT) * 2
@@ -180,7 +180,7 @@ internal const val EXPECTED_BYTE_TABLES_COUNT = 1922 // BYTE_TABLES_SIZE
 internal const val EXPECTED_DWORD_TABLES_FNV1A = 185718703
 internal const val EXPECTED_BYTE_TABLES_FNV1A = -1298083103
 
-expect fun loadDecimal128ConstantTables()
+internal expect fun loadDecimal128ConstantTables()
 private val loadEmUp = loadDecimal128ConstantTables()
 
 
