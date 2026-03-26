@@ -2,8 +2,9 @@ package com.decimal128.decimal
 
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
-object MagnitudeSqrt {
+internal object MagnitudeSqrt {
     val verbose = false
 
     fun magSqrt(sqrt: MutDec, radicand: MutDec, pentad: Pentad): Residue {
@@ -17,7 +18,7 @@ object MagnitudeSqrt {
 
         val dRadicandScaled = coeffRadicandScaled.c256ToFloorDouble()
 
-        val dGuess0 = Math.sqrt(dRadicandScaled)
+        val dGuess0 = sqrt(dRadicandScaled)
         val rawGuess0 = dGuess0.toRawBits()
         var guess0Significand = ((rawGuess0 and ((1L shl 52) - 1)) or (1L shl 52))
         val guess0Exp = ((rawGuess0 ushr 52).toInt() and 0x7FF) - 1023
@@ -170,7 +171,7 @@ fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext): MutDec {
 
     val dRadicandScaled = coeffRadicandScaled.c256ToFloorDouble()
 
-    val dGuess0 = Math.sqrt(dRadicandScaled)
+    val dGuess0 = sqrt(dRadicandScaled)
     val rawGuess0 = dGuess0.toRawBits()
     var guess0Significand = ((rawGuess0 and ((1L shl 52) - 1)) or (1L shl 52))
     val guess0Exp = ((rawGuess0 ushr 52).toInt() and 0x7FF) - 1023

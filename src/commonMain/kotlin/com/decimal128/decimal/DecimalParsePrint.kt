@@ -67,7 +67,7 @@ object DecimalParsePrint {
         //  Separately, pull the ByteArray from env.decTemps
         if (printLen < cb)
             println("calculated printLen too low printLen:$printLen cb:$cb x:$x")
-        return String(bytes, 0, cb)
+        return bytes.decodeToString(0, cb)
     }
 
     private fun calcPrintLen(md: MutDec, prefs: DecPrefs): Int {
@@ -174,59 +174,6 @@ object DecimalParsePrint {
         bytes[off] = bytes[off + 1]
         bytes[off + 1] = BYTE_DOT
         return cb + 1
-    }
-
-    private fun finiteToUtf8(x: MutDec, bytes: ByteArray, off: Int, prefs: DecPrefs, tmp: C256): Int {
-        val qExp = x.qExp
-        val signByte = if (x.sign) BYTE_MINUS else BYTE_PLUS
-        bytes[off] = signByte
-        var ib = off + if (x.sign or prefs.printCollapseSNaN) 1 else 0
-        var exp = qExp
-
-        val digitLen = x.digitLen
-        val scale = -qExp
-        val eSci = x.sciExp() // = qExp + digitLen  + (-digitLen shr 31)
-        val isInteger = scale == 0
-        // one more case here ... isSciInteger == is single digit significand with exponent
-        val isSciDecimal = !isInteger && (scale < 0 || eSci < -6) && digitLen > 1
-        val isNonSciDecimal = !isInteger && !isSciDecimal && digitLen > qExp && eSci >= -6
-        val isNonSciDecimalLT1 = isNonSciDecimal && scale >= digitLen
-        val isNonSciDecimalGE1 = isNonSciDecimal && scale < digitLen
-        if (isNonSciDecimalLT1) {
-            val zeroCount = 2 + -eSci - 1
-            bytes.fill(BYTE_ZERO, ib, ib + zeroCount)
-            bytes[ib + 1] = BYTE_DOT
-            ib += zeroCount
-        } else if (isSciDecimal) {
-            ++ib // skip a byte for the decimal point ... move first digit into this slot shortly
-        }
-        // render integer coeff, including a single 0
-        ib += IntegerParsePrint.c256ToUtf8(x, bytes, ib, tmp)
-        if (isNonSciDecimal) {
-            if (isNonSciDecimalGE1) {
-                val decimalIndex = ib - scale
-                System.arraycopy(bytes, decimalIndex, bytes, decimalIndex + 1, scale)
-                bytes[decimalIndex] = BYTE_DOT
-                ++ib
-            }
-            return ib - off
-        }
-        if (isSciDecimal) {
-            val coeffStart = off + if (x.sign) 1 else 0
-            bytes[coeffStart] = bytes[coeffStart + 1]
-            bytes[coeffStart + 1] = BYTE_DOT
-            exp = eSci
-        }
-        if (exp != 0) {
-            bytes[ib++] = 'E'.code.toByte()
-            val expSignChar = if (exp < 0) BYTE_MINUS else BYTE_PLUS
-            // FIXME - figure out what to do about the sign char
-            bytes[ib] = expSignChar
-            ib += if (exp < 0) 0 else 1
-            val wtf =  int32ToUtf8(exp, bytes, ib)
-            ib += wtf
-        }
-        return ib - off
     }
 
     private fun infiniteToUtf8(z: MutDec, utf8: ByteArray, off: Int, prefs: DecPrefs): Int {

@@ -14,7 +14,7 @@ internal fun c128UnscaledCompare(x: Decimal, y: Decimal): Int {
 }
 
 
-fun c128ScaleDownPow10(resultPentad: Pentad, dw1: Long, dw0: Long, pow10: Int): Residue {
+internal fun c128ScaleDownPow10(resultPentad: Pentad, dw1: Long, dw0: Long, pow10: Int): Residue {
     if (dw1 == 0L) {
         verify { pow10 < MIN_POW10_DIGIT_LEN_128 }
         val denomPow10 = pow10_64(pow10)

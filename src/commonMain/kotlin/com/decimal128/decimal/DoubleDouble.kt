@@ -1,5 +1,10 @@
 package com.decimal128.decimal
 
+import kotlin.math.abs
+
+expect fun mathFma(a: Double, b: Double, c: Double): Double
+expect fun mathUlp(a: Double): Double
+
 class DoubleDouble(a: Double, b: Double) {
     constructor() : this(0.0, 0.0)
     var hi = a
@@ -42,14 +47,14 @@ class DoubleDouble(a: Double, b: Double) {
 
         fun newTwoProd(a: Double, b: Double): DoubleDouble {
             val p = a * b
-            val err = Math.fma(a, b, -p)
+            val err = mathFma(a, b, -p)
             return DoubleDouble(p, err)
         }
 
         fun newMulApprox(x: DoubleDouble, y: DoubleDouble): DoubleDouble {
             //val (p, e) = twoProd(aH, bH)
             val p = x.hi * y.hi
-            val e = Math.fma(x.hi, y.hi, -p)
+            val e = mathFma(x.hi, y.hi, -p)
             // 2) cross terms
             val cross = (x.hi * y.lo) + (x.lo * y.hi)
             // 3) combine error and cross into low part and renormalize
@@ -64,7 +69,7 @@ class DoubleDouble(a: Double, b: Double) {
 
         fun newMulDoubleDoubleByDouble(x: DoubleDouble, y:Double): DoubleDouble {
             val hi  = x.hi * y
-            val err1 = Math.fma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
+            val err1 = mathFma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
             val err2 = x.lo * y                 // low limb scaled
             val lo  = err1 + err2              // combined low-order bits
             return DoubleDouble(hi, lo)
@@ -72,7 +77,7 @@ class DoubleDouble(a: Double, b: Double) {
 
         fun newSquare(x: Double): DoubleDouble {
             val hi = x * x
-            val lo = Math.fma(x, x, -hi)
+            val lo = mathFma(x, x, -hi)
             return DoubleDouble(hi, lo)
         }
 
@@ -135,7 +140,7 @@ class DoubleDouble(a: Double, b: Double) {
         val p = x.hi - y.hi
         // 2) compute the exact rounding error of that subtraction
         //    (a.hi - b.hi) – p  plus the lo-words
-        val err = Math.fma(1.0, x.hi, -y.hi - p) + x.lo - y.lo
+        val err = mathFma(1.0, x.hi, -y.hi - p) + x.lo - y.lo
         // 3) renormalize (quick two-sum)
         val sum = p + err
         this.hi = sum
@@ -145,7 +150,7 @@ class DoubleDouble(a: Double, b: Double) {
     @Suppress("NOTHING_TO_INLINE")
     inline fun setMulDoubleDoubleByDouble(x: DoubleDouble, y: Double) {
         val hi  = x.hi * y
-        val err1 = Math.fma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
+        val err1 = mathFma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
         val err2 = x.lo * y                 // low limb scaled
         val lo  = err1 + err2              // combined low-order bits
         this.hi = hi
@@ -156,7 +161,7 @@ class DoubleDouble(a: Double, b: Double) {
     inline fun setMulApprox(x: DoubleDouble, y: DoubleDouble) {
         //val (p, e) = twoProd(aH, bH)
         val p = x.hi * y.hi
-        val e = Math.fma(x.hi, y.hi, -p)
+        val e = mathFma(x.hi, y.hi, -p)
         // 2) cross terms
         val cross = (x.hi * y.lo) + (x.lo * y.hi)
         // 3) combine error and cross into low part and renormalize
@@ -167,7 +172,7 @@ class DoubleDouble(a: Double, b: Double) {
     inline fun setMulBetter_X(x: DoubleDouble, y: DoubleDouble) {
         // 1) high‐word product + error
         val pH = x.hi * y.hi
-        val pL = Math.fma(x.hi, y.hi, -pH)
+        val pL = mathFma(x.hi, y.hi, -pH)
 
         // 2) exact cross‐terms c1 = aH*bL, c2 = aL*bH
         val c1 = x.hi * y.lo
@@ -184,7 +189,7 @@ class DoubleDouble(a: Double, b: Double) {
 
         // 4) low×low split
         val llH = x.lo * y.lo
-        val llL = Math.fma(x.lo, y.lo, -llH)
+        val llL = mathFma(x.lo, y.lo, -llH)
         // and merge s2 + llH → (s3,e3)
         val s3 = s2 + llH
         val z3 = s3 - s2
@@ -210,7 +215,7 @@ class DoubleDouble(a: Double, b: Double) {
         // 1) hi-word product
         val p     = a.hi * b.hi
         // 2) error of hi×hi
-        val e1    = Math.fma(a.hi, b.hi, -p)
+        val e1    = mathFma(a.hi, b.hi, -p)
         // 3) cross-terms
         val e2    = a.hi * b.lo + a.lo * b.hi
         // 4) lo×lo (very tiny, but for completeness)
@@ -242,7 +247,7 @@ class DoubleDouble(a: Double, b: Double) {
         // hi×hi
         val p  = a.hi * b.hi
         // error of hi×hi
-        val e1 = Math.fma(a.hi, b.hi, -p)
+        val e1 = mathFma(a.hi, b.hi, -p)
         // cross-terms
         val c1 = a.hi * b.lo
         val c2 = a.lo * b.hi
@@ -293,7 +298,7 @@ class DoubleDouble(a: Double, b: Double) {
     @Suppress("NOTHING_TO_INLINE")
     inline fun setMul(x: DoubleDouble, y: Double) {
         val pH = x.hi * y
-        val pL = Math.fma(x.hi, y, -pH)
+        val pL = mathFma(x.hi, y, -pH)
         // combine low word
         setQuickTwoSum(pH, pL + x.lo * y)
     }
@@ -307,7 +312,7 @@ class DoubleDouble(a: Double, b: Double) {
         //    high-word
         val pH = y.hi * q1
         //    error of y.hi*q1
-        val pL = Math.fma(y.hi, q1, -pH)
+        val pL = mathFma(y.hi, q1, -pH)
         //    add cross term y.lo * q1
         val pL2 = pL + y.lo * q1
 
@@ -346,7 +351,7 @@ class DoubleDouble(a: Double, b: Double) {
         //    high-word
         val pH = x.hi * q1
         //    error of that product
-        val pL = Math.fma(x.hi, q1, -pH)
+        val pL = mathFma(x.hi, q1, -pH)
         //    include x.lo*q1 in the remainder
         val remH = 1.0 - pH
         val remL = -(pL + x.lo * q1)
@@ -369,7 +374,7 @@ class DoubleDouble(a: Double, b: Double) {
         //    high-word
         val pH = hi * q1
         //    error of that product
-        val pL = Math.fma(hi, q1, -pH)
+        val pL = mathFma(hi, q1, -pH)
         //    include x.lo*q1 in the remainder
         val remH = 1.0 - pH
         val remL = -(pL + lo * q1)
@@ -454,8 +459,8 @@ class DoubleDouble(a: Double, b: Double) {
     inline fun EQwithinUlpSlop(other: DoubleDouble, ulpSlop: Int): Boolean {
         if (hi != other.hi)
             return false
-        val ulpLo = Math.ulp(lo)
-        return Math.abs(lo - other.lo) <= ulpLo * ulpSlop
+        val ulpLo = mathUlp(lo)
+        return abs(lo - other.lo) <= ulpLo * ulpSlop
     }
 
     override fun equals(other: Any?) = (other is DoubleDouble) && (hi == other.hi) && (lo == other.lo)

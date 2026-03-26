@@ -55,7 +55,7 @@ internal object IntegerParsePrint {
         val utf8 = ByteArray(c.digitLen + sign01)
         utf8[0] = '-'.code.toByte() // if non-negative then this will be overwritten
         c256ToUtf8(c, utf8, sign01)
-        return String(utf8)
+        return utf8.decodeToString()
     }
 
     fun c256ToUtf8(c: C256, utf8: ByteArray, off: Int, tmp: C256? = null): Int {
@@ -174,7 +174,7 @@ internal object IntegerParsePrint {
         bytes[s    ] = '0'.code.toByte()
         bytes[s + 1] = 'x'.code.toByte()
         u256ToHexUtf8(u, hexitCount, bytes, s + 2)
-        return String(bytes)
+        return bytes.decodeToString()
     }
 
     fun u256ToHexUtf8(u: C256, hexitCount: Int, utf8: ByteArray, off: Int) {

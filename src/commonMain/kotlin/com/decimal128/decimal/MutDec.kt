@@ -13,6 +13,7 @@ import com.decimal128.decimal.IntegerParsePrint.int256ToUtf8
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
 import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_RESULT_WOULD_EXCEED_PRECISION
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -945,7 +946,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         //for (i in totalLen-1 downTo totalLen-digitsRightOfDecimal)
         //    utf8[i] = utf8[i - 1]
         utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
-        return String(utf8, 0, totalLen)
+        return utf8.decodeToString(0, totalLen)
     }
 
     private fun moveBytesUp1(bytes: ByteArray, off: Int, len: Int) {
@@ -964,7 +965,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val printedDigitLen = max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = max(calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = DecContext.current().tmps.bytesPrintOnly
         var i = int256ToUtf8(sign, this, utf8, 0)
@@ -977,7 +978,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         utf8[i] = 'E'.code.toByte()
         val j = int32ToUtf8(eExp, utf8, i + 1)
         verify { i + 1 + j == totalLen }
-        return String(utf8, 0, totalLen)
+        return utf8.decodeToString(0, totalLen)
     }
 
     private /*inline*/ fun toEngineeringExponentString(): String {
@@ -996,7 +997,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             if (digitLen == 0) 0 else max(0, 1 + expAdjustment - digitLen)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = max(calcDigitLen64(Math.abs(eExp).toLong()), 1)
+        val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
                 printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = DecContext.current().tmps.bytesPrintOnly
@@ -1018,7 +1019,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         utf8[i] = 'E'.code.toByte()
         val j = int32ToUtf8(adjustedExp, utf8, i + 1)
         verify { i + 1 + j == totalLen }
-        return String(utf8, 0, totalLen)
+        return utf8.decodeToString(0, totalLen)
     }
 
     private fun toSpecialValueString() : String {
@@ -1039,7 +1040,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         for (i in nanStr.indices)
             utf8[i] = nanStr[i].code.toByte()
         int256ToUtf8(sign = false, this, utf8, nanStr.length)
-        return String(utf8, 0, nanStr.length + digitLen)
+        return utf8.decodeToString(0, nanStr.length + digitLen)
     }
 
     fun toDebugString() : String {
@@ -1050,7 +1051,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             utf8[i] = 'E'.code.toByte()
             val j = int32ToUtf8(qExp, utf8, i + 1)
             verify { i + 1 + j == utf8.size }
-            return String(utf8)
+            return utf8.decodeToString()
         } else {
             return toSpecialValueString()
         }
@@ -1061,7 +1062,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val coeffLen = max(digitLen, 1)
         val expELen = 1
         val expSignLen = if (qExp < 0) 1 else 0
-        val expDigitLen = max(calcDigitLen64(Math.abs(qExp).toLong()), 1)
+        val expDigitLen = max(calcDigitLen64(abs(qExp).toLong()), 1)
         return signLen + coeffLen + expELen + expSignLen + expDigitLen
     }
 

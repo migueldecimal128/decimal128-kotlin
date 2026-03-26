@@ -112,7 +112,7 @@ class TestInvDoubleDouble{
         val ddDivisor = divisor.c256ToNewDoubleDouble()
 
         val dGuess0 = 1.0 / dDivisor
-        val r = Math.fma(-dDivisor, dGuess0, 1.0)
+        val r = mathFma(-dDivisor, dGuess0, 1.0)
         val ddGuess0 = DoubleDouble(dGuess0, r * dGuess0)
 
         if (verbose) {

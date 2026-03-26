@@ -109,7 +109,7 @@ class TestDoubleDoubleTwoSum {
     private fun twoProd(a: Double, b: Double): Pair<Double, Double> {
         val p = a * b
         // requires Java 9+ (Kotlin stdlib passes through to Math.fma)
-        val err = Math.fma(a, b, -p)
+        val err = mathFma(a, b, -p)
         return p to err
     }
 
