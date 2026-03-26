@@ -1,19 +1,18 @@
 package com.decimal128.decimal
 
-val IEEE754_LT = Compare754Result(-1)
-val IEEE754_EQ = Compare754Result(0)
-val IEEE754_GT = Compare754Result(1)
-val IEEE754_UNORDERED = Compare754Result(2)
+enum class Compare754Result {
+    IEEE754_LT,
+    IEEE754_EQ,
+    IEEE754_GT,
+    IEEE754_UNORDERED
+    ;
 
-private val TO_STRING_MAP =
-    arrayOf("LESS_THAN", "EQUAL", "GREATER_THAN", "UNORDERED")
+    companion object {
+        operator fun invoke(value: Int): Compare754Result = when {
+            value < 0 -> IEEE754_LT
+            value == 0 -> IEEE754_EQ
+            else -> IEEE754_GT
+        }
 
-@JvmInline
-value class Compare754Result constructor(val value: Int) {
-    init { verify { value >= -1 && value <= 2 } }
-
-    override fun toString(): String {
-        return TO_STRING_MAP[value]
     }
-
 }

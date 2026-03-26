@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Compare754Result.*
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import kotlin.math.min
 

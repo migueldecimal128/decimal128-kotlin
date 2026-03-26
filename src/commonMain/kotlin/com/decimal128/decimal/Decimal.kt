@@ -3,6 +3,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Compare754Result.*
 import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min

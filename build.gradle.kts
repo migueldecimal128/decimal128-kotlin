@@ -69,11 +69,9 @@ kotlin {
 
     jvmToolchain(21)
 
-    jvm {
-//	   	   withJava()
-    }
+    jvm { }
 
-    // macosArm64 { }
+    //macosArm64 { }
 
 
     sourceSets {

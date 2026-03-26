@@ -3,6 +3,7 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.Compare754Result.*
 import com.decimal128.decimal.Decimal.Companion.NEG_ONEe0
 import com.decimal128.decimal.Decimal.Companion.NaN
 import com.decimal128.decimal.Decimal.Companion.POS_ONEe0
