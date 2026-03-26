@@ -45,5 +45,3 @@ actual inline fun shiftDown(x: IntArray, srcIndex: Int, dstIndex: Int, len: Int)
     System.arraycopy(x, srcIndex, x, dstIndex, len)
 
 actual inline fun mathFma(a: Double, b: Double, c: Double): Double = Math.fma(a, b, c)
-
-actual inline fun mathUlp(a: Double): Double = Math.ulp(a)

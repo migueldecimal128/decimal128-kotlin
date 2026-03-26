@@ -1,9 +1,27 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 import kotlin.math.abs
 
 expect fun mathFma(a: Double, b: Double, c: Double): Double
-expect fun mathUlp(a: Double): Double
+
+private fun mathUlp(x: Double): Double {
+    val exp = ((x.toBits() ushr 52) and 0x7FFL).toInt()
+    return when (exp) {
+        0x7FF -> kotlin.math.abs(x)          // NaN or Infinity — matches Java
+        0     -> Double.MIN_VALUE             // zero or subnormal
+        else  -> {
+            val e = exp - 52                  // SIGNIFICAND_WIDTH - 1 = 52
+            if (e >= -1022) {                 // Double.MIN_EXPONENT = -1022
+                Double.fromBits(e.toLong() shl 52)
+            } else {
+                Double.fromBits(1L shl (e + 1074))  // 1074 = 1022 + 52
+            }
+        }
+    }
+}
 
 class DoubleDouble(a: Double, b: Double) {
     constructor() : this(0.0, 0.0)
@@ -100,20 +118,17 @@ class DoubleDouble(a: Double, b: Double) {
 
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setQuickTwoSum(a: Double, b: Double) {
         hi = a + b
         lo = b - (hi - a)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setTwoSum(a: Double, b:Double) {
         hi = a + b
         val z = hi - a
         lo = (a - (hi - z)) + (b - z)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setAdd(x: DoubleDouble, y: DoubleDouble) {
         // 1) twoSum on hi
         val s  = x.hi + y.hi
@@ -134,7 +149,6 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(u, e2 + e3)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setSub(x: DoubleDouble, y: DoubleDouble) {
         // 1) subtract hi-words
         val p = x.hi - y.hi
@@ -147,7 +161,6 @@ class DoubleDouble(a: Double, b: Double) {
         this.lo = err - (sum - p)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setMulDoubleDoubleByDouble(x: DoubleDouble, y: Double) {
         val hi  = x.hi * y
         val err1 = mathFma(x.hi, y, -hi)  // exactly recovers the rounding error of hi*d
@@ -157,7 +170,6 @@ class DoubleDouble(a: Double, b: Double) {
         this.lo = lo
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setMulApprox(x: DoubleDouble, y: DoubleDouble) {
         //val (p, e) = twoProd(aH, bH)
         val p = x.hi * y.hi
@@ -168,7 +180,6 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(p, e + cross)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setMulBetter_X(x: DoubleDouble, y: DoubleDouble) {
         // 1) high‐word product + error
         val pH = x.hi * y.hi
@@ -210,7 +221,6 @@ class DoubleDouble(a: Double, b: Double) {
     }
 
     /** this = a * b  in full double-double precision */
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setMulBetter_Y(a: DoubleDouble, b: DoubleDouble) {
         // 1) hi-word product
         val p     = a.hi * b.hi
@@ -242,7 +252,6 @@ class DoubleDouble(a: Double, b: Double) {
         this.lo = l
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setMulBetter(a: DoubleDouble, b: DoubleDouble) {
         // hi×hi
         val p  = a.hi * b.hi
@@ -293,9 +302,6 @@ class DoubleDouble(a: Double, b: Double) {
         this.lo = l
     }
 
-
-
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setMul(x: DoubleDouble, y: Double) {
         val pH = x.hi * y
         val pL = mathFma(x.hi, y, -pH)
@@ -303,7 +309,6 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(pH, pL + x.lo * y)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setDivApprox(x: DoubleDouble, y: DoubleDouble) {
         // 1) initial quotient
         val q1 = x.hi / y.hi
@@ -342,7 +347,6 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(q1, q2)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun setInvFast(x: DoubleDouble) {
         // 1) first guess q1 = 1/x.hi
         val q1 = 1.0 / x.hi
@@ -365,7 +369,6 @@ class DoubleDouble(a: Double, b: Double) {
         hi = hi2
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun mutateInvFast() {
         // 1) first guess q1 = 1/x.hi
         val q1 = 1.0 / hi
@@ -443,7 +446,6 @@ class DoubleDouble(a: Double, b: Double) {
         setQuickTwoSum(hi, lo0)
     }
 */
-    @Suppress("NOTHING_TO_INLINE")
     inline fun compareTo(other: DoubleDouble): Int {
         val cmpHi = hi.compareTo(other.hi)
         if (cmpHi != 0)
@@ -452,11 +454,9 @@ class DoubleDouble(a: Double, b: Double) {
         return cmpLo
     }
 
-    @Suppress("NOTHING_TO_INLINE")
     inline fun EQ(other: DoubleDouble) = hi == other.hi && lo == other.lo
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun EQwithinUlpSlop(other: DoubleDouble, ulpSlop: Int): Boolean {
+    fun EQwithinUlpSlop(other: DoubleDouble, ulpSlop: Int): Boolean {
         if (hi != other.hi)
             return false
         val ulpLo = mathUlp(lo)
@@ -467,3 +467,4 @@ class DoubleDouble(a: Double, b: Double) {
 
     override fun toString(): String = "{$hi + $lo}"
 }
+
