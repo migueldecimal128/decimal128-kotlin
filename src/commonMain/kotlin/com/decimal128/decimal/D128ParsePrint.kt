@@ -15,8 +15,10 @@ import kotlin.math.min
 
 object D128ParsePrint {
     private val SPECIAL_VALUE_STRINGS = arrayOf(
-        "Infinity", "-Infinity", "NaN", "-NaN", "sNaN", "-sNaN"
+        "Infinity", "-Infinity", "Inf", "-Inf", "NaN", "-NaN", "sNaN", "-sNaN",
+        "INFINITY", "-INFINITY", "INF", "-INF", "NAN", "-NAN", "SNAN", "-SNAN",
     )
+    private const val SVS_BCE = 0x0F // Special Value Strings Bounds Check Elimination
 
     private val SMALL_INTEGER_STRINGS = arrayOf(
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
@@ -410,13 +412,18 @@ object D128ParsePrint {
                         utf8)
             }
         }
-        val signBit = stealSignBit(stealX)
-        if (stealIsINF(stealX))
-            return SPECIAL_VALUE_STRINGS[stealSignBit(stealX)]
-        val nanIndex = (if (stealIsQNAN(stealX)) 2 else 4) + signBit
-        val nanStr = SPECIAL_VALUE_STRINGS[nanIndex]
+        var signBit = stealSignBit(stealX)
+        val caseOffset = if (prefs.printSpecialValueAllCaps) 8 else 0
+        if (stealIsINF(stealX)) {
+            val infShortOffset = if (prefs.printInfinityShort3Char) 2 else 0
+            return SPECIAL_VALUE_STRINGS[(caseOffset + infShortOffset + signBit) and SVS_BCE]
+        }
+        if (! prefs.printNaNMinusSign)
+            signBit = 0
+        val nanIndex = (if (stealIsQNAN(stealX) || prefs.printCollapseSNaN) 4 else 6) + signBit
+        val nanStr = SPECIAL_VALUE_STRINGS[(caseOffset + nanIndex) and SVS_BCE]
         val digitLen = stealDigitLen(stealX)
-        if (digitLen == 0)
+        if (digitLen == 0 || !prefs.printNaNPayload)
             return nanStr
         val payloadNanLen = nanStr.length + digitLen
         for (i in nanStr.indices)

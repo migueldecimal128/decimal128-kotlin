@@ -6,13 +6,11 @@ data class DecPrefs(
     val printExponentUppercaseE: Boolean = true,
     val printEngineeringString: Boolean = false,
 
-    val printInfinityAllCaps: Boolean = false,
-    val printInfinity8Chars: Boolean = false,
+    val printSpecialValueAllCaps: Boolean = false,
+    val printInfinityShort3Char: Boolean = false,
 
-    val printNaNSign: Boolean = true,
+    val printNaNMinusSign: Boolean = true,
     val printNaNPayload: Boolean = true,
-    val printNaNPlusSign: Boolean = false,
-    val printNaNAllCaps: Boolean = false,
     val printCollapseSNaN: Boolean = false,
 
     val parseCollapseSNaN: Boolean = false,
@@ -31,5 +29,4 @@ data class DecPrefs(
     }
 
     enum class PrintStyle { AUTO, ALWAYS_SCIENTIFIC, INTEGER_COEFFICIENT}
-    enum class TextCase { MIXED_CASE, UPPER_CASE, LOWER_CASE }
 }

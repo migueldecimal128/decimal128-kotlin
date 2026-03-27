@@ -151,7 +151,7 @@ fun bdToDecimal128String(bd: BigDecimal, toEngineeringExp: Boolean = false): Str
                 decimal128.toEngineeringString()
         }
         //q < BIG_DECIMAL_INFINITY_SCALE -> decimal128.toEngineeringString()
-        q == BIG_DECIMAL_INFINITY_SCALE -> if (isNeg) "-Inf" else "Inf"
+        q == BIG_DECIMAL_INFINITY_SCALE -> if (isNeg) "-Infinity" else "Infinity"
         q == BIG_DECIMAL_QNAN_SCALE -> (if (isNeg) "-NaN" else "NaN") + if (magnitude.bitLength() == 0) "" else magnitude
         q == BIG_DEICMAL_SNAN_SCALE -> (if (isNeg) "-sNaN" else "sNaN") + if (magnitude.bitLength() == 0) "" else magnitude
         else -> throw RuntimeException("invalid exponent for ieee754r decimal128")

@@ -102,12 +102,12 @@ object DecimalParsePrint {
 
     private fun calcPrintLenInfinite(md: MutDec, prefs: DecPrefs): Int {
         val sign = if (md.sign) 1 else 0
-        val text = if (prefs.printInfinity8Chars) 8 else 3
+        val text = if (prefs.printInfinityShort3Char) 3 else 8
         return sign + text
     }
 
     private fun calcPrintLenNaN(md: MutDec, prefs: DecPrefs): Int {
-        val sign = if (prefs.printNaNSign and (md.sign or prefs.printNaNPlusSign)) 1 else 0
+        val sign = if (prefs.printNaNMinusSign and md.sign) 1 else 0
         val text = 3 + if (md.isSignaling() && !prefs.printCollapseSNaN) 1 else 0
         val payload = md.digitLen
         return sign + text + payload
@@ -177,10 +177,10 @@ object DecimalParsePrint {
 
     private fun infiniteToUtf8(z: MutDec, utf8: ByteArray, off: Int, prefs: DecPrefs): Int {
         var ib = off
-        val charLen = if (prefs.printInfinity8Chars) 8 else 3
+        val charLen = if (prefs.printInfinityShort3Char) 3 else 8
         var charsRemaining= charLen
         var shifter = INFINITY_CHARS_BACKWARDS
-        val upperCaseMask = if (prefs.printInfinityAllCaps) UPPER_CASE_MASK else 0x7F
+        val upperCaseMask = if (prefs.printSpecialValueAllCaps) UPPER_CASE_MASK else 0x7F
         do {
             utf8[ib++] = (shifter.toInt() and upperCaseMask).toByte()
             shifter = shifter ushr 8
@@ -192,9 +192,9 @@ object DecimalParsePrint {
     private fun nanToUtf8(z: MutDec, utf8: ByteArray, off: Int, prefs: DecPrefs, tmp: C256?): Int {
         var ib = off
         // write the sign ... but it might be overwritten
-        utf8[off] = (if (z.sign) '-' else '+').code.toByte()
-        ib += if (prefs.printNaNSign and (z.sign or prefs.printNaNPlusSign)) 1 else 0
-        val upperCaseMask = if (prefs.printNaNAllCaps) UPPER_CASE_MASK else 0x7F
+        utf8[off] = '-'.code.toByte()
+        ib += if (prefs.printNaNMinusSign and z.sign) 1 else 0
+        val upperCaseMask = if (prefs.printSpecialValueAllCaps) UPPER_CASE_MASK else 0x7F
         utf8[ib  ] = ('s'.code or upperCaseMask).toByte()
         ib += if (z.isSignaling() && !prefs.printCollapseSNaN) 1 else 0
         utf8[ib    ] =  'N'.code.toByte()
