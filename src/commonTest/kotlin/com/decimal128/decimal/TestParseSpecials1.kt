@@ -1,8 +1,9 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class TestParseSpecials1 {
 
@@ -123,7 +124,7 @@ class TestParseSpecials1 {
             val v = D128ParsePrint.parseFiniteValueText(tc)
             if (verbose)
                 println (" => $v")
-            assert(v == null || v is InvalidOperationReason)
+            assertTrue(v == null || v is InvalidOperationReason)
         }
     }
 
@@ -144,6 +145,6 @@ class TestParseSpecials1 {
     @Test
     fun testTooManyDigitsNative() {
         // confirm that too many digits leads to NumberFormatException
-        assertThrows<NumberFormatException> { "12345678901234567890".toLong() }
+        assertFailsWith<NumberFormatException> { "12345678901234567890".toLong() }
     }
 }

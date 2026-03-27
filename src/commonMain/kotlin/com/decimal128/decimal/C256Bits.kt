@@ -183,6 +183,9 @@ internal fun c256ToFloorDouble(x: C256): Double {
     return dHiBits
 }
 
+internal fun scalb(x: Double, n: Int): Double =
+    x * Double.fromBits((n + 1023L).shl(52))
+
 internal fun c256Set(z: C256, d: Double) {
     val dRaw = d.toRawBits()
     val exp = ((dRaw ushr 52).toInt() and 0x7FF) - 1023

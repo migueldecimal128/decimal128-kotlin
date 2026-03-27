@@ -5,8 +5,6 @@ package com.decimal128.decimal
 
 import kotlin.math.abs
 
-expect fun mathFma(a: Double, b: Double, c: Double): Double
-
 private fun mathUlp(x: Double): Double {
     val exp = ((x.toBits() ushr 52) and 0x7FFL).toInt()
     return when (exp) {

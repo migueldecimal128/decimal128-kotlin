@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
 private const val S_U32_DIV_1E1 = 35

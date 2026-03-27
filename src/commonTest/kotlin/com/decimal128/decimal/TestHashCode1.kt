@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertNotEquals
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 class TestHashCode1 {
     val verbose = false

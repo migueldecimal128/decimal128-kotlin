@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TestParseSimple1 {
 
@@ -115,7 +115,7 @@ class TestParseSimple1 {
 
     @Test
     fun testMalFormed() {
-        assertThrows<NumberFormatException> { test1("Infinity and beyond")}
+        assertFailsWith<NumberFormatException> { test1("Infinity and beyond")}
     }
 
     fun test1(parse: String, expected: String = parse) {
@@ -162,7 +162,7 @@ class TestParseSimple1 {
         for (dblCase in dblBadCases) {
             if (verbose)
                 println("dblCase:$dblCase")
-            assertThrows<NumberFormatException> {
+            assertFailsWith<NumberFormatException> {
                 val v = dblCase.toDouble()
             }
         }

@@ -53,28 +53,28 @@ internal object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x3
         val dividend7 = (rem shl 32) or (x3 ushr 32)
-        rem = unsignedMod(dividend7, y0)
+        rem = unsignedRem(dividend7, y0)
         // Process lo 32 bits of x3
         val dividend6 = (rem shl 32) or (x3 and MASK32L)
-        rem = unsignedMod(dividend6, y0)
+        rem = unsignedRem(dividend6, y0)
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        rem = unsignedMod(dividend5, y0)
+        rem = unsignedRem(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32L)
-        rem = unsignedMod(dividend4, y0)
+        rem = unsignedRem(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = unsignedMod(dividend3, y0)
+        rem = unsignedRem(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32L)
-        rem = unsignedMod(dividend2, y0)
+        rem = unsignedRem(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = unsignedMod(dividend1, y0)
+        rem = unsignedRem(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32L)
-        rem = unsignedMod(dividend0, y0)
+        rem = unsignedRem(dividend0, y0)
 
         return rem
     }
@@ -84,22 +84,22 @@ internal object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        rem = unsignedMod(dividend5, y0)
+        rem = unsignedRem(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32L)
-        rem = unsignedMod(dividend4, y0)
+        rem = unsignedRem(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = unsignedMod(dividend3, y0)
+        rem = unsignedRem(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32L)
-        rem = unsignedMod(dividend2, y0)
+        rem = unsignedRem(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = unsignedMod(dividend1, y0)
+        rem = unsignedRem(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32L)
-        rem = unsignedMod(dividend0, y0)
+        rem = unsignedRem(dividend0, y0)
 
         return rem
     }
@@ -109,16 +109,16 @@ internal object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = unsignedMod(dividend3, y0)
+        rem = unsignedRem(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32L)
-        rem = unsignedMod(dividend2, y0)
+        rem = unsignedRem(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = unsignedMod(dividend1, y0)
+        rem = unsignedRem(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32L)
-        rem = unsignedMod(dividend0, y0)
+        rem = unsignedRem(dividend0, y0)
 
         return rem
     }
@@ -128,10 +128,10 @@ internal object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = unsignedMod(dividend1, y0)
+        rem = unsignedRem(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32L)
-        rem = unsignedMod(dividend0, y0)
+        rem = unsignedRem(dividend0, y0)
 
         return rem
     }
@@ -281,28 +281,28 @@ internal object DivDirect {
         var rem = 0L
         // Process hi 32 bits of x3
         val dividend7 = (rem shl 32) or (x3 ushr 32)
-        rem = unsignedMod(dividend7, y0)
+        rem = unsignedRem(dividend7, y0)
         // Process lo 32 bits of x3
         val dividend6 = (rem shl 32) or (x3 and MASK32L)
-        rem = unsignedMod(dividend6, y0)
+        rem = unsignedRem(dividend6, y0)
         // Process hi 32 bits of x2
         val dividend5 = (rem shl 32) or (x2 ushr 32)
-        rem = unsignedMod(dividend5, y0)
+        rem = unsignedRem(dividend5, y0)
         // Process lo 32 bits of x2
         val dividend4 = (rem shl 32) or (x2 and MASK32L)
-        rem = unsignedMod(dividend4, y0)
+        rem = unsignedRem(dividend4, y0)
         // Process hi 32 bits of x1
         val dividend3 = (rem shl 32) or (x1 ushr 32)
-        rem = unsignedMod(dividend3, y0)
+        rem = unsignedRem(dividend3, y0)
         // Process lo 32 bits of x1
         val dividend2 = (rem shl 32) or (x1 and MASK32L)
-        rem = unsignedMod(dividend2, y0)
+        rem = unsignedRem(dividend2, y0)
         // Process hi 32 bits of x0
         val dividend1 = (rem shl 32) or (x0 ushr 32)
-        rem = unsignedMod(dividend1, y0)
+        rem = unsignedRem(dividend1, y0)
         // Process lo 32 bits of x0
         val dividend0 = (rem shl 32) or (x0 and MASK32L)
-        rem = unsignedMod(dividend0, y0)
+        rem = unsignedRem(dividend0, y0)
 
         return rem
     }

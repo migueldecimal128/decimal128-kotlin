@@ -30,7 +30,7 @@ internal fun c256SetDivRemX64(z: C256?, x: C256, y0: Long, knuthD: IntArray): Lo
     val x0 = x.dw0
     if (x.bitLen <= 64) {
         val quot = unsignedDiv(x0, y0)
-        val rem = unsignedMod(x0, y0)
+        val rem = unsignedRem(x0, y0)
         z?.c256Set64(quot)
         return rem
     }
