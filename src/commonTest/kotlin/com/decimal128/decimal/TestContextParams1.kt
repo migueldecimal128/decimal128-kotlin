@@ -16,10 +16,14 @@ class TestContextParams1 {
         for (ctx in contexts) {
             for (i in 0..4) {
                 val rounding = DecRounding.fromValue(i)
-                val decPrefs = DecPrefs().copy(printValuePlusSign = true, printStyle = DecPrefs.PrintStyle.ALWAYS_SCIENTIFIC)
+                val decPrefs = DecPrefs().copy(
+                    printStyle = DecPrefs.PrintStyle.ALWAYS_SCIENTIFIC,
+                    printExponentPlusSign = false,
+                    printExponentUppercaseE = true,
+                    )
                 val ctxT = ctx.with(rounding).with(decPrefs)
                 ctxT.eval {
-                    val a = "1.0".toDecimal()
+                    val a = ".10".toDecimal()
                     val b = "3.0".toDecimal()
                     val c = a / b
                     if (verbose)

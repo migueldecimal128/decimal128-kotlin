@@ -78,7 +78,7 @@ object DecimalParsePrint {
     }
 
     private fun calcPrintLenFinite(md: MutDec, prefs: DecPrefs): Int {
-        val signLen = if (md.sign or prefs.printValuePlusSign) 1 else 0
+        val signLen = if (md.sign) 1 else 0
         val expSignLen = if (md.qExp < 0 || md.qExp > 0 && prefs.printExponentPlusSign) 1 else 0
         val expLen = calcBitLen64(abs(md.qExp).toLong())
         val engineeringStringPadding = if (prefs.printEngineeringString) 3 else 0
@@ -101,7 +101,7 @@ object DecimalParsePrint {
     }
 
     private fun calcPrintLenInfinite(md: MutDec, prefs: DecPrefs): Int {
-        val sign = if (md.sign or prefs.printValuePlusSign) 1 else 0
+        val sign = if (md.sign) 1 else 0
         val text = if (prefs.printInfinity8Chars) 8 else 3
         return sign + text
     }
@@ -116,7 +116,7 @@ object DecimalParsePrint {
     private fun decToUtf8_2(x: MutDec, bytes: ByteArray, off: Int, prefs: DecPrefs, tmp: C256?): Int {
         val signByte = if (x.sign) BYTE_MINUS else BYTE_PLUS
         bytes[off] = signByte
-        val signWidth = if (x.sign or prefs.printValuePlusSign) 1 else 0
+        val signWidth = if (x.sign) 1 else 0
         var ib = off + signWidth
         val qExp = x.qExp
         if (!x.isFinite()) {

@@ -1,9 +1,8 @@
 package com.decimal128.decimal
 
 data class DecPrefs(
-    val printValuePlusSign: Boolean = false,
     val printNegativeZero: Boolean = true,
-    val printExponentPlusSign: Boolean = true,
+    val printExponentPlusSign: Boolean = true, // Double default is false
     val printExponentUppercaseE: Boolean = true,
     val printEngineeringString: Boolean = false,
 
