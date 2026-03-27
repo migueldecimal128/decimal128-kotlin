@@ -158,7 +158,7 @@ class TestDecBasicArithmetic {
     fun testRemainderNear() = runBinaryDecimalCtxOp(
         "dqRemainderNear.decTest",
         "remaindernear",
-        ::remNearImpl,
+        ::d128RemNearImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -174,7 +174,7 @@ class TestDecBasicArithmetic {
 
     @Test
     fun testRemainderNearCases() = runBinaryDecimalCtxOp(
-        ::remNearImpl,
+        ::d128RemNearImpl,
         verbose = verbose,
         cases = arrayOf(
         )

@@ -112,7 +112,7 @@ class TestBid128BasicArithmetic {
     fun testRemNear() = IntelRunner1.runBinaryDecimalCtxOp(
         "/intel/readtest.in",
         "bid128_rem",
-        ::remNearImpl,
+        ::d128RemNearImpl,
         skip = true,
         skipCases = arrayOf(
             // FIXME - these are valid ... my implementation is not :(
@@ -139,7 +139,7 @@ class TestBid128BasicArithmetic {
             // "bid128_rem 0 [26741c0590811072,ffffffff6ef7ffff] [0000000000000000,0300040220100840] [8000000000000000015515ab6c6033c0] 00",
             // "bid128_rem 0 [397cdc9a254ff562,99bc2af7b316f57c] [268d807293a0dcac,afddbd631e831cbb] [a68c1d3c3991cbb19eee601c8bdcb12c] 00",
         ),
-        ::remNearImpl,
+        ::d128RemNearImpl,
         decContext = decContext,
         verbose = verbose,
     )
