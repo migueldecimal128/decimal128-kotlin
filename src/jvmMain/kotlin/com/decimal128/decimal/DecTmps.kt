@@ -51,5 +51,5 @@ actual open class DecTmps {
     // perhaps this should be 76 in order to support 253-bit coefficients
     // in flight in the debugger
     @JvmField
-    internal actual val bytesPrintOnly: ByteArray = ByteArray(MAX_DEC38_CHAR_LEN)
+    internal actual val utf8BytesPrintOnly: ByteArray = ByteArray(MAX_DEC76_CHAR_LEN)
 }

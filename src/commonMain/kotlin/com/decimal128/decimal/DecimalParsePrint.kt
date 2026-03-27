@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -59,7 +58,7 @@ object DecimalParsePrint {
     fun decToString(x: MutDec, ctx: DecContext? = null) : String {
         val prefs = ctx?.decPrefs ?: DecPrefs.KOTLIN_DEFAULT
         val printLen = calcPrintLen(x, prefs)
-        val bytes = ctx?.tmps?.bytesPrintOnly ?: ByteArray(MAX_DEC38_CHAR_LEN)
+        val bytes = ctx?.tmps?.utf8BytesPrintOnly ?: ByteArray(MAX_DEC38_CHAR_LEN)
         val cb = decToUtf8_2(x, bytes, 0, prefs, ctx?.tmps?.c256PrintOnly)
         // FIXME ... ok ... so this fails when we pass in a
         //  value that is too long ... exceeds 34 digits

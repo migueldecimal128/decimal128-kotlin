@@ -251,3 +251,13 @@ internal fun decContextDecimal128Extended38(): DecContext = DecContext(
     decFlags = DecFlags(),
     decTmps = DecTmps()
 )
+
+inline fun <T> DecContext.eval(block: () -> T): T {
+    val previous = DecContext.current()
+    DecContext.setCurrent(this)
+    return try {
+        block()
+    } finally {
+        DecContext.setCurrent(previous)
+    }
+}

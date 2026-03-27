@@ -33,6 +33,6 @@ expect open class DecTmps() {
     // will be called during debugging and we don't want to
     // overwrite another tmp when stepping through code.
     internal val c256PrintOnly: C256
-    internal val bytesPrintOnly: ByteArray
+    internal val utf8BytesPrintOnly: ByteArray
 }
 

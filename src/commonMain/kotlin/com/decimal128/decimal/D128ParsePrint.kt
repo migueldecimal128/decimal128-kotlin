@@ -388,14 +388,20 @@ object D128ParsePrint {
         return dec
     }
 
-    fun toString(x: Decimal): String {
+    fun toString(x: Decimal, ctx: DecContext): String {
         val stealX = x.steal
+        val prefs = ctx.decPrefs
+        val printValuePlusSign = prefs.printValuePlusSign
+        val utf8 = ctx.tmps.utf8BytesPrintOnly
         if (stealIsFinite(stealX)) {
             val qExp = stealQExp(stealX)
             return when {
-                qExp == 0 -> toIntegerString(x)
-                qExp < 0 && stealSciExp(stealX) >= -6 -> toDecimalPointString(x)
-                else -> toNormalizedScientificString(x)
+                qExp == 0 -> toIntegerString(x, printValuePlusSign, utf8)
+                qExp < 0 &&
+                        prefs.printStyle == DecPrefs.PrintStyle.AUTO &&
+                        stealSciExp(stealX) >= prefs.printMinPlainExponent ->
+                    toDecimalPointString(x, printValuePlusSign)
+                else -> toNormalizedScientificString(x, printValuePlusSign)
             }
         }
         val signBit = stealSignBit(stealX)
@@ -406,37 +412,38 @@ object D128ParsePrint {
         val digitLen = stealDigitLen(stealX)
         if (digitLen == 0)
             return nanStr
-        val utf8 = ByteArray(nanStr.length + digitLen)
+        val payloadNanLen = nanStr.length + digitLen
         for (i in nanStr.indices)
             utf8[i] = nanStr[i].code.toByte()
         IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, nanStr.length)
-        return utf8.decodeToString()
+        return utf8.decodeToString(0, payloadNanLen)
     }
 
-    private fun toIntegerString(x: Decimal): String {
+    private fun toIntegerString(x: Decimal, printValuePlusSign: Boolean, utf8: ByteArray): String {
         val xSteal = x.steal
         if (stealBitLen(xSteal) < 4) {
-            val i = ((16 and stealSignMask(xSteal)) + x.dw0.toInt()) and 0x1F // bounds-check-elimination
+            val i = ((stealSignBit(xSteal) shl 4) + x.dw0.toInt()) and 0x1F // bounds-check-elimination
             return SMALL_INTEGER_STRINGS[i]
         }
+        val signLen = if (stealSignFlag(xSteal) or printValuePlusSign) 1 else 0
         val digitLen = stealDigitLen(xSteal)
-        val utf8 = ByteArray(stealSignBit(xSteal) + digitLen)
-        utf8[0] = '-'.code.toByte() // will be overwritten if positive
-        IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, x.signBit)
-        return utf8.decodeToString()
+        utf8[0] = (if (x.signFlag) '-' else '+').code.toByte() // might be overwritten if positive
+        IntegerParsePrint.u128ToUtf8(digitLen, x.dw1, x.dw0, utf8, signLen)
+        return utf8.decodeToString(0, signLen + digitLen)
     }
 
-    private fun toDecimalPointString(x: Decimal): String {
+    private fun toDecimalPointString(x: Decimal, printValuePlusSign: Boolean): String {
         val xSteal = x.steal
         val xQ = stealQExp(xSteal)
         val xDigitLen = stealDigitLen(xSteal)
         val digitsRightOfDecimal = -xQ
         val leadingZeroCount = max(1 + digitsRightOfDecimal - xDigitLen, 0)
-        val signLen = stealSignBit(xSteal)
+        val signFlag = stealSignFlag(xSteal)
+        val signLen = if (signFlag or printValuePlusSign) 1 else 0
         val decimalPointLen = 1
         val totalLen = signLen + leadingZeroCount + decimalPointLen + xDigitLen
         val utf8 = ByteArray(totalLen)
-        utf8[0] = '-'.code.toByte() // overwritten when positive
+        utf8[0] = (if (signFlag) '-' else '+').code.toByte() // overwritten when positive
         for (i in signLen..leadingZeroCount) // there is one extra here
             utf8[i] = '0'.code.toByte()
         IntegerParsePrint.u128ToUtf8(xDigitLen, x.dw1, x.dw0, utf8, signLen + leadingZeroCount)
@@ -446,11 +453,12 @@ object D128ParsePrint {
         return utf8.decodeToString()
     }
 
-    private fun toNormalizedScientificString(x: Decimal): String {
+    private fun toNormalizedScientificString(x: Decimal, printValuePlusSign: Boolean): String {
         val xSteal = x.steal
         val eExp = stealSciExp(xSteal)
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
-        val signLen = stealSignBit(xSteal)
+        val signFlag = stealSignFlag(xSteal)
+        val signLen = if (signFlag or printValuePlusSign) 1 else 0
         val xDigitLen = stealDigitLen(xSteal)
         val decimalPointLen = if (xDigitLen > 1) 1 else 0
         val printedDigitLen = xDigitLen + 1 - (-xDigitLen ushr 31)
@@ -460,7 +468,7 @@ object D128ParsePrint {
         val expDigitLen = max(calcDigitLen64(eExpAbs.toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = ByteArray(totalLen)
-        utf8[0] = '-'.code.toByte() // overwritten if non-negative
+        utf8[0] = (if (signFlag) '-' else '+').code.toByte() // overwritten if non-negative
         IntegerParsePrint.u128ToUtf8(printedDigitLen, x.dw1, x.dw0, utf8, signLen + decimalPointLen)
         if (decimalPointLen > 0) {
             utf8[signLen] = utf8[signLen + 1]

@@ -937,7 +937,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val leadingZeroCount = max(1 + digitsRightOfDecimal - digitLen, 0)
         val decimalPointLen = 1
         val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
-        val utf8 = DecContext.current().tmps.bytesPrintOnly
+        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
         utf8[0] = '-'.code.toByte() // overwritten when positive
         for (i in signLen..leadingZeroCount) // there is one extra here
             utf8[i] = '0'.code.toByte()
@@ -967,7 +967,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val expSignLen = if (eExp < 0) 1 else 0
         val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
-        val utf8 = DecContext.current().tmps.bytesPrintOnly
+        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
         var i = int256ToUtf8(sign, this, utf8, 0)
         if (digitLen > 1) {
             val insertionPoint = signLen + 1
@@ -1000,7 +1000,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
                 printedDigitLen + expELen + expSignLen + expDigitLen
-        val utf8 = DecContext.current().tmps.bytesPrintOnly
+        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
         var i = int256ToUtf8(sign, this, utf8, 0)
         when {
             additionalLeftOfPointZeroCount > 0 -> {
@@ -1036,7 +1036,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val digitLen = stealDigitLen(steal)
         if (digitLen == 0)
             return nanStr
-        val utf8 = DecContext.current().tmps.bytesPrintOnly
+        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
         for (i in nanStr.indices)
             utf8[i] = nanStr[i].code.toByte()
         int256ToUtf8(sign = false, this, utf8, nanStr.length)

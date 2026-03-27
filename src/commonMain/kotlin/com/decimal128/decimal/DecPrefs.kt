@@ -22,7 +22,7 @@ data class DecPrefs(
     val parseThrowOnDigitOverflow: Boolean = false,
     val parseThrowOnOutOfRange: Boolean = false,
 
-    val printAutoMinNoExponent: Int = -6,
+    val printMinPlainExponent: Int = -6,
     val printStyle: PrintStyle = PrintStyle.AUTO,
 
     val propagatePreferSnan: Boolean = true,
