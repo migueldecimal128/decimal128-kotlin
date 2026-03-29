@@ -76,7 +76,7 @@ object D128ParsePrint {
         var ch = txt.nextChar()
         if (ch == '+' || ch == '-')
             ch = txt.nextChar()
-        txt.reset()
+        txt.rewind()
         if (ch >= '0' && ch <= '9' || ch == '.')
             return parseFiniteValueText(txt, ctx)
         val chLower = (ch.code or 0x20).toChar()

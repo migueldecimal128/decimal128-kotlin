@@ -358,7 +358,7 @@ object DecimalParsePrint {
     }
 
     fun isNanText(x: MutDec, src: Latin1Iterator, maxPayloadDigits: Int, discardNanPayload: Boolean): Boolean {
-        src.reset()
+        src.rewind()
         x.setZero()
         var ch = src.nextChar()
         val sign = ch == '-'
@@ -397,7 +397,7 @@ object DecimalParsePrint {
     }
 
     fun isInfinityText(x: MutDec, src: Latin1Iterator): Boolean {
-        src.reset()
+        src.rewind()
         var ch = src.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -418,7 +418,7 @@ object DecimalParsePrint {
     }
 
     fun isValidBidHexText(x: MutDec, src: Latin1Iterator): Boolean {
-        src.reset()
+        src.rewind()
         var ch = src.nextChar()
         if (ch != '[')
             return false
@@ -453,7 +453,7 @@ object DecimalParsePrint {
     }
 
     fun isValidDpdHexText(x: MutDec, src: Latin1Iterator): Boolean {
-        src.reset()
+        src.rewind()
         if (src.nextChar() != '#')
             return false
         if (! parseHexDword(src, x))

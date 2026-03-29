@@ -217,7 +217,7 @@ internal object IntegerParsePrint {
             if (ch == '0') { // discard leading zero
                 ch = src.nextChar()
                 if (ch == 'x' || ch == 'X')
-                    return u256FromHexLatin1Iterator(u, allowSign, src.reset())
+                    return u256FromHexLatin1Iterator(u, allowSign, src.rewind())
                 leadingZeroSeen = true
             }
             while (ch == '0' || ch == '_') {
