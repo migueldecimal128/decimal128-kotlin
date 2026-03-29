@@ -44,7 +44,7 @@ object D128ParsePrint {
      *         decimal128 text form or would require rounding.
      */
     fun parseDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
-        val strIterator = StringLatin1Iterator(str)
+        val strIterator = ctx.tmps.parseStringLatin1Iterator.reload(str)
         val decOrReason = parseDecimalOrReason(strIterator, ctx)
         if (decOrReason is Decimal)
             return decOrReason

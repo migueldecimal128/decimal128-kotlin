@@ -3,6 +3,9 @@
 
 package com.decimal128.decimal
 
+private const val EMPTY_STRING = ""
+private val EMPTY_CHAR_ARRAY = CharArray(0)
+private val EMPTY_BYTE_ARRAY = ByteArray(0)
 /**
  * Abstract iterator over a sequence of characters stored in Latin-1 (ISO-8859-1) format.
  *
@@ -12,19 +15,11 @@ package com.decimal128.decimal
  * The iterator is zero-based with respect to the underlying sequence and
  * tracks its position internally.
  *
- * @property off the starting offset in the underlying sequence
- * @property len the number of characters to iterate over
- *
- * @constructor Initializes the iterator for a given slice of size `size`.
- * Throws [IllegalArgumentException] if the range `[off, off + len)` is invalid.
- *
- * @param size the total size of the underlying character sequence
- * @param off the starting offset of the iteration window
  * @param len the length of the iteration window
  */
 abstract class Latin1Iterator(len: Int) {
-    private var len = len
-    private var i = 0
+    protected var len = len
+    protected var i = 0
 
     /** Returns true if there are more characters to read in the forward direction. */
     fun hasNext() = (i < len)
@@ -52,39 +47,57 @@ abstract class Latin1Iterator(len: Int) {
     /** Returns the character at the specified absolute index in the underlying sequence. */
     abstract fun getCharAt(i: Int): Char
 
+    abstract fun clear()
+
     /** Returns a string representation of the iterator's current window. */
     abstract override fun toString(): String
 
     init { require(len >= 0) { "Invalid offset/length range" } }
 }
 
-/**
- * [Latin1Iterator] implementation backed by a [String].
- *
- * Provides sequential and reverse iteration over a contiguous substring of [s].
- * The iteration respects the specified offset and length.
- *
- * @property s the underlying string to iterate over
- * @param off the starting offset of the iteration window in the string
- * @param len the length of the iteration window
- *
- * @constructor Creates an iterator for the substring `s[off..off+len-1]`.
- * @throws IllegalArgumentException if the offset and length are out of bounds
- */
-class StringLatin1Iterator(private val s: String) : Latin1Iterator(s.length) {
+class StringLatin1Iterator(str: String): Latin1Iterator(str.length) {
+    private var str = str
 
     /** Returns the character at the given absolute index in the underlying string. */
-    override fun getCharAt(i: Int) = s[i]
+    override fun getCharAt(i: Int) = str[i]
+
+    override fun clear() {
+        super.i = 0
+        super.len = 0
+        str = EMPTY_STRING
+    }
+
+    fun reload(str: String): StringLatin1Iterator {
+        this.str = str
+        super.len = str.length
+        super.i = 0
+        return this
+    }
 
     /** Returns the full string representation of this iterator. */
-    override fun toString() = s
+    override fun toString() = str
+
 }
 
-class CharSequenceLatin1Iterator(private val csq: CharSequence) : Latin1Iterator(csq.length) {
+class CharSequenceLatin1Iterator(csq: CharSequence) : Latin1Iterator(csq.length) {
+    private var csq = csq
 
 
     /** Returns the character at the given absolute index in the underlying [CharSequence]. */
     override fun getCharAt(i: Int) = csq[i]
+
+    override fun clear() {
+        i = 0
+        len = 0
+        csq = EMPTY_STRING
+    }
+
+    fun reload(csq: CharSequence): CharSequenceLatin1Iterator {
+        this.csq = csq
+        super.len = csq.length
+        super.i = 0
+        return this
+    }
 
     /** Returns the string representation of the underlying [CharSequence]. */
     override fun toString() = csq.toString()
@@ -104,10 +117,9 @@ class CharSequenceLatin1Iterator(private val csq: CharSequence) : Latin1Iterator
  * @constructor Creates an iterator for the subsequence `chars[off..off+len-1]`.
  * @throws IllegalArgumentException if the offset and length are out of bounds
  */
-class CharArrayLatin1Iterator(chars: CharArray, off: Int, len: Int) : Latin1Iterator(chars.size) {
+class CharArrayLatin1Iterator(chars: CharArray, off: Int, len: Int) : Latin1Iterator(len) {
     private var chars = chars
     private var off = off
-    private var len = len
 
     /** Convenience constructor to iterate over the entire array. */
     constructor(chars: CharArray) : this(chars, 0, chars.size)
@@ -115,8 +127,25 @@ class CharArrayLatin1Iterator(chars: CharArray, off: Int, len: Int) : Latin1Iter
     /** Returns the character at the given absolute index in the underlying [CharArray]. */
     override fun getCharAt(i: Int) = chars[off + i]
 
+    override fun clear() {
+        i = 0
+        len = 0
+        chars = EMPTY_CHAR_ARRAY
+    }
+
+    fun reload(chars: CharArray, off: Int, len: Int): CharArrayLatin1Iterator {
+        require(off >= 0 && len >= 0 && off + len <= chars.size)
+        this.chars = chars
+        this.off = off
+        super.len = len
+        super.i = 0
+        return this
+    }
+
     /** Returns the string representation of the subsequence covered by this iterator. */
     override fun toString() = chars.concatToString(off, off + len)
+
+    init { require(off >= 0 && len >= 0 && off + len <= chars.size) }
 }
 
 
@@ -134,10 +163,9 @@ class CharArrayLatin1Iterator(chars: CharArray, off: Int, len: Int) : Latin1Iter
  * @constructor Creates an iterator for the subsequence `bytes[off..off+len-1]`.
  * @throws IllegalArgumentException if the offset and length are out of bounds
  */
-class ByteArrayLatin1Iterator(bytes: ByteArray, off: Int, len: Int) : Latin1Iterator(bytes.size) {
+class ByteArrayLatin1Iterator(bytes: ByteArray, off: Int, len: Int) : Latin1Iterator(len) {
     private var bytes = bytes
     private var off = off
-    private var len = len
 
 
     /** Convenience constructor to iterate over the entire array. */
@@ -146,6 +174,24 @@ class ByteArrayLatin1Iterator(bytes: ByteArray, off: Int, len: Int) : Latin1Iter
     /** Returns the character at the given absolute index in the underlying [ByteArray]. */
     override fun getCharAt(i: Int) = (bytes[off + i].toInt() and 0xFF).toChar()
 
+    override fun clear() {
+        i = 0
+        len = 0
+        bytes = EMPTY_BYTE_ARRAY
+    }
+
+    fun reload(bytes: ByteArray, off: Int, len: Int): ByteArrayLatin1Iterator {
+        require(off >= 0 && len >= 0 && off + len <= bytes.size)
+        this.bytes = bytes
+        this.off = off
+        super.len = len
+        super.i = 0
+        return this
+    }
+
     /** Returns the string representation of the subsequence covered by this iterator. */
     override fun toString() = bytes.decodeToString(off, off + len)
+
+    init { require(off >= 0 && len >= 0 && off + len <= bytes.size) }
+
 }
