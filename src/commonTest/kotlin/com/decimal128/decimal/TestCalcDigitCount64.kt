@@ -1,8 +1,10 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
-import java.util.*
+import kotlin.test.assertEquals
+import kotlin.test.Test
+import kotlin.random.Random
+import kotlin.math.*
+
 
 /*
 fun getDigitCount(n: Int) : Int {
@@ -54,8 +56,8 @@ class TestCalcDigitCount64 {
         val expected = if (ul == 0uL) 0 else ulStrLen
         if (verbose)
             println("ul:$ul expected:$expected")
-        val l = ul.toLong()
-        val bitLen = 64 - java.lang.Long.numberOfLeadingZeros(l)
+        val l: Long = ul.toLong()
+        val bitLen = 64 - l.countLeadingZeroBits()
         val observed = calcDigitLen64(bitLen, l)
         if (expected != observed)
             println("expected:$expected  observed:$observed  ul:$ul")
@@ -68,7 +70,7 @@ class TestCalcDigitCount64 {
             test1Random()
     }
 
-    val random = Random()
+    val random = Random.Default
 
     fun test1Random() {
         var bitLength = 0

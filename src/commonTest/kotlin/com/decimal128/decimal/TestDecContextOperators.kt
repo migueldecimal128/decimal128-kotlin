@@ -1,10 +1,10 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.DecContext.Companion.decimal128Kotlin
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.Test
 
-class TestContextOperators {
+class TestDecContextOperators {
 
     val verbose = false
 

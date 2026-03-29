@@ -1,12 +1,12 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.test.assertEquals
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class TestBExpMinMax1 {
+class TestBExpMinMax {
 
     val verbose = false
 

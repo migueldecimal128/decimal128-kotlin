@@ -2,10 +2,9 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.Decimal.Companion.ONE
 import com.decimal128.decimal.Decimal.Companion.ZERO
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertTrue
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class TestDecTrapHandlers {
 
@@ -18,7 +17,7 @@ class TestDecTrapHandlers {
 
         val catchCtx = DecContext.decimal128Kotlin().withThrownException(DecException.DIVIDE_BY_ZERO)
 
-        assertThrows<DivideByZeroException> {
+        assertFailsWith<DivideByZeroException> {
             with (catchCtx) {
                 val z1 = ONE / ZERO
             }

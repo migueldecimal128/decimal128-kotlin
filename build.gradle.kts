@@ -78,11 +78,14 @@ kotlin {
         all {
         }
 	    val commonMain by getting
-	    val commonTest by getting
+	    val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
 		val jvmMain   by getting
 		val jvmTest   by getting {
 			dependencies {
-                implementation(kotlin("test"))     // <-- pulls in kotlin-test on jvmTest
                 implementation("net.java.dev.jna:jna:5.17.0")
 			}
 		}
