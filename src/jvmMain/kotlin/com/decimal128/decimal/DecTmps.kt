@@ -52,4 +52,7 @@ actual open class DecTmps {
     // in flight in the debugger
     @JvmField
     internal actual val utf8BytesPrintOnly: ByteArray = ByteArray(MAX_DEC76_CHAR_LEN)
+
+    @JvmField
+    internal actual val parseStringLatin1Iterator: StringLatin1Iterator = StringLatin1Iterator("")
 }

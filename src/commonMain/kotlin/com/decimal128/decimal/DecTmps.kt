@@ -34,5 +34,6 @@ expect open class DecTmps() {
     // overwrite another tmp when stepping through code.
     internal val c256PrintOnly: C256
     internal val utf8BytesPrintOnly: ByteArray
+    internal val parseStringLatin1Iterator: StringLatin1Iterator
 }
 
