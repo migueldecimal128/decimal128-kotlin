@@ -23,7 +23,7 @@ data class DectestCase1(
 
 
     val operand1: Decimal
-        get() = parseDpd128(operand1Str)
+        get() = parseDpd128(operand1Str, decContext)
     val operand1Int: Int
         get() = operand1Str.toInt()
 
@@ -95,6 +95,7 @@ data class DectestCase1(
 
             "division_undefined" to DecException.INVALID_OPERATION,
             "division_impossible" to DecException.INVALID_OPERATION,
+            "conversion_syntax" to DecException.INVALID_OPERATION,
         )
 
         private fun allocDecContext(dectestEnv: DectestEnv): DecContext {
@@ -102,7 +103,7 @@ data class DectestCase1(
             require(dectestEnv.maxExp == 6144)
             require(dectestEnv.minExp == -6143)
             require(dectestEnv.rounding != null)
-            val decContext = DecContext.decimal128Kotlin().with(dectestEnv.rounding)
+            val decContext = DecContext.decimal128IEEE().with(dectestEnv.rounding)
             return decContext
         }
 
@@ -230,7 +231,7 @@ data class DectestCase1(
             return result
         }
 
-        fun parseDpd128(str: String): Decimal {
+        fun parseDpd128(str: String, decContext: DecContext = DecContext.current()): Decimal {
             if (str.startsWith('#')) {
                 require(str.length == 33)
                 val hi = hexStringToLong(str.substring(1, 17))
@@ -238,7 +239,7 @@ data class DectestCase1(
                 val dpd = MutDec().setDpd128(hi, lo)
                 return Decimal.from(dpd)
             }
-            return Decimal.from(str)
+            return Decimal.from(str, decContext)
         }
 
         fun hexStringToLong(hex: String): Long {

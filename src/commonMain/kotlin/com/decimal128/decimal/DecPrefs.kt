@@ -25,7 +25,10 @@ data class DecPrefs(
     val propagatePreferSnan: Boolean = true,
 ) {
     companion object {
-        val KOTLIN_DEFAULT = DecPrefs()
+        val IEEE_DEFAULT = DecPrefs()
+        val KOTLIN_DEFAULT = DecPrefs(
+            parseMalformedSignalsInvalidOperation = true,
+        )
     }
 
     enum class PrintStyle { AUTO, ALWAYS_SCIENTIFIC, INTEGER_COEFFICIENT}

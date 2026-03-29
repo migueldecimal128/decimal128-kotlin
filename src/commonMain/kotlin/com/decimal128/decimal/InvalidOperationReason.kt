@@ -19,6 +19,8 @@ enum class InvalidOperationReason {
     PARSE_NO_COEFFICIENT_DIGIT,
     PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION,
     PARSE_VALUE_OUT_OF_RANGE,
+    PARSE_NON_DIGIT_AFTER_NAN,
+    PARSE_NAN_PAYLOAD_TOO_LONG,
     SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO,        // e.g., sqrt(-1)
     SQUARE_ROOT_OF_NEG_INFINITY,
     QUANTIZE,           // e.g., quantize(Infinity, finite)

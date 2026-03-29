@@ -287,7 +287,6 @@ object DectestRunner1 {
             if (verbose)
                 println(tc.text)
             val operand1 = tc.operand1
-            val operand2 = tc.operand2
             val decCtx = tc.decContext
             val observed = unaryStringCtxOp(operand1, decCtx)
             val expected = tc.resultStr

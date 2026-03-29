@@ -1,42 +1,39 @@
 package com.decimal128.decimal.dectest
 
+import com.decimal128.decimal.D128ParsePrint
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryStringCtxOp
 import com.decimal128.decimal.fmaImpl
 import org.junit.jupiter.api.Test
 
 class TestDecToString {
 
-    val verbose = false
+    val verbose = true
 
-    /*
     @Test
-    fun testToSci() = runUnaryStringCtxOp(
-        "dqBase.decTest",
-        "toSci",
-        ::fmaImpl,
-        verbose = verbose,
-        skip = true,
-        skipCases = arrayOf(
+    fun testToSci() {
+        runUnaryStringCtxOp(
+            "dqBase.decTest",
+            "toSci",
+            D128ParsePrint::toString,
+            verbose = verbose,
+            skip = true,
+            skipCases = arrayOf<String>(
+                "dqbas745 toSci 'sNaN1234567890123456787234561234567890' -> NaN Conversion_syntax",
+                "dqbas725 toSci 'NaN1234567890123456781234567890123456' -> NaN Conversion_syntax",
+                "dqbas561 toSci \"qNaN\"            -> NaN Conversion_syntax"
+            )
         )
-    )
+    }
 
     @Test
     fun testToSciCases() = runUnaryStringCtxOp(
-        ::fmaImpl,
+        D128ParsePrint::toString,
         verbose = verbose,
         cases = arrayOf(
-            "rounding: floor",
-            "dqadd371720 fma  1   0        0E-19  ->  0E-19",
-            "dqadd371721 fma  1  -0        0E-19  -> -0E-19",
-
-            //"rounding:    up",
-            //"dqadd371674 fma -9E6144 10   1     -> -Infinity Overflow Inexact Rounded",
-
-            "rounding: half_even",
-            "dqadd37787 fma  1  -1000 -Inf   -> -Infinity",
-            "dqadd3138 fma  1  -1  '0E-39'      ->  '-1.000000000000000000000000000000000' Rounded",
-            "dqadd3139 fma  1  '0E-39' 1        ->  '1.000000000000000000000000000000000'  Rounded",
+            "dqbas562 toSci \"NaNq\"            -> NaN Conversion_syntax",
+            "dqbas500 toSci '1..2'            -> NaN Conversion_syntax",
+            "dqbas071 toSci  .1234567891234567890123456780123456123  -> 0.1234567891234567890123456780123456 Inexact Rounded",
         )
     )
-*/
+
 }

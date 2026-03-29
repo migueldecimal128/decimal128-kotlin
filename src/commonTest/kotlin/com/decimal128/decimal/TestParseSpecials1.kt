@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 
 class TestParseSpecials1 {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testParseInfinity() {
@@ -40,16 +40,16 @@ class TestParseSpecials1 {
         assertEquals(Decimal.NEG_QNAN, negNaN)
         val negSnan = D128ParsePrint.parseNanText("-Snan")
         assertEquals(Decimal.NEG_SNAN, negSnan)
-        val null1 = D128ParsePrint.parseNanText("NaN ")
-        assertEquals("NaN", null1.toString())
         val plussNaN = D128ParsePrint.parseNanText("+sNaN")
         assertEquals(Decimal.POS_SNAN, plussNaN)
         val NaN0 = D128ParsePrint.parseNanText("NaN0")
         assertEquals(Decimal.POS_QNAN, NaN0)
 
+        val null1 = D128ParsePrint.parseNanText("NaN ")
+        assertEquals(InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN.toString(), null1.toString())
         val nanPlus1 = D128ParsePrint.parseNanText("NaN+1")
         val nanPlus1Str = nanPlus1.toString()
-        assertEquals("NaN1", nanPlus1Str)
+        assertEquals(InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN.toString(), nanPlus1Str)
         val null3 = D128ParsePrint.parseNanText("")
         assertEquals(null, null3)
 

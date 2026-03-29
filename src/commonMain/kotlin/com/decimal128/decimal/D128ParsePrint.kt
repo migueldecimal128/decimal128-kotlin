@@ -192,7 +192,7 @@ object D128ParsePrint {
     fun parseNanText(str: String) =
         parseNanText(StringLatin1Iterator(str))
 
-    fun parseNanText(txt: Latin1Iterator): Decimal? {
+    fun parseNanText(txt: Latin1Iterator): Any? {
         var ch = txt.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -212,25 +212,32 @@ object D128ParsePrint {
         var accum19a = 0L
         var accum19b = 0L
         do {
-            // be very lenient when parsing NaN payload
-            // IEEE754 says nothing about external text representation of NaN payload
-            // could have parens, brackets, etc.
-            if (ch >= '0' && ch <= '9') {
-                val d = ch - '0'
-                // flush leading zeros from payload ... don't increment
-                accumDigitCount += (-(accumDigitCount or d)) ushr 31
-                if (accumDigitCount <= 19)
-                    accum19a = (accum19a * 10L) + d.toLong()
-                else
-                    accum19b = (accum19b * 10L) + d.toLong()
-            }
+            if (ch < '0' || ch > '9')
+                return InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN
+            val d = ch - '0'
+            // flush leading zeros from payload ... don't increment
+            accumDigitCount += (-(accumDigitCount or d)) ushr 31
+            if (accumDigitCount <= 19)
+                accum19a = (accum19a * 10L) + d.toLong()
+            else
+                accum19b = (accum19b * 10L) + d.toLong()
             ch = txt.nextChar()
         } while (ch.code != 0)
         var payloadDw0: Long
         var payloadDw1: Long
         if (accumDigitCount > NAN_PAYLOAD_PRECISION) {
-            payloadDw0 = -1
-            payloadDw1 = -1
+            // Colishaw decTest says that an oversized payload throws Conversion_syntax
+            // IEEE754-2019 3.5.2 Encodings says:
+            //  The maximum value of the binary-encoded significand is the same as that
+            //  of the corresponding decimal-encoded significand; that is,
+            //  10 (3 × J + 1) −1 (or 10 (3 × J ) −1 when T is used
+            //  as the payload of a NaN). If the value exceeds the maximum,
+            //  the significand c is non-canonical and the value used for c is zero.
+            //
+            // This is parsing, so I suppose there is some room for interpretation.
+            // I choose to interpret this case as coeff == 0
+            payloadDw0 = 0
+            payloadDw1 = 0
         } else {
             payloadDw0 = accum19a
             payloadDw1 = 0L
