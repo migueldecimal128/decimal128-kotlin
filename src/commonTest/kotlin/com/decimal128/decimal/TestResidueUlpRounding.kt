@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 import com.decimal128.decimal.Residue.Companion.HALF
 import com.decimal128.decimal.Residue.Companion.LT_HALF
@@ -13,7 +13,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
-
 
 
 class TestResidueUlpRounding {
@@ -153,4 +152,3 @@ class TestResidueUlpRounding {
     }
 
 }
-

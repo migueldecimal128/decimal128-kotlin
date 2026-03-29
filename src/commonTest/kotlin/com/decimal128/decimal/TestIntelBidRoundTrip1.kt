@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
-import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class TestIntelBidRoundTrip1 {
 
