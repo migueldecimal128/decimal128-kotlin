@@ -540,20 +540,21 @@ object D128ParsePrint {
                                         exponentEUtf8Byte: Byte,
                                         printExponentPlusSign: Boolean,
                                         utf8: ByteArray): String {
-        val expAdjustment = if (eExp % 3 == 0) 0 else (3 - (eExp % 3 + 3) % 3)
+        // zero path — round exponent up to next multiple of 3
+        val expAdjustment = (3 - ((eExp % 3) + 3) % 3) % 3
         val adjustedExp = eExp + expAdjustment
-        val trailingZeroCount = expAdjustment  // zeros needed to preserve quantum
-        val decimalPointLen = if (trailingZeroCount > 0) 1 else 0
 
-        // write '0'
-        utf8[signLen] = '0'.code.toByte()
-        var i = signLen + 1
+        // write '0.00' always ... truncate as needed
+        utf8[signLen]     = '0'.code.toByte()
+        utf8[signLen + 1] = '.'.code.toByte()
+        utf8[signLen + 2] = '0'.code.toByte()
+        utf8[signLen + 3] = '0'.code.toByte()
 
-        // write decimal point and trailing zeros
-        if (decimalPointLen > 0) {
-            utf8[i++] = '.'.code.toByte()
-            repeat(trailingZeroCount) { utf8[i++] = '0'.code.toByte() }
-        }
+        // truncate based on expAdjustment
+        // expAdjustment == 0 → "0"     (just the '0')
+        // expAdjustment == 1 → "0.0"   (one trailing zero)
+        // expAdjustment == 2 → "0.00"  (two trailing zeros)
+        var i = signLen + 1 + if (expAdjustment == 0) 0 else 1 + expAdjustment
 
         if (adjustedExp == 0)
             return utf8.decodeToString(0, i)
