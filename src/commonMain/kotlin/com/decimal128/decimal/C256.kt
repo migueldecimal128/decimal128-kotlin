@@ -219,7 +219,7 @@ C256Rep() {
         if (digitLen == 0 && bitLen == 253)
             "MutDec \uD83D\uDEA7 under construction \uD83D\uDEA7"
         else
-            IntegerParsePrint.int256ToString(false, this)
+            IntegerParsePrint.c256ToString(false, this)
 
     override fun equals(other: Any?) = other is C256 && c256UnscaledEQ(this, other)
 

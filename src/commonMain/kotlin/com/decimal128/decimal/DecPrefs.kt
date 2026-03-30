@@ -31,5 +31,5 @@ data class DecPrefs(
         )
     }
 
-    enum class PrintStyle { AUTO, ALWAYS_SCIENTIFIC, INTEGER_COEFFICIENT}
+    enum class PrintStyle { AUTO, ENGINEERING, ALWAYS_SCIENTIFIC, COEFFICIENT_QEXPONENT}
 }

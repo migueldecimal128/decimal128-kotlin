@@ -907,7 +907,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return if (stealIsFinite(steal)) {
             val qExp = stealQExp(steal)
             when {
-                qExp == 0 -> IntegerParsePrint.int256ToString(stealSignFlag(steal), this)
+                qExp == 0 -> IntegerParsePrint.c256ToString(stealSignFlag(steal), this)
                 qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
                 else -> toScientificString()
             }
@@ -993,19 +993,19 @@ class MutDec() : C256(), Comparable<MutDec> {
         val adjustedExp = eExp - expAdjustment
         val decimalPointLen = if (digitLen > 1) 1 else 0
         val printedDigitLen = max(digitLen, 1)
-        val additionalLeftOfPointZeroCount =
+        val expAlignZeroCount =
             if (digitLen == 0) 0 else max(0, 1 + expAdjustment - digitLen)
         val expELen = 1
         val expSignLen = if (eExp < 0) 1 else 0
         val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
-        val totalLen = signLen + decimalPointLen + additionalLeftOfPointZeroCount +
+        val totalLen = signLen + decimalPointLen + expAlignZeroCount +
                 printedDigitLen + expELen + expSignLen + expDigitLen
         val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
         var i = int256ToUtf8(sign, this, utf8, 0)
         when {
-            additionalLeftOfPointZeroCount > 0 -> {
+            expAlignZeroCount > 0 -> {
                 utf8[i++] = '0'.code.toByte()
-                if (additionalLeftOfPointZeroCount == 2)
+                if (expAlignZeroCount == 2)
                     utf8[i++] = '0'.code.toByte()
             }
 
