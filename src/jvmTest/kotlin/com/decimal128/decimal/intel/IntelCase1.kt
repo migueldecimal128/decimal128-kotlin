@@ -1,6 +1,6 @@
 package com.decimal128.decimal.intel
 
-import com.decimal128.decimal.D128ParsePrint
+import com.decimal128.decimal.D128Parse
 import com.decimal128.decimal.D128SerdeBid
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
@@ -216,7 +216,7 @@ class IntelCase1 private constructor (
                 val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)
                 return decimal
             }
-            return D128ParsePrint.parseDecimal(str, ctx)
+            return D128Parse.parseDecimal(str, ctx)
         }
 
     }

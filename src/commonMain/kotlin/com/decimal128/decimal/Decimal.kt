@@ -257,7 +257,7 @@ class Decimal private constructor(
          * @throws IllegalArgumentException if [str] is not a valid decimal128 value.
          */
         fun from(str: String, ctx: DecContext = DecContext.current()) =
-            D128ParsePrint.parseDecimal(str, ctx)
+            D128Parse.parseDecimal(str, ctx)
 
         fun from(mutDec: MutDec, ctx: DecContext = DecContext.current()): Decimal {
             require(mutDec.digitLen <= ctx.precision)
@@ -1124,9 +1124,9 @@ class Decimal private constructor(
      * The round-trip property holds: `Decimal.from(d.toString()) bitwiseEQ d`
      * for all canonical values.
      */
-    override fun toString(): String = D128ParsePrint.toString(this, DecContext.current())
+    override fun toString(): String = D128Print.toString(this, DecContext.current())
 
-    fun toString(ctx: DecContext): String = D128ParsePrint.toString(this, ctx)
+    fun toString(ctx: DecContext): String = D128Print.toString(this, ctx)
 
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
 
