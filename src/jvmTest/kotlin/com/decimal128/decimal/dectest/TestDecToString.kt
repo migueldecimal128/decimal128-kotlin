@@ -2,7 +2,6 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.D128ParsePrint
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryStringCtxOp
-import com.decimal128.decimal.fmaImpl
 import org.junit.jupiter.api.Test
 
 class TestDecToString {

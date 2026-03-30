@@ -25,8 +25,6 @@ data class DectestCase1(
 
     val operand1: Decimal
         get() = parseDpd128(operand1Str, decContext)
-    val operand1Int: Int
-        get() = operand1Str.toInt()
 
 
     val operand2: Decimal

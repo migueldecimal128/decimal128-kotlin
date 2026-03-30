@@ -4,6 +4,21 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Compare754Result.*
+import com.decimal128.decimal.Decimal.Companion.INFINITY
+import com.decimal128.decimal.Decimal.Companion.NEG_INFINITY
+import com.decimal128.decimal.Decimal.Companion.NEG_ONEe0
+import com.decimal128.decimal.Decimal.Companion.NEG_QNAN
+import com.decimal128.decimal.Decimal.Companion.NEG_SNAN
+import com.decimal128.decimal.Decimal.Companion.NEG_ZEROe0
+import com.decimal128.decimal.Decimal.Companion.NaN
+import com.decimal128.decimal.Decimal.Companion.ONE
+import com.decimal128.decimal.Decimal.Companion.POS_INFINITY
+import com.decimal128.decimal.Decimal.Companion.POS_ONEe0
+import com.decimal128.decimal.Decimal.Companion.POS_QNAN
+import com.decimal128.decimal.Decimal.Companion.POS_SNAN
+import com.decimal128.decimal.Decimal.Companion.POS_ZEROe0
+import com.decimal128.decimal.Decimal.Companion.ZERO
+import com.decimal128.decimal.Decimal.Companion.sNaN
 import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
@@ -166,7 +181,6 @@ class Decimal private constructor(
         val NEG_SNAN = Decimal(stealEncodeSNAN(1, 0L, 0L), 0L, 0L)
         val sNaN = POS_SNAN
 
-        private const val DECIMAL128_QTINY_Neg6176 = -6176
         private const val DECIMAL128_QMAX_6111 = 6111
 
         private const val HASH_CODE_SIGN_FALSE = 1237 * 31 * 31 * 31
@@ -764,8 +778,8 @@ class Decimal private constructor(
                 var r1 = dw1
                 var r0 = dw0
                 var rQ = qExp
-                if (qExp < DECIMAL128_QMAX_6111) {
-                    val maxNtzdClamp = DECIMAL128_QMAX_6111 - qExp
+                if (qExp < Q_MAX) {
+                    val maxNtzdClamp = Q_MAX - qExp
                     val tmps = DecContext.current().tmps
                     val t = tmps.mdecArg1
                     t.c256Set128(dw1, dw0)

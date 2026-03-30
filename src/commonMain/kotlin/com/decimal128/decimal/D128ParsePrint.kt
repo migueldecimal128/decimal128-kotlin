@@ -86,7 +86,7 @@ object D128ParsePrint {
     }
 
     /**
-     * Parses a textual infinity representation into a [`Decimal`] value.
+     * Parses a textual infinity representation into a [Decimal] value.
      *
      * Accepted forms are case-insensitive:
      *
@@ -140,20 +140,8 @@ object D128ParsePrint {
         return Decimal.infinity(sign)
     }
 
-    private const val MAX128_HI19 = 3402823669209384634L // hi 19 digits of 2**128-1
-    private const val MAX128_LO20 = 72997609508796735L   // lo 20 digits of 2**128-1
-
-    private const val NINES_33_HI = 0x0000314DC6448D93L
-    private const val NINES_33_LO = 0x38C15B09FFFFFFFFL
-
-    private const val NINES_38_HI = 0x04B3B4CA85A86C47L
-    private const val NINES_38_LO = Long.MIN_VALUE or 0x2098A223FFFFFFFFL
-
-    private const val NINES_19 = (999_999_999_999_999_999L * 10L) + 9L
-    private const val NINES_14 = 99_999_999_999_999L
-
     /**
-     * Parses a textual NaN representation into a [`Decimal`] value.
+     * Parses a textual NaN representation into a [Decimal] value.
      *
      * Accepted forms (case-insensitive):
      *
@@ -275,10 +263,10 @@ object D128ParsePrint {
      * @return the parsed finite `Decimal` value, or `null` if not a valid finite
      *         decimal128 text form without rounding.
      */
-    fun parseFiniteValueText(str: String, ctx: DecContext = DecContext.current()): Any? =
+    fun parseFiniteValueText(str: String, ctx: DecContext = DecContext.current()): Any =
         parseFiniteValueText(StringLatin1Iterator(str), ctx)
 
-    fun parseFiniteValueText(txt: Latin1Iterator, ctx: DecContext): Any? {
+    fun parseFiniteValueText(txt: Latin1Iterator, ctx: DecContext): Any {
         val precision = ctx.precision
         var residue: Residue = Residue.EXACT
 

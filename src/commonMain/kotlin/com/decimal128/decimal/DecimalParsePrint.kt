@@ -4,49 +4,12 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-private const val SPECIAL_NAME_INF =
-    ('I'.code.toLong() shl 0) or ('n'.code.toLong() shl 8) or ('f'.code.toLong() shl 16)
-private const val SPECIAL_NAME_NAN =
-    ('N'.code.toLong() shl 0) or ('a'.code.toLong() shl 8) or ('N'.code.toLong() shl 16)
-
 private const val UPPER_CASE_MASK = ('a'.code - 'A'.code).inv()
 
 private const val INFINITY_CHARS_BACKWARDS = (('y'.code.toLong() shl 56) or ('t'.code.toLong() shl 48) or
         ('i'.code.toLong() shl 40) or ('n'.code.toLong() shl 32) or
         ('i'.code.toLong() shl 24) or ('f'.code.toLong() shl 16) or
         ('n'.code.toLong() shl  8) or ('I'.code.toLong()))
-
-private fun u64ToUtf8(digitLen: Int, dw0: Long, bytes: ByteArray, off: Int, len: Int) : Int {
-    val last = off + digitLen + (-digitLen shr 31)
-    val count = last + 1 - off
-    var d = dw0
-    var i = count - 1
-    do {
-        val qA = unsignedMulHi(d, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitA = (( d - (qA * 10L)) + '0'.code).toByte()
-        val qB = unsignedMulHi(qA, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitB = ((qA - (qB * 10L)) + '0'.code).toByte()
-        val qC = unsignedMulHi(qB, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        val digitC = ((qB - (qC * 10L)) + '0'.code).toByte()
-        //val qD = umulHigh(qC, 0xCCCCCCCCCCCCCCCDuL.toLong()) ushr 3
-        //val digitD = qC - (qD * 10L)
-
-        //val iD = i - 3; val maskD = -iD shr 31
-        val tC = i - 2; val maskC = -tC shr 31; val iC = tC and maskC
-        val tB = i - 1; val maskB = -tB shr 31; val iB = tB and maskB
-
-        //bytes[off + (iD and maskD)] = ('0'.code + digitD).toByte()
-        bytes[off + iC] = digitC
-        bytes[off + iB] = digitB
-        bytes[off + i] = digitA
-
-        //d = qD
-        //i -= 4
-        d = qC
-        i -= 3
-    } while (i >= 0)
-    return count
-}
 
 private const val BYTE_ZERO = '0'.code.toByte()
 private const val BYTE_DOT = '.'.code.toByte()
@@ -81,7 +44,6 @@ object DecimalParsePrint {
         val signLen = if (md.sign) 1 else 0
         val expSignLen = if (md.qExp < 0 || md.qExp > 0 && prefs.printExponentPlusSign) 1 else 0
         val expLen = calcBitLen64(abs(md.qExp).toLong())
-        val engineeringStringPadding = if (prefs.printEngineeringString) 3 else 0
         val dotLen = if (md.qExp == 0) 0 else 1
         val expELen = dotLen
         val coeffLen = when {
