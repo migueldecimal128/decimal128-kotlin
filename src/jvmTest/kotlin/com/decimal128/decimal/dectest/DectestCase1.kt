@@ -99,7 +99,7 @@ data class DectestCase1(
             "conversion_syntax" to DecException.INVALID_OPERATION,
         )
 
-        private fun allocDecContext(dectestEnv: DectestEnv): DecContext {
+        private fun allocDecContext(dectestEnv: DectestEnv, printStyleEngineering: Boolean = false): DecContext {
             require(dectestEnv.precision == 34)
             require(dectestEnv.maxExp == 6144)
             require(dectestEnv.minExp == -6143)
@@ -107,14 +107,16 @@ data class DectestCase1(
             val decContext = DecContext.decimal128IEEE().
             with(dectestEnv.rounding).
             with(DecPrefs.IEEE_DEFAULT.
-            copy(printExponentPlusSign = true))
+            copy(printExponentPlusSign = true,
+                printStyle = if (printStyleEngineering) DecPrefs.PrintStyle.ENGINEERING else DecPrefs.PrintStyle.AUTO
+                ))
             return decContext
         }
 
         /**
          * Parse a single decTest test case line into a DectestCase object.
          */
-        fun parseDectestCase(text: String, env: DectestEnv): DectestCase1 {
+        fun parseDectestCase(text: String, env: DectestEnv, printStyleEngineering: Boolean = false): DectestCase1 {
             // Split at ->
             val (lhs, rhs) = ARROW.split(text, 2)
 
@@ -157,7 +159,7 @@ data class DectestCase1(
                 conditions = conditions,
                 dectestEnv = env,
                 expectedDecFlags = conditionsToDecFlags(conditions),
-                decContext = allocDecContext(env)
+                decContext = allocDecContext(env, printStyleEngineering)
             )
         }
 

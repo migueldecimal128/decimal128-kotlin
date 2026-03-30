@@ -4,13 +4,13 @@ import com.decimal128.decimal.DecRounding
 
 object DectestParser1 {
 
-    fun parse(input: String, opName: String = ""): List<DectestCase1> =
-        parseLines(input.lineSequence(), opName)
+    fun parse(input: String, opName: String = "", printStyleEngineering: Boolean = false): List<DectestCase1> =
+        parseLines(input.lineSequence(), opName, printStyleEngineering)
 
-    fun parse(lines: Array<String>, opName: String = ""): List<DectestCase1> =
-        parseLines(lines.asSequence(), opName)
+    fun parse(lines: Array<String>, opName: String = "", printStyleEngineering: Boolean = false): List<DectestCase1> =
+        parseLines(lines.asSequence(), opName, printStyleEngineering)
 
-    fun parseLines(lines: Sequence<String>, opName: String = ""): List<DectestCase1> {
+    fun parseLines(lines: Sequence<String>, opName: String = "", printStyleEngineering: Boolean = false): List<DectestCase1> {
         var env = DectestEnv()
         val out = ArrayList<DectestCase1>()
 
@@ -27,7 +27,7 @@ object DectestParser1 {
             if (env.isValid()) {
                 // Test case
                 if ("->" in raw) {
-                    val case = DectestCase1.parseDectestCase(raw, env)
+                    val case = DectestCase1.parseDectestCase(raw, env, printStyleEngineering)
                     if (case.operand1Str != "#" && case.operand2Str != "#" && case.operand3Str != "#") {
                         if (opName == "" || case.operation == opName) {
                             out += case

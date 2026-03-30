@@ -256,29 +256,31 @@ object DectestRunner1 {
     fun runUnaryStringCtxOp(fileName: String,
                             opName: String,
                             unaryStringCtxOp: (Decimal, DecContext) -> String,
+                            printStyleEngineering: Boolean = false,
                             verbose: Boolean = true,
                             skip: Boolean = true,
                             skipCases: Array<String> = arrayOf(),
     ) {
         val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
-        val allTests = DectestParser1.parse(fileText, opName)
+        val allTests = DectestParser1.parse(fileText, opName, printStyleEngineering)
         runUnaryStringCtxOp(allTests, unaryStringCtxOp, skip, skipCases, verbose)
     }
 
     fun runUnaryStringCtxOp(unaryStringCtxOp: (Decimal, DecContext) -> String,
+                            printStyleEngineering: Boolean = false,
                             verbose: Boolean = true,
                             cases: Array<String> = emptyArray(),
     ) {
-        val cases2 = DectestParser1.parse(cases)
+        val cases2 = DectestParser1.parse(cases, printStyleEngineering = printStyleEngineering)
         runUnaryStringCtxOp(cases2, unaryStringCtxOp, verbose = verbose)
     }
 
 
-    fun runUnaryStringCtxOp(cases: List<DectestCase1>,
-                            unaryStringCtxOp: (Decimal, DecContext) -> String,
-                            skip: Boolean = true,
-                            skipCases: Array<String> = arrayOf(),
-                            verbose: Boolean = true,
+    private fun runUnaryStringCtxOp(cases: List<DectestCase1>,
+                                    unaryStringCtxOp: (Decimal, DecContext) -> String,
+                                    skip: Boolean = true,
+                                    skipCases: Array<String> = arrayOf(),
+                                    verbose: Boolean = true,
     ) {
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         cases.forEach { tc ->

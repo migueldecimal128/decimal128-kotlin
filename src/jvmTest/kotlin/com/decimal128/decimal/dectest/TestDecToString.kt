@@ -36,4 +36,31 @@ class TestDecToString {
         )
     )
 
+    @Test
+    fun testToEng() {
+        runUnaryStringCtxOp(
+            "dqBase.decTest",
+            "toEng",
+            D128ParsePrint::toString,
+            printStyleEngineering = true,
+            verbose = verbose,
+            skip = true,
+            skipCases = arrayOf<String>(
+            )
+        )
+    }
+
+    @Test
+    fun testToEngCases() = runUnaryStringCtxOp(
+        D128ParsePrint::toString,
+        printStyleEngineering = true,
+        verbose = verbose,
+        cases = arrayOf<String>(
+            "dqbast800 toEng 0e+1              -> \"0.00E+3\"",
+            "dqbas330  toEng 10e-2  -> 0.10",
+            "dqbas324  toEng 10e1   -> 100",
+            "dqbas302  toEng 10e12  -> 10E+12",
+        )
+    )
+
 }

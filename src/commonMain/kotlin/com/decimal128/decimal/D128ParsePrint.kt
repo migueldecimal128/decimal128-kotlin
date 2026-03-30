@@ -420,7 +420,6 @@ object D128ParsePrint {
                 return when {
                     notAlwaysScientific && qExp == 0 -> toIntegerString(x, utf8)
                     notAlwaysScientific && qExp < 0 &&
-                            prefs.printStyle == DecPrefs.PrintStyle.AUTO &&
                             stealSciExp(stealX) >= prefs.printMinPlainExponent ->
                         toDecimalPointString(x, utf8)
                     printStyle != PrintStyle.ENGINEERING ->
@@ -530,35 +529,77 @@ object D128ParsePrint {
         val eExp = stealSciExp(steal)
         val signLen = stealSignBit(steal)
 
+        return if (digitLen == 0)
+            toEngineeringStringZero(eExp, signLen, exponentEUtf8Byte, printExponentPlusSign, utf8)
+        else
+            toEngineeringStringNonZero(x, digitLen, eExp, signLen, exponentEUtf8Byte, printExponentPlusSign, utf8)
+    }
+
+    private fun toEngineeringStringZero(eExp: Int,
+                                        signLen: Int,
+                                        exponentEUtf8Byte: Byte,
+                                        printExponentPlusSign: Boolean,
+                                        utf8: ByteArray): String {
+        val expAdjustment = if (eExp % 3 == 0) 0 else (3 - (eExp % 3 + 3) % 3)
+        val adjustedExp = eExp + expAdjustment
+        val trailingZeroCount = expAdjustment  // zeros needed to preserve quantum
+        val decimalPointLen = if (trailingZeroCount > 0) 1 else 0
+
+        // write '0'
+        utf8[signLen] = '0'.code.toByte()
+        var i = signLen + 1
+
+        // write decimal point and trailing zeros
+        if (decimalPointLen > 0) {
+            utf8[i++] = '.'.code.toByte()
+            repeat(trailingZeroCount) { utf8[i++] = '0'.code.toByte() }
+        }
+
+        if (adjustedExp == 0)
+            return utf8.decodeToString(0, i)
+
+        utf8[i++] = exponentEUtf8Byte
+        if (printExponentPlusSign && adjustedExp >= 0)
+            utf8[i++] = '+'.code.toByte()
+        val expLen = int32ToUtf8(adjustedExp, utf8, i)
+        return utf8.decodeToString(0, i + expLen)
+    }
+
+    private fun toEngineeringStringNonZero(x: Decimal,
+                                           digitLen: Int,
+                                           eExp: Int,
+                                           signLen: Int,
+                                           exponentEUtf8Byte: Byte,
+                                           printExponentPlusSign: Boolean,
+                                           utf8: ByteArray): String {
         val expAdjustment = (if (eExp >= 0) eExp else ((eExp % 3) + 3)) % 3
         val leftOfRadixPointCount = 1 + expAdjustment
         val adjustedExp = eExp - expAdjustment
-        val expAlignZeroCount =
-            if (digitLen == 0) 0 else max(0, 1 + expAdjustment - digitLen)
-        val decimalPointLen = if (digitLen > 1 && expAlignZeroCount == 0) 1 else 0
-        val printedDigitLen = max(digitLen, 1)
-        val expELen = 1
+        val expAlignZeroCount = max(0, 1 + expAdjustment - digitLen)
+        val decimalPointLen = if (digitLen > leftOfRadixPointCount) 1 else 0
+        val printedDigitLen = digitLen
         val expSignLen = if (adjustedExp < 0 || printExponentPlusSign) 1 else 0
         val expDigitLen = max(calcDigitLen64(abs(adjustedExp).toLong()), 1)
         val totalLen = signLen + decimalPointLen + expAlignZeroCount +
-                printedDigitLen + expELen + expSignLen + expDigitLen
-        verify { utf8[0] == '-'.code.toByte() }
+                printedDigitLen + (if (adjustedExp != 0) 1 + expSignLen + expDigitLen else 0)
+
         IntegerParsePrint.u128ToUtf8(printedDigitLen, x.dw1, x.dw0, utf8, signLen + decimalPointLen)
         var i = signLen + decimalPointLen + printedDigitLen
+
         when {
             expAlignZeroCount > 0 -> {
-                utf8[i] = '0'.code.toByte()
-                utf8[i + 1] = '0'.code.toByte()
-                i += expAlignZeroCount
+                repeat(expAlignZeroCount) { utf8[i++] = '0'.code.toByte() }
             }
-
             digitLen > leftOfRadixPointCount -> {
                 for (j in 0..<leftOfRadixPointCount)
                     utf8[signLen + j] = utf8[signLen + j + 1]
-                val insertionPoint = signLen + leftOfRadixPointCount
-                utf8[insertionPoint] = '.'.code.toByte()
+                utf8[signLen + leftOfRadixPointCount] = '.'.code.toByte()
             }
         }
+
+        if (adjustedExp == 0)
+            return utf8.decodeToString(0, i)
+
         utf8[i++] = exponentEUtf8Byte
         if (printExponentPlusSign && adjustedExp >= 0)
             utf8[i++] = '+'.code.toByte()
