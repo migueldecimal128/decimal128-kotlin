@@ -237,7 +237,7 @@ internal fun decContextDecimal128Kotlin(): DecContext = DecContext(
 internal fun decContextDecimal128IEEE(): DecContext = DecContext(
     decFormat = DecFormat.DECIMAL_128,
     decRounding = DecRounding.ROUND_TIES_TO_EVEN,
-    decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
+    decPrefs = DecPrefs.IEEE_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
     decTrapHandlers = null,
     decFlags = DecFlags(),
     decTmps = DecTmps()

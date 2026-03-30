@@ -15,7 +15,7 @@ data class DecPrefs(
 
     val parseCollapseSNaN: Boolean = false,
     val parseDiscardNanPayload: Boolean = false,
-    val parseMalformedSignalsInvalidOperation: Boolean = false,
+    val parseMalformedThrowsNumberFormatException: Boolean = false,
     val parseThrowOnDigitOverflow: Boolean = false,
     val parseThrowOnOutOfRange: Boolean = false,
 
@@ -27,7 +27,7 @@ data class DecPrefs(
     companion object {
         val IEEE_DEFAULT = DecPrefs()
         val KOTLIN_DEFAULT = DecPrefs(
-            parseMalformedSignalsInvalidOperation = true,
+            parseMalformedThrowsNumberFormatException = true,
         )
     }
 

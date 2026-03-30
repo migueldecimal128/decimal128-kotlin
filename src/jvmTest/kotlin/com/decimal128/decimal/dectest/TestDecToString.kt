@@ -30,8 +30,8 @@ class TestDecToString {
         D128ParsePrint::toString,
         verbose = verbose,
         cases = arrayOf(
-            "dqbas562 toSci \"NaNq\"            -> NaN Conversion_syntax",
             "dqbas500 toSci '1..2'            -> NaN Conversion_syntax",
+            "dqbas562 toSci \"NaNq\"            -> NaN Conversion_syntax",
             "dqbas071 toSci  .1234567891234567890123456780123456123  -> 0.1234567891234567890123456780123456 Inexact Rounded",
         )
     )

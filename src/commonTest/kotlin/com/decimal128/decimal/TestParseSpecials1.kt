@@ -130,7 +130,7 @@ class TestParseSpecials1 {
 
     @Test
     fun testParseFiniteValueText_bad_ieee() {
-        val decPrefs = DecPrefs().copy(parseMalformedSignalsInvalidOperation = true,
+        val decPrefs = DecPrefs().copy(parseMalformedThrowsNumberFormatException = false,
             parseThrowOnDigitOverflow = false, parseThrowOnOutOfRange = false)
         val decContext = DecContext.decimal128IEEE().with(decPrefs)
         for (tc in tcsNull) {

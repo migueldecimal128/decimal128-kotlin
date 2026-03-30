@@ -51,10 +51,10 @@ object D128ParsePrint {
         val reason: InvalidOperationReason =
             if (decOrReason is InvalidOperationReason) decOrReason
             else PARSE_MALFORMED
-        if (ctx.decPrefs.parseMalformedSignalsInvalidOperation) {
-            return ctx.signalInvalid(reason)
+        if (ctx.decPrefs.parseMalformedThrowsNumberFormatException) {
+            throw NumberFormatException("invalid decimal format:$reason:'$str'")
         }
-        throw NumberFormatException("invalid decimal format:$reason:'$str'")
+        return ctx.signalInvalid(reason)
     }
 
     /**
@@ -212,15 +212,21 @@ object D128ParsePrint {
         var accum19a = 0L
         var accum19b = 0L
         do {
-            if (ch < '0' || ch > '9')
+            if (ch >= '0' && ch <= '9') {
+                val d = ch - '0'
+                // flush leading zeros from payload ... don't increment
+                accumDigitCount += (-(accumDigitCount or d)) ushr 31
+                if (accumDigitCount <= 19)
+                    accum19a = (accum19a * 10L) + d.toLong()
+                else
+                    accum19b = (accum19b * 10L) + d.toLong()
+            } else {
+                if (ch != '(' && ch != ')' &&
+                    ch != '[' && ch != ']' &&
+                    ch != '{' && ch != '}')
                 return InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN
-            val d = ch - '0'
-            // flush leading zeros from payload ... don't increment
-            accumDigitCount += (-(accumDigitCount or d)) ushr 31
-            if (accumDigitCount <= 19)
-                accum19a = (accum19a * 10L) + d.toLong()
-            else
-                accum19b = (accum19b * 10L) + d.toLong()
+
+            }
             ch = txt.nextChar()
         } while (ch.code != 0)
         var payloadDw0: Long
