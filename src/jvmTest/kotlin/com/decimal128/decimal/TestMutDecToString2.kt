@@ -9,9 +9,9 @@ class TestMutDecToString2 {
     val verbose = false
 
     val tcs = arrayOf(
+        "-9",
         "NaN",
         "-sNaN123456789012345678901234567890",
-        "-9",
         "6.02E23",
         "0", "1", "-9",
         "0.0", "-0.0",
@@ -36,8 +36,8 @@ class TestMutDecToString2 {
     fun test1(tc: String) {
         if (verbose)
             println("tc:$tc")
-        val dec = MutDec().set(tc)
-        val str = dec.toString()
+        val md = MutDec().set(tc)
+        val str = md.toString()
         if (verbose)
             println(" -> dec:$str")
         assertEquals(tc, str)

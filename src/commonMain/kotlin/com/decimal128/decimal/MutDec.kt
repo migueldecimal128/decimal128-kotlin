@@ -904,157 +904,22 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     override fun toString(): String {
         val steal = steal
-        return if (stealIsFinite(steal)) {
-            val qExp = stealQExp(steal)
-            when {
-                qExp == 0 -> IntegerParsePrint.c256ToString(stealSignFlag(steal), this)
-                qExp < 0 && sciExp() >= -6 -> toDecimalPointString()
-                else -> toScientificString()
-            }
-        } else {
-            toSpecialValueString()
-        }
+        if (!stealIsFinite(steal) || stealBitLen(steal) <= 127)
+            return D128ParsePrint.d128ToString(steal, dw1, dw0, DecContext.current())
+        // this is called only when the MutDec has not been normalized ...
+        // ... only in the debugger
+
+        return (if (steal < 0) "-" else "") + super.toString() + "E" + qExp.toString()
     }
 
-    fun toString(toEngineeringExp: Boolean): String {
+    fun toString(ctx: DecContext): String {
         val steal = steal
-        val qExp = stealQExp(steal)
-        if (toEngineeringExp &&
-            stealIsFinite(steal) &&
-            (qExp > 0 || qExp < 0 && stealSciExp(steal) < -6))
-            return toEngineeringExponentString()
-        else
-            return toString()
-    }
+        if (!stealIsFinite(steal) || stealBitLen(steal) <= 127)
+            return D128ParsePrint.d128ToString(steal, dw1, dw0, ctx)
+        // this is called only when the MutDec has not been normalized ...
+        // ... only in the debugger
 
-    private /*inline*/ fun toDecimalPointString() : String {
-        val steal = steal
-        val qExp = stealQExp(steal)
-        val digitLen = stealDigitLen(steal)
-        val signLen = stealSignBit(steal)
-
-        val digitsRightOfDecimal = -qExp
-        val leadingZeroCount = max(1 + digitsRightOfDecimal - digitLen, 0)
-        val decimalPointLen = 1
-        val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
-        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
-        utf8[0] = '-'.code.toByte() // overwritten when positive
-        for (i in signLen..leadingZeroCount) // there is one extra here
-            utf8[i] = '0'.code.toByte()
-        int256ToUtf8(sign = false, this, utf8, signLen + leadingZeroCount)
-        moveBytesUp1(utf8, totalLen - digitsRightOfDecimal - 1, digitsRightOfDecimal)
-        //for (i in totalLen-1 downTo totalLen-digitsRightOfDecimal)
-        //    utf8[i] = utf8[i - 1]
-        utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
-        return utf8.decodeToString(0, totalLen)
-    }
-
-    private fun moveBytesUp1(bytes: ByteArray, off: Int, len: Int) {
-        for (i in off + len - 1 downTo off)
-            bytes[i + 1] = bytes[i]
-    }
-
-    private /*inline*/ fun toScientificString(): String {
-        val steal = steal
-        val digitLen = stealDigitLen(steal)
-        val eExp = stealSciExp(steal)
-        val signLen = stealSignBit(steal)
-        val sign = stealSignFlag(steal)
-
-        val decimalPointLen = if (digitLen > 1) 1 else 0
-        val printedDigitLen = max(digitLen, 1)
-        val expELen = 1
-        val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
-        val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
-        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
-        var i = int256ToUtf8(sign, this, utf8, 0)
-        if (digitLen > 1) {
-            val insertionPoint = signLen + 1
-            moveBytesUp1(utf8, insertionPoint, digitLen - 1)
-            utf8[insertionPoint] = '.'.code.toByte()
-            ++i
-        }
-        utf8[i] = 'E'.code.toByte()
-        val j = int32ToUtf8(eExp, utf8, i + 1)
-        verify { i + 1 + j == totalLen }
-        return utf8.decodeToString(0, totalLen)
-    }
-
-    private /*inline*/ fun toEngineeringExponentString(): String {
-        val steal = steal
-        val digitLen = stealDigitLen(steal)
-        val eExp = stealSciExp(steal)
-        val signLen = stealSignBit(steal)
-        val sign = stealSignFlag(steal)
-
-        val expAdjustment = (if (eExp >= 0) eExp else ((eExp % 3) + 3)) % 3
-        val leftOfRadixPointCount = 1 + expAdjustment
-        val adjustedExp = eExp - expAdjustment
-        val decimalPointLen = if (digitLen > 1) 1 else 0
-        val printedDigitLen = max(digitLen, 1)
-        val expAlignZeroCount =
-            if (digitLen == 0) 0 else max(0, 1 + expAdjustment - digitLen)
-        val expELen = 1
-        val expSignLen = if (eExp < 0) 1 else 0
-        val expDigitLen = max(calcDigitLen64(abs(eExp).toLong()), 1)
-        val totalLen = signLen + decimalPointLen + expAlignZeroCount +
-                printedDigitLen + expELen + expSignLen + expDigitLen
-        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
-        var i = int256ToUtf8(sign, this, utf8, 0)
-        when {
-            expAlignZeroCount > 0 -> {
-                utf8[i++] = '0'.code.toByte()
-                if (expAlignZeroCount == 2)
-                    utf8[i++] = '0'.code.toByte()
-            }
-
-            digitLen > leftOfRadixPointCount -> {
-                val insertionPoint = signLen + 1
-                moveBytesUp1(utf8, insertionPoint, digitLen - 1)
-                utf8[insertionPoint] = '.'.code.toByte()
-                ++i
-            }
-        }
-        utf8[i] = 'E'.code.toByte()
-        val j = int32ToUtf8(adjustedExp, utf8, i + 1)
-        verify { i + 1 + j == totalLen }
-        return utf8.decodeToString(0, totalLen)
-    }
-
-    private fun toSpecialValueString() : String {
-        val steal = steal
-        val sign = stealSignFlag(steal)
-        if (stealIsINF(steal)) return if (sign) "-Infinity" else "Infinity"
-        verify { isNaN() }
-        val nanStr =
-            if (stealIsSNAN(steal)) {
-                if (sign) "-sNaN" else "sNaN"
-            } else {
-                if (sign) "-NaN" else "NaN"
-            }
-        val digitLen = stealDigitLen(steal)
-        if (digitLen == 0)
-            return nanStr
-        val utf8 = DecContext.current().tmps.utf8BytesPrintOnly
-        for (i in nanStr.indices)
-            utf8[i] = nanStr[i].code.toByte()
-        int256ToUtf8(sign = false, this, utf8, nanStr.length)
-        return utf8.decodeToString(0, nanStr.length + digitLen)
-    }
-
-    fun toDebugString() : String {
-        if (isFinite()) {
-            val printLen = calcDebugPrintLength()
-            val utf8 = ByteArray(printLen)
-            val i = int256ToUtf8(sign, this, utf8, 0)
-            utf8[i] = 'E'.code.toByte()
-            val j = int32ToUtf8(qExp, utf8, i + 1)
-            verify { i + 1 + j == utf8.size }
-            return utf8.decodeToString()
-        } else {
-            return toSpecialValueString()
-        }
+        return (if (steal < 0) "-" else "") + super.toString() + "E" + qExp.toString()
     }
 
     fun calcDebugPrintLength(): Int {

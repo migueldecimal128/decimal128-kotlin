@@ -102,7 +102,7 @@ class TestMutDecToString {
             println("$strVal bd:$bd => expected:$expected")
 
         val d = newMutDec(bd)
-        val observed = DecimalParsePrint.decToString(d, ctxEPlus)
+        val observed = d.toString(ctxEPlus)
 
         if (verbose)
             println(" => observed:$observed")

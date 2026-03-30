@@ -395,7 +395,7 @@ object D128ParsePrint {
         return d128ToString(x.steal, x.dw1, x.dw0, ctx)
     }
 
-    private fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): String {
+    fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): String {
         val prefs = ctx.decPrefs
         val utf8 = ctx.tmps.utf8BytesPrintOnly
         // a minus sign is always written

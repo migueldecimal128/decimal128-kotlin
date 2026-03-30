@@ -38,14 +38,13 @@ private const val S_U64_DIV_1E16 = 51
 internal object IntegerParsePrint {
 
     internal fun c256ToString(sign: Boolean, c: C256): String {
-        return if (c.bitLen <= 63) {
-            if (c.bitLen == 0) {
-                if (sign) "-0" else "0"
-            } else {
+        val bitLen = c.bitLen
+        return when {
+            bitLen == 0 -> if (sign) "-0" else "0"
+            bitLen <= 63 ->
                 (if (sign) -(c.dw0) else c.dw0).toString()
-            }
-        } else {
-            c256ToStringImpl(sign, c)
+            else ->
+                c256ToStringImpl(sign, c)
         }
     }
 
@@ -91,7 +90,6 @@ internal object IntegerParsePrint {
     fun int256ToUtf8(sign: Boolean, c: C256, utf8: ByteArray, off: Int): Int {
         val sign01 = if (sign) 1 else 0
         utf8[off] = '-'.code.toByte() // if non-negative then this will be overwritten
-        c256ToUtf8(c, utf8, off + sign01)
         return sign01 + c256ToUtf8(c, utf8, off + sign01)
     }
 
