@@ -132,7 +132,7 @@ object DecimalParsePrint {
             x.digitLen > 1 -> finiteScientificDecimalToUtf8(x, bytes, ib, tmp)
             else ->  finiteSingleDigitScientificToUtf8(x, bytes, ib)
         }
-        bytes[ib++] = (if (prefs.printExponentUppercaseE) 'E' else 'e').code.toByte()
+        bytes[ib++] = (if (prefs.printExponentLowercaseE) 'e' else 'E').code.toByte()
         bytes[ib] = (if (sciExp < 0) '-' else '+').code.toByte()
         ib += if ((sciExp < 0) or prefs.printExponentPlusSign) 1 else 0
         val sciExpAbs = abs(sciExp)

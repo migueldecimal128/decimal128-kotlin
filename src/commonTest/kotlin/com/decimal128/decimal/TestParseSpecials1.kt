@@ -85,8 +85,8 @@ class TestParseSpecials1 {
         "123",
         "0", "-0", "1", "-2", "123", "-456", "1.23", "-4.56",
         "3.141592653589793238462643383279502",
-        "6.02E+23",
-        "9.999999999999999999999999999999999E+6144",
+        "6.023e23",
+        "9.999999999999999999999999999999999e6144",
 
         "123_456_789",
         "123__456__789",
@@ -94,11 +94,14 @@ class TestParseSpecials1 {
 
     @Test
     fun testParseFiniteValueText_good() {
-        for (tc in tcsGood) {
-            if (verbose)
-                println("tc:$tc")
-            val v = D128ParsePrint.parseFiniteValueText(tc)
-            assertEquals(tc.replace("_", ""), v.toString())
+        val ctxLowerCaseE = DecContext.decimal128Kotlin().with(DecPrefs.KOTLIN_DEFAULT.copy(printExponentLowercaseE = true))
+        ctxLowerCaseE.eval {
+            for (tc in tcsGood) {
+                if (verbose)
+                    println("tc:$tc")
+                val v = D128ParsePrint.parseFiniteValueText(tc)
+                assertEquals(tc.replace("_", ""), v.toString())
+            }
         }
     }
 

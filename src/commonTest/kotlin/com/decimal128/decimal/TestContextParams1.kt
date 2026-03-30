@@ -19,7 +19,7 @@ class TestContextParams1 {
                 val decPrefs = DecPrefs().copy(
                     printStyle = DecPrefs.PrintStyle.ALWAYS_SCIENTIFIC,
                     printExponentPlusSign = false,
-                    printExponentUppercaseE = true,
+                    printExponentLowercaseE = false,
                     )
                 val ctxT = ctx.with(rounding).with(decPrefs)
                 ctxT.eval {

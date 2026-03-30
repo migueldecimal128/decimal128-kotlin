@@ -413,7 +413,7 @@ object D128ParsePrint {
         if (stealIsFinite(stealX)) {
             val printStyle = prefs.printStyle
             val notAlwaysScientific = printStyle != PrintStyle.ALWAYS_SCIENTIFIC
-            val printExponentUppercaseE = prefs.printExponentUppercaseE
+            val exponentEUtf8Byte = (if (prefs.printExponentLowercaseE) 'e' else 'E').code.toByte()
             val printExponentPlusSign = prefs.printExponentPlusSign
             if (printStyle != PrintStyle.COEFFICIENT_QEXPONENT) {
                 val qExp = stealQExp(stealX)
@@ -426,16 +426,16 @@ object D128ParsePrint {
                     printStyle != PrintStyle.ENGINEERING ->
                         toNormalizedScientificString(
                             x,
-                            printExponentUppercaseE,
+                            exponentEUtf8Byte,
                             printExponentPlusSign,
                             utf8
                         )
                     else ->
-                        toEngineeringString(x, printExponentUppercaseE, printExponentPlusSign, utf8)
+                        toEngineeringString(x, exponentEUtf8Byte, printExponentPlusSign, utf8)
                 }
             } else {
                 return toCoefficientQExponentString(x,
-                    printExponentUppercaseE, printExponentPlusSign, utf8)
+                    exponentEUtf8Byte, printExponentPlusSign, utf8)
             }
         }
         var signBit = stealSignBit(stealX)
@@ -492,7 +492,7 @@ object D128ParsePrint {
     }
 
     private fun toNormalizedScientificString(x: Decimal,
-                                             printExponentUppercaseE: Boolean,
+                                             exponentEUtf8Byte: Byte,
                                              printExponentPlusSign: Boolean,
                                              utf8: ByteArray): String {
         val xSteal = x.steal
@@ -514,7 +514,7 @@ object D128ParsePrint {
             utf8[signLen + 1] = '.'.code.toByte()
         }
         val iE = signLen + decimalPointLen + printedDigitLen
-        utf8[iE] = (if (printExponentUppercaseE) 'E' else 'e').code.toByte()
+        utf8[iE] = exponentEUtf8Byte
         utf8[iE + 1] = expSignByte // will get overwritten when expSignLen == 0
         val j = IntegerParsePrint.renderTailDigitsBeforeIndex(eExpAbs.toLong(), utf8, totalLen)
         verify { j == expDigitLen }
@@ -522,7 +522,7 @@ object D128ParsePrint {
     }
 
     private fun toEngineeringString(x: Decimal,
-                                    printExponentUppercaseE: Boolean,
+                                    exponentEUtf8Byte: Byte,
                                     printExponentPlusSign: Boolean,
                                     utf8: ByteArray): String {
         val steal = x.steal
@@ -559,7 +559,7 @@ object D128ParsePrint {
                 utf8[insertionPoint] = '.'.code.toByte()
             }
         }
-        utf8[i++] = if (printExponentUppercaseE) 'E'.code.toByte() else 'e'.code.toByte()
+        utf8[i++] = exponentEUtf8Byte
         if (printExponentPlusSign && adjustedExp >= 0)
             utf8[i++] = '+'.code.toByte()
         val j = int32ToUtf8(adjustedExp, utf8, i)
@@ -568,7 +568,7 @@ object D128ParsePrint {
     }
 
     private fun toCoefficientQExponentString(x: Decimal,
-                                             printExponentUppercaseE: Boolean,
+                                             exponentEUtf8Byte: Byte,
                                              printExponentPlusSign: Boolean,
                                              utf8: ByteArray): String {
         val steal = x.steal
@@ -582,7 +582,7 @@ object D128ParsePrint {
         val totalLen = signLen + printedDigitLen + expELen + expSignLen + expDigitLen
         verify { utf8[0] == '-'.code.toByte() }
         var i = IntegerParsePrint.u128ToUtf8(printedDigitLen, x.dw1, x.dw0, utf8, signLen)
-        utf8[i++] = if (printExponentUppercaseE) 'E'.code.toByte() else 'e'.code.toByte()
+        utf8[i++] = exponentEUtf8Byte
         if (printExponentPlusSign && qExp >= 0)
             utf8[i++] = '+'.code.toByte()
         val j = int32ToUtf8(qExp, utf8, i)

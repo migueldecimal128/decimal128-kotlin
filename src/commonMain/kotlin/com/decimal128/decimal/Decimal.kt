@@ -1112,6 +1112,8 @@ class Decimal private constructor(
      */
     override fun toString(): String = D128ParsePrint.toString(this, DecContext.current())
 
+    fun toString(ctx: DecContext): String = D128ParsePrint.toString(this, ctx)
+
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
 
     context(decContext: DecContext)

@@ -3,6 +3,7 @@ package com.decimal128.decimal.dectest
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecFlags
+import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.MutDec
 import com.decimal128.decimal.with
@@ -103,7 +104,10 @@ data class DectestCase1(
             require(dectestEnv.maxExp == 6144)
             require(dectestEnv.minExp == -6143)
             require(dectestEnv.rounding != null)
-            val decContext = DecContext.decimal128IEEE().with(dectestEnv.rounding)
+            val decContext = DecContext.decimal128IEEE().
+            with(dectestEnv.rounding).
+            with(DecPrefs.IEEE_DEFAULT.
+            copy(printExponentPlusSign = true))
             return decContext
         }
 

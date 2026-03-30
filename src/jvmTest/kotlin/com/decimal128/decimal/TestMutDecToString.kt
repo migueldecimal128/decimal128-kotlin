@@ -94,6 +94,7 @@ class TestMutDecToString {
     }
 
     fun test1(tc: TC) {
+        val ctxEPlus = DecContext.decimal128Kotlin().with(DecPrefs.KOTLIN_DEFAULT.copy(printExponentPlusSign = true))
         val strVal = tc.strVal
         val bd = tc.bd
         val expected = tc.expected
@@ -101,7 +102,7 @@ class TestMutDecToString {
             println("$strVal bd:$bd => expected:$expected")
 
         val d = newMutDec(bd)
-        val observed = DecimalParsePrint.decToString(d)
+        val observed = DecimalParsePrint.decToString(d, ctxEPlus)
 
         if (verbose)
             println(" => observed:$observed")
