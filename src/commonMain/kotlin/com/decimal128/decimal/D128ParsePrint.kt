@@ -412,15 +412,13 @@ object D128ParsePrint {
         utf8[0] = '-'.code.toByte()
         if (stealIsFinite(stealX)) {
             val printStyle = prefs.printStyle
-            val notAlwaysScientific = printStyle != PrintStyle.ALWAYS_SCIENTIFIC
             val exponentEUtf8Byte = (if (prefs.printExponentLowercaseE) 'e' else 'E').code.toByte()
             val printExponentPlusSign = prefs.printExponentPlusSign
             if (printStyle != PrintStyle.COEFFICIENT_QEXPONENT) {
                 val qExp = stealQExp(stealX)
                 return when {
-                    notAlwaysScientific && qExp == 0 -> toIntegerString(x, utf8)
-                    notAlwaysScientific && qExp < 0 &&
-                            stealSciExp(stealX) >= prefs.printMinPlainExponent ->
+                    qExp == 0 -> toIntegerString(x, utf8)
+                    qExp < 0 && stealSciExp(stealX) >= prefs.printMinPlainExponent ->
                         toDecimalPointString(x, utf8)
                     printStyle != PrintStyle.ENGINEERING ->
                         toNormalizedScientificString(

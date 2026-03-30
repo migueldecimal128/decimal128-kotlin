@@ -17,7 +17,6 @@ class TestContextParams1 {
             for (i in 0..4) {
                 val rounding = DecRounding.fromValue(i)
                 val decPrefs = DecPrefs().copy(
-                    printStyle = DecPrefs.PrintStyle.ALWAYS_SCIENTIFIC,
                     printExponentPlusSign = false,
                     printExponentLowercaseE = false,
                     )
