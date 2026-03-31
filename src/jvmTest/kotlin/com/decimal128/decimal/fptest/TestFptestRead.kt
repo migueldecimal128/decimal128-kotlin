@@ -262,15 +262,15 @@ class TestFptestRead {
         fun result(): MutDec? {
             if (result == "#")
                 return null
-            val dec = MutDec()
+            val md = MutDec()
             //val ctx = DecContext()
             val ctx = DecContext.decimal128Kotlin()
             when (result) {
-                "Q" -> dec.setNaN()
-                "S" -> dec.setSNaN()
-                else -> DecimalParse.decFromString(dec, result, ctx)
+                "Q" -> md.setNaN()
+                "S" -> md.setSNaN()
+                else -> MutDecParse.parseDecimal(md, result, ctx)
             }
-            return dec
+            return md
         }
 
         fun decOperands(): ArrayList<MutDec> {
@@ -284,7 +284,7 @@ class TestFptestRead {
                     "S" -> d.setSNaN()
                     else -> {
                         operandPrintWriter?.println(t)
-                        DecimalParse.decFromString(d, t, ctx)
+                        MutDecParse.parseDecimal(d, t, ctx)
                     }
                 }
                 ret.add(d)
