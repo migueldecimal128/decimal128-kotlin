@@ -906,7 +906,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     override fun toString(): String {
         val steal = steal
         if (!stealIsFinite(steal) || stealBitLen(steal) <= 127)
-            return D128Print.d128ToString(steal, dw1, dw0, DecContext.current())
+            return d128ToString(steal, dw1, dw0, DecContext.current())
         // this is called only when the MutDec has not been normalized ...
         // ... only in the debugger
 
@@ -916,7 +916,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun toString(ctx: DecContext): String {
         val steal = steal
         if (!stealIsFinite(steal) || stealBitLen(steal) <= 127)
-            return D128Print.d128ToString(steal, dw1, dw0, ctx)
+            return d128ToString(steal, dw1, dw0, ctx)
         // this is called only when the MutDec has not been normalized ...
         // ... only in the debugger
 

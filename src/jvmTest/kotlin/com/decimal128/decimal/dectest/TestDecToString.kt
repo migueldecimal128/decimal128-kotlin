@@ -1,6 +1,6 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.D128Print
+import com.decimal128.decimal.d128ToString
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryStringCtxOp
 import org.junit.jupiter.api.Test
 
@@ -13,7 +13,7 @@ class TestDecToString {
         runUnaryStringCtxOp(
             "dqBase.decTest",
             "toSci",
-            D128Print::toString,
+            ::d128ToString,
             verbose = verbose,
             skip = true,
             skipCases = arrayOf<String>(
@@ -26,7 +26,7 @@ class TestDecToString {
 
     @Test
     fun testToSciCases() = runUnaryStringCtxOp(
-        D128Print::toString,
+        ::d128ToString,
         verbose = verbose,
         cases = arrayOf(
             "dqbas713 toSci 'NaN1'            -> NaN1",
@@ -41,7 +41,7 @@ class TestDecToString {
         runUnaryStringCtxOp(
             "dqBase.decTest",
             "toEng",
-            D128Print::toString,
+            ::d128ToString,
             printStyleEngineering = true,
             verbose = verbose,
             skip = true,
@@ -52,7 +52,7 @@ class TestDecToString {
 
     @Test
     fun testToEngCases() = runUnaryStringCtxOp(
-        D128Print::toString,
+        ::d128ToString,
         printStyleEngineering = true,
         verbose = verbose,
         cases = arrayOf<String>(

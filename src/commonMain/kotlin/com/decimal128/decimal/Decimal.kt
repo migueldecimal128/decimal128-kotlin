@@ -1133,9 +1133,9 @@ class Decimal private constructor(
      * The round-trip property holds: `Decimal.from(d.toString()) bitwiseEQ d`
      * for all canonical values.
      */
-    override fun toString(): String = D128Print.toString(this, DecContext.current())
+    override fun toString(): String = d128ToString(steal, dw1, dw0, DecContext.current())
 
-    fun toString(ctx: DecContext): String = D128Print.toString(this, ctx)
+    fun toString(ctx: DecContext): String = d128ToString(steal, dw1, dw0, ctx)
 
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
 
