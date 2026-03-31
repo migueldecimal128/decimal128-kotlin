@@ -15,67 +15,62 @@ class TestParseSpecials1 {
         if (verbose)
             println("x:$x")
 
-        val infinity = D128Parse.parseInfinityText("infinity")
+        val infinity = D128Parse.parseDecimal("infinity")
         assertEquals(Decimal.POS_INFINITY, infinity)
-        val inf = D128Parse.parseInfinityText("inf")
+        val inf = D128Parse.parseDecimal("inf")
         assertEquals(Decimal.POS_INFINITY, inf)
-        val plusINF = D128Parse.parseInfinityText("+INF")
+        val plusINF = D128Parse.parseDecimal("+INF")
         assertEquals(Decimal.POS_INFINITY, plusINF)
-        val negInfinity = D128Parse.parseInfinityText("-Infinity")
+        val negInfinity = D128Parse.parseDecimal("-Infinity")
         assertEquals(Decimal.NEG_INFINITY, negInfinity)
-        val null1 = D128Parse.parseInfinityText("x")
-        assertEquals(null, null1)
-        val null2 = D128Parse.parseInfinityText("+Infin")
-        assertEquals(null, null2)
+        assertFailsWith<NumberFormatException> { D128Parse.parseDecimal("x") }
+
+        assertFailsWith<NumberFormatException> { D128Parse.parseDecimal("+Infin") }
 
     }
 
     @Test
     fun testParseNanText() {
-        val nan = D128Parse.parseNanText("nan")
+        val nan = D128Parse.parseDecimal("nan")
         assertEquals(Decimal.POS_QNAN, nan)
-        val plusNAN = D128Parse.parseNanText("+NAN")
+        val plusNAN = D128Parse.parseDecimal("+NAN")
         assertEquals(Decimal.POS_QNAN, plusNAN)
-        val negNaN = D128Parse.parseNanText("-NaN")
+        val negNaN = D128Parse.parseDecimal("-NaN")
         assertEquals(Decimal.NEG_QNAN, negNaN)
-        val negSnan = D128Parse.parseNanText("-Snan")
+        val negSnan = D128Parse.parseDecimal("-Snan")
         assertEquals(Decimal.NEG_SNAN, negSnan)
-        val plussNaN = D128Parse.parseNanText("+sNaN")
+        val plussNaN = D128Parse.parseDecimal("+sNaN")
         assertEquals(Decimal.POS_SNAN, plussNaN)
-        val NaN0 = D128Parse.parseNanText("NaN0")
+        val NaN0 = D128Parse.parseDecimal("NaN0")
         assertEquals(Decimal.POS_QNAN, NaN0)
 
-        val null1 = D128Parse.parseNanText("NaN ")
-        assertEquals(InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN.toString(), null1.toString())
-        val nanPlus1 = D128Parse.parseNanText("NaN+1")
-        val nanPlus1Str = nanPlus1.toString()
-        assertEquals(InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN.toString(), nanPlus1Str)
-        val null3 = D128Parse.parseNanText("")
-        assertEquals(null, null3)
+        assertFailsWith<NumberFormatException> { D128Parse.parseDecimal("NaN ") }
+        assertFailsWith<NumberFormatException> { D128Parse.parseDecimal("NaN+1") }
+        assertFailsWith<NumberFormatException> { D128Parse.parseDecimal("") }
 
-        val nan1 = D128Parse.parseNanText("nan1")
+        val nan1 = D128Parse.parseDecimal("nan1")
         assertEquals("NaN1", nan1.toString())
-        val nan1234567890 = D128Parse.parseNanText("nan1234567890")
+        val nan1234567890 = D128Parse.parseDecimal("nan1234567890")
         assertEquals("NaN1234567890", nan1234567890.toString())
-        val nan19 = D128Parse.parseNanText("nan1234567890123456789")
+        val nan19 = D128Parse.parseDecimal("nan1234567890123456789")
         assertEquals("NaN1234567890123456789", nan19.toString())
-        val nan20 = D128Parse.parseNanText("nan12345678901234567890")
+        val nan20 = D128Parse.parseDecimal("nan12345678901234567890")
         assertEquals("NaN12345678901234567890", nan20.toString())
-        val nan21 = D128Parse.parseNanText("nan123456789012345678901")
+        val nan21 = D128Parse.parseDecimal("nan123456789012345678901")
         assertEquals("NaN123456789012345678901", nan21.toString())
-        val NAN33 = D128Parse.parseNanText("+NAN123456789012345678901234567890123")
+        val NAN33 = D128Parse.parseDecimal("+NAN123456789012345678901234567890123")
         assertEquals("NaN123456789012345678901234567890123", NAN33.toString())
         // NANs that overflow canonical 33 nines become zero ...
         //  ... close reading of IEEE754-2019 3.5.2
-        val NAN34 = D128Parse.parseNanText("+NAN1234567890123456789012345678901234")
+        val NAN34 = D128Parse.parseDecimal("+NAN1234567890123456789012345678901234")
         assertEquals("NaN", NAN34.toString())
-        val NAN32nines = D128Parse.parseNanText("+NAN99999999999999999999999999999999")
+        val NAN32nines = D128Parse.parseDecimal("+NAN99999999999999999999999999999999")
         assertEquals("NaN99999999999999999999999999999999", NAN32nines.toString())
-        val NAN33nines = D128Parse.parseNanText("+NAN999999999999999999999999999999999")
+        val NAN33nines = D128Parse.parseDecimal("+NAN999999999999999999999999999999999")
         assertEquals("NaN999999999999999999999999999999999", NAN33nines.toString())
-        val NAN34nines = D128Parse.parseNanText("+NAN9999999999999999999999999999999999")
+        val NAN34nines = D128Parse.parseDecimal("+NAN9999999999999999999999999999999999")
         assertEquals("NaN", NAN34nines.toString())
-        val NAN35nines = D128Parse.parseNanText("+NAN99999999999999999999999999999999999")
+        val NAN35nines = D128Parse.parseDecimal("+NAN99999999999999999999999999999999999")
         assertEquals("NaN", NAN35nines.toString())
 
     }
@@ -99,7 +94,7 @@ class TestParseSpecials1 {
             for (tc in tcsGood) {
                 if (verbose)
                     println("tc:$tc")
-                val v = D128Parse.parseFiniteValueText(tc)
+                val v = D128Parse.parseDecimal(tc)
                 assertEquals(tc.replace("_", ""), v.toString())
             }
         }
@@ -124,10 +119,9 @@ class TestParseSpecials1 {
         for (tc in tcsNull) {
             if (verbose)
                 println("tc:$tc")
-            val v = D128Parse.parseFiniteValueText(tc)
+            val msg = assertFailsWith<NumberFormatException> { D128Parse.parseDecimal(tc) }
             if (verbose)
-                println (" => $v")
-            assertTrue(v == null || v is InvalidOperationReason)
+                println (" => $msg")
         }
     }
 

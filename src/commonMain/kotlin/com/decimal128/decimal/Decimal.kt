@@ -259,14 +259,23 @@ class Decimal private constructor(
         fun from(str: String, ctx: DecContext = DecContext.current()) =
             D128Parse.parseDecimal(str, ctx)
 
-        fun from(mutDec: MutDec, ctx: DecContext = DecContext.current()): Decimal {
-            require(mutDec.digitLen <= ctx.precision)
-            return when (mutDec.type) {
-                STEAL_TYP_FNZ -> decimalFNZ(mutDec.signBit, mutDec.qExp, mutDec.dw1, mutDec.dw0)
-                STEAL_TYP_ZER -> zero(mutDec.sign, mutDec.qExp)
-                STEAL_TYP_INF -> infinity(mutDec.sign)
-                else -> NaN(mutDec.sign, mutDec.isSignaling(), mutDec.dw1, mutDec.dw0)
+        fun from(mutDec: MutDec): Decimal {
+            val steal = mutDec.steal
+            require(mutDec.digitLen <= 38)
+            if (! stealIsFNZ(steal)) when {
+                stealIsZER(steal) -> {
+                    if (stealQExp(steal) == 0)
+                        return if (steal < 0) NEG_ZEROe0 else POS_ZEROe0
+                }
+                stealIsINF(steal) ->
+                    return if (steal < 0) NEG_INFINITY else POS_INFINITY
+                stealBitLen(steal) == 0 -> { // NAN with no payload
+                    if (stealIsQNAN(steal))
+                        return if (steal < 0) NEG_QNAN else POS_QNAN
+                    return if (steal < 0) NEG_SNAN else POS_SNAN
+                }
             }
+            return Decimal(steal, mutDec.dw1, mutDec.dw0)
         }
 
         /**
