@@ -291,7 +291,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun set(str: String) = set(str, DecContext.current())
 
     fun set(str: String, ctx: DecContext): MutDec {
-        DecimalParsePrint.decFromString(this, str, ctx)
+        DecimalParse.decFromString(this, str, ctx)
         verify { validate() }
         return this
     }
