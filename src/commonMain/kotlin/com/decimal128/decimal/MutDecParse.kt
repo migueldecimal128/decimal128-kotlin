@@ -15,6 +15,13 @@ import com.decimal128.decimal.InvalidOperationReason.PARSE_VALUE_OUT_OF_RANGE
 import kotlin.math.max
 import kotlin.math.min
 
+internal fun parseToDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
+    val md = ctx.tmps.mdecArg1
+    MutDecParse.parseToMutDec(md, str, ctx)
+    return Decimal.from(md)
+}
+
+
 object MutDecParse {
 
     /**
@@ -31,7 +38,7 @@ object MutDecParse {
      * @throws IllegalArgumentException if the input is not a valid finite
      *         decimal128 text form or would require rounding.
      */
-    fun parseDecimal(md: MutDec, str: String, ctx: DecContext = DecContext.current()): MutDec {
+    fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext.current()): MutDec {
         val strIterator = ctx.tmps.parseStringLatin1Iterator.reload(str)
         val mutDecOrReason = parseDecimalOrReason(md, strIterator, ctx)
         if (mutDecOrReason is MutDec)

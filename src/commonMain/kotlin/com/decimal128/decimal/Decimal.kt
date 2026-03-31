@@ -257,7 +257,7 @@ class Decimal private constructor(
          * @throws IllegalArgumentException if [str] is not a valid decimal128 value.
          */
         fun from(str: String, ctx: DecContext = DecContext.current()) =
-            D128Parse.parseDecimal(str, ctx)
+            parseToDecimal(str, ctx)
 
         fun from(mutDec: MutDec): Decimal {
             val steal = mutDec.steal

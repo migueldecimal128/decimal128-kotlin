@@ -268,7 +268,7 @@ class TestFptestRead {
             when (result) {
                 "Q" -> md.setNaN()
                 "S" -> md.setSNaN()
-                else -> MutDecParse.parseDecimal(md, result, ctx)
+                else -> MutDecParse.parseToMutDec(md, result, ctx)
             }
             return md
         }
@@ -284,7 +284,7 @@ class TestFptestRead {
                     "S" -> d.setSNaN()
                     else -> {
                         operandPrintWriter?.println(t)
-                        MutDecParse.parseDecimal(d, t, ctx)
+                        MutDecParse.parseToMutDec(d, t, ctx)
                     }
                 }
                 ret.add(d)

@@ -1,6 +1,5 @@
 package com.decimal128.decimal.intel
 
-import com.decimal128.decimal.D128Parse
 import com.decimal128.decimal.D128SerdeBid
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
@@ -9,6 +8,7 @@ import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.Pentad
+import com.decimal128.decimal.parseToDecimal
 
 // *** THIS DOC IN THE SOURCE FILE IS OUT-OF-DATE ... WHAT A SHOCK! ***
 // readtest.c - read tests from stdin
@@ -216,7 +216,7 @@ class IntelCase1 private constructor (
                 val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)
                 return decimal
             }
-            return D128Parse.parseDecimal(str, ctx)
+            return parseToDecimal(str, ctx)
         }
 
     }
