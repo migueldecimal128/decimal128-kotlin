@@ -774,45 +774,12 @@ class Decimal private constructor(
         other is Decimal && eqJavaStyle(other)
 
     /**
-     * Returns a hash code consistent with `compareTo(other) == 0`.
-     * Values in the same numerical cohort produce the same hash code,
-     * all NaNs hash identically, and ±0 hash to distinct constants.
-     * This is unlike [BigDecimal.equals] which also requires the same scale.
+     * Decimal.hashCode() is an unsupported operation ... unless someone
+     * comes up with a valid reason why a Decimal should be the key in
+     * a collection.
      */
     override fun hashCode(): Int {
-        val steal = steal
-        when {
-            stealIsFNZ(steal) -> {
-                val qExp = qExp
-                var r1 = dw1
-                var r0 = dw0
-                var rQ = qExp
-                if (qExp < Q_MAX) {
-                    val maxNtzdClamp = Q_MAX - qExp
-                    val tmps = DecContext.current().tmps
-                    val t = tmps.mdecArg1
-                    t.c256Set128(dw1, dw0)
-                    val ntzdActual = c256CountTrailingZeroDigitsDestructive(t)
-                    val ntzdNormalized = min(maxNtzdClamp, ntzdActual)
-                    if (ntzdNormalized > 0) {
-                        t.c256Set128(dw1, dw0)
-                        c256SetDivPow10(t, t, ntzdNormalized, tmps.pentad1)
-                        r1 = t.dw1
-                        r0 = t.dw0
-                        rQ = qExp + ntzdNormalized
-                    }
-                }
-                val hcSign = if (signFlag) HASH_CODE_SIGN_TRUE else HASH_CODE_SIGN_FALSE
-                val hcQExp = rQ * 31 * 31
-                val hcDw1 = (r1 xor (r1 shr 32)).toInt() * 31
-                val hcDw0 = (r0 xor (r0 shr 32)).toInt()
-                return hcSign + hcQExp + hcDw1 + hcDw0
-            }
-
-            stealIsZER(steal) -> return if (steal < 0) HASH_CODE_NEG_ZERO else HASH_CODE_POS_ZERO
-            stealIsINF(steal) -> return if (steal < 0) HASH_CODE_NEG_INFINITY else HASH_CODE_POS_INFINITY
-            else -> return HASH_CODE_NAN
-        }
+        throw UnsupportedOperationException("hashCode() not supported")
     }
 
     /**
