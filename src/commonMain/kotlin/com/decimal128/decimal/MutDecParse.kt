@@ -3,10 +3,12 @@
 
 package com.decimal128.decimal
 
+import com.decimal128.decimal.InvalidOperationReason.PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
 import com.decimal128.decimal.InvalidOperationReason.PARSE_INVALID_UNDERSCORE_LOCATION
 import com.decimal128.decimal.InvalidOperationReason.PARSE_DOUBLE_DOT
 import com.decimal128.decimal.InvalidOperationReason.PARSE_EMPTY_STRING
 import com.decimal128.decimal.InvalidOperationReason.PARSE_MALFORMED
+import com.decimal128.decimal.InvalidOperationReason.PARSE_NO_COEFFICIENT_DIGIT
 import com.decimal128.decimal.InvalidOperationReason.PARSE_NO_EXPONENT_DIGIT
 import com.decimal128.decimal.InvalidOperationReason.PARSE_UNEXPECTED_CHAR
 import com.decimal128.decimal.InvalidOperationReason.PARSE_VALUE_OUT_OF_RANGE
@@ -257,7 +259,7 @@ object MutDecParse {
             ch = txt.nextChar()
         }
         if (! hasCoefficientDigit)
-            return InvalidOperationReason.PARSE_NO_COEFFICIENT_DIGIT
+            return PARSE_NO_COEFFICIENT_DIGIT
         // this path has at least one digit
         if (ch == 'E' || ch == 'e') {
             if (chLast == '_')
@@ -308,7 +310,7 @@ object MutDecParse {
             dw1T += if (unsignedLT(dw0T,accum19b)) 1L else 0L
         }
         if (significantDigitCount > precision && ctx.decPrefs.parseThrowOnDigitOverflow)
-            return InvalidOperationReason.PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
+            return PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
         // at this point, our coeff <= precision digits
         // but we need to deal with residue and rounding
         // rounding rollover could affect the exponent

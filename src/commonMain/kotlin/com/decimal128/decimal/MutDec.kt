@@ -200,12 +200,13 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    internal fun setNaN(sign: Boolean, isSignaling: Boolean, payloadHi: Long, payloadLo: Long) {
+    internal fun setNaN(sign: Boolean, isSignaling: Boolean, payloadHi: Long, payloadLo: Long): MutDec {
         this.dw3 = 0L; this.dw2 = 0L
         this.dw1 = payloadHi
         this.dw0 = payloadLo
         this.steal = stealEncodeNAN(if (sign) 1 else 0, if (isSignaling) 1 else 0, payloadHi, payloadLo)
         verify { validate() }
+        return this
     }
 
     fun setSNaN(): MutDec {

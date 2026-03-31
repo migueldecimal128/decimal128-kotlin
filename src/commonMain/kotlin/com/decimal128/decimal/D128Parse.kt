@@ -18,6 +18,12 @@ import kotlin.math.min
 
 object D128Parse {
 
+    fun parseDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
+        val md = ctx.tmps.mdecArg1
+        MutDecParse.parseDecimal(md, str, ctx)
+        return Decimal.from(md)
+    }
+
     /**
      * Parses a decimal string into a `Decimal` (decimal128).
      *
@@ -32,7 +38,7 @@ object D128Parse {
      * @throws IllegalArgumentException if the input is not a valid finite
      *         decimal128 text form or would require rounding.
      */
-    fun parseDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
+    fun parseDecimal_x(str: String, ctx: DecContext = DecContext.current()): Decimal {
         val strIterator = ctx.tmps.parseStringLatin1Iterator.reload(str)
         val decOrReason = parseDecimalOrReason(strIterator, ctx)
         if (decOrReason is Decimal)
