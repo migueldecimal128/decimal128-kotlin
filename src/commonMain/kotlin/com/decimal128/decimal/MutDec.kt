@@ -292,7 +292,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun set(str: String) = set(str, DecContext.current())
 
     fun set(str: String, ctx: DecContext): MutDec {
-        MutDecParse.parseToMutDec(this, str, ctx)
+        parseToMutDec(this, str, ctx)
         verify { validate() }
         return this
     }
