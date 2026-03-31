@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 class TestDecToString {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testToSci() {

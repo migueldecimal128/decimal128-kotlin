@@ -71,10 +71,7 @@ object MutDecParse {
      *
      * @return the parsed positive or negative infinity, or `null` if not matched.
      */
-    fun parseInfinityText(md: MutDec, str: String) =
-        parseInfinityText(md, StringLatin1Iterator(str))
-
-    fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
+    private fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
         var ch = txt.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -132,10 +129,7 @@ object MutDecParse {
      *
      * @return the parsed NaN value, or `null` if the string is not a NaN form.
      */
-    fun parseNanText(md: MutDec, str: String) =
-        parseNanText(md, StringLatin1Iterator(str))
-
-    fun parseNanText(md: MutDec, txt: Latin1Iterator): Any {
+    private fun parseNanText(md: MutDec, txt: Latin1Iterator): Any {
         var ch = txt.nextChar()
         val sign = ch == '-'
         if (ch == '-' || ch == '+')
@@ -201,10 +195,7 @@ object MutDecParse {
         return md.setNaN(sign, isSignaling = hasS, payloadDw1, payloadDw0)
     }
 
-    fun parseFiniteValueText(md: MutDec, str: String, ctx: DecContext = DecContext.current()): Any =
-        parseFiniteValueText(md, StringLatin1Iterator(str), ctx)
-
-    fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
+    private fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
         val precision = ctx.precision
         var residue: Residue = Residue.EXACT
 

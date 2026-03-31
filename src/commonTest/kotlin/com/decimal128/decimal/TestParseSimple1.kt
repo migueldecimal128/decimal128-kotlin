@@ -6,7 +6,7 @@ import kotlin.test.assertFailsWith
 
 class TestParseSimple1 {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun test() {

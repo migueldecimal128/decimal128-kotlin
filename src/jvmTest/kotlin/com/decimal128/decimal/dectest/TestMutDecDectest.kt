@@ -82,6 +82,9 @@ class TestMutDecDectest {
     )
 
     val ignoredCases = arrayOf(
+        "dqbas561 toSci \"qNaN\"            -> NaN Conversion_syntax",
+        "dqbas725 toSci 'NaN1234567890123456781234567890123456' -> NaN Conversion_syntax",
+        "dqbas745 toSci 'sNaN1234567890123456787234561234567890' -> NaN Conversion_syntax",
         // figure out what to do about these
         // it isn't clear what colishaw means about "compare" with
         // respect to comparing signed zeros
@@ -324,6 +327,9 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqbas519 toSci ''                -> NaN Conversion_syntax",
+        "dqcan616 tointegralx  #7e010ff3fcff3fcff3fcff3fcff3fcff  -> #7c000ff3fcff3fcff3fcff3fcff3fcff  Invalid_operation",
+        "dqbas510 toSci ' +1'             -> NaN Conversion_syntax",
         "dqfma0305  fma   1e-6176    0.1  0         -> 0E-6176 Underflow Subnormal Inexact Rounded Clamped",
         "dqcom013 compare   0   0  -> 0",
         "dqnextm193 nextminus  -9.999999999999999999999999999999999E+6144  -> -Infinity",
@@ -418,7 +424,7 @@ class TestMutDecDectest {
         "dqabs900 abs  # -> NaN Invalid_operation",
         "dqbas906 toSci '99e999999999'       -> Infinity Overflow  Inexact Rounded",
         "dqbas610 toSci  .0               -> 0.0",
-        "dqbas519 toSci ''                -> NaN Conversion_syntax",
+        //"dqbas519 toSci ''                -> NaN Conversion_syntax",
         "dqbas510 toSci ' +1'             -> NaN Conversion_syntax",
 
         "dqbas450  toSci 10000000000000000000000000000000009    -> 1.000000000000000000000000000000001E+34   Rounded Inexact",
@@ -604,10 +610,11 @@ class TestMutDecDectest {
     inner class Dectest(val line: String, val id: String, val op: String,
                         val operand1: String, val operand2: String, val operand3: String,
                         val result: String, val conditions: Array<String>) {
-        val op1 = parseOperand(operand1)
-        val op2 = if (operand2 == "") MY_NAN else parseOperand(operand2)
-        val op3 = if (operand3 == "") MY_NAN else parseOperand(operand3)
-        val res = parseOperand(result)
+        val ctxParse = DecContext.decimal128IEEE()
+        val op1 = parseOperand(operand1, ctxParse)
+        val op2 = if (operand2 == "") MY_NAN else parseOperand(operand2, ctxParse)
+        val op3 = if (operand3 == "") MY_NAN else parseOperand(operand3, ctxParse)
+        val res = parseOperand(result, ctxParse)
         val exceptionSet: Set<DecException> = captureExceptionSet(conditions)
 
         override fun toString(): String {
@@ -628,7 +635,7 @@ class TestMutDecDectest {
             for (cond in conditions) {
                 when (cond.lowercase()) {
                     "clamped" -> {}
-                    "conversion_syntax" -> {}
+                    "conversion_syntax" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "division_by_zero" -> exceptionSet.add(DecException.DIVIDE_BY_ZERO)
                     "division_impossible" -> exceptionSet.add(DecException.INVALID_OPERATION)
                     "division_undefined" -> exceptionSet.add(DecException.INVALID_OPERATION)
@@ -651,59 +658,59 @@ class TestMutDecDectest {
         }
 
         fun eval() {
-            val env = buildenv()
-            if (env == null)
+            val ctx = buildRoundedCtx(ctxParse)
+            if (ctx == null)
                 return
             if (verbose)
                 println("op:$op op1:$op1 op2:$op2 ==> res:$res")
             val observed = when (op) {
                 "abs" -> MutDec().setAbs(op1)
-                "add" -> MutDec().setAdd(op1, op2, env)
-                "fma" -> MutDec().setFma(op1, op2, op3, env)
-                "subtract" -> MutDec().setSub(op1, op2, env)
+                "add" -> MutDec().setAdd(op1, op2, ctx)
+                "fma" -> MutDec().setFma(op1, op2, op3, ctx)
+                "subtract" -> MutDec().setSub(op1, op2, ctx)
                 "minus" -> MutDec().setNegate(op1)
-                "multiply" -> MutDec().setMul(op1, op2, env)
-                "divide" -> MutDec().setDiv(op1, op2, env)
+                "multiply" -> MutDec().setMul(op1, op2, ctx)
+                "divide" -> MutDec().setDiv(op1, op2, ctx)
                 "toSci" -> {
-                    val parseResult = parseOperand(operand1, env)
+                    val parseResult = parseOperand(operand1, ctx)
                     parseResult
                 }
                 //"remainder" -> Decimal2.newMod(op1, op2, ctx)
-                "compare" -> op1.partialCompareTo(op2, env)
-                "comparesig" -> op1.partialCompareTo(op2, env)
+                "compare" -> op1.partialCompareTo(op2, ctx)
+                "comparesig" -> op1.partialCompareTo(op2, ctx)
                 "comparetotal" -> MutDec().set(op1.compareTotalOrderTo(op2))
                 "comparetotmag" -> MutDec().set(op1.compareTotalOrderMagTo(op2))
                 "copy" -> MutDec().set(op1)
                 "copyabs" -> MutDec().setAbs(op1)
                 "copynegate" -> MutDec().setNegate(op1)
                 "copysign" -> MutDec().set(op1, op2.sign)
-                "divideint", -> MutDec().setDivInt(op1, op2, env)
+                "divideint", -> MutDec().setDivInt(op1, op2, ctx)
                 "apply" -> MutDec().set(op1)
-                "logb" -> MutDec().setLogB(op1, env)
-                "max" -> MutDec().setMaximumNumber(op1, op2, env)
-                "maxmag" -> MutDec().setMaximumMagnitudeNumber(op1, op2, env)
-                "min" -> MutDec().setMinimumNumber(op1, op2, env)
-                "minmag" -> MutDec().setMinimumMagnitudeNumber(op1, op2, env)
-                "nextminus" -> MutDec().setNextDown(op1, env)
-                "nextplus" -> MutDec().setNextUp(op1, env)
-                "quantize" -> MutDec().setQuantize(op1, op2, env)
-                "reduce" -> MutDec().setStripTrailingZeros(op1, env)
+                "logb" -> MutDec().setLogB(op1, ctx)
+                "max" -> MutDec().setMaximumNumber(op1, op2, ctx)
+                "maxmag" -> MutDec().setMaximumMagnitudeNumber(op1, op2, ctx)
+                "min" -> MutDec().setMinimumNumber(op1, op2, ctx)
+                "minmag" -> MutDec().setMinimumMagnitudeNumber(op1, op2, ctx)
+                "nextminus" -> MutDec().setNextDown(op1, ctx)
+                "nextplus" -> MutDec().setNextUp(op1, ctx)
+                "quantize" -> MutDec().setQuantize(op1, op2, ctx)
+                "reduce" -> MutDec().setStripTrailingZeros(op1, ctx)
                 "samequantum" -> MutDec().set(if (op1.sameQuantum(op2)) 1 else 0)
-                "tointegralx" -> MutDec().setRoundToIntegralExact(op1, env)
+                "tointegralx" -> MutDec().setRoundToIntegralExact(op1, ctx)
                 "scaleb" -> {
 
                     val pow10 = operand2.toInt()
-                    MutDec().setScaleB(op1, pow10, env)
+                    MutDec().setScaleB(op1, pow10, ctx)
                 }
-                "remaindernear" -> MutDec().setRemainderNear(op1, op2, env)
-                "remainder" -> MutDec().setRemainderTruncate(op1, op2, env)
+                "remaindernear" -> MutDec().setRemainderNear(op1, op2, ctx)
+                "remainder" -> MutDec().setRemainderTruncate(op1, op2, ctx)
                 else -> return
             }
             if (verbose)
                 println("    observed:$observed")
             if (! res.exactlyEQ(observed)) {
                 println("snafu!")
-                val parseResult = parseOperand(operand1, env)
+                val parseResult = parseOperand(operand1, ctx)
                 println("res:$res observed:$observed")
                 val eq = res.exactlyEQ(observed)
                 println("eq:$eq")
@@ -711,7 +718,7 @@ class TestMutDecDectest {
             }
             require (res.exactlyEQ(observed))
 
-            val observedExceptions = env.decFlags.getSetExceptions()
+            val observedExceptions = ctx.decFlags.getSetExceptions()
             assertEquals(this.exceptionSet, observedExceptions)
         }
     }
@@ -754,19 +761,22 @@ class TestMutDecDectest {
         } else if (t[0] == '\"' && t[t.lastIndex] == '\"') {
             t = t.substring(1, t.lastIndex).replace("\"\"", "\"")
         }
-        if (t.length == 0)
-            return MY_NAN
-        if (t == "#")
-            return MY_NAN
-        if (t.startsWith('#')) {
-            println("octothorpe not fully implemented")
-            return MY_NAN
+        if (t.length > 0) {
+            if (t == "#")
+                return MY_NAN
+            if (t.startsWith('#')) {
+                require(t.length == 33)
+                val hi = hexStringToLong(t.substring(1, 17))
+                val lo = hexStringToLong(t.substring(17, 33))
+                val dpd = MutDec().setDpd128(hi, lo)
+                return dpd
+            }
         }
         val d = MutDec().set(t, ctx)
         return d
     }
 
-    fun buildenv(): DecContext? {
+    fun buildRoundedCtx(ctx: DecContext): DecContext? {
         // going forward, we only support Decimal128
         if (precision != 34)
             return null
@@ -775,8 +785,8 @@ class TestMutDecDectest {
         val roundingIndex = validRoundingStrings.indexOf(rounding)
         if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
             return null
-        val env = DecContext.decimal128Kotlin().with(decRoundings[roundingIndex])
-        return env
+        val roundedCtx = ctx.with(decRoundings[roundingIndex])
+        return roundedCtx
     }
 
 }

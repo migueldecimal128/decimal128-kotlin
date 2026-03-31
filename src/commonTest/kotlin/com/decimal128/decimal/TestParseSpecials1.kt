@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 
 class TestParseSpecials1 {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testParseInfinity() {

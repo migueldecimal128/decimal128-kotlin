@@ -292,7 +292,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun set(str: String) = set(str, DecContext.current())
 
     fun set(str: String, ctx: DecContext): MutDec {
-        DecimalParse.decFromString(this, str, ctx)
+        MutDecParse.parseDecimal(this, str, ctx)
         verify { validate() }
         return this
     }
