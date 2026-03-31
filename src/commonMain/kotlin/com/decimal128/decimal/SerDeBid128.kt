@@ -134,7 +134,7 @@ internal fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDe
             d.setInfinite(sign)
 
         (combination and 0x1F000) == 0x1F000 ->
-            d.setNaN((combination and 0x800) == 0x800, sign, significand110Hi, bid128Lo)
+            d.setNaN(sign, (combination and 0x800) == 0x800, significand110Hi, bid128Lo)
 
         else -> {
             // large-form finite pattern => non-canonical for decimal128:

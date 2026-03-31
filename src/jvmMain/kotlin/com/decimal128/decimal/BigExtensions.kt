@@ -66,8 +66,8 @@ fun MutDec.set(bd: BigDecimal, ctx: DecContext) {
     val sign = bd.signum() < 0
     when {
         qBd == 99999 -> this.setInfinite(sign)
-        qBd == 100000 -> this.setNaN(isSignaling = false, sign = sign, 0L, 0L)
-        qBd == 100001 -> this.setNaN(isSignaling = true, sign = sign, 0L, 0L)
+        qBd == 100000 -> this.setNaN(sign = sign, isSignaling = false, 0L, 0L)
+        qBd == 100001 -> this.setNaN(sign = sign, isSignaling = true, 0L, 0L)
         bd.compareTo(BigDecimal.ZERO) == 0 ->
             this.setZero(sign, qBd) // always false since BigDecimal does not support -0.0
         else -> {

@@ -130,7 +130,7 @@ internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDe
                     payloadLo = d.dw0
                 }
             }
-            d.setNaN((combination and 0x800) == 0x800, sign, payloadHi, payloadLo)
+            d.setNaN(sign, (combination and 0x800) == 0x800, payloadHi, payloadLo)
         }
 
         else -> {

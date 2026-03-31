@@ -200,7 +200,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    internal fun setNaN(isSignaling: Boolean, sign: Boolean, payloadHi: Long, payloadLo: Long) {
+    internal fun setNaN(sign: Boolean, isSignaling: Boolean, payloadHi: Long, payloadLo: Long) {
         this.dw3 = 0L; this.dw2 = 0L
         this.dw1 = payloadHi
         this.dw0 = payloadLo

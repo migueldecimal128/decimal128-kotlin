@@ -204,7 +204,7 @@ object DecimalParse {
             if (payloadDigitCount > 19)
                 c256SetFmaPow10(x, x, payloadDigitCount - 19, accumulator38)
         }
-        x.setNaN(hasS, sign, x.dw1, x.dw0)
+        x.setNaN(sign, hasS, x.dw1, x.dw0)
         return true
     }
 
