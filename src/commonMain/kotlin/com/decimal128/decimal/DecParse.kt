@@ -15,28 +15,39 @@ import com.decimal128.decimal.InvalidOperationReason.PARSE_VALUE_OUT_OF_RANGE
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Parses [str] into a [Decimal], using [ctx] for precision, rounding, and parse preferences.
+ *
+ * Behaviour on failure mirrors [parseToMutDec].
+ *
+ * @param str the string to parse
+ * @param ctx precision, rounding mode, and parse preferences; defaults to the current context
+ * @return the parsed [Decimal]
+ * @throws NumberFormatException if [str] is malformed and
+ * [DecPrefs.parseMalformedThrowsNumberFormatException] is set
+ */
 internal fun parseToDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
     val md = ctx.tmps.mdecArg1
     parseToMutDec(md, str, ctx)
     return Decimal.from(md)
 }
 
-
 /**
- * Parses a decimal string into a `Decimal` (decimal128).
+ * Parses [str] into [md], using [ctx] for precision, rounding, and parse preferences.
  *
- * Accepts the same finite-value syntax as `parseFiniteValueText`:
- * optional sign, digits with optional decimal point, optional `e`/`E`
- * exponent (with optional sign), and only ASCII/Basic-Latin characters.
+ * On success, returns [md]. On failure, behaviour depends on [DecPrefs]:
+ * - If [DecPrefs.parseMalformedThrowsNumberFormatException] is set, throws
+ *   [NumberFormatException].
+ * - Otherwise, signals an invalid-operation condition and returns [md] set to NaN.
  *
- * If the input is valid, a `Decimal` is returned. Otherwise an
- * `IllegalArgumentException` is thrown containing the diagnostic text
- * produced by `parseDecimalOrErrorString`.
- *
- * @throws IllegalArgumentException if the input is not a valid finite
- *         decimal128 text form or would require rounding.
+ * @param md the destination to write the parsed value into
+ * @param str the string to parse
+ * @param ctx precision, rounding mode, and parse preferences; defaults to the current context
+ * @return [md]
+ * @throws NumberFormatException if [str] is malformed and
+ * [DecPrefs.parseMalformedThrowsNumberFormatException] is set
  */
-fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext.current()): MutDec {
+internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext.current()): MutDec {
     val strIterator = ctx.tmps.parseStringLatin1Iterator.reload(str)
     val mutDecOrReason = parseDecimalOrReason(md, strIterator, ctx)
     if (mutDecOrReason is MutDec)
@@ -60,23 +71,22 @@ private fun parseDecimalOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContex
     val chLower = (ch.code or 0x20).toChar()
     if (chLower == 'i')
         return parseInfinityText(md, txt)
-    return parseNanText(md, txt)
+    return parseNanText(md, txt, ctx.decPrefs.parseCollapseSNaN)
 }
 
 /**
- * Parses a textual infinity representation into a [Decimal] value.
+ * Parses a positive or negative infinity from [txt] into [md].
  *
- * Accepted forms are case-insensitive:
+ * Accepted forms (case-insensitive): `inf`, `infinity`, with an optional
+ * leading `+` or `-` sign. The iterator must be exhausted after the match;
+ * trailing characters are rejected.
  *
- *   - `INF`, `Infinity`
- *   - Optional leading sign: `+inf`, `-infinity`
- *
- * The entire string must match one of these forms exactly (no trailing
- * characters). Returns `null` if the text is not a valid infinity form.
- *
- * @return the parsed positive or negative infinity, or `null` if not matched.
+ * @param md the destination to write the infinity value into
+ * @param txt iterator over the full input, positioned before any sign character
+ * @return [md] on success, or [InvalidOperationReason.PARSE_MALFORMED] if the
+ * input is not a valid infinity form
  */
-private fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
+private inline fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
     var ch = txt.nextChar()
     val sign = ch == '-'
     if (ch == '-' || ch == '+')
@@ -98,43 +108,30 @@ private fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
 }
 
 /**
- * Parses a textual NaN representation into a [Decimal] value.
+ * Parses a NaN from [txt] into [md].
  *
- * Accepted forms (case-insensitive):
+ * Accepted prefixes (case-insensitive), with an optional leading `+` or `-`:
+ * `nan`, `qnan`, `snan`. After the prefix, any mix of decimal digits and
+ * bracket characters (`()`, `[]`, `{}`) may follow; digits are collected as
+ * the NaN payload. Any other character returns
+ * [InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN].
  *
- *   - `nan`,`qnan`, `snan`
- *   - Optional leading sign: `+nan`, `-snan`
- *   - Optional `q` prefix, though `qnan` and `nan` are treated identically
- *   - Any characters may follow the `nan` / `snan` prefix
- *   - Digits after the `nan` are parsed for the payload
+ * The payload is capped at 33 significant digits.
+ * If more digits are present the payload is set to zero, per IEEE 754-2019
+ * §3.5.2. Leading zeros do not count toward the limit.
  *
- * After the prefix, the parser scans the remainder of the string and
- * collects **decimal digits only** (in order). These digits form the NaN
- * payload.
+ * A signaling NaN is produced when the prefix is `snan` and
+ * [collapseSNaN] is `false`; otherwise a quiet NaN is produced.
  *
- * Canonical DPD and BID Decimal128 NaN payloads allow at most
- * **33 decimal digits**. If `allowOversizeCoefficient` is `false`,
- * payloads longer than 33 digits are clamped to the largest canonical
- * 33-digit payload ... 33 nines.
- *
- * If `allowOversizeCoefficient` is `true`, the parser accepts any number of
- * digits, although the value is clamped to 38 digits ... 38 nines.
- *
- * Leading zeros are ignored when computing the payload length; if no digits
- * appear at all, the payload is zero.
- *
- * The function returns either a quiet NaN (`qNaN`) or a signaling NaN
- * (`sNaN`) depending on whether the prefix began with `s`. If the input
- * does not begin with a valid NaN text prefix, this returns `null`.
- *
- * @param allowOversizePayload
- *        Whether payloads longer than the canonical 33-digit limit should be
- *        accepted (up to the 128-bit numerical maximum), rather than being
- *        clamped to the canonical range.
- *
- * @return the parsed NaN value, or `null` if the string is not a NaN form.
+ * @param md the destination to write the NaN value into
+ * @param txt iterator over the full input, positioned before any sign character
+ * @param collapseSNaN if `true`, an `snan` prefix produces a quiet NaN
+ * @return [md] on success, or [InvalidOperationReason.PARSE_MALFORMED] if the
+ * input does not begin with a valid NaN prefix, or
+ * [InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN] if an unexpected
+ * character follows the prefix
  */
-private fun parseNanText(md: MutDec, txt: Latin1Iterator): Any {
+private inline fun parseNanText(md: MutDec, txt: Latin1Iterator, collapseSNaN: Boolean): Any {
     var ch = txt.nextChar()
     val sign = ch == '-'
     if (ch == '-' || ch == '+')
@@ -173,7 +170,7 @@ private fun parseNanText(md: MutDec, txt: Latin1Iterator): Any {
             }
             ch = txt.nextChar()
         } while (ch.code != 0)
-        if (accumDigitCount > NAN_PAYLOAD_PRECISION) {
+        if (accumDigitCount > 33) {
             // Colishaw decTest says that an oversized payload throws Conversion_syntax
             // IEEE754-2019 3.5.2 Encodings says:
             //  The maximum value of the binary-encoded significand is the same as that
@@ -198,14 +195,57 @@ private fun parseNanText(md: MutDec, txt: Latin1Iterator): Any {
             }
         }
     }
-    return md.setNaN(sign, isSignaling = hasS, payloadDw1, payloadDw0)
+    return md.setNaN(sign, isSignaling = hasS and !collapseSNaN, payloadDw1, payloadDw0)
 }
 
-private fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
+/**
+ * Parses a finite decimal value from [txt] into [md].
+ *
+ * Accepts an optional leading `+` or `-`, followed by a coefficient of
+ * decimal digits, and an optional exponent (`e` or `E`). Underscores are
+ * permitted as digit separators in both the coefficient and exponent, subject
+ * to the restrictions below. The iterator must be exhausted after the match.
+ *
+ * **Coefficient rules**
+ * - At least one digit is required.
+ * - A single `.` may appear anywhere among the digits.
+ * - Underscores may separate digits but not appear at the start, immediately
+ *   before or after `.`, or at the end of the coefficient.
+ *
+ * **Exponent rules**
+ * - Introduced by `e` or `E`, with an optional `+` or `-`.
+ * - At least one digit is required.
+ * - Underscores may separate exponent digits but not appear before the first
+ *   digit or at the end.
+ * - Values with more than 4 significant exponent digits are clamped to 9999.
+ *
+ * **Rounding**
+ * - Coefficients exceeding [DecContext.precision] significant digits are
+ *   rounded according to [ctx]. If
+ *   [DecPrefs.parseThrowOnDigitOverflow][ctx] is set, excess digits return
+ *   [PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION] instead.
+ * - After rounding, if the result is out of range and
+ *   [DecPrefs.parseThrowOnOutOfRange][ctx] is set, returns
+ *   [PARSE_VALUE_OUT_OF_RANGE].
+ *
+ * @param md the destination to write the parsed value into
+ * @param txt iterator over the full input, positioned before any sign character
+ * @param ctx precision, rounding mode, and parse preferences
+ * @return [md] on success, or one of:
+ * - [PARSE_EMPTY_STRING] — input was empty
+ * - [PARSE_NO_COEFFICIENT_DIGIT] — no digit before the exponent
+ * - [PARSE_DOUBLE_DOT] — more than one `.` in the coefficient
+ * - [PARSE_INVALID_UNDERSCORE_LOCATION] — underscore in a disallowed position
+ * - [PARSE_NO_EXPONENT_DIGIT] — `e`/`E` not followed by a digit
+ * - [PARSE_UNEXPECTED_CHAR] — unrecognised character in the input
+ * - [PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION] — see above
+ * - [PARSE_VALUE_OUT_OF_RANGE] — see above
+ */
+private inline fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
     val precision = ctx.precision
     var residue: Residue = Residue.EXACT
 
-    var hasCoefficientDigit = false
+    var hasCoefficientDigit = false // have we seen any digits at all, including zero
     var significantDigitCount = 0 // does not count leading zeros
     var hasDot = false
     var expSign = false
@@ -213,7 +253,6 @@ private fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContex
     var ch = txt.nextChar()
     if (ch.code == 0)
         return PARSE_EMPTY_STRING
-    var chLast = '\u0000'
 
     val sign = ch == '-'
     if (ch == '-' || ch == '+')
@@ -223,6 +262,7 @@ private fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContex
     var accum19b = 0L
     var exp = 0
 
+    var chLast = '\u0000'
     while (ch in '0'..'9' || ch == '.' || ch == '_') {
         when (ch) {
             in '0'..'9' -> {
@@ -327,5 +367,3 @@ private fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContex
     }
     return md
 }
-
-
