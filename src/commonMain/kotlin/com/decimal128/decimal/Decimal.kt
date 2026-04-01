@@ -812,9 +812,9 @@ class Decimal private constructor(
      * ```
      */
     infix fun bitwiseEQ(other: Decimal): Boolean =
-        ((this.steal - other.steal).toLong() or
-                (this.dw1 - other.dw1) or
-                (this.dw0 - other.dw0)) == 0L
+        ((this.steal xor other.steal).toLong() or
+                (this.dw1 xor other.dw1) or
+                (this.dw0 xor other.dw0)) == 0L
 
     /**
      * Compares this decimal128 value with [other] using the IEEE-754

@@ -708,15 +708,15 @@ class TestMutDecDectest {
             }
             if (verbose)
                 println("    observed:$observed")
-            if (! res.exactlyEQ(observed)) {
+            if (! res.bitwiseEQ(observed)) {
                 println("snafu!")
                 val parseResult = parseOperand(operand1, ctx)
                 println("res:$res observed:$observed")
-                val eq = res.exactlyEQ(observed)
+                val eq = res.bitwiseEQ(observed)
                 println("eq:$eq")
                 println(":(")
             }
-            require (res.exactlyEQ(observed))
+            require (res.bitwiseEQ(observed))
 
             val observedExceptions = ctx.decFlags.getSetExceptions()
             assertEquals(this.exceptionSet, observedExceptions)

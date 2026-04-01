@@ -219,6 +219,9 @@ fun DecContext.operandIsSignalingNaN(mutDec: MutDec) {
         throw RuntimeException("invalid sNaN seen")
 }
 
+fun DecContext.isSet(decException: DecException): Boolean =
+    this.decFlags.isSet(decException)
+
 fun DecContext.getFptestExceptionsString() = decFlags.getFptestExceptionsString()
 
 fun DecContext.parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload

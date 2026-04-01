@@ -246,7 +246,8 @@ internal fun d128CompareJavaStyle(x: Decimal, y: Decimal): Int {
  *
  *  • **Finite non-zero values** are equal if they have the same sign
  *    and equal magnitude (`cmpMagFnzFnz(x, y) == 0`), regardless of
- *    exponent or encoding differences. All cohort members compare equal.
+ *    exponent or encoding differences. All members of the same cohort
+ *    compare equal.
  *
  *  • **Zeros:** −0 and +0 compare equal.
  *

@@ -853,10 +853,13 @@ class MutDec() : C256(), Comparable<MutDec> {
     override fun equals(other: Any?) : Boolean =
         other is MutDec && eqJavaStyleTo(other)
 
-    fun exactlyEQ(other: MutDec): Boolean {
-        return dw0 == other.dw0 && dw1 == other.dw1 &&
-                dw2 == other.dw2 && dw3 == other.dw3 &&
-                steal == other.steal
+    infix fun EQ(other: MutDec) = eqJavaStyleTo(other)
+
+    infix fun bitwiseEQ(other: MutDec): Boolean {
+        return ((this.steal xor other.steal).toLong() or (this.dw0 xor other.dw0)) == 0L &&
+                ((this.dw3 xor other.dw3) or
+                (this.dw2 xor other.dw2) or
+                (this.dw1 xor other.dw1)) == 0L
     }
 
     override fun hashCode(): Int {
