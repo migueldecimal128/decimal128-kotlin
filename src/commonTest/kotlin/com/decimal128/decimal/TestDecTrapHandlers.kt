@@ -18,7 +18,7 @@ class TestDecTrapHandlers {
         val catchCtx = DecContext.decimal128Kotlin().withThrownException(DecException.DIVIDE_BY_ZERO)
 
         assertFailsWith<DivideByZeroException> {
-            with (catchCtx) {
+            catchCtx.eval {
                 val z1 = ONE / ZERO
             }
         }
@@ -28,7 +28,7 @@ class TestDecTrapHandlers {
             DecException.DIVIDE_BY_ZERO
         )
 
-        with (sentinal99Ctx) {
+        sentinal99Ctx.eval {
             val z2 = ONE / ZERO
             assertTrue(z2 == Decimal.from(99))
         }

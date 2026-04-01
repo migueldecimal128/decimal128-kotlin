@@ -24,7 +24,7 @@ class TestDecContextOperators {
             assertEquals("-1", "$e")
         }
 
-        decimal128Kotlin().context {
+        decimal128Kotlin().eval {
             val e = Decimal.from(5)
             val f = Decimal.from(6)
             val g = Decimal.from(7)

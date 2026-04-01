@@ -86,12 +86,12 @@ class TestDecimalAddSub {
         val bdA = tc.bdA
         val bdB = tc.bdB
         val expected = tc.bdP
-        val env = tc.ctx
-        val rm = env.decRounding.mapToRoundingMode()
+        val ctx = tc.ctx
+        val rm = ctx.decRounding.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")
-        env.context {
+        ctx.eval {
 
             val decimalA = Decimal.from(bdA.toString())
             val decimalB = Decimal.from(bdB.toString())

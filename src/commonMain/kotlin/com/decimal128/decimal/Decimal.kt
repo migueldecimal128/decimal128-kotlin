@@ -1090,45 +1090,57 @@ class Decimal private constructor(
     // ── String Representation ─────────────────────────────────────────────────
 
     /**
-     * Returns the canonical decimal text representation of this value.
+     * Returns a string representation of this value formatted according to
+     * [DecPrefs] in [DecContext.current].
      *
-     * Formatting follows the same conventions as Java's `BigDecimal.toString()`:
-     * - Values are rendered with an uppercase `E` exponent when necessary.
-     * - The coefficient is never padded or truncated; all significant digits appear.
-     * - Special values render as `"Infinity"`, `"-Infinity"`, and `"NaN"`.
-     *
-     * The round-trip property holds: `Decimal.from(d.toString()) bitwiseEQ d`
-     * for all canonical values.
+     * Default [DecPrefs] behaviour:
+     * - Finite values: plain decimal for exponents in `[-6, 0]`, normalized
+     *   scientific notation (uppercase `E`, no `+` sign) outside that range.
+     * - Special values: `Infinity`, `-Infinity`, `NaN`, `-NaN`; NaN payload
+     *   included; sNaN not collapsed to qNaN.
      */
     override fun toString(): String = d128ToString(steal, dw1, dw0, DecContext.current())
 
+    /**
+     * Returns a string representation of this value formatted according to
+     * [DecPrefs] in [ctx].
+     *
+     * Default [DecPrefs] behaviour:
+     * - Finite values: plain decimal for exponents in `[-6, 0]`, normalized
+     *   scientific notation (uppercase `E`, no `+` sign) outside that range.
+     * - Special values: `Infinity`, `-Infinity`, `NaN`, `-NaN`; NaN payload
+     *   included; sNaN not collapsed to qNaN.
+     */
     fun toString(ctx: DecContext): String = d128ToString(steal, dw1, dw0, ctx)
 
+    /**
+     * Returns the sum of this value and [other], rounded according to [DecContext.current].
+     */
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
 
-    context(decContext: DecContext)
-    operator fun plus(other: Decimal): Decimal = d128AddSubImpl(this, other.steal, other, decContext)
-
+    /**
+     * Returns the difference of this value and [other], rounded according to [DecContext.current].
+     */
     operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other)
 
-    context(decContext: DecContext)
-    operator fun minus(other: Decimal): Decimal = d128AddSubImpl(this, other.steal xor Int.MIN_VALUE, other, decContext)
-
+    /**
+     * Returns the product of this value and [other], rounded according to [DecContext.current].
+     */
     operator fun times(other: Decimal): Decimal = d128MulImpl(this, other)
 
-    context(decContext: DecContext)
-    operator fun times(other: Decimal): Decimal = d128MulImpl(this, other, decContext)
-
+    /**
+     * Returns the quotient of this value and [other], rounded according to [DecContext.current].
+     */
     operator fun div(other: Decimal): Decimal = d128DivImpl(this, other)
 
-    context(decContext: DecContext)
-    operator fun div(other: Decimal): Decimal = d128DivImpl(this, other, decContext)
-
+    /**
+     * Returns the remainder of this value divided by [other], truncated toward zero.
+     */
     operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other)
 
-    context(decContext: DecContext)
-    operator fun rem(other: Decimal): Decimal = d128RemTruncImpl(this, other, decContext)
-
+    /**
+     * Returns the remainder of this value divided by [other], truncated toward zero.
+     */
     fun remainderTruncate(other: Decimal): Decimal = rem(other)
 
     /**
@@ -1387,11 +1399,19 @@ class Decimal private constructor(
 
 }
 
+/**
+ * Parses this string into a [Decimal] according to [DecContext.current].
+ *
+ * @see Decimal.from
+ */
 fun String.toDecimal(): Decimal = Decimal.from(this, DecContext.current())
 
-//context(ctx: DecContext)
-//fun String.toDecimal(): Decimal = Decimal.from(this, ctx)
-
+/**
+ * Converts this [Int] to a [Decimal].
+ */
 fun Int.toDecimal(): Decimal = Decimal.from(this)
 
+/**
+ * Converts this [Long] to a [Decimal].
+ */
 fun Long.toDecimal(): Decimal = Decimal.from(this)

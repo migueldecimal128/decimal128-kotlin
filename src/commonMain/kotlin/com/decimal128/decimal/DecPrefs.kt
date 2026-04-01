@@ -13,14 +13,14 @@ data class DecPrefs(
     val printNaNPayload: Boolean = true,
     val printCollapseSNaN: Boolean = false,
 
+    val printMinPlainExponent: Int = -6,
+    val printStyle: PrintStyle = PrintStyle.AUTO,
+
     val parseCollapseSNaN: Boolean = false,
     val parseDiscardNanPayload: Boolean = false,
     val parseMalformedThrowsNumberFormatException: Boolean = false,
     val parseThrowOnDigitOverflow: Boolean = false,
     val parseThrowOnOutOfRange: Boolean = false,
-
-    val printMinPlainExponent: Int = -6,
-    val printStyle: PrintStyle = PrintStyle.AUTO,
 
     val propagatePreferSnan: Boolean = true,
 ) {

@@ -10,6 +10,7 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.Compare754Result.*
+import com.decimal128.decimal.eval
 import com.decimal128.decimal.getFptestExceptionsString
 import com.decimal128.decimal.isOverflow
 import com.decimal128.decimal.with
@@ -79,7 +80,7 @@ class TestFptestDecimal {
             else   -> throw IllegalStateException("unknown format: $format")
         }
         val observed: Decimal =
-            with(ctx) {
+            ctx.eval {
                 when (fptest.op) {
                     "+" -> operands[0] + operands[1]
                     "-" -> operands[0] - operands[1]
