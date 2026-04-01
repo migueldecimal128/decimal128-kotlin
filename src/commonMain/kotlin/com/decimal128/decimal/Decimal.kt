@@ -1171,17 +1171,22 @@ class Decimal private constructor(
      */
     fun remainderNear(other: Decimal): Decimal = d128RemNearImpl(this, other)
 
+    /** Returns the square of this value. */
     fun square(): Decimal = d128SqrImpl(this, DecContext.current())
 
-    fun pow(n: Int, ctx: DecContext = DecContext.current()): Decimal {
-        val tmps = ctx.tmps
-        val tmp1 = tmps.mdecBridge1.set(this)
-        val tmp2 = tmps.mdecBridge2.setPow(tmp1, n, ctx)
-        return Decimal.from(tmp2)
-    }
+    /**
+     * Returns this value raised to the integer power [n].
+     *
+     * Special cases follow IEEE 754-2019 `pown` rules:
+     * - `x^0 = 1` for all finite x, including zero and infinity, but NaN^0 = NaN
+     * - `x^1 = x`
+     * - `0^n` for negative n signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
+     * - `(±∞)^n` for negative n returns ±zero
+     */
+    fun pow(n: Int, ctx: DecContext = DecContext.current()): Decimal = d128PowImpl(this, n, ctx)
 
-    // FIXME
-    // fun reciprocal(): Decimal = d128RecipImpl(DecContext.current())
+    /** Returns the reciprocal (1/this) of this value, following IEEE 754-2019 division rules. */
+    fun reciprocal(): Decimal = d128DivImpl(ONE, this, DecContext.current())
 
     // ── Rounding ──────────────────────────────────────────────────────────────
 
