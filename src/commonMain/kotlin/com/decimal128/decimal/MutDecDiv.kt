@@ -69,8 +69,9 @@ internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): 
 }
 
 internal fun mutDecReciprocalImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
-    val quotientSign = x.sign
-    when (stealTyp(x.type)) {
+    val xSteal = x.steal
+    val quotientSign = stealSignFlag(xSteal)
+    when (stealTyp(xSteal)) {
         STEAL_TYP_FNZ -> {
             return mutDecInv(z, quotientSign, x, ctx)
         }
@@ -106,7 +107,9 @@ fun mutDecSetRemTruncImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boo
 }
 
 fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean {
-    verify { x.bitLen != 0 && y.bitLen != 0 }
+    val xSteal = x.steal
+    val ySteal = y.steal
+    verify { stealBitLen(xSteal) != 0 && stealBitLen(ySteal) != 0 }
     // Compute n = nearest integer to x/y (ties to even)
     // setRemainder is an EXACT operation, so we will use a temp
     // environment so that INEXACT flag/trap does not get signaled.
@@ -116,15 +119,13 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
     if (n.qExp < 0)
         n.setRoundToIntegralExact(n, truncCtx)
 
-    // save xSign ... in case of aliasing this === x
-    val xSign = x.sign
     // Compute r = x - n*y
     // (-n) * y + x
     n.sign = !n.sign // negate n
     val quotientIsOdd = (n.dw0.toInt() and 1) != 0
     z.setFma(n, y, x, truncCtx)
     if (z.isZero())
-        z.setZero(x.sign, min(x.qExp, y.qExp))
+        z.setZero(stealSignFlag(xSteal), min(stealQExp(xSteal), stealQExp(ySteal)))
 
     return quotientIsOdd
 }

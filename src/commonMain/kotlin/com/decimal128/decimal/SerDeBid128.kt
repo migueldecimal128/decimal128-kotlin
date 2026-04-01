@@ -70,7 +70,9 @@ private inline fun encodeSignAndGCombinationFieldBid128(type: Int, sign: Boolean
 
 internal fun encodeBid128Hi(d: MutDec): Long {
     val mostSignificant3 = (d.dw1 ushr (110 - 64)).toInt() and 0x07
-    val signCombo = encodeSignAndGCombinationFieldBid128(d.type, d.sign, d.qExp, mostSignificant3)
+    val steal = d.steal
+    val signCombo = encodeSignAndGCombinationFieldBid128(stealTyp(steal),
+        stealSignFlag(steal), stealQExp(steal), mostSignificant3)
     val significand110Hi = d.dw1 and ((1L shl (110 - 64)) - 1L)
     val bidDecimal128Hi = signCombo or significand110Hi
     return bidDecimal128Hi

@@ -82,7 +82,10 @@ class MutDec() : C256(), Comparable<MutDec> {
             return false
         if (digitLen != calcDigitLen256(bitLen, dw3, dw2, dw1, dw0))
             return false;
-        when (type) {
+        val steal = steal
+        val bitLen = stealBitLen(steal)
+        val qExp = stealQExp(steal)
+        when (stealTyp(steal)) {
             STEAL_TYP_ZER -> {
                 if (bitLen > 0)
                     return false
@@ -179,14 +182,6 @@ class MutDec() : C256(), Comparable<MutDec> {
             return ctx.signalInvalid(InvalidOperationReason.NAN_OPERAND, this)
         quietSNaN()
         return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
-    }
-
-    internal fun setNaN(ctx: DecContext) {
-        setZero()
-        sign = false
-        type = STEAL_NAN_QNAN
-        qExp = NON_FINITE_QNAN
-        verify { validate() }
     }
 
     internal fun quietSNaN() {
@@ -563,7 +558,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         set(x)
         val steal = steal
         val sign = stealSignFlag(steal)
-        when (type) {
+        when (stealTyp(steal)) {
             STEAL_TYP_FNZ -> {
                 if (sign == isUp) {
                     mutateNextTowardZero(ctx)
@@ -921,15 +916,6 @@ class MutDec() : C256(), Comparable<MutDec> {
         // ... only in the debugger
 
         return (if (steal < 0) "-" else "") + super.toString() + "E" + qExp.toString()
-    }
-
-    fun calcDebugPrintLength(): Int {
-        val signLen = if (sign) 1 else 0
-        val coeffLen = max(digitLen, 1)
-        val expELen = 1
-        val expSignLen = if (qExp < 0) 1 else 0
-        val expDigitLen = max(calcDigitLen64(abs(qExp).toLong()), 1)
-        return signLen + coeffLen + expELen + expSignLen + expDigitLen
     }
 
     fun encodeLittleEndianLongsBid128() = encodeLittleEndianBid128(LongArray(2))

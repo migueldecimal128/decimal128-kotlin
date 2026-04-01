@@ -97,15 +97,17 @@ internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDe
             val decletsLo6 = dpd128Lo and ((1L shl 60) - 1L)
             val binHi = binFromDeclets7(decletsHi6)
             val binLo = binFromDeclets7(decletsLo6)
-            if (binHi != 0L) {
-                d.c256Set64(binHi)
-                c256SetFmaPow10(d, d, 18, binLo)
+            if ((binHi or binLo) == 0L) {
+                d.setZero(sign, qExp)
             } else {
-                d.c256Set64(binLo)
+                if (binHi != 0L) {
+                    d.c256Set64(binHi)
+                    c256SetFmaPow10(d, d, 18, binLo)
+                } else {
+                    d.c256Set64(binLo)
+                }
+                d.steal = stealEncodeFNZ(sign, qExp, stealPackedLengths(d.steal))
             }
-            d.type = if ((binHi or binLo) == 0L) STEAL_TYP_ZER else STEAL_TYP_FNZ
-            d.qExp = qExp
-            d.sign = sign
         }
 
         (combination and 0x1F000) == 0x1E000 ->
@@ -164,7 +166,9 @@ private fun encodeDpd128(d: MutDec, isBigEndian: Boolean, longs: LongArray?, byt
         declets5Hi = declets6FromBin(binHi)
     }
     val declets6Lo = declets6FromBin(binLo)
-    val signCombo = encodeSignAndGCombinationFieldDpd128(d.type, d.sign, d.qExp, mostSigBcd4)
+    val steal = d.steal
+    val signCombo = encodeSignAndGCombinationFieldDpd128(stealTyp(steal),
+        stealSignFlag(steal), stealQExp(steal), mostSigBcd4)
     val dpdLo = (declets5Hi shl 60) or declets6Lo
     val dpdHi = signCombo or (declets5Hi ushr 4)
     if (longs != null) {

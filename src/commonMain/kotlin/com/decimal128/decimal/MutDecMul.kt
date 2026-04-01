@@ -7,7 +7,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     val yQ = stealQExp(ySteal)
     val productQExp = xQ + yQ
     val productSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
-    val binopSignature = binopSignatureOf(x.type, y.type)
+    val binopSignature = binopSignatureOf(x.steal, y.steal)
     if (binopSignature == FNZ_FNZ) {
         c256SetMul(z, x, y, ctx.tmps.pentad1)
         z.finalizeFnz(productSign, productQExp, ctx)

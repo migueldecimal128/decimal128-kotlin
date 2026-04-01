@@ -274,9 +274,7 @@ internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec,
                 residue.subtractionInverse()
             }
         }
-        z.type = STEAL_TYP_FNZ
-        z.qExp = qAlign
-        z.sign = mSign
+        z.steal = stealEncodeFNZ(mSign, qAlign, stealPackedLengths(z.steal))
         return residue
 
     } else {
@@ -289,9 +287,7 @@ internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec,
         // just adjust y's coefficient and subtract
         val gap = s.qExp - m.qExp
         c256FusedSubMulPow10(z, m, s, gap, pentad)
-        z.type = STEAL_TYP_FNZ
-        z.qExp = m.qExp
-        z.sign = mSign
+        z.steal = stealEncodeFNZ(mSign, m.qExp, stealPackedLengths(z.steal))
         return EXACT
     }
 }
