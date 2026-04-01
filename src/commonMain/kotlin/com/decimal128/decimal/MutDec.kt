@@ -600,7 +600,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         c256MutateIncrement()
         if (digitLen > precision) { // rolled up a decade
             c256SetPow10(this, precision - 1)
-            this.qExp = qExp + 1
+            ++this.qExp
         }
     }
 

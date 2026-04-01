@@ -118,18 +118,20 @@ internal fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDe
     val combination = (bid128Hi ushr 46).toInt() and 0x1FFFF
     val significand110Hi = bid128Hi and ((1L shl (110 - 64)) - 1L)
     when {
-        (combination and 0x18000) != 0x18000 -> {
+        (combination and 0x18000) != 0x18000 -> { // finite
             val biasedExponent = combination ushr 3
             val qExp = biasedExponent + decimal128.qTiny
             val mostSignificant3 = (combination and 0x07).toLong() shl (110 - 64)
             d.c256Set128(mostSignificant3 or significand110Hi, bid128Lo)
-            // IEEE754-2019 3.5.2 p21
-            //  If the value exceeds the maximum, the significand c is
-            //  non-canonical and the value used for c is zero.
-            if (d.digitLen > 34)
-                d.c256SetZero()
-            d.qExp = qExp
-            d.sign = sign
+            val digitLen = d.digitLen
+            if (digitLen == 0 || digitLen > 34) {
+                // IEEE754-2019 3.5.2 p21
+                //  If the value exceeds the maximum, the significand c is
+                //  non-canonical and the value used for c is zero.
+                d.setZero(sign, qExp)
+            } else {
+                d.steal = stealEncodeFNZ(sign, qExp, stealPackedLengths(d.steal))
+            }
         }
 
         (combination and 0x1F000) == 0x1E000 ->
@@ -142,9 +144,7 @@ internal fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDe
             // large-form finite pattern => non-canonical for decimal128:
             // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
             val E = (combination ushr 1) and 0x3FFF   // 14 bits
-            d.c256SetZero()
-            d.qExp = E + decimal128.qTiny             // preserve exponent
-            d.sign = sign                             // preserve sign (±0)
+            d.setZero(sign, E + decimal128.qTiny)     // preserve sign & exponent
         }
     }
     return d
