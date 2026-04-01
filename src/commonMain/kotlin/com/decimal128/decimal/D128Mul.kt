@@ -3,6 +3,8 @@
 
 package com.decimal128.decimal
 
+import kotlin.math.min
+
 internal fun d128MulImpl(x: Decimal, y: Decimal): Decimal =
     d128MulImpl(x, y, DecContext.current())
 
@@ -61,3 +63,73 @@ private fun mulFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     return d
 }
 
+internal fun d128SqrImpl(x: Decimal, ctx: DecContext): Decimal {
+    val xSteal = x.steal
+    when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> {
+            if (stealBitLen(xSteal) <= 64) {
+                val xDw0 = x.dw0
+                val p0 = xDw0 * xDw0
+                val p1 = unsignedMulHi(xDw0, xDw0) + ((x.dw1 * xDw0) shl 1)
+                return decFinalizeFinite(false, p1, p0, stealQExp(xSteal) shl 1, ctx)
+            } else {
+                val tmps = ctx.tmps
+                val m = tmps.mdecBridge1.set(x)
+                val z = tmps.mdecBridge2
+                z.setSquare(m, ctx)
+                return Decimal.from(z)
+            }
+        }
+        STEAL_TYP_ZER -> return Decimal.zero(false, stealQExp(xSteal) shl 1)
+        STEAL_TYP_INF -> return Decimal.POS_INFINITY
+        else -> return nanOperandFound(x, ctx)
+    }
+}
+
+internal fun d128PowImpl(x: Decimal, pow: Int, ctx: DecContext): Decimal {
+    val xSteal = x.steal
+    return when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> powImplFNZ(x, pow, ctx)
+        STEAL_TYP_ZER -> powImplZER(x, pow, ctx)
+        STEAL_TYP_INF -> powImplINF(x, pow)
+        else -> nanOperandFound(x, ctx)
+    }
+}
+
+private inline fun powImplINF(x: Decimal, pow: Int): Decimal {
+    val resultSign = x.signBit and (pow and 1) != 0
+    return when {
+        pow > 0 -> Decimal.infinity(resultSign)
+        pow < 0 -> Decimal.zero(resultSign)
+        else -> Decimal.ONE
+    }
+}
+
+
+private inline fun powImplZER(x: Decimal, pow: Int, ctx: DecContext): Decimal {
+    val resultSign = x.signBit and (pow and 1) != 0
+    return when {
+        pow > 0 -> {
+            // clamp power to prevent overflow with multiplication
+            val pClamp = min(pow, 9999)
+            val zQ = x.qExp * pClamp
+            Decimal.zero(resultSign, zQ)
+        }
+        pow < 0 -> ctx.signalDivByZero(Decimal.infinity(resultSign))
+        else -> Decimal.ONE
+    }
+}
+
+private inline fun powImplFNZ(x: Decimal, pow: Int, ctx: DecContext): Decimal {
+    when {
+        pow > 0 -> when {
+            pow == 1 -> return x
+            pow == 2 -> return x.square()
+        }
+        pow == 0 -> return Decimal.ONE
+    }
+    val tmps = ctx.tmps
+    val tmp1 = tmps.mdecBridge1.set(x)
+    val tmp2 = tmps.mdecBridge2.setPow(tmp1, pow, ctx)
+    return Decimal.from(tmp2)
+}

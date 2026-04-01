@@ -816,6 +816,10 @@ class Decimal private constructor(
                 (this.dw1 xor other.dw1) or
                 (this.dw0 xor other.dw0)) == 0L
 
+    infix fun EQ(other: Decimal): Boolean = eqJavaStyle(other)
+
+    infix fun NE(other: Decimal): Boolean = !eqJavaStyle(other)
+
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
      * *totalOrder* relation.
@@ -1113,6 +1117,8 @@ class Decimal private constructor(
      */
     fun toString(ctx: DecContext): String = d128ToString(steal, dw1, dw0, ctx)
 
+    // ── operators and arithmetic ─────────────────────────────────────────────────
+
     /**
      * Returns the sum of this value and [other], rounded according to [DecContext.current].
      */
@@ -1164,6 +1170,18 @@ class Decimal private constructor(
      * @see remainderTruncate for the `%` operator behavior
      */
     fun remainderNear(other: Decimal): Decimal = d128RemNearImpl(this, other)
+
+    fun square(): Decimal = d128SqrImpl(this, DecContext.current())
+
+    fun pow(n: Int, ctx: DecContext = DecContext.current()): Decimal {
+        val tmps = ctx.tmps
+        val tmp1 = tmps.mdecBridge1.set(this)
+        val tmp2 = tmps.mdecBridge2.setPow(tmp1, n, ctx)
+        return Decimal.from(tmp2)
+    }
+
+    // FIXME
+    // fun reciprocal(): Decimal = d128RecipImpl(DecContext.current())
 
     // ── Rounding ──────────────────────────────────────────────────────────────
 
