@@ -27,7 +27,7 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
         FNZ_INF,
         INF_FNZ,
         INF_INF -> fmaInfProd(z, x.sign xor y.sign, a, ctx)
-        else -> z.setNaNOperand(x, y, ctx)
+        else -> z.setNanOperandFound(x, y, ctx)
     }
     return z
 }

@@ -154,7 +154,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    internal fun setNaNOperand(x: MutDec, ctx: DecContext): MutDec {
+    internal fun setNanOperandFound(x: MutDec, ctx: DecContext): MutDec {
         val stealX = x.steal
         verify { stealIsNAN(stealX) }
         this.set(x)
@@ -166,7 +166,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    internal fun setNaNOperand(x: MutDec, y: MutDec, ctx: DecContext, alwaysSignal: Boolean = false): MutDec {
+    internal fun setNanOperandFound(x: MutDec, y: MutDec, ctx: DecContext, alwaysSignal: Boolean = false): MutDec {
         val stealX = x.steal
         val stealY = y.steal
         verify { stealHasNAN(stealX, stealY) }
@@ -378,7 +378,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         if (!this.isZero() || !other.isZero()) {
             if (!isNaN() && !other.isNaN())
                 return md.set(compareJavaStyleTo(other))
-            md.setNaNOperand(this, other, ctx)
+            md.setNanOperandFound(this, other, ctx)
         }
         return md
     }
@@ -708,7 +708,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             INF_FNZ,
             FNZ_INF -> return ctx.setNanSignalInvalid(this, QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE)
             else -> // NAN_FOUND
-                return setNaNOperand(x, y, ctx)
+                return setNanOperandFound(x, y, ctx)
 
         }
     }
@@ -726,7 +726,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         if (x.bitLen == 0) setZero(xSign, targetQ)
                         else finalizeFnz(xSign, targetQ, ctx))
             }
-            stealIsNAN(steal) -> setNaNOperand(x, ctx)
+            stealIsNAN(steal) -> setNanOperandFound(x, ctx)
         }
         return this
     }
@@ -741,7 +741,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             }
             STEAL_TYP_FNZ -> set(stealSciExp(xSteal))
             STEAL_TYP_INF -> setInfinite()
-            else -> setNaNOperand(x, ctx)
+            else -> setNanOperandFound(x, ctx)
         }
         return this
     }

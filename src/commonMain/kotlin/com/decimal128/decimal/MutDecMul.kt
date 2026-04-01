@@ -22,7 +22,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
         INF_FNZ,
         FNZ_INF,
         INF_INF -> z.setInfinite(productSign)
-        else -> z.setNaNOperand(x, y, ctx)
+        else -> z.setNanOperandFound(x, y, ctx)
     }
     return z
 }
@@ -39,7 +39,7 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         return z.setZero(false, sqrQExp)
     if (typ == STEAL_TYP_INF)
         return z.setInfinite(false)
-    return z.setNaNOperand(x, ctx)
+    return z.setNanOperandFound(x, ctx)
 }
 
 internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
@@ -67,7 +67,7 @@ internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
                 ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_INFINITY)
             }
         }
-        else -> z.setNaNOperand(x, ctx)
+        else -> z.setNanOperandFound(x, ctx)
     }
     return z
 }
@@ -78,7 +78,7 @@ internal fun mutDecPowImpl(z: MutDec, x: MutDec, pow: Int, ctx: DecContext): Mut
         STEAL_TYP_FNZ -> return mutDecPowImplFNZ(z, x, pow, ctx)
         STEAL_TYP_ZER -> return mutDecPowImplZER(z, x, pow, ctx)
         STEAL_TYP_INF -> return mutDecPowImplINF(z, x, pow, ctx)
-        else -> return z.setNaNOperand(x, ctx)
+        else -> return z.setNanOperandFound(x, ctx)
     }
 }
 

@@ -23,6 +23,7 @@ enum class InvalidOperationReason {
     PARSE_NAN_PAYLOAD_TOO_LONG,
     SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO,        // e.g., sqrt(-1)
     SQUARE_ROOT_OF_NEG_INFINITY,
+    LOG_OF_NEG_INFINITY,
     QUANTIZE,           // e.g., quantize(Infinity, finite)
     QUANTIZE_RESULT_WOULD_EXCEED_PRECISION,
     QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE,

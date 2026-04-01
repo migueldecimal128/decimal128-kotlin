@@ -35,7 +35,7 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
             }
             FNZ_ZER -> return setScaleToMinQexp(z, xSign, x, stealQExp(ySteal), ctx)
             ZER_FNZ -> return setScaleToMinQexp(z, ySign, y, stealQExp(xSteal), ctx)
-            else -> z.setNaNOperand(x, y, ctx)
+            else -> z.setNanOperandFound(x, y, ctx)
         }
     }
     return z

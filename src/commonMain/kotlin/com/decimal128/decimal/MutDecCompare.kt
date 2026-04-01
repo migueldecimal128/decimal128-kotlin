@@ -201,6 +201,6 @@ internal fun mutDecSetMinMaxImpl(z: MutDec, x: MutDec, y: MutDec, op: Int, ctx: 
             return z
         }
     }
-    return z.setNaNOperand(x, y, ctx)
+    return z.setNanOperandFound(x, y, ctx)
 }
 

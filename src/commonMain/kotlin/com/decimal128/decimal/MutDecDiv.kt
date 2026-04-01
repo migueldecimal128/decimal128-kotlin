@@ -20,7 +20,7 @@ internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
         INF_ZER,
         INF_FNZ -> z.setInfinite(quotientSign)
         INF_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_INF_BY_INF)
-        else -> z.setNaNOperand(x, y, ctx)
+        else -> z.setNanOperandFound(x, y, ctx)
     }
     return z
 }
@@ -43,7 +43,7 @@ internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext):
             INF_ZER,
             INF_FNZ -> z.setInfinite(quotientSign)
             FNZ_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
-            else -> z.setNaNOperand(x, y, ctx)
+            else -> z.setNanOperandFound(x, y, ctx)
         }
     }
     return z
@@ -77,7 +77,7 @@ internal fun mutDecReciprocalImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec
         }
         STEAL_TYP_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
         STEAL_TYP_INF -> z.setZero(quotientSign)
-        else -> z.setNaNOperand(x, ctx)
+        else -> z.setNanOperandFound(x, ctx)
     }
     return z
 }
@@ -100,7 +100,7 @@ fun mutDecSetRemTruncImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boo
             INF_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.INF_NUMERATOR_IN_REMAINDER_OP)
             ZER_INF,
             FNZ_INF -> z.set(x)
-            else -> z.setNaNOperand(x, y, ctx)
+            else -> z.setNanOperandFound(x, y, ctx)
         }
     }
     return false
