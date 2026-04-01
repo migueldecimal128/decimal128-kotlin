@@ -349,18 +349,19 @@ class MutDec() : C256(), Comparable<MutDec> {
         return stealTyp(steal) != STEAL_TYP_NAN
     }
 
-    // IEEE754-2008 5.4.1
+    // IEEE754-2019 5.4.1
     fun setAdd(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecAddImpl(this, x, y.sign, y, ctx)
 
-    // IEEE754-2008 5.4.1
+    // IEEE754-2019 5.4.1
     fun setSub(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecAddImpl(this, x, !y.sign, y, ctx)
 
-    // IEEE754-2008 5.4.1
+    // IEEE754-2019 5.4.1
     fun setMul(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecMulImpl(this, x, y, ctx)
 
     fun setSquare(x: MutDec, ctx: DecContext): MutDec = mutDecSqrImpl(this, x, ctx)
 
-    // IEEE754-2008 5.4.1
+    fun setPow(x: MutDec, pow: Int, ctx: DecContext): MutDec = mutDecPowImpl(this, x, pow, ctx)
+    // IEEE754-2019 5.4.1
     fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec = mutDecFmaImpl(this, x, y, a, ctx)
 
     fun setDiv(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecDivImpl(this, x, y, ctx)
@@ -648,7 +649,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
     }
 
-    // IEEE754-2008 5.3.2
+    // IEEE754-2019 5.3.2
     fun setQuantize(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // Handle NaN propagation
         val xSteal = x.steal
@@ -712,7 +713,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
     }
 
-    // IEEE754-2008 5.3.3
+    // IEEE754-2019 5.3.3
     fun setScaleB(x: MutDec, pow10: Int, ctx: DecContext): MutDec {
         set(x)
         val steal = steal
@@ -730,7 +731,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    // IEEE754-2008 5.3.3
+    // IEEE754-2019 5.3.3
     fun setLogB(x: MutDec, ctx: DecContext): MutDec {
         val xSteal = x.steal
         when (stealTyp(xSteal)) {
