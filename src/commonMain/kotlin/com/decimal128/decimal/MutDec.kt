@@ -186,7 +186,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     internal fun quietSNaN() {
         verify { isSignaling() }
-        qExp = NON_FINITE_QNAN
+        steal = stealWithQuietedSNAN(steal)
     }
 
     internal fun setNaN(): MutDec {
