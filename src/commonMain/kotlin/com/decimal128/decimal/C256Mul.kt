@@ -76,7 +76,7 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: 
     val xBitLen = x.bitLen
     verify { xBitLen <= 127 }
     val maxBitLen = xBitLen + yBitLen
-    verify { maxBitLen <= 254 }
+    verify { maxBitLen <= 256 }
     when {
         xBitLen <= 64 -> _mulCoeff3x1(z, maxBitLen, y2, y1, y0, x.dw0, pentad)
         xBitLen <= 127 -> _mulCoeff3x2(z, maxBitLen, y2, y1, y0, x.dw1, x.dw0, pentad)

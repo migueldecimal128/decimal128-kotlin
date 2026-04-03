@@ -30,6 +30,8 @@ actual open class DecTmps {
     internal actual val mdecTrans3: MutDec = MutDec()
     @JvmField
     internal actual val mdecTrans4: MutDec = MutDec()
+    @JvmField
+    internal actual val mdecTrans5: MutDec = MutDec()
 
     //
     @JvmField

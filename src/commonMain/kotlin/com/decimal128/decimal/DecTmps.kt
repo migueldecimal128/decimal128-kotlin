@@ -19,6 +19,7 @@ expect open class DecTmps() {
     internal val mdecTrans2: MutDec
     internal val mdecTrans3: MutDec
     internal val mdecTrans4: MutDec
+    internal val mdecTrans5: MutDec
 
     //
     internal val pentad1: Pentad

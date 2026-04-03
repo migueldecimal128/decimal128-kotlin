@@ -5,42 +5,48 @@ internal object MutDecLn {
     val ctx38 = DecContext.decimal128Extended38()
 
     // Numerator P(z) coefficients
-    // p[0] = 0, p[1] = 1 -- handled directly in Horner, not stored
+// p[0] = 0, p[1] = 1 -- handled directly in Horner, not stored
     private val P2 = MutDec().set("4", ctx38)
-    private val P3 = MutDec().set("6.55392156862745098039215686274509803921569", ctx38)
-    private val P4 = MutDec().set("5.66176470588235294117647058823529411764706", ctx38)
-    private val P5 = MutDec().set("2.76323529411764705882352941176470588235294", ctx38)
-    private val P6 = MutDec().set("0.756862745098039215686274509803921568627451", ctx38)
-    private val P7 = MutDec().set("0.108241758241758241758241758241758241758242", ctx38)
-    private val P8 = MutDec().set("0.00677117000646412411118293471234647705235941", ctx38)
-    private val P9 = MutDec().set("0.000116370557547028135263429381076439899969312", ctx38)
+    private val P3 = MutDec().set("6.5539215686274509803921568627450980392", ctx38)
+    private val P4 = MutDec().set("5.6617647058823529411764705882352941176", ctx38)
+    private val P5 = MutDec().set("2.7632352941176470588235294117647058824", ctx38)
+    private val P6 = MutDec().set("0.75686274509803921568627450980392156863", ctx38)
+    private val P7 = MutDec().set("0.10824175824175824175824175824175824176", ctx38)
+    private val P8 = MutDec().set("0.0067711700064641241111829347123464770524", ctx38)
+    private val P9 = MutDec().set("0.00011637055754702813526342938107643989997", ctx38)
 
     // Denominator Q(z) coefficients
-    // q[0] = 1 -- handled directly in Horner, not stored
-    private val Q1 = MutDec().set("4.50000000000000000000000000000000000000000", ctx38)
-    private val Q2 = MutDec().set("8.47058823529411764705882352941176470588235", ctx38)
-    private val Q3 = MutDec().set("8.64705882352941176470588235294117647058824", ctx38)
-    private val Q4 = MutDec().set("5.18823529411764705882352941176470588235294", ctx38)
-    private val Q5 = MutDec().set("1.85294117647058823529411764705882352941176", ctx38)
-    private val Q6 = MutDec().set("0.380090497737556561085972850678733031674208", ctx38)
-    private val Q7 = MutDec().set("0.0407239819004524886877828054298642533936652", ctx38)
-    private val Q8 = MutDec().set("0.00185109008638420403126285479226655697243933", ctx38)
-    private val Q9 = MutDec().set("0.0000205676676264911559029206088029617441382147", ctx38)
+// q[0] = 1 -- handled directly in Horner, not stored
+    private val Q1 = MutDec().set("4.5000000000000000000000000000000000000", ctx38)
+    private val Q2 = MutDec().set("8.4705882352941176470588235294117647059", ctx38)
+    private val Q3 = MutDec().set("8.6470588235294117647058823529411764706", ctx38)
+    private val Q4 = MutDec().set("5.1882352941176470588235294117647058824", ctx38)
+    private val Q5 = MutDec().set("1.8529411764705882352941176470588235294", ctx38)
+    private val Q6 = MutDec().set("0.38009049773755656108597285067873303167", ctx38)
+    private val Q7 = MutDec().set("0.040723981900452488687782805429864253394", ctx38)
+    private val Q8 = MutDec().set("0.0018510900863842040312628547922665569724", ctx38)
+    private val Q9 = MutDec().set("0.000020567667626491155902920608802961744138", ctx38)
 
-    // ln(k) for k = 1..9
-    private val LN1 = MutDec().set("0", ctx38)
-    private val LN2 = MutDec().set("0.6931471805599453094172321214581765680755", ctx38)
-    private val LN3 = MutDec().set("1.09861228866810969139524523692252570464749", ctx38)
-    private val LN4 = MutDec().set("1.386294361119890618834464242916353136151", ctx38)
-    private val LN5 = MutDec().set("1.6094379124341003746007593332261876395256", ctx38)
-    private val LN6 = MutDec().set("1.79175946922805500081247735838070227272299", ctx38)
-    private val LN7 = MutDec().set("1.94591014905531330510535274344317972963708", ctx38)
-    private val LN8 = MutDec().set("2.0794415416798359282516963643745297042265", ctx38)
-    private val LN9 = MutDec().set("2.19722457733621938279049047384505140929498", ctx38)
+    private val ZERO = MutDec()
+    private val ONE = MutDec().setOne()
+    private val FOUR = MutDec().set(4)
+
+    // ln(k) for k = 0 + 1..9
+    private val LN = arrayOf(
+        ZERO,
+        ZERO, // LN1
+        MutDec().set("0.69314718055994530941723212145817656808", ctx38), // LN2
+        MutDec().set("1.0986122886681096913952452369225257046", ctx38),  // LN3
+        MutDec().set("1.3862943611198906188344642429163531362", ctx38),  // LN4
+        MutDec().set("1.6094379124341003746007593332261876395", ctx38),  // LN5
+        MutDec().set("1.7917594692280550008124773583807022727", ctx38),  // LN6
+        MutDec().set("1.9459101490553133051053527434431797296", ctx38),  // LN7
+        MutDec().set("2.0794415416798359282516963643745297042", ctx38),  // LN8
+        MutDec().set("2.1972245773362193827904904738450514093", ctx38),  // LN9
+    )
 
     // ln(10)
-    private val LN10 = MutDec().set("2.3025850929940456840179914546843642076011", ctx38)
-
+    private val LN10 = MutDec().set("2.3025850929940456840179914546843642076", ctx38)
     fun mutDecLnImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         val xSteal = x.steal
         when (stealTyp(xSteal)) {
@@ -66,14 +72,81 @@ internal object MutDecLn {
     private fun lnImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         val ctx38 = DecContext.decimal128Extended38()
         val xSteal = x.steal
+        val tmps = ctx.tmps
         var e = stealSciExp(xSteal)
         var k = extractKMostSigDigitRounded(x, ctx38)
         if (k == 10) { k = 1; e += 1 }
 
         // c' = x / (k * 10^e)  →  c' ∈ [0.9, 1.1)
-        //val divisor = ctx.tmps.mdecTrans2.setIntWithSciExp(k, e)
-        //val cPrime  = ctx.tmps.mdecTrans3.setDiv(x, divisor, ctx38)
-        return MutDec()
+        val divisor = tmps.mdecTrans1.set(k)
+        divisor.qExp = e
+        val cPrime = tmps.mdecTrans2.setDiv(x, divisor, ctx38)
+
+        // sqrt #1: c' = sqrt(c')  →  c' ∈ [~0.95, ~1.05)
+        cPrime.setSqrt(cPrime, ctx38)
+        // sqrt #2: c' = sqrt(c')  →  c' ∈ [~0.975, ~1.025)
+        cPrime.setSqrt(cPrime, ctx38)
+
+        println("cPrime = $cPrime  qExp = ${cPrime.qExp}")
+        println("ONE = $ONE  qExp = ${ONE.qExp}")
+
+        // z = c' - 1  →  |z| <= 0.025
+        val zArg = tmps.mdecTrans3.setSub(cPrime, ONE, ctx38)
+
+        // Evaluate P(z) via Horner: P(z) = z*(1 + z*(P2 + z*(P3 + ... z*P9)))
+        val pAcc = tmps.mdecTrans1
+        pAcc.set(P9)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P8, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P7, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P6, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P5, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P4, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P3, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, P2, ctx38)
+        pAcc.setMul(pAcc, zArg, ctx38)
+        pAcc.setAdd(pAcc, ONE, ctx38)   // +1
+        pAcc.setMul(pAcc, zArg, ctx38) // *z (factor out leading z)
+
+        // Evaluate Q(z) via Horner: Q(z) = 1 + z*(Q1 + z*(Q2 + ... z*Q9))
+        val qAcc = tmps.mdecTrans2
+        qAcc.set(Q9)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q8, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q7, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q6, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q5, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q4, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q3, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q2, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, Q1, ctx38)
+        qAcc.setMul(qAcc, zArg, ctx38)
+        qAcc.setAdd(qAcc, ONE, ctx38)  // +1
+
+        // r = P(z) / Q(z)  →  ln(c'')
+        val r = tmps.mdecTrans1.setDiv(pAcc, qAcc, ctx38)
+
+        // ln(x) = r*4 + ln(k) + e*ln(10)
+        r.setMul(r, FOUR, ctx38)              // r * 4
+        r.setAdd(r, LN[k], ctx38)            // + ln(k)
+        val eLnTen = tmps.mdecTrans2.set(e)
+        r.setFma(eLnTen, LN10, r, ctx38)     // + e*ln(10)
+
+        // round to 34 digits and store in z
+        return z.set(r, ctx)
     }
 
     private fun printLnConstants() {
@@ -103,20 +176,12 @@ internal object MutDecLn {
           Q8  = $Q8
           Q9  = $Q9
 
-        ln(k) for k=1..9:
-          LN1  = $LN1
-          LN2  = $LN2
-          LN3  = $LN3
-          LN4  = $LN4
-          LN5  = $LN5
-          LN6  = $LN6
-          LN7  = $LN7
-          LN8  = $LN8
-          LN9  = $LN9
-
-          LN10 = $LN10
     """.trimIndent()
         )
+        for (k in 1..9)
+            println("ln($k) = ${LN[k]}")
+
+        println("ln(10) = $LN10")
     }
 
     internal fun extractKMostSigDigitRounded(x: MutDec, ctx: DecContext): Int {

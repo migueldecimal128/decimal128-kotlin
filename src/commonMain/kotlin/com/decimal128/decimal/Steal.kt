@@ -13,8 +13,8 @@ STEAL == Sign Type Exponent And Lengths
 /*
 b31: sign
 b30-b17: qExp (signed)
-b16-b11: digitLen
-b10-b2: bitLen
+b16-b10: digitLen
+b9-b2: bitLen
 b1-b0: type
 b1: isNonZero/isNaN
 b0: isNonFinite

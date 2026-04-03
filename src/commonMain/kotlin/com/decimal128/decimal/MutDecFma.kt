@@ -32,7 +32,7 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
     return z
 }
 
-private inline fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+private /*inline*/ fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
     val aT = if (z === a) ctx.tmps.mdecArg1.set(a) else a
