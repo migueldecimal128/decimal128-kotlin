@@ -94,7 +94,7 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y3: Long, y2: Long, y1: 
     val xBitLen = x.bitLen
     verify { xBitLen <= 64 }
     val maxBitLen = xBitLen + yBitLen
-    verify { maxBitLen <= 254 }
+    verify { maxBitLen <= 256 }
     if (xBitLen <= 64)
         _mulCoeff4x1(z, maxBitLen, y3, y2, y1, y0, x.dw0, pentad)
     else

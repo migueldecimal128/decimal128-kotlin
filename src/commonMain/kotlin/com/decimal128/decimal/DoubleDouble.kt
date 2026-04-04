@@ -105,15 +105,6 @@ class DoubleDouble(a: Double, b: Double) {
             return newQuickTwoSum(q1, q2)
         }
 
-        fun newDivApprox(x: DoubleDouble, y: DoubleDouble): DoubleDouble {
-            val q1 = x.hi / y.hi
-            val p = newMulDoubleDoubleByDouble(y, q1)
-            val r = newSub(x, p)
-            val q2 = (r.hi + r.lo) / y.hi
-            return newQuickTwoSum(q1, q2)
-        }
-
-
     }
 
     inline fun setQuickTwoSum(a: Double, b: Double) {
