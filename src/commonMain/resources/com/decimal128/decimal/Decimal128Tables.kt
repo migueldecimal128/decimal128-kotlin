@@ -204,9 +204,9 @@ internal actual val BYTE_TABLES = byteArrayOf(
 private val verifyDwordTablesSize = check(DWORD_TABLES.size == DWORD_TABLES_SIZE_POW_2)
 private val verifyByteTablesSize = check(BYTE_TABLES.size == BYTE_TABLES_SIZE_POW_2)
 
-private val verifyFnv1aChecksums =
+private val verifyFnv1aChecksums = 
     check(fnv1aHash(DWORD_TABLES) == 2073989853 &&
-            fnv1aHash(BYTE_TABLES) == -409221829) { "tables FNV1A checksum mismatch" }
+          fnv1aHash(BYTE_TABLES) == -409221829) { "tables FNV1A checksum mismatch" }
 
 internal actual val POW10: LongArray = DWORD_TABLES
 
