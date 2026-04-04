@@ -15,9 +15,9 @@ class DecGenConstantTables {
     val resourceFilePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
     val staticConstPath = "src/commonMain/resources/com/decimal128/decimal/Decimal128Tables.kt"
 
-    val X_RESOURCE_TABLE_VERSION = 0x0007_D128
-    val X_DWORD_TABLES_COUNT = 943 // DWORD_TABLES_COUNT
-    val X_BYTE_TABLES_COUNT = 1923 // BYTE_TABLES_SIZE
+    val X_RESOURCE_TABLE_VERSION = 0x0008_D128
+    val X_DWORD_TABLES_COUNT = 974 // DWORD_TABLES_COUNT
+    val X_BYTE_TABLES_COUNT = 1955 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
 
@@ -27,8 +27,8 @@ class DecGenConstantTables {
         initializeTables()
 
         if (verbose) {
-            println("X_DWORD_TABLES_SIZE:$X_DWORD_TABLES_COUNT")
-            println("X_BYTE_TABLES_SIZE:$X_BYTE_TABLES_COUNT")
+            println("X_DWORD_TABLES_COUNT:$X_DWORD_TABLES_COUNT")
+            println("X_BYTE_TABLES_COUNT:$X_BYTE_TABLES_COUNT")
         }
         assertEquals(X_DWORD_TABLES_COUNT, calc_DWORD_TABLES_size())
         assertEquals(X_BYTE_TABLES_COUNT, calc_BYTE_TABLES_size())
@@ -37,8 +37,8 @@ class DecGenConstantTables {
         X_BYTE_TABLES_FNV1A = fnv1aHash(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
-        assertEquals(63135382, X_DWORD_TABLES_FNV1A)
-        assertEquals(404841159, X_BYTE_TABLES_FNV1A)
+        assertEquals(2073989853, X_DWORD_TABLES_FNV1A)
+        assertEquals(-409221829, X_BYTE_TABLES_FNV1A)
         saveTablesAsResourceFile()
         saveTablesAsStaticConstSourceCode()
     }
@@ -513,7 +513,7 @@ class DecGenConstantTables {
     }
 
     private var iRRP = 1
-    private val RANGE_RECIP_PARAMS = LongArray(647)
+    private val RANGE_RECIP_PARAMS = LongArray(678)
 
     private fun serializeTable() {
         for (q in RRMP10_Q_MIN..<RRMP10_Q_MAXX) {
@@ -536,6 +536,15 @@ class DecGenConstantTables {
             println("RANGE_RECIP_PARAMS.size should be $iRRP")
             throw IllegalStateException()
         }
+
+        val calculatedDwordCount = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_PARAMS.size
+        if (verbose) {
+            println("RANGE_RECIP_MUL_PARAMS_BASE:$RANGE_RECIP_MUL_PARAMS_BASE")
+            println("RANGE_RECIP_PARAMS.size:${RANGE_RECIP_PARAMS.size}")
+            println("calculated X_DWORD_TABLES_COUNT:$calculatedDwordCount")
+        }
+
+        check (calculatedDwordCount == X_DWORD_TABLES_COUNT)
 
         for (i in RANGE_RECIP_PARAMS.indices)
             X_DWORD_TABLES[RANGE_RECIP_MUL_PARAMS_BASE + i] = RANGE_RECIP_PARAMS[i]

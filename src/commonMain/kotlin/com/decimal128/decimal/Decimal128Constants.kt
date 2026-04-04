@@ -30,7 +30,7 @@ internal const val MIN_POW10_DIGIT_LEN_192 = 39          // 0x00000027 39
 
 internal const val MIN_POW10_DIGIT_LEN_256 = 58          // 0x0000003A 58
 
-// 256-bit coefficient handles all 777 digit integers
+// 256-bit coefficient handles all 77 digit integers
 internal const val MAXX_DIGIT_LEN = 78          // 0x0000004E 78
 
 
@@ -111,16 +111,16 @@ internal const val MAGIC_POW10_M_MAXX = 20
  * Specific params are calculated for each combination of dividend digit count
  * q in [20,77] and divisor power of 10 k in [14,43]. Adjoining entries are
  * then merged to reduce table size when doing so would not increase
- * the number of run-time operations ... would no decrease performance.
+ * the number of run-time operations ... would not decrease performance.
  */
 internal const val RANGE_RECIP_MUL_PARAMS_BASE = MAGIC_POW10_M_BASE + MAGIC_POW10_M_MAXX
-internal const val RANGE_RECIP_MUL_PARAMS_MAXX = 709
+internal const val RANGE_RECIP_MUL_PARAMS_MAXX = 678
 
-internal const val DWORD_TABLES_SIZE = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
+internal const val DWORD_TABLES_COUNT = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
 
 private val checkSize_DWORD_TABLES = run {
-    //println("DWORD_TABLES_SIZE:$DWORD_TABLES_SIZE EXPECTED_DWORD_TABLES_SIZE:$EXPECTED_DWORD_TABLES_SIZE")
-    check(DWORD_TABLES_SIZE == EXPECTED_DWORD_TABLES_SIZE)
+    println("DWORD_TABLES_COUNT:$DWORD_TABLES_COUNT EXPECTED_DWORD_TABLES_COUNT:$EXPECTED_DWORD_TABLES_COUNT")
+    check(DWORD_TABLES_COUNT == EXPECTED_DWORD_TABLES_COUNT)
 }
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
@@ -157,13 +157,9 @@ internal const val MAGIC_FLAG_AND_SHIFT_MAXX = MAGIC_POW10_M_MAXX
 // if the dividend has less than 20 digits then division can be handled by other means
 internal const val RRMP10_Q_MIN = POW10_64_COUNT
 // 256-bit coefficient supports all 77 digit numbers and some 78 digit numbers.
-// Current QA test suite wants to test the limits, so this needs to be 79.
-// Realistically, this could probably be dropped to 77 if I fully enforced
-// normalization to no more than 38 digits in a 128-bit coefficient
-// which would lead to at most a 76 digit product.
-// This would shrink the table by two rows *and* by 2 columns
-// since it would reduce K_MAXX by 2
-internal const val RRMP10_Q_MAXX = 77 // exclusive
+// We need to support 77 digit numbers because division may require
+// (38 + 38) + 1
+internal const val RRMP10_Q_MAXX = 78 // exclusive
 internal const val RRMP10_K_MIN = BARRETT_POW10_MAXX
 internal const val RRMP10_K_MAXX = RRMP10_Q_MAXX - 34
 
@@ -175,11 +171,11 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0007_D128
-internal const val EXPECTED_DWORD_TABLES_SIZE = 1005
-internal const val EXPECTED_BYTE_TABLES_SIZE = 1923 // BYTE_TABLES_SIZE
-internal const val EXPECTED_DWORD_TABLES_FNV1A = 63135382
-internal const val EXPECTED_BYTE_TABLES_FNV1A = 404841159
+internal const val EXPECTED_TABLE_VERSION = 0x0008_D128
+internal const val EXPECTED_DWORD_TABLES_COUNT = 974
+internal const val EXPECTED_BYTE_TABLES_COUNT = 1955 // BYTE_TABLES_SIZE
+internal const val EXPECTED_DWORD_TABLES_FNV1A = 2073989853
+internal const val EXPECTED_BYTE_TABLES_FNV1A = -409221829
 
 internal expect fun loadDecimal128ConstantTables()
 private val loadEmUp = loadDecimal128ConstantTables()
@@ -200,9 +196,9 @@ internal const val RRMP10_LOOKUP_BASE = MAGIC_FLAG_AND_SHIFT_BASE + MAGIC_FLAG_A
 internal const val RRMP10_LOOKUP_MAXX = RRMP10_LOOKUP_TABLE_SIZE
 
 internal const val BYTES_TABLE_TERMINATOR = 1
-internal const val BYTE_TABLES_SIZE = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX + BYTES_TABLE_TERMINATOR
+internal const val BYTE_TABLES_COUNT = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX + BYTES_TABLE_TERMINATOR
 
-private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == EXPECTED_BYTE_TABLES_SIZE)
+private val checkSize_BYTE_TABLES = check(BYTE_TABLES_COUNT == EXPECTED_BYTE_TABLES_COUNT)
 
 /*
 // minBitCount:0  maxBitCount:64
