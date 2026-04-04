@@ -9,7 +9,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
-    verify { x.digitLen <= 76 } // x is allowed more digits because of FMA
+    verify { x.digitLen <= 77 } // x is allowed more digits because of FMA
     verify { y.digitLen <= 38 }
     val xSteal = x.steal
     val ySteal = y.steal

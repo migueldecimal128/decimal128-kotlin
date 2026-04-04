@@ -108,7 +108,7 @@ class TestC256ScaleDown {
             for (xPow10 in RRMP10_K_MIN..<min(RRMP10_K_MAXX, qDigitCount + 2)) {
                 for (deltaX in deltas) {
                     val biA = biQ.add(deltaX)
-                    if (biA.toString().length <= 76) {
+                    if (biA.toString().length <= 77) {
                         val case = buildTestCase(biA, xPow10)
                         test1(case)
                     }

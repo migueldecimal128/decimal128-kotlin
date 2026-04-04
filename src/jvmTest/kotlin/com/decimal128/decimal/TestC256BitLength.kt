@@ -46,7 +46,7 @@ class TestC256BitLength {
             val biX = TEN.pow(i)
             for (deltaX in deltas) {
                 val biA = biX.add(deltaX)
-                if (biA.toString().length <= 76) {
+                if (biA.toString().length <= 77) {
                     val tc = TC(biA)
                     test1(tc)
                 }

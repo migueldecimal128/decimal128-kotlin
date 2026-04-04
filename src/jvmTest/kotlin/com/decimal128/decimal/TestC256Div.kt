@@ -59,7 +59,7 @@ class TestC256Div {
                     for (deltaY in deltas) {
                         val biB = biY.add(deltaY)
                         val tc = TC(biA, biB)
-                        if (tc.biResult.toString().length <= 76)
+                        if (tc.biResult.toString().length <= 77)
                             test1(tc)
                     }
                 }

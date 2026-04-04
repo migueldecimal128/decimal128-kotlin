@@ -50,7 +50,7 @@ class TestC256Fms {
                             for (deltaA in deltas) {
                                 val biAdelta = biA.add(deltaA)
                                 val tc = TC(biXdelta, biYdelta, biAdelta)
-                                if (tc.biIntermediateProd.toString().length <= 76 && tc.biResult.toString().length <= 76)
+                                if (tc.biIntermediateProd.toString().length <= 77 && tc.biResult.toString().length <= 77)
                                     test1(tc)
                             }
                         }
