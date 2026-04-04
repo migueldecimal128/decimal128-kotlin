@@ -6,8 +6,8 @@ import kotlin.math.max
 
 
 
-internal inline fun pow10BitLen(pow10: Int): Int {
-    return (POW10_BITLEN[pow10 and POW10_BITLEN_BCE].toInt() and 0xFF)
+internal /*inline*/ fun pow10BitLen(pow10: Int): Int {
+    return (POW10_BITLEN[pow10 and POW10_BITLEN_BCE].toInt() and 0xFF) + 1
 }
 
 internal fun pow10Offset(pow10: Int): Int {

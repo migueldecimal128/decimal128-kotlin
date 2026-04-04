@@ -6,7 +6,7 @@ internal const val MASK48L = 0x0000_FFFF_FFFF_FFFFL
 
 internal const val MAX_DEC34_CHAR_LEN = 1 /*sign*/ + 34 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
 internal const val MAX_DEC38_CHAR_LEN = 1 /*sign*/ + 38 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
-internal const val MAX_DEC76_CHAR_LEN = 1 /*sign*/ + 76 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
+internal const val MAX_DEC77_CHAR_LEN = 1 /*sign*/ + 77 /*coefficient*/ + 1 /*dot*/ + 1 /*E*/ + 1 /*sign*/+ 4 /*exp*/
 
 internal const val Q_MAX = 6111
 internal const val Q_TINY = -6176
@@ -22,9 +22,7 @@ internal const val POW10_128_COUNT = 19          // 0x00000013 19
 
 internal const val POW10_192_COUNT = 19          // 0x00000013 19
 
-// actually, 20 powers of 10 fit in 193..256 bits,
-// but we are stopping a 76 digits in 193..253
-internal const val POW10_256_COUNT = 19          // 0x00000014 2E+1
+internal const val POW10_256_COUNT = 20          // 0x00000014 2E+1
 
 internal const val MIN_POW10_DIGIT_LEN_128 = 20          // 0x00000014 2E+1
 
@@ -32,8 +30,8 @@ internal const val MIN_POW10_DIGIT_LEN_192 = 39          // 0x00000027 39
 
 internal const val MIN_POW10_DIGIT_LEN_256 = 58          // 0x0000003A 58
 
-// 253-bit coefficient handles all 76 digit integers
-internal const val MAXX_DIGIT_LEN = 77          // 0x0000004D 77
+// 256-bit coefficient handles all 777 digit integers
+internal const val MAXX_DIGIT_LEN = 78          // 0x0000004E 78
 
 
 /**
@@ -120,7 +118,10 @@ internal const val RANGE_RECIP_MUL_PARAMS_MAXX = 709
 
 internal const val DWORD_TABLES_SIZE = RANGE_RECIP_MUL_PARAMS_BASE + RANGE_RECIP_MUL_PARAMS_MAXX
 
-private val checkSize_DWORD_TABLES = check(DWORD_TABLES_SIZE == 1001)
+private val checkSize_DWORD_TABLES = run {
+    //println("DWORD_TABLES_SIZE:$DWORD_TABLES_SIZE EXPECTED_DWORD_TABLES_SIZE:$EXPECTED_DWORD_TABLES_SIZE")
+    check(DWORD_TABLES_SIZE == EXPECTED_DWORD_TABLES_SIZE)
+}
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
 internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
@@ -174,11 +175,11 @@ internal const val RRMP10_LOOKUP_TABLE_SIZE = (RRMP10_Q_MAXX - RRMP10_Q_MIN) shl
 
 
 internal const val RESOURCE_TABLE_PATHNAME = "/com/decimal128/decimal/decimal128_tables.bin"
-internal const val EXPECTED_TABLE_VERSION = 0x0006_D128
-internal const val EXPECTED_DWORD_TABLES_COUNT = 939
-internal const val EXPECTED_BYTE_TABLES_COUNT = 1922 // BYTE_TABLES_SIZE
-internal const val EXPECTED_DWORD_TABLES_FNV1A = 185718703
-internal const val EXPECTED_BYTE_TABLES_FNV1A = -1298083103
+internal const val EXPECTED_TABLE_VERSION = 0x0007_D128
+internal const val EXPECTED_DWORD_TABLES_SIZE = 1005
+internal const val EXPECTED_BYTE_TABLES_SIZE = 1923 // BYTE_TABLES_SIZE
+internal const val EXPECTED_DWORD_TABLES_FNV1A = 63135382
+internal const val EXPECTED_BYTE_TABLES_FNV1A = 404841159
 
 internal expect fun loadDecimal128ConstantTables()
 private val loadEmUp = loadDecimal128ConstantTables()
@@ -201,7 +202,7 @@ internal const val RRMP10_LOOKUP_MAXX = RRMP10_LOOKUP_TABLE_SIZE
 internal const val BYTES_TABLE_TERMINATOR = 1
 internal const val BYTE_TABLES_SIZE = RRMP10_LOOKUP_BASE + RRMP10_LOOKUP_MAXX + BYTES_TABLE_TERMINATOR
 
-private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == 1922)
+private val checkSize_BYTE_TABLES = check(BYTE_TABLES_SIZE == EXPECTED_BYTE_TABLES_SIZE)
 
 /*
 // minBitCount:0  maxBitCount:64

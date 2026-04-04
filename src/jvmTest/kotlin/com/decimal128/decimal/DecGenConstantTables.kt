@@ -10,14 +10,14 @@ import kotlin.test.fail
 
 class DecGenConstantTables {
 
-    val verbose = false
+    val verbose = true
 
     val resourceFilePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
     val staticConstPath = "src/commonMain/resources/com/decimal128/decimal/Decimal128Tables.kt"
 
-    val X_RESOURCE_TABLE_VERSION = 0x0006_D128
-    val X_DWORD_TABLES_COUNT = 939 // DWORD_TABLES_COUNT
-    val X_BYTE_TABLES_COUNT = 1922 // BYTE_TABLES_SIZE
+    val X_RESOURCE_TABLE_VERSION = 0x0007_D128
+    val X_DWORD_TABLES_COUNT = 943 // DWORD_TABLES_COUNT
+    val X_BYTE_TABLES_COUNT = 1923 // BYTE_TABLES_SIZE
     var X_DWORD_TABLES_FNV1A = 0
     var X_BYTE_TABLES_FNV1A = 0
 
@@ -37,8 +37,8 @@ class DecGenConstantTables {
         X_BYTE_TABLES_FNV1A = fnv1aHash(X_BYTE_TABLES)
         if (verbose)
             println("X_DWORD_TABLES_FNV1A:$X_DWORD_TABLES_FNV1A X_BYTE_TABLES_FNV1A:$X_BYTE_TABLES_FNV1A")
-        assertEquals(185718703, X_DWORD_TABLES_FNV1A)
-        assertEquals(-1298083103, X_BYTE_TABLES_FNV1A)
+        assertEquals(63135382, X_DWORD_TABLES_FNV1A)
+        assertEquals(404841159, X_BYTE_TABLES_FNV1A)
         saveTablesAsResourceFile()
         saveTablesAsStaticConstSourceCode()
     }
@@ -97,8 +97,8 @@ class DecGenConstantTables {
             |private val verifyByteTablesSize = check(BYTE_TABLES.size == BYTE_TABLES_SIZE_POW_2)
             |
             |private val verifyFnv1aChecksums = 
-            |    check(fnv1aHash(DWORD_TABLES) == $EXPECTED_DWORD_TABLES_FNV1A &&
-            |          fnv1aHash(BYTE_TABLES) == $EXPECTED_BYTE_TABLES_FNV1A) { "tables FNV1A checksum mismatch" }
+            |    check(fnv1aHash(DWORD_TABLES) == $X_DWORD_TABLES_FNV1A &&
+            |          fnv1aHash(BYTE_TABLES) == $X_BYTE_TABLES_FNV1A) { "tables FNV1A checksum mismatch" }
             |
             |internal actual val POW10: LongArray = DWORD_TABLES
             |
@@ -138,7 +138,7 @@ class DecGenConstantTables {
         var hiPow10 = BigInt.Companion.ONE
         var j = 0
         for (i in 0..<MAXX_DIGIT_LEN) {
-            X_BYTE_TABLES[i] = hiPow10.magnitudeBitLen().toByte()
+            X_BYTE_TABLES[i] = (hiPow10.magnitudeBitLen() - 1).toByte()
             for (dw in hiPow10.magnitudeToLittleEndianLongArray())
                 X_DWORD_TABLES[j++] = dw
             if (i < MIN_POW10_DIGIT_LEN_128 ||
