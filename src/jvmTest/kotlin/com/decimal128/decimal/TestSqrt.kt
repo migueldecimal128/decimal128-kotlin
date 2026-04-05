@@ -11,7 +11,6 @@ import java.math.RoundingMode
 import java.util.*
 import java.lang.Math.max
 import java.lang.Math.min
-import kotlin.math.nextDown
 import kotlin.math.sqrt
 
 class TestSqrt{
@@ -32,28 +31,35 @@ class TestSqrt{
                 sqrt0
             }
         } else {
-            sqrt0.setScale(sqrt0.scale() + zeroPadding, RoundingMode.UNNECESSARY)
+            //sqrt0.setScale(sqrt0.scale() + zeroPadding, RoundingMode.UNNECESSARY)
+            sqrt0
         }
     }
 
     val tcs = arrayOf (
-        TC("2"),
-        TC("625"),
-        //TC("+10E-1"),
-        //TC("+10E-1839"),
-        TC("+0.0E4019"),
-        TC("+2139362027"),
+        TC("1.8317919805335444813E-270"),
+        TC("200"),
+        TC("200"),
+        TC("2e2"),
+        TC("20e1"),
+        TC("+10E-3"),
         TC("+2139362027E-4288"),
-        TC("1e1"),
-        TC("1"),
+        TC("625"),
         TC("2"),
-        TC("10"),
         TC("4"),
         TC("16"),
         TC("256"),
         TC("400"),
         TC("40000"),
         TC("4000000"),
+        //TC("+10E-1"),
+        //TC("+10E-1839"),
+        //TC("+0.0E4019"),
+        TC("+2139362027"),
+        TC("1e1"),
+        TC("1"),
+        TC("2"),
+        TC("10"),
         TC("2"),
         TC("900"),
         TC("10000"),
@@ -74,7 +80,7 @@ class TestSqrt{
 
     @Test
     fun testRandom() {
-        for (i in 0..<10000) {
+        for (i in 0..<100000) {
             val tc = TC(randBd())
             test1(tc)
         }
@@ -84,6 +90,22 @@ class TestSqrt{
     @Test
     fun testSqrt2() {
         val md2 = MutDec().set(2)
+        val ctx38 = DecContext.decimal128Extended38()
+        val sqrt = MutDec()
+        mutDecSqrtPosFnz_38(sqrt, md2, ctx38)
+    }
+
+    @Test
+    fun testSqrt20() {
+        val md2 = MutDec().set(20)
+        val ctx38 = DecContext.decimal128Extended38()
+        val sqrt = MutDec()
+        mutDecSqrtPosFnz_38(sqrt, md2, ctx38)
+    }
+
+    @Test
+    fun testSqrt200() {
+        val md2 = MutDec().set(200)
         val ctx38 = DecContext.decimal128Extended38()
         val sqrt = MutDec()
         mutDecSqrtPosFnz_38(sqrt, md2, ctx38)
@@ -100,10 +122,13 @@ class TestSqrt{
     }
 
     fun test1(tc: TC) {
+        if (tc.bd.signum() == 0)
+            return
         val dec = MutDec()
         val decSqrt = MutDec()
         dec.set(tc.bd)
-        setSqrt(decSqrt, dec)
+        val ctx34 = DecContext.decimal128IEEE()
+        mutDecSqrtPosFnz_38(decSqrt, dec, ctx34)
         val expected = tc.sqrt
         assertEquals(expected.unscaledValue(), decSqrt.coeffToBigInteger())
         assertEquals(-expected.scale(), decSqrt.qExp)
@@ -335,7 +360,9 @@ class TestSqrt{
 
     }
 
-    fun mutDecSqrtPosFnz_38(sqrt: MutDec, radicand: MutDec, ctx: DecContext): MutDec {
+    fun mutDecSqrtPosFnz_38(sqrt: MutDec, radicand: MutDec, ctx: DecContext, reduceToPreferredQExp: Boolean = true): MutDec {
+        if (verbose)
+            println("---> radicand:$radicand")
         val rSteal = radicand.steal
         val rQExp = stealQExp(rSteal)
         val rDigitLen = stealDigitLen(rSteal)
@@ -350,7 +377,7 @@ class TestSqrt{
 
         val dRadicandScaled = coeffRadicandScaled.c256ToFloorDouble()
 
-        val x0 = sqrt(dRadicandScaled).nextDown()
+        val x0 = sqrt(dRadicandScaled)
         if (verbose)
             println("x0:$x0")
         val ddX0 = DoubleDouble(x0, 0.0)
@@ -392,10 +419,17 @@ class TestSqrt{
             c256SetSubUnscaled(sqrt, coeffX1Scaled, residual)
         if (verbose)
             println(" ==> sqrt:$sqrt")
-        val sqrtQExp = -(scaleUp / 2 + 20)
+        val sqrtQExp = -((scaleUp shr 1) + 20) + (rQExp shr 1)
         val sqrt = sqrt.finalizeFnz(false, sqrtQExp, ctx)
         if (verbose)
             println(" ==> sqrt:$sqrt")
+        if (reduceToPreferredQExp) {
+            val mdCrossCheck = MutDec().setSquare(sqrt, ctx)
+            val qExpPreferred = rQExp shr 1
+            val maxToStrip = qExpPreferred - sqrt.qExp
+            if (maxToStrip > 0)
+                sqrt.setStripTrailingZeros(sqrt, ctx, maxToStrip)
+        }
         return sqrt
     }
 

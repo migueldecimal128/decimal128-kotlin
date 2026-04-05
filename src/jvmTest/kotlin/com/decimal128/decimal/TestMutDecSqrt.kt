@@ -17,7 +17,7 @@ class TestMutDecSqrt{
         val sqrt0 = bd.sqrt(MathContext.DECIMAL128)
         val sqrt0Squared = sqrt0.multiply(sqrt0)
         val isPerfect = sqrt0Squared.compareTo(bd) == 0
-        val zeroPadding = 34 - sqrt0.precision()
+        //val zeroPadding = 34 - sqrt0.precision()
         val scale = bd.scale()
         val sqrt = if (isPerfect) {
             if ((scale and 1) != 0 && (bd.unscaledValue().mod(BigInteger.TEN).signum() == 0)) {
@@ -26,7 +26,8 @@ class TestMutDecSqrt{
                 sqrt0
             }
         } else {
-            sqrt0.setScale(sqrt0.scale() + zeroPadding, RoundingMode.UNNECESSARY)
+            //sqrt0.setScale(sqrt0.scale() + zeroPadding, RoundingMode.UNNECESSARY)
+            sqrt0
         }
     }
 

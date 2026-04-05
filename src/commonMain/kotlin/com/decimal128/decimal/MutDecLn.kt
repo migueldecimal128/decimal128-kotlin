@@ -70,6 +70,7 @@ internal object MutDecLn {
     }
 
     private fun lnImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+        println("lnImplFNZ ... x:$x")
         val ctx38 = DecContext.decimal128Extended38()
         val xSteal = x.steal
         val tmps = ctx.tmps

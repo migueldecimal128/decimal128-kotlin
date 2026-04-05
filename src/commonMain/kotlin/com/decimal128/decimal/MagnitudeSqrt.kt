@@ -7,8 +7,81 @@ import kotlin.math.sqrt
 
 private val verbose = false
 
-fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext): MutDec =
-    mutDecSqrtPosFnz_1(sqrt, radicand, ctx)
+fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext, reduceToPreferredQExp: Boolean = true): MutDec =
+    mutDecSqrtPosFnz_38(sqrt, radicand, ctx, reduceToPreferredQExp)
+
+fun mutDecSqrtPosFnz_38(sqrt: MutDec, radicand: MutDec, ctx: DecContext, reduceToPreferredQExp: Boolean = true): MutDec {
+    if (verbose)
+        println("---> radicand:$radicand")
+    val rSteal = radicand.steal
+    val rQExp = stealQExp(rSteal)
+    val rDigitLen = stealDigitLen(rSteal)
+    verify { radicand.bitLen != 0 }
+    val tmps = ctx.tmps
+    val coeffRadicandScaled = C256()
+    val pentad = ctx.tmps.pentad1
+    val scaleUp = 48 - rDigitLen + ((rDigitLen xor rQExp) and 1)
+    c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, pentad)
+    if (verbose)
+        println("radicand:$radicand radicandScaled:$coeffRadicandScaled")
+
+    val dRadicandScaled = coeffRadicandScaled.c256ToFloorDouble()
+
+    val x0 = sqrt(dRadicandScaled)
+    if (verbose)
+        println("x0:$x0")
+    val ddX0 = DoubleDouble(x0, 0.0)
+    val ddRadicandScaled = coeffRadicandScaled.c256ToNewDoubleDouble()
+    val ddProd = DoubleDouble.newMulApprox(ddX0, ddX0)
+    val ddResidual = DoubleDouble.newSub(ddRadicandScaled, ddProd)
+    val ddInv2X0 = DoubleDouble(x0 * 2.0, 0.0)
+    ddInv2X0.mutateInvFast()
+    val ddDelta = DoubleDouble.newMulApprox(ddResidual, ddInv2X0)
+    val ddX1 = DoubleDouble.newAdd(ddX0, ddDelta)
+    val coeffX1 = C256().c256Set(ddX1)
+    if (verbose)
+        println(" ==> coeffX1:$coeffX1")
+
+    val coeffX1Squared = C256()
+    c256SetSqr(coeffX1Squared, coeffX1, pentad)
+    val coeff2X1 = C256()
+    c256SetAddUnscaled(coeff2X1, coeffX1, coeffX1, pentad)
+    if (verbose)
+        println(" ==> coeffX1Squared:$coeffX1Squared coeffX1 * 2:$coeff2X1")
+    val residual = C256()
+    val lessThan = c256UnscaledCompare(coeffX1Squared, coeffRadicandScaled) < 0
+    if (lessThan)
+        c256SetSubUnscaled(residual, coeffRadicandScaled, coeffX1Squared)
+    else
+        c256SetSubUnscaled(residual, coeffX1Squared, coeffRadicandScaled)
+    c256SetScaleUpPow10(residual, residual, 20, pentad)
+    if (verbose)
+        println(" ==> scaledUpResidual:$residual")
+    c256SetDiv(residual, residual, coeff2X1, tmps)
+    if (verbose)
+        println(" ==> residualAfterDivision:$residual")
+    val coeffX1Scaled = C256()
+    c256SetScaleUpPow10(coeffX1Scaled, coeffX1, 20, pentad)
+    sqrt.setOne()
+    if (lessThan)
+        c256SetAddUnscaled(sqrt, coeffX1Scaled, residual, pentad)
+    else
+        c256SetSubUnscaled(sqrt, coeffX1Scaled, residual)
+    if (verbose)
+        println(" ==> sqrt:$sqrt")
+    val sqrtQExp = -((scaleUp shr 1) + 20) + (rQExp shr 1)
+    val sqrt = sqrt.finalizeFnz(false, sqrtQExp, ctx)
+    if (verbose)
+        println(" ==> sqrt:$sqrt")
+    if (reduceToPreferredQExp) {
+        val mdCrossCheck = MutDec().setSquare(sqrt, ctx)
+        val qExpPreferred = rQExp shr 1
+        val maxToStrip = qExpPreferred - sqrt.qExp
+        if (maxToStrip > 0)
+            sqrt.setStripTrailingZeros(sqrt, ctx, maxToStrip)
+    }
+    return sqrt
+}
 
 fun mutDecSqrtPosFnz_1(sqrt: MutDec, radicand: MutDec, ctx: DecContext): MutDec {
     val rSteal = radicand.steal
