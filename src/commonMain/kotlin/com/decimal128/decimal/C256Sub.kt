@@ -46,11 +46,7 @@ internal fun c256SetSubUnscaled(z: C256, x: C256, y: C256) { // minuend - subtra
 }
 
 internal fun c256SetSubScaled(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pentad) {
-    verify { scaleDelta > 0 }
-    if (scaleDelta > 40)
-        println("kilroy was here! scaleDelta:$scaleDelta")
-//    verify { scaleDelta <= 40 }
-    verify { x.digitLen + scaleDelta <= 77 }
+    verify { scaleDelta > 0 && x.digitLen + scaleDelta <= 77 }
 
     verify { x.c256HasValidLengths() }
     verify { y.c256HasValidLengths() }
