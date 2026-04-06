@@ -69,6 +69,28 @@ internal object MutDecLn {
         }
     }
 
+    /**
+     * Computes the natural logarithm of a positive, finite, non-zero decimal value.
+     *
+     * Uses argument reduction followed by a [9,9] Padé rational approximation:
+     *
+     * 1. **Argument reduction**: Write `x = k * 10^e` where `k` is the most significant
+     *    digit of `x` (rounded), so `c' = x / (k * 10^e) ∈ [0.9, 1.1)`.
+     * 2. **Double sqrt reduction**: Apply sqrt twice to bring `c'` into `[~0.975, ~1.025)`,
+     *    so that `z = c' - 1` satisfies `|z| <= 0.025`.
+     * 3. **Padé evaluation**: Evaluate `ln(c'') ≈ P9(z) / Q9(z)` where P9 and Q9 are
+     *    degree-9 polynomials via Horner's method.
+     * 4. **Reconstruction**: `ln(x) = 4 * r + ln(k) + e * ln(10)` where the factor of 4
+     *    compensates for the two sqrt reductions.
+     *
+     * All intermediate computation is performed at 38-digit precision ([DecContext.decimal128Extended38])
+     * and the final result is rounded to [ctx] precision.
+     *
+     * @param z the output [MutDec] to store the result in
+     * @param x the input value; must be positive, finite, and non-zero
+     * @param ctx the [DecContext] controlling precision and rounding of the final result
+     * @return [z] containing `ln(x)`, rounded to [ctx] precision
+     */
     private fun lnImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         val ctx38 = DecContext.decimal128Extended38()
         val xSteal = x.steal
@@ -127,6 +149,16 @@ internal object MutDecLn {
         return z.set(r, ctx)
     }
 
+    /**
+     * Extracts the most significant digit of [x], rounded to nearest.
+     *
+     * For example, `1.85` returns `2` and `1.23` returns `1`.
+     * Returns a value in `[1, 10]`; callers should treat `10` as `1` with exponent bumped by 1.
+     *
+     * @param x the input value; must be positive, finite, and non-zero
+     * @param ctx the [DecContext] used for rounding
+     * @return the most significant digit of [x] rounded to nearest, in `[1, 10]`
+     */
     internal fun extractKMostSigDigitRounded(x: MutDec, ctx: DecContext): Int {
         val tmps = ctx.tmps
         val z = tmps.mdecTrans1
@@ -141,5 +173,13 @@ internal object MutDecLn {
     }
 }
 
+/**
+ * Computes the natural logarithm of [x], rounded to [ctx] precision.
+ *
+ * @receiver the [MutDec] to store the result in
+ * @param x the input value; must be positive and finite
+ * @param ctx the [DecContext] controlling precision and rounding
+ * @return `this` containing `ln(x)`
+ */
 fun MutDec.setLn(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
     MutDecLn.mutDecLnImpl(this, x, ctx)
