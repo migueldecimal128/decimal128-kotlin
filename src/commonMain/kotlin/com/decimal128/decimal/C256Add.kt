@@ -48,7 +48,7 @@ internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) =
 
 internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pentad) {
     verify { scaleDelta > 0 }
-    verify { scaleDelta < PRECISION_34 }
+    verify { scaleDelta < 38 }
 
 //        check((x.dw3 or x.dw2) == 0L)
 //        check((y.dw3 or y.dw2) == 0L)

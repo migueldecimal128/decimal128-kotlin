@@ -247,8 +247,17 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun set(x: MutDec): MutDec {
-        verify { (x.dw3 or x.dw2) == 0L }
+        verify { x.digitLen <= 38 }
         this.dw3 = 0L; this.dw2 = 0L
+        this.dw1 = x.dw1; this.dw0 = x.dw0;
+        this.steal = x.steal
+        verify { validate() }
+        return this
+    }
+
+    fun setFullWidth(x: MutDec): MutDec {
+        verify { x.digitLen <= 77 }
+        this.dw3 = x.dw3; this.dw2 = x.dw2;
         this.dw1 = x.dw1; this.dw0 = x.dw0;
         this.steal = x.steal
         verify { validate() }

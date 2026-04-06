@@ -10,7 +10,7 @@ import kotlin.math.min
 
 internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.digitLen <= 77 } // x is allowed more digits because of FMA
-    verify { y.digitLen <= 38 }
+    verify { y.digitLen <= 77 }
     val xSteal = x.steal
     val ySteal = y.steal
     val binopSignature = binopSignatureOf(xSteal, ySteal)
@@ -41,7 +41,7 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
     return z
 }
 
-private inline fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private /*inline*/ fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
     val xQ = stealQExp(xSteal)
@@ -81,7 +81,7 @@ private inline fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: Mu
     return z.finalizeFnz(zSign, xQ, ctx)
 }
 
-private inline fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private /*inline*/ fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.isFiniteNonZero() && y.isFiniteNonZero()}
     val qX = x.qExp
     val qY = y.qExp

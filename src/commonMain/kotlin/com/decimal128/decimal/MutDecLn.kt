@@ -28,6 +28,7 @@ internal object MutDecLn {
     private val Q9 = MutDec().set("0.000020567667626491155902920608802961744138", ctx38)
 
     private val ZERO = MutDec()
+    private val HALF = MutDec().set("0.5")
     private val ONE = MutDec().setOne()
     private val FOUR = MutDec().set(4)
 
@@ -47,6 +48,13 @@ internal object MutDecLn {
 
     // ln(10)
     private val LN10 = MutDec().set("2.3025850929940456840179914546843642076", ctx38)
+    private val LN10_50 by lazy {
+        val ln1050 = MutDec().set(LN10) // copies TYP flag and sets qExp
+        c256SetFmaPow10(ln1050, ln1050, 12, 11014886287L)
+        ln1050.qExp -= 12
+        ln1050
+    }
+
     fun mutDecLnImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         val xSteal = x.steal
         when (stealTyp(xSteal)) {
@@ -171,6 +179,103 @@ internal object MutDecLn {
         verify { z.digitLen <= 2 &&  z.dw0 > 0 && z.dw0 <= 10 }
         return z.dw0.toInt()
     }
+
+    // Pade [9,9] numerator coefficients for exp(x), |x| <= 0.144
+    // P and Q share the same magnitudes, Q signs alternate
+    private val EP2 = MutDec().set("0.11764705882352941176470588235294117647", ctx38)
+    private val EP3 = MutDec().set("0.017156862745098039215686274509803921569", ctx38)
+    private val EP4 = MutDec().set("0.0017156862745098039215686274509803921569", ctx38)
+    private val EP5 = MutDec().set("0.00012254901960784313725490196078431372549", ctx38)
+    private val EP6 = MutDec().set("0.0000062845651080945198592257415786827551533", ctx38)
+    private val EP7 = MutDec().set("2.2444875386051856640091934209581268405E-7", ctx38)
+    private val EP8 = MutDec().set("5.1011080422845128727481668658139246375E-9", ctx38)
+    private val EP9 = MutDec().set("5.6678978247605698586090742953488051527E-11", ctx38)
+
+    // Denominator Q coefficients -- same magnitude as P, alternating signs
+    private val EQ1 = MutDec().set("-0.5", ctx38)
+    private val EQ2 = EP2  // same as EP2
+    private val EQ3 = MutDec().set("-0.017156862745098039215686274509803921569", ctx38)
+    private val EQ4 = EP4  // same as EP4
+    private val EQ5 = MutDec().set("-0.00012254901960784313725490196078431372549", ctx38)
+    private val EQ6 = EP6  // same as EP6
+    private val EQ7 = MutDec().set("-2.2444875386051856640091934209581268405E-7", ctx38)
+    private val EQ8 = EP8  // same as EP8
+    private val EQ9 = MutDec().set("-5.6678978247605698586090742953488051527E-11", ctx38)
+
+    fun mutDecExpImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+        val xSteal = x.steal
+        when (stealTyp(xSteal)) {
+            STEAL_TYP_FNZ -> return expImplFNZ(z, x, ctx)
+            STEAL_TYP_ZER -> return z.setOne() // exp(0) = 1
+            STEAL_TYP_INF -> when {
+                stealSignFlag(xSteal) -> return z.setZero()  // exp(-∞) = 0
+                else -> return z.setInfinite()                   // exp(+∞) = +∞
+            }
+
+            else -> return z.setNanOperandFound(x, ctx)
+        }
+    }
+
+    fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+        val ctx38 = DecContext.decimal128Extended38()
+        val tmps = ctx.tmps
+        val tmp1 = tmps.mdecTrans1
+        val tmp2 = tmps.mdecTrans2
+        val tmp3 = tmps.mdecTrans3
+        val pentad = tmps.pentad1
+
+        // range reduce: n = round(x / ln(10)), r = x - n * ln(10)
+        tmp1.setDiv(x, LN10, ctx38)
+        tmp1.setRoundToIntegralTiesToAway(tmp1, ctx38)
+        val n = tmp1.dw0.toInt()
+        println("n:$n tmp1:$tmp1")
+        tmp2.setFullWidth(LN10_50)
+        tmp3.setOne() // initialize type/sign
+        tmp3.qExp = tmp2.qExp // = -50
+        c256SetMul(tmp3, tmp2, tmp1, pentad)
+        tmp1.setSub(x, tmp3, ctx38)
+        println("r tmp1:$tmp1")
+
+        // two halvings: r' = r / 4
+        val rPrime = tmp1.setDiv(tmp1, FOUR, ctx38)
+        println("rPrime:$rPrime")
+
+        // Pade [9,9] evaluation of exp(r')
+        // Evaluate P(r') via Horner
+        val pAcc = tmp2.set(EP9)
+        pAcc.setFma(pAcc, rPrime, EP8, ctx38)
+        pAcc.setFma(pAcc, rPrime, EP7, ctx38)
+        pAcc.setFma(pAcc, rPrime, EP6, ctx38)
+        pAcc.setFma(pAcc, rPrime, EP5, ctx38)
+        pAcc.setFma(pAcc, rPrime, EP4, ctx38)
+        pAcc.setFma(pAcc, rPrime, EP3, ctx38)
+        pAcc.setFma(pAcc, rPrime, EP2, ctx38)
+        pAcc.setFma(pAcc, rPrime, HALF, ctx38)  // EP1 = 1/2
+        pAcc.setFma(pAcc, rPrime, ONE, ctx38)   // EP0 = 1
+
+        // Evaluate Q(r') via Horner
+        val qAcc = tmp3.set(EQ9)
+        qAcc.setFma(qAcc, rPrime, EQ8, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ7, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ6, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ5, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ4, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ3, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ2, ctx38)
+        qAcc.setFma(qAcc, rPrime, EQ1, ctx38)  // EQ1 = -1/2
+        qAcc.setFma(qAcc, rPrime, ONE, ctx38)  // EQ0 = 1Sonnet 4.6
+
+        // exp(r') = P(r') / Q(r')
+        val expRPrime = tmp2.setDiv(pAcc, qAcc, ctx38)
+        // reconstruct: square twice, multiply by 10^n
+        expRPrime.setSquare(expRPrime, ctx38)
+        z.setSquare(expRPrime, ctx38)
+        // round to ctx precision
+        z.finalizeFnz(false, expRPrime.qExp + n, ctx)
+        return z
+    }
+
+
 }
 
 /**
@@ -183,3 +288,6 @@ internal object MutDecLn {
  */
 fun MutDec.setLn(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
     MutDecLn.mutDecLnImpl(this, x, ctx)
+
+fun MutDec.setExp(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
+    MutDecLn.mutDecExpImpl(this, x, ctx)
