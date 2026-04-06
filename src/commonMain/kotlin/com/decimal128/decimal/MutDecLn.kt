@@ -70,7 +70,6 @@ internal object MutDecLn {
     }
 
     private fun lnImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
-        println("lnImplFNZ ... x:$x")
         val ctx38 = DecContext.decimal128Extended38()
         val xSteal = x.steal
         val tmps = ctx.tmps
@@ -82,18 +81,11 @@ internal object MutDecLn {
         val divisor = tmps.mdecTrans1.set(k)
         divisor.qExp = e
         val cPrime = tmps.mdecTrans2.setDiv(x, divisor, ctx38)
-        println("cPrime:$cPrime")
 
         // sqrt #1: c' = sqrt(c')  →  c' ∈ [~0.95, ~1.05)
-        cPrime.setSqrt(cPrime, ctx38)
-        println("after sqrt #1 cPrime:$cPrime")
+        cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
         // sqrt #2: c' = sqrt(c')  →  c' ∈ [~0.975, ~1.025)
-        cPrime.setSqrt(cPrime, ctx38)
-        println("after sqrt #2 cPrime:$cPrime")
-
-        println("cPrime = $cPrime  qExp = ${cPrime.qExp}")
-        println("ONE = $ONE  qExp = ${ONE.qExp}")
-
+        cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
         // z = c' - 1  →  |z| <= 0.025
         val zArg = tmps.mdecTrans3.setSub(cPrime, ONE, ctx38)
         println("zArg:$zArg")
@@ -129,10 +121,12 @@ internal object MutDecLn {
         println("after P3 pAcc:$pAcc fmaPAcc:$fmaPAcc")
         pAcc.setMul(pAcc, zArg, ctx38)
         pAcc.setAdd(pAcc, P2, ctx38)
-        println("after P2:$pAcc")
+        fmaPAcc.setFma(fmaPAcc, zArg, P2, ctx38)
+        println("after P2 pAcc:$pAcc fmaPAcc:$fmaPAcc")
         pAcc.setMul(pAcc, zArg, ctx38)
         pAcc.setAdd(pAcc, ONE, ctx38)   // +1
-        println("after ONE:$pAcc")
+        fmaPAcc.setFma(fmaPAcc, zArg, ONE, ctx38)
+        println("after ONE pAcc:$pAcc fmaPAcc:$fmaPAcc")
         pAcc.setMul(pAcc, zArg, ctx38) // *z (factor out leading z)
 
         // Evaluate Q(z) via Horner: Q(z) = 1 + z*(Q1 + z*(Q2 + ... z*Q9))
@@ -174,7 +168,8 @@ internal object MutDecLn {
         println("after Q1 qAcc:$qAcc fmaQAcc:$fmaQAcc")
         qAcc.setMul(qAcc, zArg, ctx38)
         qAcc.setAdd(qAcc, ONE, ctx38)  // +1
-        println("after ONE qAcc:$qAcc")
+        fmaQAcc.setFma(fmaQAcc, zArg, ONE, ctx38)
+        println("after Q0 ONE qAcc:$qAcc fmaQAcc:$fmaQAcc")
 
         // r = P(z) / Q(z)  →  ln(c'')
         val r = tmps.mdecTrans1.setDiv(pAcc, qAcc, ctx38)

@@ -42,14 +42,14 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     return z.setNanOperandFound(x, ctx)
 }
 
-internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext, reduceToPreferredQExp: Boolean): MutDec {
     val xSteal = x.steal
     val xQ = stealQExp(xSteal)
     val xSign = stealSignFlag(xSteal)
     when (stealTyp(x.steal)) {
         STEAL_TYP_FNZ -> {
             if (! xSign) {
-                return mutDecSqrtPosFnz(z, x, ctx)
+                return mutDecSqrtPosFnz(z, x, ctx, reduceToPreferredQExp)
             } else {
                 ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
             }

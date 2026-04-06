@@ -370,7 +370,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setReciprocal(x: MutDec, ctx: DecContext): MutDec = mutDecReciprocalImpl(this, x, ctx)
 
-    fun setSqrt(x: MutDec, ctx: DecContext): MutDec = mutDecSqrtImpl(this, x, ctx)
+    fun setSqrt(x: MutDec, ctx: DecContext, reduceToPreferredQExp: Boolean = true): MutDec = mutDecSqrtImpl(this, x, ctx, reduceToPreferredQExp)
 
     // FIXME this is not the best, but is OK for now for testing
     fun partialCompareTo(other: MutDec, ctx: DecContext): MutDec {
