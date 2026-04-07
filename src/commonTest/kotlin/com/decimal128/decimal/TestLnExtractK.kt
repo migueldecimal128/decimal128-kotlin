@@ -1,6 +1,5 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.MutDecLn.extractKMostSigDigitRounded
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
