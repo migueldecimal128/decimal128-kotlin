@@ -2,6 +2,23 @@ package com.decimal128.decimal
 
 internal object MutDecLn {
 
+    internal fun logDispatch(z: MutDec, x: MutDec,
+                             isLog10: Boolean, ctx: DecContext): MutDec {
+        val xSteal = x.steal
+        when (stealTyp(xSteal)) {
+            STEAL_TYP_FNZ -> when {
+                stealSignFlag(xSteal) -> return ctx.signalInvalid(z.setNaN())
+                else -> return logImplFNZ(z, x, isLog10, ctx)
+            }
+            STEAL_TYP_ZER -> return ctx.signalDivByZero(z.setInfinite(true))
+            STEAL_TYP_INF -> when {
+                stealSignFlag(xSteal) -> return ctx.setNanSignalInvalid(z, InvalidOperationReason.LOG_OF_NEG_INFINITY)
+                else -> return z.setInfinite(false)
+            }
+            else -> return z.setNanOperandFound(x, ctx)
+        }
+    }
+
     val ctx38 = DecContext.decimal128Extended38()
 
     private val ZERO = MutDec()
@@ -31,7 +48,7 @@ internal object MutDecLn {
         }
     }
 
-    private val padeLnQWeightStrings = arrayOf(
+    private val padeLogQWeightStrings = arrayOf(
         "1", // Q0
         "4.5000000000000000000000000000000000000", // Q1
         "8.4705882352941176470588235294117647059", // Q2
@@ -44,8 +61,8 @@ internal object MutDecLn {
         "0.000020567667626491155902920608802961744138", // Q9
     )
 
-    private val padeLnQWeights = Array<MutDec>(10) { i ->
-        val str = padeLnQWeightStrings[i]
+    private val padeLogQWeights = Array<MutDec>(10) { i ->
+        val str = padeLogQWeightStrings[i]
         when (str) {
             "1" -> ONE   // Q0 = 1, handled directly in Horner
             else -> MutDec().set(str, ctx38)
@@ -75,28 +92,6 @@ internal object MutDecLn {
         ln1050
     }
 
-    fun mutDecLnImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
-        val xSteal = x.steal
-        when (stealTyp(xSteal)) {
-            STEAL_TYP_FNZ -> when {
-                stealSignFlag(xSteal) -> return ctx.signalInvalid(z.setNaN())  // ln(negative) = NaN
-                else -> return lnImplFNZ(z, x, ctx)
-            }
-
-            STEAL_TYP_ZER -> return ctx.signalDivByZero(z.setInfinite(true)) // ln(0) = -∞
-            STEAL_TYP_INF -> when {
-                stealSignFlag(xSteal) ->
-                    return ctx.setNanSignalInvalid(
-                        z,
-                        InvalidOperationReason.LOG_OF_NEG_INFINITY
-                    )  // ln(-∞) = NaN
-                else -> return z.setInfinite(false)                  // ln(+∞) = +∞
-            }
-
-            else -> return z.setNanOperandFound(x, ctx)
-        }
-    }
-
     /**
      * Computes the natural logarithm of a positive, finite, non-zero decimal value.
      *
@@ -119,20 +114,21 @@ internal object MutDecLn {
      * @param ctx the [DecContext] controlling precision and rounding of the final result
      * @return [z] containing `ln(x)`, rounded to [ctx] precision
      */
-    private fun lnImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+    private fun logImplFNZ(z: MutDec, x: MutDec, isLog10: Boolean,
+                          ctx: DecContext): MutDec {
         val ctx38 = DecContext.decimal128Extended38()
         val xSteal = x.steal
         val tmps = ctx.tmps
         val tmp1 = tmps.mdecTrans1
         val tmp2 = tmps.mdecTrans2
         val tmp3 = tmps.mdecTrans3
-        var e = stealSciExp(xSteal)
+        var eExp = stealSciExp(xSteal)
         var k = extractKMostSigDigitRounded(x, ctx38)
-        if (k == 10) { k = 1; e += 1 }
+        if (k == 10) { k = 1; eExp += 1 }
 
         // c' = x / (k * 10^e)  →  c' ∈ [0.9, 1.1)
         val divisor = tmp1.set(k)
-        divisor.qExp = e
+        divisor.qExp = eExp
         val cPrime = tmp2.setDiv(x, divisor, ctx38)
 
         // sqrt #1: c' = sqrt(c')  →  c' ∈ [~0.95, ~1.05)
@@ -142,14 +138,21 @@ internal object MutDecLn {
         // z = c' - 1  →  |z| <= 0.025
         val zArg = tmp3.setSub(cPrime, ONE, ctx38)
 
-        val r = MutDec()
-        padeEval(r, zArg, padeLnPWeights, padeLnQWeights, ctx38)
+        val r = tmps.mdecTrans1
+        val pWeights: Array<MutDec> = if (isLog10) padeLog10PWeights else padeLnPWeights
+        padeEval(r, zArg, pWeights, padeLogQWeights, ctx38)
         r.setMul(r, zArg, ctx38)
+        val eVal = tmps.mdecTrans2.set(eExp)
 
-        // ln(x) = r*4 + ln(k) + e*ln(10)
-        r.setFma(r, FOUR, LN[k], ctx38) // r * 4 + ln(k)
-        val eLnTen = tmps.mdecTrans2.set(e)
-        r.setFma(eLnTen, LN10, r, ctx38)     // + e*ln(10)
+        if (isLog10) {
+            // log10(x) = r*4 + log10(k) + e
+            r.setFma(r, FOUR, LOG10[k], ctx38)
+            r.setAdd(r, eVal, ctx38)
+        } else {
+            // ln(x) = r*4 + ln(k) + e*ln(10)
+            r.setFma(r, FOUR, LN[k], ctx38)
+            r.setFma(eVal, LN10, r, ctx38)     // + e*ln(10)
+        }
 
         println("r:$r")
         // round to ctx.precision and store in z
@@ -204,28 +207,6 @@ internal object MutDecLn {
         if ((i and 1) == 0) p else MutDec().setNegate(p)
         }
 
-    // Pade [9,9] numerator coefficients for exp(x), |x| <= 0.144
-    // P and Q share the same magnitudes, Q signs alternate
-    private val EP2 = MutDec().set("0.11764705882352941176470588235294117647", ctx38)
-    private val EP3 = MutDec().set("0.017156862745098039215686274509803921569", ctx38)
-    private val EP4 = MutDec().set("0.0017156862745098039215686274509803921569", ctx38)
-    private val EP5 = MutDec().set("0.00012254901960784313725490196078431372549", ctx38)
-    private val EP6 = MutDec().set("0.0000062845651080945198592257415786827551533", ctx38)
-    private val EP7 = MutDec().set("2.2444875386051856640091934209581268405E-7", ctx38)
-    private val EP8 = MutDec().set("5.1011080422845128727481668658139246375E-9", ctx38)
-    private val EP9 = MutDec().set("5.6678978247605698586090742953488051527E-11", ctx38)
-
-    // Denominator Q coefficients -- same magnitude as P, alternating signs
-    private val EQ1 = MutDec().set("-0.5", ctx38)
-    private val EQ2 = EP2  // same as EP2
-    private val EQ3 = MutDec().set("-0.017156862745098039215686274509803921569", ctx38)
-    private val EQ4 = EP4  // same as EP4
-    private val EQ5 = MutDec().set("-0.00012254901960784313725490196078431372549", ctx38)
-    private val EQ6 = EP6  // same as EP6
-    private val EQ7 = MutDec().set("-2.2444875386051856640091934209581268405E-7", ctx38)
-    private val EQ8 = EP8  // same as EP8
-    private val EQ9 = MutDec().set("-5.6678978247605698586090742953488051527E-11", ctx38)
-
     fun mutDecExpImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         val xSteal = x.steal
         when (stealTyp(xSteal)) {
@@ -277,6 +258,77 @@ internal object MutDecLn {
         return z
     }
 
+    private val LOG10 = arrayOf(
+        ZERO,                                                                          // LOG10[0] unused
+        ZERO,                                                                          // LOG10[1] = log10(1) = 0
+        MutDec().set("0.30102999566398119521373889472449302677", ctx38), // LOG10[2]
+        MutDec().set("0.47712125471966243729502790325511530920", ctx38), // LOG10[3]
+        MutDec().set("0.60205999132796239042747778944898605354", ctx38), // LOG10[4]
+        MutDec().set("0.69897000433601880478626110527550697323", ctx38), // LOG10[5]
+        MutDec().set("0.77815125038364363250876679797960833597", ctx38), // LOG10[6]
+        MutDec().set("0.84509804001425683071221625859263619348", ctx38), // LOG10[7]
+        MutDec().set("0.90308998699194358564121668417347908030", ctx38), // LOG10[8]
+        MutDec().set("0.95424250943932487459005580651023061840", ctx38), // LOG10[9]
+    )
+
+    private val padeLog10PWeights = arrayOf(
+        MutDec().set("0.43429448190325182765112891891660508229", ctx38), // P0 = log10(e)
+        MutDec().set("0.43429448190325182765112891891660508229", ctx38), // P1 = log10(e)
+        MutDec().set("1.7371779276130073106045156756664203292", ctx38),  // P2
+        MutDec().set("2.8463319720816063410272517872132401717", ctx38),  // P3
+        MutDec().set("2.4588731695992934359659504968072493630", ctx38),  // P4
+        MutDec().set("1.2000578404356032119948106450651484554", ctx38),  // P5
+        MutDec().set("0.32870131375422589308497208372903835640", ctx38), // P6
+        MutDec().set("0.047008798315901434091907910454160000667", ctx38),// P7
+        MutDec().set("0.0029406817698361751096610054464456614331", ctx38),// P8
+        MutDec().set("0.000050539090998679135885762898261158410735", ctx38),// P9
+    )
+
+    fun mutDecTenPowImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+        val xSteal = x.steal
+        when (stealTyp(xSteal)) {
+            STEAL_TYP_FNZ -> return tenPowImplFNZ(z, x, ctx)
+            STEAL_TYP_ZER -> return z.setOne()          // 10^0 = 1
+            STEAL_TYP_INF -> when {
+                stealSignFlag(xSteal) -> return z.setZero()     // 10^(-∞) = 0
+                else -> return z.setInfinite()                  // 10^(+∞) = +∞
+            }
+            else -> return z.setNanOperandFound(x, ctx)
+        }
+    }
+
+    private fun tenPowImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+        val ctx38 = DecContext.decimal128Extended38()
+        val tmps = ctx.tmps
+        val tmp1 = tmps.mdecTrans1
+
+        // Exact fast path: if x is an integer, use the exponent shift trick
+        // e.g. 10^3 = 1 * 10^3,  10^-2 = 1 * 10^-2
+        // (This avoids transcendental error accumulation for the common case.)
+        val xSteal = x.steal
+        val sciExp = stealSciExp(xSteal)
+        if (sciExp >= 0) {
+            TODO()
+            /*
+            // x is a (possibly large) integer: 10^x = set(1) with exponent = x.toLong()
+            // Only feasible if x fits in a reasonable exponent range
+            val xAsLong = x.toLongExact()   // returns null if not exactly representable or too large
+            if (xAsLong != null && xAsLong in DecContext.MIN_EXPONENT..DecContext.MAX_EXPONENT) {
+                z.setOne()
+                z.qExp = xAsLong.toInt()
+                return z.finalizeFnz(false, z.qExp, ctx)
+            }
+
+             */
+        }
+
+        // General case: 10^x = exp(x * ln(10))
+        // Multiply at high precision using LN10_50 for the range-reduction step,
+        // but for the product fed into exp we just need ~38 digits.
+        tmp1.setMul(x, LN10, ctx38)        // tmp1 = x * ln(10)
+        return expImplFNZ(z, tmp1, ctx)    // z = exp(x * ln(10)), rounds to ctx inside
+    }
+
 }
 
 /**
@@ -288,10 +340,16 @@ internal object MutDecLn {
  * @return `this` containing `ln(x)`
  */
 fun MutDec.setLn(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
-    MutDecLn.mutDecLnImpl(this, x, ctx)
+    MutDecLn.logDispatch(this, x, isLog10 = false, ctx)
 
 fun MutDec.setExp(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
     MutDecLn.mutDecExpImpl(this, x, ctx)
+
+fun MutDec.setLog10(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
+    MutDecLn.logDispatch(this, x, isLog10 = true, ctx)
+
+fun MutDec.setTenPow(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
+    MutDecLn.mutDecTenPowImpl(this, x, ctx)
 
 private fun padeEval(
     result: MutDec,
