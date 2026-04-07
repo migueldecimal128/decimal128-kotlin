@@ -5,7 +5,9 @@ import kotlin.test.assertTrue
 
 class TestMutDecLn {
 
-    val verbose = false
+    val verbose = true
+
+    val foo = loadDecimal128ConstantTables()
 
     @Test
     fun lnOfE_under() {
@@ -24,12 +26,12 @@ class TestMutDecLn {
 
     @Test
     fun lnOfE_over() {
-        val ctx = DecContext.decimal128IEEE()
+        val ctx34 = DecContext.decimal128IEEE()
         // e was rounded up in the last digit ... 3 instead of 2
-        val e = MutDec().set("2.718281828459045235360287471352663", ctx)
+        val e = MutDec().set("2.718281828459045235360287471352663", ctx34)
         if (verbose)
             println("e:$e")
-        val result = MutDec().setLn(e, ctx)
+        val result = MutDec().setLn(e, ctx34)
         val expected = MutDec().set("1.000000000000000000000000000000000")
         if (verbose) {
             println("ln(e): $result")
