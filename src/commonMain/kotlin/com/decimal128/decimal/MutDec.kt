@@ -123,6 +123,26 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun isCanonical() = true
     fun radix() = 10
 
+    fun isExactPowerOf10(): Boolean = stealIsPositiveFNZ(steal) && c256IsPowerOf10(this)
+
+    fun isExactInteger(): Boolean {
+        val steal = steal
+        when {
+            stealIsFNZ(steal) -> {
+                if (qExp >= 0)
+                    return true
+                val q = -qExp
+                if (stealDigitLen(steal)  > q) {
+                    val t = DecContext.current().tmps.mdecArg1.set(this)
+                    val ctzd = c256CountTrailingZeroDigitsDestructive(t)
+                    if (ctzd >= q)
+                        return true                }
+            }
+            stealIsZER(steal) -> return true
+        }
+        return false
+    }
+
     // if the digitLen is non-zero then subtract 1
     // if digitLen == 0 then sciExp stays 0 ... 0e0
     fun sciExp() = stealSciExp(steal)

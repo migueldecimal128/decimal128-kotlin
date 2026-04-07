@@ -14,8 +14,13 @@ fun MutDec.setLn(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
 fun MutDec.setExp(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
     expDispatch(this, x, isExp10 = false, ctx)
 
-fun MutDec.setLog10(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
-    logDispatch(this, x, isLog10 = true, ctx)
+fun MutDec.setLog10(x: MutDec, ctx: DecContext = DecContext.current()): MutDec {
+    return if (x.isExactPowerOf10()) {
+        this.set(x.digitLen - 1 + x.qExp)
+    } else {
+        logDispatch(this, x, isLog10 = true, ctx)
+    }
+}
 
 fun MutDec.setExp10(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
     expDispatch(this, x, isExp10 = true, ctx)
@@ -171,6 +176,7 @@ private fun logImplFNZ(
     divisor.qExp = eExp
     val cPrime = tmp2.setDiv(x, divisor, ctx38)
 
+    println("before sqrts cPrime:$cPrime")
     // sqrt #1: c' = sqrt(c')  →  c' ∈ [~0.95, ~1.05)
     cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
     // sqrt #2: c' = sqrt(c')  →  c' ∈ [~0.975, ~1.025)
@@ -181,6 +187,9 @@ private fun logImplFNZ(
     val r = tmps.mdecTrans1
     val pWeights: Array<MutDec> = if (isLog10) padeLog10PWeights else padeLnPWeights
     padeEval(r, zArg, pWeights, padeLogQWeights, ctx38)
+
+    println("k:$k eExpL:$eExp cPrime:$cPrime zArg:$zArg r:$r")
+
     r.setMul(r, zArg, ctx38)
     val eVal = tmps.mdecTrans2.set(eExp)
 
@@ -298,8 +307,7 @@ private val LOG10 = arrayOf(
 )
 
 private val padeLog10PWeights = arrayOf(
-    MutDec().set("0.43429448190325182765112891891660508229", ctx38), // P0 = log10(e)
-    MutDec().set("0.43429448190325182765112891891660508229", ctx38), // P1 = log10(e)
+    MutDec().set("0.43429448190325182765112891891660508229", ctx38), // P1 = 1/ln(10)
     MutDec().set("1.7371779276130073106045156756664203292", ctx38),  // P2
     MutDec().set("2.8463319720816063410272517872132401717", ctx38),  // P3
     MutDec().set("2.4588731695992934359659504968072493630", ctx38),  // P4

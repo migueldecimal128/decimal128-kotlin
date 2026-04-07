@@ -40,6 +40,9 @@ internal inline fun stealIsZER(steal: Int): Boolean = (steal and STEAL_TYP_MASK)
 internal inline fun stealIsINF(steal: Int): Boolean = (steal and STEAL_TYP_MASK) == STEAL_TYP_INF
 internal inline fun stealIsNAN(steal: Int): Boolean = (steal and STEAL_TYP_MASK) == STEAL_TYP_NAN
 
+internal inline fun stealIsPositiveFNZ(steal: Int): Boolean =
+    (steal and (Int.MIN_VALUE or STEAL_TYP_MASK)) == STEAL_TYP_FNZ
+
 internal inline fun stealBothFNZ(stealX: Int, stealY: Int) =
     // below only works because FNZ == 0  //stealIsFNZ(stealX) and stealIsFNZ(stealY)
     stealIsFNZ(stealX or stealY)

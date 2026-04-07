@@ -299,36 +299,26 @@ internal fun compareWithHalfPow10_4(dw3: Long, dw2: Long, dw1: Long, dw0: Long, 
 }
 
 internal fun c256IsPowerOf10(x: C256): Boolean {
-    val xBitLen = x.bitLen
     val xDigitLen = x.digitLen
     if (xDigitLen > 0) {
         val pow10Offset = pow10Offset(xDigitLen - 1) and POW10_BCE
-        val p0 = POW10[pow10Offset    ]
-        val p1 = POW10[pow10Offset + 1] and ((64 - xBitLen) shr 31).toLong()
-        val p2 = POW10[pow10Offset + 2] and ((128 - xBitLen) shr 31).toLong()
-        val p3 = POW10[pow10Offset + 3] and ((192 - xBitLen) shr 31).toLong()
-        return (p0 == x.dw0) and (p1 == x.dw1) and (p2 == x.dw2) and (p3 == x.dw3)
+        if (x.dw0 == POW10[pow10Offset] && x.dw1 == POW10[pow10Offset + 1]) {
+            if (xDigitLen < MIN_POW10_DIGIT_LEN_192)
+                return true
+            if (x.dw2 == POW10[pow10Offset + 2] && x.dw3 == POW10[pow10Offset + 3])
+                return true
+        }
     }
     return false
 }
 
 internal fun c256SetPow10(z: C256, pow10: Int) {
-    if (pow10 >= 0) {
-        val pow10BitLen = pow10BitLen(pow10)
-        val pow10Offset = pow10Offset(pow10) and POW10_BCE
-        val p0 = POW10[pow10Offset    ]
-        val p1 = POW10[pow10Offset + 1] and ((64 - pow10BitLen) shr 31).toLong()
-        val p2 = POW10[pow10Offset + 2] and ((128 - pow10BitLen) shr 31).toLong()
-        val p3 = POW10[pow10Offset + 3] and ((192 - pow10BitLen) shr 31).toLong()
-        z.c256Set256(p3, p2, p1, p0)
-    } else {
-        z.c256SetZero()
-    }
+    if (pow10 < 0 || pow10 >= MAXX_DIGIT_LEN)
+        throw IllegalArgumentException()
+    val pow10Offset = pow10Offset(pow10) and POW10_BCE
+    if (pow10 < MIN_POW10_DIGIT_LEN_192)
+        z.c256Set128(POW10[pow10Offset + 1], POW10[pow10Offset])
+    else
+        z.c256Set256(POW10[pow10Offset + 3], POW10[pow10Offset + 2], POW10[pow10Offset + 1], POW10[pow10Offset])
 }
-
-
-
-
-
-
 
