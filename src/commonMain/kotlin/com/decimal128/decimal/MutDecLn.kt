@@ -8,8 +8,9 @@ internal object MutDecLn {
     private val HALF = MutDec().set("0.5")
     private val ONE = MutDec().setOne()
     private val FOUR = MutDec().set(4)
+    private val EIGHT = MutDec().set(8)
 
-    private val pLnStrings = arrayOf(
+    private val padeLnPWeightStrings = arrayOf(
         "1",
         "4", // P2
         "6.5539215686274509803921568627450980392", // P3
@@ -21,15 +22,16 @@ internal object MutDecLn {
         "0.00011637055754702813526342938107643989997", // P9
     )
 
-    private val pLn = Array<MutDec>(9) { i ->
-        when (pLnStrings[i]) {
+    private val padeLnPWeights = Array<MutDec>(9) { i ->
+        val str = padeLnPWeightStrings[i]
+        when (str) {
             "1" -> ONE
             "4" -> FOUR
-            else -> MutDec().set(pLnStrings[i], ctx38)
+            else -> MutDec().set(str, ctx38)
         }
     }
 
-    private val qLnStrings = arrayOf(
+    private val padeLnQWeightStrings = arrayOf(
         "1", // Q0
         "4.5000000000000000000000000000000000000", // Q1
         "8.4705882352941176470588235294117647059", // Q2
@@ -42,10 +44,11 @@ internal object MutDecLn {
         "0.000020567667626491155902920608802961744138", // Q9
     )
 
-    private val qLn = Array<MutDec>(10) { i ->
-        when (qLnStrings[i]) {
+    private val padeLnQWeights = Array<MutDec>(10) { i ->
+        val str = padeLnQWeightStrings[i]
+        when (str) {
             "1" -> ONE   // Q0 = 1, handled directly in Horner
-            else -> MutDec().set(qLnStrings[i], ctx38)
+            else -> MutDec().set(str, ctx38)
         }
     }
 
@@ -140,7 +143,7 @@ internal object MutDecLn {
         val zArg = tmp3.setSub(cPrime, ONE, ctx38)
 
         val r = MutDec()
-        padeEval(r, zArg, pLn, qLn, ctx38)
+        padeEval(r, zArg, padeLnPWeights, padeLnQWeights, ctx38)
         r.setMul(r, zArg, ctx38)
 
         // ln(x) = r*4 + ln(k) + e*ln(10)
@@ -175,6 +178,31 @@ internal object MutDecLn {
         verify { z.digitLen <= 2 &&  z.dw0 > 0 && z.dw0 <= 10 }
         return z.dw0.toInt()
     }
+
+    private val padeExpPWeightStrings = arrayOf(
+        "1",
+        "0.5",
+        "0.11764705882352941176470588235294117647",
+        "0.017156862745098039215686274509803921569",
+        "0.0017156862745098039215686274509803921569",
+        "0.00012254901960784313725490196078431372549",
+        "0.0000062845651080945198592257415786827551533",
+        "2.2444875386051856640091934209581268405E-7",
+        "5.1011080422845128727481668658139246375E-9",
+        "5.6678978247605698586090742953488051527E-11",
+    )
+    private val padeExpPWeights = Array<MutDec>(10) { i ->
+        val str = padeExpPWeightStrings[i]
+        when (str) {
+            "1" -> ONE   // Q0 = 1, handled directly in Horner
+            else -> MutDec().set(str, ctx38)
+        }
+    }
+
+    private val padeExpQWeights = Array<MutDec>(10) { i ->
+        val p = padeExpPWeights[i]
+        if ((i and 1) == 0) p else MutDec().setNegate(p)
+        }
 
     // Pade [9,9] numerator coefficients for exp(x), |x| <= 0.144
     // P and Q share the same magnitudes, Q signs alternate
@@ -220,6 +248,8 @@ internal object MutDecLn {
         val tmp3 = tmps.mdecTrans3
         val pentad = tmps.pentad1
 
+        println("\nexp($x)")
+
         // range reduce: n = round(x / ln(10)), r = x - n * ln(10)
         tmp1.setDiv(x, LN10, ctx38)
         tmp1.setRoundToIntegralTiesToAway(tmp1, ctx38)
@@ -232,45 +262,20 @@ internal object MutDecLn {
         tmp1.setSub(x, tmp3, ctx38)
         println("r tmp1:$tmp1")
 
-        // two halvings: r' = r / 4
-        val rPrime = tmp1.setDiv(tmp1, FOUR, ctx38)
+        // three halvings: r' = r / 4
+        val rPrime = tmp1.setDiv(tmp1, EIGHT, ctx38)
         println("rPrime:$rPrime")
 
-        // Pade [9,9] evaluation of exp(r')
-        // Evaluate P(r') via Horner
-        val pAcc = tmp2.set(EP9)
-        pAcc.setFma(pAcc, rPrime, EP8, ctx38)
-        pAcc.setFma(pAcc, rPrime, EP7, ctx38)
-        pAcc.setFma(pAcc, rPrime, EP6, ctx38)
-        pAcc.setFma(pAcc, rPrime, EP5, ctx38)
-        pAcc.setFma(pAcc, rPrime, EP4, ctx38)
-        pAcc.setFma(pAcc, rPrime, EP3, ctx38)
-        pAcc.setFma(pAcc, rPrime, EP2, ctx38)
-        pAcc.setFma(pAcc, rPrime, HALF, ctx38)  // EP1 = 1/2
-        pAcc.setFma(pAcc, rPrime, ONE, ctx38)   // EP0 = 1
-
-        // Evaluate Q(r') via Horner
-        val qAcc = tmp3.set(EQ9)
-        qAcc.setFma(qAcc, rPrime, EQ8, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ7, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ6, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ5, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ4, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ3, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ2, ctx38)
-        qAcc.setFma(qAcc, rPrime, EQ1, ctx38)  // EQ1 = -1/2
-        qAcc.setFma(qAcc, rPrime, ONE, ctx38)  // EQ0 = 1Sonnet 4.6
-
-        // exp(r') = P(r') / Q(r')
-        val expRPrime = tmp2.setDiv(pAcc, qAcc, ctx38)
-        // reconstruct: square twice, multiply by 10^n
+        val expRPrime = MutDec()
+        padeEval(expRPrime, rPrime, padeExpPWeights, padeExpQWeights, ctx38)
+        // reconstruct: square thrice, multiply by 10^n
+        expRPrime.setSquare(expRPrime, ctx38)
         expRPrime.setSquare(expRPrime, ctx38)
         z.setSquare(expRPrime, ctx38)
         // round to ctx precision
         z.finalizeFnz(false, expRPrime.qExp + n, ctx)
         return z
     }
-
 
 }
 
@@ -294,7 +299,7 @@ private fun padeEval(
     P: Array<MutDec>,
     Q: Array<MutDec>,
     ctx: DecContext
-): MutDec {
+) {
     check (P.size > 3 && Q.size > 3)
     val tmps = ctx.tmps
     val pAcc = tmps.mdecTrans1.set(P[P.size - 1])
@@ -304,6 +309,7 @@ private fun padeEval(
     val qAcc = tmps.mdecTrans2.set(Q[Q.size - 1])
     for (i in Q.size - 2 downTo 0)
         qAcc.setFma(qAcc, zArg, Q[i], ctx)
-
-    return result.setDiv(pAcc, qAcc, ctx)
+    result.setDiv(pAcc, qAcc, ctx)
+    println(" --> padeEval pAcc:$pAcc, qAcc:$qAcc")
+    println("  -> padeEval result:$result")
 }
