@@ -2,18 +2,16 @@ package com.decimal128.decimal
 
 import java.io.DataInputStream
 
-private val resourceTablesPair: Pair<LongArray, ByteArray> = loadResourceTables()
+@JvmField
+internal actual val BYTE_TABLES: ByteArray = ByteArray(BYTE_TABLES_SIZE_POW_2)
 
 @JvmField
-internal actual val DWORD_TABLES: LongArray = resourceTablesPair.first
+internal actual val DWORD_TABLES: LongArray = loadResourceTables()
 
 @JvmField
 internal actual val POW10: LongArray = DWORD_TABLES
 
-@JvmField
-internal actual val BYTE_TABLES: ByteArray = resourceTablesPair.second
-
-fun loadResourceTables(): Pair<LongArray, ByteArray> {
+fun loadResourceTables(): LongArray {
 
     val stream = object {}.javaClass.getResourceAsStream(RESOURCE_TABLE_PATHNAME)
         ?: error("Resource not found: $RESOURCE_TABLE_PATHNAME")
@@ -42,24 +40,23 @@ fun loadResourceTables(): Pair<LongArray, ByteArray> {
         { "decimal128_tables.bin HEADER headerByteFnv1a mismatch" }
 
         val dwordTables = LongArray(DWORD_TABLES_SIZE_POW_2)
-        val byteTables = ByteArray(BYTE_TABLES_SIZE_POW_2)
         // read dword table
         for (i in 0..<dwordTablesSize)
             dwordTables[i] = dis.readLong()
 
         // read byte table
         for (i in 0..<byteTablesSize)
-            byteTables[i] = dis.readByte()
+            BYTE_TABLES[i] = dis.readByte()
 
         // verify checksums
         val actualDwordFnv1a = fnv1aHash(dwordTables)
         if (actualDwordFnv1a != EXPECTED_DWORD_TABLES_FNV1A)
             throw RuntimeException("decimal128_tables.bin ACTUAL actualDwordFnv1a mismatch")
 
-        val actualByteFnv1a = fnv1aHash(byteTables)
+        val actualByteFnv1a = fnv1aHash(BYTE_TABLES)
         if (actualByteFnv1a != EXPECTED_BYTE_TABLES_FNV1A)
             throw RuntimeException("decimal128_tables.bin ACTUAL headerByteFnv1a mismatch")
 
-        return dwordTables to byteTables
+        return dwordTables
     }
 }
