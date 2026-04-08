@@ -841,36 +841,15 @@ class MutDec() : C256(), Comparable<MutDec> {
             stealIsZER(xSteal) -> return setZero(xSign)
             maxToStrip <= 0 -> return set(x)
             stealIsFinite(xSteal) -> {
-                var ctzd = 0
-                var remaining = maxToStrip
                 val tmps = ctx.tmps
-                val t = tmps.mdecArg1
-                var t0 = x
-                var modulo: Long = 0L
-                while (remaining > 0) {
-                    val divPow10 = min(9, remaining)
-                    val divisor = pow10_64(divPow10)
-                    modulo = DivDirect.divModX32(t, t0, divisor)
-                    t.type = if (t.bitLen == 0) STEAL_TYP_ZER else STEAL_TYP_FNZ
-                    if (modulo != 0L)
-                        break
-                    // the modulo was all zeros
-                    t0 = t
-                    ctzd += divPow10
-                    remaining -= divPow10
-                    if (remaining == 0) {
-                        // we have fully satisfied maxToStrip ... so we are done
-                        t0.qExp = xQ + maxToStrip
-                        return set(t0)
-                    }
-                }
-                ctzd += min(countTrailingZeroDigits32(modulo.toInt()), remaining)
-                // cap when qExp gets clamped
-                ctzd = min(ctzd, Q_MAX - xQ)
-                if (ctzd == 0)
+                val t = tmps.mdecArg1.set(x)
+                val ctzdActual = c256CountTrailingZeroDigitsDestructive(t)
+                // cap at Q_MAX
+                val ctzdToStrip = min(min(ctzdActual, Q_MAX - xQ), maxToStrip)
+                if (ctzdToStrip == 0)
                     return set(x)
-                c256SetScaleDownPow10(this, x, ctzd, tmps.pentad)
-                this.steal = stealEncodeFNZ(xSign, xQ + ctzd, stealPackedLengths(this.steal))
+                c256SetScaleDownPow10(this, x, ctzdToStrip, tmps.pentad)
+                this.steal = stealEncodeFNZ(xSign, xQ + ctzdToStrip, stealPackedLengths(this.steal))
                 return this
             }
             else -> return set(x, ctx)
