@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.decimal128.decimal
 
 internal fun encodeLittleEndianBid128(d: MutDec, littleEndianLongs: LongArray): LongArray {
@@ -42,7 +45,6 @@ internal fun encodeBigEndianBid128(d: MutDec, bigEndianBytes: ByteArray): ByteAr
     return bigEndianBytes
 }
 
-@Suppress("NOTHING_TO_INLINE")
 private inline fun encodeSignAndGCombinationFieldBid128(type: Int, sign: Boolean, qExp: Int, mostSigBits4: Int): Long {
     require(mostSigBits4 in 0..9)
     val signBit = if (sign) 1L shl 63 else 0L
