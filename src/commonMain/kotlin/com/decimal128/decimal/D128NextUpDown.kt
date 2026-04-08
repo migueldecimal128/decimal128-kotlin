@@ -38,7 +38,7 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     val headroom = min(ctx.precision - stealDigitLen(xSteal), qExp - Q_TINY)
     val xSignBit = stealSignBit(xSteal)
     if (headroom > 0) {
-        val pentad = ctx.tmps.pentad1
+        val pentad = ctx.tmps.pentad
         umul128xPow10to128(pentad, dw1, dw0, headroom)
         dw1 = pentad.dw1
         dw0 = pentad.dw0
@@ -65,7 +65,7 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
     var dw0 = x.dw0
     val headroom = min(ctx.precision - stealDigitLen(xSteal), xQ - Q_TINY)
     if (headroom > 0) {
-        val pentad = ctx.tmps.pentad1
+        val pentad = ctx.tmps.pentad
         umul128xPow10to128(pentad, dw1, dw0, headroom)
         dw1 = pentad.dw1
         dw0 = pentad.dw0

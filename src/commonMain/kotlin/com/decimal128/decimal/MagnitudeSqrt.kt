@@ -33,7 +33,7 @@ fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext, reduceToPr
     val tmps = ctx.tmps
     // FIXME ... this code contains a number of allocations of C256() tmps
     val coeffRadicandScaled = C256()
-    val pentad = tmps.pentad1
+    val pentad = tmps.pentad
     val scaleUp = 48 - rDigitLen + ((rDigitLen xor rQExp) and 1)
     c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, pentad)
 

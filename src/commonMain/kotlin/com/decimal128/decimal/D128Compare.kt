@@ -163,7 +163,7 @@ private fun cmpMagFnzFnz(x: Decimal, y: Decimal): Int {
     val qDelta = stealQExp(xSteal) - stealQExp(ySteal)
     if (qDelta == 0)
         return ucmp128(x1, x0, y1, y0)
-    val pentad = DecContext.current().tmps.pentad1
+    val pentad = DecContext.current().tmps.pentad
     return if (qDelta > 0)
         -ucmp128ScalePow10(y1, y0, x1, x0, qDelta, pentad)
     else

@@ -35,9 +35,10 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
 private /*inline*/ fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
-    val aT = if (z === a) ctx.tmps.mdecArg1.set(a) else a
+    val tmps = ctx.tmps
+    val aT = tmps.mdecArg1.set(a)
     // multiply without roundAndFinalize .. remains exact
-    c256SetMul(z, x, y, ctx.tmps.pentad1)
+    c256SetMul(z, x, y, tmps.pentad)
     verify { stealBitLen(z.steal) != 0 }
     // since finalize is not called yet, we must clamp
     // the exponent to a representable range that does not overflow

@@ -102,7 +102,7 @@ private fun cmpMagFnzFnz(x: MutDec, y: MutDec): Int {
     val qDelta = stealQExp(xSteal) - stealQExp(ySteal)
     if (qDelta == 0)
         return c256UnscaledCompare(x, y)
-    val pentad = DecContext.current().tmps.pentad1
+    val pentad = DecContext.current().tmps.pentad
     return if (qDelta > 0)
         -c256ScaledCompare(y, x, qDelta, pentad)
     else

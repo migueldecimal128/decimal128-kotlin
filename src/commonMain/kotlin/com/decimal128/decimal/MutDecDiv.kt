@@ -61,7 +61,7 @@ internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): 
             val headroom = ctx.precision - z.digitLen
             if (headroom < zQ) // 1234567890123456789012345678901234 / .000000001
                 return ctx.setNanSignalInvalid(z, InvalidOperationReason.DIV_INT_OVERFLOWS_COEFFICIENT)
-            c256SetScaleUpPow10(z, z, zQ, ctx.tmps.pentad1)
+            c256SetScaleUpPow10(z, z, zQ, ctx.tmps.pentad)
         }
         z.qExp = 0
     }
@@ -115,7 +115,7 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
     // environment so that INEXACT flag/trap does not get signaled.
     // use INTERNAL_TMP_ENV so that flag-setting
     val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
-    val n = ctx.tmps.mdecArg1.setDiv(x, y, truncCtx)
+    val n = ctx.tmps.mdecDivRemPow.setDiv(x, y, truncCtx)
     if (n.qExp < 0)
         n.setRoundToIntegralExact(n, truncCtx)
 
@@ -176,7 +176,7 @@ fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecCont
     val tmps = ctx.tmps
     val numeratorScale = ctx.precision + 1 - (stealDigitLen(xSteal) - stealDigitLen(ySteal))
     val scaledNumerator = tmps.mdecArg1
-    val pentad = tmps.pentad1
+    val pentad = tmps.pentad
     c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, pentad)
     val residue = when {
         (stealBitLen(ySteal) <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)

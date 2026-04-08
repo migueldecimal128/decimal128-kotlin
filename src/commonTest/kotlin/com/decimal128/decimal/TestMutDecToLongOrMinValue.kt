@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestMutDecToLongOrMinValue {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val strDecimal: String, val expected: Long)
 

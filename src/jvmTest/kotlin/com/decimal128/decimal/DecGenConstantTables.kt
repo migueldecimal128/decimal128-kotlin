@@ -10,7 +10,7 @@ import kotlin.test.fail
 
 class DecGenConstantTables {
 
-    val verbose = true
+    val verbose = false
 
     val resourceFilePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
     val staticConstPath = "src/commonMain/resources/com/decimal128/decimal/Decimal128Tables.kt"

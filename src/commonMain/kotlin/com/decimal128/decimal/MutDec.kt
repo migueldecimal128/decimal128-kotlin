@@ -504,7 +504,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             return ctx.signalInexact(this)
         }
         // integral and fractional digits
-        val residue = c256SetScaleDownPow10(this, x, fracDigitLen, ctx.tmps.pentad1)
+        val residue = c256SetScaleDownPow10(this, x, fracDigitLen, ctx.tmps.pentad)
         return roundAndFinalizeFnz(xSign, 0, residue, rounding, ctx)
     }
 
@@ -567,7 +567,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     // both integral and fractional digits
                     val tmps = ctx.tmps
                     val t = tmps.mdecArg1
-                    val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad1)
+                    val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad)
                     val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                     if (roundUp)
                         c256MutateIncrement(t)
@@ -677,7 +677,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val qExp = stealQExp(steal)
         val headroom = min(precision - stealDigitLen(steal), qExp - Q_TINY)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
+            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad)
             this.qExp = qExp - headroom
         }
         // note that this could have changed digitLen ...
@@ -693,7 +693,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val headroom =
             min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - Q_TINY)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad1)
+            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad)
             this.qExp -= headroom
         }
         c256MutateDecrement()
@@ -746,7 +746,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             FNZ_FNZ -> {
                 // Both are finite
                 val xSign = stealSignFlag(xSteal)
-                val pentad = ctx.tmps.pentad1
+                val pentad = ctx.tmps.pentad
 
                 val xQ = stealQExp(xSteal)
                 val yQ = stealQExp(ySteal)
@@ -869,7 +869,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 ctzd = min(ctzd, Q_MAX - xQ)
                 if (ctzd == 0)
                     return set(x)
-                c256SetScaleDownPow10(this, x, ctzd, tmps.pentad1)
+                c256SetScaleDownPow10(this, x, ctzd, tmps.pentad)
                 this.steal = stealEncodeFNZ(xSign, xQ + ctzd, stealPackedLengths(this.steal))
                 return this
             }
@@ -903,7 +903,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setRemainderNear(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else ctx.tmps.mdecDiv.set(y)
+        val yT = if (this !== y) y else ctx.tmps.mdecDivRemPow.set(y)
         val truncIsOdd: Boolean = mutDecSetRemTruncImpl(this, x, yT, ctx)
         if (isFiniteNonZero()) {
             val tmps = ctx.tmps

@@ -51,7 +51,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     var dw0 = dw0In
     var qExp = qExpIn
     if (precisionTruncationNeeded > 0) {
-        val tmpPair = ctx.tmps.pentad1
+        val tmpPair = ctx.tmps.pentad
         val truncationResidue =
             c128ScaleDownPow10(tmpPair, dw1, dw0, precisionTruncationNeeded)
         dw1 = tmpPair.dw1
@@ -163,7 +163,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
     val truncationNeeded = Q_TINY - qExp
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
 
-    val tmpPair = ctx.tmps.pentad1
+    val tmpPair = ctx.tmps.pentad
     val scaleResidue = c128ScaleDownPow10(tmpPair, dw1, dw0, truncationNeeded)
     val totalResidue = scaleResidue.merge(residue)
     var dw1T = tmpPair.dw1
@@ -190,7 +190,7 @@ private fun decFinalizeClamping(sign: Boolean,
     val qMax = Q_MAX
     val qExcess = qExp - qMax
     verify { qExcess > 0 && qExcess <= ctx.precision - calcDigitLen128(dw1, dw0) }
-    val pentad = ctx.tmps.pentad1
+    val pentad = ctx.tmps.pentad
     umul128xPow10to128(pentad, dw1, dw0, qExcess)
     val dw1S = pentad.dw1
     val dw0S = pentad.dw0

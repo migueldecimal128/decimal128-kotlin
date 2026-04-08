@@ -221,7 +221,7 @@ private fun logImplFNZ(
 internal fun extractKMostSigDigitRounded(x: MutDec, ctx: DecContext): Int {
     val tmps = ctx.tmps
     val z = tmps.mdecTrans1
-    val pentad = tmps.pentad1
+    val pentad = tmps.pentad
     val xSteal = x.steal
     val digitLen = stealDigitLen(xSteal)
     verify { !stealSignFlag(xSteal) && digitLen > 0 }
@@ -262,7 +262,7 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val tmp1 = tmps.mdecTrans1
     val tmp2 = tmps.mdecTrans2
     val tmp3 = tmps.mdecTrans3
-    val pentad = tmps.pentad1
+    val pentad = tmps.pentad
 
     println("\nexp($x)")
 

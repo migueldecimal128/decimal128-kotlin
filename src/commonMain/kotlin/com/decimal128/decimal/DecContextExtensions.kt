@@ -6,6 +6,9 @@ package com.decimal128.decimal
 import com.decimal128.decimal.DecException.*
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 
+fun DecContext.withExtendedPrecision38() =
+    DecContext(decRounding, decPrefs, decTrapHandlers, decFlags, tmps, true)
+
 fun DecContext.with(newDecRounding: DecRounding) =
     DecContext(newDecRounding, decPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 

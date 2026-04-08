@@ -11,7 +11,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     val productSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
     val binopSignature = binopSignatureOf(x.steal, y.steal)
     if (binopSignature == FNZ_FNZ) {
-        c256SetMul(z, x, y, ctx.tmps.pentad1)
+        c256SetMul(z, x, y, ctx.tmps.pentad)
         z.finalizeFnz(productSign, productQExp, ctx)
     } else when (binopSignature) {
         FNZ_ZER,
@@ -32,7 +32,7 @@ internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val typ = stealTyp(xSteal)
     val sqrQExp = stealQExp(xSteal) shl 1
     if (typ == STEAL_TYP_FNZ) {
-        c256SetSqr(z, x, ctx.tmps.pentad1)
+        c256SetSqr(z, x, ctx.tmps.pentad)
         return z.finalizeFnz(false, sqrQExp, ctx)
     }
     if (typ == STEAL_TYP_ZER)

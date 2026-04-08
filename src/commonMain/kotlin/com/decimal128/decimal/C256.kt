@@ -198,7 +198,7 @@ C256Rep() {
 
     internal inline fun c256ToNewDoubleDouble() = c256ToNewDoubleDouble(this)
 
-    internal inline fun c256Set(dd: DoubleDouble) = c256Set(this, dd, DecContext.current().tmps.pentad1)
+    internal inline fun c256Set(dd: DoubleDouble) = c256Set(this, dd, DecContext.current().tmps.pentad)
 
     internal inline fun c256MutateIncrement(doRoundUp: Boolean) {
         if (doRoundUp)

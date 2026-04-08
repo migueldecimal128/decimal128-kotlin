@@ -133,7 +133,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
     verify { qDelta >= 0 }
     val mDigitLen = stealDigitLen(mSteal)
     val headroom = ctx.precision - mDigitLen
-    val pentad = ctx.tmps.pentad1
+    val pentad = ctx.tmps.pentad
     val n1 = n.dw1; val n0 = n.dw0
     var dw1Sum = m.dw1
     var dw0Sum = m.dw0
@@ -161,7 +161,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
                 residue = Residue.fromValuePow10(n1, n0, nDigitLen)
         }
         else -> {
-            val resultPentad = ctx.tmps.pentad1
+            val resultPentad = ctx.tmps.pentad
             residue = c128ScaleDownPow10(resultPentad, n1, n0, shiftRight)
             dw0Sum += resultPentad.dw0
             dw1Sum += resultPentad.dw1 + if (unsignedLT(dw0Sum, resultPentad.dw0)) 1L else 0L
@@ -228,7 +228,7 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
                 if (shiftSRight > sDigitLen) Residue.GT_HALF
                 else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
             verify { residueInverse != EXACT }
-            val pentad = ctx.tmps.pentad1
+            val pentad = ctx.tmps.pentad
             umul128xPow10to128(pentad, m.dw1, m.dw0, headroomP)
             val dw1S = pentad.dw1
             val dw0S = pentad.dw0

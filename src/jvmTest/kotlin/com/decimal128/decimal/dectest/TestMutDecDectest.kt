@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 
 class TestMutDecDectest {
 
-    private val veryVerbose = false
+    private val veryverbose = false
     private val verbose = false
 
     private val prefix = "src/jvmTest/resources/dectest/"
@@ -327,6 +327,8 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqrem1120  remainder  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  0.765432109876543210987654321098768",
+
         "dqbas519 toSci ''                -> NaN Conversion_syntax",
         "dqcan616 tointegralx  #7e010ff3fcff3fcff3fcff3fcff3fcff  -> #7c000ff3fcff3fcff3fcff3fcff3fcff  Invalid_operation",
         "dqbas510 toSci ' +1'             -> NaN Conversion_syntax",
@@ -477,14 +479,14 @@ class TestMutDecDectest {
     }
 
     fun processLine(line: String) {
-        if (veryVerbose)
+        if (veryverbose)
             println("line:$line")
         val commentIndex = line.indexOf("--")
         val trimmed = (if (commentIndex >= 0) line.substring(0, commentIndex) else line).trim()
         when {
             trimmed.length == 0 -> {}
             ignoredCases.contains(trimmed) -> {
-                if (veryVerbose)
+                if (veryverbose)
                     println("<<<ignored>>>")
             }
             processDirective(trimmed) -> {}
@@ -500,7 +502,7 @@ class TestMutDecDectest {
         val colonIndex = line.indexOf(':')
         if (colonIndex < 0)
             return false
-        if (veryVerbose)
+        if (veryverbose)
             println(line)
         val directive = line.substring(0, colonIndex).trim().lowercase()
         val value = line.substring(colonIndex + 1).trim().lowercase()

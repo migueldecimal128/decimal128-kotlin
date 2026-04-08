@@ -56,7 +56,7 @@ private /*inline*/ fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y
     // roundTowardNegative; under that attribute, the sign of an
     // exact zero sum (or difference) shall be −0.
     val isRoundTowardNegative = ctx.isRoundTowardNegative()
-    val pentad = ctx.tmps.pentad1
+    val pentad = ctx.tmps.pentad
     if (xSign == ySign) {
         c256SetAddUnscaled(z, x, y, pentad)
         zSign = xSign
@@ -127,7 +127,7 @@ internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: I
         z.c256Set(x)
     } else {
         val shiftLeft = min(headroom, delta)
-        c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad1)
+        c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad)
         zQ -= shiftLeft
     }
     return z.finalizeFnz(xSign, zQ, ctx)
@@ -148,7 +148,7 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
     val nDigitLen = stealDigitLen(nSteal)
     val qDelta = mQ - nQ
     verify { qDelta > 0 }
-    val pentad = ctx.tmps.pentad1
+    val pentad = ctx.tmps.pentad
     val headroom = ctx.precision - mDigitLen
     val shiftLeft = min(max(headroom, 0), qDelta)
     val qAlign = mQ - shiftLeft
@@ -194,7 +194,7 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
         // return the value of the non-zero (if any), scaled to the smaller exponent
         (mDigitLen > 0) -> {
             verify { m.isFinite() }
-            c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.pentad1)
+            c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.pentad)
             z.steal = stealEncodeFNZ(sign, qAlign, stealPackedLengths(z.steal))
             return EXACT
         }
@@ -214,7 +214,7 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
 internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, ctx: DecContext): Residue {
     verify { !m.isZero() }
     verify { !s.isZero() }
-    val pentad = ctx.tmps.pentad1
+    val pentad = ctx.tmps.pentad
     verify { m.compareNumericMagnitudeTo(s) > 0 }
     verify { m.qExp != s.qExp }
     if (m.qExp > s.qExp) {
@@ -249,7 +249,7 @@ internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec,
                 else
                     Residue.fromValueDecade(s).subtractionInverse()
                 if (shiftMLeft > 0) {
-                    c256SetScaleUpPow10(z, m, shiftMLeft, ctx.tmps.pentad1)
+                    c256SetScaleUpPow10(z, m, shiftMLeft, ctx.tmps.pentad)
                 } else {
                     z.c256Set(m)
                 }

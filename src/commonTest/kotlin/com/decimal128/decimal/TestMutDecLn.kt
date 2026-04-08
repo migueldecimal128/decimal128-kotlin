@@ -5,7 +5,7 @@ import kotlin.test.assertTrue
 
 class TestMutDecLn {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun lnOfE_under() {

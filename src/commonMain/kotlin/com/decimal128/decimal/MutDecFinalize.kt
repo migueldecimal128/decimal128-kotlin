@@ -82,7 +82,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
     var totalResidue = inboundResidue
     if (precisionTruncationNeeded > 0) {
         val truncationResidue =
-            c256SetScaleDownPow10(this, this, precisionTruncationNeeded, ctx.tmps.pentad1)
+            c256SetScaleDownPow10(this, this, precisionTruncationNeeded, ctx.tmps.pentad)
         adjustedQExp += precisionTruncationNeeded
         totalResidue = truncationResidue.merge(inboundResidue)
         verify { stealDigitLen(this.steal) == precision }
@@ -98,7 +98,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
         if (stealDigitLen(this.steal) > precision) {
             verify { stealDigitLen(this.steal) == precision + 1 }
             // Rolling over means the result is divisible by 10, so no residue
-            val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad1)
+            val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad)
             verify { rolloverResidue == EXACT }
             ++adjustedQExp
             verify { stealDigitLen(this.steal) == precision }
@@ -219,7 +219,7 @@ private fun MutDec.finalizeSubnormal(
     verify { truncationNeeded > 0 && truncationNeeded < digitLen }
 
     // Scale down to fit in subnormal range
-    val scaleResidue = c256SetScaleDownPow10(this, this, truncationNeeded, ctx.tmps.pentad1)
+    val scaleResidue = c256SetScaleDownPow10(this, this, truncationNeeded, ctx.tmps.pentad)
     this.steal = stealEncodeFNZ(sign, Q_TINY, stealPackedLengths(this.steal))
     val precision = ctx.precision
     verify { digitLen > 0 && digitLen < precision }
@@ -239,7 +239,7 @@ private fun MutDec.finalizeSubnormal(
         // Check if rounding caused rollover into precision range
         if (digitLen > precision) {
             verify { digitLen == precision + 1 }
-            val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad1)
+            val rolloverResidue = c256SetScaleDownPow10(this, this, 1, ctx.tmps.pentad)
             verify { rolloverResidue == EXACT }
             this.qExp = Q_TINY + 1
         }
@@ -251,7 +251,7 @@ private fun MutDec.finalizeSubnormal(
 private fun MutDec.finalizeClamping(sign: Boolean, qExp: Int, ctx: DecContext): MutDec {
     val qExcess = qExp - Q_MAX
     verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
-    c256SetScaleUpPow10(this, this, qExcess, ctx.tmps.pentad1)
+    c256SetScaleUpPow10(this, this, qExcess, ctx.tmps.pentad)
     this.steal = stealEncodeFNZ(sign, Q_MAX, stealPackedLengths(this.steal))
     return this
 }

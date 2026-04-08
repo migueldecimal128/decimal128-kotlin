@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestMutDecExp {
-    val verbose = true
+    val verbose = false
 
     @Test
     fun expRangeReduction() {

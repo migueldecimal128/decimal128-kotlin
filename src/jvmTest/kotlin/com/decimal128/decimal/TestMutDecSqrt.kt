@@ -10,7 +10,7 @@ import java.util.*
 
 class TestMutDecSqrt{
 
-    val verbose = true
+    val verbose = false
 
     class TC(val bd: BigDecimal) {
         constructor(str: String) : this(BigDecimal(str))

@@ -50,7 +50,7 @@ private fun mutDecPowNImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): Mu
 
 private fun mutDecPowNImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
     verify { pow >= 3 }
-    val m = if (z !== x) x else ctx.tmps.mdecArg1.set(x)
+    val m = ctx.tmps.mdecDivRemPow.set(x)
     // Left-to-right binary exponentiation
     // Find the highest bit below the MSB
     val resultSign = x.signBit and (pow and 1) != 0
