@@ -10,8 +10,6 @@ actual open class DecTmps {
     internal actual val mdecBridge1: MutDec = MutDec()
     @JvmField
     internal actual val mdecBridge2: MutDec = MutDec()
-    @JvmField
-    internal actual val mdecBridge3: MutDec = MutDec()
 
     // use of these tmps should be internal to the MutDec layer
     @JvmField

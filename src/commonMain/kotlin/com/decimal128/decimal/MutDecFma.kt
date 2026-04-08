@@ -11,7 +11,7 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
     val aSteal = a.steal
     val signatureXY = binopSignatureOf(xSteal, ySteal)
     if (signatureXY == FNZ_FNZ && stealIsFinite(aSteal))
-        return fmaFnzFnzFinite(z, x, y, a, ctx)
+        return mutDecFmaFnzFnzFinite(z, x, y, a, ctx)
     if (stealIsNAN(aSteal))
         return fmaNanAddend(z, x, y, a, ctx)
     when (signatureXY) {
@@ -32,7 +32,7 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
     return z
 }
 
-private /*inline*/ fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
+internal fun mutDecFmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
     val tmps = ctx.tmps

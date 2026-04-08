@@ -35,7 +35,7 @@ private fun fmaFnzFnzFinite(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext)
     val e = tmps.mdecBridge2.set(y)
     // using the result here to store the addend ... fma can handle it
     val result = tmps.mdecBridgeResult.set(a)
-    return Decimal.from(result.setFma(d, e, result, ctx))
+    return Decimal.from(mutDecFmaFnzFnzFinite(result, d, e, result, ctx))
 }
 
 /**

@@ -7,7 +7,6 @@ expect open class DecTmps() {
     // to the 256-bit MutDec layer
     internal val mdecBridge1: MutDec
     internal val mdecBridge2: MutDec
-    internal val mdecBridge3: MutDec
 
     // use of these tmps should be internal to the MutDec arithmetic layer
     internal val mdecFmaParseConvert: MutDec

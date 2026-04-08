@@ -882,10 +882,11 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setRemainderNear(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else ctx.tmps.mdecDivRemPowCtzd.set(y)
+        val tmps = ctx.tmps
+        // cheating here ... prob should not be using the bridge tmp
+        val yT = tmps.mdecBridge2.set(y)
         val truncIsOdd: Boolean = mutDecSetRemTruncImpl(this, x, yT, ctx)
         if (isFiniteNonZero()) {
-            val tmps = ctx.tmps
             val rem2 = tmps.mdecDivRemPowCtzd
             val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
             if (sign) {
