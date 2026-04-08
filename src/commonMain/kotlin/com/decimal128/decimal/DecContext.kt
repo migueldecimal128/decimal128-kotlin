@@ -24,6 +24,18 @@ expect class DecContext(decFormat: DecFormat,
     internal val eMax: Int
     internal val eMin: Int
 
+    internal val dw0MaxxCoeff: Long
+    internal val dw1MaxxCoeff: Long
+    internal val dw0MinFullPrecisionCoeff:Long
+    internal val dw1MinFullPrecisionCoeff:Long
+
+    internal fun coeffFits(dw1: Long, dw0: Long): Boolean
+
+    internal fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean
+
+    internal inline fun coeffIsMaxx(dw1: Long, dw0: Long): Boolean
+
+
     companion object {
         fun decimal128Kotlin(): DecContext
         fun decimal128IEEE(): DecContext

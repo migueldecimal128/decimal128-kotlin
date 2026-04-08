@@ -29,6 +29,21 @@ actual class DecContext actual constructor(decFormat: DecFormat,
     @JvmField
     internal actual val eMin:Int = Q_TINY + 34 - precision
 
+    internal actual val dw0MaxxCoeff: Long = pow10_128_dw0(precision)
+    internal actual val dw1MaxxCoeff: Long = pow10_128_dw1(precision)
+    internal actual val dw0MinFullPrecisionCoeff:Long = pow10_128_dw0(precision - 1)
+    internal actual val dw1MinFullPrecisionCoeff:Long = pow10_128_dw1(precision - 1)
+
+    internal actual fun coeffFits(dw1: Long, dw0: Long): Boolean =
+        unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)
+
+    internal actual fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean =
+        (unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)) &&
+                (qExp >= Q_TINY && qExp <= Q_MAX)
+
+    internal actual inline fun coeffIsMaxx(dw1: Long, dw0: Long): Boolean =
+        dw1 == this.dw1MaxxCoeff && dw0 == this.dw0MaxxCoeff
+
 
 
     actual companion object {

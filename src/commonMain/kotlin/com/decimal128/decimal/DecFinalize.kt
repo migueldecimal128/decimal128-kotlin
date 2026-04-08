@@ -35,7 +35,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     if ((dw1In or dw0In) == 0L)
         return decFinalizeZero(sign, inboundResidue, qExpIn, rounding, ctx, beQuiet)
 
-    val precision = decFormat.precision
+    val precision = ctx.precision
 
     // Step 4: underflow
     // divert iff range truncation exceeds precision truncation
