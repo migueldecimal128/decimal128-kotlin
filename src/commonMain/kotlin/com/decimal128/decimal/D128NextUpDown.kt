@@ -46,10 +46,10 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     }
     ++dw0
     dw1 += if (dw0 == 0L) 1L else 0L
-    if (dw0 == ctx.decFormat.dw0MaxxCoeff && dw1 == ctx.decFormat.dw1MaxxCoeff) {
+    if (dw0 == ctx.dw0MaxxCoeff && dw1 == ctx.dw1MaxxCoeff) {
         // roll up a decade
-        dw1 = ctx.decFormat.dw1MinFullPrecisionCoeff
-        dw0 = ctx.decFormat.dw0MinFullPrecisionCoeff
+        dw1 = ctx.dw1MinFullPrecisionCoeff
+        dw0 = ctx.dw0MinFullPrecisionCoeff
         ++qExp
         if (qExp > Q_MAX)
             return Decimal.infinity(xSignBit)
@@ -72,12 +72,12 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
         xQ -= headroom
     }
     // Check if we're at a power of 10 boundary (would lose a digit if decremented)
-    if (dw0 == ctx.decFormat.dw0MinFullPrecisionCoeff &&
-        dw1 == ctx.decFormat.dw1MinFullPrecisionCoeff &&
+    if (dw0 == ctx.dw0MinFullPrecisionCoeff &&
+        dw1 == ctx.dw1MinFullPrecisionCoeff &&
         xQ > Q_TINY) {
         // Set to 10^precision - 1 and decrement exponent
-        dw1 = ctx.decFormat.dw1MaxxCoeff
-        dw0 = ctx.decFormat.dw0MaxxCoeff
+        dw1 = ctx.dw1MaxxCoeff
+        dw0 = ctx.dw0MaxxCoeff
         --xQ
     }
     dw1 -= if (dw0 == 0L) 1L else 0L
@@ -87,8 +87,8 @@ internal fun nextFnzTowardZero(x: Decimal, ctx: DecContext): Decimal {
 
 internal fun maxFiniteMagnitude(sign: Boolean, ctx: DecContext): Decimal {
     val qExp = Q_MAX
-    val dwHi = ctx.decFormat.dw1MaxxCoeff
-    val dwLo = ctx.decFormat.dw0MaxxCoeff - 1L
+    val dwHi = ctx.dw1MaxxCoeff
+    val dwLo = ctx.dw0MaxxCoeff - 1L
     return decimalFNZ(if (sign) 1 else 0, qExp, dwHi, dwLo)
 }
 

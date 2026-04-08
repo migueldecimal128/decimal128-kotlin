@@ -25,11 +25,10 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
                                        rounding: DecRounding, ctx: DecContext,
                                        beQuiet: Boolean = false): Decimal {
     // Step 1: Fast path: already in valid decimal128 range
-    val decFormat = ctx.decFormat
-    if (inboundResidue == EXACT && decFormat.coeffQexpFit(dw1In, dw0In, qExpIn))
+    if (inboundResidue == EXACT && ctx.coeffQexpFit(dw1In, dw0In, qExpIn))
         return decimalFinite(sign, qExpIn, dw1In, dw0In)
 
-    // Step 2: special values ... no applicable here ... only Finite
+    // Step 2: special values ... not applicable here ... only Finite
 
     // Step 3: zero coefficient
     if ((dw1In or dw0In) == 0L)
@@ -41,7 +40,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     // divert iff range truncation exceeds precision truncation
     val rangeTruncationNeeded = Q_TINY - qExpIn
     val precisionTruncationNeeded =
-        if (decFormat.coeffFits(dw1In, dw0In)) 0
+        if (ctx.coeffFits(dw1In, dw0In)) 0
         else calcDigitLen128(dw1In, dw0In) - precision
     if (rangeTruncationNeeded > precisionTruncationNeeded)
         return decFinalizeUnderflowRegion(sign, dw1In, dw0In,inboundResidue, qExpIn, rounding, ctx, beQuiet)
@@ -70,9 +69,9 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
         dw1 += if (dw0 == 0L) 1L else 0L
 
         // step 6.2: rollover
-        if (decFormat.coeffIsMaxx(dw1, dw0)) {
-            dw1 = decFormat.dw1MinFullPrecisionCoeff
-            dw0 = decFormat.dw0MinFullPrecisionCoeff
+        if (ctx.coeffIsMaxx(dw1, dw0)) {
+            dw1 = ctx.dw1MinFullPrecisionCoeff
+            dw0 = ctx.dw0MinFullPrecisionCoeff
             ++qExp
         }
     }
@@ -176,9 +175,9 @@ private fun decFinalizeSubnormal(sign: Boolean,
         // apply rounding
         ++dw0T
         dw1T += if (dw0T == 0L) 1L else 0L
-        if (!decFormat.coeffFits(dw1T, dw0T)) {
-            dw1T = decFormat.dw1MinFullPrecisionCoeff
-            dw0T = decFormat.dw0MinFullPrecisionCoeff
+        if (!ctx.coeffFits(dw1T, dw0T)) {
+            dw1T = ctx.dw1MinFullPrecisionCoeff
+            dw0T = ctx.dw0MinFullPrecisionCoeff
             ++qExpT
         }
     }
@@ -196,7 +195,7 @@ private fun decFinalizeClamping(sign: Boolean,
     umul128xPow10to128(pentad, dw1, dw0, qExcess)
     val dw1S = pentad.dw1
     val dw0S = pentad.dw0
-    verify { ctx.decFormat.coeffFits(dw1S, dw0S) }
+    verify { ctx.coeffFits(dw1S, dw0S) }
     // successful clamping does not signal because
     // the returned value is numerically equal
     return decimalFNZ(sign, qMax, dw1S, dw0S)
