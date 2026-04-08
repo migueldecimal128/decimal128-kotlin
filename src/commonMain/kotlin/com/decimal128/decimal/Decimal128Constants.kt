@@ -10,6 +10,7 @@ internal const val MAX_DEC77_CHAR_LEN = 1 /*sign*/ + 77 /*coefficient*/ + 1 /*do
 
 internal const val Q_MAX = 6111
 internal const val Q_TINY = -6176
+internal const val E_MIN = -6143
 internal const val NAN_PAYLOAD_PRECISION = 33
 
 

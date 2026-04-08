@@ -15,12 +15,15 @@ actual class DecContext actual constructor(decFormat: DecFormat,
         internal actual val decFormat: DecFormat = decFormat
     //@JvmField DecRounding is a value class :(
     internal actual val decRounding: DecRounding = decRounding
-        internal actual val decPrefs: DecPrefs = decPrefs
-        internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
-        internal actual val decFlags: DecFlags = decFlags
-        internal actual val tmps: DecTmps = decTmps
+    internal actual val decPrefs: DecPrefs = decPrefs
+    internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
+    internal actual val decFlags: DecFlags = decFlags
+    internal actual val tmps: DecTmps = decTmps
 
-        internal actual val precision: Int = decFormat.precision
+    internal actual val precision: Int = decFormat.precision
+    internal actual val eMax:Int = Q_MAX + precision - 1
+    internal actual val eMin:Int = Q_TINY + 34 - precision
+
 
     actual companion object {
         actual fun decimal128Kotlin(): DecContext = decContextDecimal128Kotlin()

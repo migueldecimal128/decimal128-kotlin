@@ -416,7 +416,7 @@ class Decimal private constructor(
         val type = stealTyp(steal)
         return when (type) {
             STEAL_TYP_FNZ -> {
-                if (stealSciExp(steal) < ctx.decFormat.eMin) {
+                if (stealSciExp(steal) < E_MIN) {
                     if (sign) negativeSubnormal else positiveSubnormal
                 }
                 if (sign) negativeNormal else positiveNormal

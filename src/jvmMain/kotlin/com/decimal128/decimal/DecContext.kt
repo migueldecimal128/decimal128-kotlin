@@ -24,6 +24,12 @@ actual class DecContext actual constructor(decFormat: DecFormat,
 
     @JvmField
     internal actual val precision: Int = decFormat.precision
+    @JvmField
+    internal actual val eMax:Int = Q_MAX + precision - 1
+    @JvmField
+    internal actual val eMin:Int = Q_TINY + 34 - precision
+
+
 
     actual companion object {
         actual fun decimal128Kotlin(): DecContext = decContextDecimal128Kotlin()

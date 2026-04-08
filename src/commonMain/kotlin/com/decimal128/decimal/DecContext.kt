@@ -21,6 +21,9 @@ expect class DecContext(decFormat: DecFormat,
 
     internal val precision: Int
 
+    internal val eMax: Int
+    internal val eMin: Int
+
     companion object {
         fun decimal128Kotlin(): DecContext
         fun decimal128IEEE(): DecContext
