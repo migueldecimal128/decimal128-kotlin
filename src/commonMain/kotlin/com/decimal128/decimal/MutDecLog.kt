@@ -349,37 +349,34 @@ private fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     // Exact fast path: if x is an integer, use the exponent shift trick
     // e.g. 10^3 = 1 * 10^3,  10^-2 = 1 * 10^-2
     // (This avoids transcendental error accumulation for the common case.)
-    val xSteal = x.steal
-    val qExp = stealQExp(xSteal)
-    if (x.isExactInteger()) {
-        val sciExp = stealSciExp(xSteal)
-        when {
-            sciExp > 6144 -> return ctx.signalInexactOverflow(z.setInfinite(false))
-            sciExp < -6176 -> return ctx.signalInexactUnderflow(z.setZero())
+    val l = x.toLongOrMinValue()
+    if (l != Long.MIN_VALUE) {
+        return when {
+            l > 6144L -> ctx.signalInexactOverflow(z.setInfinite(false))
+            l < -6176L -> ctx.signalInexactUnderflow(z.setZero(false, -6176))
+            else -> z.setOne().finalizeFnz(false, l.toInt(), ctx)
         }
-        val n: Int = when {
-            qExp == 0 -> x.dw0
-            qExp > 0 -> x.dw0 * pow10_64(qExp)
-            else -> x.dw0 / pow10_64(-qExp)
-        }.toInt()
-        val nSigned = if (stealSignFlag(xSteal)) -n else n
-        return z.setOne().finalizeFnz(false, nSigned, ctx)
     }
 
-// General case: 10^x, |x| not integer
-// range reduce: n = round(x), r = x - n, |r| <= 0.5
+    // General case: 10^x, |x| not integer
+    // range reduce: n = round(x), r = x - n, |r| <= 0.5
     tmp1.setRoundToIntegralTiesToAway(x, ctx38)
-    val n = if (stealSignFlag(tmp1.steal)) -tmp1.dw0.toInt() else tmp1.dw0.toInt()
+    val nLong = tmp1.toLongOrMinValue()
+    when {
+        nLong == Long.MIN_VALUE || nLong > 6200 -> return ctx.signalInexactOverflow(z.setInfinite(false))
+        nLong < -6200 -> return ctx.signalInexactUnderflow(z.setZero(false, -6176))
+    }
+    val n = nLong.toInt()
     val r = tmps.mdecTrans2.setSub(x, tmp1, ctx38)  // exact, no transcendental
 
-// three halvings: r' = r / 8
+    // three halvings: r' = r / 8
     val rPrime = tmps.mdecTrans3.setDiv(r, EIGHT, ctx38)
 
-// Pade [9,9] evaluation of 10^r'
+    // Pade [9,9] evaluation of 10^r'
     val tenPowRPrime = MutDec()
     padeEval(tenPowRPrime, rPrime, padeExp10PWeights, padeExp10QWeights, ctx38)
 
-// reconstruct: square three times, multiply by 10^n
+    // reconstruct: square three times, multiply by 10^n
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     z.setSquare(tenPowRPrime, ctx38)

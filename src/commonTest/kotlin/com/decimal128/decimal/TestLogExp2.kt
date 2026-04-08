@@ -10,6 +10,8 @@ class TestLogExp2 {
     data class TC(val function: String, val x: String, val expected: String)
 
     val tcs = arrayOf(
+        TC("exp10", "-7000", "0E-6176"),
+
         TC("log10", "2", "0.3010299956639811952137388947244930268"),
         TC("log10", "3", "0.4771212547196624372950279032551153092"),
         TC("log10", "7", "0.8450980400142568307122162585926361935"),
