@@ -35,13 +35,11 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     if ((dw1In or dw0In) == 0L)
         return decFinalizeZero(sign, inboundResidue, qExpIn, rounding, ctx, beQuiet)
 
-    val qTiny = decFormat.qTiny
-    val qMax = decFormat.qMax
     val precision = decFormat.precision
 
     // Step 4: underflow
     // divert iff range truncation exceeds precision truncation
-    val rangeTruncationNeeded = qTiny - qExpIn
+    val rangeTruncationNeeded = Q_TINY - qExpIn
     val precisionTruncationNeeded =
         if (decFormat.coeffFits(dw1In, dw0In)) 0
         else calcDigitLen128(dw1In, dw0In) - precision
@@ -80,10 +78,10 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     }
 
     // step 7: check final bounds
-    verify { qExp >= qTiny }
+    verify { qExp >= Q_TINY }
     verify {calcDigitLen128(dw1, dw0) <= precision }
-    if (qExp > qMax) {
-        val qExcess = qExp - qMax
+    if (qExp > Q_MAX) {
+        val qExcess = qExp - Q_MAX
         return if (calcDigitLen128(dw1, dw0) + qExcess <= precision)
             decFinalizeClamping(sign, dw1, dw0, qExp, ctx)
         else
@@ -164,8 +162,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
                                  rounding: DecRounding, ctx: DecContext,
                                  beQuiet: Boolean): Decimal {
     val decFormat = ctx.decFormat
-    val qTiny = decFormat.qTiny
-    val truncationNeeded = qTiny - qExp
+    val truncationNeeded = Q_TINY - qExp
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
 
     val tmpPair = ctx.tmps.pentad1
@@ -173,7 +170,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
     val totalResidue = scaleResidue.merge(residue)
     var dw1T = tmpPair.dw1
     var dw0T = tmpPair.dw0
-    var qExpT = qTiny
+    var qExpT = Q_TINY
 
     if (totalResidue != EXACT && totalResidue.ulpRoundUp(rounding.negate(sign), dw0T)) {
         // apply rounding

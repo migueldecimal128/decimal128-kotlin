@@ -92,7 +92,7 @@ internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDe
                 mostSigBcd4 = 0x08 or ((combination ushr 12) and 1)
             }
             val biasedExponent = (biasedExpHi2 shl 12) or (combination and 0xFFF)
-            val qExp = biasedExponent + decimal128.qTiny
+            val qExp = biasedExponent + Q_TINY
             val decletsHi6 = (mostSigBcd4.toLong() shl 50) or (significand110Hi shl 4) or (dpd128Lo ushr 60)
             val decletsLo6 = dpd128Lo and ((1L shl 60) - 1L)
             val binHi = binFromDeclets7(decletsHi6)
@@ -140,7 +140,7 @@ internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDe
             // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
             val E = (combination ushr 1) and 0x3FFF   // 14 bits
             d.c256SetZero()
-            d.qExp = E + decimal128.qTiny             // preserve exponent
+            d.qExp = E + Q_TINY             // preserve exponent
             d.sign = sign                             // preserve sign (±0)
         }
     }

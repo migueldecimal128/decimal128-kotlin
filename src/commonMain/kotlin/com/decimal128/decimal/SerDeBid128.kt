@@ -120,7 +120,7 @@ internal fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDe
     when {
         (combination and 0x18000) != 0x18000 -> { // finite
             val biasedExponent = combination ushr 3
-            val qExp = biasedExponent + decimal128.qTiny
+            val qExp = biasedExponent + Q_TINY
             val mostSignificant3 = (combination and 0x07).toLong() shl (110 - 64)
             d.c256Set128(mostSignificant3 or significand110Hi, bid128Lo)
             val digitLen = d.digitLen
@@ -144,7 +144,7 @@ internal fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDe
             // large-form finite pattern => non-canonical for decimal128:
             // E = bits [15:2] (G2..Gw+3), C = 0, keep sign S.
             val E = (combination ushr 1) and 0x3FFF   // 14 bits
-            d.setZero(sign, E + decimal128.qTiny)     // preserve sign & exponent
+            d.setZero(sign, E + Q_TINY)     // preserve sign & exponent
         }
     }
     return d
