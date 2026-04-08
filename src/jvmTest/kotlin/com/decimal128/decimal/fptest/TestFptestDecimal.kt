@@ -1,7 +1,6 @@
 package com.decimal128.decimal.fptest
 
 import com.decimal128.decimal.DecContext
-import com.decimal128.decimal.DecFormat
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY

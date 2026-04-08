@@ -77,7 +77,6 @@ internal fun decodeLittleEndianDpd128(d: MutDec, littleEndianBytes: ByteArray): 
 }
 
 internal fun decodeDpd128Longs(d: MutDec, dpd128Hi: Long, dpd128Lo: Long): MutDec {
-    val decimal128 = DecFormat.DECIMAL_128
     val sign = dpd128Hi < 0
     val combination = (dpd128Hi ushr 46).toInt() and 0x1FFFF
     val combinationHi2 = combination ushr 15

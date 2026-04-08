@@ -45,7 +45,6 @@ internal fun encodeBigEndianBid128(d: MutDec, bigEndianBytes: ByteArray): ByteAr
 @Suppress("NOTHING_TO_INLINE")
 private inline fun encodeSignAndGCombinationFieldBid128(type: Int, sign: Boolean, qExp: Int, mostSigBits4: Int): Long {
     require(mostSigBits4 in 0..9)
-    val decimal128 = DecFormat.DECIMAL_128
     val signBit = if (sign) 1L shl 63 else 0L
     val gCombinationField = when (stealTyp(type)) {
         STEAL_TYP_ZER,
@@ -113,7 +112,6 @@ internal fun decodeBigEndianBid128(d: MutDec, bigEndianBytes: ByteArray): MutDec
 }
 
 internal fun decodeBid128Longs(d: MutDec, bid128Hi: Long, bid128Lo: Long): MutDec {
-    val decimal128 = DecFormat.DECIMAL_128
     val sign = bid128Hi < 0
     val combination = (bid128Hi ushr 46).toInt() and 0x1FFFF
     val significand110Hi = bid128Hi and ((1L shl (110 - 64)) - 1L)
