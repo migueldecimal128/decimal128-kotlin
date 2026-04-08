@@ -10,8 +10,8 @@ actual open class DecTmps {
     internal actual val mdecBridge3: MutDec = MutDec()
 
     // use of these tmps should be internal to the MutDec layer
-    internal actual val mdecArg1: MutDec = MutDec()
-    internal actual val mdecDivRemPow: MutDec = MutDec()
+    internal actual val mdecFmaParseConvert: MutDec = MutDec()
+    internal actual val mdecDivRemPowCtzd: MutDec = MutDec()
 
     internal actual val mdecTrans1: MutDec = MutDec()
     internal actual val mdecTrans2: MutDec = MutDec()

@@ -36,7 +36,7 @@ private /*inline*/ fun fmaFnzFnzFinite(z:MutDec, x: MutDec, y: MutDec, a: MutDec
     val xSteal = x.steal
     val ySteal = y.steal
     val tmps = ctx.tmps
-    val aT = tmps.mdecArg1.set(a)
+    val aT = tmps.mdecFmaParseConvert.set(a)
     // multiply without roundAndFinalize .. remains exact
     c256SetMul(z, x, y, tmps.pentad)
     verify { stealBitLen(z.steal) != 0 }

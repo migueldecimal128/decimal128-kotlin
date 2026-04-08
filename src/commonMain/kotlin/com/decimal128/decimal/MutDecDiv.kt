@@ -115,7 +115,7 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
     // environment so that INEXACT flag/trap does not get signaled.
     // use INTERNAL_TMP_ENV so that flag-setting
     val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
-    val n = ctx.tmps.mdecDivRemPow.setDiv(x, y, truncCtx)
+    val n = ctx.tmps.mdecDivRemPowCtzd.setDiv(x, y, truncCtx)
     if (n.qExp < 0)
         n.setRoundToIntegralExact(n, truncCtx)
 
@@ -173,10 +173,10 @@ fun mutDecCompare754Impl(x: MutDec, y: MutDec, isSignaling: Boolean, ctx: DecCon
 fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
-    val tmps = ctx.tmps
     val numeratorScale = ctx.precision + 1 - (stealDigitLen(xSteal) - stealDigitLen(ySteal))
-    val scaledNumerator = tmps.mdecArg1
+    val tmps = ctx.tmps
     val pentad = tmps.pentad
+    val scaledNumerator = tmps.mdecDivRemPowCtzd
     c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, pentad)
     val residue = when {
         (stealBitLen(ySteal) <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)

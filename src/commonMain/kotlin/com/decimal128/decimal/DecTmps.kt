@@ -10,8 +10,8 @@ expect open class DecTmps() {
     internal val mdecBridge3: MutDec
 
     // use of these tmps should be internal to the MutDec arithmetic layer
-    internal val mdecArg1: MutDec
-    internal val mdecDivRemPow: MutDec
+    internal val mdecFmaParseConvert: MutDec
+    internal val mdecDivRemPowCtzd: MutDec
 
     // use of these tmps is restricted to transcendental functions
     internal val mdecTrans1: MutDec

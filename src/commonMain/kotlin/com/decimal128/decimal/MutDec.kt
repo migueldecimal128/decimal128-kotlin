@@ -133,7 +133,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     return true
                 val q = -qExp
                 if (stealDigitLen(steal)  > q) {
-                    val t = DecContext.current().tmps.mdecArg1.set(this)
+                    val t = DecContext.current().tmps.mdecDivRemPowCtzd.set(this)
                     val ctzd = c256CountTrailingZeroDigitsDestructive(t)
                     if (ctzd >= q)
                         return true                }
@@ -180,7 +180,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     return Long.MIN_VALUE
                 }
                 val ctx = DecContext.current()
-                val t = ctx.tmps.mdecArg1
+                val t = ctx.tmps.mdecFmaParseConvert
                 t.setStripTrailingZeros(this, ctx)
                 val qT = t.qExp
                 if (qT > 18)
@@ -566,7 +566,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     }
                     // both integral and fractional digits
                     val tmps = ctx.tmps
-                    val t = tmps.mdecArg1
+                    val t = tmps.mdecFmaParseConvert
                     val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad)
                     val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                     if (roundUp)
@@ -842,7 +842,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             maxToStrip <= 0 -> return set(x)
             stealIsFinite(xSteal) -> {
                 val tmps = ctx.tmps
-                val t = tmps.mdecArg1.set(x)
+                val t = tmps.mdecDivRemPowCtzd.set(x)
                 val ctzdActual = c256CountTrailingZeroDigitsDestructive(t)
                 // cap at Q_MAX
                 val ctzdToStrip = min(min(ctzdActual, Q_MAX - xQ), maxToStrip)
@@ -882,11 +882,11 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setRemainderNear(x: MutDec, y: MutDec, ctx: DecContext): MutDec {
         // avoid aliasing issues
-        val yT = if (this !== y) y else ctx.tmps.mdecDivRemPow.set(y)
+        val yT = if (this !== y) y else ctx.tmps.mdecDivRemPowCtzd.set(y)
         val truncIsOdd: Boolean = mutDecSetRemTruncImpl(this, x, yT, ctx)
         if (isFiniteNonZero()) {
             val tmps = ctx.tmps
-            val rem2 = tmps.mdecArg1
+            val rem2 = tmps.mdecDivRemPowCtzd
             val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
             if (sign) {
                 rem2.setAdd(this, yT, truncCtx)  // this + yT

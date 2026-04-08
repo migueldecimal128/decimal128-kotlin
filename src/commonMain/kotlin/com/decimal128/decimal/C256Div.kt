@@ -85,7 +85,7 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, tmps: DecT
             quot?.c256SetZero()
             return residue
         } else if (cmp > 0) {
-            val t = tmps.mdecDivRemPow
+            val t = tmps.mdecDivRemPowCtzd
             c256SetSubUnscaled(t, x, y)
             val residue = Residue.fromRemainderDivisor(t, y)
             rem?.c256Set(t)

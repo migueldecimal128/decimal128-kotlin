@@ -27,7 +27,7 @@ import kotlin.math.min
  * [DecPrefs.parseMalformedThrowsNumberFormatException] is set
  */
 internal fun parseToDecimal(str: String, ctx: DecContext = DecContext.current()): Decimal {
-    val md = ctx.tmps.mdecArg1
+    val md = ctx.tmps.mdecFmaParseConvert
     parseToMutDec(md, str, ctx)
     return Decimal.from(md)
 }

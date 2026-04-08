@@ -15,9 +15,9 @@ actual open class DecTmps {
 
     // use of these tmps should be internal to the MutDec layer
     @JvmField
-    internal actual val mdecArg1: MutDec = MutDec()
+    internal actual val mdecFmaParseConvert: MutDec = MutDec()
     @JvmField
-    internal actual val mdecDivRemPow: MutDec = MutDec()
+    internal actual val mdecDivRemPowCtzd: MutDec = MutDec()
 
     @JvmField
     internal actual val mdecTrans1: MutDec = MutDec()
