@@ -318,6 +318,29 @@ private val padeLog10PWeights = arrayOf(
     MutDec().set("0.000050539090998679135885762898261158410735", ctx38),// P9
 )
 
+
+private val padeExp10PWeightStrings = arrayOf(
+    "1",                                                      // P0
+    "1.1512925464970228420089957273421821038",                // P1
+    "0.62375271887981153065431369277576678725",               // P2
+    "0.20945220803021078496789615208818637811",               // P3
+    "0.048228153190505110248516490071932743443",              // P4
+    "0.0079321018999350207382307581722084196291",             // P5
+    "0.00093663279953333980407088694976192281395",            // P6
+    "0.000077024168636241020775343936951782874690",           // P7
+    "0.0000040307886932288201762295127255197250322",          // P8
+    "0.00000010312482175597367540252796938795052521",         // P9
+)
+
+private val padeExp10PWeights = Array<MutDec>(10) { i ->
+    MutDec().set(padeExp10PWeightStrings[i], ctx38)
+}
+
+private val padeExp10QWeights = Array<MutDec>(10) { i ->
+    val p = padeExp10PWeights[i]
+    if ((i and 1) == 0) p else MutDec().setNegate(p)
+}
+
 private fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val ctx38 = DecContext.decimal128Extended38()
     val tmps = ctx.tmps
@@ -327,27 +350,40 @@ private fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     // e.g. 10^3 = 1 * 10^3,  10^-2 = 1 * 10^-2
     // (This avoids transcendental error accumulation for the common case.)
     val xSteal = x.steal
-    val sciExp = stealSciExp(xSteal)
-    if (sciExp >= 0) {
-        TODO()
-        /*
-        // x is a (possibly large) integer: 10^x = set(1) with exponent = x.toLong()
-        // Only feasible if x fits in a reasonable exponent range
-        val xAsLong = x.toLongExact()   // returns null if not exactly representable or too large
-        if (xAsLong != null && xAsLong in DecContext.MIN_EXPONENT..DecContext.MAX_EXPONENT) {
-            z.setOne()
-            z.qExp = xAsLong.toInt()
-            return z.finalizeFnz(false, z.qExp, ctx)
+    val qExp = stealQExp(xSteal)
+    if (x.isExactInteger()) {
+        val sciExp = stealSciExp(xSteal)
+        when {
+            sciExp > 6144 -> return ctx.signalInexactOverflow(z.setInfinite(false))
+            sciExp < -6176 -> return ctx.signalInexactUnderflow(z.setZero())
         }
-
-         */
+        val n: Int = when {
+            qExp == 0 -> x.dw0
+            qExp > 0 -> x.dw0 * pow10_64(qExp)
+            else -> x.dw0 / pow10_64(-qExp)
+        }.toInt()
+        val nSigned = if (stealSignFlag(xSteal)) -n else n
+        return z.setOne().finalizeFnz(false, nSigned, ctx)
     }
 
-    // General case: 10^x = exp(x * ln(10))
-    // Multiply at high precision using LN10_50 for the range-reduction step,
-    // but for the product fed into exp we just need ~38 digits.
-    tmp1.setMul(x, LN10, ctx38)        // tmp1 = x * ln(10)
-    return expImplFNZ(z, tmp1, ctx)    // z = exp(x * ln(10)), rounds to ctx inside
+// General case: 10^x, |x| not integer
+// range reduce: n = round(x), r = x - n, |r| <= 0.5
+    tmp1.setRoundToIntegralTiesToAway(x, ctx38)
+    val n = if (stealSignFlag(tmp1.steal)) -tmp1.dw0.toInt() else tmp1.dw0.toInt()
+    val r = tmps.mdecTrans2.setSub(x, tmp1, ctx38)  // exact, no transcendental
+
+// three halvings: r' = r / 8
+    val rPrime = tmps.mdecTrans3.setDiv(r, EIGHT, ctx38)
+
+// Pade [9,9] evaluation of 10^r'
+    val tenPowRPrime = MutDec()
+    padeEval(tenPowRPrime, rPrime, padeExp10PWeights, padeExp10QWeights, ctx38)
+
+// reconstruct: square three times, multiply by 10^n
+    tenPowRPrime.setSquare(tenPowRPrime, ctx38)
+    tenPowRPrime.setSquare(tenPowRPrime, ctx38)
+    z.setSquare(tenPowRPrime, ctx38)
+    return z.finalizeFnz(false, z.qExp + n, ctx)
 }
 
 private fun padeEval(

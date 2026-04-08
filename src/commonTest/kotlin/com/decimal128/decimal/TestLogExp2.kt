@@ -26,10 +26,18 @@ class TestLogExp2 {
         TC("log10", "123456789.123456789", "8.091514977603564929204438209903815091"),
 
         TC("exp10", "0", "1"),
-        TC("exp10", "1", "10"),
+        TC("exp10", "1", "1E1"),
         TC("exp10", "-1", "0.1"),
-        TC("exp10", "2", "100"),
+        TC("exp10", "2", "1E2"),
         TC("exp10", "-2", "0.01"),
+        TC("exp10", "6", "1E6"),
+        TC("exp10", "-6", "0.000001"),
+        TC("exp10", "7", "1E7"),
+        TC("exp10", "-7", "1E-7"),
+        TC("exp10", "700", "1E700"),
+        TC("exp10", "-700", "1E-700"),
+        TC("exp10", "7000", "Infinity"),
+        TC("exp10", "-7000", "0E-6176"),
         TC("exp10", "0.5", "3.162277660168379331998893544432718534"),
         TC("exp10", "-0.5", "0.3162277660168379331998893544432718534"),
         TC("exp10", "0.1", "1.258925411794167210423954106395800606"),
@@ -100,6 +108,6 @@ class TestLogExp2 {
         val x = MutDec().set(input, ctx)
         val result = MutDec().setExp10(x, ctx)
         val exp = MutDec().set(expected, ctx)
-        assertTrue(result.bitwiseEQ(exp), "tenPow($input) = $result, expected $exp")
+        assertTrue(result.bitwiseEQ(exp), "exp10($input) = $result, expected $exp")
     }
 }

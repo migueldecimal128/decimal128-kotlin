@@ -570,7 +570,7 @@ class MutDec() : C256(), Comparable<MutDec> {
     fun convertToLongTowardNegative(x: MutDec, ctx: DecContext): Long  =
         convertToLong(ROUND_TOWARD_NEGATIVE, ctx)
 
-    fun convertToLongExact(x: MutDec, ctx: DecContext): Long =
+    fun convertToLongExact(ctx: DecContext): Long =
         convertToLong(ctx.decRounding, ctx)
 
     /**
