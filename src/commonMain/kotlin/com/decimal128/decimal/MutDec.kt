@@ -143,8 +143,61 @@ class MutDec() : C256(), Comparable<MutDec> {
         return false
     }
 
-    // if the digitLen is non-zero then subtract 1
-    // if digitLen == 0 then sciExp stays 0 ... 0e0
+    fun toLongOrMinValue(): Long {
+        val steal = this.steal
+        val bitLen = stealBitLen(steal)
+        val qExp = stealQExp(steal)
+        val dw0 = this.dw0
+        val signMaskLong = stealSignMask(steal).toLong()
+        when {
+            stealIsFNZ(steal) -> {
+                if (qExp == 0) {
+                    if (bitLen <= 63)
+                        return (dw0 xor signMaskLong) - signMaskLong
+                    return Long.MIN_VALUE
+                }
+                val digitLen = stealDigitLen(steal)
+                if (qExp > 0) {
+                    if (qExp > 18)
+                        return Long.MIN_VALUE
+                    val totalDigitLen = digitLen + qExp
+                    val pow10 = pow10_64(qExp)
+                    val l = dw0 * pow10
+                    if (totalDigitLen < 19 || (totalDigitLen == 19 && l > 0L))
+                        return (l xor signMaskLong) - signMaskLong
+                    return Long.MIN_VALUE
+                }
+                verify { qExp < 0 }
+                val qNeg = -qExp
+                if (qNeg >= digitLen)
+                    return Long.MIN_VALUE
+                if (bitLen <= 64) {
+                    // 64 bit value divided by at least 10 ... result will be positive
+                    val pow10 = pow10_64(qNeg)
+                    val l = unsignedDiv(dw0, pow10)
+                    if (l * pow10 == dw0)
+                        return (l xor signMaskLong) - signMaskLong
+                    return Long.MIN_VALUE
+                }
+                val ctx = DecContext.current()
+                val t = ctx.tmps.mdecArg1
+                t.setStripTrailingZeros(this, ctx)
+                val qT = t.qExp
+                if (qT > 18)
+                    return Long.MIN_VALUE
+                val tTotalDigitLen = t.digitLen + qT
+                val pow10 = pow10_64(qT)
+                val l = t.dw0 * pow10
+                if (tTotalDigitLen < 19 || (tTotalDigitLen == 19 && l > 0L))
+                    return (l xor signMaskLong) - signMaskLong
+                return Long.MIN_VALUE
+            }
+
+            stealIsZER(steal) -> return 0L
+        }
+        return Long.MIN_VALUE
+    }
+
     fun sciExp() = stealSciExp(steal)
 
     fun setZero() = setZero(false)
