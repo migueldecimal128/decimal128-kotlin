@@ -3,14 +3,14 @@
 
 package com.decimal128.decimal
 
-actual class DecContext actual constructor(decFormat: DecFormat,
-                                           decRounding: DecRounding,
-                                           decPrefs: DecPrefs,
-                                           decTrapHandlers: DecTrapHandlers?,
-                                           decFlags: DecFlags,
-                                           decTmps: DecTmps) {
-    @JvmField
-    internal actual val decFormat: DecFormat = decFormat
+actual class DecContext actual constructor(
+    decRounding: DecRounding,
+    decPrefs: DecPrefs,
+    decTrapHandlers: DecTrapHandlers?,
+    decFlags: DecFlags,
+    decTmps: DecTmps,
+    isExtendedPrecision38: Boolean
+) {
     //@JvmField DecRounding is a value class :(
     internal actual val decRounding: DecRounding = decRounding
     @JvmField
@@ -21,9 +21,11 @@ actual class DecContext actual constructor(decFormat: DecFormat,
     internal actual val decFlags: DecFlags = decFlags
     @JvmField
     internal actual val tmps: DecTmps = decTmps
+    @JvmField
+    internal actual val isExtendedPrecision38: Boolean = isExtendedPrecision38
 
     @JvmField
-    internal actual val precision: Int = decFormat.precision
+    internal actual val precision: Int = if (isExtendedPrecision38) 38 else 34
     @JvmField
     internal actual val eMax:Int = Q_MAX + precision - 1
     @JvmField
@@ -61,5 +63,5 @@ actual class DecContext actual constructor(decFormat: DecFormat,
     }
 
     override fun toString(): String =
-        "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+        "DecContext(isExtendedPrecision38:$isExtendedPrecision38, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 }

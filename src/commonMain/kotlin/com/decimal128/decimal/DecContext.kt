@@ -3,21 +3,20 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecException.*
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
-
-expect class DecContext(decFormat: DecFormat,
-                        decRounding: DecRounding,
-                        decPrefs: DecPrefs,
-                        decTrapHandlers: DecTrapHandlers?,
-                        decFlags: DecFlags,
-                        decTmps: DecTmps) {
-    internal val decFormat: DecFormat
+expect class DecContext(
+    decRounding: DecRounding,
+    decPrefs: DecPrefs,
+    decTrapHandlers: DecTrapHandlers?,
+    decFlags: DecFlags,
+    decTmps: DecTmps,
+    isExtendedPrecision38: Boolean = false
+) {
     internal val decRounding: DecRounding
     internal val decPrefs: DecPrefs
     internal val decTrapHandlers: DecTrapHandlers?
     internal val decFlags: DecFlags
     internal val tmps: DecTmps
+    internal val isExtendedPrecision38: Boolean
 
     internal val precision: Int
 

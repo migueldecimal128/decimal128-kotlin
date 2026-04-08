@@ -46,7 +46,7 @@ internal fun nextFnzAwayFromZero(x: Decimal, ctx: DecContext): Decimal {
     }
     ++dw0
     dw1 += if (dw0 == 0L) 1L else 0L
-    if (dw0 == ctx.dw0MaxxCoeff && dw1 == ctx.dw1MaxxCoeff) {
+    if (ctx.coeffIsMaxx(dw1, dw0)) {
         // roll up a decade
         dw1 = ctx.dw1MinFullPrecisionCoeff
         dw0 = ctx.dw0MinFullPrecisionCoeff

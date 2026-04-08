@@ -7,22 +7,22 @@ import com.decimal128.decimal.DecException.*
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 
 fun DecContext.with(newDecRounding: DecRounding) =
-    DecContext(decFormat, newDecRounding, decPrefs, decTrapHandlers, decFlags, tmps)
+    DecContext(newDecRounding, decPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 
 fun DecContext.with(newDecPrefs: DecPrefs) =
-    DecContext(decFormat, decRounding, newDecPrefs, decTrapHandlers, decFlags, tmps)
+    DecContext(decRounding, newDecPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 
 fun DecContext.withRoundingAndNewFlags(decRounding: DecRounding) =
-    DecContext(decFormat, decRounding, decPrefs, decTrapHandlers, DecFlags(), tmps)
+    DecContext(decRounding, decPrefs, decTrapHandlers, DecFlags(), tmps, isExtendedPrecision38)
 
 fun DecContext.withTrapHandler(decTrapHandler: DecTrapHandler?, vararg exceptions: DecException): DecContext {
     val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withTrapHandler(decTrapHandler, exceptions)
-    return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags, tmps)
+    return DecContext(decRounding, decPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 }
 
 fun DecContext.withThrownException(vararg exceptions: DecException): DecContext {
     val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withThrownException(exceptions)
-    return DecContext(decFormat, decRounding, decPrefs, newTrapHandlers, decFlags, tmps)
+    return DecContext(decRounding, decPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 }
 
 inline fun <T> compute(block: () -> T ): T = block()
@@ -224,30 +224,28 @@ fun DecContext.getFptestExceptionsString() = decFlags.getFptestExceptionsString(
 fun DecContext.parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
 
 internal fun decContextDecimal128Kotlin(): DecContext = DecContext(
-    decFormat = DecFormat.DECIMAL_128,
     decRounding = DecRounding.ROUND_TIES_TO_EVEN,
-    decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
-    decTrapHandlers = null,
+    decPrefs = DecPrefs.KOTLIN_DEFAULT,
+    decTrapHandlers = null,  // parseMalformedSignalsInvalidOperation = false
     decFlags = DecFlags(),
-    decTmps = DecTmps()
+    decTmps = DecTmps(),
 )
 
 internal fun decContextDecimal128IEEE(): DecContext = DecContext(
-    decFormat = DecFormat.DECIMAL_128,
     decRounding = DecRounding.ROUND_TIES_TO_EVEN,
-    decPrefs = DecPrefs.IEEE_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
-    decTrapHandlers = null,
+    decPrefs = DecPrefs.IEEE_DEFAULT,
+    decTrapHandlers = null,  // parseMalformedSignalsInvalidOperation = false
     decFlags = DecFlags(),
-    decTmps = DecTmps()
+    decTmps = DecTmps(),
 )
 
 internal fun decContextDecimal128Extended38(): DecContext = DecContext(
-    decFormat = DecFormat.DECIMAL_128_EXTENDED,
     decRounding = DecRounding.ROUND_TIES_TO_EVEN,
-    decPrefs = DecPrefs.KOTLIN_DEFAULT,  // parseMalformedSignalsInvalidOperation = false
-    decTrapHandlers = null,
+    decPrefs = DecPrefs.KOTLIN_DEFAULT, // perhaps this should be IEEE ... depending upon NaN behavior
+    decTrapHandlers = null,  // parseMalformedSignalsInvalidOperation = false
     decFlags = DecFlags(),
-    decTmps = DecTmps()
+    decTmps = DecTmps(),
+    isExtendedPrecision38 = true
 )
 
 inline fun <T> DecContext.eval(block: () -> T): T {

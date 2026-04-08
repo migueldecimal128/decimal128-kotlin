@@ -160,7 +160,6 @@ private fun decFinalizeSubnormal(sign: Boolean,
                                  qExp: Int,
                                  rounding: DecRounding, ctx: DecContext,
                                  beQuiet: Boolean): Decimal {
-    val decFormat = ctx.decFormat
     val truncationNeeded = Q_TINY - qExp
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
 

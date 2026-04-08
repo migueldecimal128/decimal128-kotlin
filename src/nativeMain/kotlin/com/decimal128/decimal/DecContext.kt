@@ -6,21 +6,23 @@ package com.decimal128.decimal
 @kotlin.native.concurrent.ThreadLocal
 private var ctxCurrent: DecContext = decContextDecimal128Kotlin()
 
-actual class DecContext actual constructor(decFormat: DecFormat,
-                                           decRounding: DecRounding,
-                                           decPrefs: DecPrefs,
-                                           decTrapHandlers: DecTrapHandlers?,
-                                           decFlags: DecFlags,
-                                           decTmps: DecTmps) {
-        internal actual val decFormat: DecFormat = decFormat
+actual class DecContext actual constructor(
+    decRounding: DecRounding,
+    decPrefs: DecPrefs,
+    decTrapHandlers: DecTrapHandlers?,
+    decFlags: DecFlags,
+    decTmps: DecTmps,
+    isExtendedPrecision38: Boolean
+) {
     //@JvmField DecRounding is a value class :(
     internal actual val decRounding: DecRounding = decRounding
     internal actual val decPrefs: DecPrefs = decPrefs
     internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
     internal actual val decFlags: DecFlags = decFlags
     internal actual val tmps: DecTmps = decTmps
+    internal actual val isExtendedPrecision38: Boolean = isExtendedPrecision38
 
-    internal actual val precision: Int = decFormat.precision
+    internal actual val precision: Int = if (isExtendedPrecision38) 38 else 34
     internal actual val eMax:Int = Q_MAX + precision - 1
     internal actual val eMin:Int = Q_TINY + 34 - precision
 
