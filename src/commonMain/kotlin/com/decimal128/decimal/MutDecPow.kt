@@ -2,64 +2,53 @@ package com.decimal128.decimal
 
 import kotlin.math.min
 
-internal fun mutDecPowImpl(z: MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
+internal fun mutDecPowNImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
     val xSteal = x.steal
     when (stealTyp(xSteal)) {
-        STEAL_TYP_FNZ -> return mutDecPowImplFNZ(z, x, pow, ctx)
-        STEAL_TYP_ZER -> return mutDecPowImplZER(z, x, pow, ctx)
-        STEAL_TYP_INF -> return mutDecPowImplINF(z, x, pow, ctx)
+        STEAL_TYP_FNZ -> return mutDecPowNImplFNZ(z, x, n, ctx)
+        STEAL_TYP_ZER -> return mutDecPowNImplZER(z, x, n, ctx)
+        STEAL_TYP_INF -> return mutDecPowNImplINF(z, x, n, ctx)
         else -> return z.setNanOperandFound(x, ctx)
     }
 }
 
-internal fun mutDecPowImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-    TODO()
-    //val xSteal = x.steal
-    //when (stealTyp(xSteal)) {
-//        STEAL_TYP_FNZ -> return mutDecPowImplFNZ(z, x, pow, ctx)
-//        STEAL_TYP_ZER -> return mutDecPowImplZER(z, x, pow, ctx)
-//        STEAL_TYP_INF -> return mutDecPowImplINF(z, x, pow, ctx)
-//        else -> return z.setNanOperandFound(x, ctx)
-//    }
-}
-
-private fun mutDecPowImplINF(z: MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
-    val resultSign = x.signBit and (pow and 1) != 0
+private fun mutDecPowNImplINF(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
+    val resultSign = x.signBit and (n and 1) != 0
     return when {
-        pow > 0 -> z.setInfinite(resultSign)
-        pow < 0 -> z.setZero(resultSign)
+        n > 0 -> z.setInfinite(resultSign)
+        n < 0 -> z.setZero(resultSign)
         else -> z.setOne()
     }
 }
 
 
-private fun mutDecPowImplZER(z: MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
-    val resultSign = x.signBit and (pow and 1) != 0
+private fun mutDecPowNImplZER(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
+    val resultSign = x.signBit and (n and 1) != 0
     when {
-        pow > 0 -> {
+        n > 0 -> {
             // clamp power to prevent overflow with multiplication
-            val pClamp = min(pow, 9999)
+            val pClamp = min(n, 9999)
             val zQ = x.qExp * pClamp
             return z.setZero(resultSign, zQ)
         }
-        pow < 0 -> return ctx.signalDivByZero(z.setInfinite(resultSign))
+        n < 0 -> return ctx.signalDivByZero(z.setInfinite(resultSign))
         else -> return z.setOne()
     }
 }
 
-private fun mutDecPowImplFNZ(z: MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
+private fun mutDecPowNImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
     return when {
-        pow > 0 -> when {
-            pow == 1 -> z.set(x)
-            pow == 2 -> z.setSquare(x, ctx)
-            else -> mutDecPowImplFNZ_pow_GE_3(z, x, pow, ctx)
+        n > 0 -> when {
+            n == 1 -> z.set(x)
+            n == 2 -> z.setSquare(x, ctx)
+            else -> mutDecPowNImplFNZ_pow_GE_3(z, x, n, ctx)
         }
-        pow < 0 -> z.setReciprocal(mutDecPowImplFNZ(z, x, -pow, ctx), ctx)
+        n < 0 -> z.setReciprocal(mutDecPowNImplFNZ(z, x, -n, ctx), ctx)
         else -> z.setOne()
     }
 }
 
-private fun mutDecPowImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
+private fun mutDecPowNImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
     verify { pow >= 3 }
     val m = if (z !== x) x else ctx.tmps.mdecArg1.set(x)
     // Left-to-right binary exponentiation
@@ -81,5 +70,19 @@ private fun mutDecPowImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecCon
         singleBitMask = singleBitMask shr 1
     }
     return z
+}
+
+internal fun mutDecPowImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    TODO()
+    /*
+    val xSteal = x.steal
+    when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> return mutDecPowNImplFNZ(z, x, pow, ctx)
+        STEAL_TYP_ZER -> return mutDecPowNImplZER(z, x, pow, ctx)
+        STEAL_TYP_INF -> return mutDecPowNImplINF(z, x, pow, ctx)
+        else -> return z.setNanOperandFound(x, ctx)
+    }
+
+     */
 }
 

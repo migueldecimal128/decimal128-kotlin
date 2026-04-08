@@ -389,7 +389,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setSquare(x: MutDec, ctx: DecContext): MutDec = mutDecSqrImpl(this, x, ctx)
 
-    fun setPow(x: MutDec, pow: Int, ctx: DecContext): MutDec = mutDecPowImpl(this, x, pow, ctx)
+    fun setPow(x: MutDec, pow: Int, ctx: DecContext): MutDec = mutDecPowNImpl(this, x, pow, ctx)
 
     fun setPow(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecPowImpl(this, x, y, ctx)
     // IEEE754-2019 5.4.1
