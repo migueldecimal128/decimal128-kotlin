@@ -102,7 +102,6 @@ class DecGenConstantTables {
             |
             |internal actual val POW10: LongArray = DWORD_TABLES
             |
-            |internal actual fun loadDecimal128ConstantTables() {}
         """.trimMargin())
     }
 

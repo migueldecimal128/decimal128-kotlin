@@ -5,8 +5,6 @@ import kotlin.test.assertTrue
 
 class TestLogExp2 {
 
-    val loadEmUp = loadDecimal128ConstantTables()
-
     data class TC(val function: String, val x: String, val expected: String)
 
     val tcs = arrayOf(

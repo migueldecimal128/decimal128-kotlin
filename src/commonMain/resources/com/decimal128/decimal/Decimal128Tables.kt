@@ -209,5 +209,3 @@ private val verifyFnv1aChecksums =
           fnv1aHash(BYTE_TABLES) == -409221829) { "tables FNV1A checksum mismatch" }
 
 internal actual val POW10: LongArray = DWORD_TABLES
-
-internal actual fun loadDecimal128ConstantTables() {}

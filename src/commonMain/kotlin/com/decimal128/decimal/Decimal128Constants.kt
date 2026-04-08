@@ -177,11 +177,6 @@ internal const val EXPECTED_BYTE_TABLES_COUNT = 1955 // BYTE_TABLES_SIZE
 internal const val EXPECTED_DWORD_TABLES_FNV1A = 2073989853
 internal const val EXPECTED_BYTE_TABLES_FNV1A = -409221829
 
-internal expect fun loadDecimal128ConstantTables()
-private val loadEmUp = loadDecimal128ConstantTables()
-
-
-
 /**
  * DivRangeRecipMulPow10 needs a 2-dimensional array for
  * digitLenDividend by powerOfTenDivisor ... q * k.

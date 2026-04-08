@@ -7,8 +7,6 @@ class TestMutDecLn {
 
     val verbose = true
 
-    val foo = loadDecimal128ConstantTables()
-
     @Test
     fun lnOfE_under() {
         val ctx = DecContext.decimal128IEEE()

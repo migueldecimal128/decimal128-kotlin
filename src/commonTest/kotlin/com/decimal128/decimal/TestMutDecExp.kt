@@ -10,8 +10,6 @@ class TestMutDecExp {
     fun expRangeReduction() {
         val ctx38 = DecContext.decimal128Extended38()
 
-        loadDecimal128ConstantTables()
-
         // Test 1: x = ln(10) -> n=1, r should be ~0
         val ln10 = MutDec().set("2.3025850929940456840179914546843642076", ctx38)
         // after range reduction, r should be very close to 0

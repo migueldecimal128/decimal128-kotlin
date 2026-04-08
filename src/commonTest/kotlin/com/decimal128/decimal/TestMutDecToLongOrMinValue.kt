@@ -7,8 +7,6 @@ class TestMutDecToLongOrMinValue {
 
     val verbose = true
 
-    val loadEmUp = loadDecimal128ConstantTables()
-
     data class TC(val strDecimal: String, val expected: Long)
 
     val tcs = arrayOf(
