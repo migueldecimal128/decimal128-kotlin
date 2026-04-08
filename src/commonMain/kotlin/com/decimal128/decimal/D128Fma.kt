@@ -30,12 +30,12 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
 }
 
 private fun fmaFnzFnzFinite(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
-    val decTmps = ctx.tmps
-    val i = decTmps.mdecBridge1.set(x)
-    val j = decTmps.mdecBridge2.set(y)
-    val k = decTmps.mdecBridge3.set(a)
-    val result = decTmps.mdecResult.setFma(i, j, k, ctx)
-    return Decimal.from(result)
+    val tmps = ctx.tmps
+    val d = tmps.mdecBridge1.set(x)
+    val e = tmps.mdecBridge2.set(y)
+    // using the result here to store the addend ... fma can handle it
+    val result = tmps.mdecBridgeResult.set(a)
+    return Decimal.from(result.setFma(d, e, result, ctx))
 }
 
 /**

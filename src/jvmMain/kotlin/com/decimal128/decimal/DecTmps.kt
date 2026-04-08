@@ -2,7 +2,7 @@ package com.decimal128.decimal
 
 actual open class DecTmps {
     @JvmField
-    internal actual val mdecResult: MutDec = MutDec()
+    internal actual val mdecBridgeResult: MutDec = MutDec()
 
     // these tmps are for bridging from the 128-bit Decimal layer
     // to the 256-bit MutDec layer

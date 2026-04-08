@@ -49,7 +49,7 @@ private fun divFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 private fun divFnzFnz256(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val dividend = ctx.tmps.mdecBridge1.set(x)
     val divisor = ctx.tmps.mdecBridge2.set(y)
-    val quotient = ctx.tmps.mdecResult
+    val quotient = ctx.tmps.mdecBridgeResult
     val qSign = x.signFlag xor y.signFlag
     return Decimal.from(mutDecDivFnzFnz(quotient, qSign, dividend, divisor, ctx))
 }
@@ -79,9 +79,10 @@ internal fun divIntImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun divIntFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    val dividend = ctx.tmps.mdecBridge1.set(x)
-    val divisor = ctx.tmps.mdecBridge2.set(y)
-    val quotient = setDivIntFnzFnz(ctx.tmps.mdecResult, dividend, divisor, ctx)
+    val tmps = ctx.tmps
+    val dividend = tmps.mdecBridge1.set(x)
+    val divisor = tmps.mdecBridge2.set(y)
+    val quotient = setDivIntFnzFnz(tmps.mdecBridgeResult, dividend, divisor, ctx)
     return Decimal.from(quotient)
 }
 
@@ -121,8 +122,8 @@ private fun remFnzFnz(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext)
     val divisor = ctx.tmps.mdecBridge2.set(y)
     val quotient =
         if (isTrunc)
-            ctx.tmps.mdecResult.setRemainderTruncate(dividend, divisor, ctx)
+            ctx.tmps.mdecBridgeResult.setRemainderTruncate(dividend, divisor, ctx)
         else
-            ctx.tmps.mdecResult.setRemainderNear(dividend, divisor, ctx)
+            ctx.tmps.mdecBridgeResult.setRemainderNear(dividend, divisor, ctx)
     return Decimal.from(quotient)
 }

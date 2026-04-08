@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 expect open class DecTmps() {
-    internal val mdecResult: MutDec
+    internal val mdecBridgeResult: MutDec
 
     // these tmps are for bridging from the 128-bit Decimal layer
     // to the 256-bit MutDec layer

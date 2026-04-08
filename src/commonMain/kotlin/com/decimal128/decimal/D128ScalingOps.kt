@@ -8,7 +8,7 @@ internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int
     return when {
         stealIsFNZ(stealX) -> {
             val t = ctx.tmps.mdecBridge1.set(x)
-            val r = ctx.tmps.mdecResult.setStripTrailingZeros(t, ctx, maxToStrip)
+            val r = ctx.tmps.mdecBridgeResult.setStripTrailingZeros(t, ctx, maxToStrip)
             Decimal.from(r)
         }
         stealIsZER(stealX) -> Decimal.zero(stealSignFlag(stealX))
