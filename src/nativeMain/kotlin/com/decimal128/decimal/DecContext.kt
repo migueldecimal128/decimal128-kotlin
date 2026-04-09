@@ -5,6 +5,7 @@ package com.decimal128.decimal
 
 @kotlin.native.concurrent.ThreadLocal
 private var ctxCurrent: DecContext = decContextDecimal128Kotlin()
+private var ctxInternal38: DecContext? = null
 
 actual class DecContext actual constructor(
     decRounding: DecRounding,
@@ -23,8 +24,6 @@ actual class DecContext actual constructor(
     internal actual val isExtendedPrecision38: Boolean = isExtendedPrecision38
 
     internal actual val precision: Int = if (isExtendedPrecision38) 38 else 34
-    internal actual val eMax:Int = Q_MAX + precision - 1
-    internal actual val eMin:Int = Q_TINY + 34 - precision
 
     internal actual val dw0MaxxCoeff: Long = pow10_128_dw0(precision)
     internal actual val dw1MaxxCoeff: Long = pow10_128_dw1(precision)
@@ -52,6 +51,19 @@ actual class DecContext actual constructor(
         actual fun current(): DecContext = ctxCurrent
         actual fun setCurrent(newDecContext: DecContext) {
             ctxCurrent = newDecContext
+        }
+
+        actual fun internal38(): DecContext {
+            var ctx38 = ctxInternal38
+            if (ctx38 == null) {
+                ctx38 = decContextDecimal128Extended38()
+                ctxInternal38 = ctx38
+            }
+            return ctx38
+        }
+
+        actual fun setInternal38(newDecContext: DecContext) {
+            ctxInternal38 = newDecContext
         }
 
     }

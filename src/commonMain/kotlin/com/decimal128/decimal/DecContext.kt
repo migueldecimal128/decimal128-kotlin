@@ -20,9 +20,6 @@ expect class DecContext(
 
     internal val precision: Int
 
-    internal val eMax: Int
-    internal val eMin: Int
-
     internal val dw0MaxxCoeff: Long
     internal val dw1MaxxCoeff: Long
     internal val dw0MinFullPrecisionCoeff:Long
@@ -42,5 +39,8 @@ expect class DecContext(
 
         fun current(): DecContext
         fun setCurrent(newDecContext: DecContext)
+
+        fun internal38(): DecContext
+        fun setInternal38(newDecContext: DecContext)
     }
 }

@@ -26,10 +26,6 @@ actual class DecContext actual constructor(
 
     @JvmField
     internal actual val precision: Int = if (isExtendedPrecision38) 38 else 34
-    @JvmField
-    internal actual val eMax:Int = Q_MAX + precision - 1
-    @JvmField
-    internal actual val eMin:Int = Q_TINY + 34 - precision
 
     internal actual val dw0MaxxCoeff: Long = pow10_128_dw0(precision)
     internal actual val dw1MaxxCoeff: Long = pow10_128_dw1(precision)
@@ -55,10 +51,21 @@ actual class DecContext actual constructor(
 
         actual fun decimal128Extended38(): DecContext = decContextDecimal128Extended38()
 
-        private val threadLocal = ThreadLocal.withInitial { decimal128Kotlin() }
+        private val threadLocalCurrent = ThreadLocal.withInitial { decimal128Kotlin() }
+        private val threadLocalInternal: ThreadLocal<DecContext?> = ThreadLocal.withInitial { null }
 
-        actual fun current(): DecContext = threadLocal.get()
-        actual fun setCurrent(newDecContext: DecContext) = threadLocal.set(newDecContext)
+        actual fun current(): DecContext = threadLocalCurrent.get()
+        actual fun setCurrent(newDecContext: DecContext) = threadLocalCurrent.set(newDecContext)
+
+        actual fun internal38(): DecContext {
+            var ctx = threadLocalInternal.get()
+            if (ctx == null) {
+                ctx = decimal128Extended38()
+                threadLocalInternal.set(ctx)
+            }
+            return ctx
+        }
+        actual fun setInternal38(newDecContext: DecContext) = threadLocalInternal.set(newDecContext)
 
     }
 
