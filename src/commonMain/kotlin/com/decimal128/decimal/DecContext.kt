@@ -3,7 +3,7 @@
 
 package com.decimal128.decimal
 
-expect class DecContext(
+expect abstract class DecContextRep(
     decRounding: DecRounding,
     decPrefs: DecPrefs,
     decTrapHandlers: DecTrapHandlers?,
@@ -45,5 +45,36 @@ expect object DecContextThreadLocal {
 
     fun internal38(): DecContext
     fun setInternal38(newDecContext: DecContext)
+
+}
+
+class DecContext(
+    decRounding: DecRounding,
+    decPrefs: DecPrefs,
+    decTrapHandlers: DecTrapHandlers?,
+    decFlags: DecFlags,
+    decTmps: DecTmps,
+    isExtendedPrecision38: Boolean = false
+) : DecContextRep(
+    decRounding, decPrefs, decTrapHandlers, decFlags, decTmps, isExtendedPrecision38) {
+
+    companion object {
+        fun decimal128Kotlin(): DecContext = decContextDecimal128Kotlin()
+
+        fun decimal128IEEE(): DecContext = decContextDecimal128IEEE()
+
+        fun decimal128Extended38(): DecContext = decContextDecimal128Extended38()
+
+        fun current(): DecContext = DecContextThreadLocal.current()
+        fun setCurrent(newDecContext: DecContext) {
+            DecContextThreadLocal.setCurrent(newDecContext)
+        }
+
+        fun internal38(): DecContext = DecContextThreadLocal.internal38()
+        fun setInternal38(newDecContext: DecContext) {
+            DecContextThreadLocal.setInternal38(newDecContext)
+        }
+
+    }
 
 }

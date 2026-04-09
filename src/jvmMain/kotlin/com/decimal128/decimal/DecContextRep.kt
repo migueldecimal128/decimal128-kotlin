@@ -3,7 +3,7 @@
 
 package com.decimal128.decimal
 
-actual class DecContext actual constructor(
+actual abstract class DecContextRep actual constructor(
     decRounding: DecRounding,
     decPrefs: DecPrefs,
     decTrapHandlers: DecTrapHandlers?,
@@ -13,12 +13,18 @@ actual class DecContext actual constructor(
 ) {
     //@JvmField DecRounding is a value class :(
     internal actual val decRounding: DecRounding = decRounding
+    @JvmField
     internal actual val decPrefs: DecPrefs = decPrefs
+    @JvmField
     internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
+    @JvmField
     internal actual val decFlags: DecFlags = decFlags
+    @JvmField
     internal actual val tmps: DecTmps = decTmps
+    @JvmField
     internal actual val isExtendedPrecision38: Boolean = isExtendedPrecision38
 
+    @JvmField
     internal actual val precision: Int = if (isExtendedPrecision38) 38 else 34
 
     internal actual val dw0MaxxCoeff: Long = pow10_128_dw0(precision)
@@ -42,34 +48,28 @@ actual class DecContext actual constructor(
         actual fun setInternal38(newDecContext: DecContext) {
             DecContextThreadLocal.setInternal38(newDecContext)
         }
+
     }
 
     override fun toString(): String =
-        "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+        "DecContext(isExtendedPrecision38:$isExtendedPrecision38, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 }
 
-@kotlin.native.concurrent.ThreadLocal
-private var ctxCurrent: DecContext = DecContext.decimal128Kotlin()
-@kotlin.native.concurrent.ThreadLocal
-private var ctxInternal38: DecContext? = null
-
 actual object DecContextThreadLocal {
-    actual fun current(): DecContext = ctxCurrent
-    actual fun setCurrent(newDecContext: DecContext) {
-        ctxCurrent = newDecContext
-    }
+    private val threadLocalCurrent = ThreadLocal.withInitial { DecContext.decimal128Kotlin() }
+    private val threadLocalInternal: ThreadLocal<DecContext?> = ThreadLocal.withInitial { null }
+
+    actual fun current(): DecContext = threadLocalCurrent.get()
+    actual fun setCurrent(newDecContext: DecContext) = threadLocalCurrent.set(newDecContext)
 
     actual fun internal38(): DecContext {
-        var ctx38 = ctxInternal38
-        if (ctx38 == null) {
-            ctx38 = DecContext.decimal128Extended38()
-            ctxInternal38 = ctx38
+        var ctx = threadLocalInternal.get()
+        if (ctx == null) {
+            ctx = DecContext.decimal128Extended38()
+            threadLocalInternal.set(ctx)
         }
-        return ctx38
+        return ctx
     }
-
-    actual fun setInternal38(newDecContext: DecContext) {
-        ctxInternal38 = newDecContext
-    }
+    actual fun setInternal38(newDecContext: DecContext) = threadLocalInternal.set(newDecContext)
 
 }
