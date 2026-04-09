@@ -54,16 +54,16 @@ class DecContext(
     companion object {
         fun decimal128Kotlin(): DecContext = DecContext(
             decRounding = DecRounding.ROUND_TIES_TO_EVEN,
-            decPrefs = DecPrefs.KOTLIN_DEFAULT,
-            decTrapHandlers = null,  // parseMalformedSignalsInvalidOperation = false
+            decPrefs = DecPrefs.KOTLIN_DEFAULT, // parseMalformedSignalsInvalidOperation = false
+            decTrapHandlers = null,
             decFlags = DecFlags(),
             decTmps = DecTmps(),
         )
 
         fun decimal128IEEE(): DecContext = DecContext(
             decRounding = DecRounding.ROUND_TIES_TO_EVEN,
-            decPrefs = DecPrefs.IEEE_DEFAULT,
-            decTrapHandlers = null,  // parseMalformedSignalsInvalidOperation = false
+            decPrefs = DecPrefs.IEEE_DEFAULT, // parseMalformedSignalsInvalidOperation = false
+            decTrapHandlers = null,
             decFlags = DecFlags(),
             decTmps = DecTmps(),
         )
@@ -112,13 +112,12 @@ class DecContext(
         return DecContext(decRounding, decPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
     }
 
-    inline fun <T> compute(block: () -> T): T = block()
-
-    fun isRoundTowardNegative() = decRounding == DecRounding.ROUND_TOWARD_NEGATIVE
-
     fun isOverflow(): Boolean = decFlags.isSet(OVERFLOW)
 
+    fun isRoundTowardNegative(): Boolean = decRounding == DecRounding.ROUND_TOWARD_NEGATIVE
+
     fun hasTrapHandler(decException: DecException) =
+
         decTrapHandlers?.hasTrapHandler(decException) ?: false
 
     fun signal(
