@@ -75,6 +75,18 @@ kotlin {
 
     macosX64 { }
 
+    /*
+    js {
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "10000"  // 10 seconds
+                }
+            }
+        }
+    }
+     */
+
     // Configure cinterop for ALL native targets
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
         compilations.getByName("main") {
