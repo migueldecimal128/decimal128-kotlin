@@ -12,13 +12,18 @@ actual inline fun unsignedMulHi(x: Long, y: Long): Long {
     val yLo = yULong and 0xFFFFFFFFUL
     val yHi = yULong shr 32
 
-    val lo = xLo * yLo
-    val mid1 = xHi * yLo
-    val mid2 = xLo * yHi
-    val hi = xHi * yHi
+    val pp00 = xLo * yLo
+    val pp01 = xHi * yLo
+    val pp10 = xLo * yHi
+    val pp11 = xHi * yHi
 
-    val mid = (lo shr 32) + mid1 + mid2
-    return (hi + (mid shr 32)).toLong()
+    val mid = pp01 + pp10  // may overflow
+    val midCarry = if (mid < pp01) 1UL else 0UL  // carry from mid overflow
+
+    val midWithLo = (pp00 shr 32) + (mid and 0xFFFFFFFFUL)
+    // midWithLo cannot overflow: max is (2^32-1) + (2^32-1) < 2^33
+
+    return (pp11 + (mid shr 32) + (midCarry shl 32) + (midWithLo shr 32)).toLong()
 }
 
 actual inline fun unsignedDiv(x: Long, y: Long): Long =

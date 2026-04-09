@@ -179,8 +179,10 @@ private fun logImplFNZ(
     println("before sqrts cPrime:$cPrime")
     // sqrt #1: c' = sqrt(c')  →  c' ∈ [~0.95, ~1.05)
     cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
+    println("after sqrt 1 cPrime:$cPrime")
     // sqrt #2: c' = sqrt(c')  →  c' ∈ [~0.975, ~1.025)
     cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
+    println("after sqrt 2 cPrime:$cPrime")
     // z = c' - 1  →  |z| <= 0.025
     val zArg = tmp3.setSub(cPrime, ONE, ctx38)
 
