@@ -251,6 +251,30 @@ internal fun decContextDecimal128Extended38(): DecContext = DecContext(
     isExtendedPrecision38 = true
 )
 
+internal fun DecContext.coeffFits(dw1: Long, dw0: Long): Boolean {
+    // if bitLen < 113 then it is guaranteed to fit
+    if (dw1.countLeadingZeroBits() > 128 - 113)
+        return true
+    val pow10Offset = (this.precision shl 1) and POW10_BCE
+    val maxxHi = POW10[pow10Offset + 1]
+    return unsignedLT(dw1, maxxHi) || dw1 == maxxHi && unsignedLT(dw0, POW10[pow10Offset])
+}
+
+internal inline fun DecContext.coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean {
+    if (qExp < Q_TINY || qExp > Q_MAX)
+        return false
+    if (dw1.countLeadingZeroBits() > 128 - 113)
+        return true
+    val pow10Offset = (this.precision shl 1) and POW10_BCE
+    val maxxHi = POW10[pow10Offset + 1]
+    return unsignedLT(dw1, maxxHi) || dw1 == maxxHi && unsignedLT(dw0, POW10[pow10Offset])
+}
+
+internal inline fun DecContext.coeffIsMaxx(dw1: Long, dw0: Long): Boolean {
+    val pow10Offset = (this.precision shl 1) and POW10_BCE
+    return dw0 == POW10[pow10Offset] && dw1 == POW10[pow10Offset + 1]
+}
+
 inline fun <T> DecContext.eval(block: () -> T): T {
     val previous = DecContext.current()
     DecContext.setCurrent(this)
