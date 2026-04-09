@@ -6,7 +6,6 @@ import com.decimal128.decimal.DecFlags
 import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.MutDec
-import com.decimal128.decimal.with
 
 data class DectestCase1(
     val text: String,

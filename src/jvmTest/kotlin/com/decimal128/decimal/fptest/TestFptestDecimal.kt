@@ -9,10 +9,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.Compare754Result.*
-import com.decimal128.decimal.eval
-import com.decimal128.decimal.getFptestExceptionsString
-import com.decimal128.decimal.isOverflow
-import com.decimal128.decimal.with
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.io.File

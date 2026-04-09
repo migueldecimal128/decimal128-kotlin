@@ -2,7 +2,6 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.with
 import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.assertTrue
 
