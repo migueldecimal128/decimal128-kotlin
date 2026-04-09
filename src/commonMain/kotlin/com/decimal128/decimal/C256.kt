@@ -6,7 +6,7 @@ const val PRECISION_34 = 34
 
 private const val SIGNBIT = Long.MIN_VALUE
 
-expect open class C256Rep() {
+expect abstract class C256Rep() {
     internal var steal: Int
     internal var dw0: Long
     internal var dw1: Long

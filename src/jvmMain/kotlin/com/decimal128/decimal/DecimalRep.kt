@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 // jvmMain
-actual open class DecimalRep actual constructor(steal: Int, dw1: Long, dw0: Long) {
+actual abstract class DecimalRep actual constructor(steal: Int, dw1: Long, dw0: Long) {
     @JvmField
     internal actual val steal: Int = steal
     @JvmField

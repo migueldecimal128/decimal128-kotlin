@@ -24,7 +24,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 // commonMain
-expect open class DecimalRep(steal: Int, dw1: Long, dw0: Long) {
+expect abstract class DecimalRep(steal: Int, dw1: Long, dw0: Long) {
     internal val steal: Int
     internal val dw1: Long
     internal val dw0: Long

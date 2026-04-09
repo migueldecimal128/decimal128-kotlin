@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-actual open class C256Rep {
+actual abstract class C256Rep {
     @JvmField
     internal actual var steal: Int = STEAL_TYP_ZER
     @JvmField
