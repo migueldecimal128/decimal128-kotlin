@@ -75,6 +75,16 @@ kotlin {
 
     macosX64 { }
 
+    // Configure cinterop for ALL native targets
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+        compilations.getByName("main") {
+            cinterops {
+                val unsigned_mul_hi by creating {
+                    defFile(project.file("src/nativeInterop/cinterop/unsigned_mul_hi.def"))
+                }
+            }
+        }
+    }
 
     sourceSets {
         all {

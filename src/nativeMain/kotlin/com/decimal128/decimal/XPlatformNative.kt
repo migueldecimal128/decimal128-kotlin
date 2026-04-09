@@ -3,7 +3,13 @@
 package com.decimal128.decimal
 
 import platform.posix.fma
+import com.decimal128.unsignedmulhi.unsigned_mul_hi
 
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+actual inline fun unsignedMulHi(x: Long, y: Long): Long =
+    unsigned_mul_hi(x.toULong(), y.toULong()).toLong()
+
+/*
 actual inline fun unsignedMulHi(x: Long, y: Long): Long {
     val xULong = x.toULong()
     val yULong = y.toULong()
@@ -25,6 +31,8 @@ actual inline fun unsignedMulHi(x: Long, y: Long): Long {
 
     return (pp11 + (mid shr 32) + (midCarry shl 32) + (midWithLo shr 32)).toLong()
 }
+
+ */
 
 actual inline fun unsignedDiv(x: Long, y: Long): Long =
     (x.toULong() / y.toULong()).toLong()
