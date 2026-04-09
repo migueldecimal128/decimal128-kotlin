@@ -26,26 +26,8 @@ actual abstract class DecContextRep actual constructor(
     internal actual val dw0MinFullPrecisionCoeff:Long = pow10_128_dw0(precision - 1)
     internal actual val dw1MinFullPrecisionCoeff:Long = pow10_128_dw1(precision - 1)
 
-    actual companion object {
-        actual fun decimal128Kotlin(): DecContext = decContextDecimal128Kotlin()
-
-        actual fun decimal128IEEE(): DecContext = decContextDecimal128IEEE()
-
-        actual fun decimal128Extended38(): DecContext = decContextDecimal128Extended38()
-
-        actual fun current(): DecContext = DecContextThreadLocal.current()
-        actual fun setCurrent(newDecContext: DecContext) {
-            DecContextThreadLocal.setCurrent(newDecContext)
-        }
-
-        actual fun internal38(): DecContext = DecContextThreadLocal.internal38()
-        actual fun setInternal38(newDecContext: DecContext) {
-            DecContextThreadLocal.setInternal38(newDecContext)
-        }
-    }
-
     override fun toString(): String =
-        "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+        "DecContext(precision=$precision, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 }
 
 @kotlin.native.concurrent.ThreadLocal

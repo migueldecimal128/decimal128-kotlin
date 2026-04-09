@@ -25,17 +25,6 @@ expect abstract class DecContextRep(
     internal val dw0MinFullPrecisionCoeff:Long
     internal val dw1MinFullPrecisionCoeff:Long
 
-    companion object {
-        fun decimal128Kotlin(): DecContext
-        fun decimal128IEEE(): DecContext
-        fun decimal128Extended38(): DecContext
-
-        fun current(): DecContext
-        fun setCurrent(newDecContext: DecContext)
-
-        fun internal38(): DecContext
-        fun setInternal38(newDecContext: DecContext)
-    }
 }
 
 expect object DecContextThreadLocal {
