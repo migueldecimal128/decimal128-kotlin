@@ -3,10 +3,6 @@
 
 package com.decimal128.decimal
 
-@kotlin.native.concurrent.ThreadLocal
-private var ctxCurrent: DecContext = decContextDecimal128Kotlin()
-private var ctxInternal38: DecContext? = null
-
 actual class DecContext actual constructor(
     decRounding: DecRounding,
     decPrefs: DecPrefs,
@@ -37,26 +33,43 @@ actual class DecContext actual constructor(
 
         actual fun decimal128Extended38(): DecContext = decContextDecimal128Extended38()
 
-        actual fun current(): DecContext = ctxCurrent
+        actual fun current(): DecContext = DecContextThreadLocal.current()
         actual fun setCurrent(newDecContext: DecContext) {
-            ctxCurrent = newDecContext
+            DecContextThreadLocal.setCurrent(newDecContext)
         }
 
-        actual fun internal38(): DecContext {
-            var ctx38 = ctxInternal38
-            if (ctx38 == null) {
-                ctx38 = decContextDecimal128Extended38()
-                ctxInternal38 = ctx38
-            }
-            return ctx38
-        }
-
+        actual fun internal38(): DecContext = DecContextThreadLocal.internal38()
         actual fun setInternal38(newDecContext: DecContext) {
-            ctxInternal38 = newDecContext
+            DecContextThreadLocal.setInternal38(newDecContext)
         }
-
     }
 
     override fun toString(): String =
         "DecContext(decFormat=$decFormat, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+}
+
+@kotlin.native.concurrent.ThreadLocal
+private var ctxCurrent: DecContext = DecContext.decimal128Kotlin()
+@kotlin.native.concurrent.ThreadLocal
+private var ctxInternal38: DecContext? = null
+
+actual object DecContextThreadLocal {
+    actual fun current(): DecContext = ctxCurrent
+    actual fun setCurrent(newDecContext: DecContext) {
+        ctxCurrent = newDecContext
+    }
+
+    actual fun internal38(): DecContext {
+        var ctx38 = ctxInternal38
+        if (ctx38 == null) {
+            ctx38 = DecContext.decimal128Extended38()
+            ctxInternal38 = ctx38
+        }
+        return ctx38
+    }
+
+    actual fun setInternal38(newDecContext: DecContext) {
+        ctxInternal38 = newDecContext
+    }
+
 }

@@ -39,24 +39,37 @@ actual class DecContext actual constructor(
 
         actual fun decimal128Extended38(): DecContext = decContextDecimal128Extended38()
 
-        private val threadLocalCurrent = ThreadLocal.withInitial { decimal128Kotlin() }
-        private val threadLocalInternal: ThreadLocal<DecContext?> = ThreadLocal.withInitial { null }
-
-        actual fun current(): DecContext = threadLocalCurrent.get()
-        actual fun setCurrent(newDecContext: DecContext) = threadLocalCurrent.set(newDecContext)
-
-        actual fun internal38(): DecContext {
-            var ctx = threadLocalInternal.get()
-            if (ctx == null) {
-                ctx = decimal128Extended38()
-                threadLocalInternal.set(ctx)
-            }
-            return ctx
+        actual fun current(): DecContext = DecContextThreadLocal.current()
+        actual fun setCurrent(newDecContext: DecContext) {
+            DecContextThreadLocal.setCurrent(newDecContext)
         }
-        actual fun setInternal38(newDecContext: DecContext) = threadLocalInternal.set(newDecContext)
+
+        actual fun internal38(): DecContext = DecContextThreadLocal.internal38()
+        actual fun setInternal38(newDecContext: DecContext) {
+            DecContextThreadLocal.setInternal38(newDecContext)
+        }
 
     }
 
     override fun toString(): String =
         "DecContext(isExtendedPrecision38:$isExtendedPrecision38, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+}
+
+actual object DecContextThreadLocal {
+    private val threadLocalCurrent = ThreadLocal.withInitial { DecContext.decimal128Kotlin() }
+    private val threadLocalInternal: ThreadLocal<DecContext?> = ThreadLocal.withInitial { null }
+
+    actual fun current(): DecContext = threadLocalCurrent.get()
+    actual fun setCurrent(newDecContext: DecContext) = threadLocalCurrent.set(newDecContext)
+
+    actual fun internal38(): DecContext {
+        var ctx = threadLocalInternal.get()
+        if (ctx == null) {
+            ctx = DecContext.decimal128Extended38()
+            threadLocalInternal.set(ctx)
+        }
+        return ctx
+    }
+    actual fun setInternal38(newDecContext: DecContext) = threadLocalInternal.set(newDecContext)
+
 }
