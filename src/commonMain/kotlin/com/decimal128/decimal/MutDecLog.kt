@@ -61,14 +61,24 @@ private fun expDispatch(
     }
 }
 
-val ctx38 = DecContext.decimal128Extended38()
+private val ctx38 = DecContext.internal38()
 
 private val ZERO = MutDec()
 private val ONE = MutDec().setOne()
 private val FOUR = MutDec().set(4)
 private val EIGHT = MutDec().set(8)
 
-private val padeLnPWeightStrings = arrayOf(
+private fun mutDecArrayOf(vararg strs: String): Array<MutDec> =
+    Array(strs.size) { i ->
+        when (val str = strs[i]) {
+            "0" -> ZERO
+            "1" -> ONE
+            "4" -> FOUR
+            else -> MutDec().set(str, ctx38)
+        }
+    }
+
+private val padeLnPWeights = mutDecArrayOf(
     "1",
     "4", // P2
     "6.5539215686274509803921568627450980392", // P3
@@ -80,16 +90,7 @@ private val padeLnPWeightStrings = arrayOf(
     "0.00011637055754702813526342938107643989997", // P9
 )
 
-private val padeLnPWeights = Array<MutDec>(9) { i ->
-    val str = padeLnPWeightStrings[i]
-    when (str) {
-        "1" -> ONE
-        "4" -> FOUR
-        else -> MutDec().set(str, ctx38)
-    }
-}
-
-private val padeLogQWeightStrings = arrayOf(
+private val padeLogQWeights = mutDecArrayOf(
     "1", // Q0
     "4.5", // Q1
     "8.4705882352941176470588235294117647059", // Q2
@@ -102,26 +103,18 @@ private val padeLogQWeightStrings = arrayOf(
     "0.000020567667626491155902920608802961744138", // Q9
 )
 
-private val padeLogQWeights = Array<MutDec>(10) { i ->
-    val str = padeLogQWeightStrings[i]
-    when (str) {
-        "1" -> ONE   // Q0 = 1, handled directly in Horner
-        else -> MutDec().set(str, ctx38)
-    }
-}
+private val LN = mutDecArrayOf(
+    "0",
+    "0", // LN1
+    "0.69314718055994530941723212145817656808", // LN2
+    "1.0986122886681096913952452369225257046",  // LN3
+    "1.3862943611198906188344642429163531362",  // LN4
+    "1.6094379124341003746007593332261876395",  // LN5
+    "1.7917594692280550008124773583807022727",  // LN6
+    "1.9459101490553133051053527434431797296",  // LN7
+    "2.0794415416798359282516963643745297042",  // LN8
+    "2.1972245773362193827904904738450514093",  // LN9
 
-// ln(k) for k = 0 + 1..9
-private val LN = arrayOf(
-    ZERO,
-    ZERO, // LN1
-    MutDec().set("0.69314718055994530941723212145817656808", ctx38), // LN2
-    MutDec().set("1.0986122886681096913952452369225257046", ctx38),  // LN3
-    MutDec().set("1.3862943611198906188344642429163531362", ctx38),  // LN4
-    MutDec().set("1.6094379124341003746007593332261876395", ctx38),  // LN5
-    MutDec().set("1.7917594692280550008124773583807022727", ctx38),  // LN6
-    MutDec().set("1.9459101490553133051053527434431797296", ctx38),  // LN7
-    MutDec().set("2.0794415416798359282516963643745297042", ctx38),  // LN8
-    MutDec().set("2.1972245773362193827904904738450514093", ctx38),  // LN9
 )
 
 // ln(10)
@@ -233,7 +226,7 @@ internal fun extractKMostSigDigitRounded(x: MutDec, ctx: DecContext): Int {
     return z.dw0.toInt()
 }
 
-private val padeExpPWeightStrings = arrayOf(
+private val padeExpPWeights = mutDecArrayOf(
     "1",
     "0.5",
     "0.11764705882352941176470588235294117647",
@@ -245,13 +238,6 @@ private val padeExpPWeightStrings = arrayOf(
     "5.1011080422845128727481668658139246375E-9",
     "5.6678978247605698586090742953488051527E-11",
 )
-private val padeExpPWeights = Array<MutDec>(10) { i ->
-    val str = padeExpPWeightStrings[i]
-    when (str) {
-        "1" -> ONE   // Q0 = 1, handled directly in Horner
-        else -> MutDec().set(str, ctx38)
-    }
-}
 
 private val padeExpQWeights = Array<MutDec>(10) { i ->
     val p = padeExpPWeights[i]
@@ -295,33 +281,32 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     return z
 }
 
-private val LOG10 = arrayOf(
-    ZERO,                                                                          // LOG10[0] unused
-    ZERO,                                                                          // LOG10[1] = log10(1) = 0
-    MutDec().set("0.30102999566398119521373889472449302677", ctx38), // LOG10[2]
-    MutDec().set("0.47712125471966243729502790325511530920", ctx38), // LOG10[3]
-    MutDec().set("0.60205999132796239042747778944898605354", ctx38), // LOG10[4]
-    MutDec().set("0.69897000433601880478626110527550697323", ctx38), // LOG10[5]
-    MutDec().set("0.77815125038364363250876679797960833597", ctx38), // LOG10[6]
-    MutDec().set("0.84509804001425683071221625859263619348", ctx38), // LOG10[7]
-    MutDec().set("0.90308998699194358564121668417347908030", ctx38), // LOG10[8]
-    MutDec().set("0.95424250943932487459005580651023061840", ctx38), // LOG10[9]
+private val LOG10 = mutDecArrayOf(
+    "0",                                        // LOG10[0] unused
+    "0",                                        // LOG10[1] = log10(1) = 0
+    "0.30102999566398119521373889472449302677", // LOG10[2]
+    "0.47712125471966243729502790325511530920", // LOG10[3]
+    "0.60205999132796239042747778944898605354", // LOG10[4]
+    "0.69897000433601880478626110527550697323", // LOG10[5]
+    "0.77815125038364363250876679797960833597", // LOG10[6]
+    "0.84509804001425683071221625859263619348", // LOG10[7]
+    "0.90308998699194358564121668417347908030", // LOG10[8]
+    "0.95424250943932487459005580651023061840", // LOG10[9]
 )
 
-private val padeLog10PWeights = arrayOf(
-    MutDec().set("0.43429448190325182765112891891660508229", ctx38), // P1 = 1/ln(10)
-    MutDec().set("1.7371779276130073106045156756664203292", ctx38),  // P2
-    MutDec().set("2.8463319720816063410272517872132401717", ctx38),  // P3
-    MutDec().set("2.4588731695992934359659504968072493630", ctx38),  // P4
-    MutDec().set("1.2000578404356032119948106450651484554", ctx38),  // P5
-    MutDec().set("0.32870131375422589308497208372903835640", ctx38), // P6
-    MutDec().set("0.047008798315901434091907910454160000667", ctx38),// P7
-    MutDec().set("0.0029406817698361751096610054464456614331", ctx38),// P8
-    MutDec().set("0.000050539090998679135885762898261158410735", ctx38),// P9
+private val padeLog10PWeights = mutDecArrayOf(
+    "0.43429448190325182765112891891660508229", // P1 = 1/ln(10)
+    "1.7371779276130073106045156756664203292",  // P2
+    "2.8463319720816063410272517872132401717",  // P3
+    "2.4588731695992934359659504968072493630",  // P4
+    "1.2000578404356032119948106450651484554",  // P5
+    "0.32870131375422589308497208372903835640", // P6
+    "0.047008798315901434091907910454160000667",// P7
+    "0.0029406817698361751096610054464456614331",// P8
+    "0.000050539090998679135885762898261158410735",// P9
 )
 
-
-private val padeExp10PWeightStrings = arrayOf(
+private val padeExp10PWeights = mutDecArrayOf(
     "1",                                                      // P0
     "1.1512925464970228420089957273421821038",                // P1
     "0.62375271887981153065431369277576678725",               // P2
@@ -333,10 +318,6 @@ private val padeExp10PWeightStrings = arrayOf(
     "0.0000040307886932288201762295127255197250322",          // P8
     "0.00000010312482175597367540252796938795052521",         // P9
 )
-
-private val padeExp10PWeights = Array<MutDec>(10) { i ->
-    MutDec().set(padeExp10PWeightStrings[i], ctx38)
-}
 
 private val padeExp10QWeights = Array<MutDec>(10) { i ->
     val p = padeExp10PWeights[i]
