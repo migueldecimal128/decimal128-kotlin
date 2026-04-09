@@ -1,8 +1,5 @@
 package com.decimal128.decimal
 
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.nextDown
 import kotlin.math.sqrt
 
 /**
