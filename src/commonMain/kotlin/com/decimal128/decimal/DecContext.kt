@@ -365,3 +365,6 @@ class DecContext(
 
     }
 }
+
+internal fun signalDivByZero(dec: Decimal): Decimal =
+    DecContext.current().signalDivByZero(dec)

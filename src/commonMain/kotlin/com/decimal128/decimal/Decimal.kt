@@ -595,10 +595,10 @@ class Decimal private constructor(
      * Returns [Int.MIN_VALUE] and signals [DecException.INVALID_OPERATION] if
      * called on a non-finite value.
      */
-    fun quantumExponent(ctx: DecContext): Int {
+    fun quantumExponent(): Int {
         if (isFinite())
             return qExp
-        ctx.signalInvalid(InvalidOperationReason.QEXP_OF_NON_FINITE, this)
+        DecContext.current().signalInvalid(InvalidOperationReason.QEXP_OF_NON_FINITE, this)
         return Int.MIN_VALUE
     }
 
@@ -675,13 +675,13 @@ class Decimal private constructor(
      * | ±∞ | +∞ |
      * | NaN | NaN, signals [DecException.INVALID_OPERATION] |
      */
-    fun logB(ctx: DecContext): Decimal {
+    fun logB(): Decimal {
         val steal = steal
         return when {
-            stealIsZER(steal) -> ctx.signalDivByZero(NEG_INFINITY)
+            stealIsZER(steal) -> DecContext.current().signalDivByZero(NEG_INFINITY)
             stealIsFNZ(steal) -> from(stealSciExp(steal))
             stealIsINF(steal) -> POS_INFINITY
-            else -> nanOperandFound(this, ctx)
+            else -> nanOperandFound(this)
         }
 
     }
@@ -716,7 +716,7 @@ class Decimal private constructor(
      * Decimal.from("120").stripTrailingZeros(ctx)    // → "1.2E+2" (or "120" if no trailing zeros)
      * ```
      */
-    fun stripTrailingZeros(ctx: DecContext): Decimal = stripTrailingZerosImpl(this, ctx)
+    fun stripTrailingZeros(): Decimal = stripTrailingZerosImpl(this, DecContext.current())
 
     /**
      * Returns this value rescaled so that its quantum exponent equals
@@ -738,7 +738,7 @@ class Decimal private constructor(
      * - +∞ returns +∞.
      * - NaN signals [DecException.INVALID_OPERATION].
      */
-    fun nextUp(ctx: DecContext): Decimal = nextUpOrDown(isUp = true, this, ctx)
+    fun nextUp(): Decimal = nextUpOrDown(isUp = true, this, DecContext.current())
 
     /**
      * Returns the largest representable value smaller than this one,

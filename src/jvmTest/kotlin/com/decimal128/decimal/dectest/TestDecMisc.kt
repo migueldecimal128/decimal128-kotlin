@@ -2,6 +2,7 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
+import com.decimal128.decimal.dectest.DectestRunner1.runMethod_Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runMethod_IntCtx_Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runTernaryDecimalCtxOp
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalCtxOp
@@ -14,7 +15,7 @@ class TestDecMisc {
     val verbose = false
 
     @Test
-    fun testLogB() = runUnaryDecimalCtxOp(
+    fun testLogB() = runMethod_Decimal(
         "dqLogB.decTest",
         "logb",
         Decimal::logB,
@@ -80,7 +81,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testNextUp() = runUnaryDecimalCtxOp(
+    fun testNextUp() = runMethod_Decimal(
         "dqNextPlus.decTest",
         "nextplus",
         Decimal::nextUp,
@@ -91,7 +92,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testNextUpCases() = runUnaryDecimalCtxOp(
+    fun testNextUpCases() = runMethod_Decimal(
         Decimal::nextUp,
         verbose = verbose,
         cases = arrayOf(
@@ -113,7 +114,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testReduce() = runUnaryDecimalCtxOp(
+    fun testReduce() = runMethod_Decimal(
         "dqReduce.decTest",
         "reduce",
         Decimal::stripTrailingZeros,
@@ -124,7 +125,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testReduceCases() = runUnaryDecimalCtxOp(
+    fun testReduceCases() = runMethod_Decimal(
         Decimal::stripTrailingZeros,
         verbose = verbose,
         cases = arrayOf(

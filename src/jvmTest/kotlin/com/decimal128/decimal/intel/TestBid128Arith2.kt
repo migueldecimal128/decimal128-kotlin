@@ -2,8 +2,11 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.dectest.DectestRunner1.runMethod_Decimal
+import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal
 import com.decimal128.decimal.intel.IntelRunner1.runDecimalIntMethodOp
 import com.decimal128.decimal.intel.IntelRunner1.runIntMethodOp
+import com.decimal128.decimal.intel.IntelRunner1.runMethod_Int
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryDecimalCtxMethodOp
 import org.junit.jupiter.api.Test
 
@@ -86,7 +89,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testNextUp(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testNextUp(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_nextup",
         Decimal::nextUp,
@@ -95,7 +98,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testNextUpCases(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testNextUpCases(): Unit = intelMethod_Decimal(
         arrayOf(
             "bid128_nextup 0 [782d2f94d69006ec,2196c0c64c5c5d60] [78000000000000000000000000000000] 00",
         ),
@@ -114,7 +117,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testQuantumExponent(): Unit = runIntMethodOp(
+    fun testQuantumExponent(): Unit = runMethod_Int(
         "/intel/readtest.in",
         "bid128_quantexp",
         Decimal::quantumExponent,

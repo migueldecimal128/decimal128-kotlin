@@ -253,6 +253,56 @@ object DectestRunner1 {
         }
     }
 
+    fun runMethod_Decimal(fileName: String,
+                          opName: String,
+                          method_Decimal: Decimal.() -> Decimal,
+                          verbose: Boolean = true,
+                          skip: Boolean = true,
+                          skipCases: Array<String> = arrayOf(),
+    ) {
+        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val allTests = DectestParser1.parse(fileText, opName)
+        runMethod_Decimal(allTests, method_Decimal, skip, skipCases, verbose)
+    }
+
+    fun runMethod_Decimal(method_Decimal: Decimal.() -> Decimal,
+                          verbose: Boolean = true,
+                          cases: Array<String> = emptyArray(),
+    ) {
+        val cases2 = DectestParser1.parse(cases)
+        runMethod_Decimal(cases2, method_Decimal, verbose = verbose)
+    }
+
+
+    fun runMethod_Decimal(cases: List<DectestCase1>,
+                          method_Decimal: Decimal.() -> Decimal,
+                          skip: Boolean = true,
+                          skipCases: Array<String> = arrayOf(),
+                          verbose: Boolean = true,
+    ) {
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        cases.forEach { tc ->
+            if (skipSet.contains(tc.text))
+                return@forEach
+            if (verbose)
+                println(tc.text)
+            val operand1 = tc.operand1
+            val decCtx = tc.decContext
+            decCtx.eval {
+                val observed = operand1.method_Decimal()
+                val expected = tc.result
+                assertTrue(
+                    expected bitwiseEQ observed,
+                    "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+                )
+                assertEquals(
+                    tc.expectedDecFlags, decCtx.decFlags,
+                    "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}"
+                )
+            }
+        }
+    }
+
     fun runUnaryStringCtxOp(fileName: String,
                             opName: String,
                             unaryStringCtxOp: (Decimal, DecContext) -> String,
