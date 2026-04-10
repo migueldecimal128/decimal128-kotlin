@@ -1,5 +1,7 @@
 package com.decimal128.decimal
 
+import com.decimal128.decimal.InvalidOperationReason.LOG_OF_NEG_NUMBER
+
 /**
  * Computes the natural logarithm of [x], rounded to [ctx] precision.
  *
@@ -32,13 +34,15 @@ private fun logDispatch(
     val xSteal = x.steal
     when (stealTyp(xSteal)) {
         STEAL_TYP_FNZ -> when {
-            stealSignFlag(xSteal) -> return ctx.signalInvalid(z.setNaN())
+            stealSignFlag(xSteal) ->
+                return ctx.setNanSignalInvalid(z, LOG_OF_NEG_NUMBER)
             else -> return logImplFNZ(z, x, isLog10, ctx)
         }
 
         STEAL_TYP_ZER -> return ctx.signalDivByZero(z.setInfinite(true))
         STEAL_TYP_INF -> when {
-            stealSignFlag(xSteal) -> return ctx.setNanSignalInvalid(z, InvalidOperationReason.LOG_OF_NEG_INFINITY)
+            stealSignFlag(xSteal) ->
+                return ctx.setNanSignalInvalid(z, LOG_OF_NEG_NUMBER)
             else -> return z.setInfinite(false)
         }
 
