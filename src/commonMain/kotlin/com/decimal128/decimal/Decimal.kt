@@ -69,8 +69,9 @@ expect abstract class DecimalRep(steal: Int, dw1: Long, dw0: Long) {
  *
  * - **Context-free** (e.g., `a + b`): uses a default decimal128 context with
  *   round-half-to-even and no exception trapping.
- * - **Context-aware** (e.g., `with(ctx) { a + b }`): uses the supplied [DecContext]
- *   for rounding mode, precision, exponent limits, and exception handling.
+ * - **Context-aware** (e.g., `ctx.eval { a + b }`): uses the specified ctx
+ *   [DecContext] for rounding mode, precision, exponent limits, and exception
+ *   handling.
  *
  * For production use, prefer the context-aware operators so that rounding and
  * overflow behavior is explicit.
@@ -83,7 +84,6 @@ expect abstract class DecimalRep(steal: Int, dw1: Long, dw0: Long) {
  * Decimal.from(42)                           // from Int
  * Decimal.from(42L)                          // from Long
  * Decimal.from("3.14159")                    // from String (decimal128 range, no rounding)
- * Decimal.from("3.14159", ctx)               // from String with context
  * Decimal.ZERO                               // canonical +0e0
  * Decimal.ONE                                // canonical +1e0
  * Decimal.POS_INFINITY                       // +∞
@@ -244,17 +244,31 @@ class Decimal private constructor(
          * strict decimal128 interchange format.
          *
          * The parser accepts:
-         * - an optional leading sign (`+` or `−`)
-         * - a decimal coefficient of up to **34 significant digits**
+         * - an optional leading sign (`+` or `-`)
+         * - a decimal coefficient
+         * - optional `_` underscore digit separators
          * - an optional exponent (`E` or `e`) within the decimal128 range
          * - `"Infinity"`, `"+Infinity"`, `"-Infinity"`
          * - `"NaN"`, `"sNaN"`, with an optional numeric payload
          *
-         * No rounding is performed. Input that would require rounding to fit
-         * in decimal128 is rejected. For rounding-aware parsing, use
-         * `ctx.parse(str)` instead.
+         * Leading insignificant zeros are stripped from coefficient and exponent
+         * digit sequences.
          *
-         * @throws IllegalArgumentException if [str] is not a valid decimal128 value.
+         * Coefficients with more than 34 significant digits are rounded to 34 digits
+         * using the current [DecContext].
+         *
+         * Underscores are allowed between digits as visual separators;
+         * they must not appear adjacent to a sign, decimal point, or exponent marker.
+         *
+         * ### Invalid input
+         * If [str] does not represent a valid decimal128 value, behavior depends on
+         * the current [DecContext]:
+         * - `DecContext.decimal128Kotlin()` (default) throws [IllegalArgumentException],
+         *   consistent with Kotlin's [Double] and `java.math.BigDecimal` parsing behavior.
+         * - `DecContext.decimal128IEEE()` signals [DecException.INVALID_OPERATION]
+         *   and returns `NaN`, following IEEE 754-2019 rules.
+         *
+         * @param str the string to parse
          */
         fun from(str: String) =
             parseToDecimal(str, DecContext.current())
