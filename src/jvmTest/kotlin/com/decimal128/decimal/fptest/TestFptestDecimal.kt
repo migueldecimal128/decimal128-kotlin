@@ -280,26 +280,30 @@ class TestFptestDecimal {
         fun result(): Decimal? {
             if (result == "#")
                 return null
-            val env = DecContext.decimal128Kotlin()
-            return when (result) {
-                "Q"  -> Decimal.POS_QNAN
-                "S"  -> Decimal.POS_SNAN
-                else -> Decimal.from(result, env)
+            val ctx = DecContext.decimal128Kotlin()
+            ctx.eval {
+                return when (result) {
+                    "Q" -> Decimal.POS_QNAN
+                    "S" -> Decimal.POS_SNAN
+                    else -> Decimal.from(result)
+                }
             }
         }
 
         fun decOperands(): ArrayList<Decimal> {
             val ret = ArrayList<Decimal>(operands.size)
             val ctx = DecContext.decimal128Kotlin()
-            for (t in operands) {
-                val d = when (t) {
-                    "Q"  -> Decimal.POS_QNAN
-                    "S"  -> Decimal.POS_SNAN
-                    else -> Decimal.from(t, ctx)
+            ctx.eval {
+                for (t in operands) {
+                    val d = when (t) {
+                        "Q" -> Decimal.POS_QNAN
+                        "S" -> Decimal.POS_SNAN
+                        else -> Decimal.from(t)
+                    }
+                    ret.add(d)
                 }
-                ret.add(d)
+                return ret
             }
-            return ret
         }
 
         fun hasTrap(str: String) = traps.contains(str)

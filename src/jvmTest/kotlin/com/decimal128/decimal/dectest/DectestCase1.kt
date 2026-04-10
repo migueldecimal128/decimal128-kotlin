@@ -242,7 +242,9 @@ data class DectestCase1(
                 val dpd = MutDec().setDpd128(hi, lo)
                 return Decimal.from(dpd)
             }
-            return Decimal.from(str, decContext)
+            decContext.eval {
+                return Decimal.from(str)
+            }
         }
 
         fun hexStringToLong(hex: String): Long {

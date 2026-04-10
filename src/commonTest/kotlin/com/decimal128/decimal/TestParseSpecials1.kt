@@ -3,7 +3,6 @@ package com.decimal128.decimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 class TestParseSpecials1 {
 
@@ -129,13 +128,15 @@ class TestParseSpecials1 {
     fun testParseFiniteValueText_bad_ieee() {
         val decPrefs = DecPrefs().copy(parseMalformedThrowsNumberFormatException = false,
             parseThrowOnDigitOverflow = false, parseThrowOnOutOfRange = false)
-        val decContext = DecContext.decimal128IEEE().with(decPrefs)
-        for (tc in tcsNull) {
-            if (verbose)
-                println("tc:$tc")
-            val v = Decimal.from(tc, decContext)
-            if (verbose)
-                println(" => $v")
+        val ctx = DecContext.decimal128IEEE().with(decPrefs)
+        ctx.eval {
+            for (tc in tcsNull) {
+                if (verbose)
+                    println("tc:$tc")
+                val v = Decimal.from(tc)
+                if (verbose)
+                    println(" => $v")
+            }
         }
     }
 

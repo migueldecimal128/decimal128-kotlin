@@ -256,8 +256,8 @@ class Decimal private constructor(
          *
          * @throws IllegalArgumentException if [str] is not a valid decimal128 value.
          */
-        fun from(str: String, ctx: DecContext = DecContext.current()) =
-            parseToDecimal(str, ctx)
+        fun from(str: String) =
+            parseToDecimal(str, DecContext.current())
 
         fun from(mutDec: MutDec): Decimal {
             val steal = mutDec.steal
@@ -1495,7 +1495,7 @@ class Decimal private constructor(
  *
  * @see Decimal.from
  */
-fun String.toDecimal(): Decimal = Decimal.from(this, DecContext.current())
+fun String.toDecimal(): Decimal = Decimal.from(this)
 
 /**
  * Converts this [Int] to a [Decimal].
