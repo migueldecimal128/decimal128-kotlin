@@ -1195,7 +1195,7 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven`.
      */
-    fun roundToIntegralTiesToEven(ctx: DecContext) =
+    fun roundToIntegralTiesToEven(ctx: DecContext): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
 
     /**
@@ -1203,7 +1203,7 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway`.
      */
-    fun roundToIntegralTiesToAway(ctx: DecContext) =
+    fun roundToIntegralTiesToAway(ctx: DecContext): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
 
     /**
@@ -1211,7 +1211,7 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero`.
      */
-    fun roundToIntegralTowardZero(ctx: DecContext) =
+    fun roundToIntegralTowardZero(ctx: DecContext): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
 
     /**
@@ -1219,7 +1219,7 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardPositive`.
      */
-    fun roundToIntegralTowardPositive(ctx: DecContext) =
+    fun roundToIntegralTowardPositive(ctx: DecContext): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
 
     /**
@@ -1227,7 +1227,7 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardNegative`.
      */
-    fun roundToIntegralTowardNegative(ctx: DecContext) =
+    fun roundToIntegralTowardNegative(ctx: DecContext): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
 
     /**
@@ -1235,7 +1235,7 @@ class Decimal private constructor(
      * [DecException.INEXACT] if the value is not already integral.
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
      */
-    fun roundToIntegralExact(ctx: DecContext) =
+    fun roundToIntegralExact(ctx: DecContext): Decimal =
         d128RoundToIntegral(this, ctx.decRounding, ctx, beQuiet = false)
 
     // ── Conversion to Kotlin Integer Types ───────────────────────────────────
@@ -1246,7 +1246,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongTiesToEven(ctx: DecContext) =
+    fun toLongTiesToEven(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
     /**
@@ -1255,7 +1255,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongTiesToAway(ctx: DecContext) =
+    fun toLongTiesToAway(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
     /**
@@ -1264,7 +1264,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongTowardZero(ctx: DecContext) =
+    fun toLongTowardZero(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
     /**
@@ -1273,7 +1273,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongTowardPositive(ctx: DecContext) =
+    fun toLongTowardPositive(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
     /**
@@ -1282,7 +1282,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongTowardNegative(ctx: DecContext) =
+    fun toLongTowardNegative(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
     /**
@@ -1300,7 +1300,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongExactTiesToAway(ctx: DecContext) =
+    fun toLongExactTiesToAway(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
     /**
@@ -1309,7 +1309,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongExactTowardZero(ctx: DecContext) =
+    fun toLongExactTowardZero(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
     /**
@@ -1318,7 +1318,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongExactTowardPositive(ctx: DecContext) =
+    fun toLongExactTowardPositive(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
     /**
@@ -1327,7 +1327,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongExactTowardNegative(ctx: DecContext) =
+    fun toLongExactTowardNegative(ctx: DecContext): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
     /**
@@ -1336,7 +1336,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntTiesToEven(ctx: DecContext) =
+    fun toIntTiesToEven(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = true)
 
     /**
@@ -1345,7 +1345,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntTiesToAway(ctx: DecContext) =
+    fun toIntTiesToAway(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = true)
 
     /**
@@ -1354,7 +1354,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntTowardZero(ctx: DecContext) =
+    fun toIntTowardZero(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = true)
 
     /**
@@ -1363,7 +1363,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntTowardPositive(ctx: DecContext) =
+    fun toIntTowardPositive(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = true)
 
     /**
@@ -1372,7 +1372,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntTowardNegative(ctx: DecContext) =
+    fun toIntTowardNegative(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = true)
 
     /**
@@ -1381,7 +1381,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntExactTiesToEven(ctx: DecContext) =
+    fun toIntExactTiesToEven(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, suppressInexact = false)
 
     /**
@@ -1390,7 +1390,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntExactTiesToAway(ctx: DecContext) =
+    fun toIntExactTiesToAway(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, suppressInexact = false)
 
     /**
@@ -1399,7 +1399,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntExactTowardZero(ctx: DecContext) =
+    fun toIntExactTowardZero(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, ctx, suppressInexact = false)
 
     /**
@@ -1408,7 +1408,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntExactTowardPositive(ctx: DecContext) =
+    fun toIntExactTowardPositive(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, suppressInexact = false)
 
     /**
@@ -1417,7 +1417,7 @@ class Decimal private constructor(
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntExactTowardNegative(ctx: DecContext) =
+    fun toIntExactTowardNegative(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
 
 }
