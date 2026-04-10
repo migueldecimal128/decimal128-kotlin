@@ -99,8 +99,7 @@ object D128SerdeBid {
      * @return the decoded `Decimal` value
      */
     fun decodeBid128(longs: LongArray, offset: Int = 0,
-                     isLittleEndian: Boolean = false,
-                     ctx: DecContext,
+                     isLittleEndian: Boolean = false
                      ): Decimal {
         require (offset >= 0 && offset + 1 < longs.size)
 
@@ -109,7 +108,7 @@ object D128SerdeBid {
         val bid128Hi = longs[iMS]
         val bid128Lo = longs[iLS]
 
-        return decodeBid128(bid128Hi, bid128Lo, ctx)
+        return decodeBid128(bid128Hi, bid128Lo)
     }
 
     /**
@@ -122,8 +121,7 @@ object D128SerdeBid {
      * @return the decoded `Decimal` value
      */
     fun decodeBid128(bytes: ByteArray, offset: Int = 0,
-                     isLittleEndian: Boolean = false,
-                     ctx: DecContext
+                     isLittleEndian: Boolean = false
                      ): Decimal {
         require (offset >= 0 && offset + 15 < bytes.size)
 
@@ -138,7 +136,7 @@ object D128SerdeBid {
         }
         val bid128Hi = if (isLittleEndian) hi else lo
         val bid128Lo = if (isLittleEndian) lo else hi
-        return decodeBid128(bid128Hi, bid128Lo, ctx)
+        return decodeBid128(bid128Hi, bid128Lo)
     }
 
     private const val QTINY_Neg6176 = -6176
@@ -241,7 +239,7 @@ object D128SerdeBid {
      * @param ctx the decimal context; controls non-canonical encoding behavior via [DecPrefs]
      * @return the decoded [Decimal] value
      */
-    fun decodeBid128(bid128Hi: Long, bid128Lo: Long, ctx: DecContext): Decimal {
+    fun decodeBid128(bid128Hi: Long, bid128Lo: Long): Decimal {
         // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 128 // storage width in bits
         val p = 34 // precision in digits
@@ -324,7 +322,7 @@ object D128SerdeBid {
         //  If the value exceeds the maximum, the significand c is
         //  non-canonical and the value used for c is zero.
         if ((dw1 or dw0) == 0L || dw1 > coeffMaxHi || dw1 == coeffMaxHi && dw0 > coeffMaxLo)
-            return Decimal.zero(sign, qExp) // use ctx? ... let's be safe
+            return Decimal.zero(sign, qExp)
         return decimalFNZ(sign, qExp, dw1, dw0)
     }
 

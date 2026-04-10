@@ -203,20 +203,22 @@ class IntelCase1 private constructor (
         val regexHex32 = Regex("""\[[0-9A-Fa-f]{8}\]""")
 
         fun parseBid128(str: String, ctx: DecContext): Decimal {
-            if (str.startsWith('[')) {
-                if (regexHex64.matches(str) || regexHex32.matches(str))
-                    throw IllegalArgumentException("not bid128:$str")
-                val pentad = Pentad()
-                D128SerdeBid.parseIntelBidHex(pentad, str)
-                val isValid = pentad.w == 1
-                val dw1 = pentad.dw1
-                val dw0 = pentad.dw0
-                if (! isValid)
-                    throw IllegalArgumentException("something invalid with bid128:$str")
-                val decimal = D128SerdeBid.decodeBid128(dw1, dw0, ctx)
-                return decimal
+            ctx.eval {
+                if (str.startsWith('[')) {
+                    if (regexHex64.matches(str) || regexHex32.matches(str))
+                        throw IllegalArgumentException("not bid128:$str")
+                    val pentad = Pentad()
+                    D128SerdeBid.parseIntelBidHex(pentad, str)
+                    val isValid = pentad.w == 1
+                    val dw1 = pentad.dw1
+                    val dw0 = pentad.dw0
+                    if (!isValid)
+                        throw IllegalArgumentException("something invalid with bid128:$str")
+                    val decimal = D128SerdeBid.decodeBid128(dw1, dw0)
+                    return decimal
+                }
+                return parseToDecimal(str)
             }
-            return parseToDecimal(str, ctx)
         }
 
     }
