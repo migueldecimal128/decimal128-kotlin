@@ -120,7 +120,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, suppressInexact: Boolea
         }
     }
     // return signalInvalid
-    signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
+    signalInvalidOperation(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
     return Long.MIN_VALUE
 }
 
@@ -137,7 +137,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, suppressInexact: Boolea
  *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
  * @return the converted [Int], or [Int.MIN_VALUE] if the value is NaN, infinite, or out of range
  */
-fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Int {
+fun d128ConvertToInt(x: Decimal, rounding: DecRounding, suppressInexact: Boolean = false): Int {
     val steal = x.steal
     if (stealIsFinite(steal)) {
         val signMask = stealSignMask(steal)
@@ -186,13 +186,13 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
                     val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                     val ret = if (!roundUp) 0 else (signMask shl 1) or 1
                     if (!suppressInexact)
-                        ctx.signalInexact(x)
+                        signalInexact(x)
                     return ret
                 }
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
                 if (intDigitLen <= 10) {
-                    val dwPair = ctx.tmps.pentad
+                    val dwPair = DecContext.current().tmps.pentad
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     var r0 = dwPair.dw0
                     val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
@@ -205,7 +205,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
                     ) {
                         val ret = (r0.toInt() xor signMask) - signMask
                         if (!suppressInexact && residue != EXACT)
-                            ctx.signalInexact(x)
+                            signalInexact(x)
                         return ret
                     }
                 }
@@ -214,7 +214,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, ctx: DecContext, suppres
         }
     }
     // return signalInvalid
-    val d = ctx.signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER, x)
+    val d = DecContext.current().signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER, x)
     // FIXME - do simple check of d and if it is an Int then return it
     return Int.MIN_VALUE
 }

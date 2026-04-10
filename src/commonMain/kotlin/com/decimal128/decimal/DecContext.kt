@@ -375,6 +375,6 @@ internal fun signalInexact(dec: Decimal): Decimal =
 internal fun signalInexact(l: Long): Long =
     DecContext.current().signalInexact(l)
 
-internal fun signalInvalid(invalidOpReason: InvalidOperationReason): Decimal =
-    DecContext.current().signalInvalid(invalidOpReason, Decimal.NaN)
+internal fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, x: Decimal = Decimal.NaN): Decimal =
+    DecContext.current().signalInvalid(invalidOpReason, x)
 

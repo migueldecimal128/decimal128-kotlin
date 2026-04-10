@@ -2,6 +2,7 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Int
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Long
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryIntCtxMethodOp
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryLongCtxMethodOp
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test
 
 class TestBid128Convert {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testConvertToLongTiesToEven(): Unit = intelMethod_Long(
@@ -125,7 +126,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntTiesToEven(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntTiesToEven(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_rnint",
         Decimal::toIntTiesToEven,
@@ -134,7 +135,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntTiesToEvenCases(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntTiesToEvenCases(): Unit = intelMethod_Int(
         arrayOf (
             "bid128_to_int32_rnint 0 [30520000000000000000000000000005] -2147483648 01 -- 5e9",
             "bid128_to_int32_rnint 0 [301069E10DE628D3A6C9CC9B8E800001] 2147483647 00 -- 2^31-1.5+ulp",
@@ -146,7 +147,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntTiesToAway(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntTiesToAway(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_rninta",
         Decimal::toIntTiesToAway,
@@ -155,7 +156,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntTowardZero(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntTowardZero(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_int",
         Decimal::toIntTowardZero,
@@ -164,7 +165,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntTowardPositive(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntTowardPositive(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_ceil",
         Decimal::toIntTowardPositive,
@@ -173,7 +174,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntTowardNegative(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntTowardNegative(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_floor",
         Decimal::toIntTowardNegative,
@@ -182,7 +183,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntExactTiesToEven(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntExactTiesToEven(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xrnint",
         Decimal::toIntExactTiesToEven,
@@ -191,7 +192,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntExactTiesToEvenCases(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntExactTiesToEvenCases(): Unit = intelMethod_Int(
         arrayOf (
             "bid128_to_int32_xrnint 0 1.0 1 00",
         ),
@@ -201,7 +202,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntExactTiesToAway(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntExactTiesToAway(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xrninta",
         Decimal::toIntExactTiesToAway,
@@ -210,7 +211,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntExactTowardZero(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntExactTowardZero(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xint",
         Decimal::toIntExactTowardZero,
@@ -219,7 +220,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntExactTowardPositive(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntExactTowardPositive(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xceil",
         Decimal::toIntExactTowardPositive,
@@ -228,7 +229,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToIntExactTowardNegative(): Unit = runUnaryIntCtxMethodOp(
+    fun testConvertToIntExactTowardNegative(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xfloor",
         Decimal::toIntExactTowardNegative,
