@@ -56,7 +56,8 @@ internal fun c256SetDiv(z: C256, x: C256, y: C256, tmps: DecTmps) = c256SetDivRe
 internal fun c256SetRem(z: C256, x: C256, y: C256, tmps: DecTmps) = c256SetDivRem(null, z, x, y, tmps)
 
 internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, tmps: DecTmps): Residue {
-    if (y.bitLen <= 64) {
+    val yBitLen = y.bitLen
+    if (yBitLen <= 64) {
         val y0 = y.dw0
         val r0 = c256SetDivRemX64(quot, x, y0, tmps.knuthD)
         if (rem != null) {
@@ -66,11 +67,12 @@ internal fun c256SetDivRem(quot: C256?, rem: C256?, x: C256, y: C256, tmps: DecT
         val residue = Residue.fromRemainderDivisor(r0, y0)
         return residue
     }
-    val bitLenDelta = x.bitLen - y.bitLen
+    val xBitLen = x.bitLen
+    val bitLenDelta = xBitLen - yBitLen
     if (bitLenDelta < 0) {
         rem?.c256Set(x)
         val residue = when {
-            rem != null || x.bitLen == 0 -> EXACT
+            rem != null || xBitLen == 0 -> EXACT
             bitLenDelta <= -2 -> LT_HALF
             else -> Residue.fromRemainderDivisor(x, y)
         }

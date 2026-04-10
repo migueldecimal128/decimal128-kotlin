@@ -800,14 +800,14 @@ class MutDec() : C256(), Comparable<MutDec> {
     // IEEE754-2019 5.3.3
     fun setScaleB(x: MutDec, pow10: Int, ctx: DecContext): MutDec {
         set(x)
-        val steal = steal
-        val xSign = stealSignFlag(steal)
+        val xSteal = x.steal
+        val xSign = stealSignFlag(xSteal)
         when {
-            stealIsFinite(steal) -> {
+            stealIsFinite(xSteal) -> {
                 val p10 = min(max(pow10, -100_000), 100_000)
-                val targetQ = x.qExp + p10
+                val targetQ = stealQExp(xSteal) + p10
                 return (
-                        if (x.bitLen == 0) setZero(xSign, targetQ)
+                        if (stealDigitLen(xSteal) == 0) setZero(xSign, targetQ)
                         else finalizeFnz(xSign, targetQ, ctx))
             }
             stealIsNAN(steal) -> setNanOperandFound(x, ctx)

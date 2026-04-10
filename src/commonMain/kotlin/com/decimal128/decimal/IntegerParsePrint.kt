@@ -163,7 +163,7 @@ internal object IntegerParsePrint {
 
     fun int256ToHexString(sign: Boolean, u: C256): String {
         val s = if (sign) 1 else 0
-        if (u.bitLen == 0)
+        if (u.digitLen == 0)
             return "0x0"
         val hexitCount = (u.bitLen + 3) ushr 2
         val bytes = ByteArray(s + 2 + hexitCount)

@@ -53,13 +53,14 @@ private const val MASK_BITS_2_MOD_4 = MASK_BITS_0_MOD_4 shl 2
 private const val MASK_BITS_3_MOD_4 = MASK_BITS_0_MOD_4 shl 3
 
 internal fun c256Ctz(x: C256): Int {
-    val ntz0 = x.dw0.countTrailingZeroBits()
-    val ntz1 = 64 + x.dw1.countTrailingZeroBits()
-    val ntz2 = 128 + x.dw2.countTrailingZeroBits()
-    val ntz3 = 192 + x.dw3.countTrailingZeroBits()
-    val ntz01 = if (x.dw0 != 0L) ntz0 else ntz1
-    val ntz23 = if (x.dw2 != 0L) ntz2 else ntz3
-    val ntz0123 = if ((x.dw0 or x.dw1) != 0L) ntz01 else ntz23
+    val dw0 = x.dw0; val dw1 = x.dw1; val dw2 = x.dw2; val dw3 = x.dw3
+    val ntz0 = dw0.countTrailingZeroBits()
+    val ntz1 = 64 + dw1.countTrailingZeroBits()
+    val ntz2 = 128 + dw2.countTrailingZeroBits()
+    val ntz3 = 192 + dw3.countTrailingZeroBits()
+    val ntz01 = if (dw0 != 0L) ntz0 else ntz1
+    val ntz23 = if (dw2 != 0L) ntz2 else ntz3
+    val ntz0123 = if ((dw0 or dw1) != 0L) ntz01 else ntz23
     return ntz0123
 }
 
@@ -145,18 +146,24 @@ internal fun isMultipleOfFive256(dw3: Long, dw2: Long, dw1: Long, dw0: Long): Bo
 }
 
 internal fun c256IsMultipleOf10(x: C256): Boolean {
-    if (x.bitLen < 4 || (x.dw0 and 1L) != 0L)
+    val steal = x.steal
+    val digitLen = stealBitLen(steal)
+    val dw0 = x.dw0
+    if (digitLen < 2 || (dw0 and 1L) != 0L)
         return false
     return c256IsMultipleOf5(x)
 }
 
-internal fun c256IsMultipleOf5(x: C256): Boolean {
-    val bitLen = x.bitLen
+private inline fun c256IsMultipleOf5(x: C256): Boolean {
+    val steal = x.steal
+    val bitLen = stealBitLen(steal)
+    val dw0 = x.dw0
+    val dw1 = x.dw1
     return when {
-        bitLen <= 64 -> isMultipleOfFive64(x.dw0)
-        bitLen <= 128 -> isMultipleOfFive128(x.dw1, x.dw0)
-        bitLen <= 192 -> isMultipleOfFive192(x.dw2, x.dw1, x.dw0)
-        else -> isMultipleOfFive256(x.dw3, x.dw2, x.dw1, x.dw0)
+        bitLen <= 64 -> isMultipleOfFive64(dw0)
+        bitLen <= 128 -> isMultipleOfFive128(dw1, dw0)
+        bitLen <= 192 -> isMultipleOfFive192(x.dw2, dw1, dw0)
+        else -> isMultipleOfFive256(x.dw3, x.dw2, dw1, dw0)
     }
 }
 
