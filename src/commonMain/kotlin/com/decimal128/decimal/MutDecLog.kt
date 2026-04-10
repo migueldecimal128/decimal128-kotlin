@@ -152,7 +152,7 @@ private val LN10_50 by lazy {
  * @param ctx the [DecContext] controlling precision and rounding of the final result
  * @return [z] containing `ln(x)`, rounded to [ctx] precision
  */
-private fun logImplFNZ(
+internal fun logImplFNZ(
     z: MutDec, x: MutDec, isLog10: Boolean,
     ctx: DecContext
 ): MutDec {
@@ -328,7 +328,7 @@ private val padeExp10QWeights = Array<MutDec>(10) { i ->
     if ((i and 1) == 0) p else MutDec().setNegate(p)
 }
 
-private fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val ctx38 = DecContext.decimal128Extended38()
     val tmps = ctx.tmps
     val tmp1 = tmps.mdecTrans1

@@ -1458,7 +1458,7 @@ class Decimal private constructor(
      *
      * @return `ln(this)`
      */
-    fun ln(): Decimal = d128LnImpl(this, DecContext.current())
+    fun ln(): Decimal = d128LogImpl(this, isLog10 = false)
 
     /**
      * Computes `e` raised to the power of this value.
@@ -1469,7 +1469,7 @@ class Decimal private constructor(
      *
      * @return `e^this`
      */
-    fun exp(): Decimal = d128ExpImpl(this, DecContext.current())
+    fun exp(): Decimal = d128ExpImpl(this, isExp10 = false)
 
     /**
      * Computes the base-10 logarithm of this value.
@@ -1481,7 +1481,7 @@ class Decimal private constructor(
      *
      * @return `log10(this)`
      */
-    fun log10(): Decimal = d128Log10Impl(this, DecContext.current())
+    fun log10(): Decimal = d128LogImpl(this, isLog10 = true)
 
     /**
      * Computes `10` raised to the power of this value.
@@ -1492,7 +1492,7 @@ class Decimal private constructor(
      *
      * @return `10^this`
      */
-    fun exp10(): Decimal = d128Exp10Impl(this, DecContext.current())
+    fun exp10(): Decimal = d128ExpImpl(this, isExp10 = true)
 
 
 }
