@@ -693,17 +693,17 @@ class Decimal private constructor(
      * ±100 000 internally to prevent intermediate overflow.
      * Infinities pass through unchanged; NaNs signal [DecException.INVALID_OPERATION].
      */
-    fun scaleB(pow10Delta: Int, ctx: DecContext): Decimal {
+    fun scaleB(pow10Delta: Int): Decimal {
         val steal = steal
         return when {
             stealIsFinite(steal) -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
                 val qNew = qExp + pow10DeltaCapped
-                decFinalizeFinite(signFlag, dw1, dw0, qNew, ctx)
+                decFinalizeFinite(signFlag, dw1, dw0, qNew)
             }
 
             stealIsINF(steal) -> this
-            else -> nanOperandFound(this, ctx)
+            else -> nanOperandFound(this)
         }
     }
 

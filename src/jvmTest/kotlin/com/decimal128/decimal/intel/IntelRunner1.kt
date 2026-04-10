@@ -513,6 +513,54 @@ object IntelRunner1 {
         }
     }
 
+    fun intelMethod_Int_Decimal(fileName: String,
+                                funcStr: String,
+                                method_Int_Decimal: Decimal.(Int) -> Decimal,
+                                verbose: Boolean = false,
+                                skip: Boolean = true,
+                                skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        intelMethod_Int_Decimal(filtered, method_Int_Decimal, verbose)
+    }
+
+    fun intelMethod_Int_Decimal(caseStrings: Array<String>,
+                                method_Int_Decimal: Decimal.(Int) -> Decimal,
+                                verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        intelMethod_Int_Decimal(cases, method_Int_Decimal, verbose)
+    }
+
+
+    fun intelMethod_Int_Decimal(cases: List<IntelCase1>,
+                                method_Int_Decimal: Decimal.(Int) -> Decimal,
+                                verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = DecContext.decimal128Kotlin().with(tc.decRounding())
+            ctx.eval {
+                ctx.decFlags.clearAll()
+                val op1 = tc.op1Bid128(ctx)
+                val op2 = tc.op2Int()
+                if (verbose)
+                    println("op1:$op1 op2:$op2 parsingFlags:${ctx.decFlags}")
+                ctx.decFlags.clearAll()
+                val observed = op1.method_Int_Decimal(op2)
+                val expected = tc.resBid128(ctx)
+                assertTrue(
+                    expected bitwiseEQ observed,
+                    "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+                )
+                val expectedFlags = tc.decFlags()
+                val observedFlags = ctx.decFlags
+                assertEquals(expectedFlags.toString(), observedFlags.toString())
+            }
+        }
+    }
+
     fun runIntMethodOp(fileName: String,
                        funcStr: String,
                        intMethodOp: Decimal.(DecContext) -> Int,

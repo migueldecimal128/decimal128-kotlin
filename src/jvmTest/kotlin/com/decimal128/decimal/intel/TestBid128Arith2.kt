@@ -3,6 +3,7 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal
+import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Int_Decimal
 import com.decimal128.decimal.intel.IntelRunner1.runDecimalIntMethodOp
 import com.decimal128.decimal.intel.IntelRunner1.runMethod_Int
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryDecimalCtxMethodOp
@@ -13,7 +14,7 @@ class TestBid128Arith2 {
     val verbose = false
 
     @Test
-    fun testScaleB(): Unit = runDecimalIntMethodOp(
+    fun testScaleB(): Unit = intelMethod_Int_Decimal(
         "/intel/readtest.in",
         "bid128_scalbn",
         Decimal::scaleB,
@@ -21,7 +22,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testScaleBCases(): Unit = runDecimalIntMethodOp(
+    fun testScaleBCases(): Unit = intelMethod_Int_Decimal(
         arrayOf(
             "bid128_scalbn 1 [2FFDED09BEAD87C0378D8E63FFFFFFFF] 2147483647 [5FFFED09BEAD87C0378D8E63FFFFFFFF] 28 ulp=0.00000",
             "bid128_scalbn 0 [00000000000000000000000000000001] -1 [00000000000000000000000000000000] 30 ulp=.1000000000",

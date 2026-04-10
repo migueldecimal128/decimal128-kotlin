@@ -488,11 +488,11 @@ object DectestRunner1 {
     }
 
     fun runMethod_IntCtx_Decimal(fileName: String,
-                             opName: String,
-                             method: Decimal.(Int, DecContext) -> Decimal,
-                             verbose: Boolean = true,
-                             skip: Boolean = true,
-                             skipCases: Array<String> = arrayOf(),
+                                 opName: String,
+                                 method: Decimal.(Int, DecContext) -> Decimal,
+                                 verbose: Boolean = true,
+                                 skip: Boolean = true,
+                                 skipCases: Array<String> = arrayOf(),
     ) {
         val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
         val allTests = DectestParser1.parse(fileText, opName)
@@ -500,8 +500,8 @@ object DectestRunner1 {
     }
 
     fun runMethod_IntCtx_Decimal(method: Decimal.(Int, DecContext) -> Decimal,
-                             verbose: Boolean = true,
-                             cases: Array<String> = emptyArray(),
+                                 verbose: Boolean = true,
+                                 cases: Array<String> = emptyArray(),
     ) {
         val cases2 = DectestParser1.parse(cases)
         runMethod_IntCtx_Decimal(cases2, method, verbose = verbose)
@@ -509,10 +509,10 @@ object DectestRunner1 {
 
 
     fun runMethod_IntCtx_Decimal(cases: List<DectestCase1>,
-                             method: Decimal.(Int, DecContext) -> Decimal,
-                             skip: Boolean = true,
-                             skipCases: Array<String> = arrayOf(),
-                             verbose: Boolean = true,
+                                 method: Decimal.(Int, DecContext) -> Decimal,
+                                 skip: Boolean = true,
+                                 skipCases: Array<String> = arrayOf(),
+                                 verbose: Boolean = true,
     ) {
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         cases.forEach { tc ->
@@ -524,6 +524,54 @@ object DectestRunner1 {
             val operand2 = tc.operand2Int
             val decCtx = tc.decContext
             val observed = operand1.method(operand2, decCtx)
+            val expected = tc.result
+            assertTrue(expected bitwiseEQ observed,
+                "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+            )
+            assertEquals(tc.expectedDecFlags, decCtx.decFlags,
+                "flags mismatch expected=${tc.expectedDecFlags} observed=${decCtx.decFlags}")
+        }
+    }
+
+    fun dectestMethod_Int_Decimal(fileName: String,
+                                  opName: String,
+                                  method_Int_Decimal: Decimal.(Int) -> Decimal,
+                                  verbose: Boolean = true,
+                                  skip: Boolean = true,
+                                  skipCases: Array<String> = arrayOf(),
+    ) {
+        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val allTests = DectestParser1.parse(fileText, opName)
+        dectestMethod_Int_Decimal(allTests, method_Int_Decimal, skip, skipCases, verbose)
+    }
+
+    fun dectestMethod_Int_Decimal(method_Int_Decimal: Decimal.(Int) -> Decimal,
+                                  verbose: Boolean = true,
+                                  cases: Array<String> = emptyArray(),
+    ) {
+        val cases2 = DectestParser1.parse(cases)
+        dectestMethod_Int_Decimal(cases2, method_Int_Decimal, verbose = verbose)
+    }
+
+
+    fun dectestMethod_Int_Decimal(cases: List<DectestCase1>,
+                                  method_Int_Decimal: Decimal.(Int) -> Decimal,
+                                  skip: Boolean = true,
+                                  skipCases: Array<String> = arrayOf(),
+                                  verbose: Boolean = true,
+    ) {
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        cases.forEach { tc ->
+            if (skipSet.contains(tc.text))
+                return@forEach
+            if (verbose)
+                println(tc.text)
+            val operand1 = tc.operand1
+            val operand2 = tc.operand2Int
+            val decCtx = tc.decContext
+            val observed = decCtx.eval {
+                operand1.method_Int_Decimal(operand2)
+            }
             val expected = tc.result
             assertTrue(expected bitwiseEQ observed,
                 "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"

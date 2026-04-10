@@ -10,7 +10,8 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 internal inline fun decFinalizeFinite(sign: Boolean,
                                       dw1: Long, dw0: Long,
                                       qExp: Int,
-                                      ctx: DecContext, beQuiet: Boolean = false): Decimal =
+                                      ctx: DecContext = DecContext.current(),
+                                      beQuiet: Boolean = false): Decimal =
     decRoundAndFinalizeFinite(sign, dw1, dw0, EXACT, qExp, ctx.decRounding, ctx, beQuiet)
 
 internal fun decRoundAndFinalizeFinite(sign: Boolean,

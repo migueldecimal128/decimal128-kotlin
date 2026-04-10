@@ -2,6 +2,7 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.dectestMethod_Decimal
+import com.decimal128.decimal.dectest.DectestRunner1.dectestMethod_Int_Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runMethod_IntCtx_Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalCtxOp
 import org.junit.jupiter.api.Test
@@ -22,7 +23,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testScaleB(): Unit = runMethod_IntCtx_Decimal(
+    fun testScaleB(): Unit = dectestMethod_Int_Decimal(
         "dqScaleB.decTest",
         "scaleb",
         Decimal::scaleB,
