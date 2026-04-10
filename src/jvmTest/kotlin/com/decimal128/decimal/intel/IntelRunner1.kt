@@ -331,12 +331,12 @@ object IntelRunner1 {
     }
 
     fun runBinaryBooleanCtxMethodOp(fileName: String,
-                                   funcStr: String,
-                                   binaryCtxMethodOp: Decimal.(Decimal, DecContext) -> Boolean,
-                                   decContext: DecContext,
-                                   verbose: Boolean = false,
-                                   skip: Boolean = true,
-                                   skipCases: Array<String> = emptyArray() ) {
+                                    funcStr: String,
+                                    binaryCtxMethodOp: Decimal.(Decimal, DecContext) -> Boolean,
+                                    decContext: DecContext,
+                                    verbose: Boolean = false,
+                                    skip: Boolean = true,
+                                    skipCases: Array<String> = emptyArray() ) {
         val cases = IntelParser1.parseTestsInFile(fileName)
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
@@ -346,7 +346,7 @@ object IntelRunner1 {
     fun runBinaryBooleanCtxMethodOp(caseStrings: Array<String>,
                                     binaryCtxMethodOp: Decimal.(Decimal, DecContext) -> Boolean,
                                     decContext: DecContext,
-                                   verbose: Boolean = false ) {
+                                    verbose: Boolean = false ) {
         val cases = IntelParser1.parseCases(caseStrings)
         runBinaryBooleanCtxMethodOp(cases, binaryCtxMethodOp, decContext, verbose)
     }
@@ -354,8 +354,8 @@ object IntelRunner1 {
 
     fun runBinaryBooleanCtxMethodOp(cases: List<IntelCase1>,
                                     binaryCtxMethodOp: Decimal.(Decimal, DecContext) -> Boolean,
-                                   decContext: DecContext,
-                                   verbose: Boolean = false ) {
+                                    decContext: DecContext,
+                                    verbose: Boolean = false ) {
         cases.forEach { tc ->
             if (verbose) {
                 println("test:${tc.text}")
@@ -693,6 +693,57 @@ object IntelRunner1 {
             val expectedFlags = tc.decFlags()
             val observedFlags = ctx.decFlags
             assertEquals(expectedFlags.toString(), observedFlags.toString())
+        }
+    }
+
+    fun intelMethod_Decimal_Boolean(fileName: String,
+                                    funcStr: String,
+                                    method_Decimal_Boolean: Decimal.(Decimal) -> Boolean,
+                                    decContext: DecContext,
+                                    verbose: Boolean = false,
+                                    skip: Boolean = true,
+                                    skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        intelMethod_Decimal_Boolean(filtered, method_Decimal_Boolean, decContext, verbose)
+    }
+
+    fun intelMethod_Decimal_Boolean(caseStrings: Array<String>,
+                                    method_Decimal_Boolean: Decimal.(Decimal) -> Boolean,
+                                    decContext: DecContext,
+                                    verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        intelMethod_Decimal_Boolean(cases, method_Decimal_Boolean, decContext, verbose)
+    }
+
+
+    fun intelMethod_Decimal_Boolean(cases: List<IntelCase1>,
+                                    method_Decimal_Boolean: Decimal.(Decimal) -> Boolean,
+                                    decContext: DecContext,
+                                    verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = decContext.with(tc.decRounding())
+            ctx.eval {
+                ctx.decFlags.clearAll()
+                val op1 = tc.op1Bid128(decContext)
+                val op2 = tc.op2Bid128(decContext)
+                if (verbose)
+                    println("op1:$op1 op2:$op2 parsingFlags:${decContext.decFlags}")
+                ctx.decFlags.clearAll()
+                val observed = op1.method_Decimal_Boolean(op2)
+                val expected = tc.resBoolean
+                assertEquals(
+                    expected, observed,
+                    "mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+                )
+                val expectedFlags = tc.decFlags()
+                val observedFlags = ctx.decFlags
+                assertEquals(expectedFlags.toString(), observedFlags.toString())
+            }
         }
     }
 

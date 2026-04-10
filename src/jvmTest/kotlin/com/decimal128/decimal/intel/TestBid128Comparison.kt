@@ -2,6 +2,7 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal_Boolean
 import org.junit.jupiter.api.Test
 
 class TestBid128Comparison {
@@ -9,7 +10,7 @@ class TestBid128Comparison {
     val verbose = false
 
     @Test
-    fun testCompareQuietEqual() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietEqual() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_equal",
         Decimal::compareQuietEqual,
@@ -18,7 +19,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietGreater() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietGreater() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_greater",
         Decimal::compareQuietGreater,
@@ -27,7 +28,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietGreaterEqual() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietGreaterEqual() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_greater_equal",
         Decimal::compareQuietGreaterEqual,
@@ -36,7 +37,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietLess() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietLess() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_less",
         Decimal::compareQuietLess,
@@ -45,7 +46,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietLessEqual() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietLessEqual() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_less_equal",
         Decimal::compareQuietLessEqual,
@@ -54,7 +55,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietLessUnordered() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietLessUnordered() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_less_unordered",
         Decimal::compareQuietLessUnordered,
@@ -63,7 +64,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietNotEqual() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietNotEqual() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_not_equal",
         Decimal::compareQuietNotEqual,
@@ -72,7 +73,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietNotGreater() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietNotGreater() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_not_greater",
         Decimal::compareQuietNotGreater,
@@ -81,7 +82,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietNotLess() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietNotLess() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_not_less",
         Decimal::compareQuietNotLess,
@@ -90,7 +91,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietOrdered() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietOrdered() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_ordered",
         Decimal::compareQuietOrdered,
@@ -99,7 +100,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareQuietUnordered() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareQuietUnordered() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_quiet_unordered",
         Decimal::compareQuietUnordered,
@@ -108,7 +109,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingGreater() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingGreater() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_greater",
         Decimal::compareSignalingGreater,
@@ -117,7 +118,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingGreaterEqual() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingGreaterEqual() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_greater_equal",
         Decimal::compareSignalingGreaterEqual,
@@ -126,7 +127,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingGreaterUnordered() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingGreaterUnordered() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_greater_unordered",
         Decimal::compareSignalingGreaterUnordered,
@@ -135,7 +136,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingLess() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingLess() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_less",
         Decimal::compareSignalingLess,
@@ -144,7 +145,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingLessEqual() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingLessEqual() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_less_equal",
         Decimal::compareSignalingLessEqual,
@@ -153,7 +154,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingLessUnordered() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingLessUnordered() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_less_unordered",
         Decimal::compareSignalingLessUnordered,
@@ -162,7 +163,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingNotGreater() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingNotGreater() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_not_greater",
         Decimal::compareSignalingNotGreater,
@@ -171,7 +172,7 @@ class TestBid128Comparison {
     )
 
     @Test
-    fun testCompareSignalingNotLess() = IntelRunner1.runBinaryBooleanCtxMethodOp(
+    fun testCompareSignalingNotLess() = intelMethod_Decimal_Boolean(
         "/intel/readtest.in",
         "bid128_signaling_not_less",
         Decimal::compareSignalingNotLess,

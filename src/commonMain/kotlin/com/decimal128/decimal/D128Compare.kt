@@ -346,13 +346,14 @@ private fun cmpNumericMagnitude(x: Decimal, y: Decimal): Int {
 private inline fun negateForSign(cmp: Int, signMask: Int) =
     (cmp xor signMask) - signMask
 
-internal fun d128CompareQuiet754(x: Decimal, y: Decimal, ctx: DecContext): Compare754Result =
-    d128Compare754(x, y, isSignaling = false, ctx)
+internal fun d128CompareQuiet754(x: Decimal, y: Decimal): Compare754Result =
+    d128Compare754(x, y, isSignaling = false)
 
-internal fun d128CompareSignaling754(x: Decimal, y: Decimal, ctx: DecContext): Compare754Result =
-    d128Compare754(x, y, isSignaling = true, ctx)
+internal fun d128CompareSignaling754(x: Decimal, y: Decimal): Compare754Result =
+    d128Compare754(x, y, isSignaling = true)
 
-internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean, ctx: DecContext): Compare754Result {
+internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean): Compare754Result {
+    val ctx = DecContext.current()
     if (Decimal.neitherIsNaN(x, y)) {
         // IEEE754-2019
         // 5.11 Details of comparison predicates
@@ -373,86 +374,86 @@ internal fun d128Compare754(x: Decimal, y: Decimal, isSignaling: Boolean, ctx: D
 // IEEE754-2019 5.6.1 Comparisons
 
 internal fun d128CompareQuietEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) == IEEE754_EQ
+    d128CompareQuiet754(x, y) == IEEE754_EQ
 
 internal fun d128CompareQuietNotEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) != IEEE754_EQ
+    d128CompareQuiet754(x, y) != IEEE754_EQ
 
 internal fun d128CompareSignalingEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareSignaling754(x, y, ctx) == IEEE754_EQ
+    d128CompareSignaling754(x, y) == IEEE754_EQ
 
 internal fun d128CompareSignalingGreater(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareSignaling754(x, y, ctx) == IEEE754_GT
+    d128CompareSignaling754(x, y) == IEEE754_GT
 
 internal fun d128CompareSignalingGreaterEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareSignaling754(x, y, ctx)
+    val cmp754 = d128CompareSignaling754(x, y)
     return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
 }
 
 internal fun d128CompareSignalingLess(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareSignaling754(x, y, ctx) == IEEE754_LT
+    d128CompareSignaling754(x, y) == IEEE754_LT
 
 internal fun d128CompareSignalingLessEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareSignaling754(x, y, ctx)
+    val cmp754 = d128CompareSignaling754(x, y)
     return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
 }
 
 internal fun d128CompareSignalingNotEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareSignaling754(x, y, ctx) != IEEE754_EQ
+    d128CompareSignaling754(x, y) != IEEE754_EQ
 
 internal fun d128CompareSignalingNotGreater(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareSignaling754(x, y, ctx) != IEEE754_GT
+    d128CompareSignaling754(x, y) != IEEE754_GT
 
 internal fun d128CompareSignalingLessUnordered(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareSignaling754(x, y, ctx)
+    val cmp754 = d128CompareSignaling754(x, y)
     return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
 }
 
 internal fun d128CompareSignalingNotLess(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareSignaling754(x, y, ctx) != IEEE754_LT
+    d128CompareSignaling754(x, y) != IEEE754_LT
 
 internal fun d128CompareSignalingGreaterUnordered(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareSignaling754(x, y, ctx)
+    val cmp754 = d128CompareSignaling754(x, y)
     return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
 }
 
 internal fun d128CompareQuietGreater(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) == IEEE754_GT
+    d128CompareQuiet754(x, y) == IEEE754_GT
 
 internal fun d128CompareQuietGreaterEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareQuiet754(x, y, ctx)
+    val cmp754 = d128CompareQuiet754(x, y)
     return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
 }
 
 internal fun d128CompareQuietLess(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) == IEEE754_LT
+    d128CompareQuiet754(x, y) == IEEE754_LT
 
 internal fun d128CompareQuietLessEqual(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareQuiet754(x, y, ctx)
+    val cmp754 = d128CompareQuiet754(x, y)
     return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
 }
 
 internal fun d128CompareQuietUnordered(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) == IEEE754_UNORDERED
+    d128CompareQuiet754(x, y) == IEEE754_UNORDERED
 
 internal fun d128CompareQuietNotGreater(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) != IEEE754_GT
+    d128CompareQuiet754(x, y) != IEEE754_GT
 
 internal fun d128CompareQuietLessUnordered(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareQuiet754(x, y, ctx)
+    val cmp754 = d128CompareQuiet754(x, y)
     return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
 }
 
 internal fun d128CompareQuietNotLess(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) != IEEE754_LT
+    d128CompareQuiet754(x, y) != IEEE754_LT
 
 internal fun d128CompareQuietGreaterUnordered(x: Decimal, y: Decimal, ctx: DecContext): Boolean {
-    val cmp754 = d128CompareQuiet754(x, y, ctx)
+    val cmp754 = d128CompareQuiet754(x, y)
     return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
 }
 
 internal fun d128CompareQuietOrdered(x: Decimal, y: Decimal, ctx: DecContext): Boolean =
-    d128CompareQuiet754(x, y, ctx) != IEEE754_UNORDERED
+    d128CompareQuiet754(x, y) != IEEE754_UNORDERED
 
 private val mapToDecimal: Array<Decimal> =
     arrayOf(NEG_ONEe0, ZERO, POS_ONEe0, NaN)

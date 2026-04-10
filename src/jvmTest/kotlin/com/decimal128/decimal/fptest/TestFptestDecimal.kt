@@ -74,8 +74,8 @@ class TestFptestDecimal {
             "d64"  -> return; // skip // DecContext(DecFormat.DECIMAL_64,  fptest.roundingDirection())
             else   -> throw IllegalStateException("unknown format: $format")
         }
-        val observed: Decimal =
-            ctx.eval {
+        ctx.eval {
+            val observed: Decimal =
                 when (fptest.op) {
                     "+" -> operands[0] + operands[1]
                     "-" -> operands[0] - operands[1]
@@ -83,33 +83,33 @@ class TestFptestDecimal {
                     "/" -> operands[0] / operands[1]
                     else -> throw RuntimeException("not implemented: ${fptest.op}")
                 }
+
+            val expected = fptest.result() ?: return  // trap case not yet handled
+
+            val cmp754 = expected.compareQuiet(observed)
+            if (expected.isNaN()) {
+                assertTrue(observed.isNaN())
+                assertEquals(IEEE754_UNORDERED, cmp754)
+            } else if (cmp754 != IEEE754_EQ) {
+                if (isBadCase(fptest, ctx)) {
+                    if (verbose) println("bad case:${fptest.fptestStr}")
+                    return
+                }
+                println(fptest.fptestStr)
+                println("expected:$expected observed:$observed")
+                assertEquals(IEEE754_EQ, cmp754)
             }
 
-        val expected = fptest.result() ?: return  // trap case not yet handled
-
-        val cmp754 = expected.compareQuiet(observed, ctx)
-        if (expected.isNaN()) {
-            assertTrue(observed.isNaN())
-            assertEquals(IEEE754_UNORDERED, cmp754)
-        } else if (cmp754 != IEEE754_EQ) {
-            if (isBadCase(fptest, ctx)) {
-                if (verbose) println("bad case:${fptest.fptestStr}")
-                return
+            val expectedExceptions = fptest.exceptions
+            val expectedExceptionsSinU = expectedExceptions.replace("u", "")
+            val observedExceptions = ctx.getFptestExceptionsString()
+            val observedExceptionsSinU = observedExceptions.replace("u", "")
+            assertEquals(expectedExceptionsSinU, observedExceptionsSinU)
+            if (observedExceptions.contains("u") && !expectedExceptions.contains("u")) {
+                println(fptest.fptestStr)
+                println(">>>>>>>>>> I reported underflow but FPtest did not")
+                throw RuntimeException()
             }
-            println(fptest.fptestStr)
-            println("expected:$expected observed:$observed")
-            assertEquals(IEEE754_EQ, cmp754)
-        }
-
-        val expectedExceptions = fptest.exceptions
-        val expectedExceptionsSinU = expectedExceptions.replace("u", "")
-        val observedExceptions = ctx.getFptestExceptionsString()
-        val observedExceptionsSinU = observedExceptions.replace("u", "")
-        assertEquals(expectedExceptionsSinU, observedExceptionsSinU)
-        if (observedExceptions.contains("u") && !expectedExceptions.contains("u")) {
-            println(fptest.fptestStr)
-            println(">>>>>>>>>> I reported underflow but FPtest did not")
-            throw RuntimeException()
         }
     }
 

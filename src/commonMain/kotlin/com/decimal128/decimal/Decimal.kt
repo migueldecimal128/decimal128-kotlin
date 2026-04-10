@@ -727,8 +727,8 @@ class Decimal private constructor(
      *
      * This is equivalent to [quantize] with an implicit quantum of `10^(-decimalScale)`.
      */
-    fun withScale(decimalScale: Int, ctx: DecContext = DecContext.current()): Decimal =
-        withScaleImpl(this, decimalScale, ctx)
+    fun withScale(decimalScale: Int): Decimal =
+        withScaleImpl(this, decimalScale)
 
     /**
      * Returns the smallest representable value greater than this one,
@@ -907,54 +907,54 @@ class Decimal private constructor(
      * IEEE 754-2019 `compareQuietEqual`: returns `true` if `this == other`
      * numerically. Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_EQ
+    fun compareQuietEqual(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) == IEEE754_EQ
 
     /**
      * IEEE 754-2019 `compareQuietNotEqual`: returns `true` if `this ≠ other`.
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietNotEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_EQ
+    fun compareQuietNotEqual(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) != IEEE754_EQ
 
     /**
      * IEEE 754-2019 `compareQuietGreater`: returns `true` if `this > other`.
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_GT
+    fun compareQuietGreater(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) == IEEE754_GT
 
     /**
      * IEEE 754-2019 `compareQuietNotGreater`: returns `true` if `this` is not greater
      * than `other` (i.e., less, equal, or unordered).
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietNotGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_GT
+    fun compareQuietNotGreater(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) != IEEE754_GT
 
-    fun compareQuietGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
+    fun compareQuietGreaterEqual(other: Decimal): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
     }
 
-    fun compareQuietLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_LT
+    fun compareQuietLess(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) == IEEE754_LT
 
-    fun compareQuietLessEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
+    fun compareQuietLessEqual(other: Decimal): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
     }
 
-    fun compareQuietUnordered(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) == IEEE754_UNORDERED
+    fun compareQuietUnordered(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) == IEEE754_UNORDERED
 
     /**
      * IEEE 754-2019 `compareQuietLessUnordered`: returns `true` if `this < other`
      * **or** either operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietLessUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
+    fun compareQuietLessUnordered(other: Decimal): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
     }
 
@@ -963,8 +963,8 @@ class Decimal private constructor(
      * **or** either operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareQuiet754(this, other, ctx)
+    fun compareQuietGreaterUnordered(other: Decimal): Boolean {
+        val cmp754 = d128CompareQuiet754(this, other)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
     }
 
@@ -973,45 +973,45 @@ class Decimal private constructor(
      * than `other`.
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietNotLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_LT
+    fun compareQuietNotLess(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) != IEEE754_LT
 
     /**
      * Returns the full four-valued [Compare754Result] for a quiet comparison.
      * The result is one of [IEEE754_LT], [IEEE754_EQ], [IEEE754_GT], or [IEEE754_UNORDERED].
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuiet(other: Decimal, ctx: DecContext): Compare754Result =
-        d128CompareQuiet754(this, other, ctx)
+    fun compareQuiet(other: Decimal): Compare754Result =
+        d128CompareQuiet754(this, other)
 
     /**
      * IEEE 754-2019 `compareQuietUnordered`: returns `true` if either operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
-    fun compareQuietOrdered(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareQuiet754(this, other, ctx) != IEEE754_UNORDERED
+    fun compareQuietOrdered(other: Decimal): Boolean =
+        d128CompareQuiet754(this, other) != IEEE754_UNORDERED
 
     /**
      * IEEE 754-2019 `compareSignalingEqual`: returns `true` if `this == other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN
      * (quiet or signaling).
      */
-    fun compareSignalingEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) == IEEE754_EQ
+    fun compareSignalingEqual(other: Decimal): Boolean =
+        d128CompareSignaling754(this, other) == IEEE754_EQ
 
     /**
      * IEEE 754-2019 `compareSignalingGreater`: returns `true` if `this > other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) == IEEE754_GT
+    fun compareSignalingGreater(other: Decimal): Boolean =
+        d128CompareSignaling754(this, other) == IEEE754_GT
 
     /**
      * IEEE 754-2019 `compareSignalingGreaterEqual`: returns `true` if `this >= other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingGreaterEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
+    fun compareSignalingGreaterEqual(other: Decimal): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_EQ)
     }
 
@@ -1019,15 +1019,15 @@ class Decimal private constructor(
      * IEEE 754-2019 `compareSignalingLess`: returns `true` if `this < other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) == IEEE754_LT
+    fun compareSignalingLess(other: Decimal): Boolean =
+        d128CompareSignaling754(this, other) == IEEE754_LT
 
     /**
      * IEEE 754-2019 `compareSignalingLessEqual`: returns `true` if `this <= other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingLessEqual(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
+    fun compareSignalingLessEqual(other: Decimal): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_EQ)
     }
 
@@ -1035,16 +1035,16 @@ class Decimal private constructor(
      * IEEE 754-2019 `compareSignalingNotEqual`: returns `true` if `this ≠ other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingNotEqual(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) != IEEE754_EQ
+    fun compareSignalingNotEqual(other: Decimal): Boolean =
+        d128CompareSignaling754(this, other) != IEEE754_EQ
 
     /**
      * IEEE 754-2019 `compareSignalingNotGreater`: returns `true` if `this` is
      * not greater than `other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingNotGreater(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) != IEEE754_GT
+    fun compareSignalingNotGreater(other: Decimal): Boolean =
+        d128CompareSignaling754(this, other) != IEEE754_GT
 
     /**
      * IEEE 754-2019 `compareSignalingLessUnordered`: returns `true` if
@@ -1052,8 +1052,8 @@ class Decimal private constructor(
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
 
-    fun compareSignalingLessUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
+    fun compareSignalingLessUnordered(other: Decimal): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other)
         return (cmp754 == IEEE754_LT) or (cmp754 == IEEE754_UNORDERED)
     }
 
@@ -1062,8 +1062,8 @@ class Decimal private constructor(
      * not less than `other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingNotLess(other: Decimal, ctx: DecContext): Boolean =
-        d128CompareSignaling754(this, other, ctx) != IEEE754_LT
+    fun compareSignalingNotLess(other: Decimal): Boolean =
+        d128CompareSignaling754(this, other) != IEEE754_LT
 
 
     /**
@@ -1071,8 +1071,8 @@ class Decimal private constructor(
      * `this > other` **or** either operand is NaN.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
-    fun compareSignalingGreaterUnordered(other: Decimal, ctx: DecContext): Boolean {
-        val cmp754 = d128CompareSignaling754(this, other, ctx)
+    fun compareSignalingGreaterUnordered(other: Decimal): Boolean {
+        val cmp754 = d128CompareSignaling754(this, other)
         return (cmp754 == IEEE754_GT) or (cmp754 == IEEE754_UNORDERED)
     }
 
