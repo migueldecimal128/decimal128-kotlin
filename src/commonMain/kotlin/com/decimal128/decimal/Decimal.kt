@@ -1126,18 +1126,6 @@ class Decimal private constructor(
      */
     override fun toString(): String = d128ToString(steal, dw1, dw0, DecContext.current())
 
-    /**
-     * Returns a string representation of this value formatted according to
-     * [DecPrefs] in [ctx].
-     *
-     * Default [DecPrefs] behaviour:
-     * - Finite values: plain decimal for exponents in `[-6, 0]`, normalized
-     *   scientific notation (uppercase `E`, no `+` sign) outside that range.
-     * - Special values: `Infinity`, `-Infinity`, `NaN`, `-NaN`; NaN payload
-     *   included; sNaN not collapsed to qNaN.
-     */
-    fun toString(ctx: DecContext): String = d128ToString(steal, dw1, dw0, ctx)
-
     // ── operators and arithmetic ─────────────────────────────────────────────────
 
     /**
@@ -1202,48 +1190,48 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven`.
      */
-    fun roundToIntegralTiesToEven(ctx: DecContext): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, ctx, beQuiet = true)
+    fun roundToIntegralTiesToEven(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, beQuiet = true)
 
     /**
      * Rounds to the nearest integer, ties resolved away from zero.
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway`.
      */
-    fun roundToIntegralTiesToAway(ctx: DecContext): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, ctx, beQuiet = true)
+    fun roundToIntegralTiesToAway(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, beQuiet = true)
 
     /**
      * Rounds toward zero (truncation).
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero`.
      */
-    fun roundToIntegralTowardZero(ctx: DecContext): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, ctx, beQuiet = true)
+    fun roundToIntegralTowardZero(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, beQuiet = true)
 
     /**
      * Rounds toward positive infinity (ceiling).
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardPositive`.
      */
-    fun roundToIntegralTowardPositive(ctx: DecContext): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, ctx, beQuiet = true)
+    fun roundToIntegralTowardPositive(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, beQuiet = true)
 
     /**
      * Rounds toward negative infinity (floor).
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardNegative`.
      */
-    fun roundToIntegralTowardNegative(ctx: DecContext): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, beQuiet = true)
+    fun roundToIntegralTowardNegative(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, beQuiet = true)
 
     /**
      * Rounds to an integer using the rounding mode from [ctx], and **does** signal
      * [DecException.INEXACT] if the value is not already integral.
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
      */
-    fun roundToIntegralExact(ctx: DecContext): Decimal =
-        d128RoundToIntegral(this, ctx.decRounding, ctx, beQuiet = false)
+    fun roundToIntegralExact(): Decimal =
+        d128RoundToIntegral(this, DecContext.current().decRounding)
 
     // ── Conversion to Kotlin Integer Types ───────────────────────────────────
 

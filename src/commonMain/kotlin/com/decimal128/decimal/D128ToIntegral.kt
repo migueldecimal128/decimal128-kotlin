@@ -3,11 +3,11 @@ package com.decimal128.decimal
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.LT_HALF
 
-internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, ctx: DecContext, beQuiet: Boolean = false): Decimal {
+internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, beQuiet: Boolean = false): Decimal {
     val stealX = x.steal
     if (!stealIsFinite(stealX)) {
         if (stealIsSNAN(stealX))
-            return nanOperandFound(x, ctx)
+            return nanOperandFound(x)
         return x
     }
     val qExp = stealQExp(stealX)
@@ -19,6 +19,7 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, ctx: DecCont
     val dw1 = x.dw1;
     val dw0 = x.dw0
     val pow10 = -qExp
+    val ctx = DecContext.current()
     val pentadResult = ctx.tmps.pentad
     pentadResult.dw0 = 0L
     pentadResult.dw1 = 0L

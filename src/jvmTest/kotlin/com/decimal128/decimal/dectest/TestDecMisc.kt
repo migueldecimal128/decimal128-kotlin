@@ -131,7 +131,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testToIntegralExact() = runUnaryDecimalCtxOp(
+    fun testToIntegralExact() = dectestMethod_Decimal(
         "dqToIntegral.decTest",
         "tointegralx",
         Decimal::roundToIntegralExact,
@@ -142,7 +142,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testToIntegralExact2() = runUnaryDecimalCtxOp(
+    fun testToIntegralExact2() = dectestMethod_Decimal(
         "dqCanonical.decTest",
         "tointegralx",
         Decimal::roundToIntegralExact,
@@ -153,7 +153,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testToIntegralExactCases(): Unit = runUnaryDecimalCtxOp(
+    fun testToIntegralExactCases(): Unit = dectestMethod_Decimal(
         Decimal::roundToIntegralExact,
         verbose = verbose,
         cases = arrayOf(

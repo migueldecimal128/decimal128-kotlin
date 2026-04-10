@@ -34,7 +34,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testRoundToIntegralTiesToEven(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testRoundToIntegralTiesToEven(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_nearest_even",
         Decimal::roundToIntegralTiesToEven,
@@ -43,7 +43,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testRoundToIntegralTiesToAway(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testRoundToIntegralTiesToAway(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_nearest_away",
         Decimal::roundToIntegralTiesToAway,
@@ -52,7 +52,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testRoundToIntegralTowardNegative(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testRoundToIntegralTowardNegative(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_negative",
         Decimal::roundToIntegralTowardNegative,
@@ -61,7 +61,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testRoundToIntegralTowardPositive(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testRoundToIntegralTowardPositive(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_positive",
         Decimal::roundToIntegralTowardPositive,
@@ -70,7 +70,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testRoundToIntegralTowardZero(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testRoundToIntegralTowardZero(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_zero",
         Decimal::roundToIntegralTowardZero,
@@ -79,7 +79,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testRoundToIntegralExact(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testRoundToIntegralExact(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_exact",
         Decimal::roundToIntegralExact,
