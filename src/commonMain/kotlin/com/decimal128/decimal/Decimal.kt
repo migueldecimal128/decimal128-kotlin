@@ -273,6 +273,12 @@ class Decimal private constructor(
         fun from(str: String) =
             parseToDecimal(str, DecContext.current())
 
+        /**
+         * Creates a [Decimal] from a [MutDec] value.
+         * Common special values (zero, infinity, NaN) are mapped to canonical instances.
+         *
+         * @param mutDec the source value; must have at most 38 significant digits
+         */
         fun from(mutDec: MutDec): Decimal {
             val steal = mutDec.steal
             require(mutDec.digitLen <= 38)
