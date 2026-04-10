@@ -738,7 +738,7 @@ class Decimal private constructor(
      * - +∞ returns +∞.
      * - NaN signals [DecException.INVALID_OPERATION].
      */
-    fun nextUp(): Decimal = nextUpOrDown(isUp = true, this, DecContext.current())
+    fun nextUp(): Decimal = nextUpOrDown(this, isUp = true)
 
     /**
      * Returns the largest representable value smaller than this one,
@@ -748,7 +748,7 @@ class Decimal private constructor(
      * - −∞ returns −∞.
      * - NaN signals [DecException.INVALID_OPERATION].
      */
-    fun nextDown(ctx: DecContext): Decimal = nextUpOrDown(isUp = false, this, ctx)
+    fun nextDown(): Decimal = nextUpOrDown(this, isUp = false)
 
     // ── Comparison ────────────────────────────────────────────────────────────
 

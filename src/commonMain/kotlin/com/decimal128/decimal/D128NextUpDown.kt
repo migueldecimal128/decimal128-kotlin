@@ -4,7 +4,8 @@ import com.decimal128.decimal.Decimal.Companion.decimalFNZ
 import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import kotlin.math.min
 
-internal fun nextUpOrDown(isUp: Boolean, x: Decimal, ctx: DecContext): Decimal {
+internal fun nextUpOrDown(x: Decimal, isUp: Boolean): Decimal {
+    val ctx = DecContext.current()
     val stealX = x.steal
     val signX = stealSignFlag(stealX)
     when {

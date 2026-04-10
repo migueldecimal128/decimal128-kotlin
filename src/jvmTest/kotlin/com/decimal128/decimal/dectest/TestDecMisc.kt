@@ -1,21 +1,17 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
-import com.decimal128.decimal.dectest.DectestRunner1.runMethod_Decimal
+import com.decimal128.decimal.dectest.DectestRunner1.dectestMethod_Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runMethod_IntCtx_Decimal
-import com.decimal128.decimal.dectest.DectestRunner1.runTernaryDecimalCtxOp
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalCtxOp
-import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 import org.junit.jupiter.api.Test
-import com.decimal128.decimal.fmaImpl
 
 class TestDecMisc {
 
     val verbose = false
 
     @Test
-    fun testLogB() = runMethod_Decimal(
+    fun testLogB() = dectestMethod_Decimal(
         "dqLogB.decTest",
         "logb",
         Decimal::logB,
@@ -81,7 +77,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testNextUp() = runMethod_Decimal(
+    fun testNextUp() = dectestMethod_Decimal(
         "dqNextPlus.decTest",
         "nextplus",
         Decimal::nextUp,
@@ -92,7 +88,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testNextUpCases() = runMethod_Decimal(
+    fun testNextUpCases() = dectestMethod_Decimal(
         Decimal::nextUp,
         verbose = verbose,
         cases = arrayOf(
@@ -103,7 +99,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testNextDown() = runUnaryDecimalCtxOp(
+    fun testNextDown() = dectestMethod_Decimal(
         "dqNextMinus.decTest",
         "nextminus",
         Decimal::nextDown,
@@ -114,7 +110,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testReduce() = runMethod_Decimal(
+    fun testReduce() = dectestMethod_Decimal(
         "dqReduce.decTest",
         "reduce",
         Decimal::stripTrailingZeros,
@@ -125,7 +121,7 @@ class TestDecMisc {
     )
 
     @Test
-    fun testReduceCases() = runMethod_Decimal(
+    fun testReduceCases() = dectestMethod_Decimal(
         Decimal::stripTrailingZeros,
         verbose = verbose,
         cases = arrayOf(

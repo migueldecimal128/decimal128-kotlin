@@ -2,10 +2,8 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.dectest.DectestRunner1.runMethod_Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal
 import com.decimal128.decimal.intel.IntelRunner1.runDecimalIntMethodOp
-import com.decimal128.decimal.intel.IntelRunner1.runIntMethodOp
 import com.decimal128.decimal.intel.IntelRunner1.runMethod_Int
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryDecimalCtxMethodOp
 import org.junit.jupiter.api.Test
@@ -108,7 +106,7 @@ class TestBid128Arith2 {
     )
 
     @Test
-    fun testNextDown(): Unit = runUnaryDecimalCtxMethodOp(
+    fun testNextDown(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_nextdown",
         Decimal::nextDown,

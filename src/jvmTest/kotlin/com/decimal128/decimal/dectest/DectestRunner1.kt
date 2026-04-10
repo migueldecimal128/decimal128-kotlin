@@ -253,32 +253,32 @@ object DectestRunner1 {
         }
     }
 
-    fun runMethod_Decimal(fileName: String,
-                          opName: String,
-                          method_Decimal: Decimal.() -> Decimal,
-                          verbose: Boolean = true,
-                          skip: Boolean = true,
-                          skipCases: Array<String> = arrayOf(),
+    fun dectestMethod_Decimal(fileName: String,
+                              opName: String,
+                              method_Decimal: Decimal.() -> Decimal,
+                              verbose: Boolean = true,
+                              skip: Boolean = true,
+                              skipCases: Array<String> = arrayOf(),
     ) {
         val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
         val allTests = DectestParser1.parse(fileText, opName)
-        runMethod_Decimal(allTests, method_Decimal, skip, skipCases, verbose)
+        dectestMethod_Decimal(allTests, method_Decimal, skip, skipCases, verbose)
     }
 
-    fun runMethod_Decimal(method_Decimal: Decimal.() -> Decimal,
-                          verbose: Boolean = true,
-                          cases: Array<String> = emptyArray(),
+    fun dectestMethod_Decimal(method_Decimal: Decimal.() -> Decimal,
+                              verbose: Boolean = true,
+                              cases: Array<String> = emptyArray(),
     ) {
         val cases2 = DectestParser1.parse(cases)
-        runMethod_Decimal(cases2, method_Decimal, verbose = verbose)
+        dectestMethod_Decimal(cases2, method_Decimal, verbose = verbose)
     }
 
 
-    fun runMethod_Decimal(cases: List<DectestCase1>,
-                          method_Decimal: Decimal.() -> Decimal,
-                          skip: Boolean = true,
-                          skipCases: Array<String> = arrayOf(),
-                          verbose: Boolean = true,
+    fun dectestMethod_Decimal(cases: List<DectestCase1>,
+                              method_Decimal: Decimal.() -> Decimal,
+                              skip: Boolean = true,
+                              skipCases: Array<String> = arrayOf(),
+                              verbose: Boolean = true,
     ) {
         val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
         cases.forEach { tc ->
