@@ -368,3 +368,13 @@ class DecContext(
 
 internal fun signalDivByZero(dec: Decimal): Decimal =
     DecContext.current().signalDivByZero(dec)
+
+internal fun signalInexact(dec: Decimal): Decimal =
+    DecContext.current().signalInexact(dec)
+
+internal fun signalInexact(l: Long): Long =
+    DecContext.current().signalInexact(l)
+
+internal fun signalInvalid(invalidOpReason: InvalidOperationReason): Decimal =
+    DecContext.current().signalInvalid(invalidOpReason, Decimal.NaN)
+

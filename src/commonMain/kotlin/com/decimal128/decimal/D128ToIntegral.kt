@@ -47,7 +47,7 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, beQuiet: Boo
  *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
  * @return the converted [Long], or [Long.MIN_VALUE] if the value is NaN, infinite, or out of range
  */
-fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppressInexact: Boolean = false): Long {
+fun d128ConvertToLong(x: Decimal, rounding: DecRounding, suppressInexact: Boolean = false): Long {
     val steal = x.steal
     if (stealIsFinite(steal)) {
         val signMaskLong = stealSignMask(steal).toLong()
@@ -95,13 +95,13 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppre
                     val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
                     val ret = if (!roundUp) 0L else (signMaskLong shl 1) or 1L
                     if (!suppressInexact)
-                        ctx.signalInexact(x)
+                        signalInexact(x)
                     return ret
                 }
                 // both integral and fractional digits
                 val intDigitLen = digitLen - fracDigitLen
                 if (intDigitLen <= 19) {
-                    val dwPair = ctx.tmps.pentad
+                    val dwPair = DecContext.current().tmps.pentad
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
                     var r0 = dwPair.dw0
@@ -111,7 +111,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppre
                     if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
                         val ret = (r0 xor signMaskLong) - signMaskLong
                         if (!suppressInexact && residue != EXACT)
-                            ctx.signalInexact(ret)
+                            signalInexact(ret)
                         return ret
                     }
                 }
@@ -120,7 +120,7 @@ fun d128ConvertToLong(x: Decimal, rounding: DecRounding, ctx: DecContext, suppre
         }
     }
     // return signalInvalid
-    ctx.signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
+    signalInvalid(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
     return Long.MIN_VALUE
 }
 

@@ -747,5 +747,55 @@ object IntelRunner1 {
         }
     }
 
+    fun intelMethod_Long(fileName: String,
+                         funcStr: String,
+                         method_Long: Decimal.() -> Long,
+                         decContext: DecContext,
+                         verbose: Boolean = false,
+                         skip: Boolean = true,
+                         skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        intelMethod_Long(filtered, method_Long, decContext, verbose)
+    }
+
+    fun intelMethod_Long(caseStrings: Array<String>,
+                         method_Long: Decimal.() -> Long,
+                         decContext: DecContext,
+                         verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        intelMethod_Long(cases, method_Long, decContext, verbose)
+    }
+
+
+    fun intelMethod_Long(cases: List<IntelCase1>,
+                         method_Long: Decimal.() -> Long,
+                         decContext: DecContext,
+                         verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = decContext.with(tc.decRounding())
+            ctx.eval {
+                ctx.decFlags.clearAll()
+                val op1 = tc.op1Bid128(decContext)
+                if (verbose)
+                    println("op1:$op1 parsingFlags:${decContext.decFlags}")
+                ctx.decFlags.clearAll()
+                val observed = op1.method_Long()
+                val expected = tc.resLong
+                assertEquals(
+                    expected, observed,
+                    "mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+                )
+                val expectedFlags = tc.decFlags()
+                val observedFlags = ctx.decFlags
+                assertEquals(expectedFlags.toString(), observedFlags.toString())
+            }
+        }
+    }
+
 
 }

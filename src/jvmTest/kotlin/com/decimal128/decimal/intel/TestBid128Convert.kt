@@ -2,6 +2,7 @@ package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Long
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryIntCtxMethodOp
 import com.decimal128.decimal.intel.IntelRunner1.runUnaryLongCtxMethodOp
 import org.junit.jupiter.api.Test
@@ -11,7 +12,7 @@ class TestBid128Convert {
     val verbose = false
 
     @Test
-    fun testConvertToLongTiesToEven(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongTiesToEven(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_rnint",
         Decimal::toLongTiesToEven,
@@ -20,7 +21,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongTiesToEvenCases(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongTiesToEvenCases(): Unit = intelMethod_Long(
         arrayOf (
             "bid128_to_int64_rnint 0 [0000000000000000,0000000000000000] 0 00",
             "bid128_to_int64_rnint 0 [AFFE314DC6448D9338C15B0A00000000] -1 00 -- -(1)",
@@ -33,7 +34,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongTiesToAway(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongTiesToAway(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_rninta",
         Decimal::toLongTiesToAway,
@@ -42,7 +43,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongTowardZero(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongTowardZero(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_int",
         Decimal::toLongTowardZero,
@@ -51,7 +52,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongTowardPositive(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongTowardPositive(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_ceil",
         Decimal::toLongTowardPositive,
@@ -60,7 +61,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongTowardNegative(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongTowardNegative(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_floor",
         Decimal::toLongTowardNegative,
@@ -69,7 +70,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongExactTiesToEven(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongExactTiesToEven(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xrnint",
         Decimal::toLongExactTiesToEven,
@@ -78,7 +79,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongExactTiesToEvenCases(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongExactTiesToEvenCases(): Unit = intelMethod_Long(
         arrayOf (
             "bid128_to_int64_xrnint 0 1.0 1 00",
         ),
@@ -88,7 +89,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongExactTiesToAway(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongExactTiesToAway(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xrninta",
         Decimal::toLongExactTiesToAway,
@@ -97,7 +98,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongExactTowardZero(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongExactTowardZero(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xint",
         Decimal::toLongExactTowardZero,
@@ -106,7 +107,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongExactTowardPositive(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongExactTowardPositive(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xceil",
         Decimal::toLongExactTowardPositive,
@@ -115,7 +116,7 @@ class TestBid128Convert {
     )
 
     @Test
-    fun testConvertToLongExactTowardNegative(): Unit = runUnaryLongCtxMethodOp(
+    fun testConvertToLongExactTowardNegative(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xfloor",
         Decimal::toLongExactTowardNegative,
