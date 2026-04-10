@@ -75,7 +75,6 @@ kotlin {
 
     macosX64 { }
 
-    /*
     js {
         nodejs {
             testTask {
@@ -85,7 +84,6 @@ kotlin {
             }
         }
     }
-     */
 
     // Configure cinterop for ALL native targets
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {

@@ -36,4 +36,37 @@ actual inline fun unsignedCmp(x: Long, y: Long): Int =
 actual inline fun unsignedCmp(x: Int, y: Int): Int =
     (x xor Int.MIN_VALUE).compareTo(y xor Int.MIN_VALUE)
 
-actual inline fun mathFma(a: Double, b: Double, c: Double): Double = (a * b) + c
+actual inline fun mathFma(a: Double, b: Double, c: Double): Double =
+    mathFmaCorrect(a, b, c)
+
+private fun twoProd(a: Double, b: Double): Pair<Double, Double> {
+    val p = a * b
+    val c = 134217729.0 * a  // 2^27 + 1
+    val aHi = c - (c - a)
+    val aLo = a - aHi
+    val d = 134217729.0 * b
+    val bHi = d - (d - b)
+    val bLo = b - bHi
+    val err = ((aHi * bHi - p) + aHi * bLo + aLo * bHi) + aLo * bLo
+    return Pair(p, err)
+}
+
+private fun twoSum(a: Double, b: Double): Pair<Double, Double> {
+    val s = a + b
+    val v = s - a
+    val err = (a - (s - v)) + (b - v)
+    return Pair(s, err)
+}
+
+fun mathFmaCorrect(a: Double, b: Double, c: Double): Double {
+    // 1. Get the exact product (p + err)
+    val (p, pErr) = twoProd(a, b)
+
+    // 2. Sum the exact product with c using an expansion
+    // We need to sum three terms: p, pErr, and c
+    val (s1, e1) = twoSum(p, c)
+
+    // 3. The final result is the main sum plus the accumulation of all errors
+    // This is where the "fusion" happens mathematically
+    return s1 + (e1 + pErr)
+}
