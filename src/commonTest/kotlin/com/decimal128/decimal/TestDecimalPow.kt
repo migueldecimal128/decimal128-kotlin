@@ -76,24 +76,30 @@ class TestDecimalPow {
     @Test
     fun posZeroNegPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = Decimal.ZERO.pow(-1, ctx)
-        assertTrue(result bitwiseEQ dec("INF"))
+        ctx.eval {
+            val result = Decimal.ZERO.pow(-1)
+            assertTrue(result bitwiseEQ dec("INF"))
+        }
         assertTrue(ctx.isSet(DecException.DIVIDE_BY_ZERO))
     }
 
     @Test
     fun negZeroNegOddPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = Decimal.NEG_ZEROe0.pow(-1, ctx)
-        assertTrue(result bitwiseEQ dec("-infinity"))
+        ctx.eval {
+            val result = Decimal.NEG_ZEROe0.pow(-1)
+            assertTrue(result bitwiseEQ dec("-infinity"))
+        }
         assertTrue(ctx.isSet(DecException.DIVIDE_BY_ZERO))
     }
 
     @Test
     fun negZeroNegEvenPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = "-0".toDecimal().pow(-2, ctx)
-        assertTrue(result.isInfinite() && !result.isNegative())
+        ctx.eval {
+            val result = "-0".toDecimal().pow(-2)
+            assertTrue(result.isInfinite() && !result.isNegative())
+        }
         assertTrue(ctx.isSet(DecException.DIVIDE_BY_ZERO))
     }
 
@@ -150,18 +156,22 @@ class TestDecimalPow {
     @Test
     fun sNaNAnyPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = "sNaN".toDecimal().pow(5, ctx)
-        assertTrue(ctx.isSet(DecException.INVALID_OPERATION))
-        assertTrue(result.isNaN() && !result.isSignaling())
+        ctx.eval {
+            val result = "sNaN".toDecimal().pow(5)
+            assertTrue(ctx.isSet(DecException.INVALID_OPERATION))
+            assertTrue(result.isNaN() && !result.isSignaling())
+        }
     }
 
     @Test
     fun sNaNZeroPow() {
         // sNaN^0 = qNaN + Invalid, not 1
         val ctx = DecContext.decimal128IEEE()
-        val result = "sNaN".toDecimal().pow(0, ctx)
-        assertTrue(ctx.isSet(DecException.INVALID_OPERATION))
-        assertTrue(result.isNaN() && !result.isSignaling())
+        ctx.eval {
+            val result = "sNaN".toDecimal().pow(0)
+            assertTrue(ctx.isSet(DecException.INVALID_OPERATION))
+            assertTrue(result.isNaN() && !result.isSignaling())
+        }
     }
 
     // ---- large pow / overflow / underflow ------------------------------------
@@ -169,40 +179,50 @@ class TestDecimalPow {
     @Test
     fun overflowPosToInfinity() {
         val ctx = DecContext.decimal128IEEE()
-        val result = "1E+100".toDecimal().pow(1000, ctx)
-        assertTrue(result.isInfinite() && !result.isNegative())
-        assertTrue(ctx.isSet(DecException.OVERFLOW))
+        ctx.eval {
+            val result = "1E+100".toDecimal().pow(1000)
+            assertTrue(result.isInfinite() && !result.isNegative())
+            assertTrue(ctx.isSet(DecException.OVERFLOW))
+        }
     }
 
     @Test
     fun overflowNegOddToNegInfinity() {
         val ctx = DecContext.decimal128IEEE()
-        val result = dec("-1E+100").pow(1001, ctx)
-        assertTrue(result.isInfinite() && result.isNegative())
-        assertTrue(ctx.isSet(DecException.OVERFLOW))
+        ctx.eval {
+            val result = dec("-1E+100").pow(1001)
+            assertTrue(result.isInfinite() && result.isNegative())
+            assertTrue(ctx.isSet(DecException.OVERFLOW))
+        }
     }
 
     @Test
     fun overflowNegEvenToPosInfinity() {
         val ctx = DecContext.decimal128IEEE()
-        val result = dec("-1E+100").pow(1000, ctx)
-        assertTrue(result.isInfinite() && !result.isNegative())
-        assertTrue(ctx.isSet(DecException.OVERFLOW))
+        ctx.eval {
+            val result = dec("-1E+100").pow(1000)
+            assertTrue(result.isInfinite() && !result.isNegative())
+            assertTrue(ctx.isSet(DecException.OVERFLOW))
+        }
     }
 
     @Test
     fun underflowToZero() {
         val ctx = DecContext.decimal128IEEE()
-        val result = dec("1E-100").pow(1000, ctx)
-        assertTrue(result bitwiseEQ dec("0E-6176"))
-        assertTrue(ctx.isSet(DecException.UNDERFLOW))
+        ctx.eval {
+            val result = dec("1E-100").pow(1000)
+            assertTrue(result bitwiseEQ dec("0E-6176"))
+            assertTrue(ctx.isSet(DecException.UNDERFLOW))
+        }
     }
 
     @Test
     fun underflowNegOddToNegZero() {
         val ctx = DecContext.decimal128IEEE()
-        val result = dec("-1E-100").pow(1001, ctx)
-        assertTrue(result bitwiseEQ dec("-0E-6176"))
-        assertTrue(ctx.isSet(DecException.UNDERFLOW))
+        ctx.eval {
+            val result = dec("-1E-100").pow(1001)
+            assertTrue(result bitwiseEQ dec("-0E-6176"))
+            assertTrue(ctx.isSet(DecException.UNDERFLOW))
+        }
     }
 }

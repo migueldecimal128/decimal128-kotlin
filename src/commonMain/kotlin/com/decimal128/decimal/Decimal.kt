@@ -410,7 +410,7 @@ class Decimal private constructor(
      * @return the IEEE-754 class of this decimal128 value, in accordance
      *         with IEEE-754-2019 §7.5.2.
      */
-    fun ieeeClass(ctx: DecContext): Ieee754Class {
+    fun ieeeClass(): Ieee754Class {
         val steal = steal
         val sign = stealSignFlag(steal)
         val type = stealTyp(steal)
@@ -707,7 +707,8 @@ class Decimal private constructor(
      *
      * This is equivalent to [quantize] with an implicit quantum of `10^(-decimalScale)`.
      */
-    fun withScale(decimalScale: Int, ctx: DecContext): Decimal = withScale(this, decimalScale, ctx)
+    fun withScale(decimalScale: Int, ctx: DecContext = DecContext.current()): Decimal =
+        withScaleImpl(this, decimalScale, ctx)
 
     /**
      * Returns the smallest representable value greater than this one,
@@ -1174,20 +1175,6 @@ class Decimal private constructor(
     /** Returns the square of this value. */
     fun square(): Decimal = d128SqrImpl(this, DecContext.current())
 
-    /**
-     * Returns this value raised to the integer power [n].
-     *
-     * Special cases follow IEEE 754-2019 `pown` rules:
-     * - `x^0 = 1` for all finite x, including zero and infinity, but NaN^0 = NaN
-     * - `x^1 = x`
-     * - `0^n` for negative n signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
-     * - `(±∞)^n` for negative n returns ±zero
-     */
-    fun pow(n: Int, ctx: DecContext = DecContext.current()): Decimal = d128PowImpl(this, n, ctx)
-
-    /** Returns the reciprocal (1/this) of this value, following IEEE 754-2019 division rules. */
-    fun reciprocal(): Decimal = d128DivImpl(ONE, this, DecContext.current())
-
     // ── Rounding ──────────────────────────────────────────────────────────────
 
     /**
@@ -1419,6 +1406,87 @@ class Decimal private constructor(
      */
     fun toIntExactTowardNegative(ctx: DecContext): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, ctx, suppressInexact = false)
+
+    // ── Elementary Functions ──────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the reciprocal (1/this) of this value, following IEEE 754-2019 division rules.
+     *
+     * Special cases:
+     * - `1/0` signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
+     * - `1/±∞` returns ±zero
+     * - `1/NaN` returns NaN
+     */
+    fun reciprocal(): Decimal = d128DivImpl(ONE, this, DecContext.current())
+
+    /**
+     * Returns this value raised to the integer power [n].
+     *
+     * Special cases follow IEEE 754-2019 `pown` rules:
+     * - `x^0 = 1` for all finite x, including zero and infinity, but NaN^0 = NaN
+     * - `x^1 = x`
+     * - `0^n` for negative n signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
+     * - `(±∞)^n` for negative n returns ±zero
+     */
+    fun pow(n: Int): Decimal = d128PowImpl(this, n, DecContext.current())
+
+    /**
+     * Returns this value raised to the decimal power [x].
+     *
+     * Special cases follow IEEE 754-2019 `pow` rules:
+     * - `x^0 = 1` for all finite x, including zero and infinity, but NaN^0 = NaN
+     * - `0^x` for negative x signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
+     * - `(±∞)^x` for negative x returns ±zero
+     * - `pow` of a negative base with a non-integer exponent signals [DecException.INVALID_OPERATION] and returns NaN
+     */
+    fun pow(x: Decimal): Decimal = d128PowImpl(this, x, DecContext.current())
+
+    /**
+     * Computes the natural logarithm of this value.
+     *
+     * Special cases:
+     * - `ln(0)` signals [DecException.DIVIDE_BY_ZERO] and returns `-∞`
+     * - `ln(negative)` signals [DecException.INVALID_OPERATION] and returns NaN
+     * - `ln(+∞)` returns `+∞`
+     *
+     * @return `ln(this)`
+     */
+    fun ln(): Decimal = d128LnImpl(this, DecContext.current())
+
+    /**
+     * Computes `e` raised to the power of this value.
+     *
+     * Special cases:
+     * - `exp(-∞)` returns `0`
+     * - `exp(+∞)` returns `+∞`
+     *
+     * @return `e^this`
+     */
+    fun exp(): Decimal = d128ExpImpl(this, DecContext.current())
+
+    /**
+     * Computes the base-10 logarithm of this value.
+     *
+     * Special cases:
+     * - `log10(0)` signals [DecException.DIVIDE_BY_ZERO] and returns `-∞`
+     * - `log10(negative)` signals [DecException.INVALID_OPERATION] and returns NaN
+     * - `log10(+∞)` returns `+∞`
+     *
+     * @return `log10(this)`
+     */
+    fun log10(): Decimal = d128Log10Impl(this, DecContext.current())
+
+    /**
+     * Computes `10` raised to the power of this value.
+     *
+     * Special cases:
+     * - `exp10(-∞)` returns `0`
+     * - `exp10(+∞)` returns `+∞`
+     *
+     * @return `10^this`
+     */
+    fun exp10(): Decimal = d128Exp10Impl(this, DecContext.current())
+
 
 }
 

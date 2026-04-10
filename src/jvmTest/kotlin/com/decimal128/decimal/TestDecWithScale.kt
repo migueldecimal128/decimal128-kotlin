@@ -37,9 +37,11 @@ class TestDecWithScale {
 
     fun test1(tc: TC) {
         val ctx = DecContext.decimal128Kotlin().with(DecPrefs.KOTLIN_DEFAULT.copy( printExponentPlusSign = true ))
-        val x = Decimal.from(tc.str)
-        val scaled = x.withScale(tc.scale, ctx)
-        assertEquals(tc.expected, scaled.toString(ctx))
+        ctx.eval {
+            val x = Decimal.from(tc.str)
+            val scaled = x.withScale(tc.scale)
+            assertEquals(tc.expected, scaled.toString())
+        }
     }
 
 }

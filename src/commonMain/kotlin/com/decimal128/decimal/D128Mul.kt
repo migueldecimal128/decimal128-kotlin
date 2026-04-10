@@ -133,3 +133,8 @@ private inline fun powImplFNZ(x: Decimal, pow: Int, ctx: DecContext): Decimal {
     val tmp2 = tmps.mdecBridge2.setPow(tmp1, pow, ctx)
     return Decimal.from(tmp2)
 }
+
+internal fun d128PowImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    TODO()
+}
+

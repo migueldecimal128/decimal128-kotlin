@@ -31,6 +31,9 @@ internal fun nanOperandFound(x: Decimal, y: Decimal,
     return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
 }
 
+internal fun nanOperandFound(x: Decimal): Decimal =
+    nanOperandFound(x, DecContext.current())
+
 internal fun nanOperandFound(x: Decimal, ctx: DecContext): Decimal {
     val steal = x.steal
     verify { stealIsNAN(steal) }
