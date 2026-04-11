@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.InvalidOperationReason.LOG_OF_NEG_NUMBER
+import kotlin.math.max
 
 /**
  * Computes the natural logarithm of [x], rounded to [ctx] precision.
@@ -243,6 +244,13 @@ private val padeExpQWeights = Array<MutDec>(10) { i ->
 }
 
 fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    if (stealSciExp(xSteal) >= 6) {
+        return if (stealSignFlag(xSteal))
+            ctx.signalInexactUnderflow(z.setZero(false, Q_TINY))
+        else
+            ctx.setSignalInexactOverflow(z, false)
+    }
     val ctx38 = DecContext.decimal128Extended38()
     val tmps = ctx.tmps
     val tmp1 = tmps.mdecTrans1
@@ -253,15 +261,25 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     // range reduce: n = round(x / ln(10)), r = x - n * ln(10)
     tmp1.setDiv(x, LN10, ctx38)
     tmp1.setRoundToIntegralTiesToAway(tmp1, ctx38)
-    val n = tmp1.dw0.toInt()
-    tmp2.setFullWidth(LN10_50)
-    tmp3.setOne() // initialize type/sign
-    tmp3.qExp = tmp2.qExp // = -50
-    c256SetMul(tmp3, tmp2, tmp1, pentad)
-    tmp1.setSub(x, tmp3, ctx38)
+    val n = tmp1.toLongOrMinValue().toInt()
+    if (n != 0) {
+        tmp2.setFullWidth(LN10_50)
+        tmp3.setOne()
+        tmp3.qExp = tmp2.qExp
+        println(" c256SetMul(tmp3, $tmp2, $tmp1, pentad)")
+        c256SetMul(tmp3, tmp2, tmp1, pentad)
+        if (n < 0)
+            tmp1.setAdd(x, tmp3, ctx38)
+        else
+            tmp1.setSub(x, tmp3, ctx38)
+    } else {
+        tmp1.set(x, ctx38)  // r = x exactly, no reduction needed
+    }
 
     // three halvings: r' = r / 4
+    println("expImplFNZ n:$n r tmp1:$tmp1")
     val rPrime = tmp1.setDiv(tmp1, EIGHT, ctx38)
+    println("           rPrime tmp1:$rPrime")
 
     val expRPrime = MutDec()
     padeEval(expRPrime, rPrime, padeExpPWeights, padeExpQWeights, ctx38)
@@ -269,9 +287,19 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     expRPrime.setSquare(expRPrime, ctx38)
     expRPrime.setSquare(expRPrime, ctx38)
     z.setSquare(expRPrime, ctx38)
+    // always scale coefficient to max precision
+    val headroom = max(ctx.precision - z.digitLen, 0)
+    if (headroom > 0)
+        c256SetScaleUpPow10(z, z, headroom, pentad)
     // round to ctx precision
-    z.finalizeFnz(false, expRPrime.qExp + n, ctx)
-    return z
+    // result is always INEXACT
+    val flags = ctx.decFlags
+    flags.clear(DecException.INEXACT)
+    z.finalizeFnz(false, expRPrime.qExp + n - headroom, ctx)
+    return if (headroom > 0 && !flags.isSet(DecException.INEXACT))
+        ctx.signalInexact(z)
+    else
+        z
 }
 
 private val LOG10 = mutDecArrayOf(
