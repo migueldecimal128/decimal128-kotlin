@@ -18,7 +18,7 @@ fun MutDec.setExp(x: MutDec, ctx: DecContext = DecContext.current()): MutDec =
 
 fun MutDec.setLog10(x: MutDec, ctx: DecContext = DecContext.current()): MutDec {
     return if (x.isExactPowerOf10()) {
-        this.set(x.digitLen - 1 + x.qExp)
+        this.set(stealSciExp(x.steal))
     } else {
         logDispatch(this, x, isLog10 = true, ctx)
     }
@@ -173,21 +173,16 @@ internal fun logImplFNZ(
     divisor.qExp = eExp
     val cPrime = tmp2.setDiv(x, divisor, ctx38)
 
-    println("before sqrts cPrime:$cPrime")
     // sqrt #1: c' = sqrt(c')  →  c' ∈ [~0.95, ~1.05)
     cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
-    println("after sqrt 1 cPrime:$cPrime")
     // sqrt #2: c' = sqrt(c')  →  c' ∈ [~0.975, ~1.025)
     cPrime.setSqrt(cPrime, ctx38, reduceToPreferredQExp = false)
-    println("after sqrt 2 cPrime:$cPrime")
     // z = c' - 1  →  |z| <= 0.025
     val zArg = tmp3.setSub(cPrime, ONE, ctx38)
 
     val r = tmps.mdecTrans1
     val pWeights: Array<MutDec> = if (isLog10) padeLog10PWeights else padeLnPWeights
     padeEval(r, zArg, pWeights, padeLogQWeights, ctx38)
-
-    println("k:$k eExpL:$eExp cPrime:$cPrime zArg:$zArg r:$r")
 
     r.setMul(r, zArg, ctx38)
     val eVal = tmps.mdecTrans2.set(eExp)
@@ -202,7 +197,6 @@ internal fun logImplFNZ(
         r.setFma(eVal, LN10, r, ctx38)     // + e*ln(10)
     }
 
-    println("r:$r")
     // round to ctx.precision and store in z
     return z.set(r, ctx)
 }
@@ -256,23 +250,18 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val tmp3 = tmps.mdecTrans3
     val pentad = tmps.pentad
 
-    println("\nexp($x)")
-
     // range reduce: n = round(x / ln(10)), r = x - n * ln(10)
     tmp1.setDiv(x, LN10, ctx38)
     tmp1.setRoundToIntegralTiesToAway(tmp1, ctx38)
     val n = tmp1.dw0.toInt()
-    println("n:$n tmp1:$tmp1")
     tmp2.setFullWidth(LN10_50)
     tmp3.setOne() // initialize type/sign
     tmp3.qExp = tmp2.qExp // = -50
     c256SetMul(tmp3, tmp2, tmp1, pentad)
     tmp1.setSub(x, tmp3, ctx38)
-    println("r tmp1:$tmp1")
 
     // three halvings: r' = r / 4
     val rPrime = tmp1.setDiv(tmp1, EIGHT, ctx38)
-    println("rPrime:$rPrime")
 
     val expRPrime = MutDec()
     padeEval(expRPrime, rPrime, padeExpPWeights, padeExpQWeights, ctx38)
@@ -387,6 +376,4 @@ private fun padeEval(
     for (i in Q.size - 2 downTo 0)
         qAcc.setFma(qAcc, zArg, Q[i], ctx)
     result.setDiv(pAcc, qAcc, ctx)
-    println(" --> padeEval pAcc:$pAcc, qAcc:$qAcc")
-    println("  -> padeEval result:$result")
 }

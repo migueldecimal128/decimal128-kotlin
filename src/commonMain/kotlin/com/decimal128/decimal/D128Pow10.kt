@@ -54,3 +54,17 @@ internal fun d128FusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y:
     val d1 = p1 - y.dw1 - borrow0
     return decFinalizeFinite(sign, d1, d0, y.qExp, ctx)
 }
+
+internal fun d128IsExactPowerOfTen(x: Decimal): Boolean {
+    val steal = x.steal
+    if (stealIsPositiveFNZ(steal)) {
+        val digitLen = stealDigitLen(steal)
+        verify { digitLen < MIN_POW10_DIGIT_LEN_192 }
+        if (digitLen > 0) {
+            val pow10Offset = pow10Offset(digitLen - 1) and POW10_BCE
+            if (x.dw0 == POW10[pow10Offset] && x.dw1 == POW10[pow10Offset + 1])
+                return true
+        }
+    }
+    return false
+}

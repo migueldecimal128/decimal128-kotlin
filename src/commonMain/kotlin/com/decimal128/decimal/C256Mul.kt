@@ -80,8 +80,6 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y2: Long, y1: Long, y0: 
     val xBitLen = x.bitLen
     verify { xBitLen <= 127 }
     val maxBitLen = xBitLen + yBitLen
-    if (maxBitLen >= 256)
-        println("kilroy was here! xBitLen:$xBitLen yBitLen:$yBitLen")
     verify { maxBitLen <= 257 }
     when {
         xBitLen <= 64 -> _mulCoeff3x1(z, maxBitLen, y2, y1, y0, x.dw0, pentad)

@@ -225,6 +225,8 @@ object IntelRunner1 {
                 ctx.decFlags.clearAll()
                 val observed = op1.method_Decimal()
                 val expected = tc.resBid128(ctx)
+                if (verbose)
+                    println("observed:$observed expected:$expected")
                 assertTrue(
                     expected bitwiseEQ observed,
                     "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
