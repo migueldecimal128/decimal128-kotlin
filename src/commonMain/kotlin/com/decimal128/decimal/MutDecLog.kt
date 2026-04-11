@@ -356,7 +356,7 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val l = x.toLongOrMinValue()
     if (l != Long.MIN_VALUE) {
         return when {
-            l > 6144L -> ctx.signalInexactOverflow(z.setInfinite(false))
+            l > 6144L -> ctx.setSignalInexactOverflow(z, false)
             l < -6176L -> ctx.signalInexactUnderflow(z.setZero(false, -6176))
             else -> z.setOne().finalizeFnz(false, l.toInt(), ctx)
         }
@@ -367,7 +367,8 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     tmp1.setRoundToIntegralTiesToAway(x, ctx38)
     val nLong = tmp1.toLongOrMinValue()
     when {
-        nLong == Long.MIN_VALUE || nLong > 6200 -> return ctx.signalInexactOverflow(z.setInfinite(false))
+        nLong == Long.MIN_VALUE || nLong > 6200 ->
+            return ctx.setSignalInexactOverflow(z, false)
         nLong < -6200 -> return ctx.signalInexactUnderflow(z.setZero(false, -6176))
     }
     val n = nLong.toInt()
@@ -384,6 +385,7 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     z.setSquare(tenPowRPrime, ctx38)
+    println("n:$n z.qExp:${z.qExp}")
     return z.finalizeFnz(false, z.qExp + n, ctx)
 }
 

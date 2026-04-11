@@ -86,5 +86,37 @@ class TestBid128Log {
         verbose = verbose,
     )
 
+    @Test
+    fun testExp10(): Unit = intelMethod_Decimal(
+        "/intel/readtest.in",
+        "bid128_exp10",
+        Decimal::exp10,
+        DecContext.decimal128Kotlin(),
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            // Intel signals INEXACT, but they should also be signaling UNDERFLOW
+            // see IEEE754-2019 7.5
+            "bid128_exp10 0 [b0058bf72fa4eea6e98489819368194d] [00000000000000000000000000000000] 20",
+            "bid128_exp10 0 [b005db5e877e758bfe53dd5e06733086] [00000000000000000000000000000000] 20",
+            "bid128_exp10 0 [b005b1d75299a5aa378acaa543a24b82] [00000000000000000000000000000000] 20",
+            "bid128_exp10 0 [b0053af01b8a0125ac5437185b9f74bb] [00000000000000000000000000000000] 20",
+            "bid128_exp10 0 [b0057e657e0fef7b8b7572acc164e1f3] [00000000000000000000000000000000] 20",
+            "bid128_exp10 0 [b00552f25788a4e163d781ec08d2be04] [00000000000000000000000000000000] 20",
+            // Intel should signaling OVERFLOW in addition to INEXACT
+            "bid128_exp10 0 [3005da8d9306b37a08cd74840506b073] [78000000000000000000000000000000] 20",
+            "bid128_exp10 0 [30059144adac675798f2764aabb361f2] [78000000000000000000000000000000] 20",
+            "bid128_exp10 0 [3005967f3b6dc2b69607e01ce2a77a34] [78000000000000000000000000000000] 20",
+        )
+    )
 
+    @Test
+    fun testExp10Cases(): Unit = intelMethod_Decimal(
+        arrayOf(
+            "bid128_exp10 0 [b000aa9eeb9637ce97ce137590ff2e75] [2fb87a25091fa9548163398ab6dadb5e] 20",
+        ),
+        Decimal::exp10,
+        DecContext.decimal128Kotlin(),
+        verbose = verbose,
+    )
 }

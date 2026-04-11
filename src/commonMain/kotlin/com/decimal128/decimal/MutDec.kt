@@ -183,7 +183,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 val t = ctx.tmps.mdecFmaParseConvert
                 t.setStripTrailingZeros(this, ctx)
                 val qT = t.qExp
-                if (qT > 18)
+                if (qT > 18 || qT < 0)
                     return Long.MIN_VALUE
                 val tTotalDigitLen = t.digitLen + qT
                 val pow10 = pow10_64(qT)

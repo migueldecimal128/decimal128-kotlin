@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class TestLogExp2 {
+class TestLogExp {
 
     data class TC(val function: String, val x: String, val expected: String)
 
