@@ -37,6 +37,8 @@ class TestSqrt{
     }
 
     val tcs = arrayOf (
+        TC("4"),
+
         TC("1.8317919805335444813E-270"),
         TC("200"),
         TC("200"),

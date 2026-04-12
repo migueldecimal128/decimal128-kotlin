@@ -68,19 +68,21 @@ internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int, pentad: Pentad)
 /**
  * Count of Trailing Zero Digits
  */
-internal fun c256CountTrailingZeroDigitsDestructive(c: C256): Int {
+internal fun c256CountTrailingZeroDigitsAndIsOddDestructive(c: C256): Int {
     if (c.c256IsZero())
         return -1
     var ctzd = 0
     while (true) {
         val ctzBits = c.dw0.countTrailingZeroBits()
         if (ctzBits == 0)
-            return ctzd
+            return (ctzd shl 1) or (c.dw0.toInt() and 1)
         val chunk = min(ctzBits, BARRETT_POW10_MAX)
         val rem = barrettDivModPow10(c, c, chunk)
         if (rem != 0L) {
             val ntzdRem = ctzdU64(rem)
-            return ctzd + ntzdRem
+            val pow10 = POW10[(ntzdRem shl 1) and POW10_BCE]
+            val stripped = unsignedDiv(rem, pow10).toInt()
+            return ((ctzd + ntzdRem) shl 1) or (stripped and 1)
         }
         ctzd += chunk
     }

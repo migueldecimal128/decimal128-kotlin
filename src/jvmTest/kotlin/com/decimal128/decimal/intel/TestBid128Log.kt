@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 class TestBid128Log {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testLn(): Unit = intelMethod_Decimal(

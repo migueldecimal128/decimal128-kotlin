@@ -134,7 +134,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 val q = -qExp
                 if (stealDigitLen(steal)  > q) {
                     val t = DecContext.current().tmps.mdecDivRemPowCtzd.set(this)
-                    val ctzd = c256CountTrailingZeroDigitsDestructive(t)
+                    val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
                     if (ctzd >= q)
                         return true                }
             }
@@ -843,7 +843,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             stealIsFinite(xSteal) -> {
                 val tmps = ctx.tmps
                 val t = tmps.mdecDivRemPowCtzd.set(x)
-                val ctzdActual = c256CountTrailingZeroDigitsDestructive(t)
+                val ctzdActual = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
                 // cap at Q_MAX
                 val ctzdToStrip = min(min(ctzdActual, Q_MAX - xQ), maxToStrip)
                 if (ctzdToStrip == 0)

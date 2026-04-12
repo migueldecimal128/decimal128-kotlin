@@ -266,7 +266,6 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         tmp2.setFullWidth(LN10_50)
         tmp3.setOne()
         tmp3.qExp = tmp2.qExp
-        println(" c256SetMul(tmp3, $tmp2, $tmp1, pentad)")
         c256SetMul(tmp3, tmp2, tmp1, pentad)
         if (n < 0)
             tmp1.setAdd(x, tmp3, ctx38)
@@ -277,9 +276,7 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     }
 
     // three halvings: r' = r / 4
-    println("expImplFNZ n:$n r tmp1:$tmp1")
     val rPrime = tmp1.setDiv(tmp1, EIGHT, ctx38)
-    println("           rPrime tmp1:$rPrime")
 
     val expRPrime = MutDec()
     padeEval(expRPrime, rPrime, padeExpPWeights, padeExpQWeights, ctx38)
@@ -385,7 +382,6 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     z.setSquare(tenPowRPrime, ctx38)
-    println("n:$n z.qExp:${z.qExp}")
     return z.finalizeFnz(false, z.qExp + n, ctx)
 }
 

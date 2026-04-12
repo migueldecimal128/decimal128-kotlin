@@ -86,17 +86,17 @@ internal fun d128SqrImpl(x: Decimal, ctx: DecContext): Decimal {
     }
 }
 
-internal fun d128PowImpl(x: Decimal, pow: Int, ctx: DecContext): Decimal {
+internal fun d128PownImpl(x: Decimal, pow: Int, ctx: DecContext = DecContext.current()): Decimal {
     val xSteal = x.steal
     return when (stealTyp(xSteal)) {
-        STEAL_TYP_FNZ -> powImplFNZ(x, pow, ctx)
-        STEAL_TYP_ZER -> powImplZER(x, pow, ctx)
-        STEAL_TYP_INF -> powImplINF(x, pow)
+        STEAL_TYP_FNZ -> pownImplFNZ(x, pow, ctx)
+        STEAL_TYP_ZER -> pownImplZER(x, pow, ctx)
+        STEAL_TYP_INF -> pownImplINF(x, pow)
         else -> nanOperandFound(x, ctx)
     }
 }
 
-private inline fun powImplINF(x: Decimal, pow: Int): Decimal {
+private inline fun pownImplINF(x: Decimal, pow: Int): Decimal {
     val resultSign = x.signBit and (pow and 1) != 0
     return when {
         pow > 0 -> Decimal.infinity(resultSign)
@@ -106,7 +106,7 @@ private inline fun powImplINF(x: Decimal, pow: Int): Decimal {
 }
 
 
-private inline fun powImplZER(x: Decimal, pow: Int, ctx: DecContext): Decimal {
+private inline fun pownImplZER(x: Decimal, pow: Int, ctx: DecContext): Decimal {
     val resultSign = x.signBit and (pow and 1) != 0
     return when {
         pow > 0 -> {
@@ -120,7 +120,7 @@ private inline fun powImplZER(x: Decimal, pow: Int, ctx: DecContext): Decimal {
     }
 }
 
-private inline fun powImplFNZ(x: Decimal, pow: Int, ctx: DecContext): Decimal {
+private inline fun pownImplFNZ(x: Decimal, pow: Int, ctx: DecContext): Decimal {
     when {
         pow > 0 -> when {
             pow == 1 -> return x
@@ -134,7 +134,84 @@ private inline fun powImplFNZ(x: Decimal, pow: Int, ctx: DecContext): Decimal {
     return Decimal.from(tmp2)
 }
 
-internal fun d128PowImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
-    TODO()
+internal fun d128PowImpl(x: Decimal, y: Decimal): Decimal {
+    val ctx = DecContext.current()
+    val yIsIntegral = d128IsExactInteger(y, ctx)
+    if (yIsIntegral) {
+        val n = y.toLongTowardZero()
+        if (n > Int.MIN_VALUE && n <= Int.MAX_VALUE)
+            return d128PownImpl(x, n.toInt(), ctx)
+    }
+    val xSteal = x.steal; val ySteal = y.steal
+    val signature = binopSignatureOf(xSteal, ySteal)
+    return if (signature == FNZ_FNZ) {
+        powFnzFnz(x, y, ctx)
+    } else when (signature) {
+        ZER_ZER,
+        INF_ZER,
+        FNZ_ZER -> Decimal.ONE
+        ZER_INF -> if (stealSignFlag(ySteal)) Decimal.POS_INFINITY else Decimal.ZERO
+        INF_INF,
+        FNZ_INF -> powFnzInf(x, y, ctx)
+        ZER_FNZ -> powZerFnz(x, y, yIsIntegral, ctx)
+        INF_FNZ -> powInfFnz(x, y, yIsIntegral, ctx)
+        else -> nanOperandFound(x, y, ctx)
+    }
 }
 
+private fun powFnzInf(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    val xSteal = x.steal
+    val yNegative = stealSignFlag(y.steal)
+
+    // |x| < 1 when sciExp < 0, |x| > 1 when sciExp >= 0
+    // (|x| == 1 already handled via pown delegation)
+    val xLessThanOne = stealSciExp(xSteal) < 0
+
+    return if (xLessThanOne)
+        if (yNegative) Decimal.POS_INFINITY else Decimal.ZERO
+    else
+        if (yNegative) Decimal.ZERO else Decimal.POS_INFINITY
+}
+
+private fun powZerFnz(x: Decimal, y: Decimal, yIsIntegral: Boolean, ctx: DecContext): Decimal {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val yNegative = stealSignFlag(ySteal)
+    val xNegative = stealSignFlag(xSteal)
+
+    return if (yNegative) {
+        // pow(±0, y < 0) → ±∞, signal divideByZero
+        // sign of result: negative only if x is -0 and y is odd integer
+        val resultNegative = xNegative && yIsIntegral && y.isOddInteger()
+        ctx.signalDivByZero(Decimal.infinity(resultNegative))
+    } else {
+        // pow(±0, y > 0) → ±0
+        // sign of result: negative only if x is -0 and y is odd integer
+        val resultNegative = xNegative && yIsIntegral && y.isOddInteger()
+        Decimal.zero(resultNegative)
+    }
+}
+
+private fun powInfFnz(x: Decimal, y: Decimal, yIsIntegral: Boolean, ctx: DecContext): Decimal {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val xNegative = stealSignFlag(xSteal)
+    val yNegative = stealSignFlag(ySteal)
+
+    return if (!xNegative) {
+        // pow(+∞, y)
+        if (yNegative) Decimal.ZERO else Decimal.POS_INFINITY
+    } else {
+        // pow(-∞, y)
+        // sign of result: negative only if y is finite odd integer
+        val resultNegative = yIsIntegral && y.isOddInteger()
+        if (yNegative)
+            Decimal.zero(resultNegative)
+        else
+            Decimal.infinity(resultNegative)
+    }
+}
+
+private fun powFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
+    TODO()
+}

@@ -68,3 +68,41 @@ internal fun d128IsExactPowerOfTen(x: Decimal): Boolean {
     }
     return false
 }
+
+internal fun d128IsExactInteger(x: Decimal, ctx: DecContext): Boolean {
+    val steal = x.steal
+    when {
+        stealIsFNZ(steal) -> {
+            val qExp = stealQExp(steal)
+            if (qExp >= 0)
+                return true
+            val q = -qExp
+            if (stealDigitLen(steal)  > q) {
+                val t = ctx.tmps.mdecDivRemPowCtzd.set(x)
+                val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
+                if (ctzd >= q)
+                    return true
+            }
+        }
+        stealIsZER(steal) -> return true
+    }
+    return false
+}
+
+internal fun d128IsOddInteger(x: Decimal, ctx: DecContext): Boolean {
+    val steal = x.steal
+    val qExp = stealQExp(steal)
+    if (stealIsFNZ(steal)) when {
+        qExp == 0 -> if ((x.dw0 and 1L) != 0L) return true
+        qExp < 0 -> {
+            val q = -qExp
+            if (stealDigitLen(steal) > q) {
+                val t = ctx.tmps.mdecDivRemPowCtzd.set(x)
+                val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
+                if (ctzd >= q)
+                    return true
+            }
+        }
+    }
+    return false
+}

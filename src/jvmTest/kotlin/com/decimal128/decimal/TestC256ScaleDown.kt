@@ -199,14 +199,14 @@ class TestC256ScaleDown {
 
         val expected = case.biExpected
         if (case.digitLen > 76 || expected.bitLength() > 253) {
-            println("product would overflow ... skipped")
+            if (verbose)
+                println("product would overflow ... skipped")
             return
         }
         val sign = case.sign
         val coeffA = newCoeff(case.biA)
         val coeffObserved = C256()
         val pow10 = case.pow10
-        val env = DecContext.decimal128IEEE().with(case.decRounding)
         if (verbose)
             println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.decRounding} expected:$expected")
         c256SetScaleDownPow10(coeffObserved, coeffA, pow10, Pentad())

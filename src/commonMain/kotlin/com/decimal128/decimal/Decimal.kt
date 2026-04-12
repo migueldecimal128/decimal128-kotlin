@@ -559,6 +559,10 @@ class Decimal private constructor(
         }
     }
 
+    fun isExactInteger(): Boolean = d128IsExactInteger(this, DecContext.current())
+
+    fun isOddInteger(): Boolean = d128IsOddInteger(this, DecContext.current())
+
     fun isExactPowerOfTen(): Boolean = d128IsExactPowerOfTen(this)
 
     // ── Quantum and Exponent ──────────────────────────────────────────────────
@@ -1437,7 +1441,7 @@ class Decimal private constructor(
      * - `0^n` for negative n signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
      * - `(±∞)^n` for negative n returns ±zero
      */
-    fun pow(n: Int): Decimal = d128PowImpl(this, n, DecContext.current())
+    fun pow(n: Int): Decimal = d128PownImpl(this, n)
 
     /**
      * Returns this value raised to the decimal power [x].
@@ -1448,7 +1452,7 @@ class Decimal private constructor(
      * - `(±∞)^x` for negative x returns ±zero
      * - `pow` of a negative base with a non-integer exponent signals [DecException.INVALID_OPERATION] and returns NaN
      */
-    fun pow(x: Decimal): Decimal = d128PowImpl(this, x, DecContext.current())
+    fun pow(x: Decimal): Decimal = d128PowImpl(this, x)
 
     /**
      * Computes the natural logarithm of this value.

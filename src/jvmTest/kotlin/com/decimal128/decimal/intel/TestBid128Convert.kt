@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 
 class TestBid128Convert {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testConvertToLongTiesToEven(): Unit = intelMethod_Long(
