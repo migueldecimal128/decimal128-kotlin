@@ -125,7 +125,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun isExactPowerOf10(): Boolean = stealIsPositiveFNZ(steal) && c256IsPowerOf10(this)
 
-    fun isExactInteger(): Boolean {
+    fun isExactIntegral(): Boolean {
         val steal = steal
         when {
             stealIsFNZ(steal) -> {

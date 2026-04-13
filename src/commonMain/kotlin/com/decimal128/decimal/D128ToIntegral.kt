@@ -3,6 +3,48 @@ package com.decimal128.decimal
 import com.decimal128.decimal.Residue.Companion.EXACT
 import com.decimal128.decimal.Residue.Companion.LT_HALF
 
+internal fun d128IsExactIntegral(x: Decimal): Boolean {
+    val steal = x.steal
+    when {
+        stealIsFNZ(steal) -> {
+            val qExp = stealQExp(steal)
+            if (qExp >= 0)
+                return true
+            val q = -qExp
+            if (stealDigitLen(steal) > q) {
+                val t = DecContext.current().tmps.mdecDivRemPowCtzd.set(x)
+                val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
+                if (ctzd >= q)
+                    return true
+            }
+        }
+        stealIsZER(steal) -> return true
+    }
+    return false
+}
+
+internal fun d128IsOddIntegral(x: Decimal): Boolean {
+    val xSteal = x.steal
+    if (!stealIsFNZ(xSteal)) return false
+    val qExp = stealQExp(xSteal)
+    return when {
+        qExp > 0 -> false  // coefficient * 10^qExp — always even since 10^qExp is even
+        qExp == 0 -> (x.dw0 and 1L) != 0L  // check last digit of coefficient
+        else -> {  // qExp < 0 — may have fractional part
+            val q = -qExp
+            val digitLen = stealDigitLen(xSteal)
+            if (digitLen <= q) return false  // purely fractional, not an integer
+            val ctx = DecContext.current()
+            val t = ctx.tmps.mdecBridge1.set(x)
+            val encoded = c256CountTrailingZeroDigitsAndIsOddDestructive(t)
+            if (encoded == -1) return false  // zero
+            val ctzd = encoded ushr 1
+            val isOdd = (encoded and 1) != 0
+            ctzd == q && isOdd  // is integer and odd
+        }
+    }
+}
+
 internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, beQuiet: Boolean = false): Decimal {
     val stealX = x.steal
     if (!stealIsFinite(stealX)) {

@@ -574,7 +574,7 @@ class Decimal private constructor(
         }
     }
 
-    fun isExactInteger(): Boolean = d128IsExactInteger(this)
+    fun isExactIntegral(): Boolean = d128IsExactIntegral(this)
 
     fun isOddIntegral(): Boolean = d128IsOddIntegral(this)
 

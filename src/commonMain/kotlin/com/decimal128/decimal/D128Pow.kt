@@ -107,7 +107,7 @@ private fun tenPowN(sign: Boolean, n: Int, preferredQExp: Int): Decimal {
 internal fun d128PowImpl(x: Decimal, y: Decimal): Decimal {
     val xSteal = x.steal; val ySteal = y.steal
     val ctx = DecContext.current()
-    val yIsIntegral = d128IsExactInteger(y)
+    val yIsIntegral = d128IsExactIntegral(y)
     if (yIsIntegral) {
         val n = y.toLongOrMinValue()
         if (n > Int.MIN_VALUE && n <= Int.MAX_VALUE)
