@@ -12,14 +12,16 @@ class TestDecimalPow {
         val baseStr: String,
         val powerStr: String,
         val expectedStr: String,
-        val expectDivByZero: Boolean = false,
-        val expectOverflow: Boolean = false,
-        val expectUnderflow: Boolean = false,
-        val expectInvalid: Boolean = false,
+        val divByZero: Boolean = false,
+        val overflow: Boolean = false,
+        val underflow: Boolean = false,
+        val invalidOperation: Boolean = false,
+        val inexact: Boolean = false,
         val useEQ: Boolean = false
     )
 
     val tcs = arrayOf(
+        TC("1", "9999999999999999999999999999999999", "1"),
         TC("1.00", "2", "1.0000"),
         TC("-1", "Inf", "1"),
 
@@ -48,20 +50,36 @@ class TestDecimalPow {
         // ---- non-integer powers ----------------------------------------------------
         TC("100", "0.5", "10"),           // sqrt(100) = 10
         //TC("1000", "0.333333333333333333333333333333333", "10", useEQ = true),  // cube root
-        TC("2", "0.5", "1.4142135623730950488016887242096980", useEQ = true),   // sqrt(2)
-        TC("10", "0.5", "3.162277660168379331998893544432719", useEQ = true),  // sqrt(10)
-        TC("2", "2.5", "5.656854249492380195206754896838792", useEQ = true),
+        TC("2", "0.5", "1.4142135623730950488016887242096980", inexact = true, useEQ = true),   // sqrt(2)
+        TC("10", "0.5", "3.162277660168379331998893544432719", inexact = true, useEQ = true),  // sqrt(10)
+        TC("2", "2.5", "5.656854249492380195206754896838792", inexact = true, useEQ = true),
 
         // ---- negative base, non-integer power → invalid ----------------------------
-        TC("-2", "0.5", "NaN", expectInvalid = true),
-        TC("-3.7", "1.5", "NaN", expectInvalid = true),
+        TC("-2", "0.5", "NaN", invalidOperation = true),
+        TC("-3.7", "1.5", "NaN", invalidOperation = true),
 
         // ---- zero base -------------------------------------------------------------
         TC("0", "0.5", "0"),
-        TC("0", "-1", "Inf", expectDivByZero = true),
-        TC("0", "-0.5", "Inf", expectDivByZero = true),
+        TC("0", "-1", "Inf", divByZero = true),
+        TC("0", "-0.5", "Inf", divByZero = true),
         TC("-0", "0.5", "0"),
-        TC("-0", "-1", "-Inf", expectDivByZero = true),
+        TC("-0", "-1", "-Inf", divByZero = true),
+
+        // pow(±0, y) for various y
+        TC("0", "2", "0"),           // even integer → +0
+        TC("-0", "2", "0"),          // even integer → +0 (not -0)
+        TC("-0", "3", "-0"),         // odd integer → -0
+        TC("0", "-2", "Inf", divByZero = true),   // even negative integer → +∞
+        TC("-0", "-2", "Inf", divByZero = true),  // even negative integer → +∞
+        TC("-0", "-3", "-Inf", divByZero = true), // odd negative integer → -∞
+        TC("0", "Inf", "0"),         // +∞ exponent → +0
+        TC("-0", "Inf", "0"),        // +∞ exponent → +0
+        TC("0", "-Inf", "Inf"),      // -∞ exponent → +∞
+        TC("-0", "-Inf", "Inf"),     // -∞ exponent → +∞
+        TC("0", "0.5", "0"),         // non-integer > 0 → +0
+        TC("-0", "0.5", "0"),        // non-integer > 0 → +0 (not -0)
+        TC("0", "-0.5", "Inf", divByZero = true),  // non-integer < 0 → +∞
+        TC("-0", "-0.5", "Inf", divByZero = true), // non-integer < 0 → +∞
 
         // ---- infinity base ---------------------------------------------------------
         TC("Inf", "0.5", "Inf"),
@@ -89,15 +107,15 @@ class TestDecimalPow {
         TC("1.0001", "-Inf", "0"),
 
         // ---- overflow / underflow --------------------------------------------------
-        TC("1E+100", "1000", "Inf", expectOverflow = true),
-        TC("1E-100", "1000", "0E-6176", expectUnderflow = true),
+        TC("1E+100", "1000", "Inf", inexact = true, overflow = true),
+        TC("1E-100", "1000", "0E-6176", inexact = true, underflow = true),
 
         // ---- NaN -------------------------------------------------------------------
         TC("NaN", "2", "NaN"),
         TC("2", "NaN", "NaN"),
         TC("NaN", "NaN", "NaN"),
-        TC("sNaN", "2", "NaN", expectInvalid = true),
-        TC("2", "sNaN", "NaN", expectInvalid = true),
+        TC("sNaN", "2", "NaN", invalidOperation = true),
+        TC("2", "sNaN", "NaN", invalidOperation = true),
 
         // pow(+1, y) = 1 for any y
         TC("1", "0", "1"),
@@ -109,8 +127,8 @@ class TestDecimalPow {
         TC("1", "Inf", "1"),
         TC("1", "-Inf", "1"),
         TC("1", "NaN", "1"),
-        TC("1", "99999999999999999999999999999999999", "1"),
-        TC("1", "-99999999999999999999999999999999999", "1"),
+        TC("1", "9999999999999999999999999999999999", "1"),
+        TC("1", "-9999999999999999999999999999999999", "1"),
 
         // cohort variants of 1
         TC("1.0", "0.5", "1.0"),
@@ -125,6 +143,8 @@ class TestDecimalPow {
     }
 
     private fun test1(tc: TC) {
+        if (verbose)
+            println(tc)
         val ctx = DecContext.decimal128IEEE()
         ctx.eval {
             val base = tc.baseStr.toDecimal()
@@ -138,20 +158,16 @@ class TestDecimalPow {
                     result bitwiseEQ expected,
                     "pow(${tc.baseStr}, ${tc.powerStr}): expected $expected observed $result"
                 )
-            if (tc.expectDivByZero)
-                assertTrue(
-                    ctx.isSet(DecException.DIVIDE_BY_ZERO),
-                    "Expected DIVIDE_BY_ZERO for pow(${tc.baseStr}, ${tc.powerStr})"
-                )
-            if (tc.expectOverflow)
-                assertTrue(ctx.isSet(DecException.OVERFLOW), "Expected OVERFLOW for pow(${tc.baseStr}, ${tc.powerStr})")
-            if (tc.expectUnderflow)
-                assertTrue(ctx.isSet(DecException.UNDERFLOW), "Expected UNDERFLOW for pow(${tc.baseStr}, ${tc.powerStr})")
-            if (tc.expectInvalid)
-                assertTrue(
-                    ctx.isSet(DecException.INVALID_OPERATION),
-                    "Expected INVALID_OPERATION for pow(${tc.baseStr}, ${tc.powerStr})"
-                )
+            assertEquals(tc.divByZero, ctx.isSet(DecException.DIVIDE_BY_ZERO),
+                "DIVIDE_BY_ZERO mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.overflow, ctx.isSet(DecException.OVERFLOW),
+                "OVERFLOW mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.underflow, ctx.isSet(DecException.UNDERFLOW),
+                "UNDERFLOW mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.invalidOperation, ctx.isSet(DecException.INVALID_OPERATION),
+                "INVALID_OPERATION mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.inexact, ctx.isSet(DecException.INEXACT),
+                "INEXACT mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
         }
 
     }

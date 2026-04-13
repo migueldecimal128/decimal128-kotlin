@@ -66,7 +66,23 @@ internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int, pentad: Pentad)
 }
 
 /**
- * Count of Trailing Zero Digits
+ * Counts the trailing zero digits of [c] and determines whether the
+ * least significant non-zero digit is odd, encoded in a single [Int]:
+ *
+ * - Bits 31..1: count of trailing zero digits
+ * - Bit 0: `1` if the least significant non-zero digit is odd, `0` if even
+ *
+ * Callers extract the two fields as:
+ * ```
+ * val result = c256CountTrailingZeroDigitsAndIsOddDestructive(c)
+ * val ctzd = result ushr 1
+ * val isOdd = (result and 1) != 0
+ * ```
+ *
+ * Returns `-1` if [c] is zero.
+ *
+ * **Note:** [c] is modified during computation and will be in an
+ * undetermined state afterwards.
  */
 internal fun c256CountTrailingZeroDigitsAndIsOddDestructive(c: C256): Int {
     if (c.c256IsZero())

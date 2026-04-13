@@ -105,14 +105,20 @@ private fun tenPowN(sign: Boolean, n: Int, preferredQExp: Int): Decimal {
 }
 
 internal fun d128PowImpl(x: Decimal, y: Decimal): Decimal {
+    val xSteal = x.steal; val ySteal = y.steal
     val ctx = DecContext.current()
-    val yIsIntegral = d128IsExactInteger(y, ctx)
+    val yIsIntegral = d128IsExactInteger(y)
     if (yIsIntegral) {
         val n = y.toLongOrMinValue()
         if (n > Int.MIN_VALUE && n <= Int.MAX_VALUE)
             return d128PownImpl(x, n.toInt(), ctx)
+        // large integer y - handle magnitude 1 base
+        if (d128CompareNumericMagnitude(x, Decimal.ONE) == 0)
+            return if (stealSignFlag(xSteal) && y.isOddIntegral())
+                Decimal.NEG_ONEe0  // -1 ^ large integer - need parity check
+            else
+                Decimal.POS_ONEe0  // 1 ^ anything = 1
     }
-    val xSteal = x.steal; val ySteal = y.steal
     val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
         powFnzFnz(x, y, ctx)
@@ -166,12 +172,12 @@ private fun powZerFnz(x: Decimal, y: Decimal, yIsIntegral: Boolean, ctx: DecCont
     return if (yNegative) {
         // pow(±0, y < 0) → ±∞, signal divideByZero
         // sign of result: negative only if x is -0 and y is odd integer
-        val resultNegative = xNegative && yIsIntegral && y.isOddInteger()
+        val resultNegative = xNegative && yIsIntegral && y.isOddIntegral()
         ctx.signalDivByZero(Decimal.infinity(resultNegative))
     } else {
         // pow(±0, y > 0) → ±0
         // sign of result: negative only if x is -0 and y is odd integer
-        val resultNegative = xNegative && yIsIntegral && y.isOddInteger()
+        val resultNegative = xNegative && yIsIntegral && y.isOddIntegral()
         Decimal.zero(resultNegative)
     }
 }
@@ -188,7 +194,7 @@ private fun powInfFnz(x: Decimal, y: Decimal, yIsIntegral: Boolean, ctx: DecCont
     } else {
         // pow(-∞, y)
         // sign of result: negative only if y is finite odd integer
-        val resultNegative = yIsIntegral && y.isOddInteger()
+        val resultNegative = yIsIntegral && y.isOddIntegral()
         if (yNegative)
             Decimal.zero(resultNegative)
         else

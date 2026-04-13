@@ -574,9 +574,9 @@ class Decimal private constructor(
         }
     }
 
-    fun isExactInteger(): Boolean = d128IsExactInteger(this, DecContext.current())
+    fun isExactInteger(): Boolean = d128IsExactInteger(this)
 
-    fun isOddInteger(): Boolean = d128IsOddInteger(this, DecContext.current())
+    fun isOddIntegral(): Boolean = d128IsOddIntegral(this)
 
     fun isExactPowerOfTen(): Boolean = d128IsExactPowerOfTen(this)
 

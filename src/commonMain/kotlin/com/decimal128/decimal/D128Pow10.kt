@@ -69,7 +69,7 @@ internal fun d128IsExactPowerOfTen(x: Decimal): Boolean {
     return false
 }
 
-internal fun d128IsExactInteger(x: Decimal, ctx: DecContext): Boolean {
+internal fun d128IsExactInteger(x: Decimal): Boolean {
     val steal = x.steal
     when {
         stealIsFNZ(steal) -> {
@@ -77,8 +77,8 @@ internal fun d128IsExactInteger(x: Decimal, ctx: DecContext): Boolean {
             if (qExp >= 0)
                 return true
             val q = -qExp
-            if (stealDigitLen(steal)  > q) {
-                val t = ctx.tmps.mdecDivRemPowCtzd.set(x)
+            if (stealDigitLen(steal) > q) {
+                val t = DecContext.current().tmps.mdecDivRemPowCtzd.set(x)
                 val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
                 if (ctzd >= q)
                     return true
@@ -89,20 +89,24 @@ internal fun d128IsExactInteger(x: Decimal, ctx: DecContext): Boolean {
     return false
 }
 
-internal fun d128IsOddInteger(x: Decimal, ctx: DecContext): Boolean {
-    val steal = x.steal
-    val qExp = stealQExp(steal)
-    if (stealIsFNZ(steal)) when {
-        qExp == 0 -> if ((x.dw0 and 1L) != 0L) return true
-        qExp < 0 -> {
+internal fun d128IsOddIntegral(x: Decimal): Boolean {
+    val xSteal = x.steal
+    if (!stealIsFNZ(xSteal)) return false
+    val qExp = stealQExp(xSteal)
+    return when {
+        qExp > 0 -> false  // coefficient * 10^qExp — always even since 10^qExp is even
+        qExp == 0 -> (x.dw0 and 1L) != 0L  // check last digit of coefficient
+        else -> {  // qExp < 0 — may have fractional part
             val q = -qExp
-            if (stealDigitLen(steal) > q) {
-                val t = ctx.tmps.mdecDivRemPowCtzd.set(x)
-                val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
-                if (ctzd >= q)
-                    return true
-            }
+            val digitLen = stealDigitLen(xSteal)
+            if (digitLen <= q) return false  // purely fractional, not an integer
+            val ctx = DecContext.current()
+            val t = ctx.tmps.mdecBridge1.set(x)
+            val encoded = c256CountTrailingZeroDigitsAndIsOddDestructive(t)
+            if (encoded == -1) return false  // zero
+            val ctzd = encoded ushr 1
+            val isOdd = (encoded and 1) != 0
+            ctzd == q && isOdd  // is integer and odd
         }
     }
-    return false
 }
