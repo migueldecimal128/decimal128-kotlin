@@ -51,19 +51,25 @@ class MutDec() : C256(), Comparable<MutDec> {
 
         fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
             decodeLittleEndianBid128(MutDec(), littleEndianLongs)
+
         fun decodeLittleEndianBid128(littleEndianBytes: ByteArray) =
             decodeLittleEndianBid128(MutDec(), littleEndianBytes)
+
         fun decodeBigEndianBid128(bigEndianLongs: LongArray) =
             decodeBigEndianBid128(MutDec(), bigEndianLongs)
+
         fun decodeBigEndianBid128(bigEndianBytes: ByteArray) =
             decodeBigEndianBid128(MutDec(), bigEndianBytes)
 
         fun decodeLittleEndianDpd128(littleEndianLongs: LongArray) =
             decodeLittleEndianDpd128(MutDec(), littleEndianLongs)
+
         fun decodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
             decodeLittleEndianDpd128(MutDec(), littleEndianBytes)
+
         fun decodeBigEndianDpd128(bigEndianLongs: LongArray) =
             decodeBigEndianDpd128(MutDec(), bigEndianLongs)
+
         fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
             decodeBigEndianDpd128(MutDec(), bigEndianBytes)
 
@@ -95,16 +101,19 @@ class MutDec() : C256(), Comparable<MutDec> {
                 if (qExp < Q_TINY || qExp > Q_MAX)
                     return false
             }
+
             STEAL_TYP_FNZ -> {
                 if (bitLen == 0)
                     return false
                 if (qExp < Q_TINY || qExp > Q_MAX)
                     return false
             }
+
             STEAL_TYP_INF -> {
                 if (bitLen != 0)
                     return false
             }
+
             STEAL_TYP_NAN -> {
                 if (qExp != NON_FINITE_SNAN && qExp != NON_FINITE_QNAN)
                     return false
@@ -135,15 +144,39 @@ class MutDec() : C256(), Comparable<MutDec> {
                 if (qExp >= 0)
                     return true
                 val q = -qExp
-                if (stealDigitLen(steal)  > q) {
+                if (stealDigitLen(steal) > q) {
                     val t = DecContext.current().tmps.mdecDivRemPowCtzd.set(this)
                     val ctzd = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
                     if (ctzd >= q)
-                        return true                }
+                        return true
+                }
             }
+
             stealIsZER(steal) -> return true
         }
         return false
+    }
+
+    internal fun isOddIntegral(): Boolean {
+        val xSteal = this.steal
+        if (!stealIsFNZ(xSteal)) return false
+        val qExp = stealQExp(xSteal)
+        return when {
+            qExp > 0 -> false  // coefficient * 10^qExp — always even since 10^qExp is even
+            qExp == 0 -> (this.dw0 and 1L) != 0L  // check last digit of coefficient
+            else -> {  // qExp < 0 — may have fractional part
+                val q = -qExp
+                val digitLen = stealDigitLen(xSteal)
+                if (digitLen <= q) return false  // purely fractional, not an integer
+                val ctx = DecContext.current()
+                val t = ctx.tmps.mdecBridge1.set(this)
+                val encoded = c256CountTrailingZeroDigitsAndIsOddDestructive(t)
+                if (encoded == -1) return false  // zero
+                val ctzd = encoded ushr 1
+                val isOdd = (encoded and 1) != 0
+                ctzd == q && isOdd  // is integer and odd
+            }
+        }
     }
 
     fun toLongOrMinValue(): Long {
@@ -456,9 +489,11 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setSquare(x: MutDec, ctx: DecContext): MutDec = mutDecSqrImpl(this, x, ctx)
 
-    fun setPown(x: MutDec, pow: Int, ctx: DecContext = DecContext.current()): MutDec = mutDecPownImpl(this, x, pow, ctx)
+    fun setPown(x: MutDec, pow: Int, ctx: DecContext = DecContext.current()): MutDec =
+        mutDecPownImpl(this, x, pow, ctx)
 
-    fun setPow(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecPowImpl(this, x, y, ctx)
+    fun setPow(x: MutDec, y: MutDec, ctx: DecContext= DecContext.current()): MutDec =
+        mutDecPowImpl(this, x, y, ctx)
     // IEEE754-2019 5.4.1
     fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec = mutDecFmaImpl(this, x, y, a, ctx)
 
@@ -789,7 +824,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
                         // Check if result would exceed precision
                         if (resultDigitLen > ctx.precision) {
-                            return ctx.setNanSignalInvalid(this, QUANTIZE_RESULT_WOULD_EXCEED_PRECISION)
+                            return ctx.setNanSignalInvalidOperation(this, QUANTIZE_RESULT_WOULD_EXCEED_PRECISION)
                         }
 
                         // Scale up coefficient
@@ -804,7 +839,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             INF_ZER,
             ZER_INF,
             INF_FNZ,
-            FNZ_INF -> return ctx.setNanSignalInvalid(this, QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE)
+            FNZ_INF -> return ctx.setNanSignalInvalidOperation(this, QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE)
             else -> // NAN_FOUND
                 return setNanOperandFound(x, y, ctx)
 

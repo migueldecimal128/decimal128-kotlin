@@ -122,16 +122,134 @@ private fun mutDecPownImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecCo
 }
 
 internal fun mutDecPowImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-    TODO()
-    /*
-    val xSteal = x.steal
-    when (stealTyp(xSteal)) {
-        STEAL_TYP_FNZ -> return mutDecPowNImplFNZ(z, x, pow, ctx)
-        STEAL_TYP_ZER -> return mutDecPowNImplZER(z, x, pow, ctx)
-        STEAL_TYP_INF -> return mutDecPowNImplINF(z, x, pow, ctx)
-        else -> return z.setNanOperandFound(x, ctx)
+    val xSteal = x.steal;
+    val ySteal = y.steal
+    val ctx = DecContext.current()
+    val yIsIntegral: Boolean = y.isExactIntegral()
+    if (yIsIntegral) {
+        val n = y.toLongOrMinValue()
+        if (n > Int.MIN_VALUE && n <= Int.MAX_VALUE)
+            return mutDecPownImpl(z, x, n.toInt(), ctx)
+        // large integer y - handle magnitude 1 base
+        if (mutDecCompareNumericMagnitude(x, MutDec.ONE) == 0)
+            return z.setOne(stealSignFlag(xSteal) && y.isOddIntegral())
     }
-
-     */
+    val signature: Int = binopSignatureOf(xSteal, ySteal)
+    if (signature == FNZ_FNZ) {
+        return mutDecPowFnzFnz(z, x, y, ctx)
+    } else when (signature) {
+        ZER_ZER,
+        INF_ZER,
+        FNZ_ZER -> return z.setOne()
+        ZER_INF -> return if (stealSignFlag(ySteal)) z.setInfinite() else z.setZero()
+        INF_INF,
+        FNZ_INF -> return mutDecPowFnzInf(z, x, y, ctx)
+        ZER_FNZ -> return mutDecPowZerFnz(z, x, y, yIsIntegral, ctx)
+        INF_FNZ -> return mutDecPowInfFnz(z, x, y, yIsIntegral, ctx)
+        else -> {
+            if (stealIsPositiveFNZ(xSteal) && stealIsQNAN(ySteal) &&
+                mutDecCompareNumericMagnitude(x, MutDec.ONE) == 0) {
+                return z.setOne()
+            } else {
+                return z.setNanOperandFound(x, y, ctx)
+            }
+        }
+    }
 }
 
+private fun mutDecPowFnzInf(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val yNegative = stealSignFlag(y.steal)
+
+    // IEEE754-2019 p.
+    // pow (−1, ±∞) is 1 with no exception
+    // pow (+1, y) is 1 for any y (even a quiet NaN)
+    // pow(±1, ±∞) = 1
+    if (mutDecCompareNumericMagnitude(x, MutDec.ONE) == 0)
+        return z.setOne()
+
+    // |x| < 1 when sciExp < 0, |x| > 1 when sciExp >= 0
+    // (|x| == 1 already handled via pown delegation)
+    val xLessThanOne = stealSciExp(xSteal) < 0
+
+    return if (xLessThanOne xor yNegative) z.setZero() else z.setInfinite()
+}
+
+private fun mutDecPowZerFnz(z: MutDec, x: MutDec, y: MutDec, yIsIntegral: Boolean, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val yNegative = stealSignFlag(ySteal)
+    val xNegative = stealSignFlag(xSteal)
+
+    return if (yNegative) {
+        // pow(±0, y < 0) → ±∞, signal divideByZero
+        // sign of result: negative only if x is -0 and y is odd integer
+        val resultNegative = xNegative && yIsIntegral && y.isOddIntegral()
+        ctx.signalDivByZero(z.setInfinite(resultNegative))
+    } else {
+        // pow(±0, y > 0) → ±0
+        // sign of result: negative only if x is -0 and y is odd integer
+        val resultNegative = xNegative && yIsIntegral && y.isOddIntegral()
+        z.setZero(resultNegative)
+    }
+}
+
+private fun mutDecPowInfFnz(z: MutDec, x: MutDec, y: MutDec, yIsIntegral: Boolean, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val xNegative = stealSignFlag(xSteal)
+    val yNegative = stealSignFlag(ySteal)
+    // pow(+∞, y)
+    // pow(-∞, y)
+    // sign of result: negative only if x negative && y is finite odd integer
+
+    val resultNegative = xNegative && yIsIntegral && y.isOddIntegral()
+    return if (yNegative)
+        z.setZero(resultNegative)
+    else
+        z.setInfinite(resultNegative)
+}
+
+private fun mutDecPowFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+
+    // negative base with non-integer exponent → invalid
+    if (stealSignFlag(xSteal))
+        return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.POWER_OF_NEG_BASE_NON_INTEGER_EXPONENT)
+
+    // x^y = exp(y * ln(x))
+    // FIXME ... figure out where tmps come from
+    val mutX = MutDec().set(x)
+    val mutY = MutDec().set(y)
+    val log10X = MutDec()
+    val yLog10X = MutDec()
+    val result = MutDec()
+
+    val ctx38 = DecContext.internal38()
+
+    logImplFNZ(log10X, mutX, isLog10 = true, ctx38)
+    yLog10X.setMul(mutY, log10X, ctx38)
+    exp10ImplFNZ(result, yLog10X, ctx) // final operation is in ctx.precision
+
+    // apply preferred exponent: floor(y × Q(x))
+    if (result.isFiniteNonZero()) {
+        val ySteal = y.steal
+        val qX = stealQExp(xSteal)
+        val preferredQExp = when {
+            qX == 0 -> 0
+            stealSciExp(ySteal) >= 5 ->
+                if (stealSignFlag(ySteal)) Q_TINY else Q_MAX
+
+            else -> {
+                val tmp = ctx.tmps.mdecTrans1  // reuse, log10X no longer needed
+                mutDecMulImpl(tmp, mutY, qX.toLong(), ctx38)
+                tmp.setRoundToIntegralTowardNegative(tmp, ctx38)
+                val clamped = max(min(tmp.toLongOrMinValue(), Q_MAX.toLong()), Q_TINY.toLong()).toInt()
+                clamped
+            }
+        }
+
+        result.setWithPreferredScale(result, -preferredQExp, ctx)
+    }
+    return z.set(result)
+}

@@ -137,12 +137,12 @@ class TestDecimalPow {
     )
 
     @Test
-    fun testCases() {
+    fun testDecimalCases() {
         for (tc in tcs)
-            test1(tc)
+            testDecimal(tc)
     }
 
-    private fun test1(tc: TC) {
+    private fun testDecimal(tc: TC) {
         if (verbose)
             println(tc)
         val ctx = DecContext.decimal128IEEE()
@@ -151,6 +151,42 @@ class TestDecimalPow {
             val power = tc.powerStr.toDecimal()
             val result = base.pow(power)
             val expected = tc.expectedStr.toDecimal()
+            if (tc.useEQ)
+                assertTrue(result EQ expected, "pow(${tc.baseStr}, ${tc.powerStr}): expected $expected observed $result")
+            else
+                assertTrue(
+                    result bitwiseEQ expected,
+                    "pow(${tc.baseStr}, ${tc.powerStr}): expected $expected observed $result"
+                )
+            assertEquals(tc.divByZero, ctx.isSet(DecException.DIVIDE_BY_ZERO),
+                "DIVIDE_BY_ZERO mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.overflow, ctx.isSet(DecException.OVERFLOW),
+                "OVERFLOW mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.underflow, ctx.isSet(DecException.UNDERFLOW),
+                "UNDERFLOW mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.invalidOperation, ctx.isSet(DecException.INVALID_OPERATION),
+                "INVALID_OPERATION mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+            assertEquals(tc.inexact, ctx.isSet(DecException.INEXACT),
+                "INEXACT mismatch for pow(${tc.baseStr}, ${tc.powerStr})")
+        }
+
+    }
+
+    @Test
+    fun testMutDecCases() {
+        for (tc in tcs)
+            testMutDec(tc)
+    }
+
+    private fun testMutDec(tc: TC) {
+        if (verbose)
+            println(tc)
+        val ctx = DecContext.decimal128IEEE()
+        ctx.eval {
+            val base = MutDec().set(tc.baseStr)
+            val power = MutDec().set(tc.powerStr)
+            val result = MutDec().setPow(base, power)
+            val expected = MutDec().set(tc.expectedStr)
             if (tc.useEQ)
                 assertTrue(result EQ expected, "pow(${tc.baseStr}, ${tc.powerStr}): expected $expected observed $result")
             else

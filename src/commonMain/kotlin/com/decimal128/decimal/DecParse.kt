@@ -59,7 +59,7 @@ internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext
     if (ctx.decPrefs.parseMalformedThrowsNumberFormatException) {
         throw NumberFormatException("invalid decimal format:$reason:'$str'")
     }
-    return ctx.setNanSignalInvalid(md, reason)
+    return ctx.setNanSignalInvalidOperation(md, reason)
 }
 
 private fun parseDecimalOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {

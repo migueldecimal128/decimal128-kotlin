@@ -157,10 +157,7 @@ private fun powFnzInf(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     // (|x| == 1 already handled via pown delegation)
     val xLessThanOne = stealSciExp(xSteal) < 0
 
-    return if (xLessThanOne)
-        if (yNegative) Decimal.POS_INFINITY else Decimal.ZERO
-    else
-        if (yNegative) Decimal.ZERO else Decimal.POS_INFINITY
+    return if (xLessThanOne xor yNegative) Decimal.ZERO else Decimal.POS_INFINITY
 }
 
 private fun powZerFnz(x: Decimal, y: Decimal, yIsIntegral: Boolean, ctx: DecContext): Decimal {
@@ -188,18 +185,11 @@ private fun powInfFnz(x: Decimal, y: Decimal, yIsIntegral: Boolean, ctx: DecCont
     val xNegative = stealSignFlag(xSteal)
     val yNegative = stealSignFlag(ySteal)
 
-    return if (!xNegative) {
-        // pow(+∞, y)
-        if (yNegative) Decimal.ZERO else Decimal.POS_INFINITY
-    } else {
-        // pow(-∞, y)
-        // sign of result: negative only if y is finite odd integer
-        val resultNegative = yIsIntegral && y.isOddIntegral()
-        if (yNegative)
-            Decimal.zero(resultNegative)
-        else
-            Decimal.infinity(resultNegative)
-    }
+    val resultNegative = xNegative && yIsIntegral && y.isOddIntegral()
+    // pow(+∞, y)
+    // pow(-∞, y)
+    // sign of result: negative only if y is finite odd integer
+    return if (yNegative) Decimal.zero(resultNegative) else Decimal.infinity(resultNegative)
 }
 
 private fun powFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {

@@ -29,7 +29,7 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
             FNZ_INF -> z.setInfinite(ySign)
             INF_INF -> {
                 if (xSign != ySign) {
-                    return ctx.setNanSignalInvalid(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
+                    return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
                 }
                 z.setInfinite(ySign)
             }

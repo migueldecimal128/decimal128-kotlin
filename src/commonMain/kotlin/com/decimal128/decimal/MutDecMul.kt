@@ -19,7 +19,7 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
         ZER_FNZ,
         ZER_ZER -> z.setZero(productSign, productQExp)
         INF_ZER,
-        ZER_INF -> ctx.setNanSignalInvalid(z, InvalidOperationReason.MUL_ZERO_BY_INFINITY)
+        ZER_INF -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         INF_FNZ,
         FNZ_INF,
         INF_INF -> z.setInfinite(productSign)
@@ -70,7 +70,7 @@ internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext, reduceToPrefe
             if (! xSign) {
                 return mutDecSqrtPosFnz(z, x, ctx, reduceToPreferredQExp)
             } else {
-                ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
+                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
             }
         }
         STEAL_TYP_ZER -> {
@@ -83,7 +83,7 @@ internal fun mutDecSqrtImpl(z: MutDec, x: MutDec, ctx: DecContext, reduceToPrefe
             if (! xSign) {
                 z.setInfinite(false)
             } else {
-                ctx.setNanSignalInvalid(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_INFINITY)
+                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.SQUARE_ROOT_OF_NEG_INFINITY)
             }
         }
         else -> z.setNanOperandFound(x, ctx)

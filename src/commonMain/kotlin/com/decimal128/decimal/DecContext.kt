@@ -175,7 +175,7 @@ class DecContext(
         return signalMutDec(INVALID_OPERATION, mutDec, invalidOpReason)
     }
 
-    fun setNanSignalInvalid(z: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
+    fun setNanSignalInvalidOperation(z: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
         z.setNaN()
         return signalInvalidOperation(invalidOpReason, z)
     }
