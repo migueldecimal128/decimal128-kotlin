@@ -191,13 +191,13 @@ internal fun mutDecSetMinMaxImpl(z: MutDec, x: MutDec, y: MutDec, op: Int, ctx: 
         if (!stealIsNAN(xSteal)) {
             z.set(x)
             if (stealIsSNAN(ySteal))
-                ctx.signalInvalid(z)
+                ctx.signalInvalidOperation(z)
             return z
         }
         if (!stealIsNAN(ySteal)) {
             z.set(y)
             if (stealIsSNAN(xSteal))
-                ctx.signalInvalid(z)
+                ctx.signalInvalidOperation(z)
             return z
         }
     }

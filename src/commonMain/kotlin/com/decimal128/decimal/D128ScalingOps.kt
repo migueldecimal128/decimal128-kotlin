@@ -33,7 +33,7 @@ internal fun withScaleImpl(x: Decimal, decimalScale: Int): Decimal {
                     umul128xPow10to128(pentad, x.dw1, x.dw0, qDelta)
                     return decimalFNZ(x.signFlag, xQ - qDelta, pentad.dw1, pentad.dw0)
                 }
-                return ctx.signalInvalid(InvalidOperationReason.UNABLE_TO_SCALE)
+                return ctx.signalInvalidOperation(InvalidOperationReason.UNABLE_TO_SCALE)
             }
 
             qDelta < 0 -> { // remove fractional zeros
@@ -41,7 +41,7 @@ internal fun withScaleImpl(x: Decimal, decimalScale: Int): Decimal {
                 val r = ctx.tmps.mdecBridge2.setStripTrailingZeros(t, ctx, -qDelta)
                 if (r.qExp == -decimalScale)
                     return Decimal.from(r)
-                return ctx.signalInvalid(InvalidOperationReason.UNABLE_TO_SCALE)
+                return ctx.signalInvalidOperation(InvalidOperationReason.UNABLE_TO_SCALE)
             }
 
             else -> return x

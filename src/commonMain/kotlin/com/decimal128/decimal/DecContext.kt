@@ -157,7 +157,7 @@ class DecContext(
         return mutDec.set(decTrapHandlers.signal(trapContext))
     }
 
-    fun signalInvalid(mutDec: MutDec): MutDec {
+    fun signalInvalidOperation(mutDec: MutDec): MutDec {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
@@ -166,7 +166,7 @@ class DecContext(
         return signalMutDec(INVALID_OPERATION, mutDec)
     }
 
-    fun signalInvalid(invalidOpReason: InvalidOperationReason, mutDec: MutDec): MutDec {
+    fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, mutDec: MutDec): MutDec {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
@@ -177,13 +177,13 @@ class DecContext(
 
     fun setNanSignalInvalid(z: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
         z.setNaN()
-        return signalInvalid(invalidOpReason, z)
+        return signalInvalidOperation(invalidOpReason, z)
     }
 
-    fun signalInvalid(invalidOpReason: InvalidOperationReason): Decimal =
-        signalInvalid(invalidOpReason, Decimal.NaN)
+    fun signalInvalidOperation(invalidOpReason: InvalidOperationReason): Decimal =
+        this@DecContext.signalInvalidOperation(invalidOpReason, Decimal.NaN)
 
-    fun signalInvalid(invalidOpReason: InvalidOperationReason, dec: Decimal): Decimal {
+    fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, dec: Decimal): Decimal {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
@@ -319,7 +319,7 @@ class DecContext(
         return signal(INEXACT, l)
     }
 
-    fun signalInvalid(l: Long): Long {
+    fun signalInvalidOperation(l: Long): Long {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
@@ -389,5 +389,5 @@ internal fun signalInexact(l: Long): Long =
     DecContext.current().signalInexact(l)
 
 internal fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, x: Decimal = Decimal.NaN): Decimal =
-    DecContext.current().signalInvalid(invalidOpReason, x)
+    DecContext.current().signalInvalidOperation(invalidOpReason, x)
 

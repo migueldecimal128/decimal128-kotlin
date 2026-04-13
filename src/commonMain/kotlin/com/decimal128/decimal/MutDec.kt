@@ -233,7 +233,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         this.set(x)
         if (stealIsSNAN(stealX)) {
             quietSNaN()
-            ctx.signalInvalid(this)
+            ctx.signalInvalidOperation(this)
         }
         verify { validate() }
         return this
@@ -252,9 +252,9 @@ class MutDec() : C256(), Comparable<MutDec> {
         if (!alwaysSignal && !isSignaling)
             return this
         if (!isSignaling)
-            return ctx.signalInvalid(InvalidOperationReason.NAN_OPERAND, this)
+            return ctx.signalInvalidOperation(InvalidOperationReason.NAN_OPERAND, this)
         quietSNaN()
-        return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
+        return ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, this)
     }
 
     internal fun quietSNaN() {
@@ -345,7 +345,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             return finalizeFnz(stealSignFlag(steal), stealQExp(steal), ctx)
         if (stealIsSNAN(xSteal)) {
             quietSNaN()
-            ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
+            ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, this)
         }
         verify { validate() }
         return this
@@ -541,7 +541,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         return (dw0 xor signMask) - signMask
                     if (dw0 == Long.MIN_VALUE && sign)
                         return Long.MIN_VALUE
-                    ctx.signalInvalid(this)
+                    ctx.signalInvalidOperation(this)
                     return Long.MAX_VALUE - signMask
                 }
 
@@ -577,7 +577,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         return (t.dw0 xor signMask) - signMask
                     if (t.dw0 == Long.MIN_VALUE && sign)
                         return Long.MIN_VALUE
-                    ctx.signalInvalid(t)
+                    ctx.signalInvalidOperation(t)
                     return Long.MAX_VALUE - signMask
                 }
 
@@ -591,20 +591,20 @@ class MutDec() : C256(), Comparable<MutDec> {
                         // ... so the value ends in 0
                         // ... but Long.MIN_VALUE ends in 8
                     }
-                    return ctx.signalInvalid(Long.MAX_VALUE - signMask)
+                    return ctx.signalInvalidOperation(Long.MAX_VALUE - signMask)
                 }
             }
 
             STEAL_TYP_ZER -> return 0L
             STEAL_TYP_INF -> {
                 val ret = if (sign) Long.MIN_VALUE else Long.MAX_VALUE
-                ctx.signalInvalid(this)
+                ctx.signalInvalidOperation(this)
                 return ret
             }
 
             else -> { // STEAL_TYP_NAN
                 verify { isNaN() }
-                ctx.signalInvalid(InvalidOperationReason.NAN_OPERAND, this)
+                ctx.signalInvalidOperation(InvalidOperationReason.NAN_OPERAND, this)
                 return Long.MIN_VALUE
             }
         }
@@ -664,7 +664,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             else -> {
                 if (stealIsSNAN(steal)) {
                     quietSNaN()
-                    ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, this)
+                    ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, this)
                 }
             }
         }

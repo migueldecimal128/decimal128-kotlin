@@ -159,7 +159,7 @@ internal fun logImplFNZ(
 ): MutDec {
     val ctx38 = DecContext.decimal128Extended38()
     val xSteal = x.steal
-    val tmps = ctx.tmps
+    val tmps = ctx38.tmps
     val tmp1 = tmps.mdecTrans1
     val tmp2 = tmps.mdecTrans2
     val tmp3 = tmps.mdecTrans3
@@ -344,7 +344,7 @@ private val padeExp10QWeights = Array<MutDec>(10) { i ->
 
 internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val ctx38 = DecContext.decimal128Extended38()
-    val tmps = ctx.tmps
+    val tmps = ctx38.tmps
     val tmp1 = tmps.mdecTrans1
 
     // Exact fast path: if x is an integer, use the exponent shift trick
@@ -364,8 +364,12 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     tmp1.setRoundToIntegralTiesToAway(x, ctx38)
     val nLong = tmp1.toLongOrMinValue()
     when {
-        nLong == Long.MIN_VALUE || nLong > 6200 ->
-            return ctx.setSignalInexactOverflow(z, false)
+        nLong == Long.MIN_VALUE ->
+            return if (stealSignFlag(x.steal))
+                ctx.signalInexactUnderflow(z.setZero(false, -6176))
+            else
+                ctx.setSignalInexactOverflow(z, false)
+        nLong > 6200 -> return ctx.setSignalInexactOverflow(z, false)
         nLong < -6200 -> return ctx.signalInexactUnderflow(z.setZero(false, -6176))
     }
     val n = nLong.toInt()
@@ -382,7 +386,20 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     tenPowRPrime.setSquare(tenPowRPrime, ctx38)
     z.setSquare(tenPowRPrime, ctx38)
-    return z.finalizeFnz(false, z.qExp + n, ctx)
+
+    // always scale coefficient to max precision
+    val headroom = max(ctx.precision - z.digitLen, 0)
+    if (headroom > 0)
+        c256SetScaleUpPow10(z, z, headroom, ctx.tmps.pentad)
+    // round to ctx precision
+    // result is always INEXACT
+    val flags = ctx.decFlags
+    flags.clear(DecException.INEXACT)
+    z.finalizeFnz(false, z.qExp + n - headroom, ctx)
+    return if (headroom > 0 && !flags.isSet(DecException.INEXACT))
+        ctx.signalInexact(z)
+    else
+        z
 }
 
 private fun padeEval(

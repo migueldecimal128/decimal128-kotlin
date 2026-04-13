@@ -1,6 +1,7 @@
 package com.decimal128.decimal.intel
 
 import com.decimal128.decimal.DecContext
+import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.assertTrue
@@ -551,6 +552,56 @@ object IntelRunner1 {
                     println("op1:$op1 op2:$op2 parsingFlags:${ctx.decFlags}")
                 ctx.decFlags.clearAll()
                 val observed = op1.method_Int_Decimal(op2)
+                val expected = tc.resBid128(ctx)
+                assertTrue(
+                    expected bitwiseEQ observed,
+                    "bitwiseEQ mismatch expected=$expected observed=$observed for\n${tc.text}\n"
+                )
+                val expectedFlags = tc.decFlags()
+                val observedFlags = ctx.decFlags
+                assertEquals(expectedFlags.toString(), observedFlags.toString())
+            }
+        }
+    }
+
+    fun intelMethod_Decimal_Decimal(fileName: String,
+                                    funcStr: String,
+                                    method_Decimal_Decimal: Decimal.(Decimal) -> Decimal,
+                                    verbose: Boolean = false,
+                                    skip: Boolean = true,
+                                    skipCases: Array<String> = emptyArray() ) {
+        val cases = IntelParser1.parseTestsInFile(fileName)
+        val skipSet: Set<String> = if (skip) skipCases.toSet() else emptySet()
+        val filtered = cases.filter { it.funcStr == funcStr && !skipSet.contains(it.text)}
+        intelMethod_Decimal_Decimal(filtered, method_Decimal_Decimal, verbose)
+    }
+
+    fun intelMethod_Decimal_Decimal(caseStrings: Array<String>,
+                                    method_Decimal_Decimal: Decimal.(Decimal) -> Decimal,
+                                    verbose: Boolean = false ) {
+        val cases = IntelParser1.parseCases(caseStrings)
+        intelMethod_Decimal_Decimal(cases, method_Decimal_Decimal, verbose)
+    }
+
+
+    fun intelMethod_Decimal_Decimal(cases: List<IntelCase1>,
+                                    method_Decimal_Decimal: Decimal.(Decimal) -> Decimal,
+                                    verbose: Boolean = false ) {
+        cases.forEach { tc ->
+            if (verbose) {
+                println("test:${tc.text}")
+            }
+            val ctx = DecContext.decimal128Kotlin().with(tc.decRounding()).with(
+                DecPrefs.KOTLIN_DEFAULT.copy(propagatePreferSnan = false)
+            )
+            ctx.eval {
+                ctx.decFlags.clearAll()
+                val op1 = tc.op1Bid128(ctx)
+                val op2 = tc.op2Bid128(ctx)
+                if (verbose)
+                    println("op1:$op1 op2:$op2 parsingFlags:${ctx.decFlags}")
+                ctx.decFlags.clearAll()
+                val observed = op1.method_Decimal_Decimal(op2)
                 val expected = tc.resBid128(ctx)
                 assertTrue(
                     expected bitwiseEQ observed,

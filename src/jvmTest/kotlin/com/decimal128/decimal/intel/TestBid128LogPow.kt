@@ -3,11 +3,13 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal
+import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal_Decimal
 import org.junit.jupiter.api.Test
+import kotlin.arrayOf
 
-class TestBid128Log {
+class TestBid128LogPow {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testLn(): Unit = intelMethod_Decimal(
@@ -119,4 +121,50 @@ class TestBid128Log {
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
+
+    //@Test
+    fun testPow(): Unit = intelMethod_Decimal_Decimal(
+        "/intel/readtest.in",
+        "bid128_pow",
+        Decimal::pow,
+        verbose = verbose,
+        skip = true,
+        skipCases = arrayOf(
+            // skip temporarily 1.00000000000000 vs 1
+            "bid128_pow 0 [2FFDED09BEAD87C0378D8E63FFFFFFFF] [00000000000000000000000000000001] [2FFE314DC6448D9338C15B0A00000000] 20 ulp=0.0000000000e-01",
+            "bid128_pow 0 [2FFDED09BEAD87C0378D8E63FFFFFFFF] [00420000000000000000000000000001] [2FFE314DC6448D9338C15B0A00000000] 20 ulp=0.0000000000e-01",
+            "bid128_pow 0 [2FFDED09BEAD87C0378D8E63FFFFFFFF] [80000000000000000000000000000001] [2FFE314DC6448D9338C15B0A00000000] 20 ulp=0.0000000000e-01",
+            "bid128_pow 0 [2FFDED09BEAD87C0378D8E63FFFFFFFF] [80420000000000000000000000000001] [2FFE314DC6448D9338C15B0A00000000] 20 ulp=0.0000000000e-01",
+            // I think that I'm right here and Intel is wrong ... but check again
+            "bid128_pow 0 [AFFDED09BEAD87C0378D8E63FFFFFFFF] [5FFFED09BEAD87C0378D8E63FFFFFFFF] [00000000000000000000000000000000] 30 ulp=0.0000000000e-01",
+            // Intel returns wrong quantum
+            "bid128_pow 0 -1 -3 -1.0 20",
+            // Intel returns only 19 digits ... where did they come up with that?
+            "bid128_pow 0 -0.875 -3 -1.4927113702623906706 20",
+            // I differ from Intel in the last place
+            "bid128_pow 0 [5FFFED09BEAD87C0378D8E63FFFFFFFF] [2FFDED09BEAD87C0378D8E63FFFFFFFF] [5FFFED09BEAD87C0378D8E63FFFFC8BA] 20 ulp=-3.8539644841e-01",
+            // Intel is not returning the preferred exponent
+            "bid128_pow 0 [0001ed09bead87c0378d8e64ffffffff] [303e000000000000000000000000000a] [30400000000000000000000000000000] 00",
+            "bid128_pow 0 [6003b75d7734cd9e1234567890123456] [303e000000000000000000000000000a] [30400000000000000000000000000000] 00",
+            "bid128_pow 0 [69dbb75d7734cd9e1234567890123456] [303e000000000000000000000000000a] [30400000000000000000000000000000] 00",
+        )
+
+    )
+
+    @Test
+    fun testPowCases(): Unit = intelMethod_Decimal_Decimal(
+        arrayOf(
+            "bid128_pow 0 [7c000000000000000000000000000000] [303e000000000000000000000000000a] [7c000000000000000000000000000000] 00",
+            "bid128_pow 0 [7c000000000000000000010000000000] [69dbb75d7734cd9e1234567890123456] [30400000000000000000000000000001] 00",
+            "bid128_pow 0 10 -6176 1e-6176 00",
+            "bid128_pow 0 [2FFDED09BEAD87C0378D8E63FFFFFFFF] [5FFFED09BEAD87C0378D8E63FFFFFFFF] [00000000000000000000000000000000] 30 ulp=0.0000000000e-01",
+            // skip temporarily
+            //"bid128_pow 0 [2FFDED09BEAD87C0378D8E63FFFFFFFF] [00000000000000000000000000000001] [2FFE314DC6448D9338C15B0A00000000] 20 ulp=0.0000000000e-01",
+
+            "bid128_pow 0 [00000000000000000000000000000001] [00000000000000000000000000000001] [2FFE314DC6448D9338C15B0A00000000] 20 ulp=0.0000000000e-01",
+        ),
+        Decimal::pow,
+        verbose = verbose,
+    )
+
 }

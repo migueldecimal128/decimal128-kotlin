@@ -36,14 +36,18 @@ private fun mutDecPowNImplZER(z: MutDec, x: MutDec, n: Int, ctx: DecContext): Mu
     }
 }
 
-private fun mutDecPowNImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
+internal fun mutDecPowNImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
     return when {
         n > 0 -> when {
             n == 1 -> z.set(x)
             n == 2 -> z.setSquare(x, ctx)
             else -> mutDecPowNImplFNZ_pow_GE_3(z, x, n, ctx)
         }
-        n < 0 -> z.setReciprocal(mutDecPowNImplFNZ(z, x, -n, ctx), ctx)
+        n < 0 -> {
+            // FIXME - which tmp to use for this?
+            val reciprocal = MutDec().setReciprocal(x, ctx)  // 1/x first
+            mutDecPowNImplFNZ(z, reciprocal, -n, ctx)          // then raise to positive power
+        }
         else -> z.setOne()
     }
 }

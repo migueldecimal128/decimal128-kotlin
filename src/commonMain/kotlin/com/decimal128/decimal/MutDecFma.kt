@@ -66,12 +66,12 @@ private inline fun fmaNanAddend(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx:
     z.set(theNAN)
     if (z.isSignaling()) {
         z.quietSNaN()
-        return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, z)
+        return ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, z)
     }
     if (theNAN === a) {
         if ((stealIsZER(xSteal) and stealIsINF(ySteal)) or
             (stealIsINF(xSteal) and stealIsZER(ySteal)))
-            return ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
+            return ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY, z)
     }
     return z
 }

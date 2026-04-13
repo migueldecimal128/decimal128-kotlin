@@ -171,6 +171,9 @@ class Decimal private constructor(
         val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, PACKED_LENGTHS_1_1), 0L, 1L)
         val NEG_ONEe0 = Decimal(stealEncodeFNZ(1, 0, PACKED_LENGTHS_1_1), 0L, 1L)
         val ONE = POS_ONEe0
+        val POS_TENe0 = decimalFNZ(0, 0, 0L, 10L)
+        val NEG_TENe0 = decimalFNZ(1, 0, 0L, 10L)
+        val TEN = POS_TENe0
         val POS_INFINITY = Decimal(stealEncodeINF(0), 0L, 0L)
         val NEG_INFINITY = Decimal(stealEncodeINF(1), 0L, 0L)
         val INFINITY = POS_INFINITY
@@ -208,6 +211,16 @@ class Decimal private constructor(
             val steal = stealEncodeZER(signBit, qClamped)
             val zero = Decimal(steal, 0L, 0L)
             return zero
+        }
+
+        fun one(sign: Boolean, qExp: Int): Decimal {
+            require (qExp >= -33 && qExp <= 0)
+            if (qExp == 0)
+                return if (sign) NEG_ONEe0 else POS_ONEe0
+            val pow10Offset = (-qExp shl 1) and POW10_BCE
+            val dw1 = POW10[pow10Offset + 1]
+            val dw0 = POW10[pow10Offset]
+            return decimalFinite(sign, qExp, dw1, dw0)
         }
 
         /**
@@ -603,7 +616,7 @@ class Decimal private constructor(
     fun quantumExponent(): Int {
         if (isFinite())
             return qExp
-        DecContext.current().signalInvalid(InvalidOperationReason.QEXP_OF_NON_FINITE, this)
+        DecContext.current().signalInvalidOperation(InvalidOperationReason.QEXP_OF_NON_FINITE, this)
         return Int.MIN_VALUE
     }
 
@@ -1239,6 +1252,11 @@ class Decimal private constructor(
         d128RoundToIntegral(this, DecContext.current().decRounding)
 
     // ── Conversion to Kotlin Integer Types ───────────────────────────────────
+
+    fun toLongOrMinValue(): Long {
+        val ctx = DecContext.current()
+        return ctx.tmps.mdecBridge1.set(this).toLongOrMinValue()
+    }
 
     /**
      * Converts this decimal to [Long] using round-half-to-even.

@@ -12,7 +12,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
         ZER_ZER,
         ZER_FNZ,
         FNZ_ZER -> fmaZeroProd(x, y, a, ctx)
-        ZER_INF -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
+        ZER_INF -> ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
 
         FNZ_FNZ -> {
             verify { a.isInfinite() }
@@ -21,7 +21,7 @@ internal fun fmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decim
         FNZ_INF, INF_FNZ, INF_INF ->
             fmaInfProd(x.signFlag xor y.signFlag, a, ctx)
 
-        INF_ZER -> ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
+        INF_ZER -> ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
         //INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
         //INF_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
 
@@ -61,11 +61,11 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
 
     if (!hasSNAN) {
         if ((stealIsZER(stealX) and stealIsINF(stealY)) or (stealIsINF(stealX) and stealIsZER(stealY)))
-            return ctx.signalInvalid(InvalidOperationReason.MUL_ZERO_BY_INFINITY, theNAN)
+            return ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY, theNAN)
         return theNAN
     }
     val quietedNaN = Decimal.qNaN(theNAN.signFlag, theNAN.dw1, theNAN.dw0)
-    return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
+    return ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
 }
 
 private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
@@ -90,6 +90,6 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     verify { !a.isNaN() }
     if (a.isFinite() || a.signFlag == infSign)
         return Decimal.infinity(infSign)
-    return ctx.signalInvalid(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
+    return ctx.signalInvalidOperation(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 

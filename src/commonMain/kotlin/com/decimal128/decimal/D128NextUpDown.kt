@@ -25,7 +25,7 @@ internal fun nextUpOrDown(x: Decimal, isUp: Boolean): Decimal {
         stealIsQNAN(stealX) -> return x
         else -> {
             verify { stealIsSNAN(stealX) }
-            return ctx.signalInvalid(InvalidOperationReason.SNAN_OPERAND, Decimal.qNaN(signX, x.dw1, x.dw0))
+            return ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, Decimal.qNaN(signX, x.dw1, x.dw0))
         }
     }
 }
