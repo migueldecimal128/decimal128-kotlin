@@ -7,7 +7,9 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.max
 import kotlin.math.min
 
-internal fun MutDec.finalizeFnz(sign: Boolean, inboundQExp: Int, ctx: DecContext): MutDec {
+internal fun MutDec.finalizeFnz(sign: Boolean,
+                                inboundQExp: Int,
+                                ctx: DecContext = DecContext.current()): MutDec {
     val steal = steal
     val digitLen = stealDigitLen(steal)
     verify { digitLen != 0 }

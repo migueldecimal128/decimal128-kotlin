@@ -249,7 +249,7 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
         return if (stealSignFlag(xSteal))
             ctx.signalInexactUnderflow(z.setZero(false, Q_TINY))
         else
-            ctx.setSignalInexactOverflow(z, false)
+            ctx.setInfinitySignalInexactOverflow(z, false)
     }
     val ctx38 = DecContext.decimal128Extended38()
     val tmps = ctx.tmps
@@ -353,7 +353,7 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val l = x.toLongOrMinValue()
     if (l != Long.MIN_VALUE) {
         return when {
-            l > 6144L -> ctx.setSignalInexactOverflow(z, false)
+            l > 6144L -> ctx.setInfinitySignalInexactOverflow(z, false)
             l < -6176L -> ctx.signalInexactUnderflow(z.setZero(false, -6176))
             else -> z.setOne().finalizeFnz(false, l.toInt(), ctx)
         }
@@ -368,8 +368,8 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
             return if (stealSignFlag(x.steal))
                 ctx.signalInexactUnderflow(z.setZero(false, -6176))
             else
-                ctx.setSignalInexactOverflow(z, false)
-        nLong > 6200 -> return ctx.setSignalInexactOverflow(z, false)
+                ctx.setInfinitySignalInexactOverflow(z, false)
+        nLong > 6200 -> return ctx.setInfinitySignalInexactOverflow(z, false)
         nLong < -6200 -> return ctx.signalInexactUnderflow(z.setZero(false, -6176))
     }
     val n = nLong.toInt()

@@ -82,7 +82,7 @@ private inline fun pownImplFNZ(x: Decimal, n: Int, ctx: DecContext): Decimal {
 
     val tmps = ctx.tmps
     val tmp1 = tmps.mdecBridge1.set(x)
-    val tmp2 = mutDecPowNImplFNZ(tmps.mdecBridgeResult, tmp1, n, ctx)
+    val tmp2 = mutDecPownImplFNZ(tmps.mdecBridgeResult, tmp1, n, ctx)
     return Decimal.from(tmp2)
 }
 

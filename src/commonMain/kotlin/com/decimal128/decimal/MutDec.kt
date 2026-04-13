@@ -46,6 +46,9 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     companion object {
 
+        val ONE = MutDec().set(1)
+        val TEN = MutDec().set(10)
+
         fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
             decodeLittleEndianBid128(MutDec(), littleEndianLongs)
         fun decodeLittleEndianBid128(littleEndianBytes: ByteArray) =
@@ -219,10 +222,21 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     internal inline fun setZeroWithQTiny(sign: Boolean): MutDec = setZero(sign, Q_TINY)
 
-    fun setOne(sign: Boolean = false): MutDec {
-        this.dw3 = 0L; this.dw2= 0L; this.dw1 = 0L
-        this.dw0 = 1L
-        this.steal = stealEncodeFNZ(sign, 0, PACKED_LENGTHS_1_1)
+    fun setOne(sign: Boolean = false, qExp: Int = 0): MutDec {
+        require(qExp <= 0)
+        this.dw3 = 0L; this.dw2 = 0L;
+        if (qExp == 0) {
+            this.dw1 = 0L
+            this.dw0 = 1L
+            this.steal = stealEncodeFNZ(sign, qExp, PACKED_LENGTHS_1_1)
+        } else {
+            val q = -max(qExp, -33)
+            val pow10Offset = (q shl 1) and POW10_BCE
+            this.dw1 = POW10[pow10Offset + 1]
+            this.dw0 = POW10[pow10Offset]
+            this.c256Set128(dw1, dw0)
+            this.steal = stealEncodeFNZ(sign, qExp, calcStealPackedLengths128(dw1, dw0))
+        }
         verify { validate() }
         return this
     }
@@ -442,7 +456,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setSquare(x: MutDec, ctx: DecContext): MutDec = mutDecSqrImpl(this, x, ctx)
 
-    fun setPow(x: MutDec, pow: Int, ctx: DecContext): MutDec = mutDecPowNImpl(this, x, pow, ctx)
+    fun setPown(x: MutDec, pow: Int, ctx: DecContext = DecContext.current()): MutDec = mutDecPownImpl(this, x, pow, ctx)
 
     fun setPow(x: MutDec, y: MutDec, ctx: DecContext): MutDec = mutDecPowImpl(this, x, y, ctx)
     // IEEE754-2019 5.4.1

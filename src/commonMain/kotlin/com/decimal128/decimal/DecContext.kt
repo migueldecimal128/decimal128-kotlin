@@ -213,7 +213,7 @@ class DecContext(
     fun signalDivByZero(sign: Boolean): Decimal =
         signalDivByZero(if (sign) Decimal.NEG_INFINITY else Decimal.POS_INFINITY)
 
-    fun setSignalInexactOverflow(z: MutDec, isNegative: Boolean): MutDec {
+    fun setInfinitySignalInexactOverflow(z: MutDec, isNegative: Boolean): MutDec {
         when (decRounding) {
             DecRounding.ROUND_TOWARD_ZERO,
             DecRounding.ROUND_TOWARD_NEGATIVE ->
@@ -263,6 +263,9 @@ class DecContext(
         val trap = if (decTrapHandlers.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
         return signal(trap, dec)
     }
+
+    fun setZeroSignalInexactUnderflow(z: MutDec, sign: Boolean = false): MutDec =
+        signalInexactUnderflow(z.setZero(sign, Q_TINY))
 
     fun signalInexactUnderflow(mutDec: MutDec): MutDec {
         val decTrapHandlers = decTrapHandlers

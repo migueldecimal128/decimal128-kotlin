@@ -19,6 +19,10 @@ class TestDecimalPown {
     )
 
     val tcs = arrayOf(
+        TC("1.0", 3, "1.000"),
+        TC("10", 6144, "1E+6144"),
+
+
         // ---- pow == 0 ------------------------------------------------------------
         TC("3.7", 0, "1E+0"),
         TC("-3.7", 0, "1E+0"),
@@ -161,12 +165,18 @@ class TestDecimalPown {
         )
 
     @Test
-    fun testCases() {
+    fun testDecimalCases() {
         for (tc in tcs)
-            test1(tc)
+            testDecimal(tc)
     }
 
-    private fun test1(tc: TC) {
+    @Test
+    fun testMutDecCases() {
+        for (tc in tcs)
+            testMutDec(tc)
+    }
+
+    private fun testDecimal(tc: TC) {
         val ctx = DecContext.decimal128IEEE()
         ctx.eval {
             val base = tc.baseStr.toDecimal()
@@ -196,5 +206,39 @@ class TestDecimalPown {
         }
 
     }
+
+    private fun testMutDec(tc: TC) {
+        if (verbose)
+            println("$tc")
+        val ctx = DecContext.decimal128IEEE()
+        ctx.eval {
+            val base = MutDec().set(tc.baseStr)
+            val result = MutDec().setPown(base, tc.n)
+            val expected = MutDec().set(tc.expectedStr)
+            if (tc.useEQ)
+                assertTrue(result EQ expected, "pow(${tc.baseStr}, ${tc.n}): expected $expected observed $result")
+            else
+                assertTrue(
+                    result bitwiseEQ expected,
+                    "pow(${tc.baseStr}, ${tc.n}): expected $expected observed $result"
+                )
+            if (tc.expectDivByZero)
+                assertTrue(
+                    ctx.isSet(DecException.DIVIDE_BY_ZERO),
+                    "Expected DIVIDE_BY_ZERO for pow(${tc.baseStr}, ${tc.n})"
+                )
+            if (tc.expectOverflow)
+                assertTrue(ctx.isSet(DecException.OVERFLOW), "Expected OVERFLOW for pow(${tc.baseStr}, ${tc.n})")
+            if (tc.expectUnderflow)
+                assertTrue(ctx.isSet(DecException.UNDERFLOW), "Expected UNDERFLOW for pow(${tc.baseStr}, ${tc.n})")
+            if (tc.expectInvalid)
+                assertTrue(
+                    ctx.isSet(DecException.INVALID_OPERATION),
+                    "Expected INVALID_OPERATION for pow(${tc.baseStr}, ${tc.n})"
+                )
+        }
+
+    }
+
 }
 

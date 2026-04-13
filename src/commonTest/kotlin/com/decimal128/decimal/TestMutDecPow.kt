@@ -7,7 +7,7 @@ class TestMutDecPow {
 
 
     private fun md(s: String) = MutDec().set(s)
-    private fun pow(x: String, n: Int): MutDec = MutDec().setPow(md(x), n, DecContext.current())
+    private fun pow(x: String, n: Int): MutDec = MutDec().setPown(md(x), n, DecContext.current())
 
     // ---- pow == 0 ------------------------------------------------------------
 
@@ -76,7 +76,7 @@ class TestMutDecPow {
     @Test
     fun posZeroNegPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("0"), -1, ctx)
+        val result = MutDec().setPown(md("0"), -1, ctx)
         assertTrue(result bitwiseEQ md("INF"))
         assertTrue(ctx.isSet(DecException.DIVIDE_BY_ZERO))
     }
@@ -84,7 +84,7 @@ class TestMutDecPow {
     @Test
     fun negZeroNegOddPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("-0"), -1, ctx)
+        val result = MutDec().setPown(md("-0"), -1, ctx)
         assertTrue(result bitwiseEQ md("-infinity"))
         assertTrue(ctx.isSet(DecException.DIVIDE_BY_ZERO))
     }
@@ -92,7 +92,7 @@ class TestMutDecPow {
     @Test
     fun negZeroNegEvenPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("-0"), -2, ctx)
+        val result = MutDec().setPown(md("-0"), -2, ctx)
         assertTrue(result.isInfinite() && !result.sign)
         assertTrue(ctx.isSet(DecException.DIVIDE_BY_ZERO))
     }
@@ -144,13 +144,13 @@ class TestMutDecPow {
     fun qNaNZeroPow() {
         // NaN^0 = NaN, not 1
         val result = pow("NaN", 0)
-        assertTrue(result.isNaN() && !result.isSignaling())
+        assertTrue(result EQ MutDec.ONE)
     }
 
     @Test
     fun sNaNAnyPow() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("sNaN"), 5, ctx)
+        val result = MutDec().setPown(md("sNaN"), 5, ctx)
         assertTrue(ctx.isSet(DecException.INVALID_OPERATION))
         assertTrue(result.isNaN() && !result.isSignaling())
     }
@@ -159,7 +159,7 @@ class TestMutDecPow {
     fun sNaNZeroPow() {
         // sNaN^0 = qNaN + Invalid, not 1
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("sNaN"), 0, ctx)
+        val result = MutDec().setPown(md("sNaN"), 0, ctx)
         assertTrue(ctx.isSet(DecException.INVALID_OPERATION))
         assertTrue(result.isNaN() && !result.isSignaling())
     }
@@ -169,7 +169,7 @@ class TestMutDecPow {
     @Test
     fun overflowPosToInfinity() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("1E+100"), 1000, ctx)
+        val result = MutDec().setPown(md("1E+100"), 1000, ctx)
         assertTrue(result.isInfinite() && !result.sign)
         assertTrue(ctx.isSet(DecException.OVERFLOW))
     }
@@ -177,7 +177,7 @@ class TestMutDecPow {
     @Test
     fun overflowNegOddToNegInfinity() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("-1E+100"), 1001, ctx)
+        val result = MutDec().setPown(md("-1E+100"), 1001, ctx)
         assertTrue(result.isInfinite() && result.sign)
         assertTrue(ctx.isSet(DecException.OVERFLOW))
     }
@@ -185,7 +185,7 @@ class TestMutDecPow {
     @Test
     fun overflowNegEvenToPosInfinity() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("-1E+100"), 1000, ctx)
+        val result = MutDec().setPown(md("-1E+100"), 1000, ctx)
         assertTrue(result.isInfinite() && !result.isNegative())
         assertTrue(ctx.isSet(DecException.OVERFLOW))
     }
@@ -193,7 +193,7 @@ class TestMutDecPow {
     @Test
     fun underflowToZero() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("1E-100"), 1000, ctx)
+        val result = MutDec().setPown(md("1E-100"), 1000, ctx)
         assertTrue(result bitwiseEQ MutDec().setZeroWithQTiny(sign = false))
         assertTrue(ctx.isSet(DecException.UNDERFLOW))
     }
@@ -201,7 +201,7 @@ class TestMutDecPow {
     @Test
     fun underflowNegOddToNegZero() {
         val ctx = DecContext.decimal128IEEE()
-        val result = MutDec().setPow(md("-1E-100"), 1001, ctx)
+        val result = MutDec().setPown(md("-1E-100"), 1001, ctx)
         assertTrue(result bitwiseEQ md("-0E-6176"))
         assertTrue(ctx.isSet(DecException.UNDERFLOW))
     }
