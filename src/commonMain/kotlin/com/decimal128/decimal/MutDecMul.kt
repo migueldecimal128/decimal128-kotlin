@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import kotlin.math.absoluteValue
 import kotlin.math.min
 
 internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
@@ -26,6 +27,24 @@ internal fun mutDecMulImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     }
     return z
 }
+
+internal fun mutDecMulImpl(z: MutDec, x: MutDec, l: Long, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val prodQ = stealQExp(xSteal)
+    val prodSign = stealSignFlag(xSteal) xor (l < 0L)
+    return when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> {
+            val dw = l.absoluteValue
+            val bitLen = 64 - dw.countLeadingZeroBits()
+            c256SetMul(z, x, bitLen, dw, ctx.tmps.pentad)
+            z.finalizeFnz(prodSign, prodQ, ctx)
+        }
+        STEAL_TYP_ZER -> z.setZero(prodSign, prodQ)
+        STEAL_TYP_INF -> z.setInfinite(prodSign)
+        else -> z.setNanOperandFound(x, ctx)
+    }
+}
+
 
 internal fun mutDecSqrImpl(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal

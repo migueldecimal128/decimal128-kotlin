@@ -21,8 +21,7 @@ internal fun c256SetMul(z: C256, x: C256, y: C256, pentad: Pentad) {
             z.c256Set128(pHi, pLo)
             return
         }
-        // FIXME -- why did I change this from 128 to 127 ?
-        (xBitLen or yBitLen) <= 127 -> //if ((xBitLen <= 127) and (yBitLen <= 127))
+        (xBitLen or yBitLen) <= 128 ->
             _mulCoeff2x2(z, maxProdBitLen, x.dw1, x.dw0, y.dw1, y.dw0, pentad)
 
         (xBitLen <= 192 && yBitLen <= 64) ->
@@ -40,16 +39,21 @@ internal fun c256SetMul(z: C256, x: C256, yBitLen: Int, y0: Long, pentad: Pentad
     val xBitLen = x.bitLen
     verify { xBitLen <= 127 }
     val maxBitLen = xBitLen + yBitLen
+    val x0 = x.dw0
+    val x1 = x.dw1
     when {
         xBitLen <= 64 -> {
-            val x0 = x.dw0
             val pHi = unsignedMulHi(x0, y0)
             val pLo = x0 * y0
             z.c256Set128(pHi, pLo)
         }
 
-        xBitLen <= 127 -> _mulCoeff2x1(z, maxBitLen, x.dw1, x.dw0, y0, pentad)
-        else -> throwCoeffMultiplyOverflow()
+        xBitLen <= 128 -> _mulCoeff2x1(z, maxBitLen, x1, x0, y0, pentad)
+        xBitLen <= 192 ->
+            _mulCoeff3x1(z, maxBitLen, x.dw2, x1, x0, y0, pentad)
+
+        else ->
+            _mulCoeff4x1(z, maxBitLen, x.dw3, x.dw2, x1, x0, y0, pentad)
     }
 }
 
