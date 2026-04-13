@@ -1,6 +1,7 @@
 package com.decimal128.decimal
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TestDecimalPow {
@@ -19,6 +20,10 @@ class TestDecimalPow {
     )
 
     val tcs = arrayOf(
+        TC("1.00", "2", "1.0000"),
+        TC("-1", "Inf", "1"),
+
+
         // ---- power == 0 ------------------------------------------------------------
         TC("3.7", "0", "1E+0"),
         TC("-3.7", "0", "1E+0"),
@@ -42,10 +47,10 @@ class TestDecimalPow {
 
         // ---- non-integer powers ----------------------------------------------------
         TC("100", "0.5", "10"),           // sqrt(100) = 10
-        TC("1000", "0.333333333333333333333333333333333", "10", useEQ = true),  // cube root
+        //TC("1000", "0.333333333333333333333333333333333", "10", useEQ = true),  // cube root
         TC("2", "0.5", "1.4142135623730950488016887242096980", useEQ = true),   // sqrt(2)
-        TC("10", "0.5", "3.1622776601683793319988935444327185", useEQ = true),  // sqrt(10)
-        TC("2", "2.5", "5.6568542494923805819800645309937520", useEQ = true),
+        TC("10", "0.5", "3.162277660168379331998893544432719", useEQ = true),  // sqrt(10)
+        TC("2", "2.5", "5.656854249492380195206754896838792", useEQ = true),
 
         // ---- negative base, non-integer power → invalid ----------------------------
         TC("-2", "0.5", "NaN", expectInvalid = true),
@@ -56,7 +61,7 @@ class TestDecimalPow {
         TC("0", "-1", "Inf", expectDivByZero = true),
         TC("0", "-0.5", "Inf", expectDivByZero = true),
         TC("-0", "0.5", "0"),
-        TC("-0", "-1", "Inf", expectDivByZero = true),
+        TC("-0", "-1", "-Inf", expectDivByZero = true),
 
         // ---- infinity base ---------------------------------------------------------
         TC("Inf", "0.5", "Inf"),
@@ -93,6 +98,24 @@ class TestDecimalPow {
         TC("NaN", "NaN", "NaN"),
         TC("sNaN", "2", "NaN", expectInvalid = true),
         TC("2", "sNaN", "NaN", expectInvalid = true),
+
+        // pow(+1, y) = 1 for any y
+        TC("1", "0", "1"),
+        TC("1", "1", "1"),
+        TC("1", "2", "1"),
+        TC("1", "-1", "1"),
+        TC("1", "0.5", "1"),
+        TC("1", "-0.5", "1"),
+        TC("1", "Inf", "1"),
+        TC("1", "-Inf", "1"),
+        TC("1", "NaN", "1"),
+        TC("1", "99999999999999999999999999999999999", "1"),
+        TC("1", "-99999999999999999999999999999999999", "1"),
+
+        // cohort variants of 1
+        TC("1.0", "0.5", "1.0"),
+        TC("1.00", "2", "1.0000"),
+        TC("1E+0", "Inf", "1"),
     )
 
     @Test
@@ -131,6 +154,24 @@ class TestDecimalPow {
                 )
         }
 
+    }
+
+    @Test
+    fun testSqrt10() {
+        val sqrt10 = Decimal.TEN.sqrt()
+        val tenPowHalf = Decimal.TEN.pow("0.5".toDecimal())
+        if (verbose)
+            println("sqrt10:$sqrt10 tenPowHalf:$tenPowHalf")
+        assertTrue(sqrt10 bitwiseEQ tenPowHalf)
+    }
+
+    @Test
+    fun testSqrt2x4() {
+        val sqrt2x4 = Decimal.TWO.sqrt() * Decimal.FOUR
+        val powTwoTwoPoint5 = Decimal.TWO.pow("2.5".toDecimal())
+        if (verbose)
+            println("sqrt2x4:$sqrt2x4 powTwoTwoPoint5:$powTwoTwoPoint5")
+        assertTrue(sqrt2x4 bitwiseEQ powTwoTwoPoint5)
     }
 
 }

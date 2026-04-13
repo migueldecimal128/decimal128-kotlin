@@ -171,6 +171,8 @@ class Decimal private constructor(
         val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, PACKED_LENGTHS_1_1), 0L, 1L)
         val NEG_ONEe0 = Decimal(stealEncodeFNZ(1, 0, PACKED_LENGTHS_1_1), 0L, 1L)
         val ONE = POS_ONEe0
+        val TWO = decimalFNZ(0, 0, 0L, 2L)
+        val FOUR = decimalFNZ(0, 0, 0L, 4L)
         val POS_TENe0 = decimalFNZ(0, 0, 0L, 10L)
         val NEG_TENe0 = decimalFNZ(1, 0, 0L, 10L)
         val TEN = POS_TENe0
@@ -1200,6 +1202,9 @@ class Decimal private constructor(
 
     /** Returns the square of this value. */
     fun square(): Decimal = d128SqrImpl(this, DecContext.current())
+
+    /** returns the sqrt of this value **/
+    fun sqrt(): Decimal = d128SqrtImpl(this)
 
     // ── Rounding ──────────────────────────────────────────────────────────────
 

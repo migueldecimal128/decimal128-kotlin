@@ -797,6 +797,35 @@ class MutDec() : C256(), Comparable<MutDec> {
         }
     }
 
+    fun setWithPreferredScale(x: MutDec, decimalScale: Int, ctx: DecContext): MutDec {
+        val xSteal = x.steal
+        when (stealTyp(xSteal)) {
+            STEAL_TYP_FNZ -> {
+                val xQ = stealQExp(xSteal)
+                val qDesired = -decimalScale
+                val qDelta = xQ - qDesired
+                when {
+                    qDelta > 0 -> { // add fractional zeros if possible
+                        val xDigitLen = stealDigitLen(xSteal)
+                        val headroom = min(ctx.precision - xDigitLen, xQ - Q_TINY)
+                        if (qDelta <= headroom) {
+                            val pentad = ctx.tmps.pentad
+                            c256SetScaleUpPow10(this, x, qDelta, pentad)
+                            return finalizeFnz(stealSignFlag(xSteal), xQ - qDelta, ctx)
+                        }
+                        return set(x)  // can't achieve, return as-is
+                    }
+                    // remove fractional zeros if possible
+                    qDelta < 0 -> return setStripTrailingZeros(x, ctx, -qDelta)
+
+                    else -> return set(x)
+                }
+            }
+            STEAL_TYP_ZER -> return setZero(stealSignFlag(xSteal), -decimalScale)
+            else -> return set(x)  // inf, NaN — return as-is
+        }
+    }
+
     // IEEE754-2019 5.3.3
     fun setScaleB(x: MutDec, pow10: Int, ctx: DecContext): MutDec {
         set(x)
