@@ -12,7 +12,7 @@ internal const val Q_MAX = 6111
 internal const val Q_TINY = -6176
 internal const val E_MAX = 6144
 internal const val E_MIN = -6143
-internal const val NAN_PAYLOAD_PRECISION = 33
+internal const val NAN_PAYLOAD_PRECISION_33 = 33
 
 
 

@@ -302,13 +302,11 @@ object D128SerdeBid {
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
-                val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
                 val payloadHi = coeffTHi
                 val payloadLo = bid128Lo
-                if (payloadHi > payloadMaxHi || payloadHi == payloadMaxHi && unsignedGT(payloadLo, payloadMaxLo)) {
-                    return Decimal.NaN(sign, isSignaling)
-                }
-                return Decimal.NaN(sign, isSignaling, payloadHi, payloadLo)
+                val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
+                return if (isSignaling) Decimal.sNaN(sign, payloadHi, payloadLo)
+                else Decimal.qNaN(sign, payloadHi, payloadLo)
             }
 
             else -> {
@@ -430,9 +428,9 @@ object D128SerdeBid {
             // if the top 5 bits are 0x11111 then NaN
             (combination shr (w5 - 5)) == 0b11111 -> {
                 // with the next bit determining signaling NaN
-                val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
                 val payloadDw0 = min(coeffT, payloadMax)
-                return Decimal.NaN(sign, isSignaling, 0L, payloadDw0)
+                val isSignaling = ((combination shr (w5 - 6)) and 1) != 0
+                return if (isSignaling) Decimal.sNaN(sign, 0L, payloadDw0) else Decimal.qNaN(sign, 0L, payloadDw0)
             }
             else -> {
                 // all possible cases were covered above

@@ -319,7 +319,8 @@ class Decimal private constructor(
          * If the payload exceeds 33 digits, the canonical no-payload NaN is returned.
          */
         fun qNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
-            val payloadIsZero = (dw1 or dw0) == 0L
+            val payloadIsZero =
+                (dw1 or dw0) == 0L || calcDigitLen128(dw1, dw0) > NAN_PAYLOAD_PRECISION_33
             return when {
                 payloadIsZero && sign -> NEG_QNAN
                 payloadIsZero -> POS_QNAN
@@ -339,8 +340,8 @@ class Decimal private constructor(
          * If the payload exceeds 33 digits, the canonical no-payload NaN is returned.
          */
         fun sNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
-            val payloadIsZero = (dw1 or dw0) == 0L || calcDigitLen128(dw1, dw0) > 33
-
+            val payloadIsZero =
+                (dw1 or dw0) == 0L || calcDigitLen128(dw1, dw0) > NAN_PAYLOAD_PRECISION_33
             return when {
                 payloadIsZero && sign -> NEG_SNAN
                 payloadIsZero -> POS_SNAN
@@ -348,32 +349,6 @@ class Decimal private constructor(
                     stealEncodeSNAN(if (sign) 1 else 0, dw1, dw0), dw1, dw0)
             }
         }
-
-        fun NaN(sign: Boolean, signaling: Boolean = false): Decimal =
-            when {
-                !signaling && !sign -> POS_QNAN
-                !signaling && sign -> NEG_QNAN
-                sign -> NEG_SNAN
-                else -> POS_SNAN
-            }
-
-        fun NaN(
-            sign: Boolean = false, signaling: Boolean = false,
-            payloadDw1: Long, payloadDw0: Long
-        ): Decimal {
-            if ((payloadDw1 or payloadDw0) != 0L) {
-                val digitLen = calcDigitLen128(payloadDw1, payloadDw0)
-                if (digitLen <= NAN_PAYLOAD_PRECISION) {
-                    val signBit = if (sign) 1 else 0
-                    val steal =
-                        if (signaling) stealEncodeSNAN(signBit, payloadDw1, payloadDw0)
-                        else stealEncodeQNAN(signBit, payloadDw1, payloadDw0)
-                    return Decimal(steal, payloadDw1, payloadDw0)
-                }
-            }
-            return NaN(sign, signaling)
-        }
-
 
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
@@ -653,7 +628,7 @@ class Decimal private constructor(
             stealIsZER(steal) && stealQExp(steal) == 0 -> return zero(newSign)
             stealIsINF(steal) -> return infinity(newSign)
             stealIsNAN(steal) && stealBitLen(steal) == 0 ->
-                    return NaN(newSign, signaling = stealIsSNAN(steal))
+                    return if (stealIsSNAN(steal)) Decimal.sNaN(newSign) else Decimal.qNaN(newSign)
         }
         return Decimal(steal xor BIT31, dw1, dw0)
     }
