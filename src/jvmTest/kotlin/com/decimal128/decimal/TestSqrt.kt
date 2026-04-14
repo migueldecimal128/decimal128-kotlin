@@ -252,7 +252,7 @@ class TestSqrt{
                 do {
                     val deltaQ = qPreferred - qZ
                     val chunk = min(min(9, deltaQ), ntz)
-                    val chunkRemainder = barrettDivModPow10(quot, sqrt, chunk)
+                    val chunkRemainder = barrettDivRemPow10(quot, sqrt, chunk)
                     if (chunkRemainder > 0) {
                         var pow10Count = 0
                         var t = chunkRemainder

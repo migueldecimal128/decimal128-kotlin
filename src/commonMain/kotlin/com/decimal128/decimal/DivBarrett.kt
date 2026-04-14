@@ -4,12 +4,12 @@ package com.decimal128.decimal
 
 internal fun barrettDivPow10(z: C256, x: C256, pow10: Int): Residue {
     verify { pow10 in 1..<BARRETT_POW10_MAXX }
-    val remainder = barrettDivModPow10(z, x, pow10)
+    val remainder = barrettDivRemPow10(z, x, pow10)
     val residue = Residue.residueFromRemainderPow10(remainder, pow10)
     return residue
 }
 
-internal fun barrettDivModPow10(z: C256, x: C256, pow10: Int): Long {
+internal fun barrettDivRemPow10(z: C256, x: C256, pow10: Int): Long {
     verify { pow10 in 1..<BARRETT_POW10_MAXX }
     val loBits = x.dw0 and ((1L shl pow10) - 1)
     c256SetShiftRight(z, x, pow10)
@@ -17,7 +17,6 @@ internal fun barrettDivModPow10(z: C256, x: C256, pow10: Int): Long {
     val remainder10 = (remainder5 shl pow10) + loBits
     return remainder10
 }
-
 
 internal fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
     verify { pow5 in 1..<BARRETT_POW10_MAXX }
