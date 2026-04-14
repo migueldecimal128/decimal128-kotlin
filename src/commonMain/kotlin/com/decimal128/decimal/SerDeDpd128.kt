@@ -216,7 +216,7 @@ private fun encodeSignAndGCombinationFieldDpd128(type: Int, sign: Boolean, qExp:
     return signCombo
 }
 
-internal fun declets6FromBin(bin: Long): Long {
+private fun declets6FromBin(bin: Long): Long {
     require(bin in 0L..EIGHTEEN_NINES)
     var t = bin
     var declets6 = 0L
@@ -224,7 +224,7 @@ internal fun declets6FromBin(bin: Long): Long {
     while (t != 0L) {
         val q = unsignedMulHi(t, 0x020C49BA5E353F7DL) ushr 3
         val r = t - (q * 1000L)
-        val declet = encodeDpdDeclet(r)
+        val declet = dpdEncodeDeclet(r)
         declets6 = declets6 or (declet shl shift)
         shift += 10
         t = q
@@ -232,23 +232,15 @@ internal fun declets6FromBin(bin: Long): Long {
     return declets6
 }
 
-internal fun binFromDeclets6(declets6: Long): Long {
-    if (declets6 == 0L)
-        return 0L
-    var bin = decodeDpdDeclet(declets6 ushr 50)
-    for (shift in 40 downTo 0 step 10)
-        bin = (bin * 1000L) + decodeDpdDeclet((declets6 ushr shift) and 0x3FFL)
-    return bin
-}
-
-// there could be up to 7 declets with the top declet having 4 bits
-internal fun binFromDeclets7(declets7: Long): Long {
+// there could be up to 7 declets with the top declet having
+// only 4 bits instead of 10
+private fun binFromDeclets7(declets7: Long): Long {
     var bin = 0L
     var decletsT = declets7
     var multiplier = 1L
     while (decletsT != 0L) {
         val declet = decletsT and 0x3FFL
-        val bin1 = decodeDpdDeclet(declet)
+        val bin1 = dpdDecodeDeclet(declet)
         bin += bin1 * multiplier
         multiplier *= 1000L
         decletsT = decletsT ushr 10
@@ -256,7 +248,7 @@ internal fun binFromDeclets7(declets7: Long): Long {
     return bin
 }
 
-internal fun encodeDpdDeclet(n: Long): Long {
+internal fun dpdEncodeDeclet(n: Long): Long {
     require(n in 0..999) { "n must be in 0..999" }
 
     if (n == 0L)
@@ -311,7 +303,7 @@ internal fun encodeDpdDeclet(n: Long): Long {
  * Mapping: bit9..bit0 → p q r s t u v w x y
  * Equations: Cowlishaw's dpd2bcd (handles canonical + non-canonical).
  */
-internal fun decodeDpdDeclet(declet: Long): Long {
+internal fun dpdDecodeDeclet(declet: Long): Long {
     require(declet in 0..1023) { "declet must be 10 bits" }
 
     if (declet == 0L)
