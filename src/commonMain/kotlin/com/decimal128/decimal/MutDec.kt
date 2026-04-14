@@ -49,31 +49,6 @@ class MutDec() : C256(), Comparable<MutDec> {
         val ONE = MutDec().set(1)
         val TEN = MutDec().set(10)
 
-        fun decodeLittleEndianBid128(littleEndianLongs: LongArray) =
-            decodeLittleEndianBid128(MutDec(), littleEndianLongs)
-
-        fun decodeLittleEndianBid128(littleEndianBytes: ByteArray) =
-            decodeLittleEndianBid128(MutDec(), littleEndianBytes)
-
-        fun decodeBigEndianBid128(bigEndianLongs: LongArray) =
-            decodeBigEndianBid128(MutDec(), bigEndianLongs)
-
-        fun decodeBigEndianBid128(bigEndianBytes: ByteArray) =
-            decodeBigEndianBid128(MutDec(), bigEndianBytes)
-
-        fun decodeLittleEndianDpd128(littleEndianLongs: LongArray) =
-            decodeLittleEndianDpd128(MutDec(), littleEndianLongs)
-
-        fun decodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
-            decodeLittleEndianDpd128(MutDec(), littleEndianBytes)
-
-        fun decodeBigEndianDpd128(bigEndianLongs: LongArray) =
-            decodeBigEndianDpd128(MutDec(), bigEndianLongs)
-
-        fun decodeBigEndianDpd128(bigEndianBytes: ByteArray) =
-            decodeBigEndianDpd128(MutDec(), bigEndianBytes)
-
-
         private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
         private const val S_U32_DIV_1E1 = 35
 
@@ -417,12 +392,6 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun set(str: String, ctx: DecContext): MutDec {
         parseToMutDec(this, str, ctx)
-        verify { validate() }
-        return this
-    }
-
-    fun setBid128(bid128Hi: Long, bid128Lo: Long): MutDec {
-        decodeBid128Longs(this, bid128Hi, bid128Lo)
         verify { validate() }
         return this
     }
@@ -1063,29 +1032,5 @@ class MutDec() : C256(), Comparable<MutDec> {
 
         return (if (steal < 0) "-" else "") + super.toString() + "E" + qExp.toString()
     }
-
-    fun encodeLittleEndianLongsBid128() = encodeLittleEndianBid128(LongArray(2))
-    fun encodeLittleEndianBid128(littleEndianLongs: LongArray) = encodeLittleEndianBid128(this, littleEndianLongs)
-    fun encodeLittleEndianBytesBid128() = encodeLittleEndianBid128(ByteArray(16))
-    fun encodeLittleEndianBid128(littleEndianBytes: ByteArray) = encodeLittleEndianBid128(this, littleEndianBytes)
-
-    fun encodeLittleEndianLongsDpd128() = encodeLittleEndianDpd128(LongArray(2))
-    fun encodeLittleEndianDpd128(littleEndianLongs: LongArray) =
-        encodeLittleEndianDpd128(littleEndianLongs, this, DecContext.current().tmps.knuthD)
-    fun encodeLittleEndianBytesDpd128() = encodeLittleEndianDpd128(ByteArray(16))
-    fun encodeLittleEndianDpd128(littleEndianBytes: ByteArray) =
-        encodeLittleEndianDpd128(littleEndianBytes, this, DecContext.current().tmps.knuthD)
-
-    fun encodeBigEndianLongsBid128() = encodeBigEndianBid128(LongArray(2))
-    fun encodeBigEndianBid128(BigEndianLongs: LongArray) = encodeBigEndianBid128(this, BigEndianLongs)
-    fun encodeBigEndianBytesBid128() = encodeBigEndianBid128(ByteArray(16))
-    fun encodeBigEndianBid128(BigEndianBytes: ByteArray) = encodeBigEndianBid128(this, BigEndianBytes)
-
-    fun encodeBigEndianLongsDpd128() = encodeBigEndianDpd128(LongArray(2))
-    fun encodeBigEndianDpd128(bigEndianLongs: LongArray) =
-        encodeBigEndianDpd128(bigEndianLongs, this, DecContext.current().tmps.knuthD)
-    fun encodeBigEndianBytesDpd128() = encodeBigEndianDpd128(ByteArray(16))
-    fun encodeBigEndianDpd128(bigEndianBytes: ByteArray) =
-        encodeBigEndianDpd128(bigEndianBytes, this, DecContext.current().tmps.knuthD)
 
 }

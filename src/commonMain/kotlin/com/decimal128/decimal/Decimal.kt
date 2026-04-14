@@ -250,9 +250,7 @@ class Decimal private constructor(
             D128SerdeBid.decodeBid64(bid64)
 
         fun fromDpd128(bid128Hi: Long, bid128Lo: Long): Decimal {
-            val dpd = DecContext.current().tmps.mdecBridge1
-            dpd.setDpd128(bid128Hi, bid128Lo)
-            return Decimal.from(dpd)
+            TODO()
         }
 
         /**
