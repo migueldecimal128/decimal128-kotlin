@@ -1215,55 +1215,75 @@ class Decimal private constructor(
     /** returns the sqrt of this value **/
     fun sqrt(): Decimal = d128SqrtImpl(this)
 
-    // ── Rounding ──────────────────────────────────────────────────────────────
+// ── Rounding ──────────────────────────────────────────────────────────────
+
+    /**
+     * Rounds to an integer using the rounding mode from [DecContext.current].
+     *
+     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
+     * result differs from this value. Defaults to `false` (no signal).
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` (when [signalInexact] is `true`).
+     */
+    fun roundToIntegral(signalInexact: Boolean = false): Decimal =
+        d128RoundToIntegral(this, DecContext.current().decRounding, beQuiet = !signalInexact)
+
+    /**
+     * included as an internal function for testing purposes.
+     * but the name used in IEEE754 is poorly chose .. Round, but also Exact ?
+     */
+    internal fun roundToIntegralExact() = roundToIntegral(signalInexact = true)
 
     /**
      * Rounds to the nearest integer, ties resolved to even (banker's rounding).
-     * Does not signal [DecException.INEXACT].
-     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven`.
+     *
+     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
+     * result differs from this value. Defaults to `false` (no signal).
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven` /
+     * `roundToIntegralExact` (when [signalInexact] is `true`).
      */
-    fun roundToIntegralTiesToEven(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, beQuiet = true)
+    fun roundToIntegralTiesToEven(signalInexact: Boolean = false): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, beQuiet = !signalInexact)
 
     /**
      * Rounds to the nearest integer, ties resolved away from zero.
-     * Does not signal [DecException.INEXACT].
-     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway`.
+     *
+     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
+     * result differs from this value. Defaults to `false` (no signal).
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway` /
+     * `roundToIntegralExact` (when [signalInexact] is `true`).
      */
-    fun roundToIntegralTiesToAway(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, beQuiet = true)
+    fun roundToIntegralTiesToAway(signalInexact: Boolean = false): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, beQuiet = !signalInexact)
 
     /**
      * Rounds toward zero (truncation).
-     * Does not signal [DecException.INEXACT].
-     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero`.
+     *
+     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
+     * result differs from this value. Defaults to `false` (no signal).
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero` /
+     * `roundToIntegralExact` (when [signalInexact] is `true`).
      */
-    fun roundToIntegralTowardZero(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, beQuiet = true)
-
+    fun roundToIntegralTowardZero(signalInexact: Boolean = false): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, beQuiet = !signalInexact)
     /**
      * Rounds toward positive infinity (ceiling).
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardPositive`.
      */
-    fun roundToIntegralTowardPositive(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, beQuiet = true)
+    fun roundToIntegralTowardPositive(signalInexact: Boolean = false): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, beQuiet = !signalInexact)
 
     /**
      * Rounds toward negative infinity (floor).
      * Does not signal [DecException.INEXACT].
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardNegative`.
      */
-    fun roundToIntegralTowardNegative(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, beQuiet = true)
-
-    /**
-     * Rounds to an integer using the rounding mode from [ctx], and **does** signal
-     * [DecException.INEXACT] if the value is not already integral.
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
-     */
-    fun roundToIntegralExact(): Decimal =
-        d128RoundToIntegral(this, DecContext.current().decRounding)
+    fun roundToIntegralTowardNegative(signalInexact: Boolean = false): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, beQuiet = !signalInexact)
 
     // ── Conversion to Kotlin Integer Types ───────────────────────────────────
 
