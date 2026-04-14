@@ -861,8 +861,18 @@ class Decimal private constructor(
                 (this.dw1 xor other.dw1) or
                 (this.dw0 xor other.dw0)) == 0L
 
+    /** Returns `true` if this value and [other] are numerically equal
+     *  under Java-style semantics.
+     *
+     *  @see compareJavaStyleTo for the full semantics.
+     */
     infix fun EQ(other: Decimal): Boolean = eqJavaStyle(other)
 
+    /** Returns `true` if this value and [other] are not numerically equal
+     *  under Java-style semantics.
+     *
+     *  @see compareJavaStyleTo for the full semantics.
+     */
     infix fun NE(other: Decimal): Boolean = !eqJavaStyle(other)
 
     /**
@@ -1134,6 +1144,15 @@ class Decimal private constructor(
      */
     fun compareJavaStyleTo(other: Decimal): Int = d128CompareJavaStyle(this, other)
 
+    /**
+     * Returns `true` if this value and [other] are equal under Java-style
+     * semantics — equivalent to `compareJavaStyleTo(other) == 0`.
+     *
+     * This is the implementation backing the [EQ] and [NE] infix operators.
+     * Prefer those at call sites, either a functions or as infix operators.
+     *
+     * @see compareJavaStyleTo for the full semantics.
+     */
     fun eqJavaStyle(other: Decimal): Boolean = d128EqJavaStyle(this, other)
 
     // ── String Representation ─────────────────────────────────────────────────
