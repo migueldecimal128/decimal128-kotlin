@@ -18,7 +18,6 @@ import com.decimal128.decimal.Decimal.Companion.POS_QNAN
 import com.decimal128.decimal.Decimal.Companion.POS_SNAN
 import com.decimal128.decimal.Decimal.Companion.POS_ZEROe0
 import com.decimal128.decimal.Decimal.Companion.ZERO
-import com.decimal128.decimal.Decimal.Companion.sNaN
 import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
@@ -312,11 +311,8 @@ class Decimal private constructor(
             return Decimal(steal, mutDec.dw1, mutDec.dw0)
         }
 
-        /**
-         * Returns a quiet NaN with no payload.
-         * @param sign whether to set the sign bit (has no numeric meaning for NaNs).
-         */
-        fun qNaN(sign: Boolean) = if (sign) NEG_QNAN else POS_QNAN
+        fun qNaN(sign: Boolean): Decimal =
+            if (sign) NEG_QNAN else POS_QNAN
 
         /**
          * Returns a quiet NaN with a 128-bit diagnostic payload.
@@ -343,7 +339,8 @@ class Decimal private constructor(
          * If the payload exceeds 33 digits, the canonical no-payload NaN is returned.
          */
         fun sNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
-            val payloadIsZero = (dw1 or dw0) == 0L
+            val payloadIsZero = (dw1 or dw0) == 0L || calcDigitLen128(dw1, dw0) > 33
+
             return when {
                 payloadIsZero && sign -> NEG_SNAN
                 payloadIsZero -> POS_SNAN
@@ -352,11 +349,6 @@ class Decimal private constructor(
             }
         }
 
-        /**
-         * Returns a quiet or signaling NaN with no payload.
-         * @param sign whether to set the sign bit.
-         * @param signaling `true` for sNaN, `false` (default) for qNaN.
-         */
         fun NaN(sign: Boolean, signaling: Boolean = false): Decimal =
             when {
                 !signaling && !sign -> POS_QNAN
@@ -500,7 +492,7 @@ class Decimal private constructor(
     fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealSciExp(steal) < -6143
 
     /**
-     * Returns `true` if this value is normal, subnormal, or zero
+     * Returns `true` if this value is normal, subnormal, or zero.
      * Returns `false` for infinity, and NaN.
      */
     fun isFinite(): Boolean = stealIsFinite(steal)
@@ -1019,7 +1011,7 @@ class Decimal private constructor(
         d128CompareQuiet754(this, other)
 
     /**
-     * IEEE 754-2019 `compareQuietOrdered`: returns `true` if either operand is NaN.
+     * IEEE 754-2019 `compareQuietOrdered`: returns `true` if **neither** operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
     fun compareQuietOrdered(other: Decimal): Boolean =
@@ -1362,6 +1354,19 @@ class Decimal private constructor(
 
 // ── Conversion to Kotlin Integer Types ───────────────────────────────────
 
+    /**
+     * Converts this decimal to [Long] if the value is exactly integral
+     * and within [Long] range, returning [Long.MIN_VALUE] as a sentinel
+     * on failure without signaling [DecException.INVALID_OPERATION].
+     *
+     * Unlike [toLongTiesToEven] and similar, this function does not round —
+     * non-integral values return [Long.MIN_VALUE]. It also does not signal
+     * on overflow, NaN, or infinity.
+     *
+     * Use this when you need a fast, exception-free conversion that succeeds
+     * only when the value is **exactly** representable as a [Long], without
+     * disturbing the current [DecContext] flags.
+     */
     fun toLongOrMinValue(): Long {
         val ctx = DecContext.current()
         return ctx.tmps.mdecBridge1.set(this).toLongOrMinValue()

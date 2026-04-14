@@ -192,6 +192,20 @@ class DecContext(
         return signal(INVALID_OPERATION, dec, invalidOpReason)
     }
 
+    fun signalSNanOperandFound(nan: Decimal): Decimal {
+        verify { nan.isNaN() }
+        // Intel libbid tests do not prefer sNaN,
+        // They return the first left-to-right NaN, but signal if any operant is sNaN
+        // therefore, this might be called with a NaN that is actually a qNaN that
+        // does not need to be quieted.
+        val quietedNaN =
+            if (nan.isSignaling())
+                Decimal.qNaN(nan.signFlag, nan.dw1, nan.dw0)
+            else
+                nan
+        return signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
+    }
+
     fun signalDivByZero(mutDec: MutDec): MutDec {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(DIVIDE_BY_ZERO)) {

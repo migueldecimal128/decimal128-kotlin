@@ -54,18 +54,17 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
     verify { stealIsNAN(a.steal) }
     val hasSNAN = stealIsSNAN(stealX) or stealIsSNAN(stealY) or stealIsSNAN(stealA)
     val targetNAN = if (hasSNAN) STEAL_NAN_SNAN else STEAL_NAN_QNAN
-    val theNAN =
+    val theNaN =
         if ((stealX and STEAL_NAN_MASK) == targetNAN) x
         else if ((stealY and STEAL_NAN_MASK) == targetNAN) y
         else a
 
     if (!hasSNAN) {
         if ((stealIsZER(stealX) and stealIsINF(stealY)) or (stealIsINF(stealX) and stealIsZER(stealY)))
-            return ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY, theNAN)
-        return theNAN
+            return ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY, theNaN)
+        return theNaN
     }
-    val quietedNaN = Decimal.qNaN(theNAN.signFlag, theNAN.dw1, theNAN.dw0)
-    return ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
+    return ctx.signalSNanOperandFound(theNaN)
 }
 
 private fun fmaZeroProd(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): Decimal {
