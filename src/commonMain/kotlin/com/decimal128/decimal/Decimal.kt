@@ -1219,73 +1219,113 @@ class Decimal private constructor(
 
     /**
      * Rounds to an integer using the rounding mode from [DecContext.current].
+     * Does not signal [DecException.INEXACT].
      *
-     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
-     * result differs from this value. Defaults to `false` (no signal).
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` (when [signalInexact] is `true`).
+     * IEEE 754-2019 §5.3.1 `roundToIntegralValue`.
      */
-    fun roundToIntegral(signalInexact: Boolean = false): Decimal =
-        d128RoundToIntegral(this, DecContext.current().decRounding, beQuiet = !signalInexact)
+    fun roundToIntegral(): Decimal =
+        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = true)
 
     /**
-     * included as an internal function for testing purposes.
-     * but the name used in IEEE754 is poorly chose .. Round, but also Exact ?
+     * Rounds to an integer using the rounding mode from [DecContext.current],
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
      */
-    internal fun roundToIntegralExact() = roundToIntegral(signalInexact = true)
+    fun roundToIntegralSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = false)
 
     /**
      * Rounds to the nearest integer, ties resolved to even (banker's rounding).
+     * Does not signal [DecException.INEXACT].
      *
-     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
-     * result differs from this value. Defaults to `false` (no signal).
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven` /
-     * `roundToIntegralExact` (when [signalInexact] is `true`).
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven`.
      */
-    fun roundToIntegralTiesToEven(signalInexact: Boolean = false): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, beQuiet = !signalInexact)
+    fun roundToIntegralTiesToEven(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
+
+    /**
+     * Rounds to the nearest integer, ties resolved to even (banker's rounding),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToEven`.
+     */
+    fun roundToIntegralTiesToEvenSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
 
     /**
      * Rounds to the nearest integer, ties resolved away from zero.
+     * Does not signal [DecException.INEXACT].
      *
-     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
-     * result differs from this value. Defaults to `false` (no signal).
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway` /
-     * `roundToIntegralExact` (when [signalInexact] is `true`).
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway`.
      */
-    fun roundToIntegralTiesToAway(signalInexact: Boolean = false): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, beQuiet = !signalInexact)
+    fun roundToIntegralTiesToAway(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
+
+    /**
+     * Rounds to the nearest integer, ties resolved away from zero,
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToAway`.
+     */
+    fun roundToIntegralTiesToAwaySignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
 
     /**
      * Rounds toward zero (truncation).
+     * Does not signal [DecException.INEXACT].
      *
-     * If [signalInexact] is `true`, signals [DecException.INEXACT] when the
-     * result differs from this value. Defaults to `false` (no signal).
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero` /
-     * `roundToIntegralExact` (when [signalInexact] is `true`).
+     * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero`.
      */
-    fun roundToIntegralTowardZero(signalInexact: Boolean = false): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, beQuiet = !signalInexact)
+    fun roundToIntegralTowardZero(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
+
+    /**
+     * Rounds toward zero (truncation),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardZero`.
+     */
+    fun roundToIntegralTowardZeroSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
+
     /**
      * Rounds toward positive infinity (ceiling).
      * Does not signal [DecException.INEXACT].
+     *
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardPositive`.
      */
-    fun roundToIntegralTowardPositive(signalInexact: Boolean = false): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, beQuiet = !signalInexact)
+    fun roundToIntegralTowardPositive(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
+
+    /**
+     * Rounds toward positive infinity (ceiling),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardPositive`.
+     */
+    fun roundToIntegralTowardPositiveSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
 
     /**
      * Rounds toward negative infinity (floor).
      * Does not signal [DecException.INEXACT].
+     *
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardNegative`.
      */
-    fun roundToIntegralTowardNegative(signalInexact: Boolean = false): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, beQuiet = !signalInexact)
+    fun roundToIntegralTowardNegative(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
 
-    // ── Conversion to Kotlin Integer Types ───────────────────────────────────
+    /**
+     * Rounds toward negative infinity (floor),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardNegative`.
+     */
+    fun roundToIntegralTowardNegativeSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
+
+// ── Conversion to Kotlin Integer Types ───────────────────────────────────
 
     fun toLongOrMinValue(): Long {
         val ctx = DecContext.current()
@@ -1293,13 +1333,22 @@ class Decimal private constructor(
     }
 
     /**
-     * Converts this decimal to [Long] using round-half-to-even.
+     * Converts this decimal to [Long] using round-half-to-even (banker's rounding).
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
     fun toLongTiesToEven(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
+
+    /**
+     * Converts this decimal to [Long] using round-half-to-even (banker's rounding),
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toLongTiesToEvenSignalInexact(): Long =
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
 
     /**
      * Converts this decimal to [Long] using round-half-away-from-zero.
@@ -1311,6 +1360,15 @@ class Decimal private constructor(
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
 
     /**
+     * Converts this decimal to [Long] using round-half-away-from-zero,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toLongTiesToAwaySignalInexact(): Long =
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
+
+    /**
      * Converts this decimal to [Long] by truncating toward zero.
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
@@ -1318,6 +1376,15 @@ class Decimal private constructor(
      */
     fun toLongTowardZero(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
+
+    /**
+     * Converts this decimal to [Long] by truncating toward zero,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toLongTowardZeroSignalInexact(): Long =
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward positive infinity (ceiling).
@@ -1329,6 +1396,15 @@ class Decimal private constructor(
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
 
     /**
+     * Converts this decimal to [Long] by rounding toward positive infinity (ceiling),
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toLongTowardPositiveSignalInexact(): Long =
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
+
+    /**
      * Converts this decimal to [Long] by rounding toward negative infinity (floor).
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
@@ -1338,139 +1414,103 @@ class Decimal private constructor(
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
 
     /**
-     * Converts this decimal to [Long] using round-half-to-even,
+     * Converts this decimal to [Long] by rounding toward negative infinity (floor),
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toLongExactTiesToEven() =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN)
+    fun toLongTowardNegativeSignalInexact(): Long =
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
 
     /**
-     * Converts this decimal to [Long] using round-half-away-from-zero.
+     * Converts this decimal to [Int] using round-half-to-even (banker's rounding).
      * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toLongExactTiesToAway(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY)
-
-    /**
-     * Converts this decimal to [Long] by truncating toward zero,
-     * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toLongExactTowardZero(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO)
-
-    /**
-     * Converts this decimal to [Long] by rounding toward positive infinity,
-     * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toLongExactTowardPositive(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE)
-
-    /**
-     * Converts this decimal to [Long] by rounding toward negative infinity,
-     * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toLongExactTowardNegative(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE)
-
-    /**
-     * Converts this decimal to [Int] using round-half-to-even.
-     * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
     fun toIntTiesToEven(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
 
     /**
+     * Converts this decimal to [Int] using round-half-to-even (banker's rounding),
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toIntTiesToEvenSignalInexact(): Int =
+        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
+
+    /**
      * Converts this decimal to [Int] using round-half-away-from-zero.
      * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
     fun toIntTiesToAway(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
 
     /**
+     * Converts this decimal to [Int] using round-half-away-from-zero,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toIntTiesToAwaySignalInexact(): Int =
+        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
+
+    /**
      * Converts this decimal to [Int] by truncating toward zero.
      * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
     fun toIntTowardZero(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
 
     /**
+     * Converts this decimal to [Int] by truncating toward zero,
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toIntTowardZeroSignalInexact(): Int =
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
+
+    /**
      * Converts this decimal to [Int] by rounding toward positive infinity (ceiling).
      * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
     fun toIntTowardPositive(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
 
     /**
+     * Converts this decimal to [Int] by rounding toward positive infinity (ceiling),
+     * signaling [DecException.INEXACT] if the result is not exact.
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
+     * on overflow, NaN, or infinity.
+     */
+    fun toIntTowardPositiveSignalInexact(): Int =
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
+
+    /**
      * Converts this decimal to [Int] by rounding toward negative infinity (floor).
      * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
     fun toIntTowardNegative(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
 
     /**
-     * Converts this decimal to [Int] using round-half-to-even,
+     * Converts this decimal to [Int] by rounding toward negative infinity (floor),
      * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
+     * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
      */
-    fun toIntExactTiesToEven(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN)
-
-    /**
-     * Converts this decimal to [Int] using round-half-away-from-zero.
-     * Does not signal [DecException.INEXACT].
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toIntExactTiesToAway(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY)
-
-    /**
-     * Converts this decimal to [Int] by truncating toward zero,
-     * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toIntExactTowardZero(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO)
-
-    /**
-     * Converts this decimal to [Int] by rounding toward positive infinity,
-     * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toIntExactTowardPositive(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE)
-
-    /**
-     * Converts this decimal to [Int] by rounding toward negative infinity,
-     * signaling [DecException.INEXACT] if the result is not exact.
-     * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
-     * on overflow, NaN, or infinity.
-     */
-    fun toIntExactTowardNegative(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE)
+    fun toIntTowardNegativeSignalInexact(): Int =
+        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
 
     // ── Elementary Functions ──────────────────────────────────────────────────────────────
 

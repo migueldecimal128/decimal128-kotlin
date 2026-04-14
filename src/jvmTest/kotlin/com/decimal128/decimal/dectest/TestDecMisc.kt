@@ -134,7 +134,7 @@ class TestDecMisc {
     fun testToIntegralExact() = dectestMethod_Decimal(
         "dqToIntegral.decTest",
         "tointegralx",
-        Decimal::roundToIntegralExact,
+        Decimal::roundToIntegralSignalInexact,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -145,7 +145,7 @@ class TestDecMisc {
     fun testToIntegralExact2() = dectestMethod_Decimal(
         "dqCanonical.decTest",
         "tointegralx",
-        Decimal::roundToIntegralExact,
+        Decimal::roundToIntegralSignalInexact,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -154,7 +154,7 @@ class TestDecMisc {
 
     @Test
     fun testToIntegralExactCases(): Unit = dectestMethod_Decimal(
-        Decimal::roundToIntegralExact,
+        Decimal::roundToIntegralSignalInexact,
         verbose = verbose,
         cases = arrayOf(
             "dqcan616 tointegralx  #7e010ff3fcff3fcff3fcff3fcff3fcff  -> #7c000ff3fcff3fcff3fcff3fcff3fcff  Invalid_operation",

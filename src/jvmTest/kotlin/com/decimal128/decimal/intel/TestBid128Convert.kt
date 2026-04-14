@@ -74,7 +74,7 @@ class TestBid128Convert {
     fun testConvertToLongExactTiesToEven(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xrnint",
-        Decimal::toLongExactTiesToEven,
+        Decimal::toLongTiesToEvenSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -84,7 +84,7 @@ class TestBid128Convert {
         arrayOf (
             "bid128_to_int64_xrnint 0 1.0 1 00",
         ),
-        Decimal::toLongExactTiesToEven,
+        Decimal::toLongTiesToEvenSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -93,7 +93,7 @@ class TestBid128Convert {
     fun testConvertToLongExactTiesToAway(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xrninta",
-        Decimal::toLongExactTiesToAway,
+        Decimal::toLongTiesToAwaySignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -102,7 +102,7 @@ class TestBid128Convert {
     fun testConvertToLongExactTowardZero(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xint",
-        Decimal::toLongExactTowardZero,
+        Decimal::toLongTowardZeroSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -111,7 +111,7 @@ class TestBid128Convert {
     fun testConvertToLongExactTowardPositive(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xceil",
-        Decimal::toLongExactTowardPositive,
+        Decimal::toLongTowardPositiveSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -120,7 +120,7 @@ class TestBid128Convert {
     fun testConvertToLongExactTowardNegative(): Unit = intelMethod_Long(
         "/intel/readtest.in",
         "bid128_to_int64_xfloor",
-        Decimal::toLongExactTowardNegative,
+        Decimal::toLongTowardNegativeSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -186,7 +186,7 @@ class TestBid128Convert {
     fun testConvertToIntExactTiesToEven(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xrnint",
-        Decimal::toIntExactTiesToEven,
+        Decimal::toIntTiesToEvenSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -196,7 +196,7 @@ class TestBid128Convert {
         arrayOf (
             "bid128_to_int32_xrnint 0 1.0 1 00",
         ),
-        Decimal::toIntExactTiesToEven,
+        Decimal::toIntTiesToEvenSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -205,7 +205,7 @@ class TestBid128Convert {
     fun testConvertToIntExactTiesToAway(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xrninta",
-        Decimal::toIntExactTiesToAway,
+        Decimal::toIntTiesToAwaySignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -214,7 +214,7 @@ class TestBid128Convert {
     fun testConvertToIntExactTowardZero(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xint",
-        Decimal::toIntExactTowardZero,
+        Decimal::toIntTowardZeroSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -223,7 +223,7 @@ class TestBid128Convert {
     fun testConvertToIntExactTowardPositive(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xceil",
-        Decimal::toIntExactTowardPositive,
+        Decimal::toIntTowardPositiveSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
@@ -232,7 +232,7 @@ class TestBid128Convert {
     fun testConvertToIntExactTowardNegative(): Unit = intelMethod_Int(
         "/intel/readtest.in",
         "bid128_to_int32_xfloor",
-        Decimal::toIntExactTowardNegative,
+        Decimal::toIntTowardNegativeSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )

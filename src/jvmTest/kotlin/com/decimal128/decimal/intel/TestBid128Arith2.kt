@@ -82,7 +82,7 @@ class TestBid128Arith2 {
     fun testRoundToIntegralExact(): Unit = intelMethod_Decimal(
         "/intel/readtest.in",
         "bid128_round_integral_exact",
-        Decimal::roundToIntegralExact,
+        Decimal::roundToIntegralSignalInexact,
         DecContext.decimal128Kotlin(),
         verbose = verbose,
     )
