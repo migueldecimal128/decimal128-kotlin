@@ -54,7 +54,7 @@ class TestEncodeDecodeDpd128 {
 
     val fptestOperandFilename = "/fptest/fptestOperandsUniq.txt"
 
-    //@Test
+    @Test
     fun testFptestOperands() {
         this::class.java.getResourceAsStream(fptestOperandFilename)!!
             .bufferedReader()
