@@ -500,14 +500,14 @@ class Decimal private constructor(
     fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealSciExp(steal) < -6143
 
     /**
-     * Returns `true` if this value is finite — zero, subnormal, or normal.
-     * Returns `false` for infinities and NaNs.
+     * Returns `true` if this value is normal, subnormal, or zero
+     * Returns `false` for infinity, and NaN.
      */
     fun isFinite(): Boolean = stealIsFinite(steal)
 
     /**
-     * isFiniteNonZero(x) is true if and only if x is normal or subnormal
-     * (not zero, infinite, or NaN).
+     * Returns `true` if this value is normal or subnormal and non-zero.
+     * Returns `false` for zero, infinity, and NaN.
      */
     fun isFiniteNonZero(): Boolean = stealIsFNZ(steal)
 
@@ -815,9 +815,13 @@ class Decimal private constructor(
         other is Decimal && eqJavaStyle(other)
 
     /**
-     * Decimal.hashCode() is an unsupported operation ... unless someone
-     * comes up with a valid reason why a Decimal should be the key in
-     * a collection.
+     * Always throws [UnsupportedOperationException].
+     *
+     * `Decimal` does not support use as a hash-based collection key because
+     * [equals] uses numeric equality (ignoring quantum), which is incompatible
+     * with a stable hash contract across cohort members.
+     *
+     * @throws UnsupportedOperationException always
      */
     override fun hashCode(): Int {
         throw UnsupportedOperationException("hashCode() not supported")
@@ -1005,7 +1009,7 @@ class Decimal private constructor(
         d128CompareQuiet754(this, other)
 
     /**
-     * IEEE 754-2019 `compareQuietUnordered`: returns `true` if either operand is NaN.
+     * IEEE 754-2019 `compareQuietOrdered`: returns `true` if either operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
     fun compareQuietOrdered(other: Decimal): Boolean =
@@ -1167,6 +1171,11 @@ class Decimal private constructor(
      * Returns the quotient of this value and [other], rounded according to [DecContext.current].
      */
     operator fun div(other: Decimal): Decimal = d128DivImpl(this, other)
+
+    /**
+     * Returns the quotient of this value and [n], rounded according to [DecContext.current].
+     */
+    operator fun div(n: Int): Decimal = d128DivImpl(this, n.toDecimal())
 
     /**
      * Returns the remainder of this value divided by [other], truncated toward zero.

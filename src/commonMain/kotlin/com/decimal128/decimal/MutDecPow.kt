@@ -103,7 +103,7 @@ private fun mutDecPownImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecCo
     // Left-to-right binary exponentiation
     // Find the highest bit below the MSB
     val resultSign = x.signBit and (pow and 1) != 0
-    val estimatedResultExp = x.qExp.toLong() * pow.toLong()
+    val estimatedResultExp = stealSciExp(x.steal).toLong() * pow.toLong()
     when {
         estimatedResultExp > 6200 ->
             return ctx.signalInexactOverflow(z.setInfinite(resultSign))
