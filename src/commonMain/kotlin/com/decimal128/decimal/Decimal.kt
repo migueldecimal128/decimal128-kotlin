@@ -1228,12 +1228,28 @@ class Decimal private constructor(
      */
     fun remainderNear(other: Decimal): Decimal = d128RemNearImpl(this, other)
 
-    /** Returns the square of this value. */
+    /**
+     * Returns the square of this value (`this × this`), rounded according to [DecContext.current].
+     *
+     * Special cases follow IEEE 754-2019 multiplication rules:
+     * - `(±∞)² = +∞`
+     * - `(±0)² = +0`
+     * - qNaN returns NaN without signaling
+     * - sNaN signals [DecException.INVALID_OPERATION] and returns NaN
+     */
     fun square(): Decimal = d128SqrImpl(this, DecContext.current())
 
-    /** returns the sqrt of this value **/
+    /**
+     * Returns the square root of this value, rounded according to [DecContext.current].
+     *
+     * Special cases:
+     * - `√(+∞) = +∞`
+     * - `√(±0) = ±0`
+     * - `√(negative)` signals [DecException.INVALID_OPERATION] and returns NaN
+     * - qNaN returns NaN without signaling
+     * - sNaN signals [DecException.INVALID_OPERATION] and returns NaN
+     */
     fun sqrt(): Decimal = d128SqrtImpl(this)
-
 // ── Rounding ──────────────────────────────────────────────────────────────
 
     /**
