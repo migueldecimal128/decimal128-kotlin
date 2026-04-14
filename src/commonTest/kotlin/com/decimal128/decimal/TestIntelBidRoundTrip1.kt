@@ -41,11 +41,8 @@ class TestIntelBidRoundTrip1 {
         assertTrue(isValid)
         val decimal = D128SerdeBid.decodeBid128(dw1, dw0)
         val roundTrip = LongArray(2)
-        D128SerdeBid.encodeBid128(decimal, roundTrip, isLittleEndian = false)
-        assertEquals(dw1, roundTrip[0])
-        assertEquals(dw0, roundTrip[1])
-        D128SerdeBid.encodeBid128(decimal, roundTrip, isLittleEndian = true)
-        assertEquals(dw0, roundTrip[0])
-        assertEquals(dw1, roundTrip[1])
+        D128SerdeBid.encodeBid128(decimal, pentad)
+        assertEquals(dw1, pentad.dw1)
+        assertEquals(dw0, pentad.dw0)
     }
 }

@@ -52,42 +52,9 @@ object D128SerdeBid {
      * @param offset index of the first word to write
      * @param isLittleEndian if true, writes [lo, hi]; otherwise writes [hi, lo]
      */
-    fun encodeBid128(d: Decimal, longs: LongArray, offset: Int = 0,
-                     isLittleEndian: Boolean = false) {
-        require (offset >= 0 && offset + 1 < longs.size)
-
-        val bid128Hi = encodeBid128Hi(d)
-        val bid128Lo = d.dw0
-
-        val iLS = offset + if (isLittleEndian) 0 else 1
-        val iMS = offset + if (isLittleEndian) 1 else 0
-        longs[iLS] = bid128Lo
-        longs[iMS] = bid128Hi
-    }
-
-    /**
-     * Encodes `d` into its 128-bit **BID** representation and writes the
-     * 16-byte result into `bytes` starting at `offset`.
-     *
-     * @param d the decimal value to encode
-     * @param bytes destination byte array (must have 16 bytes from `offset`)
-     * @param offset starting index for the encoded bytes
-     * @param isLittleEndian if true, writes least-significant byte first; otherwise big-endian
-     */
-    fun encodeBid128(d: Decimal, bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) {
-        require (offset >= 0 && offset + 15 < bytes.size)
-
-        val bid128Hi = encodeBid128Hi(d)
-        val bid128Lo = d.dw0
-        val lo = if (isLittleEndian) bid128Lo else bid128Hi
-        val hi = if (isLittleEndian) bid128Hi else bid128Lo
-        val shiftStep = if (isLittleEndian) 8 else -8
-        var shift = if (isLittleEndian) 0 else 56
-        for (i in offset..offset + 7) {
-            bytes[i    ] = (lo shr shift).toByte()
-            bytes[i + 8] = (hi shr shift).toByte()
-            shift += shiftStep
-        }
+    fun encodeBid128(d: Decimal, out: Pentad) {
+        out.dw1 = encodeBid128Hi(d)
+        out.dw0 = d.dw0
     }
 
     /**
