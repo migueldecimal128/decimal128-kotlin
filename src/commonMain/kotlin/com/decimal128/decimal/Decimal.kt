@@ -243,14 +243,16 @@ class Decimal private constructor(
             }
         }
 
-        fun fromBID(dwHi: Long, dwLo: Long): Decimal {
-            // just do this thru MutDec.setBID()
-            TODO()
-        }
+        fun fromBid128(bid128Hi: Long, bid128Lo: Long): Decimal =
+            D128SerdeBid.decodeBid128(bid128Hi, bid128Lo)
 
-        fun fromDPD(dwHi: Long, dwLo: Long): Decimal {
-            // just do this thru MutDec.setDPD()
-            TODO()
+        fun fromBid64(bid64: Long): Decimal =
+            D128SerdeBid.decodeBid64(bid64)
+
+        fun fromDpd128(bid128Hi: Long, bid128Lo: Long): Decimal {
+            val dpd = DecContext.current().tmps.mdecBridge1
+            dpd.setDpd128(bid128Hi, bid128Lo)
+            return Decimal.from(dpd)
         }
 
         /**

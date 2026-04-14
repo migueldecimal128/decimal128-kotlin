@@ -483,20 +483,6 @@ object D128SerdeBid {
         pentad.dw1 = bid128Hi
     }
 
-    private fun parseHexDword(str: String, off: Int): Pair<Boolean, Long> {
-        var dw = 0L
-        for (i in 0..15) {
-            val ch = str[off + i]
-            dw = when (ch) {
-                in '0'..'9' -> (dw shl 4) or (ch - '0').toLong()
-                in 'A'..'F' -> (dw shl 4) or (ch - 'A' + 10).toLong()
-                in 'a'..'f' -> (dw shl 4) or (ch - 'a' + 10).toLong()
-                else -> return false to 0L
-            }
-        }
-        return true to dw
-    }
-
     private fun parseHexDword(pentad:Pentad, str: String, off: Int) {
         var dw = 0L
         for (i in 0..15) {
