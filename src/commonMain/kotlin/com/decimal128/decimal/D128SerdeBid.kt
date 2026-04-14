@@ -57,64 +57,8 @@ object D128SerdeBid {
         out.dw0 = d.dw0
     }
 
-    /**
-     * Decodes a 128-bit **BID** value from two 64-bit words in `longs`
-     * starting at `offset`.
-     *
-     * @param longs source array containing the encoded words
-     * @param offset index of the first word to read
-     * @param isLittleEndian if true, reads [lo, hi]; otherwise reads [hi, lo]
-     * @return the decoded `Decimal` value
-     */
-    fun decodeBid128(longs: LongArray, offset: Int = 0,
-                     isLittleEndian: Boolean = false
-                     ): Decimal {
-        require (offset >= 0 && offset + 1 < longs.size)
-
-        val iLS = offset + if (isLittleEndian) 0 else 1
-        val iMS = offset + if (isLittleEndian) 1 else 0
-        val bid128Hi = longs[iMS]
-        val bid128Lo = longs[iLS]
-
-        return decodeBid128(bid128Hi, bid128Lo)
-    }
-
-    /**
-     * Decodes a 128-bit **BID** value from 16 bytes in `bytes`
-     * starting at `offset`.
-     *
-     * @param bytes source byte array containing the encoded value
-     * @param offset starting index of the 16-byte BID128 sequence
-     * @param isLittleEndian if true, reads least-significant byte first; otherwise big-endian
-     * @return the decoded `Decimal` value
-     */
-    fun decodeBid128(bytes: ByteArray, offset: Int = 0,
-                     isLittleEndian: Boolean = false
-                     ): Decimal {
-        require (offset >= 0 && offset + 15 < bytes.size)
-
-        var lo = 0L
-        var hi = 0L
-        val shiftStep = if (isLittleEndian) 8 else -8
-        var shift = if (isLittleEndian) 0 else 56
-        for (i in offset..offset + 7) {
-            lo = lo or ((bytes[i    ].toLong() and 0xFFL) shl shift)
-            hi = hi or ((bytes[i + 8].toLong() and 0xFFL) shl shift)
-            shift += shiftStep
-        }
-        val bid128Hi = if (isLittleEndian) hi else lo
-        val bid128Lo = if (isLittleEndian) lo else hi
-        return decodeBid128(bid128Hi, bid128Lo)
-    }
-
     private const val QTINY_Neg6176 = -6176
     private const val QMAX_6111 = 6111
-
-    private const val BID64_QTINY_Neg398 = -398
-    private const val BID64_QMAX_369 = 369
-
-    private const val BID32_QTINY_Neg101 = -101
-    private const val BID32_QMAX_90 = 90
 
     /**
      * Encodes the Decimal128 BID **sign bit** and **17-bit G-combination field**.
