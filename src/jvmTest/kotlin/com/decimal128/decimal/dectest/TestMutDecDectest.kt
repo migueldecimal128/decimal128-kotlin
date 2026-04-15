@@ -743,11 +743,8 @@ class TestMutDecDectest {
             require(t.length == 33)
             val hi = hexStringToLong(t.substring(1, 17))
             val lo = hexStringToLong(t.substring(17, 33))
-            val dpdOld = MutDec().setDpd128(hi, lo)
-            val dpdNew = MutDec().set(Decimal.fromDpd128(hi, lo))
-            if (dpdOld.compareTo(dpdNew) != 0)
-                println(" #1 kilroy was here! dpdOld:$dpdOld dpdNew:$dpdNew")
-            return dpdNew
+            val dpd = MutDec().set(Decimal.fromDpd128(hi, lo))
+            return dpd
         }
         val d = MutDec().set(t)
         return d
@@ -774,11 +771,8 @@ class TestMutDecDectest {
                 require(t.length == 33)
                 val hi = hexStringToLong(t.substring(1, 17))
                 val lo = hexStringToLong(t.substring(17, 33))
-                val dpdOld = MutDec().setDpd128(hi, lo)
-                val dpdNew = MutDec().set(Decimal.fromDpd128(hi, lo))
-                if (dpdOld.compareTo(dpdNew) != 0)
-                    println(" #2 kilroy was here! dpdOld:$dpdOld dpdNew:$dpdNew")
-                return dpdNew
+                val dpd = MutDec().set(Decimal.fromDpd128(hi, lo))
+                return dpd
             }
         }
         val d = MutDec().set(t, ctx)

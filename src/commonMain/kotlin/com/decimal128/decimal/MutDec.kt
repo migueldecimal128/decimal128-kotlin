@@ -396,11 +396,11 @@ class MutDec() : C256(), Comparable<MutDec> {
         return this
     }
 
-    fun setDpd128(dpd128Hi: Long, dpd128Lo: Long): MutDec {
-        decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
-        verify { validate() }
-        return this
-    }
+    //fun setDpd128(dpd128Hi: Long, dpd128Lo: Long): MutDec {
+    //    decodeDpd128Longs(this, dpd128Hi, dpd128Lo)
+    //    verify { validate() }
+    //    return this
+    //}
 
     fun setMaxFiniteMagnitude(sign: Boolean, ctx: DecContext): MutDec {
         val precision = ctx.precision
