@@ -9,7 +9,7 @@ import kotlin.arrayOf
 
 class TestBid128LogPow {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testLn(): Unit = intelMethod_Decimal(

@@ -249,9 +249,8 @@ class Decimal private constructor(
         fun fromBid64(bid64: Long): Decimal =
             D128SerdeBid.decodeBid64(bid64)
 
-        fun fromDpd128(bid128Hi: Long, bid128Lo: Long): Decimal {
-            TODO()
-        }
+        fun fromDpd128(dpd128Hi: Long, dpd128Lo: Long): Decimal =
+            D128SerdeDpd.decodeDpd128(dpd128Hi, dpd128Lo)
 
         /**
          * Parses a `Decimal` from its textual representation using the

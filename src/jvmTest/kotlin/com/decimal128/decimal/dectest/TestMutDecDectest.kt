@@ -3,6 +3,7 @@ package com.decimal128.decimal.dectest
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecRounding
+import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.MutDec
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -326,6 +327,7 @@ class TestMutDecDectest {
     }
 
     val tcs = arrayOf(
+        "dqcan002 apply 0                      -> #22080000000000000000000000000000",
         "dqrem1120  remainder  1234567890123456789012345678901234  1.000000000000000000000000000000001  ->  0.765432109876543210987654321098768",
 
         "dqbas519 toSci ''                -> NaN Conversion_syntax",
@@ -741,8 +743,11 @@ class TestMutDecDectest {
             require(t.length == 33)
             val hi = hexStringToLong(t.substring(1, 17))
             val lo = hexStringToLong(t.substring(17, 33))
-            val dpd = MutDec().setDpd128(hi, lo)
-            return dpd
+            val dpdOld = MutDec().setDpd128(hi, lo)
+            val dpdNew = MutDec().set(Decimal.fromDpd128(hi, lo))
+            if (dpdOld.compareTo(dpdNew) != 0)
+                println(" #1 kilroy was here! dpdOld:$dpdOld dpdNew:$dpdNew")
+            return dpdNew
         }
         val d = MutDec().set(t)
         return d
@@ -769,8 +774,11 @@ class TestMutDecDectest {
                 require(t.length == 33)
                 val hi = hexStringToLong(t.substring(1, 17))
                 val lo = hexStringToLong(t.substring(17, 33))
-                val dpd = MutDec().setDpd128(hi, lo)
-                return dpd
+                val dpdOld = MutDec().setDpd128(hi, lo)
+                val dpdNew = MutDec().set(Decimal.fromDpd128(hi, lo))
+                if (dpdOld.compareTo(dpdNew) != 0)
+                    println(" #2 kilroy was here! dpdOld:$dpdOld dpdNew:$dpdNew")
+                return dpdNew
             }
         }
         val d = MutDec().set(t, ctx)

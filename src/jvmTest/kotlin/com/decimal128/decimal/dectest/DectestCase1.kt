@@ -239,8 +239,11 @@ data class DectestCase1(
                 require(str.length == 33)
                 val hi = hexStringToLong(str.substring(1, 17))
                 val lo = hexStringToLong(str.substring(17, 33))
-                val dpd = MutDec().setDpd128(hi, lo)
-                return Decimal.from(dpd)
+                val dpdOld = MutDec().setDpd128(hi, lo)
+                val dpdNew = MutDec().set(Decimal.fromDpd128(hi, lo))
+                if (dpdOld.compareTo(dpdNew) != 0)
+                    println(" #3 kilroy was here! dpdOld:$dpdOld dpdNew:$dpdNew")
+                return Decimal.from(dpdNew)
             }
             decContext.eval {
                 return Decimal.from(str)

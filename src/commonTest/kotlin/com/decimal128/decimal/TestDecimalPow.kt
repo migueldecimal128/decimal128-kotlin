@@ -6,7 +6,7 @@ import kotlin.test.assertTrue
 
 class TestDecimalPow {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(
         val baseStr: String,
