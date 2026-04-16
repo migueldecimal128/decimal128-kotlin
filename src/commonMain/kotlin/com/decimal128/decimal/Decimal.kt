@@ -243,14 +243,44 @@ class Decimal private constructor(
             }
         }
 
-        fun fromBid128(bid128Hi: Long, bid128Lo: Long): Decimal =
-            D128SerdeBid.decodeBid128(bid128Hi, bid128Lo)
+        /** Decodes a BID-encoded decimal128 from two 64-bit words. */
+        fun decodeBid128(bid128Hi: Long, bid128Lo: Long): Decimal =
+            bid128Decode(bid128Hi, bid128Lo)
+
+        /**
+         * Decodes a BID-encoded decimal128 from two consecutive elements of [longs] starting at [offset].
+         * [isLittleEndian] controls whether the least significant long is at [offset] or [offset] + 1.
+         */
+        fun decodeBid128(longs: LongArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+            d128Decode(isDpd = false, longs, offset, isLittleEndian)
+
+        /**
+         * Decodes a BID-encoded decimal128 from 16 consecutive bytes of [bytes] starting at [offset].
+         * [isLittleEndian] controls whether the least significant byte is at [offset] or [offset] + 15.
+         */
+        fun decodeBid128(bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+            d128Decode(isDpd = false, bytes, offset, isLittleEndian)
+
+        /** Decodes a DPD-encoded decimal128 from two 64-bit words. */
+        fun decodeDpd128(dpd128Hi: Long, dpd128Lo: Long): Decimal =
+            dpd128Decode(dpd128Hi, dpd128Lo)
+
+        /**
+         * Decodes a DPD-encoded decimal128 from two consecutive elements of [longs] starting at [offset].
+         * [isLittleEndian] controls whether the least significant long is at [offset] or [offset] + 1.
+         */
+        fun decodeDpd128(longs: LongArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+            d128Decode(isDpd = true, longs, offset, isLittleEndian)
+
+        /**
+         * Decodes a DPD-encoded decimal128 from 16 consecutive bytes of [bytes] starting at [offset].
+         * [isLittleEndian] controls whether the least significant byte is at [offset] or [offset] + 15.
+         */
+        fun decodeDpd128(bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+            d128Decode(isDpd = true, bytes, offset, isLittleEndian)
 
         fun fromBid64(bid64: Long): Decimal =
-            D128SerdeBid.decodeBid64(bid64)
-
-        fun fromDpd128(dpd128Hi: Long, dpd128Lo: Long): Decimal =
-            D128SerdeDpd.decodeDpd128(dpd128Hi, dpd128Lo)
+            bid64Decode(bid64)
 
         /**
          * Parses a `Decimal` from its textual representation using the
@@ -372,6 +402,21 @@ class Decimal private constructor(
             return false;
         return true
     }
+
+    // ── Encoding ────────────────────────────────────────────────────────
+    // IEEE754-2019 3.5 Decimal interchange format encodings p. 20
+
+    fun encodeBid128(longs: LongArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+        d128Encode(this, isDpd = false, longs, offset, isLittleEndian, DecContext.current().tmps.pentad)
+
+    fun encodeBid128(bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+        d128Encode(this, isDpd = false, bytes, offset, isLittleEndian, DecContext.current().tmps.pentad)
+
+    fun encodeDpd128(longs: LongArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+        d128Encode(this, isDpd = true, longs, offset, isLittleEndian, DecContext.current().tmps.pentad)
+
+    fun encodeDpd128(bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) =
+        d128Encode(this, isDpd = true, bytes, offset, isLittleEndian, DecContext.current().tmps.pentad)
 
     // ── Classification ────────────────────────────────────────────────────────
 

@@ -34,14 +34,14 @@ class TestIntelBidRoundTrip1 {
         if (verbose)
             println("tc:$tc")
         val pentad = Pentad()
-        D128SerdeBid.parseIntelBidHex(pentad, tc)
+        bid128ParseIntelHex(pentad, tc)
         val isValid = pentad.w == 1
         val dw1 = pentad.dw1
         val dw0 = pentad.dw0
         assertTrue(isValid)
-        val decimal = D128SerdeBid.decodeBid128(dw1, dw0)
+        val decimal = bid128Decode(dw1, dw0)
         val roundTrip = LongArray(2)
-        D128SerdeBid.encodeBid128(decimal, pentad)
+        bid128Encode(decimal, pentad)
         assertEquals(dw1, pentad.dw1)
         assertEquals(dw0, pentad.dw0)
     }

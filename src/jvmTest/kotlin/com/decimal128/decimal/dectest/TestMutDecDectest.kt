@@ -743,7 +743,7 @@ class TestMutDecDectest {
             require(t.length == 33)
             val hi = hexStringToLong(t.substring(1, 17))
             val lo = hexStringToLong(t.substring(17, 33))
-            val dpd = MutDec().set(Decimal.fromDpd128(hi, lo))
+            val dpd = MutDec().set(Decimal.decodeDpd128(hi, lo))
             return dpd
         }
         val d = MutDec().set(t)
@@ -771,7 +771,7 @@ class TestMutDecDectest {
                 require(t.length == 33)
                 val hi = hexStringToLong(t.substring(1, 17))
                 val lo = hexStringToLong(t.substring(17, 33))
-                val dpd = MutDec().set(Decimal.fromDpd128(hi, lo))
+                val dpd = MutDec().set(Decimal.decodeDpd128(hi, lo))
                 return dpd
             }
         }

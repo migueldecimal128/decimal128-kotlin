@@ -239,7 +239,7 @@ data class DectestCase1(
                 require(str.length == 33)
                 val hi = hexStringToLong(str.substring(1, 17))
                 val lo = hexStringToLong(str.substring(17, 33))
-                return Decimal.fromDpd128(hi, lo)
+                return Decimal.decodeDpd128(hi, lo)
             }
             decContext.eval {
                 return Decimal.from(str)
