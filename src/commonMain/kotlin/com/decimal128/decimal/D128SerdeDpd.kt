@@ -100,8 +100,83 @@ internal object D128SerdeDpd {
         }
         return decimalFinite(sign, qExp, coeffHi, coeffLo)
     }
+
+    fun encodeDpd128(d: MutDec, out: Pentad) {
+        verify { d.digitLen <= 34 }
+        var mostSigBcd4 = 0
+        var declets5Hi = 0L
+        var binLo = d.dw0
+        if (d.digitLen > 18) {
+            val tmps = DecContext.current().tmps
+            val q = tmps.c256
+            val r = c256SetDivRemX64(q, d, TEN_POW_18, tmps.knuthD)
+            binLo = r
+            var binHi = q.dw0
+            if (q.digitLen > 15) {
+                val t = q.dw0 / TEN_POW_15
+                binHi = q.dw0 - (t * TEN_POW_15)
+                mostSigBcd4 = t.toInt()
+                verify { mostSigBcd4 in 0..9 }
+            }
+            verify { binHi in 0L..<TEN_POW_15 }
+            declets5Hi = declets6FromBin(binHi)
+        }
+        val declets6Lo = declets6FromBin(binLo)
+        val steal = d.steal
+        val signCombo = encodeSignAndGCombinationFieldDpd128(steal, mostSigBcd4)
+        val T_hi_bits = 46 // bits of T residing in the Hi Long
+        val dpdLo = (declets5Hi shl 60) or declets6Lo
+        val dpdHi = (signCombo.toLong() shl T_hi_bits) or (declets5Hi ushr 4)
+        out.dw1 = dpdHi
+        out.dw0 = dpdLo
+    }
+
 }
 
+private fun encodeSignAndGCombinationFieldDpd128(
+    steal: Int,
+    mostSigBcd4: Int
+): Int {
+    val sBit = stealSignBit(steal)
+    val gField: Int
+
+    // 1. Convert to Biased Exponent
+    val biasedQExp = stealQExp(steal) + 6176
+
+    when (stealTyp(steal)) {
+        STEAL_TYP_ZER,
+        STEAL_TYP_FNZ -> {
+            verify { mostSigBcd4 in 0..9 }
+            // Split 14-bit biasedExp into 2 MSB and 12 LSB
+            val expMSB = (biasedQExp shr 12) and 0x3
+            val expLSB = biasedQExp and 0x0FFF
+
+            val gPrefix = if (mostSigBcd4 <= 7) {
+                // Case A: 0xxxx or 10xxx
+                (expMSB shl 3) or (mostSigBcd4 and 0x7)
+            } else {
+                // Case B: 110xx or 1110x
+                0b11000 or (expMSB shl 1) or (mostSigBcd4 and 0x1)
+            }
+            // Result is G prefix (5 bits) + G LSBs (12 bits)
+            gField = (gPrefix shl 12) or expLSB
+        }
+
+        STEAL_TYP_INF -> {
+            // Infinity: G0-G4 = 11110, remaining G bits are 0
+            gField = 0b11110 shl 12
+        }
+
+        STEAL_TYP_NAN -> {
+            // NaN: G0-G4 = 11111, G5 = isSignaling
+            val isSignaling = if (stealIsSNAN(steal)) 1 else 0
+            gField = (0b11111 shl 12) or (isSignaling shl 11)
+        }
+
+        else -> throw IllegalStateException()
+    }
+    return (sBit shl 17) or gField
+}
 
 // there could be up to 7 declets with the top declet having
 // only 4 bits instead of 10
@@ -117,4 +192,20 @@ private fun binFromDeclets7(declets7: Long): Long {
         decletsT = decletsT ushr 10
     }
     return bin
+}
+
+private fun declets6FromBin(bin: Long): Long {
+    require(bin in 0L..EIGHTEEN_NINES)
+    var t = bin
+    var declets6 = 0L
+    var shift = 0
+    while (t != 0L) {
+        val q = unsignedMulHi(t, 0x020C49BA5E353F7DL) ushr 3
+        val r = t - (q * 1000L)
+        val declet = dpdEncodeDeclet(r)
+        declets6 = declets6 or (declet shl shift)
+        shift += 10
+        t = q
+    }
+    return declets6
 }
