@@ -101,15 +101,16 @@ internal object D128SerdeDpd {
         return decimalFinite(sign, qExp, coeffHi, coeffLo)
     }
 
-    fun encodeDpd128(d: MutDec, out: Pentad) {
-        verify { d.digitLen <= 34 }
+    fun encodeDpd128(d: Decimal, out: Pentad) {
+        val steal = d.steal
+        verify { stealDigitLen(steal) <= 34 }
         var mostSigBcd4 = 0
         var declets5Hi = 0L
         var binLo = d.dw0
-        if (d.digitLen > 18) {
+        if (stealDigitLen(steal) > 18) {
             val tmps = DecContext.current().tmps
-            val q = tmps.c256
-            val r = c256SetDivRemX64(q, d, TEN_POW_18, tmps.knuthD)
+            val q = tmps.c256.c256Set128(d.dw1, d.dw0)
+            val r = c256SetDivRemX64(q, q, TEN_POW_18, tmps.knuthD)
             binLo = r
             var binHi = q.dw0
             if (q.digitLen > 15) {
@@ -122,7 +123,6 @@ internal object D128SerdeDpd {
             declets5Hi = declets6FromBin(binHi)
         }
         val declets6Lo = declets6FromBin(binLo)
-        val steal = d.steal
         val signCombo = encodeSignAndGCombinationFieldDpd128(steal, mostSigBcd4)
         val T_hi_bits = 46 // bits of T residing in the Hi Long
         val dpdLo = (declets5Hi shl 60) or declets6Lo
