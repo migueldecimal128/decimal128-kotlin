@@ -147,6 +147,9 @@ class Decimal private constructor(
 
         private const val BIT31 = Int.MIN_VALUE
 
+        /**
+         * internal constructor for finite values
+         */
         internal fun decimalFinite(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= Q_TINY && qExp <= Q_MAX }
             val signBit = if (sign) 1 else 0
@@ -154,9 +157,15 @@ class Decimal private constructor(
             return Decimal(steal, dw1, dw0)
         }
 
+        /**
+         * internal constructor for FNZ Finite Non-Zero values
+         */
         internal inline fun decimalFNZ(signFlag: Boolean, qExp: Int, dw1: Long, dw0: Long): Decimal =
             decimalFNZ(if (signFlag) 1 else 0, qExp, dw1, dw0)
 
+        /**
+         * internal constructor for FNZ Finite Non-Zero values
+         */
         internal fun decimalFNZ(signBit: Int, qExp: Int, dw1: Long, dw0: Long): Decimal {
             verify { qExp >= Q_TINY && qExp <= Q_MAX }
             verify { dw0 or dw1 != 0L }
@@ -164,7 +173,14 @@ class Decimal private constructor(
             return Decimal(steal, dw1, dw0)
         }
 
-        val POS_ZEROe0 = Decimal(stealEncodeZER(0, 0), 0L, 0L)
+        // this is a cache of positive zeros with 0 and negative exponents
+        // 0, 0.0, 0.00, 0.000, 0.0000,
+        private const val ZEROS_CACHE_SIZE = 16 // must be a power of 2
+        private const val ZEROS_CACHE_BCE = ZEROS_CACHE_SIZE - 1 // BCE Bounds Check Elimination
+        private val ZEROS_CACHE = Array(ZEROS_CACHE_SIZE) { i ->
+            Decimal(stealEncodeZER(0, -i), 0L, 0L) }
+
+        val POS_ZEROe0 = ZEROS_CACHE[0]
         val NEG_ZEROe0 = Decimal(stealEncodeZER(1, 0), 0L, 0L)
         val ZERO = POS_ZEROe0
         val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, PACKED_LENGTHS_1_1), 0L, 1L)
@@ -205,8 +221,12 @@ class Decimal private constructor(
          * to `[Q_TINY, Q_MAX]`.
          */
         fun zero(sign: Boolean, qExp: Int): Decimal {
-            if (qExp == 0)
-                return if (sign) NEG_ZEROe0 else POS_ZEROe0
+            if (qExp <= 0 && qExp > -ZEROS_CACHE_SIZE && !sign)
+                return ZEROS_CACHE[-qExp and ZEROS_CACHE_BCE]
+            if (qExp == 0) {
+                verify { sign }
+                return NEG_ZEROe0
+            }
             val qClamped = max(min(qExp, Q_MAX), Q_TINY)
             val signBit = if (sign) 1 else 0
             val steal = stealEncodeZER(signBit, qClamped)
