@@ -279,9 +279,6 @@ class Decimal private constructor(
         fun decodeDpd128(bytes: ByteArray, offset: Int = 0, isLittleEndian: Boolean = false) =
             d128Decode(isDpd = true, bytes, offset, isLittleEndian)
 
-        fun fromBid64(bid64: Long): Decimal =
-            bid64Decode(bid64)
-
         /**
          * Parses a `Decimal` from its textual representation using the
          * strict decimal128 interchange format.

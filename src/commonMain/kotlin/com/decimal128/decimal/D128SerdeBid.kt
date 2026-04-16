@@ -237,6 +237,11 @@ fun bid128Decode(bid128Hi: Long, bid128Lo: Long): Decimal {
     return decimalFNZ(sign, qExp, dw1, dw0)
 }
 
+/*
+// deferring support for smaller formats until someone asks for it.
+// This code for decoding bid64 and bid32 has *not* been tested.
+// there is at least one problem with payload.digitLen
+//
 fun bid64Decode(bid64: Long, allowNonCanonical: Boolean = false): Decimal {
     // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
     val k = 64 // storage width in bits
@@ -363,6 +368,7 @@ private fun decodeBidHelper(
     return decimalFNZ(sign, qExp, 0L, dw0)
 }
 
+ */
 
 /**
  * Parses a 128-bit BID hex value in the IntelRDFPMathLib20U3 test format.
