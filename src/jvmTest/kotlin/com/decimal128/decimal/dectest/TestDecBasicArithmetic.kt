@@ -2,11 +2,11 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.*
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class TestDecBasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(

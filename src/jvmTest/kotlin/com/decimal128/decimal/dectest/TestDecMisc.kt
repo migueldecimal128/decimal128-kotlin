@@ -3,9 +3,7 @@ package com.decimal128.decimal.dectest
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.dectestMethod_Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.dectestMethod_Int_Decimal
-import com.decimal128.decimal.dectest.DectestRunner1.runMethod_IntCtx_Decimal
-import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalCtxOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class TestDecMisc {
 

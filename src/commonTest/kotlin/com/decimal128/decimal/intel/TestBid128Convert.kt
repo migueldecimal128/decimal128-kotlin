@@ -4,9 +4,7 @@ import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Int
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Long
-import com.decimal128.decimal.intel.IntelRunner1.runUnaryIntCtxMethodOp
-import com.decimal128.decimal.intel.IntelRunner1.runUnaryLongCtxMethodOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class TestBid128Convert {
 

@@ -4,7 +4,7 @@ import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal_Decimal
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.arrayOf
 
 class TestBid128LogPow {

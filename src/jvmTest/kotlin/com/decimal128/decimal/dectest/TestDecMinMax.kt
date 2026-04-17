@@ -1,7 +1,7 @@
 package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import com.decimal128.decimal.d128MaxImpl
 import com.decimal128.decimal.d128MaxNumImpl
 import com.decimal128.decimal.d128MinImpl

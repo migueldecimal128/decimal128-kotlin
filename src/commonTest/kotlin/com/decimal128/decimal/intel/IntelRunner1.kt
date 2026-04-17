@@ -3,7 +3,7 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
-import org.junit.jupiter.api.Assertions.assertEquals
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 object IntelRunner1 {

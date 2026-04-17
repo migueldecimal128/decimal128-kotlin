@@ -3,7 +3,7 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.intel.IntelRunner1.intelMethod_Decimal_Boolean
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class TestBid128Comparison {
 

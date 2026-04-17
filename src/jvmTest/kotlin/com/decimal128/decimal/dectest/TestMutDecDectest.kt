@@ -5,10 +5,11 @@ import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.MutDec
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import java.io.File
 import java.util.EnumSet
 import kotlin.test.assertEquals
+import kotlin.text.iterator
 
 class TestMutDecDectest {
 

@@ -2,7 +2,7 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.d128ToString
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryStringCtxOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class TestDecToString {
 

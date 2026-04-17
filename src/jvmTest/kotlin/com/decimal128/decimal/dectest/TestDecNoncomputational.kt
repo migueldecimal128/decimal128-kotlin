@@ -4,7 +4,7 @@ import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryBooleanOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import com.decimal128.decimal.dectest.DectestRunner1.runUnaryDecimalOp
 
 class TestDecNoncomputational {

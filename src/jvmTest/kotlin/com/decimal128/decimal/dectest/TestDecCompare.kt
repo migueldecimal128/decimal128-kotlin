@@ -6,7 +6,7 @@ import com.decimal128.decimal.cmpTotalOrderImpl
 import com.decimal128.decimal.cmpTotalOrderMagnitudeImpl
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryDecimalCtxOp
 import com.decimal128.decimal.dectest.DectestRunner1.runBinaryIntOp
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class TestDecCompare {
 
