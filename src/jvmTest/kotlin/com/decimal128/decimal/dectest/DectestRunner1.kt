@@ -4,6 +4,7 @@ import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.Decimal
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.decimal128.decimal.loadTestResourceAsString
 
 object DectestRunner1 {
 
@@ -14,7 +15,7 @@ object DectestRunner1 {
                           skip: Boolean = true,
                           skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runUnaryDecimalOp(allTests, unaryDecimalOp, skip, skipCases, verbose)
     }
@@ -54,7 +55,7 @@ object DectestRunner1 {
                       skip: Boolean = true,
                       skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText)
         runUnaryIntOp(allTests, unaryIntOp, skip, skipCases, verbose)
     }
@@ -93,7 +94,7 @@ object DectestRunner1 {
                            skip: Boolean = true,
                            skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runBinaryDecimalOp(allTests, binaryDecimalOp, skip, skipCases, verbose)
     }
@@ -135,7 +136,7 @@ object DectestRunner1 {
                        skip: Boolean = true,
                        skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runBinaryIntOp(allTests, binaryIntOp, skip, skipCases, verbose)
     }
@@ -175,7 +176,7 @@ object DectestRunner1 {
                            skip: Boolean = true,
                            skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runBinaryBooleanOp(allTests, binaryBooleanOp, skip, skipCases, verbose)
     }
@@ -215,7 +216,7 @@ object DectestRunner1 {
                              skip: Boolean = true,
                              skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runUnaryDecimalCtxOp(allTests, unaryStringCtxOp, skip, skipCases, verbose)
     }
@@ -260,7 +261,7 @@ object DectestRunner1 {
                               skip: Boolean = true,
                               skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         dectestMethod_Decimal(allTests, method_Decimal, skip, skipCases, verbose)
     }
@@ -311,7 +312,7 @@ object DectestRunner1 {
                             skip: Boolean = true,
                             skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName, printStyleEngineering)
         runUnaryStringCtxOp(allTests, unaryStringCtxOp, skip, skipCases, verbose)
     }
@@ -357,7 +358,7 @@ object DectestRunner1 {
                               skip: Boolean = true,
                               skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runBinaryDecimalCtxOp(allTests, binaryDecimalCtxOp, skip, skipCases, verbose)
     }
@@ -402,7 +403,7 @@ object DectestRunner1 {
                           skip: Boolean = true,
                           skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runBinaryIntCtxOp(allTests, binaryIntCtxOp, skip, skipCases, verbose)
     }
@@ -448,7 +449,7 @@ object DectestRunner1 {
                                skip: Boolean = true,
                                skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runTernaryDecimalCtxOp(allTests, ternaryDecimalCtxOp, skip, skipCases, verbose)
     }
@@ -494,7 +495,7 @@ object DectestRunner1 {
                                  skip: Boolean = true,
                                  skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         runMethod_IntCtx_Decimal(allTests, method, skip, skipCases, verbose)
     }
@@ -540,7 +541,7 @@ object DectestRunner1 {
                                   skip: Boolean = true,
                                   skipCases: Array<String> = arrayOf(),
     ) {
-        val fileText: String = DectestParser1::class.java.getResource("/dectest/$fileName")!!.readText()
+        val fileText: String = loadTestResourceAsString("/dectest/$fileName") ?: return
         val allTests = DectestParser1.parse(fileText, opName)
         dectestMethod_Int_Decimal(allTests, method_Int_Decimal, skip, skipCases, verbose)
     }
