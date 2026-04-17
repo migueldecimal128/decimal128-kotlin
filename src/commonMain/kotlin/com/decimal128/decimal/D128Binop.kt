@@ -5,6 +5,9 @@ package com.decimal128.decimal
 
 import kotlin.math.min
 
+internal fun nanOperandFound(x: Decimal, y: Decimal): Decimal =
+    nanOperandFound(x, y, DecContext.current(), alwaysSignal = false)
+
 internal fun nanOperandFound(x: Decimal, y: Decimal,
                                ctx: DecContext, alwaysSignal: Boolean = false): Decimal {
     val stealX = x.steal

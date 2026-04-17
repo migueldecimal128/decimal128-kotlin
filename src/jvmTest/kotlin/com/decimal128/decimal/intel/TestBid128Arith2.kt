@@ -119,7 +119,7 @@ class TestBid128Arith2 {
     fun testQuantumExponent(): Unit = runMethod_Int(
         "/intel/readtest.in",
         "bid128_quantexp",
-        Decimal::quantumExponent,
+        Decimal::quantumInt,
         verbose = verbose,
     )
 

@@ -25,3 +25,25 @@ internal const val NAN_NAN = 0b1111
 internal inline fun binopSignatureOf(stealX: Int, stealY: Int): Int =
     ((stealX shl 2) or (stealY and 0x03)) and 0x0F
 
+/*
+    //typical example
+
+    val xSteal = x.steal
+    val ySteal = y.steal
+    val signature = binopSignatureOf(xSteal, ySteal)
+    when (signature) {
+        FNZ_FNZ,
+        FNZ_INF,
+        FNZ_ZER,
+
+        INF_FNZ,
+        INF_INF,
+        INF_ZER,
+
+        ZER_FNZ,
+        ZER_INF,
+        ZER_ZER -> TODO()
+
+        else -> nanOperandFound(x, y)
+    }
+ */

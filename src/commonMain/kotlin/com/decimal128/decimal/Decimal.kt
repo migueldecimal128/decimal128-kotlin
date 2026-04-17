@@ -18,6 +18,7 @@ import com.decimal128.decimal.Decimal.Companion.POS_QNAN
 import com.decimal128.decimal.Decimal.Companion.POS_SNAN
 import com.decimal128.decimal.Decimal.Companion.POS_ZEROe0
 import com.decimal128.decimal.Decimal.Companion.ZERO
+import com.decimal128.decimal.InvalidOperationReason.*
 import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min
@@ -637,16 +638,37 @@ class Decimal private constructor(
     }
 
     /**
-     * Returns the quantum exponent `qExp` of this finite value, i.e., the power
-     * of ten by which the integer coefficient is scaled.
+     * Returns the quantum of this value as a [Decimal], per IEEE 754-2019 §3.5.2.
      *
-     * Returns [Int.MIN_VALUE] and signals [DecException.INVALID_OPERATION] if
-     * called on a non-finite value.
+     * For a finite value with exponent `q`, returns `10^q` — the value of one
+     * unit in the last place. For example, `1.23.quantum()` returns `0.01`.
+     *
+     * Signals invalidOperation and returns NaN if called on a non-finite value.
+     *
+     * @see quantumInt
      */
-    fun quantumExponent(): Int {
-        if (isFinite())
-            return qExp
-        DecContext.current().signalInvalidOperation(InvalidOperationReason.QEXP_OF_NON_FINITE, this)
+    fun quantum(): Decimal {
+        val steal = this.steal
+        if (stealIsFinite(steal))
+            return Decimal.from(stealQExp(steal))
+        return DecContext.current().signalInvalidOperation(QUANTUM_OF_NON_FINITE, this)
+    }
+
+    /**
+     * Returns the quantum exponent `qExp` of this finite value as an [Int],
+     * i.e., the power of ten by which the integer coefficient is scaled.
+     * For example, `1.23.quantumInt()` returns `-2`.
+     *
+     * Signals invalidOperation and returns [Int.MIN_VALUE] if called on a
+     * non-finite value.
+     *
+     * @see quantum
+     */
+    fun quantumInt(): Int {
+        val steal = this.steal
+        if (stealIsFinite(steal))
+            return stealQExp(steal)
+        DecContext.current().signalInvalidOperation(QUANTUM_OF_NON_FINITE, this)
         return Int.MIN_VALUE
     }
 
@@ -768,15 +790,32 @@ class Decimal private constructor(
 
     /**
      * Returns this value rescaled so that its quantum exponent equals
-     * `−decimalScale`, rounding if necessary under [ctx].
+     * `-decimalScale`, rounding if necessary under the current decimal context.
      *
      * `decimalScale` is the number of digits to the right of the decimal point.
-     * For example, `withScale(2, ctx)` produces a value like `1.23`.
+     * For example, `withScale(2)` produces a value like `1.23`.
      *
-     * This is equivalent to [quantize] with an implicit quantum of `10^(-decimalScale)`.
+     * This is equivalent to [quantize] with a quantum of `10^(-decimalScale)`.
      */
     fun withScale(decimalScale: Int): Decimal =
         withScaleImpl(this, decimalScale)
+
+    /**
+     * Returns this value rescaled to the same quantum as [reference], rounding
+     * if necessary under the current decimal context.
+     *
+     * If both operands are infinite, returns infinity with the sign of this value.
+     * If exactly one operand is infinite, signals invalidOperation and returns NaN.
+     * If either operand is NaN, propagates NaN according to the usual rules.
+     *
+     * IEEE754-2019 5.3.2
+     *
+     * @param reference The value whose quantum (exponent) is used as the target.
+     * @return This value rescaled to the quantum of [reference].
+     * @see withScale
+     */
+    fun quantize(reference: Decimal): Decimal =
+        quantizeImpl(this, reference)
 
     /**
      * Returns the smallest representable value greater than this one,

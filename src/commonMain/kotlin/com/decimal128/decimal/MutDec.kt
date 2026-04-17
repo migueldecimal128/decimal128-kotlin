@@ -792,7 +792,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         val resultDigitLen = x.digitLen + scaleAmount
 
                         // Check if result would exceed precision
-                        if (resultDigitLen > ctx.precision) {
+                        if (resultDigitLen > ctx.precision || xQ - Q_TINY < scaleAmount) {
                             return ctx.setNanSignalInvalidOperation(this, QUANTIZE_RESULT_WOULD_EXCEED_PRECISION)
                         }
 
