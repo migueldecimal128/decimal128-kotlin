@@ -1,5 +1,7 @@
 package com.decimal128.decimal.intel
 
+import com.decimal128.decimal.loadTestResourceAsString
+
 object IntelParser1 {
 
     fun parseAllCases(fileText: String): List<IntelCase1> {
@@ -29,7 +31,7 @@ object IntelParser1 {
         val v = fileCaseCache[fileName]
         if (v != null)
             return v
-        val fileText = IntelParser1::class.java.getResource(fileName)!!.readText()
+        val fileText = loadTestResourceAsString(fileName) ?: return listOf()
         val allCases = parseAllCases(fileText)
         fileCaseCache[fileName] = allCases
         return allCases
