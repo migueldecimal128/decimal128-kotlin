@@ -471,7 +471,7 @@ class Decimal private constructor(
      * class of the operand for decimal128
      *
      * @return the IEEE-754 class of this decimal128 value, in accordance
-     *         with IEEE-754-2019 §7.5.2.
+     *         with IEEE-754-2019 §5.7.2.
      */
     fun ieeeClass(): Ieee754Class {
         val steal = steal
@@ -504,7 +504,6 @@ class Decimal private constructor(
      */
     fun isSignMinus(): Boolean = steal < 0 // IEEE754 5.7.2
 
-
     /** Alias for [isSignMinus]. */
     fun isNegative(): Boolean = steal < 0
 
@@ -514,6 +513,8 @@ class Decimal private constructor(
      *
      * The subnormal threshold is hardwired to the decimal128 minimum adjusted
      * exponent of −6143, equivalent to `eExp >= −6143` and `digitLen <= 34`.
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isNormal(): Boolean = stealIsFNZ(steal) &&
             stealDigitLen(steal) <= 34 &&
@@ -525,12 +526,16 @@ class Decimal private constructor(
      *
      * A decimal128 value is subnormal when its adjusted (scientific) exponent
      * `eExp` is less than −6143. Equivalently: `qExp == −6176 && digitLen < 34`.
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isSubnormal(): Boolean = stealIsFNZ(steal) && stealSciExp(steal) < -6143
 
     /**
      * Returns `true` if this value is normal, subnormal, or zero.
      * Returns `false` for infinity, and NaN.
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isFinite(): Boolean = stealIsFinite(steal)
 
@@ -546,6 +551,8 @@ class Decimal private constructor(
      * In decimal floating-point, zero has an entire cohort of representations
      * (one per valid exponent). All are considered zero by this predicate,
      * regardless of the encoded exponent or sign.
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isZero(): Boolean = stealIsZER(steal)
 
@@ -558,16 +565,22 @@ class Decimal private constructor(
      *
      * IEEE rules state that nonCanonical coefficients must be treated
      * as zero. Therefore, more than 34 digits == 0
+     *
+     * // FIXME should is this actually needed?
      */
     fun isCanonicalZero(): Boolean = stealIsZER(steal)
 
     /**
      * Returns `true` if this value is ±∞.
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isInfinite(): Boolean = stealIsINF(steal)
 
     /**
      * Returns `true` if this value is a NaN (quiet or signaling).
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isNaN(): Boolean = stealIsNAN(steal)
 
@@ -577,6 +590,8 @@ class Decimal private constructor(
      * Signaling NaNs trigger an [DecException.INVALID_OPERATION] exception
      * (or set the corresponding flag) when they appear as operands to most
      * arithmetic operations.
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isSignaling(): Boolean = stealIsSNAN(steal)
 
@@ -589,6 +604,8 @@ class Decimal private constructor(
      * - **Finite**: coefficient must have at most 34 digits and `qExp` in −6176..6111
      * - **Infinity**: coefficient/payload must be zero
      * - **NaN**: payload must have at most 33 digits
+     *
+     * IEEE754-2019 5.7.2
      */
     fun isCanonical(): Boolean {
         val steal = steal
@@ -611,7 +628,6 @@ class Decimal private constructor(
 
     // ── Quantum and Exponent ──────────────────────────────────────────────────
 
-
     // 5.7.3 Decimal operation
     /**
      * Returns `true` if this value and [other] share the same *quantum* (same
@@ -626,6 +642,8 @@ class Decimal private constructor(
      * Decimal.from("1.0").isSameQuantum(Decimal.from("2.0"))   // true  (both qExp = -1)
      * Decimal.from("1.0").isSameQuantum(Decimal.from("1.00"))  // false (qExp -1 vs -2)
      * ```
+     *
+     * IEEE754-2019 5.7.3
      */
     fun isSameQuantum(other: Decimal): Boolean {
         val stealX = steal
@@ -642,6 +660,8 @@ class Decimal private constructor(
      *
      * For a finite value with exponent `q`, returns `10^q` — the value of one
      * unit in the last place. For example, `1.23.quantum()` returns `0.01`.
+     *
+     * IEEE754-2019 5.3.2
      *
      * Signals invalidOperation and returns NaN if called on a non-finite value.
      *
@@ -695,6 +715,8 @@ class Decimal private constructor(
      * Returns the absolute value of this decimal.
      *
      * The sign bit is cleared. For NaNs, the sign is cleared without signaling.
+     *
+     * IEEE754-2019 5.5.1
      */
     fun abs() = if (steal < 0) negate() else this
 
@@ -703,6 +725,8 @@ class Decimal private constructor(
      *
      * Negate is exact: no rounding, no exceptions. `−(−x) == x` always.
      * For NaNs (including sNaNs), the sign bit is toggled without signaling.
+     *
+     * IEEE754-2019 5.5.1
      */
     fun negate(): Decimal {
         val steal = steal
@@ -719,16 +743,19 @@ class Decimal private constructor(
     /**
      * Returns this value with the sign bit copied from [signDonor].
      *
-     * This is the IEEE 754-2019 `copySign` operation (§5.5.1). The magnitude
-     * and type of `this` are unchanged; only the sign bit is replaced.
-     * No exceptions are signaled.
+     * The magnitude and type of `this` are unchanged; only the sign
+     * bit is replaced. No exceptions are signaled.
+     *
+     * IEEE 754-2019 §5.5.1
      */
     fun copySign(signDonor: Decimal): Decimal =
         if (this.signBit == signDonor.signBit) this else this.negate()
 
     /**
      * Returns a copy of this value. Because `Decimal` is immutable, this
-     * always returns `this`. Provided for IEEE 754-2019 completeness (§5.5.1).
+     * always returns `this`.
+     *
+     * Provided for IEEE 754-2019 completeness (§5.5.1).
      */
     fun copy(): Decimal = this
 
@@ -759,8 +786,8 @@ class Decimal private constructor(
     /**
      * Returns `this × 10^pow10Delta`, rounded as needed within [ctx].
      *
-     * Equivalent to IEEE 754-2019 `scaleB`. The exponent delta is clamped to
-     * ±100 000 internally to prevent intermediate overflow.
+     * Equivalent to IEEE 754-2019 5.3.3 `scaleB`.
+     *
      * Infinities pass through unchanged; NaNs signal [DecException.INVALID_OPERATION].
      */
     fun scaleB(pow10Delta: Int): Decimal {
@@ -980,7 +1007,11 @@ class Decimal private constructor(
 
     fun compareTotalOrderTo(other: Decimal) = d128CompareTotalOrder(this, other)
 
-    /** Returns `true` if `totalOrder(this, other)` — i.e., `this ≤ other` in total order. */
+    /**
+     * Returns `true` if `totalOrder(this, other)` — i.e., `this ≤ other` in total order.
+     *
+     * IEEE754-2019 5.7.2 & 5.10
+     */
     fun isTotalOrder(other: Decimal) = compareTotalOrderTo(other) <= 0
 
     /**
@@ -991,7 +1022,11 @@ class Decimal private constructor(
      */
     fun compareTotalOrderMagTo(other: Decimal) = d128CompareTotalOrderMag(this, other)
 
-    /** Returns `true` if `totalOrderMag(this, other)` — i.e., `|this| ≤ |other|` in total order. */
+    /**
+     * Returns `true` if `totalOrderMag(this, other)` — i.e., `|this| ≤ |other|` in total order.
+     *
+     * IEEE754-2019 5.7.2
+     */
     fun isTotalOrderMag(other: Decimal) = compareTotalOrderMagTo(other) <= 0
 
     /**
@@ -1005,28 +1040,28 @@ class Decimal private constructor(
     // ── IEEE 754-2019 Comparison Predicates (§5.6.1) ─────────────────────────
 
     /**
-     * IEEE 754-2019 `compareQuietEqual`: returns `true` if `this == other`
+     * IEEE 754-2019 5.6.1 `compareQuietEqual`: returns `true` if `this == other`
      * numerically. Does **not** signal on quiet NaN operands.
      */
     fun compareQuietEqual(other: Decimal): Boolean =
         d128CompareQuiet754(this, other) == IEEE754_EQ
 
     /**
-     * IEEE 754-2019 `compareQuietNotEqual`: returns `true` if `this ≠ other`.
+     * IEEE 754-2019 5.6.1 `compareQuietNotEqual`: returns `true` if `this ≠ other`.
      * Does **not** signal on quiet NaN operands.
      */
     fun compareQuietNotEqual(other: Decimal): Boolean =
         d128CompareQuiet754(this, other) != IEEE754_EQ
 
     /**
-     * IEEE 754-2019 `compareQuietGreater`: returns `true` if `this > other`.
+     * IEEE 754-2019 5.6.1 `compareQuietGreater`: returns `true` if `this > other`.
      * Does **not** signal on quiet NaN operands.
      */
     fun compareQuietGreater(other: Decimal): Boolean =
         d128CompareQuiet754(this, other) == IEEE754_GT
 
     /**
-     * IEEE 754-2019 `compareQuietNotGreater`: returns `true` if `this` is not greater
+     * IEEE 754-2019 5.6.1 `compareQuietNotGreater`: returns `true` if `this` is not greater
      * than `other` (i.e., less, equal, or unordered).
      * Does **not** signal on quiet NaN operands.
      */
@@ -1050,7 +1085,7 @@ class Decimal private constructor(
         d128CompareQuiet754(this, other) == IEEE754_UNORDERED
 
     /**
-     * IEEE 754-2019 `compareQuietLessUnordered`: returns `true` if `this < other`
+     * IEEE 754-2019 5.6.1 `compareQuietLessUnordered`: returns `true` if `this < other`
      * **or** either operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
@@ -1060,7 +1095,7 @@ class Decimal private constructor(
     }
 
     /**
-     * IEEE 754-2019 `compareQuietGreaterUnordered`: returns `true` if `this > other`
+     * IEEE 754-2019 5.6.1 `compareQuietGreaterUnordered`: returns `true` if `this > other`
      * **or** either operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
@@ -1070,7 +1105,7 @@ class Decimal private constructor(
     }
 
     /**
-     * IEEE 754-2019 `compareQuietNotLess`: returns `true` if `this` is not less
+     * IEEE 754-2019 5.6.1 `compareQuietNotLess`: returns `true` if `this` is not less
      * than `other`.
      * Does **not** signal on quiet NaN operands.
      */
@@ -1086,14 +1121,14 @@ class Decimal private constructor(
         d128CompareQuiet754(this, other)
 
     /**
-     * IEEE 754-2019 `compareQuietOrdered`: returns `true` if **neither** operand is NaN.
+     * IEEE 754-2019 5.6.1 `compareQuietOrdered`: returns `true` if **neither** operand is NaN.
      * Does **not** signal on quiet NaN operands.
      */
     fun compareQuietOrdered(other: Decimal): Boolean =
         d128CompareQuiet754(this, other) != IEEE754_UNORDERED
 
     /**
-     * IEEE 754-2019 `compareSignalingEqual`: returns `true` if `this == other`.
+     * IEEE 754-2019 5.6.1 `compareSignalingEqual`: returns `true` if `this == other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN
      * (quiet or signaling).
      */
@@ -1101,14 +1136,14 @@ class Decimal private constructor(
         d128CompareSignaling754(this, other) == IEEE754_EQ
 
     /**
-     * IEEE 754-2019 `compareSignalingGreater`: returns `true` if `this > other`.
+     * IEEE 754-2019 5.6.1 `compareSignalingGreater`: returns `true` if `this > other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
     fun compareSignalingGreater(other: Decimal): Boolean =
         d128CompareSignaling754(this, other) == IEEE754_GT
 
     /**
-     * IEEE 754-2019 `compareSignalingGreaterEqual`: returns `true` if `this >= other`.
+     * IEEE 754-2019 5.6.1 `compareSignalingGreaterEqual`: returns `true` if `this >= other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
     fun compareSignalingGreaterEqual(other: Decimal): Boolean {
@@ -1117,14 +1152,14 @@ class Decimal private constructor(
     }
 
     /**
-     * IEEE 754-2019 `compareSignalingLess`: returns `true` if `this < other`.
+     * IEEE 754-2019 5.6.1 `compareSignalingLess`: returns `true` if `this < other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
     fun compareSignalingLess(other: Decimal): Boolean =
         d128CompareSignaling754(this, other) == IEEE754_LT
 
     /**
-     * IEEE 754-2019 `compareSignalingLessEqual`: returns `true` if `this <= other`.
+     * IEEE 754-2019 5.6.1 `compareSignalingLessEqual`: returns `true` if `this <= other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
     fun compareSignalingLessEqual(other: Decimal): Boolean {
@@ -1133,14 +1168,14 @@ class Decimal private constructor(
     }
 
     /**
-     * IEEE 754-2019 `compareSignalingNotEqual`: returns `true` if `this ≠ other`.
+     * IEEE 754-2019 5.6.1 `compareSignalingNotEqual`: returns `true` if `this ≠ other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
     fun compareSignalingNotEqual(other: Decimal): Boolean =
         d128CompareSignaling754(this, other) != IEEE754_EQ
 
     /**
-     * IEEE 754-2019 `compareSignalingNotGreater`: returns `true` if `this` is
+     * IEEE 754-2019 5.6.1 `compareSignalingNotGreater`: returns `true` if `this` is
      * not greater than `other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
@@ -1148,7 +1183,7 @@ class Decimal private constructor(
         d128CompareSignaling754(this, other) != IEEE754_GT
 
     /**
-     * IEEE 754-2019 `compareSignalingLessUnordered`: returns `true` if
+     * IEEE 754-2019 5.6.1 `compareSignalingLessUnordered`: returns `true` if
      * `this < other` **or** either operand is NaN.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
@@ -1159,7 +1194,7 @@ class Decimal private constructor(
     }
 
     /**
-     * IEEE 754-2019 `compareSignalingNotLess`: returns `true` if `this` is
+     * IEEE 754-2019 5.6.1 `compareSignalingNotLess`: returns `true` if `this` is
      * not less than `other`.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
@@ -1168,7 +1203,7 @@ class Decimal private constructor(
 
 
     /**
-     * IEEE 754-2019 `compareSignalingGreaterUnordered`: returns `true` if
+     * IEEE 754-2019 5.6.1 `compareSignalingGreaterUnordered`: returns `true` if
      * `this > other` **or** either operand is NaN.
      * **Signals** [DecException.INVALID_OPERATION] if either operand is a NaN.
      */
@@ -1282,12 +1317,13 @@ class Decimal private constructor(
      * even when both operands are positive.
      *
      * Special cases:
-     * | `this`  | `other` | result |
-     * |---------|---------|--------|
-     * | finite  | ±0      | NaN, signals [DecException.INVALID_OPERATION] |
-     * | ±∞      | any     | NaN, signals [DecException.INVALID_OPERATION] |
-     * | finite  | ±∞      | `this` |
-     * | NaN (either) | — | NaN, signals [DecException.INVALID_OPERATION] |
+     *
+     * | `this`       | `other` | result |
+     * |--------------|---------|--------|
+     * | finite       | ±0      | NaN, signals [DecException.INVALID_OPERATION] |
+     * | ±∞           | any     | NaN, signals [DecException.INVALID_OPERATION] |
+     * | finite       | ±∞      | `this` |
+     * | NaN (either) | —       | NaN, signals [DecException.INVALID_OPERATION] |
      *
      * The sign of an exact zero result matches the sign of `this`.
      *
@@ -1309,6 +1345,8 @@ class Decimal private constructor(
     /**
      * Returns the square root of this value, rounded according to [DecContext.current].
      *
+     * IEEE754-2019 5.4.1
+     *
      * Special cases:
      * - `√(+∞) = +∞`
      * - `√(±0) = ±0`
@@ -1316,26 +1354,26 @@ class Decimal private constructor(
      * - qNaN returns NaN without signaling
      * - sNaN signals [DecException.INVALID_OPERATION] and returns NaN
      */
-    fun sqrt(): Decimal = d128SqrtImpl(this)
+    fun squareRoot(): Decimal = d128SqrtImpl(this)
+
+    /**
+     * Returns `(this * multiplier) + addend` as a single fused operation,
+     * with only one rounding step applied to the final result.
+     *
+     * This avoids the double rounding that would occur if multiplication
+     * and addition were performed separately, producing a more accurate result.
+     * The operation is performed under the current decimal context.
+     *
+     * IEEE754-2019 §5.4.1 `fusedMultiplyAdd`
+     *
+     * @param multiplier The value to multiply with this.
+     * @param addend The value to add to the product.
+     * @return The fused multiply-add result.
+     */
+    fun fma(multiplier: Decimal, addend: Decimal): Decimal =
+        d128FmaImpl(this, multiplier, addend, DecContext.current())
+
 // ── Rounding ──────────────────────────────────────────────────────────────
-
-    /**
-     * Rounds to an integer using the rounding mode from [DecContext.current].
-     * Does not signal [DecException.INEXACT].
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralValue`.
-     */
-    fun roundToIntegral(): Decimal =
-        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = true)
-
-    /**
-     * Rounds to an integer using the rounding mode from [DecContext.current],
-     * signaling [DecException.INEXACT] if the result is not already integral.
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
-     */
-    fun roundToIntegralSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = false)
 
     /**
      * Rounds to the nearest integer, ties resolved to even (banker's rounding).
@@ -1347,15 +1385,6 @@ class Decimal private constructor(
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
 
     /**
-     * Rounds to the nearest integer, ties resolved to even (banker's rounding),
-     * signaling [DecException.INEXACT] if the result is not already integral.
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToEven`.
-     */
-    fun roundToIntegralTiesToEvenSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
-
-    /**
      * Rounds to the nearest integer, ties resolved away from zero.
      * Does not signal [DecException.INEXACT].
      *
@@ -1363,15 +1392,6 @@ class Decimal private constructor(
      */
     fun roundToIntegralTiesToAway(): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
-
-    /**
-     * Rounds to the nearest integer, ties resolved away from zero,
-     * signaling [DecException.INEXACT] if the result is not already integral.
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToAway`.
-     */
-    fun roundToIntegralTiesToAwaySignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
 
     /**
      * Rounds toward zero (truncation).
@@ -1383,15 +1403,6 @@ class Decimal private constructor(
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
 
     /**
-     * Rounds toward zero (truncation),
-     * signaling [DecException.INEXACT] if the result is not already integral.
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardZero`.
-     */
-    fun roundToIntegralTowardZeroSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
-
-    /**
      * Rounds toward positive infinity (ceiling).
      * Does not signal [DecException.INEXACT].
      *
@@ -1401,15 +1412,6 @@ class Decimal private constructor(
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
 
     /**
-     * Rounds toward positive infinity (ceiling),
-     * signaling [DecException.INEXACT] if the result is not already integral.
-     *
-     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardPositive`.
-     */
-    fun roundToIntegralTowardPositiveSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
-
-    /**
      * Rounds toward negative infinity (floor).
      * Does not signal [DecException.INEXACT].
      *
@@ -1417,6 +1419,60 @@ class Decimal private constructor(
      */
     fun roundToIntegralTowardNegative(): Decimal =
         d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
+
+    /**
+     * Rounds to an integer using the rounding mode from [DecContext.current],
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
+     */
+    fun roundToIntegralSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = false)
+
+    /**
+     * Rounds to an integer using the rounding mode from [DecContext.current].
+     * Does not signal [DecException.INEXACT].
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralValue`.
+     */
+    fun roundToIntegral(): Decimal =
+        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = true)
+
+    /**
+     * Rounds to the nearest integer, ties resolved to even (banker's rounding),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToEven`.
+     */
+    fun roundToIntegralTiesToEvenSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
+
+    /**
+     * Rounds to the nearest integer, ties resolved away from zero,
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToAway`.
+     */
+    fun roundToIntegralTiesToAwaySignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
+
+    /**
+     * Rounds toward zero (truncation),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardZero`.
+     */
+    fun roundToIntegralTowardZeroSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
+
+    /**
+     * Rounds toward positive infinity (ceiling),
+     * signaling [DecException.INEXACT] if the result is not already integral.
+     *
+     * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardPositive`.
+     */
+    fun roundToIntegralTowardPositiveSignalInexact(): Decimal =
+        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
 
     /**
      * Rounds toward negative infinity (floor),
@@ -1452,6 +1508,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTiesToEven(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
@@ -1461,6 +1519,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTiesToEvenSignalInexact(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
@@ -1470,6 +1530,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTiesToAway(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
@@ -1479,6 +1541,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTiesToAwaySignalInexact(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
@@ -1488,6 +1552,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTowardZero(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
@@ -1497,6 +1563,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTowardZeroSignalInexact(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
@@ -1506,6 +1574,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTowardPositive(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
@@ -1515,6 +1585,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTowardPositiveSignalInexact(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
@@ -1524,6 +1596,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTowardNegative(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
@@ -1533,6 +1607,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toLongTowardNegativeSignalInexact(): Long =
         d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
@@ -1542,6 +1618,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTiesToEven(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
@@ -1551,6 +1629,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTiesToEvenSignalInexact(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
@@ -1560,6 +1640,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTiesToAway(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
@@ -1569,6 +1651,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTiesToAwaySignalInexact(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
@@ -1578,6 +1662,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTowardZero(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
@@ -1587,6 +1673,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTowardZeroSignalInexact(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
@@ -1596,6 +1684,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTowardPositive(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
@@ -1605,6 +1695,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTowardPositiveSignalInexact(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
@@ -1614,6 +1706,8 @@ class Decimal private constructor(
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTowardNegative(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
@@ -1623,6 +1717,8 @@ class Decimal private constructor(
      * signaling [DecException.INEXACT] if the result is not exact.
      * Signals [DecException.INVALID_OPERATION] and returns [Int.MIN_VALUE]
      * on overflow, NaN, or infinity.
+     *
+     * IEEE754-2019 5.8
      */
     fun toIntTowardNegativeSignalInexact(): Int =
         d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
@@ -1647,6 +1743,8 @@ class Decimal private constructor(
      * - `x^1 = x`
      * - `0^n` for negative n signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
      * - `(±∞)^n` for negative n returns ±zero
+     *
+     * IEEE754-2019 9.2 `pown(integer)`
      */
     fun pow(n: Int): Decimal = d128PownImpl(this, n)
 
@@ -1658,6 +1756,8 @@ class Decimal private constructor(
      * - `0^x` for negative x signals [DecException.DIVIDE_BY_ZERO] and returns ±infinity
      * - `(±∞)^x` for negative x returns ±zero
      * - `pow` of a negative base with a non-integer exponent signals [DecException.INVALID_OPERATION] and returns NaN
+     *
+     * IEEE754-2019 9.2
      */
     fun pow(x: Decimal): Decimal = d128PowImpl(this, x)
 
@@ -1680,6 +1780,8 @@ class Decimal private constructor(
      * - `exp(-∞)` returns `0`
      * - `exp(+∞)` returns `+∞`
      *
+     * IEEE754-2019 9.2
+     *
      * @return `e^this`
      */
     fun exp(): Decimal = d128ExpImpl(this, isExp10 = false)
@@ -1692,6 +1794,8 @@ class Decimal private constructor(
      * - `log10(negative)` signals [DecException.INVALID_OPERATION] and returns NaN
      * - `log10(+∞)` returns `+∞`
      *
+     * IEEE754-2019 9.2
+     *
      * @return `log10(this)`
      */
     fun log10(): Decimal = d128Log10Impl(this)
@@ -1702,6 +1806,8 @@ class Decimal private constructor(
      * Special cases:
      * - `exp10(-∞)` returns `0`
      * - `exp10(+∞)` returns `+∞`
+     *
+     * IEEE754-2019 9.2
      *
      * @return `10^this`
      */

@@ -210,7 +210,7 @@ class TestDecimalPow {
 
     @Test
     fun testSqrt10() {
-        val sqrt10 = Decimal.TEN.sqrt()
+        val sqrt10 = Decimal.TEN.squareRoot()
         val tenPowHalf = Decimal.TEN.pow("0.5".toDecimal())
         if (verbose)
             println("sqrt10:$sqrt10 tenPowHalf:$tenPowHalf")
@@ -219,7 +219,7 @@ class TestDecimalPow {
 
     @Test
     fun testSqrt2x4() {
-        val sqrt2x4 = Decimal.TWO.sqrt() * Decimal.FOUR
+        val sqrt2x4 = Decimal.TWO.squareRoot() * Decimal.FOUR
         val powTwoTwoPoint5 = Decimal.TWO.pow("2.5".toDecimal())
         if (verbose)
             println("sqrt2x4:$sqrt2x4 powTwoTwoPoint5:$powTwoTwoPoint5")

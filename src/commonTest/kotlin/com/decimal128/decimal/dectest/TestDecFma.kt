@@ -2,7 +2,7 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.dectest.DectestRunner1.runTernaryDecimalCtxOp
 import kotlin.test.Test
-import com.decimal128.decimal.fmaImpl
+import com.decimal128.decimal.d128FmaImpl
 
 class TestDecFma {
 
@@ -12,7 +12,7 @@ class TestDecFma {
     fun testFma() = runTernaryDecimalCtxOp(
         "dqFMA.decTest",
         "fma",
-        ::fmaImpl,
+        ::d128FmaImpl,
         verbose = verbose,
         skip = true,
         skipCases = arrayOf(
@@ -25,7 +25,7 @@ class TestDecFma {
 
     @Test
     fun testFmaCases() = runTernaryDecimalCtxOp(
-        ::fmaImpl,
+        ::d128FmaImpl,
         verbose = verbose,
         cases = arrayOf(
             "dqfma0307  fma   1e-6176    0.1  1e-6176   -> 1E-6176 Underflow Subnormal Inexact Rounded",
