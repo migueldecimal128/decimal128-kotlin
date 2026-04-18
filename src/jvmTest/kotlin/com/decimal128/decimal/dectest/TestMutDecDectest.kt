@@ -5,18 +5,16 @@ import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecRounding
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.MutDec
+import com.decimal128.decimal.loadTestResourceAsString
 import kotlin.test.Test
-import java.io.File
-import java.util.EnumSet
 import kotlin.test.assertEquals
-import kotlin.text.iterator
 
 class TestMutDecDectest {
 
     private val veryverbose = false
     private val verbose = false
 
-    private val prefix = "src/jvmTest/resources/dectest/"
+    private val prefix = "/dectest/"
 
     private var precision = 34
     private var rounding = "half_even"
@@ -475,8 +473,11 @@ class TestMutDecDectest {
     fun read1(dectestFileName: String) {
         if (verbose)
             println("dectestFileName: $dectestFileName")
-        val file = File(dectestFileName).bufferedReader()
-        for (line in file.readLines())
+        val fileString = loadTestResourceAsString(dectestFileName) ?: run {
+            println("SKIPPED: $dectestFileName not available on this platform")
+            return
+        }
+        for (line in fileString.lineSequence())
             processLine(line)
     }
 
@@ -635,7 +636,7 @@ class TestMutDecDectest {
         }
 
         fun captureExceptionSet(conditions: Array<String>): Set<DecException> {
-            val exceptionSet = EnumSet.noneOf(DecException::class.java)
+            val exceptionSet = mutableSetOf<DecException>()
             for (cond in conditions) {
                 when (cond.lowercase()) {
                     "clamped" -> {}
