@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestDecimalQuantize {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val xStr: String, val yStr: String, val expectedStr: String)
 

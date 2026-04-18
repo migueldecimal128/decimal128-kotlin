@@ -31,7 +31,10 @@ object IntelParser1 {
         val v = fileCaseCache[fileName]
         if (v != null)
             return v
-        val fileText = loadTestResourceAsString(fileName) ?: return listOf()
+        val fileText = loadTestResourceAsString(fileName) ?: run {
+            println("SKIPPED: $fileName not available on this platform")
+            return listOf()
+        }
         val allCases = parseAllCases(fileText)
         fileCaseCache[fileName] = allCases
         return allCases
