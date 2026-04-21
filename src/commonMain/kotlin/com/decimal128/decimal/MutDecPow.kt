@@ -9,7 +9,7 @@ internal fun mutDecPownImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext = DecC
         STEAL_TYP_FNZ -> return mutDecPownImplFNZ(z, x, n, ctx)
         STEAL_TYP_ZER -> return mutDecPownImplZER(z, x, n, ctx)
         STEAL_TYP_INF -> return mutDecPownImplINF(z, x, n, ctx)
-        else -> {
+        else -> { // STEAL_TYP_NAN
             // IEEE754-2019 p.63
             // pown (x, 0) is 1 if x is not a signaling NaN
             if (n == 0 && stealIsQNAN(xSteal))
@@ -70,8 +70,16 @@ internal fun mutDecPownImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): M
             return ret
         }
         n < 0 -> {
-            val reciprocal = MutDec().setReciprocal(x, ctx)
-            mutDecPownImplFNZ(z, reciprocal, -n, ctx)
+            val reciprocal = ctx.tmps.mdecTrans1.setReciprocal(x, ctx)
+            if (n > Int.MIN_VALUE) {
+                mutDecPownImplFNZ(z, reciprocal, -n, ctx)
+            } else {
+                // special case for Int.MIN_VALUE
+                // -MIN_VALUE overflows, so compute as pown(recip, MAX_VALUE) * recip
+                val t = ctx.tmps.mdecTrans2
+                mutDecPownImplFNZ(t, reciprocal, Int.MAX_VALUE, ctx)
+                z.setMul(t, reciprocal, ctx)
+            }
         }
         else -> mutDecPownImplFNZ_pow_GE_3(z, x, n, ctx)
     }
@@ -253,3 +261,49 @@ private fun mutDecPowFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): M
     }
     return z.set(result)
 }
+
+internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int): MutDec {
+    val ctx = DecContext.current()
+    val xSteal = x.steal
+    when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> {
+            val t = ctx.tmps.mdecTrans1.setAdd(MutDec.ONE, x, ctx)
+            when {
+                t.isNegative() ->
+                    return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.COMPOUND_X_LT_NEG_ONE)
+                n == 0 -> return z.setOne()
+                t.isZero() -> {
+                    return if (n < 0) {
+                        z.setInfinite()
+                        ctx.signalDivByZero(z)
+                    } else {
+                        //  Q(compound(x, n)) is floor(n × min(0, Q(x)))
+                        val nCapped = min(n, 10_000) // ensure following multiply does not overflow
+                        val qPreferred = nCapped * min(0, stealQExp(xSteal))
+                        z.setZero(false, qPreferred)
+                    }
+                }
+
+            }
+            return mutDecPownImplFNZ(z, t, n, ctx)
+        }
+        STEAL_TYP_ZER -> return z.setOne()
+        STEAL_TYP_INF -> return when {
+            stealSignFlag(xSteal) ->
+                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.COMPOUND_X_LT_NEG_ONE)
+            n > 0 -> z.setInfinite()
+            n == 0 -> z.setOne() // compound (x, 0) is 1 for x ≥ −1 or quiet NaN
+            else -> // n < 0
+                z.setZero()
+        }
+        else -> { // STEAL_TYP_NAN
+            // IEEE754-2019 p. 62
+            // compound (x, 0) is 1 for x ≥ −1 or quiet NaN
+            if (n == 0 && stealIsQNAN(xSteal))
+                return z.setOne()
+            else
+                return z.setNanOperandFound(x, ctx)
+        }
+    }
+}
+
