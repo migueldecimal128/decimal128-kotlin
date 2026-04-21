@@ -10,8 +10,8 @@ class TestMutDecCompound {
     data class TC(val xStr: String, val n: Int, val expectedStr: String)
 
     val tcs = arrayOf(
-        TC("1", Int.MIN_VALUE, "0"),
         TC("0.05", Int.MIN_VALUE, "0E-6176"),        // discounts to zero
+        TC("1", Int.MIN_VALUE, "0"),
 
         // compound(x, 0) is 1 for x ≥ -1
         TC("0", 0, "1"),
@@ -78,13 +78,13 @@ class TestMutDecCompound {
 
         // Very large negative n (discounting)
         TC("0.05", Int.MIN_VALUE, "0E-6176"),        // discounts to zero
-        TC("0.01", -1_000_000, "0E-6176"),
+        TC("0.01", -1_000_000, "4.228802060756949496317010804840068E-4322"),
         TC("1", Int.MIN_VALUE, "0"),
 
         // x very close to -1 from above (near zero base)
         TC("-0.9999999999", 1, "1E-10"),        // 1+x is tiny positive
-        TC("-0.9999999999", -1, "1E+10"),       // discounting with tiny base
-        TC("-0.9999999999", Int.MAX_VALUE, "+0"), // tiny base ^ huge n -> 0
+        TC("-0.9999999999", -1, "1E10"),       // discounting with tiny base
+        TC("-0.9999999999", Int.MAX_VALUE, "0E-6176"), // tiny base ^ huge n -> 0
         TC("-0.9999999999", Int.MIN_VALUE, "Infinity"), // tiny base ^ huge neg n -> Inf
 
         // x very close to -1 from below (should signal invalidOperation)
@@ -92,22 +92,22 @@ class TestMutDecCompound {
 
         // x extremely large
         TC("9.999999999E+6144", Int.MAX_VALUE, "Infinity"),  // max decimal ^ max int
-        TC("9.999999999E+6144", -1, "+0"),               // 1/huge
+        TC("9.999999999E+6144", -1, "1.0000000001000000000100000000010E-6145"),               // 1/huge
 
         // x very small positive (near zero but not zero)
-        TC("1E-6144", Int.MAX_VALUE, "1"),      // (1 + tiny)^huge - depends on precision
-        TC("1E-6144", 1, "1.000000...001"),     // rounds to 1 at most precisions
+        TC("1E-6144", Int.MAX_VALUE, "1.000000000000000000000000000000000"),      // (1 + tiny)^huge - depends on precision
+        TC("1E-6144", 1, "1.000000000000000000000000000000000"),     // rounds to 1 at most precisions
 
         // n = 1 (identity-ish)
         TC("0", 1, "1"),                        // (1+0)^1 = 1
         TC("-1", 1, "0"),                       // (1+-1)^1 = 0
-        TC("1E+6144", 1, "1E+6144 + 1"),        // may overflow to Infinity depending on precision
+        TC("1E+6144", 1, "1.000000000000000000000000000000000E6144"),        // may overflow to Infinity depending on precision
 
         // Quantum edge cases for zero result
-        TC("-1", Int.MAX_VALUE, "+0"),          // check qExp = floor(MAX_INT * min(0, Q(-1)))
-        TC("-1.000", Int.MAX_VALUE, "+0"),      // Q(x) = -3, qExp = floor(MAX_INT * -3) -> clamped
-        TC("-1.000", 2, "+0"),                  // qExp = floor(2 * -3) = -6
-        TC("-1.0", 2, "+0"),                    // qExp = floor(2 * -1) = -2
+        TC("-1", Int.MAX_VALUE, "0"),          // check qExp = floor(MAX_INT * min(0, Q(-1)))
+        TC("-1.000", Int.MAX_VALUE, "0E-6176"),      // Q(x) = -3, qExp = floor(MAX_INT * -3) -> clamped
+        TC("-1.000", 2, "0.000000"),                  // qExp = floor(2 * -3) = -6
+        TC("-1.0", 2, "0.00"),                    // qExp = floor(2 * -1) = -2
     )
 
     @Test

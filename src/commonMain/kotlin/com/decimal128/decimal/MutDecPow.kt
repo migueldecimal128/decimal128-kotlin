@@ -1,5 +1,6 @@
 package com.decimal128.decimal
 
+import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
@@ -45,21 +46,19 @@ private fun mutDecPownImplZER(z: MutDec, x: MutDec, n: Int, ctx: DecContext): Mu
 }
 
 internal fun mutDecPownImplFNZ(z: MutDec, x: MutDec, lpow: Long, ctx: DecContext): MutDec {
-    val preferredQExpLong = lpow * stealQExp(x.steal).toLong()
+    val estimatedQExpLong = lpow * stealQExp(x.steal).toLong()
     val negative = (stealSignBit(x.steal) and lpow.toInt()) != 0
     return when {
         lpow == 0L -> z.setOne()
         lpow == 1L -> z.set(x)
         lpow == 2L -> z.setSquare(x, ctx)
         mutDecCompareNumericMagnitude(x, MutDec.ONE) == 0 -> {
-            val resultQExp = max(min(preferredQExpLong, 0L), -33L).toInt()
+            val resultQExp = max(min(estimatedQExpLong, 0L), -33L).toInt()
             z.setOne(negative, resultQExp)
         }
         mutDecCompareNumericMagnitude(x, MutDec.TEN) == 0 -> {
             val minPreferredQExp = min(max(lpow - 33L, -32L), 0L)
-            val preferredQExp = max(preferredQExpLong, minPreferredQExp).toInt()
-            //val preferredQExp = max(min(preferredQExpLong, 1L), minPreferredQExp).toInt()
-            //val preferredQExp = max(min(preferredQExpLong, 0L), minPreferredQExp).toInt()
+            val preferredQExp = max(estimatedQExpLong, minPreferredQExp).toInt()
             val ret = when {
                 lpow > 6144L -> ctx.setInfinitySignalInexactOverflow(z, negative)
                 lpow < -6176L -> ctx.setZeroSignalInexactUnderflow(z)
@@ -68,8 +67,17 @@ internal fun mutDecPownImplFNZ(z: MutDec, x: MutDec, lpow: Long, ctx: DecContext
             return ret
         }
         lpow < 0 -> {
-            val reciprocal = ctx.tmps.mdecTrans1.setReciprocal(x, ctx)
-            mutDecPownImplFNZ(z, reciprocal, -lpow, ctx)
+            val absPow = -lpow
+            val estimatedResultExp = stealSciExp(x.steal).toLong() * -lpow
+            if (estimatedResultExp < 6100L) {
+                // raise first, then reciprocal - avoids subnormal underflow
+                mutDecPownImplFNZ(z, x, absPow, ctx)
+                z.setReciprocal(z, ctx)
+            } else {
+                // reciprocal first, then raise
+                val reciprocal = ctx.tmps.mdecTrans1.setReciprocal(x, ctx)
+                mutDecPownImplFNZ(z, reciprocal, absPow, ctx)
+            }
         }
         else -> mutDecPownImplFNZ_pow_GE_3(z, x, lpow, ctx)
     }
@@ -275,7 +283,15 @@ internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int): MutDec {
                 }
 
             }
-            return mutDecPownImplFNZ(z, t, n.toLong(), ctx)
+            mutDecPownImplFNZ(z, t, n.toLong(), ctx)
+            if (z.isZero()) {
+                val absLong = n.toLong().absoluteValue
+                val qPreferredLong = absLong * min(0L, stealQExp(xSteal).toLong())
+                val qPreferred = max(min(qPreferredLong, 6111L), -6176L).toInt()
+                //val qPreferred = qPreferredLong.coerceIn(-6176L, 6111L).toInt()
+                z.setZero(false, qPreferred)
+            }
+            return z
         }
         STEAL_TYP_ZER -> return z.setOne()
         STEAL_TYP_INF -> return when {
