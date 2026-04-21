@@ -205,4 +205,11 @@ class TestMutDecPow {
         assertTrue(result bitwiseEQ md("-0E-6176"))
         assertTrue(ctx.isSet(DecException.UNDERFLOW))
     }
+
+    @Test
+    fun testOneIntMinValue() {
+        val ctx = DecContext.decimal128IEEE()
+        val result = MutDec().setPown(md("1"), Int.MIN_VALUE, ctx)
+        assertTrue(result bitwiseEQ md("1"))
+    }
 }

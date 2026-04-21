@@ -10,7 +10,8 @@ class TestMutDecCompound {
     data class TC(val xStr: String, val n: Int, val expectedStr: String)
 
     val tcs = arrayOf(
-        TC("0.05", Int.MIN_VALUE, "0"),        // discounts to zero
+        TC("1", Int.MIN_VALUE, "0"),
+        TC("0.05", Int.MIN_VALUE, "0E-6176"),        // discounts to zero
 
         // compound(x, 0) is 1 for x ≥ -1
         TC("0", 0, "1"),
@@ -76,8 +77,8 @@ class TestMutDecCompound {
         TC("1", Int.MAX_VALUE, "Infinity"),         // 2^MAX_INT
 
         // Very large negative n (discounting)
-        TC("0.05", Int.MIN_VALUE, "0"),        // discounts to zero
-        TC("0.01", -1_000_000, "0"),
+        TC("0.05", Int.MIN_VALUE, "0E-6176"),        // discounts to zero
+        TC("0.01", -1_000_000, "0E-6176"),
         TC("1", Int.MIN_VALUE, "0"),
 
         // x very close to -1 from above (near zero base)

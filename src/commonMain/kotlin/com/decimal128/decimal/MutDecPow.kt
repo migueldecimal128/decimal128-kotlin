@@ -6,7 +6,7 @@ import kotlin.math.min
 internal fun mutDecPownImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext = DecContext.current()): MutDec {
     val xSteal = x.steal
     when (stealTyp(xSteal)) {
-        STEAL_TYP_FNZ -> return mutDecPownImplFNZ(z, x, n, ctx)
+        STEAL_TYP_FNZ -> return mutDecPownImplFNZ(z, x, n.toLong(), ctx)
         STEAL_TYP_ZER -> return mutDecPownImplZER(z, x, n, ctx)
         STEAL_TYP_INF -> return mutDecPownImplINF(z, x, n, ctx)
         else -> { // STEAL_TYP_NAN
@@ -44,45 +44,59 @@ private fun mutDecPownImplZER(z: MutDec, x: MutDec, n: Int, ctx: DecContext): Mu
     }
 }
 
-internal fun mutDecPownImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
+internal fun mutDecPownImplFNZ(z: MutDec, x: MutDec, lpow: Long, ctx: DecContext): MutDec {
+    val preferredQExpLong = lpow * stealQExp(x.steal).toLong()
+    val negative = (stealSignBit(x.steal) and lpow.toInt()) != 0
     return when {
-        n == 0 -> z.setOne()
-        n == 1 -> z.set(x)
-        n == 2 -> z.setSquare(x, ctx)
+        lpow == 0L -> z.setOne()
+        lpow == 1L -> z.set(x)
+        lpow == 2L -> z.setSquare(x, ctx)
         mutDecCompareNumericMagnitude(x, MutDec.ONE) == 0 -> {
-            val resultQExpLong = n.toLong() * x.qExp.toLong()
-            val resultQExp = max(min(resultQExpLong, 0L), -33L).toInt()
-            val negative = stealSignFlag(x.steal) && (n and 1) != 0
+            val resultQExp = max(min(preferredQExpLong, 0L), -33L).toInt()
             z.setOne(negative, resultQExp)
         }
         mutDecCompareNumericMagnitude(x, MutDec.TEN) == 0 -> {
-            val negative = stealSignFlag(x.steal) && (n and 1) != 0
-            val preferredQExpLong = n.toLong() * stealQExp(x.steal).toLong()
-            val minPreferredQExp = min(max((n - 33).toLong(), -32L), 0L)
+            val minPreferredQExp = min(max(lpow - 33L, -32L), 0L)
             val preferredQExp = max(preferredQExpLong, minPreferredQExp).toInt()
             //val preferredQExp = max(min(preferredQExpLong, 1L), minPreferredQExp).toInt()
             //val preferredQExp = max(min(preferredQExpLong, 0L), minPreferredQExp).toInt()
             val ret = when {
-                n > 6144 -> ctx.setInfinitySignalInexactOverflow(z, negative)
-                n < -6176 -> ctx.setZeroSignalInexactUnderflow(z)
-                else -> setTenPowN(z, negative, n, preferredQExp)
+                lpow > 6144L -> ctx.setInfinitySignalInexactOverflow(z, negative)
+                lpow < -6176L -> ctx.setZeroSignalInexactUnderflow(z)
+                else -> setTenPowN(z, negative, lpow.toInt(), preferredQExp)
             }
             return ret
         }
-        n < 0 -> {
+        lpow < 0 -> {
             val reciprocal = ctx.tmps.mdecTrans1.setReciprocal(x, ctx)
-            if (n > Int.MIN_VALUE) {
-                mutDecPownImplFNZ(z, reciprocal, -n, ctx)
-            } else {
-                // special case for Int.MIN_VALUE
-                // -MIN_VALUE overflows, so compute as pown(recip, MAX_VALUE) * recip
-                val t = ctx.tmps.mdecTrans2
-                mutDecPownImplFNZ(t, reciprocal, Int.MAX_VALUE, ctx)
-                z.setMul(t, reciprocal, ctx)
-            }
+            mutDecPownImplFNZ(z, reciprocal, -lpow, ctx)
         }
-        else -> mutDecPownImplFNZ_pow_GE_3(z, x, n, ctx)
+        else -> mutDecPownImplFNZ_pow_GE_3(z, x, lpow, ctx)
     }
+}
+
+private fun mutDecPownImplFNZ_pow_GE_3(z:MutDec, x: MutDec, lpow: Long, ctx: DecContext): MutDec {
+    verify { lpow >= 3L }
+    val m = ctx.tmps.mdecDivRemPowCtzd.set(x)
+    // Left-to-right binary exponentiation
+    // Find the highest bit below the MSB
+    val resultSign = (x.signBit and lpow.toInt()) != 0
+    val estimatedResultExp = stealSciExp(x.steal).toLong() * lpow
+    when {
+        estimatedResultExp > 6200L ->
+            return ctx.signalInexactOverflow(z.setInfinite(resultSign))
+        estimatedResultExp < -6250L ->
+            return ctx.signalInexactUnderflow(z.setZero(resultSign, Q_TINY))
+    }
+    var singleBitMask = 1L shl (62 - lpow.countLeadingZeroBits())
+    z.set(m)
+    while (singleBitMask != 0L) {
+        z.setSquare(z, ctx)
+        if (lpow and singleBitMask != 0L)
+            z.setMul(z, m, ctx)
+        singleBitMask = singleBitMask shr 1
+    }
+    return z
 }
 
 private fun setTenPowN(z: MutDec, sign: Boolean, n: Int, preferredQExp: Int): MutDec {
@@ -103,30 +117,6 @@ private fun setTenPowN(z: MutDec, sign: Boolean, n: Int, preferredQExp: Int): Mu
             z.finalizeFnz(sign, preferredQExp)
         }
     }
-}
-
-private fun mutDecPownImplFNZ_pow_GE_3(z:MutDec, x: MutDec, pow: Int, ctx: DecContext): MutDec {
-    verify { pow >= 3 }
-    val m = ctx.tmps.mdecDivRemPowCtzd.set(x)
-    // Left-to-right binary exponentiation
-    // Find the highest bit below the MSB
-    val resultSign = x.signBit and (pow and 1) != 0
-    val estimatedResultExp = stealSciExp(x.steal).toLong() * pow.toLong()
-    when {
-        estimatedResultExp > 6200 ->
-            return ctx.signalInexactOverflow(z.setInfinite(resultSign))
-        estimatedResultExp < -6250 ->
-            return ctx.signalInexactUnderflow(z.setZero(resultSign, Q_TINY))
-    }
-    var singleBitMask = 1 shl (30 - pow.countLeadingZeroBits())
-    z.set(m)
-    while (singleBitMask != 0) {
-        z.setSquare(z, ctx)
-        if (pow and singleBitMask != 0)
-            z.setMul(z, m, ctx)
-        singleBitMask = singleBitMask shr 1
-    }
-    return z
 }
 
 internal fun mutDecPowImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
@@ -285,7 +275,7 @@ internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int): MutDec {
                 }
 
             }
-            return mutDecPownImplFNZ(z, t, n, ctx)
+            return mutDecPownImplFNZ(z, t, n.toLong(), ctx)
         }
         STEAL_TYP_ZER -> return z.setOne()
         STEAL_TYP_INF -> return when {
