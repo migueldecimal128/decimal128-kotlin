@@ -184,12 +184,21 @@ class Decimal private constructor(
         val POS_ZEROe0 = ZEROS_CACHE[0]
         val NEG_ZEROe0 = Decimal(stealEncodeZER(1, 0), 0L, 0L)
         val ZERO = POS_ZEROe0
-        val POS_ONEe0 = Decimal(stealEncodeFNZ(0, 0, PACKED_LENGTHS_1_1), 0L, 1L)
+        val POS_ZEROeQ_TINY = Decimal(stealEncodeZER(0, Q_TINY), 0L, 0L)
+        val POS_ZEROeQ_MAX = Decimal(stealEncodeZER(0, Q_MAX), 0L, 0L)
+        val NEG_ZEROeQ_TINY = Decimal(stealEncodeZER(1, Q_TINY), 0L, 0L)
+        val NEG_ZEROeQ_MAX = Decimal(stealEncodeZER(1, Q_MAX), 0L, 0L)
+
+        private val SMALL_POS_INT_CACHE: Array<Decimal> = Array<Decimal>(11) { i ->
+            if (i == 0) ZERO else decimalFNZ(0, 0, 0L, i.toLong()) }
+
+
+        val POS_ONEe0 = SMALL_POS_INT_CACHE[1]
         val NEG_ONEe0 = Decimal(stealEncodeFNZ(1, 0, PACKED_LENGTHS_1_1), 0L, 1L)
         val ONE = POS_ONEe0
-        val TWO = decimalFNZ(0, 0, 0L, 2L)
-        val FOUR = decimalFNZ(0, 0, 0L, 4L)
-        val POS_TENe0 = decimalFNZ(0, 0, 0L, 10L)
+        val TWO = SMALL_POS_INT_CACHE[2]
+        val FOUR = SMALL_POS_INT_CACHE[4]
+        val POS_TENe0 = SMALL_POS_INT_CACHE[10]
         val NEG_TENe0 = decimalFNZ(1, 0, 0L, 10L)
         val TEN = POS_TENe0
         val POS_INFINITY = Decimal(stealEncodeINF(0), 0L, 0L)
@@ -228,9 +237,12 @@ class Decimal private constructor(
                 verify { sign }
                 return NEG_ZEROe0
             }
-            val qClamped = max(min(qExp, Q_MAX), Q_TINY)
+            if (qExp >= Q_MAX)
+                return if (sign) NEG_ZEROeQ_MAX else POS_ZEROeQ_MAX
+            if (qExp <= Q_TINY)
+                return if (sign) NEG_ZEROeQ_TINY else POS_ZEROeQ_TINY
             val signBit = if (sign) 1 else 0
-            val steal = stealEncodeZER(signBit, qClamped)
+            val steal = stealEncodeZER(signBit, qExp)
             val zero = Decimal(steal, 0L, 0L)
             return zero
         }
@@ -254,14 +266,12 @@ class Decimal private constructor(
          * Returns a `Decimal` with value [l].
          */
         fun from(l: Long): Decimal {
-            return when {
-                l == 0L -> ZERO
-                l == 1L -> ONE
-                else -> {
-                    val signMask = (l shr 63)
-                    decimalFNZ((l ushr 63).toInt(), 0, 0L, (l xor signMask) - signMask)
-                }
+            if (l >= 0L && l < SMALL_POS_INT_CACHE.size.toLong()) {
+                val i = l.toInt()
+                return SMALL_POS_INT_CACHE[i]
             }
+            val signMask = (l shr 63)
+            return decimalFNZ((l ushr 63).toInt(), 0, 0L, (l xor signMask) - signMask)
         }
 
         /** Decodes a BID-encoded decimal128 from two 64-bit words. */
@@ -341,18 +351,25 @@ class Decimal private constructor(
          */
         fun from(mutDec: MutDec): Decimal {
             val steal = mutDec.steal
-            require(mutDec.digitLen <= 38)
-            if (! stealIsFNZ(steal)) when {
-                stealIsZER(steal) -> {
-                    if (stealQExp(steal) == 0)
-                        return if (steal < 0) NEG_ZEROe0 else POS_ZEROe0
+            val digitLen = stealDigitLen(steal)
+            require(digitLen <= 38)
+            when (stealTyp(steal)) {
+                STEAL_TYP_FNZ -> {
+                    if (stealSignBit(steal) == 0 &&
+                        stealQExp(steal) == 0 &&
+                        digitLen <= 3 &&
+                        mutDec.dw0 < SMALL_POS_INT_CACHE.size) {
+                        val n = mutDec.dw0.toInt()
+                        return SMALL_POS_INT_CACHE[n]
+                    }
                 }
-                stealIsINF(steal) ->
-                    return if (steal < 0) NEG_INFINITY else POS_INFINITY
-                stealBitLen(steal) == 0 -> { // NAN with no payload
-                    if (stealIsQNAN(steal))
-                        return if (steal < 0) NEG_QNAN else POS_QNAN
-                    return if (steal < 0) NEG_SNAN else POS_SNAN
+                STEAL_TYP_ZER -> return zero(stealSignFlag(steal), stealQExp(steal))
+                STEAL_TYP_INF -> return if (steal < 0) NEG_INFINITY else POS_INFINITY
+                STEAL_TYP_NAN -> if (digitLen == 0) {
+                    return if (stealIsQNAN(steal))
+                        if (steal < 0) NEG_QNAN else POS_QNAN
+                    else
+                        if (steal < 0) NEG_SNAN else POS_SNAN
                 }
             }
             return Decimal(steal, mutDec.dw1, mutDec.dw0)
