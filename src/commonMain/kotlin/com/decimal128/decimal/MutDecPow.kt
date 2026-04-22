@@ -260,8 +260,7 @@ private fun mutDecPowFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): M
     return z.set(result)
 }
 
-internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int): MutDec {
-    val ctx = DecContext.current()
+internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
     val xSteal = x.steal
     when (stealTyp(xSteal)) {
         STEAL_TYP_FNZ -> {
@@ -330,7 +329,7 @@ internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int): MutDec {
 //rootn (−∞, n) is qNaN and signals the invalid operation exception for even n < 0.
 //NOTE — rootn (−0, 2) differs from squareRoot(−0) because they have different consistency
 //considerations.
-internal fun mutDecRootnImpl(z: MutDec, x: MutDec, n: Int): MutDec {
+internal fun mutDecRootnImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
     val ctx = DecContext.current()
     val xSteal = x.steal
     if (n == 0)

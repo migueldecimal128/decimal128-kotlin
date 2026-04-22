@@ -234,3 +234,20 @@ private fun powFnzFnz(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     }
     return Decimal.from(result)
 }
+
+internal fun d128CompoundImpl(x: Decimal, n: Int): Decimal {
+    val ctx = DecContext.current()
+    val tmps = ctx.tmps
+    return Decimal.from(
+        mutDecCompoundImpl(tmps.mdecBridgeResult, tmps.mdecBridge1.set(x), n, ctx)
+    )
+}
+
+internal fun d128RootnImpl(x: Decimal, n: Int): Decimal {
+    val ctx = DecContext.current()
+    val tmps = ctx.tmps
+    return Decimal.from(
+        mutDecRootnImpl(tmps.mdecBridgeResult, tmps.mdecBridge1.set(x), n, ctx)
+    )
+}
+

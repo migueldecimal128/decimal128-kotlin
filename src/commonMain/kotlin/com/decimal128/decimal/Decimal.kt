@@ -1779,6 +1779,54 @@ class Decimal private constructor(
     fun pow(x: Decimal): Decimal = d128PowImpl(this, x)
 
     /**
+     * Computes compound interest: (1 + x)^n where x is this decimal and n is an integer exponent.
+     *
+     * Special cases:
+     * - x ≥ −1 or qNaN, n = 0: returns 1
+     * - x = −1, n < 0: returns +∞ and signals divideByZero
+     * - x = −1, n > 0: returns +0
+     * - x = ±0: returns 1
+     * - x = +∞, n > 0: returns +∞
+     * - x = +∞, n < 0: returns +0
+     * - x < −1: returns qNaN and signals invalidOperation
+     * - x = qNaN, n ≠ 0: returns qNaN
+     *
+     * Domain: x ∈ [−1, +∞], n ∈ Z
+     *
+     * @param n the integer exponent
+     * @return (1 + this)^n
+     */
+     fun compound(n: Int): Decimal = d128CompoundImpl(this, n)
+
+    /**
+     * Computes the nth root of x: x^(1/n) where x is this decimal and n is an integer.
+     *
+     * Special cases:
+     * - n = 0: returns qNaN and signals invalidOperation
+     * - x < 0 and n even: returns qNaN and signals invalidOperation
+     * - n = −1: may overflow or underflow
+     * - x = 0 and n < 0: returns ±∞ and signals divideByZero
+     * - x = ±0, n odd < 0: returns ±∞ and signals divideByZero
+     * - x = ±0, n even < 0: returns +∞ and signals divideByZero
+     * - x = ±0, n even > 0: returns +0
+     * - x = ±0, n odd > 0: returns ±0
+     * - x = +∞, n > 0: returns +∞
+     * - x = +∞, n < 0: returns +0
+     * - x = −∞, n odd > 0: returns −∞
+     * - x = −∞, n even > 0: returns qNaN and signals invalidOperation
+     * - x = −∞, n odd < 0: returns −0
+     * - x = −∞, n even < 0: returns qNaN and signals invalidOperation
+     *
+     * Note: rootn(−0, 2) == +0 differs from squareRoot(−0) == -0.
+     *
+     * Domain: x ∈ [−∞, +∞], n ∈ Z
+     *
+     * @param n the integer root
+     * @return this^(1/n)
+     */
+    fun rootn(n: Int): Decimal = d128RootnImpl(this, n)
+
+    /**
      * Computes the natural logarithm of this value.
      *
      * Special cases:

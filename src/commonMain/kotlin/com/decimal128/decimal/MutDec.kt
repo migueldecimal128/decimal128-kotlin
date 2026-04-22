@@ -463,14 +463,14 @@ class MutDec() : C256(), Comparable<MutDec> {
         mutDecPownImpl(this, x, pow, ctx)
 
     // IEEE754-2019 9.2 Additional mathematical operations
-    fun setPow(x: MutDec, y: MutDec, ctx: DecContext= DecContext.current()): MutDec =
+    fun setPow(x: MutDec, y: MutDec, ctx: DecContext = DecContext.current()): MutDec =
         mutDecPowImpl(this, x, y, ctx)
 
     // IEEE754-2019 9.2 Additional mathematical operations
-    fun setCompound(x: MutDec, n: Int): MutDec = mutDecCompoundImpl(this, x, n)
+    fun setCompound(x: MutDec, n: Int): MutDec = mutDecCompoundImpl(this, x, n, DecContext.current())
 
     // IEEE754-2019 9.2 Additional mathematical operations
-    fun setRootn(x: MutDec, n: Int): MutDec = mutDecRootnImpl(this, x, n)
+    fun setRootn(x: MutDec, n: Int): MutDec = mutDecRootnImpl(this, x, n, DecContext.current())
 
     // IEEE754-2019 5.4.1
     fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec = mutDecFmaImpl(this, x, y, a, ctx)
