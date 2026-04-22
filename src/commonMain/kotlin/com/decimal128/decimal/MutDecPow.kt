@@ -313,3 +313,90 @@ internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int): MutDec {
     }
 }
 
+// For the rootn operation:
+//n = 0: invalid operation;
+//x < 0 and n even: invalid operation;
+//n = −1: overflow, underflow
+//x = 0 and n < 0: divideByZero
+//rootn (±0, n) is ±∞ and signals the divideByZero exception for odd n < 0
+//rootn (±0, n) is +∞ and signals the divideByZero exception for even n < 0
+//rootn (±0, n) is +0 for even n > 0
+//rootn (±0, n) is ±0 for odd n > 0
+//rootn (+∞, n) is +∞ for n > 0
+//rootn (−∞, n) is −∞ for odd n > 0
+//rootn (−∞, n) is qNaN and signals the invalid operation exception for even n > 0
+//rootn (+∞, n) is +0 for n < 0
+//rootn (−∞, n) is −0 for odd n < 0
+//rootn (−∞, n) is qNaN and signals the invalid operation exception for even n < 0.
+//NOTE — rootn (−0, 2) differs from squareRoot(−0) because they have different consistency
+//considerations.
+internal fun mutDecRootnImpl(z: MutDec, x: MutDec, n: Int): MutDec {
+    val ctx = DecContext.current()
+    val xSteal = x.steal
+    if (n == 0)
+        return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.ROOTN_BAD_ARGS)
+    val xSignFlag = stealSignFlag(xSteal)
+    val nIsOdd = (n and 1) != 0
+    return when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> {
+            if (xSignFlag && !nIsOdd)
+                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.ROOTN_BAD_ARGS)
+            else
+                mutDecRootnImplFNZ(z, x, n, ctx)
+        }
+        STEAL_TYP_ZER -> {
+            //rootn (±0, n) is ±∞ and signals the divideByZero exception for odd n < 0
+            //rootn (±0, n) is +∞ and signals the divideByZero exception for even n < 0
+            //rootn (±0, n) is +0 for even n > 0
+            //rootn (±0, n) is ±0 for odd n > 0
+            if (n < 0)
+                ctx.signalDivByZero(z.setInfinite(nIsOdd and xSignFlag))
+            else
+                z.setZero(nIsOdd and xSignFlag)
+        }
+        STEAL_TYP_INF -> when {
+            //rootn (−∞, n) is −0 for odd n < 0
+            xSignFlag && nIsOdd && n < 0 ->
+                z.setZero(true)
+            //rootn (−∞, n) is −∞ for odd n > 0
+            xSignFlag && nIsOdd -> z.setInfinite(true)
+            //rootn (−∞, n) is qNaN and signals the invalid operation exception for even n < 0.
+            //rootn (−∞, n) is qNaN and signals the invalid operation exception for even n > 0
+            xSignFlag ->
+                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.ROOTN_BAD_ARGS)
+            //rootn (+∞, n) is +0 for n < 0
+            n < 0 -> z.setZero()
+            //rootn (+∞, n) is +∞ for n > 0
+            else -> z.setInfinite(false)
+        }
+        else -> // STEAL_TYP_NAN
+            z.setNanOperandFound(x, ctx)
+    }
+}
+
+private fun mutDecRootnImplFNZ(z: MutDec, x: MutDec, n: Int, ctx: DecContext): MutDec {
+    val xSteal = x.steal
+    val nAbs = n.toLong().absoluteValue
+    if (nAbs.countOneBits() == 1) {
+        // n is a power of 2, apply sqrt repeatedly
+        val shifts = nAbs.countTrailingZeroBits()
+        z.set(x)
+        if (shifts > 0) {
+            if (shifts > 1) {
+                val ctx38 = DecContext.internal38()
+                repeat(shifts-1) {
+                    z.setSqrt(z, ctx38)
+                }
+            }
+            z.setSqrt(z, ctx)
+        }
+        if (n < 0) z.setReciprocal(z, ctx)
+        return z
+    }
+    val absX = if (stealSignFlag(xSteal)) ctx.tmps.mdecTrans2.set(x).mutateNegate() else x
+    val nReciprocal = ctx.tmps.mdecTrans1.set(n)
+    nReciprocal.setReciprocal(nReciprocal, ctx)
+    z.setPow(absX, nReciprocal, ctx)
+    if (stealSignFlag(xSteal)) z.mutateNegate()
+    return z
+}

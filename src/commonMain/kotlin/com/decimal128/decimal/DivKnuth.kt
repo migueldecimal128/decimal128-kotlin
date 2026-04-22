@@ -50,7 +50,8 @@ internal fun divKnuth(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArra
         normalizeShiftLeft(knuthD, VN + n, s)
     }
 
-    for (i in 0 until ((m - n + 1) and BCE))
+    // always clear all 8 quotient entries
+    for (i in 0..7)
         knuthD[Q + i] = 0
 
     divKnuthCore(knuthD, m, n)

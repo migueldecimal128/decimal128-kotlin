@@ -469,6 +469,9 @@ class MutDec() : C256(), Comparable<MutDec> {
     // IEEE754-2019 9.2 Additional mathematical operations
     fun setCompound(x: MutDec, n: Int): MutDec = mutDecCompoundImpl(this, x, n)
 
+    // IEEE754-2019 9.2 Additional mathematical operations
+    fun setRootn(x: MutDec, n: Int): MutDec = mutDecRootnImpl(this, x, n)
+
     // IEEE754-2019 5.4.1
     fun setFma(x: MutDec, y: MutDec, a: MutDec, ctx: DecContext): MutDec = mutDecFmaImpl(this, x, y, a, ctx)
 
