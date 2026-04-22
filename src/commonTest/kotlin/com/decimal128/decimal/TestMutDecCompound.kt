@@ -111,18 +111,36 @@ class TestMutDecCompound {
     )
 
     @Test
-    fun testCases() {
+    fun testCasesMutDec() {
         for (tc in tcs)
-            test(tc)
+            testMutDec(tc)
     }
 
-    fun test(tc: TC) {
+    fun testMutDec(tc: TC) {
         if (verbose)
             println(tc)
         val x = MutDec().set(tc.xStr)
         val n = tc.n
 
         val observed = MutDec().setCompound(x, n)
+
+        assertEquals(tc.expectedStr, observed.toString())
+
+    }
+
+    @Test
+    fun testCasesDecimal() {
+        for (tc in tcs)
+            testDecimal(tc)
+    }
+
+    fun testDecimal(tc: TC) {
+        if (verbose)
+            println(tc)
+        val x = tc.xStr.toDecimal()
+        val n = tc.n
+
+        val observed = x.compound(n)
 
         assertEquals(tc.expectedStr, observed.toString())
 
