@@ -1291,6 +1291,11 @@ class Decimal private constructor(
     // ── operators and arithmetic ─────────────────────────────────────────────────
 
     /**
+     * Returns the negation of this value.
+     */
+    operator fun unaryMinus(): Decimal = negate()
+
+    /**
      * Returns the sum of this value and [other], rounded according to [DecContext.current].
      */
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
@@ -1306,12 +1311,17 @@ class Decimal private constructor(
     operator fun times(other: Decimal): Decimal = d128MulImpl(this, other)
 
     /**
+     * Returns the product of this value and int [n], rounded according to [DecContext.current].
+     */
+    operator fun times(n: Int): Decimal = d128MulImpl(this, Decimal.from(n))
+
+    /**
      * Returns the quotient of this value and [other], rounded according to [DecContext.current].
      */
     operator fun div(other: Decimal): Decimal = d128DivImpl(this, other)
 
     /**
-     * Returns the quotient of this value and [n], rounded according to [DecContext.current].
+     * Returns the quotient of this value and Int [n], rounded according to [DecContext.current].
      */
     operator fun div(n: Int): Decimal = d128DivImpl(this, n.toDecimal())
 
@@ -1897,3 +1907,8 @@ fun Int.toDecimal(): Decimal = Decimal.from(this)
  * Converts this [Long] to a [Decimal].
  */
 fun Long.toDecimal(): Decimal = Decimal.from(this)
+
+/**
+ * Returns the sum of all elements, or [ZERO] if the collection is empty.
+ */
+fun Iterable<Decimal>.sum(): Decimal = fold(ZERO) { acc, d -> acc + d }
