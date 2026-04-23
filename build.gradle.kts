@@ -92,9 +92,12 @@ kotlin {
         @Suppress("UNUSED_VARIABLE")
         compilations.getByName("main") {
             cinterops {
-                val unsigned_mul_hi by creating {
+                create("unsigned_mul_hi") {
                     defFile(project.file("src/nativeInterop/cinterop/unsigned_mul_hi.def"))
                 }
+                //val unsigned_mul_hi by creating {
+                //    defFile(project.file("src/nativeInterop/cinterop/unsigned_mul_hi.def"))
+                //}
             }
         }
     }
