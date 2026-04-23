@@ -209,34 +209,38 @@ Standard Kotlin operators are available and use the current `DecContext` for rou
 ```kotlin
 val a = "1.5".toDecimal()
 val b = "2.3".toDecimal()
+val rate = "0.05".toDecimal()
 
-a + b          // addition
-a - b          // subtraction
-a * b          // multiplication
-a * 3          // multiply by Int
-a / b          // division
-a / 2          // divide by Int
-a % b          // remainder (truncated toward zero)
--a             // negation
+a + b    // addition
+1 + rate // mixed Int and Decimal
+a - b    // subtraction
+a * b    // multiplication
+a * 3    // multiply by Int
+2 * b    // multiply Int by Decimal
+a / b    // division
+a / 2    // divide by Int
+1 / b    // reciprocal
+a % b    // remainder (truncated toward zero)
+-a       // negation
 ```
 
 Additional arithmetic operations:
 
 ```kotlin
-a.square()                       // a²
-a.squareRoot()                   // √a
-a.fma(multiplier, addend)        // fused multiply-add: (a × multiplier) + addend
-a.remainderTruncate(b)           // same as a % b
-a.remainderNear(b)               // IEEE 754-2019 near-remainder
-a.abs()                          // absolute value
-a.negate()                       // sign flip
-a.copySign(signDonor)            // magnitude of a with sign from signDonor
-a.reciprocal()                   // 1 / a
+a.square()                 // a²
+a.squareRoot()             // √a
+a.fma(multiplier, addend)  // fused multiply-add: (a × multiplier) + addend
+a.remainderTruncate(b)     // same as a % b
+a.remainderNear(b)         // IEEE 754-2019 near-remainder
+a.abs()                    // absolute value
+a.negate()                 // sign flip
+a.copySign(signDonor)      // magnitude of a with sign from signDonor
+a.reciprocal()             // 1 / a
 ```
 
 ### Elementary Functions
 
-```kotlin
+```text
 a.pow(n: Int)       // a^n  (integer power, IEEE 754-2019 pown)
 a.pow(x: Decimal)   // a^x  (decimal power, IEEE 754-2019 pow)
 a.compound(n: Int)  // (1 + a)^n  (compound interest)
@@ -263,15 +267,20 @@ a.exp10()           // 10^a
 - Provided for alignment with `Double` and `BigDecimal` behavior
 
 ```kotlin
-"1.0".toDecimal() == "1.0000".toDecimal()   // true
-"-0".toDecimal()  <  "0".toDecimal()       // true
+"1.0".toDecimal() == "1.00".toDecimal() // true
+"-0".toDecimal() < "+0".toDecimal()    // perhaps surprisingly true
+"0.9999999999999999999".toDecimal() < 1 // true ... mixed Decimal and Int
 ```
 
 ### Infix operators
 
 ```kotlin
-a EQ b    // numeric equality
-a NE b    // numeric inequality
+"-0".toDecimal() EQ "+0".toDecimal() // perhaps surprisingling true
+a EQ b                               // numeric equality
+a NE b                               // numeric inequality
+
+"1.0000".toDecimal() EQ 1            // numeric equality against an integer
+0 EQ "0.000000000000000000000000000" // true
 ```
 
 ### IEEE 754-2019 totalOrder
@@ -288,7 +297,7 @@ a.isTotalOrderMag(b)          // true if totalOrderMag(a, b)
 Do **not** signal on quiet NaN operands:
 
 ```kotlin
-a.compareQuietEqual(b)
+a.compareQuietEqual(b)         // returns Compare754Result enum
 a.compareQuietNotEqual(b)
 a.compareQuietLess(b)
 a.compareQuietLessEqual(b)
@@ -308,7 +317,7 @@ a.compareQuiet(b)              // returns Compare754Result enum
 **Signal** `INVALID_OPERATION` if either operand is NaN:
 
 ```kotlin
-a.compareSignalingEqual(b)
+a.compareSignalingEqual(b)     // returns Compare754Result enum
 a.compareSignalingNotEqual(b)
 a.compareSignalingLess(b)
 a.compareSignalingLessEqual(b)
@@ -351,8 +360,8 @@ when the result differs from the input.
 ### Scale and quantize
 
 ```kotlin
-a.withScale(2)            // rescale to 2 decimal places (e.g. "1.23")
-a.quantize(reference)     // rescale to same quantum as reference (IEEE 754-2019 §5.3.2)
+a.withScale(2)            // rescale/round to 2 decimal places (e.g. "1.23")
+a.quantize(reference)     // rescale/round to same quantum as reference (IEEE 754-2019 §5.3.2)
 a.scaleB(n)               // a × 10^n  (IEEE 754-2019 §5.3.3 scaleB)
 a.stripTrailingZeros()    // remove trailing fractional zeros
 a.nextUp()                // smallest value > a  (IEEE 754-2019 §5.3.1)
@@ -391,7 +400,7 @@ a.quantumInt()       // qExp as an Int
 a.eExponent()        // adjusted (scientific) exponent: qExp + digitLen − 1
 a.precision()        // number of significant decimal digits in the coefficient
 a.logB()             // eExp as a Decimal  (IEEE 754-2019 §5.3.3 logB)
-a.isSameQuantum(b)   // true if a and b share the same encoded exponent
+a.isSameQuantum(b)   // true if a and b share the same quantum exponent (qExp)
 ```
 
 ---
@@ -401,7 +410,7 @@ a.isSameQuantum(b)   // true if a and b share the same encoded exponent
 All conversion functions implement IEEE 754-2019 §5.8 and signal `INVALID_OPERATION`
 (returning `MIN_VALUE`) on overflow, NaN, or infinity.
 
-### To `Long`
+### Conversion to `Long`
 
 ```kotlin
 a.toLongOrMinValue()            // exact only, no rounding, no signaling on failure
@@ -414,7 +423,7 @@ a.toLongTowardNegative()        // floor
 
 Each also has a `…SignalInexact()` variant.
 
-### To `Int`
+### Conversion to `Int`
 
 ```kotlin
 a.toIntTiesToEven()
