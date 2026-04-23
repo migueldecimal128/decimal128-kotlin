@@ -89,15 +89,11 @@ kotlin {
 
     // Configure cinterop for ALL native targets
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-        @Suppress("UNUSED_VARIABLE")
         compilations.getByName("main") {
             cinterops {
                 create("unsigned_mul_hi") {
                     defFile(project.file("src/nativeInterop/cinterop/unsigned_mul_hi.def"))
                 }
-                //val unsigned_mul_hi by creating {
-                //    defFile(project.file("src/nativeInterop/cinterop/unsigned_mul_hi.def"))
-                //}
             }
         }
     }
