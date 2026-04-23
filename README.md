@@ -13,6 +13,8 @@ right choice for financial calculations and any domain where exact decimal round
 ## Table of Contents
 
 - [Why Decimal128?](#why-decimal128)
+- [Decimal vs Double](#decimal-vs-double)
+- [Decimal vs Java BigDecimal](#decimal-vs-java-bigdecimal)
 - [Value Space](#value-space)
 - [Getting Started](#getting-started)
     - [Construction](#construction)
@@ -29,20 +31,109 @@ right choice for financial calculations and any domain where exact decimal round
 - [Financial Functions](#financial-functions)
 - [Compliance and Testing](#compliance-and-testing)
 - [Thread Safety](#thread-safety)
-- [Extension Functions](#extension-functions)
+- [Bibliography](#bibliography)
+- [License](#license)
 
 ---
 
 ## Why Decimal128?
 
-Binary floating-point cannot represent most decimal fractions exactly. The classic example:
+Binary floating-point cannot represent most decimal fractions exactly. The SQL standard correctly distinguishes binary floating-point **approximate numeric values** from **exact numeric values**. The classic example:
 
 ```kotlin
 println(0.1 + 0.2)          // 0.30000000000000004  (Double)
 println("0.1".toDecimal() + "0.2".toDecimal())  // 0.3  (Decimal)
 ```
 
-`Decimal` solves this by storing values as an integer coefficient with up to 34 digits, coupled with a base-10 exponent that moves the decimal point — so `0.1` is represented exactly as `1 × 10^−1`.
+`Decimal128` stores exact values with an integer coefficient of up to 34 decimal digits, coupled with a base-10 exponent that aligns the radix point — so `4.3210` is represented exactly as `43210e-4` (i.e. `43210 × 10^−4`).
+
+---
+
+## Decimal vs Double
+
+`Double` is the right choice for scientific and engineering work — it is hardware-accelerated
+and its 64-bit binary representation provide adequate range and precision for 
+most calculations. Nevertheless, it is the wrong choice when dealing
+with financial numbers where exact decimal values matter and where
+accounting standards dictate proper rounding with controlled rounding behavior. 
+
+**Representation** — `Double` is a IEEE 754 `binary64` value that consumes 64 bits, 8 bytes,
+with a 53-bit normalized significand and an 11 bit exponent. 
+`Decimal` is a IEEE 754-2019 `decimal128` value with a 113-bit integer coefficient and
+a larger exponent range ... more bits => greater precision and broader range. 
+
+**Precision and Range** — `Double` provides approximately 15 significant decimal digits 
+of precision up to approximately `10^308`. 
+`Decimal` provides exactly 34 decimal digits of precision up to exactly `10^6144`. 
+
+**Exactness** — Fractional bits to the right of the radix point in `Double`/`binary64`
+represent negative powers of 2: `1/2 1/4 1/8 1/16` `0.5 0.25 0.125 0.0625`. 
+Most decimal values with fractional components like `0.1`, `99.44`, or `0.05`
+have no exact binary representation, so rounding errors accumulate silently
+across calculations. 
+`Decimal` represents these values exactly.
+
+**Rounding control** — Arithmetic operations on `Double` round using the default
+IEEE 754 `roundTiesToEven` with no application-level control in most programming languages. 
+`Decimal` gives full control over rounding mode via `DecContext`,
+which is essential for financial calculations where rounding behavior must comply
+with regulatory or contractual requirements: 
+
+> 1. Tax computation must be carried to the third decimal place, and
+> 2. The tax must be rounded to a whole cent using a method that rounds up to the next
+>   cent whenever the third decimal place is greater than four.
+
+**Special values** — Both `Double` and `Decimal` support infinity, NaN, and signed zero. 
+`Decimal` also supports `sNaN` signaling NaN values. 
+
+**Flags** — Exception flags (e.g. `divByZero`, `overflow`, `underflow`) are generally
+not accessible from high-level languages, including Kotlin and Java. 
+The ThreadLocal `DecContext` object provides direct access to the exception flags
+register and supports usder-defined trap handlers, 
+in accordance with IEEE 754-2019 decimal128. 
+
+---
+
+## Decimal vs Java BigDecimal
+
+Both implement decimal floating-point arithmetic but serve different goals.
+
+**Standard conformance** — `Decimal` strictly follows IEEE 754-2019, including infinity, NaN,
+signed zero, preferred exponents, and all exception flags. 
+`BigDecimal` predates IEEE754-2008/2019 and supports none of these — operations
+that would produce infinity or NaN throw `ArithmeticException` instead. 
+The same person, Mike Cowlishaw, was the prime mover behind both `BigDecimal` and the
+addition of decimal floating point to the IEEE754-2008/2019 standard. 
+
+**Performance** — `BigDecimal` allocates at least one variable-length `BigInteger`
+for every operation, relying heavily on heap allocation and garbage collection,
+while polluting the CPU-cache.
+`Decimal` is cache-friendly and allocation-light. 
+Objects consume a fixed 32 bytes, including object header.
+Reusable mutable temporaries minimize heap allocation during
+operations and stay hot in the CPU-cache. 
+
+**Transcendental and financial functions** — `Decimal` includes
+`log10`, `exp10`, `ln`, `exp`,
+`pow(n: Int)`, `pow(y: Decimal)`, `compound`, `squareRoot` and `rootn`, 
+calculated with 38-digit intermediate precision rounded
+to a final 34-digit precision. It also includes a suite of basic financial functions
+covering compound interest, mortgage payments, amortization, NPV, IRR, and
+present/future value.
+`BigDecimal` has none of these.
+
+**Rounding** — Both support multiple rounding modes. 
+`Decimal` uses a ThreadLocal `DecContext`, allowing clean infix operator 
+expressions without the need to explicitly pass the context
+parameter to every expression. 
+
+**Cross-platform** — `Decimal` targets Kotlin Multiplatform and runs identically
+on JVM, Native, and JavaScript. `BigDecimal` is JVM-only.
+
+`BigDecimal` is a pragmatic, widely-adopted, battle-tested implementation of
+arbitrary-precision finite decimal values. `Decimal` is a complete IEEE 754-2019
+decimal128 implementation with 34 decimal digits of precision that prioritizes
+correctness, performance, and cross-platform consistency.
 
 ---
 
@@ -89,7 +180,7 @@ In addition to finite non-zero values, `Decimal` represents:
 
 Coefficients with more than 34 significant digits are rounded to 34 digits using the current `DecContext`.
 
-### Predefined Constants
+### Predefined Decimal Constants
 
 | Constant | Value |
 |---|---|
@@ -158,11 +249,13 @@ a.exp10()           // 10^a
 `<=`, `>=` operators use **Java-style numeric semantics**:
 
 - Cohort members (`1.0` vs `1.00`) compare as **equal**
-- For signed zeros and non-finite values, the same rules as `java.lang.Double` apply: **−0 < +0**, all NaNs compare equal and greater than every non-NaN
+- For signed zeros and non-finite values, the same rules as `java.lang.Double`
+  apply: **−0 < +0**, all NaNs compare equal and greater than every non-NaN
 - No IEEE-754 signaling occurs
+- Provided for alignment with `Double` and `BigDecimal` behavior
 
 ```kotlin
-"1.0".toDecimal() == "1.00".toDecimal()   // true
+"1.0".toDecimal() == "1.0000".toDecimal()   // true
 "-0".toDecimal()  <  "0".toDecimal()       // true
 ```
 
@@ -473,6 +566,28 @@ presentValue(futureValue, rate, numPeriods)             // FV / (1+r)^n
 futureValue(presentValue, rate, numPeriods)             // PV × (1+r)^n
 cagr(presentValue, futureValue, numPeriods)             // Compound Annual Growth Rate
 ```
+
+---
+
+## Bibliography
+
+**Mike Cowlishaw — speleotrove.com/decimal**
+Mike Cowlishaw carried the banner for decimal floating-point for many years as an IBM Fellow.
+His work includes the decNumber reference implementation written in C and the decTest suite of
+test vectors.
+https://speleotrove.com/decimal/
+
+**Intel Decimal Floating-Point Math Library**
+A C implementation of IEEE 754-2019 decimal floating-point arithmetic.
+https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html
+
+**What Every Computer Scientist Should Know About Floating-Point Arithmetic** — David Goldberg
+The classic paper documenting the behavioral quirks of binary floating-point.
+https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
+
+**SQL:1999 Standard (ISO/IEC 9075-2:1999)**
+The SQL database standard defines `DECIMAL` as an exact numeric type with a defined precision and scale.
+https://courses.cms.caltech.edu/cs123/sql99std/ansi-iso-9075-2-1999.pdf
 
 ---
 

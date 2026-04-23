@@ -914,6 +914,14 @@ class Decimal private constructor(
      */
     override fun compareTo(other: Decimal): Int = compareJavaStyleTo(other)
 
+    /**
+     * Compares this value to the integer [n] using Java-style numeric comparison.
+     *
+     * Equivalent to `compareTo(Decimal(n))`. See [compareTo] for full semantics.
+     *
+     * @return −1, 0, or +1 according to Java-style numeric ordering.
+     */
+    fun compareTo(n: Int): Int = compareJavaStyleTo(Decimal.from(n))
 
     /**
      * Java-style numeric equality.
@@ -972,19 +980,53 @@ class Decimal private constructor(
                 (this.dw1 xor other.dw1) or
                 (this.dw0 xor other.dw0)) == 0L
 
-    /** Returns `true` if this value and [other] are numerically equal
-     *  under Java-style semantics.
+    /**
+     * Tests numeric equality between this and [other].
+     *
+     * Equivalent to `==` for two `Decimal` values — [equals] is overridden
+     * to compare numerically, so cohort members such as `1.0` and `1.00`
+     * compare equal. Provided for consistency with the mixed-type `Int EQ Decimal`
+     * form, where `==` cannot be used.
      *
      *  @see compareJavaStyleTo for the full semantics.
      */
     infix fun EQ(other: Decimal): Boolean = eqJavaStyle(other)
 
-    /** Returns `true` if this value and [other] are not numerically equal
+    /** Returns `true` if this value and integer [n] are numerically equal
      *  under Java-style semantics.
+     *
+     * Prefer this over `==` when comparing mixed `Int`/`Decimal` values — Kotlin's
+     * `==` compiles to `equals()`, which requires matching types and will silently
+     * return `false` for `Int == Decimal`.
+     *
+     *  @see compareJavaStyleTo for the full semantics.
+     */
+    infix fun EQ(n: Int): Boolean = eqJavaStyle(from(n))
+
+    /**
+     * Returns `true` if this value and [other] are not numerically equal
+     * under Java-style semantics.
+     *
+     * Equivalent to `!=` for two `Decimal` values — [equals] is overridden
+     * to compare numerically, so cohort members such as `1.0` and `1.00`
+     * compare equal. Provided for consistency with the mixed-type `Int EQ Decimal`
+     * form, where `!=` cannot be used.
      *
      *  @see compareJavaStyleTo for the full semantics.
      */
     infix fun NE(other: Decimal): Boolean = !eqJavaStyle(other)
+
+    /**
+     * Returns `true` if this value and integer [n] are numerically not equal
+     * under Java-style semantics.
+     *
+     * Prefer this over `!=` when comparing mixed `Int`/`Decimal` values — Kotlin's
+     * `!=` compiles to `!equals()`, which requires matching types and will silently
+     * return `true` for `Int != Decimal`.
+     *
+     * @see compareJavaStyleTo for the full semantics.
+     */
+    infix fun NE(n: Int): Boolean = !eqJavaStyle(from(n))
 
     /**
      * Compares this decimal128 value with [other] using the IEEE-754
@@ -1912,3 +1954,54 @@ fun Long.toDecimal(): Decimal = Decimal.from(this)
  * Returns the sum of all elements, or [ZERO] if the collection is empty.
  */
 fun Iterable<Decimal>.sum(): Decimal = fold(ZERO) { acc, d -> acc + d }
+
+/**
+ * Multiplies this integer by a [Decimal], delegating to [Decimal.times].
+ *
+ * Enables natural left-hand syntax:
+ * ```
+ * val result = 3 * myDecimal  // equivalent to myDecimal * 3
+ * ```
+ *
+ * @receiver The integer multiplier.
+ * @param d The [Decimal] to multiply by.
+ * @return The product as a [Decimal].
+ */
+operator fun Int.times(d: Decimal) = d.times(this)
+
+/**
+ * Tests numeric equality between this integer and [d], delegating to [Decimal.EQ].
+ *
+ * Prefer this over `==` when comparing mixed `Int`/`Decimal` values — Kotlin's
+ * `==` compiles to `equals()`, which requires matching types and will silently
+ * return `false` for `Int == Decimal`.
+ *
+ * Enables natural left-hand syntax: `3 EQ myDecimal`
+ *
+ * @see Decimal.EQ
+ */
+infix fun Int.EQ(d: Decimal) = d.EQ(this)
+
+/**
+ * Tests inequality between this integer and [d], delegating to [Decimal.NE].
+ *
+ * Prefer this over `!=` when comparing mixed `Int`/`Decimal` values — Kotlin's
+ * `!=` compiles to `!equals()`, which requires matching types and will silently
+ * return `true` for `Int != Decimal`.
+ *
+ * Enables natural left-hand syntax: `3 NE myDecimal`
+ *
+ * @see Decimal.NE
+ */
+infix fun Int.NE(d: Decimal) = d.NE(this)
+
+/**
+ * Compares this integer to [d] using Java-style numeric comparison,
+ * delegating to [Decimal.compareTo].
+ *
+ * Enables natural left-hand syntax: `3 > myDecimal`, `3 <= myDecimal`, etc.
+ *
+ * @return −1, 0, or +1 according to Java-style numeric ordering.
+ * @see Decimal.compareTo
+ */
+operator fun Int.compareTo(d: Decimal) = -(d.compareTo(this))
