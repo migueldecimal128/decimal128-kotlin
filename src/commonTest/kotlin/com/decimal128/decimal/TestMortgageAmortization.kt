@@ -1,8 +1,5 @@
-package com.decimal128.finance
+package com.decimal128.decimal
 
-import com.decimal128.decimal.Decimal
-import com.decimal128.decimal.sum
-import com.decimal128.decimal.toDecimal
 import kotlin.test.Test
 
 class TestMortgageAmortization {

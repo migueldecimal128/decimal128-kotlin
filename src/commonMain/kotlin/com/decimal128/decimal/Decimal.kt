@@ -912,7 +912,7 @@ class Decimal private constructor(
      *
      * @return −1, 0, or +1 according to Java-style numeric ordering.
      */
-    override fun compareTo(other: Decimal): Int = compareJavaStyleTo(other)
+    override fun compareTo(other: Decimal): Int = d128CompareJavaStyle(this, other)
 
     /**
      * Compares this value to the integer [n] using Java-style numeric comparison.
@@ -921,7 +921,7 @@ class Decimal private constructor(
      *
      * @return −1, 0, or +1 according to Java-style numeric ordering.
      */
-    fun compareTo(n: Int): Int = compareJavaStyleTo(Decimal.from(n))
+    operator fun compareTo(n: Int): Int = d128CompareJavaStyle(this, n)
 
     /**
      * Java-style numeric equality.
@@ -1001,7 +1001,7 @@ class Decimal private constructor(
      *
      *  @see compareJavaStyleTo for the full semantics.
      */
-    infix fun EQ(n: Int): Boolean = eqJavaStyle(from(n))
+    infix fun EQ(n: Int): Boolean = d128EqJavaStyle(this, n)
 
     /**
      * Returns `true` if this value and [other] are not numerically equal
@@ -1014,7 +1014,7 @@ class Decimal private constructor(
      *
      *  @see compareJavaStyleTo for the full semantics.
      */
-    infix fun NE(other: Decimal): Boolean = !eqJavaStyle(other)
+    infix fun NE(other: Decimal): Boolean = !d128EqJavaStyle(this, other)
 
     /**
      * Returns `true` if this value and integer [n] are numerically not equal
@@ -1026,7 +1026,7 @@ class Decimal private constructor(
      *
      * @see compareJavaStyleTo for the full semantics.
      */
-    infix fun NE(n: Int): Boolean = !eqJavaStyle(from(n))
+    infix fun NE(n: Int): Boolean = !d128EqJavaStyle(this, n)
 
     /**
      * Compares this decimal128 value with [other] using the IEEE-754

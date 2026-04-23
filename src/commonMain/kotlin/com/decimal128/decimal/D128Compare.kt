@@ -9,6 +9,7 @@ import com.decimal128.decimal.Decimal.Companion.NaN
 import com.decimal128.decimal.Decimal.Companion.POS_ONEe0
 import com.decimal128.decimal.Decimal.Companion.ZERO
 import com.decimal128.decimal.Decimal.Companion.hasNaN
+import kotlin.math.absoluteValue
 
 internal fun d128CompareNumericMagnitude(x: Decimal, y: Decimal): Int {
     val signature = binopSignatureOf(x.steal, y.steal)
@@ -283,6 +284,37 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
         else -> x.isNaN() && y.isNaN()
     }
 }
+
+internal fun d128CompareJavaStyle(x: Decimal, n: Int): Int {
+    val xSteal = x.steal
+    val xSignMask = xSteal shr 31
+    val xOneOrNegOne = xSignMask or 1
+    when (stealTyp(xSteal)) {
+        STEAL_TYP_FNZ -> {
+            if ((xSignMask xor n) >= 0) { // signs are the same
+                if (n != 0) { // n is not zero ... we know x is non-zero
+                    val xLong = x.toLongTowardZero()
+                    if (xLong != Long.MIN_VALUE) { // does not overflow a long
+                        val cmp = xLong.compareTo(n.toLong())
+                        if (cmp != 0)
+                            return (cmp shr 31) or 1
+                        if (x.isExactIntegral())
+                            return 0
+                    }
+                }
+            }
+            // the magnitude of x wins ... 1 or -1 depending upon sign of x
+            return xOneOrNegOne
+        }
+        STEAL_TYP_ZER -> return (-n shr 31) or (n ushr 31) // signum(-n)
+        STEAL_TYP_INF -> return xOneOrNegOne
+        else -> // STEAL_TYP_NAN
+            return 1
+
+    }
+}
+
+internal fun d128EqJavaStyle(x: Decimal, n: Int): Boolean = x.toLongOrMinValue() == n.toLong()
 
 /**
  * Compares the **magnitudes** of two decimal128 values using

@@ -38,24 +38,30 @@ right choice for financial calculations and any domain where exact decimal round
 
 ## Why Decimal128?
 
-Binary floating-point cannot represent most decimal fractions exactly. The SQL standard correctly distinguishes binary floating-point **approximate numeric values** from **exact numeric values**. The classic example:
+Binary floating-point cannot represent most decimal fractions exactly. 
+The SQL standard correctly distinguishes binary floating-point
+**approximate numeric values** from **exact numeric values**. 
+The classic example:
 
 ```kotlin
 println(0.1 + 0.2)          // 0.30000000000000004  (Double)
 println("0.1".toDecimal() + "0.2".toDecimal())  // 0.3  (Decimal)
 ```
 
-`Decimal128` stores exact values with an integer coefficient of up to 34 decimal digits, coupled with a base-10 exponent that aligns the radix point — so `4.3210` is represented exactly as `43210e-4` (i.e. `43210 × 10^−4`).
-
+`Decimal128` stores exact values with an integer coefficient of up to 
+34 decimal digits, coupled with a base-10 exponent ± 6000 that aligns
+the radix point — so `4.3210` is represented exactly as `43210e-4`
+(i.e. `43210 × 10^−4`). 34 digits × 10^±6000 ... what's not to like?
 ---
 
 ## Decimal vs Double
 
-`Double` is the right choice for scientific and engineering work — it is hardware-accelerated
-and its 64-bit binary representation provide adequate range and precision for 
-most calculations. Nevertheless, it is the wrong choice when dealing
-with financial numbers where exact decimal values matter and where
-accounting standards dictate proper rounding with controlled rounding behavior. 
+`Double` is the right choice for scientific and engineering work — it is
+implemented in hardware and its 64-bit binary representation provide
+adequate range and precision for most calculations. 
+Nevertheless, it is the wrong choice when dealing with financial numbers
+where exact decimal values matter, you need more precision, and where
+accounting standards dictate controlled rounding behavior. 
 
 **Representation** — `Double` is a IEEE 754 `binary64` value that consumes 64 bits, 8 bytes,
 with a 53-bit normalized significand and an 11 bit exponent. 
@@ -117,9 +123,9 @@ operations and stay hot in the CPU-cache.
 `log10`, `exp10`, `ln`, `exp`,
 `pow(n: Int)`, `pow(y: Decimal)`, `compound`, `squareRoot` and `rootn`, 
 calculated with 38-digit intermediate precision rounded
-to a final 34-digit precision. It also includes a suite of basic financial functions
-covering compound interest, mortgage payments, amortization, NPV, IRR, and
-present/future value.
+to a final 34-digit precision. It also includes a suite of basic financial
+functions covering compound interest, mortgage payments, amortization,
+NPV, IRR, and present/future value.
 `BigDecimal` has none of these.
 
 **Rounding** — Both support multiple rounding modes. 
@@ -130,7 +136,7 @@ parameter to every expression.
 **Cross-platform** — `Decimal` targets Kotlin Multiplatform and runs identically
 on JVM, Native, and JavaScript. `BigDecimal` is JVM-only.
 
-`BigDecimal` is a pragmatic, widely-adopted, battle-tested implementation of
+`BigDecimal` is a pragmatic, widely-supported, battle-tested implementation of
 arbitrary-precision finite decimal values. `Decimal` is a complete IEEE 754-2019
 decimal128 implementation with 34 decimal digits of precision that prioritizes
 correctness, performance, and cross-platform consistency.
@@ -171,14 +177,16 @@ In addition to finite non-zero values, `Decimal` represents:
 42L.toDecimal()         // from Long
 ```
 
-**String parsing** accepts:
+**String parsing** accepts standard decimal/scientific notation:
 - An optional leading sign (`+` or `-`)
-- A decimal coefficient with optional `_` underscore digit separators
+- A decimal coefficient with optional `.` as the radix point 
+  and optional `_` underscore digit separators
 - An optional exponent (`E` or `e`) within the decimal128 range
-- `"Infinity"`, `"Inf"`, `"+Infinity"`, `"-Infinity"` (and their `Inf` variants)
-- `"NaN"` with an optional numeric payload
+- `"Infinity"`, `"INF"`, `"-infinity"` for infinitely large magnitude
+- `"NaN"`, `"NAN1234"` for `Not A Number` with an optional numeric payload
 
-Coefficients with more than 34 significant digits are rounded to 34 digits using the current `DecContext`.
+Parsed coefficients with more than 34 significant digits are properly rounded to 34 digits
+using the rounding direction specified in `DecContext.current()`.
 
 ### Predefined Decimal Constants
 
@@ -275,7 +283,7 @@ a.compareTotalOrderMagTo(b)   // totalOrder on magnitudes (ignoring sign)
 a.isTotalOrderMag(b)          // true if totalOrderMag(a, b)
 ```
 
-### IEEE 754-2019 quiet comparisons (§5.6.1)
+### IEEE 754-2019 §5.6.1 quiet comparisons
 
 Do **not** signal on quiet NaN operands:
 
@@ -295,7 +303,7 @@ a.compareQuietNotGreater(b)
 a.compareQuiet(b)              // returns Compare754Result enum
 ```
 
-### IEEE 754-2019 signaling comparisons (§5.6.1)
+### IEEE 754-2019 §5.6.1 signaling comparisons
 
 **Signal** `INVALID_OPERATION` if either operand is NaN:
 
@@ -459,17 +467,11 @@ For production use, prefer context-aware arithmetic so rounding and overflow beh
 explicit. Use `ctx.eval { … }` to run a block under a specific `DecContext`:
 
 ```kotlin
-val ctx = DecContext.decimal128Kotlin()   // default: round-half-to-even, throws on invalid input
+val ctx = DecContext.decimal128IEEE().with(DecRounding.ROUND_TOWARD_ZERO)
 
 ctx.eval {
-    val result = a + b      // uses ctx for rounding
+    val result = a + b      // uses ctx for rounding direction
 }
-```
-
-The rounding mode can be overridden with `.with()`:
-
-```kotlin
-val ctx = DecContext.decimal128IEEE().with(DecRounding.ROUND_TOWARD_ZERO)
 ```
 
 Available rounding modes (`DecRounding`):
@@ -484,9 +486,9 @@ Available rounding modes (`DecRounding`):
 
 ### Invalid input behavior
 
-| Context | Behavior on invalid string |
-|---|---|
-| `DecContext.decimal128Kotlin()` | Throws `IllegalArgumentException` (Kotlin-idiomatic) |
+| Context | Behavior on parsing an invalid string                      |
+|---|------------------------------------------------------------|
+| `DecContext.decimal128Kotlin()` | Throws `IllegalArgumentException` (Kotlin-idiomatic)       |
 | `DecContext.decimal128IEEE()` | Signals `INVALID_OPERATION`, returns `NaN` (IEEE 754-2019) |
 
 ---
@@ -531,7 +533,8 @@ listOf(a, b, c).sum()   // Iterable<Decimal>.sum() — returns ZERO for empty co
 
 ## Financial Functions
 
-The `com.decimal.finance` package provides common financial functions out-of-the-box:
+The `com.decimal128.decimal` package provides common basic financial 
+functions out-of-the-box:
 
 **Interest**
 
@@ -545,26 +548,26 @@ effectiveAnnualRate(nominalRate, timesPerYear) // EAR: (1 + r/n)^n − 1
 **Mortgage and Annuities**
 
 ```kotlin
-mortgagePayment(principal, periodicRate, numPayments)  // fixed-rate PMT
+mortgagePayment(principal, periodicRate, numPayments)      // fixed-rate PMT
 amortizationSchedule(principal, periodicRate, numPayments) // List<AmortizationRow>
-presentValueAnnuity(payment, periodicRate, numPeriods)  // PV of ordinary annuity
-futureValueAnnuity(payment, periodicRate, numPeriods)   // FV of ordinary annuity
+presentValueAnnuity(payment, periodicRate, numPeriods)     // PV of ordinary annuity
+futureValueAnnuity(payment, periodicRate, numPeriods)      // FV of ordinary annuity
 ```
 
 **Cash Flow Analysis**
 
 ```kotlin
-npv(rate, cashFlows)                                    // Net Present Value
-irr(cashFlows, guess, tolerance, maxIter)               // Internal Rate of Return
-mirr(cashFlows, financeRate, reinvestRate)              // Modified IRR
+npv(rate, cashFlows)                        // Net Present Value
+irr(cashFlows, guess, tolerance, maxIter)   // Internal Rate of Return
+mirr(cashFlows, financeRate, reinvestRate)  // Modified IRR
 ```
 
 **Single Cash-Flow Helpers**
 
 ```kotlin
-presentValue(futureValue, rate, numPeriods)             // FV / (1+r)^n
-futureValue(presentValue, rate, numPeriods)             // PV × (1+r)^n
-cagr(presentValue, futureValue, numPeriods)             // Compound Annual Growth Rate
+presentValue(futureValue, rate, numPeriods) // FV / (1+r)^n
+futureValue(presentValue, rate, numPeriods) // PV × (1+r)^n
+cagr(presentValue, futureValue, numPeriods) // Compound Annual Growth Rate
 ```
 
 ---

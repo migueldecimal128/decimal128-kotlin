@@ -14,12 +14,10 @@
  * consistent rounding across an entire calculation.
  */
 
-package com.decimal128.finance
+package com.decimal128.decimal
 
-import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.Decimal.Companion.ONE
 import com.decimal128.decimal.Decimal.Companion.ZERO
-import com.decimal128.decimal.toDecimal
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -319,8 +317,8 @@ fun cagr(
     futureValue: Decimal,
     numPeriods: Int
 ): Decimal {
-    require(presentValue > ZERO) { "presentValue must be positive" }
-    require(futureValue  > ZERO) { "futureValue must be positive"  }
+    require(presentValue > 0) { "presentValue must be positive" }
+    require(futureValue  > 0) { "futureValue must be positive"  }
     return (futureValue / presentValue).rootn(numPeriods) - ONE
 }
 
