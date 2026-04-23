@@ -89,6 +89,7 @@ kotlin {
 
     // Configure cinterop for ALL native targets
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+
         compilations.getByName("main") {
             cinterops {
                 create("unsigned_mul_hi") {
