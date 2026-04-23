@@ -286,6 +286,7 @@ internal fun d128EqJavaStyle(x: Decimal, y: Decimal): Boolean {
 }
 
 internal fun d128CompareJavaStyle(x: Decimal, n: Int): Int {
+    val nLong = n.toLong()
     val xSteal = x.steal
     val xSignMask = xSteal shr 31
     val xOneOrNegOne = xSignMask or 1
@@ -295,7 +296,7 @@ internal fun d128CompareJavaStyle(x: Decimal, n: Int): Int {
                 if (n != 0) { // n is not zero ... we know x is non-zero
                     val xLong = x.toLongTowardZeroNoFlags()
                     if (xLong != Long.MIN_VALUE) { // does not overflow a long
-                        val cmp = xLong.compareTo(n.toLong())
+                        val cmp = xLong.compareTo(nLong)
                         if (cmp != 0)
                             return (cmp shr 31) or 1
                         if (x.isExactIntegral())
@@ -306,7 +307,12 @@ internal fun d128CompareJavaStyle(x: Decimal, n: Int): Int {
             // the magnitude of x wins ... 1 or -1 depending upon sign of x
             return xOneOrNegOne
         }
-        STEAL_TYP_ZER -> return (-n shr 31) or (n ushr 31) // signum(-n)
+        STEAL_TYP_ZER -> {
+            if (n == 0)
+                return xSignMask
+            else
+                return ((-nLong shr 63) or (nLong ushr 63)).toInt()
+        }
         STEAL_TYP_INF -> return xOneOrNegOne
         else -> // STEAL_TYP_NAN
             return 1
