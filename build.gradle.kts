@@ -75,6 +75,8 @@ kotlin {
 
     macosX64 { }
 
+    linuxX64 { }
+
     js {
         nodejs {
             testTask {
@@ -87,6 +89,7 @@ kotlin {
 
     // Configure cinterop for ALL native targets
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+        @Suppress("UNUSED_VARIABLE")
         compilations.getByName("main") {
             cinterops {
                 val unsigned_mul_hi by creating {
@@ -99,33 +102,14 @@ kotlin {
     sourceSets {
         all {
         }
-	    val commonMain by getting
-	    val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
-		val jvmMain   by getting
-		val jvmTest   by getting {
-			dependencies {
-                implementation("net.java.dev.jna:jna:5.17.0")
-			}
-		}
     }
-}
-
-val nativeInputDir = layout.projectDirectory.dir("native/darwin-x86_64")
-val nativeTestDir  = layout.buildDirectory.dir("native/darwin-x86_64")
-
-tasks.register<Copy>("copyNativeForTests") {
-    from(nativeInputDir)
-    into(nativeTestDir)
 }
 
 // configure *all* Test tasks (including the MPP-generated jvmTest) to use JUnit Platform:
 tasks.withType<Test> {
-    dependsOn("copyNativeForTests")
-    systemProperty("jna.library.path", nativeTestDir.get().asFile.absolutePath)
 
     useJUnitPlatform()
     testLogging {

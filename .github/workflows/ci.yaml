@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-ubuntu:
-    name: JVM + JS (Ubuntu)
+    name: JVM + JS + linuxX64 (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,11 +30,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
+            ~/.konan
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Run JVM and JS tests
-        run: ./gradlew jvmTest jsNodeTest
+      - name: Run JVM, JS, linuxX64 tests
+        run: ./gradlew jvmTest jsNodeTest linuxX64Test
 
   test-macos:
     name: macOS Native (ARM64 + X64)
