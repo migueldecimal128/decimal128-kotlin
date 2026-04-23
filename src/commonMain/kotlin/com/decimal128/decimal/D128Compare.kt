@@ -293,7 +293,7 @@ internal fun d128CompareJavaStyle(x: Decimal, n: Int): Int {
         STEAL_TYP_FNZ -> {
             if ((xSignMask xor n) >= 0) { // signs are the same
                 if (n != 0) { // n is not zero ... we know x is non-zero
-                    val xLong = x.toLongTowardZero()
+                    val xLong = x.toLongTowardZeroNoFlags()
                     if (xLong != Long.MIN_VALUE) { // does not overflow a long
                         val cmp = xLong.compareTo(n.toLong())
                         if (cmp != 0)
@@ -314,7 +314,7 @@ internal fun d128CompareJavaStyle(x: Decimal, n: Int): Int {
     }
 }
 
-internal fun d128EqJavaStyle(x: Decimal, n: Int): Boolean = x.toLongOrMinValue() == n.toLong()
+internal fun d128EqJavaStyle(x: Decimal, n: Int): Boolean = x.isExactIntegral() && x.toLongTowardZeroNoFlags() == n.toLong()
 
 /**
  * Compares the **magnitudes** of two decimal128 values using

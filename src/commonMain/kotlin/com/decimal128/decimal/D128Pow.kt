@@ -109,7 +109,7 @@ internal fun d128PowImpl(x: Decimal, y: Decimal): Decimal {
     val ctx = DecContext.current()
     val yIsIntegral = d128IsExactIntegral(y)
     if (yIsIntegral) {
-        val n = y.toLongOrMinValue()
+        val n = y.toLongTowardZeroNoFlags()
         if (n > Int.MIN_VALUE && n <= Int.MAX_VALUE)
             return d128PownImpl(x, n.toInt(), ctx)
         // large integer y - handle magnitude 1 base

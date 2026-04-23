@@ -1555,24 +1555,6 @@ class Decimal private constructor(
 // ── Conversion to Kotlin Integer Types ───────────────────────────────────
 
     /**
-     * Converts this decimal to [Long] if the value is exactly integral
-     * and within [Long] range, returning [Long.MIN_VALUE] as a sentinel
-     * on failure without signaling [DecException.INVALID_OPERATION].
-     *
-     * Unlike [toLongTiesToEven] and similar, this function does not round —
-     * non-integral values return [Long.MIN_VALUE]. It also does not signal
-     * on overflow, NaN, or infinity.
-     *
-     * Use this when you need a fast, exception-free conversion that succeeds
-     * only when the value is **exactly** representable as a [Long], without
-     * disturbing the current [DecContext] flags.
-     */
-    fun toLongOrMinValue(): Long {
-        val ctx = DecContext.current()
-        return ctx.tmps.mdecBridge1.set(this).toLongOrMinValue()
-    }
-
-    /**
      * Converts this decimal to [Long] using round-half-to-even (banker's rounding).
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
@@ -1581,7 +1563,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTiesToEven(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] using round-half-to-even (banker's rounding),
@@ -1592,7 +1574,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTiesToEvenSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] using round-half-away-from-zero.
@@ -1603,7 +1585,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTiesToAway(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] using round-half-away-from-zero,
@@ -1614,7 +1596,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTiesToAwaySignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by truncating toward zero.
@@ -1625,7 +1607,15 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTowardZero(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true, suppressInvalid = false)
+
+    /**
+     * Converts this decimal to [Long] by truncating toward zero.
+     * Does not signal or raise any flags.
+     * Returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
+     */
+    fun toLongTowardZeroNoFlags(): Long =
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true, suppressInvalid = true)
 
     /**
      * Converts this decimal to [Long] by truncating toward zero,
@@ -1636,7 +1626,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTowardZeroSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward positive infinity (ceiling).
@@ -1647,7 +1637,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTowardPositive(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward positive infinity (ceiling),
@@ -1658,7 +1648,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTowardPositiveSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward negative infinity (floor).
@@ -1669,7 +1659,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTowardNegative(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward negative infinity (floor),
@@ -1680,7 +1670,7 @@ class Decimal private constructor(
      * IEEE754-2019 5.8
      */
     fun toLongTowardNegativeSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
+        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Int] using round-half-to-even (banker's rounding).

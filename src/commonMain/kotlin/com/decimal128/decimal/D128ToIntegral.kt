@@ -89,7 +89,9 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, suppressInex
  *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
  * @return the converted [Long], or [Long.MIN_VALUE] if the value is NaN, infinite, or out of range
  */
-internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding, suppressInexact: Boolean = false): Long {
+internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding,
+                               suppressInexact: Boolean,
+                               suppressInvalid: Boolean): Long {
     val steal = x.steal
     if (stealIsFinite(steal)) {
         val signMaskLong = stealSignMask(steal).toLong()
@@ -162,7 +164,8 @@ internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding, suppressInexac
         }
     }
     // return signalInvalid
-    signalInvalidOperation(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
+    if (! suppressInvalid)
+        signalInvalidOperation(InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER)
     return Long.MIN_VALUE
 }
 
@@ -179,7 +182,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding, suppressInexac
  *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
  * @return the converted [Int], or [Int.MIN_VALUE] if the value is NaN, infinite, or out of range
  */
-fun d128ConvertToInt(x: Decimal, rounding: DecRounding, suppressInexact: Boolean = false): Int {
+fun d128ConvertToInt(x: Decimal, rounding: DecRounding, suppressInexact: Boolean): Int {
     val steal = x.steal
     if (stealIsFinite(steal)) {
         val signMask = stealSignMask(steal)
