@@ -70,13 +70,11 @@ kotlin {
     jvmToolchain(21)
 
     jvm { }
-
     macosArm64 { }
-
     macosX64 { }
-
     linuxX64 { }
-
+    iosArm64 { }
+    iosSimulatorArm64 { }
     js {
         nodejs {
             testTask {

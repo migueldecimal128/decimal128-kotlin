@@ -1,5 +1,5 @@
 @file:Suppress("NOTHING_TO_INLINE")
-
+// XPlatformJs.kt
 package com.decimal128.decimal
 
 actual inline fun unsignedMulHi(x: Long, y: Long): Long {
@@ -32,9 +32,6 @@ actual inline fun unsignedRem(x: Long, y: Long): Long =
 
 actual inline fun unsignedCmp(x: Long, y: Long): Int =
     (x xor Long.MIN_VALUE).compareTo(y xor Long.MIN_VALUE)
-
-actual inline fun unsignedCmp(x: Int, y: Int): Int =
-    (x xor Int.MIN_VALUE).compareTo(y xor Int.MIN_VALUE)
 
 actual inline fun mathFma(a: Double, b: Double, c: Double): Double =
     mathFmaCorrect(a, b, c)

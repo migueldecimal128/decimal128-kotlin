@@ -41,7 +41,7 @@ jobs:
         run: ./gradlew jvmTest jsNodeTest linuxX64Test
 
   test-macos:
-    name: macOS Native (ARM64 + X64)
+    name: macOS tests
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,4 +63,4 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle-
 
       - name: Run macOS native tests
-        run: ./gradlew macosArm64Test macosX64Test
+        run: ./gradlew macosArm64Test macosX64Test iosSimulatorArm64Test

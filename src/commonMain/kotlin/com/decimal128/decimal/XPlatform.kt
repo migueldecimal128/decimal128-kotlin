@@ -12,17 +12,7 @@ expect inline fun unsignedRem(x: Long, y: Long): Long
 
 expect inline fun unsignedCmp(x: Long, y: Long): Int
 
-expect inline fun unsignedCmp(x: Int, y: Int): Int
-
 inline fun unsignedLT(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) < (y xor Long.MIN_VALUE)
-
-inline fun unsignedGT(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) > (y xor Long.MIN_VALUE)
-
-inline fun unsignedGE(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) >= (y xor Long.MIN_VALUE)
-
-inline fun unsignedLT_option1(x: Long, y: Long): Boolean = unsignedCmp(x, y) < 0
-
-inline fun unsignedLT_option2(x: Long, y: Long): Boolean = (x xor Long.MIN_VALUE) < (y xor Long.MIN_VALUE)
 
 expect fun mathFma(a: Double, b: Double, c: Double): Double
 
