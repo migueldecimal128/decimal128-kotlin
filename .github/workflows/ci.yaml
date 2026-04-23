@@ -41,7 +41,7 @@ jobs:
         run: ./gradlew jvmTest jsNodeTest linuxX64Test
 
   test-macos:
-    name: macOS tests
+    name: macosArm64 + macosX64 + iosSimulatorArm64
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
