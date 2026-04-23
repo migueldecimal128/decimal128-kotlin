@@ -1343,9 +1343,19 @@ class Decimal private constructor(
     operator fun plus(other: Decimal): Decimal = d128AddImpl(this, other)
 
     /**
+     * Returns the sum of this value and integer [n], rounded according to [DecContext.current].
+     */
+    operator fun plus(n: Int): Decimal = d128AddImpl(this, from(n))
+
+    /**
      * Returns the difference of this value and [other], rounded according to [DecContext.current].
      */
     operator fun minus(other: Decimal): Decimal = d128SubImpl(this, other)
+
+    /**
+     * Returns the difference of this value and integer [n], rounded according to [DecContext.current].
+     */
+    operator fun minus(n: Int): Decimal = d128SubImpl(this, from(n))
 
     /**
      * Returns the product of this value and [other], rounded according to [DecContext.current].
@@ -1555,7 +1565,7 @@ class Decimal private constructor(
 // ── Conversion to Kotlin Integer Types ───────────────────────────────────
 
     /**
-     * Converts this decimal to [Long] using round-half-to-even (banker's rounding).
+t     * Converts this decimal to [Long] using round-half-to-even (banker's rounding).
      * Does not signal [DecException.INEXACT].
      * Signals [DecException.INVALID_OPERATION] and returns [Long.MIN_VALUE]
      * on overflow, NaN, or infinity.
@@ -1946,6 +1956,34 @@ fun Long.toDecimal(): Decimal = Decimal.from(this)
 fun Iterable<Decimal>.sum(): Decimal = fold(ZERO) { acc, d -> acc + d }
 
 /**
+ * Adds a [Decimal] to this integer, delegating to [Decimal.plus].
+ *
+ * Enables natural left-hand syntax:
+ * ```
+ * val result = 1 + interestRate  // equivalent to interestRate + 1
+ * ```
+ *
+ * @receiver The integer addend.
+ * @param d The [Decimal] to add to.
+ * @return The sum as a [Decimal].
+ */
+operator fun Int.plus(d: Decimal) = d.plus(this)
+
+/**
+ * Subtracts a [Decimal] from this integer, delegating to [Decimal.minus].
+ *
+ * Enables natural left-hand syntax:
+ * ```
+ * val result = 1 - interestRate  // equivalent to 1.toDecimal() - interestRate
+ * ```
+ *
+ * @receiver The integer minuend.
+ * @param d The [Decimal] subtrahend.
+ * @return The difference as a [Decimal].
+ */
+operator fun Int.minus(d: Decimal) = -(d.minus(this))
+
+/**
  * Multiplies this integer by a [Decimal], delegating to [Decimal.times].
  *
  * Enables natural left-hand syntax:
@@ -1958,6 +1996,20 @@ fun Iterable<Decimal>.sum(): Decimal = fold(ZERO) { acc, d -> acc + d }
  * @return The product as a [Decimal].
  */
 operator fun Int.times(d: Decimal) = d.times(this)
+
+/**
+ * Divides this integer by a [Decimal], delegating to [Decimal.div].
+ *
+ * A common use case is computing the reciprocal of a [Decimal]:
+ * ```
+ * val reciprocal = 1 / d
+ * ```
+ *
+ * @receiver The integer dividend.
+ * @param d The [Decimal] divisor.
+ * @return The quotient as a [Decimal].
+ */
+operator fun Int.div(d: Decimal) = Decimal.from(this).div(d)
 
 /**
  * Tests numeric equality between this integer and [d], delegating to [Decimal.EQ].

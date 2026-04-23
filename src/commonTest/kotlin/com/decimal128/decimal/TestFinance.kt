@@ -6,7 +6,7 @@ import kotlin.test.assertTrue
 
 class TestFinance {
 
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testMain() {

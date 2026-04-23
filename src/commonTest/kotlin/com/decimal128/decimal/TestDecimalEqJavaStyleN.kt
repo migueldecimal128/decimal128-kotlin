@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestDecimalEqJavaStyleN {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val xStr: String, val n: Int, val expected: Boolean)
 

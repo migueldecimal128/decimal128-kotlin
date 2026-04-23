@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class TestDecimalCompareJavaStyleN {
-    val verbose = true
+    val verbose = false
 
     data class TC(val xStr: String, val n: Int, val expected: Int)
 

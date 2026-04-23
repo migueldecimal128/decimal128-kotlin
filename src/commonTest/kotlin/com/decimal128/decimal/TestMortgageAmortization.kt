@@ -3,7 +3,7 @@ package com.decimal128.decimal
 import kotlin.test.Test
 
 class TestMortgageAmortization {
-    val verbose = true
+    val verbose = false
 
     @Test
     fun testMortgage() {
