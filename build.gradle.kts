@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.plugins.signing.SigningExtension
 
 buildscript {
     dependencies {
@@ -10,24 +11,23 @@ buildscript {
 plugins {
     id("maven-publish")
     id("signing")
+    id("com.vanniktech.maven.publish") version "0.36.0"
     kotlin("multiplatform") version "2.3.10"
     id("org.jetbrains.dokka") version "2.0.0"
 }
 
 group = "com.decimal128"
-version = "0.1.0-SNAPSHOT"
+version = "0.9.0"
 
 repositories {
     mavenLocal()
     mavenCentral()
 }
 
-tasks.dokkaHtml {
-    outputDirectory.set(layout.buildDirectory.dir("documentation/html"))
-}
-
-tasks.dokkaGfm {
-    outputDirectory.set(layout.buildDirectory.dir("documentation/markdown"))
+dokka {
+    dokkaPublications.html {
+        outputDirectory.set(layout.buildDirectory.dir("documentation/html"))
+    }
 }
 
 tasks.register<Test>("testHsdis") {
@@ -120,8 +120,45 @@ tasks.withType<Test> {
         showStandardStreams = true
     }
 }
-/*
 
+tasks.matching { it.name == "iosSimulatorArm64Test" }.configureEach {
+    enabled = System.getenv("CI") != null
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+    coordinates("com.decimal128", "decimal128-kotlin", "0.9.0")
+
+    pom {
+        name.set("decimal128-kotlin")
+        description.set("IEEE 754-2019 decimal128 floating-point arithmetic for Kotlin Multiplatform.")
+        url.set("https://github.com/migueldecimal128/decimal128-kotlin")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://opensource.org/licenses/MIT")
+            }
+        }
+        developers {
+            developer {
+                id.set("migueldecimal128")
+                name.set("MiguelDecimal128")
+                email.set("miguel@decimal128.com")
+            }
+        }
+        scm {
+            connection.set("scm:git:git://github.com/migueldecimal128/decimal128-kotlin.git")
+            developerConnection.set("scm:git:ssh://github.com/migueldecimal128/decimal128-kotlin.git")
+            url.set("https://github.com/migueldecimal128/decimal128-kotlin")
+        }
+    }
+}
+
+
+extensions.getByType<SigningExtension>().useGpgCmd()
+
+/*
 afterEvaluate {
     tasks.named<Test>("jvmTest") {
         jvmArgs(

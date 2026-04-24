@@ -17,8 +17,8 @@ right choice for financial calculations and any domain where exact decimal round
 - [Decimal vs Java BigDecimal](#decimal-vs-java-bigdecimal)
 - [Value Space](#value-space)
 - [Getting Started](#getting-started)
-    - [Construction](#construction)
-    - [Predefined Constants](#predefined-constants)
+- [Construction](#construction)
+- [Predefined Decimal Constants](#predefined-decimal-constants)
 - [Arithmetic](#arithmetic)
 - [Comparison](#comparison)
 - [Rounding](#rounding)
@@ -30,8 +30,8 @@ right choice for financial calculations and any domain where exact decimal round
 - [DecContext and Rounding Modes](#deccontext-and-rounding-modes)
 - [Financial Functions](#financial-functions)
 - [Compliance and Testing](#compliance-and-testing)
-- [Thread Safety](#thread-safety)
 - [Bibliography](#bibliography)
+- [Installation](#installation)
 - [License](#license)
 
 ---
@@ -43,7 +43,7 @@ The SQL standard correctly distinguishes binary floating-point
 **approximate numeric values** from **exact numeric values**. 
 The classic example:
 
-```kotlin
+```text
 println(0.1 + 0.2)          // 0.30000000000000004  (Double)
 println("0.1".toDecimal() + "0.2".toDecimal())  // 0.3  (Decimal)
 ```
@@ -171,7 +171,7 @@ In addition to finite non-zero values, `Decimal` represents:
 
 ### Construction
 
-```kotlin
+```text
 "3.14159".toDecimal()   // from String
 42.toDecimal()          // from Int
 42L.toDecimal()         // from Long
@@ -206,7 +206,7 @@ using the rounding direction specified in `DecContext.current()`.
 
 Standard Kotlin operators are available and use the current `DecContext` for rounding:
 
-```kotlin
+```text
 val a = "1.5".toDecimal()
 val b = "2.3".toDecimal()
 val rate = "0.05".toDecimal()
@@ -226,7 +226,7 @@ a % b    // remainder (truncated toward zero)
 
 Additional arithmetic operations:
 
-```kotlin
+```text
 a.square()                 // a²
 a.squareRoot()             // √a
 a.fma(multiplier, addend)  // fused multiply-add: (a × multiplier) + addend
@@ -266,7 +266,7 @@ a.exp10()           // 10^a
 - No IEEE-754 signaling occurs
 - Provided for alignment with `Double` and `BigDecimal` behavior
 
-```kotlin
+```text
 "1.0".toDecimal() == "1.00".toDecimal() // true
 "-0".toDecimal() < "+0".toDecimal()    // perhaps surprisingly true
 "0.9999999999999999999".toDecimal() < 1 // true ... mixed Decimal and Int
@@ -274,7 +274,7 @@ a.exp10()           // 10^a
 
 ### Infix operators
 
-```kotlin
+```text
 "-0".toDecimal() EQ "+0".toDecimal() // perhaps surprisingling true
 a EQ b                               // numeric equality
 a NE b                               // numeric inequality
@@ -285,7 +285,7 @@ a NE b                               // numeric inequality
 
 ### IEEE 754-2019 totalOrder
 
-```kotlin
+```text
 a.compareTotalOrderTo(b)      // −1, 0, +1 using IEEE totalOrder (§5.10)
 a.isTotalOrder(b)             // true if totalOrder(a, b)
 a.compareTotalOrderMagTo(b)   // totalOrder on magnitudes (ignoring sign)
@@ -296,7 +296,7 @@ a.isTotalOrderMag(b)          // true if totalOrderMag(a, b)
 
 Do **not** signal on quiet NaN operands:
 
-```kotlin
+```text
 a.compareQuietEqual(b)         // returns Compare754Result enum
 a.compareQuietNotEqual(b)
 a.compareQuietLess(b)
@@ -316,7 +316,7 @@ a.compareQuiet(b)              // returns Compare754Result enum
 
 **Signal** `INVALID_OPERATION` if either operand is NaN:
 
-```kotlin
+```text
 a.compareSignalingEqual(b)     // returns Compare754Result enum
 a.compareSignalingNotEqual(b)
 a.compareSignalingLess(b)
@@ -335,7 +335,7 @@ a.compareSignalingGreaterUnordered(b)
 
 All rounding methods implement IEEE 754-2019 §5.3.1. The available rounding modes are:
 
-```kotlin
+```text
 DecRounding.ROUND_TIES_TO_EVEN      // nearest, ties → even (banker's rounding)
 DecRounding.ROUND_TIES_TO_AWAY      // nearest, ties → away from zero
 DecRounding.ROUND_TOWARD_ZERO       // truncation
@@ -345,7 +345,7 @@ DecRounding.ROUND_TOWARD_NEGATIVE   // floor
 
 ### Round to integral value
 
-```kotlin
+```text
 a.roundToIntegralTiesToEven()        // nearest, ties → even (banker's rounding)
 a.roundToIntegralTiesToAway()        // nearest, ties → away from zero
 a.roundToIntegralTowardZero()        // truncation
@@ -359,7 +359,7 @@ when the result differs from the input.
 
 ### Scale and quantize
 
-```kotlin
+```text
 a.withScale(2)            // rescale/round to 2 decimal places (e.g. "1.23")
 a.quantize(reference)     // rescale/round to same quantum as reference (IEEE 754-2019 §5.3.2)
 a.scaleB(n)               // a × 10^n  (IEEE 754-2019 §5.3.3 scaleB)
@@ -372,7 +372,7 @@ a.nextDown()              // largest value < a   (IEEE 754-2019 §5.3.1)
 
 ## Classification and Predicates
 
-```kotlin
+```text
 a.ieeeClass()         // Ieee754Class enum: one of 10 IEEE-754-2019 classes
 a.isFinite()          // normal, subnormal, or zero
 a.isFiniteNonZero()   // finite and non-zero
@@ -394,7 +394,7 @@ a.isExactPowerOfTen() // finite and exactly a power of 10
 
 ## Quantum and Exponent
 
-```kotlin
+```text
 a.quantum()          // 10^qExp as a Decimal (unit in the last place)
 a.quantumInt()       // qExp as an Int
 a.eExponent()        // adjusted (scientific) exponent: qExp + digitLen − 1
@@ -412,7 +412,7 @@ All conversion functions implement IEEE 754-2019 §5.8 and signal `INVALID_OPERA
 
 ### Conversion to `Long`
 
-```kotlin
+```text
 a.toLongOrMinValue()            // exact only, no rounding, no signaling on failure
 a.toLongTiesToEven()            // round half-to-even
 a.toLongTiesToAway()            // round half-away-from-zero
@@ -425,7 +425,7 @@ Each also has a `…SignalInexact()` variant.
 
 ### Conversion to `Int`
 
-```kotlin
+```text
 a.toIntTiesToEven()
 a.toIntTiesToAway()
 a.toIntTowardZero()
@@ -445,7 +445,7 @@ database or binary encoded packet.
 
 ### Decoding
 
-```kotlin
+```text
 // From two 64-bit longs
 Decimal.decodeBid128(hi: Long, lo: Long)
 Decimal.decodeDpd128(hi: Long, lo: Long)
@@ -461,7 +461,7 @@ Decimal.decodeDpd128(bytes, offset = 0, isLittleEndian = false)
 
 ### Encoding
 
-```kotlin
+```text
 a.encodeBid128(longs, offset = 0, isLittleEndian = false)
 a.encodeDpd128(longs, offset = 0, isLittleEndian = false)
 a.encodeBid128(bytes, offset = 0, isLittleEndian = false)
@@ -475,7 +475,7 @@ a.encodeDpd128(bytes, offset = 0, isLittleEndian = false)
 For production use, prefer context-aware arithmetic so rounding and overflow behavior is
 explicit. Use `ctx.eval { … }` to run a block under a specific `DecContext`:
 
-```kotlin
+```text
 val ctx = DecContext.decimal128IEEE().with(DecRounding.ROUND_TOWARD_ZERO)
 
 ctx.eval {
@@ -507,12 +507,16 @@ Available rounding modes (`DecRounding`):
 `Decimal` is fully compliant with IEEE 754-2019 and the IBM/Cowlishaw General Decimal Arithmetic
 Specification (GDAS).
 
-The following test suites pass on all supported platforms (JVM, Native, and JavaScript):
+Tests are run with GitHub continuous integration on: JVM, macosX64,
+macosArm64, linuxX86, iosSimulatorArm64, and JavaScript Node.js
 
-- **IBM/Cowlishaw DecTest** — the full QA suite for decNumber, including proper rounding, flag
+Tests include: 
+
+- **IBM/Cowlishaw DecTest** — all of the decNumber/decTest `dq*.decTest` vectors that
+  are targeted at decimal128, including proper rounding, flag
   signaling, and DPD-encoded values
-- **IBM FPTest** — test vectors for decimal128
-- **Intel libbid bid_128** — test vectors from the Intel Decimal Floating Point library
+- **IBM FPTest** — the test vectors for decimal128 basic arithmetic operations
+- **Intel libbid** — the `bid_128` test vectors from the Intel Decimal Floating Point library
 
 All tests are included in the source distribution on GitHub.
 
@@ -530,7 +534,7 @@ handling, and flag inspection.
 
 ## Extension Functions
 
-```kotlin
+```text
 "3.14".toDecimal()      // String → Decimal
 42.toDecimal()          // Int    → Decimal
 42L.toDecimal()         // Long   → Decimal
@@ -547,7 +551,7 @@ functions out-of-the-box:
 
 **Interest**
 
-```kotlin
+```text
 simpleInterest(principal, rate, periods)       // principal × rate × periods
 simpleInterest(principal, rate, numPeriods)    // overload with Int periods
 compoundInterest(principal, rate, numPeriods)  // principal × (1 + rate)^n
@@ -556,7 +560,7 @@ effectiveAnnualRate(nominalRate, timesPerYear) // EAR: (1 + r/n)^n − 1
 
 **Mortgage and Annuities**
 
-```kotlin
+```text
 mortgagePayment(principal, periodicRate, numPayments)      // fixed-rate PMT
 amortizationSchedule(principal, periodicRate, numPayments) // List<AmortizationRow>
 presentValueAnnuity(payment, periodicRate, numPeriods)     // PV of ordinary annuity
@@ -565,7 +569,7 @@ futureValueAnnuity(payment, periodicRate, numPeriods)      // FV of ordinary ann
 
 **Cash Flow Analysis**
 
-```kotlin
+```text
 npv(rate, cashFlows)                        // Net Present Value
 irr(cashFlows, guess, tolerance, maxIter)   // Internal Rate of Return
 mirr(cashFlows, financeRate, reinvestRate)  // Modified IRR
@@ -573,7 +577,7 @@ mirr(cashFlows, financeRate, reinvestRate)  // Modified IRR
 
 **Single Cash-Flow Helpers**
 
-```kotlin
+```text
 presentValue(futureValue, rate, numPeriods) // FV / (1+r)^n
 futureValue(presentValue, rate, numPeriods) // PV × (1+r)^n
 cagr(presentValue, futureValue, numPeriods) // Compound Annual Growth Rate
@@ -602,6 +606,26 @@ The SQL database standard defines `DECIMAL` as an exact numeric type with a defi
 https://courses.cms.caltech.edu/cs123/sql99std/ansi-iso-9075-2-1999.pdf
 
 ---
+
+## Installation
+
+Add to your `build.gradle.kts`:
+
+```text
+dependencies {
+    implementation("com.decimal128:decimal128-kotlin:0.9.0")
+}
+```
+
+Or for Maven (`pom.xml`):
+
+```xml
+<dependency>
+    <groupId>com.decimal128</groupId>
+    <artifactId>decimal128-kotlin</artifactId>
+    <version>0.9.0</version>
+</dependency>
+```
 
 ## License
 

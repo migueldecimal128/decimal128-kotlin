@@ -1,4 +1,4 @@
-rootProject.name = "kdecimal128"
+rootProject.name = "decimal128-kotlin"
 
 pluginManagement {
     repositories {
