@@ -111,12 +111,14 @@ that would produce infinity or NaN throw `ArithmeticException` instead.
 The same person, Mike Cowlishaw, was the prime mover behind both `BigDecimal` and the
 addition of decimal floating point to the IEEE754-2008/2019 standard. 
 
-**Performance** — `BigDecimal` allocates at least one variable-length `BigInteger`
-for every operation, relying heavily on heap allocation and garbage collection,
-while polluting the CPU-cache.
+**Performance** — `BigDecimal` base objects consume 48 bytes in the heap. There is
+sufficient space in the base object for _compact_ significands that fit in 64 bits
+... 18 decimal digits. Larger significands allocate a separate `BigInteger` object.
+Intermediate and final results that require on `BigInteger` lean heavily on
+heap allocation and garbage collection, while polluting the CPU-cache.
 `Decimal` is cache-friendly and allocation-light. 
-Objects consume a fixed 32 bytes, including object header.
-Reusable mutable temporaries minimize heap allocation during
+Objects consume a fixed 32 bytes of heap storage. 
+Reused mutable temporaries minimize heap allocation during
 operations and stay hot in the CPU-cache. 
 
 **Transcendental and financial functions** — `Decimal` includes
