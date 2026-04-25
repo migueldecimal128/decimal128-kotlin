@@ -59,6 +59,7 @@ class TestBid128BasicArithmetic {
     @Test
     fun testSubCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
+            "bid128_sub 0 -7679.786588685697599698777757867965E6128 -66796955588778955.9565996878579899E6123 [5ff549559c2888deda66540f4b3d2dcc] 20",
             "bid128_sub 0 +1000000010000010.0100000E-6192 +8998898888898999998899999999.988888889E-6026 [8121bbae128738e463d45adcde9f1499] 00",
         ),
         ::d128SubImpl,

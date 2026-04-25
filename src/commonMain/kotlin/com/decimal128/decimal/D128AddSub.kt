@@ -179,7 +179,12 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
  * We can handle the following cases in the 128-bit world
  * 1. m.qExp < s.qExp ... scale s.coefficient up by qDelta
  * 2. sufficient headroom in 38 digits to completely cover the gap
- * 3. fully swamped
+ * 3. catastrophic cancellation is impossible because magnitudes
+ *    differ enough.
+ *    3a. Fully swamped ... no digits overlap
+ *        3a1. there is a 0 to the right of the decimal point
+ *        3a2. s is exactly to the right of the decimal point
+ *    3b. partially swamped
  *
  * Otherwise, use wide 256-bit ALU
  */
@@ -195,6 +200,7 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
     val qM = stealQExp(mSteal)
     val qS = stealQExp(sSteal)
     val precision = ctx.precision
+    verify { precision <= 38 }
 
     if (qM < qS) {
         // case 1: |m| > |s|, m.qExp < s.qExp
@@ -205,41 +211,56 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
     }
     // case 2: |m| > |s|, m.qExp > s.qExp
 
-    verify { precision < 38 }
     val mDigitLen = stealDigitLen(mSteal)
-    run {
-        val headroom = 38 - mDigitLen
-        val gap = qM - qS
-        if (headroom >= gap) {
-            // case 2 success
-            // m has enough headroom to scale and align with s.qExp
-            return d128FusedMulPow10Subtract(sign, m, gap, s, ctx)
-        }
+    val headroom38 = 38 - mDigitLen
+    val gap38 = qM - qS
+    if (headroom38 >= gap38) {
+        // case 2 success
+        // m has enough headroom to scale and align with s.qExp
+        return d128FusedMulPow10Subtract(sign, m, gap38, s, ctx)
     }
 
-    // case 3: fully swamped
-    run {
-        // in this case, headroom and shift are based upon ctx.precision
+    // case 3: Catastrophic Cancellation Impossible
+    if (precision == 34 && isCatastrophicCancellationImpossible(mSteal, sSteal)) {
+        verify { mDigitLen <= 34 }
+
         val sDigitLen = stealDigitLen(sSteal)
-        val headroomP = 1 + precision - mDigitLen
-        if (headroomP < 1) return@run  // no room for guard digit, skip to fullWidthAdd
-        val qAlignP = qM - headroomP
-        val shiftSRight = qAlignP - qS
+        val headroomPrime = 1 + precision - mDigitLen
+        val pentad = ctx.tmps.pentad
+        umul128xPow10to128(pentad, m.dw1, m.dw0, headroomPrime)
+        val dw1MinuendPrime = pentad.dw1
+        val dw0MinuendPrime = pentad.dw0
+        val qAlign = qM - headroomPrime
+        val shiftSRight = qAlign - qS
+        val residue: Residue
+        var dw1Diff: Long
+        var dw0Diff: Long
         if (shiftSRight >= sDigitLen) {
-            val residueInverse =
-                if (shiftSRight > sDigitLen) Residue.GT_HALF
-                else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse()
-            verify { residueInverse != EXACT }
-            val pentad = ctx.tmps.pentad
-            umul128xPow10to128(pentad, m.dw1, m.dw0, headroomP)
-            val dw1S = pentad.dw1
-            val dw0S = pentad.dw0
-            val dw1T = dw1S - if (dw0S == 0L) 1L else 0L
-            val dw0T = dw0S - 1
-            return decRoundAndFinalizeFinite(sign, dw1T, dw0T, residueInverse, qAlignP, ctx)
+            // case 3a: fully swamped
+            residue =
+                if (shiftSRight > sDigitLen) Residue.GT_HALF // case 3a1
+                else Residue.fromValuePow10(s.dw1, s.dw0, shiftSRight).subtractionInverse() // case 3a2
+            verify { residue != EXACT }
+            dw1Diff = dw1MinuendPrime - if (dw0MinuendPrime == 0L) 1L else 0L
+            dw0Diff = dw0MinuendPrime - 1
+            //return decRoundAndFinalizeFinite(sign, dw1Diff, dw0Diff, residueInverse, qAlign, ctx)
+        } else {
+            // case 3b: partially swamped
+            // residue here could be EXACT if the swamped digits were all zeros
+            residue = c128ScaleDownPow10(pentad, s.dw1, s.dw0, shiftSRight).subtractionInverse()
+            dw0Diff = dw0MinuendPrime - pentad.dw0
+            dw1Diff = dw1MinuendPrime - pentad.dw1 - if (unsignedLT(dw0MinuendPrime, dw0Diff)) 1L else 0L
+            if (residue != EXACT) {
+                dw0Diff -= 1L
+                if (dw0Diff == 0L)
+                    dw1Diff -= 1L
+            }
         }
+        return decRoundAndFinalizeFinite(sign, dw1Diff, dw0Diff, residue, qAlign, ctx)
     }
-    // fall back to wide 256-bit ALU
+
+    // fall back to wide 256-bit ALU for more precision
+    // when catastrophic cancellation is possible.
     return fullWidthSub(sign, m, s, ctx)
 }
 

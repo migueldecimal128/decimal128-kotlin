@@ -277,7 +277,7 @@ internal fun stealCompareMagnitudeFnzFnz(xSteal: Int, ySteal: Int): Int {
  * of magnitude). If so, then we need to perform the subtraction full-width
  * with greater precision.
  */
-internal fun isCatestrophicCancellationImpossible(mSteal: Int, sSteal: Int): Boolean {
+internal fun isCatastrophicCancellationImpossible(mSteal: Int, sSteal: Int): Boolean {
     // Check 1: Decimal Scientific Exponent separation.
     // If the most significant digit of m is at least 2 orders of magnitude
     // greater than s then the subtraction can only shift the result

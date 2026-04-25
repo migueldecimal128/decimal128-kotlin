@@ -6,7 +6,7 @@ import kotlin.test.Test
 
 class TestDecBasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
     @Test
     fun testAdd() = runBinaryDecimalCtxOp(
