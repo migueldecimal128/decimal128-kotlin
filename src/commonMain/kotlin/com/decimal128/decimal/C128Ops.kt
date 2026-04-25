@@ -35,9 +35,10 @@ internal fun c128ScaleDownPow10(resultPentad: Pentad, dw1: Long, dw0: Long, pow1
     if (pow10 < BARRETT_POW10_MAXX)
         return barrettDivPow10(resultPentad, dw1, dw0, pow10)
 
-    val t = C256()
+    val tmps = DecContext.current().tmps
+    val t = tmps.mdecDivRemPowCtzd
     t.c256Set128(dw1, dw0)
-    val s = C256()
+    val s = tmps.mdecFmaParseConvert
     val residue = c256SetScaleDownPow10(s, t, pow10, resultPentad)
     resultPentad.dw1 = s.dw1
     resultPentad.dw0 = s.dw0
