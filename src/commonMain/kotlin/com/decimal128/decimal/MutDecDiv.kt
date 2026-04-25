@@ -28,7 +28,6 @@ internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
 internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
-    val quotientSign = stealSignFlag(xSteal) xor stealSignFlag(ySteal)
     val binopSignature = binopSignatureOf(xSteal, ySteal)
     if (binopSignature == FNZ_FNZ) {
         setDivIntFnzFnz(z, x, y, ctx)
@@ -187,7 +186,7 @@ fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecCont
     var ntz = z.dw0.countTrailingZeroBits()
     if (residue == Residue.EXACT && qZ < qPreferred && ntz > 0) {
         if (qZ + 1 < qPreferred) {
-            val quot = C256()
+            val quot = tmps.c256
             do {
                 val deltaQ = qPreferred - qZ
                 val chunk = min(min(9, deltaQ), ntz)

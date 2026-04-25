@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.decimal128.decimal.benchmark
 
 import com.decimal128.decimal.Decimal
@@ -18,7 +19,11 @@ open class ArithmeticBenchmark {
 
     // "compact" → 18 digits or fewer, hits BigDecimal's intCompact fast path
     // "full"    → 30+ digits, forces BigDecimal into BigInteger-backed storage
-    @Param("compact", "full")
+    @Param(
+        "compact_aligned", "full_aligned",
+        "compact_shift2", "full_shift2",
+        "compact_shift10", "full_shift10",
+        "compact_shift30", "full_shift30",)
     lateinit var regime: String
 
     // Hoisted so BigDecimal's MathContext lookup never appears in the hot path.
@@ -32,9 +37,23 @@ open class ArithmeticBenchmark {
     @Setup(Level.Trial)
     fun setup() {
         val (aStr, bStr) = when (regime) {
-            "compact" -> "123456789.12345678" to "987654321.87654321"
-            "full"    -> "1234567890123456789012345678.901234" to
-                    "9876543210987654321098765432.109876"
+            "compact_aligned" ->
+                "123456789012345678" to "9876543210123456"
+            "full_aligned" ->
+                "1234567890123456789012345678901234e-2" to "987654321098765432109876543210e-2"
+            "compact_shift2" ->
+                "123456789012345678e-4" to "222222222e-2"
+            "full_shift2" ->
+                "602214076000000000000000e-2" to "99999999999999999999999999e-4"
+            "compact_shift10" ->
+                "1234560987654321e-10" to "565656565656e0"
+            "full_shift10" ->
+                "123456789012345678900987654321e-10" to "24242424243535353535e0"
+            "compact_shift30" ->
+                "1234567890e30" to "9876543210"
+            "full_shift30" ->
+                "123456789012345678901234567890e-10" to "99999999999999999999e20"
+
             else -> error("unknown regime: $regime")
         }
         aDec = aStr.toDecimal()
