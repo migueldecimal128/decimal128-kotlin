@@ -248,6 +248,14 @@ internal inline fun clampQExponentRange(q: Int): Int {
     return min(max(q, CLAMPED_EXP_MIN), CLAMPED_EXP_MAX)
 }
 
+/**
+ * Perform some inexpensive tests to determine which magnitude is greater.
+ * If the scientific exponents are different then we know.
+ * If the Binary base-2 exponents (calculated from digitLen and bitLen)
+ * are different enough then we know.
+ * Otherwise, return 0 and the caller will have to perform a finer-grained
+ * (more expensive) test.
+ */
 internal fun stealCompareMagnitudeFnzFnz(xSteal: Int, ySteal: Int): Int {
     verify { binopSignatureOf(xSteal, ySteal) == FNZ_FNZ }
     val xE = stealSciExp(xSteal)
@@ -259,4 +267,45 @@ internal fun stealCompareMagnitudeFnzFnz(xSteal: Int, ySteal: Int): Int {
     if (stealBExpMax(xSteal) < stealBExpMin(ySteal))
         return -1
     return 0
+}
+
+/**
+ * Determines if the subtraction |m| - |s| is safe from catastrophic cancellation.
+ *
+ * Catastrophic cancellation occurs when the leading digits of two values
+ * match, causing the result to "shrink" significantly (more than one order
+ * of magnitude). If so, then we need to perform the subtraction full-width
+ * with greater precision.
+ */
+internal fun isCatestrophicCancellationImpossible(mSteal: Int, sSteal: Int): Boolean {
+    // Check 1: Decimal Scientific Exponent separation.
+    // If the most significant digit of m is at least 2 orders of magnitude
+    // greater than s then the subtraction can only shift the result
+    // one place to the right.
+    // 100 - 1 = 99 ... 1e2 - 1e0 = 9.9e1
+    // the subtraction (e.g., 100 - 0.99) can only shift the
+    // result's MSD one position to the right (to 99.01).
+    val eM = stealSciExp(mSteal)
+    val eS = stealSciExp(sSteal)
+    if (eM - eS >= 2)
+        return true
+
+    // Check 2: Binary Exponent separation.
+    // Using the coefficient bitLen and base-10 qExp, we can
+    // calculate an upper/lower bounds for the base-2 binary
+    // exponent of the value in base 2.
+    // Similar to the decimal check, if the binary bounding boxes
+    // are separated by at least two powers of two, i.e 2 bits, the
+    // subtraction cannot be more than 1 bit shorter than the
+    // minuend.
+    // Of the cases that make it past the decimal check,
+    // 33% will have eM == eS and 66% will have eM == eS + 1
+    // This binary check should catch 11% of the eM == eS cases
+    // and 86% of the eM == eS + 1 cases.
+    // Approx 61% of those failing the sciExp test should be
+    // caught here
+    if (stealBExpMin(mSteal) - stealBExpMax(sSteal) >= 2)
+        return true
+
+    return false
 }

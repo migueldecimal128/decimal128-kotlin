@@ -4,7 +4,7 @@
 
 package com.decimal128.decimal
 
-internal const val VERIFY_ENABLED: Boolean = false
+internal const val VERIFY_ENABLED: Boolean = true
 
 internal inline fun verify(block: () -> Boolean) {
     if (VERIFY_ENABLED)

@@ -184,9 +184,11 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
  * Otherwise, use wide 256-bit ALU
  */
 private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: DecContext): Decimal {
+    // for all cases, |m| > |s| ... or we wouldn't be here
     verify { m.compareNumericMagnitudeTo(s) > 0 }
     verify { s.isNotZero() }
     verify { m.qExp != s.qExp }
+
 
     val mSteal = m.steal
     val sSteal = s.steal
@@ -209,7 +211,7 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
         val headroom = 38 - mDigitLen
         val gap = qM - qS
         if (headroom >= gap) {
-            // case 2a
+            // case 2 success
             // m has enough headroom to scale and align with s.qExp
             return d128FusedMulPow10Subtract(sign, m, gap, s, ctx)
         }
