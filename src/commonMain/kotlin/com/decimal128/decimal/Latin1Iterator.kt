@@ -25,10 +25,10 @@ abstract class Latin1Iterator(len: Int) {
     fun hasNext() = (i < len)
 
     /** Returns the current character without advancing the iterator, or '\u0000' if at end. */
-    fun peek() = if (i < len) getCharAt(i) else '\u0000'
+    //fun peek() = if (i < len) getCharAt(i) else '\u0000'
 
     /** Returns the number of remaining characters from the current position to the end. */
-    fun remainingLen() = len - i
+    //fun remainingLen() = len - i
 
     /** Returns the next character and advances the iterator, or '\u0000' if at end. */
     fun nextChar() = if (i < len) getCharAt(i++) else '\u0000'

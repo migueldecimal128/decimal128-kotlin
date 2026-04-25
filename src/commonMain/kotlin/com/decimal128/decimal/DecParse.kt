@@ -64,15 +64,17 @@ internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext
 
 private fun parseDecimalOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
     var ch = txt.nextChar()
+    if (ch >= '0' && ch <= '9')
+        return parseFiniteValueText(md, sign = false, ch, txt, ctx)
+    val sign = ch == '-'
     if (ch == '+' || ch == '-')
         ch = txt.nextChar()
-    txt.rewind()
     if (ch >= '0' && ch <= '9' || ch == '.')
-        return parseFiniteValueText(md, txt, ctx)
+        return parseFiniteValueText(md, sign, ch, txt, ctx)
     val chLower = (ch.code or 0x20).toChar()
     if (chLower == 'i')
-        return parseInfinityText(md, txt)
-    return parseNanText(md, txt, ctx.decPrefs.parseCollapseSNaN)
+        return parseInfinityText(md, sign, ch, txt)
+    return parseNanText(md, sign, ch, txt, ctx.decPrefs.parseCollapseSNaN)
 }
 
 /**
@@ -87,11 +89,8 @@ private fun parseDecimalOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContex
  * @return [md] on success, or [InvalidOperationReason.PARSE_MALFORMED] if the
  * input is not a valid infinity form
  */
-private inline fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
-    var ch = txt.nextChar()
-    val sign = ch == '-'
-    if (ch == '-' || ch == '+')
-        ch = txt.nextChar()
+private inline fun parseInfinityText(md: MutDec, sign: Boolean, chFirst: Char, txt: Latin1Iterator): Any {
+    var ch = chFirst
     var chPrevCode = 0
     for (target in "infinity") {
         if (ch.code or 0x20 != target.code) {
@@ -132,11 +131,8 @@ private inline fun parseInfinityText(md: MutDec, txt: Latin1Iterator): Any {
  * [InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN] if an unexpected
  * character follows the prefix
  */
-private inline fun parseNanText(md: MutDec, txt: Latin1Iterator, collapseSNaN: Boolean): Any {
-    var ch = txt.nextChar()
-    val sign = ch == '-'
-    if (ch == '-' || ch == '+')
-        ch = txt.nextChar()
+private inline fun parseNanText(md: MutDec, sign: Boolean, chFirst: Char, txt: Latin1Iterator, collapseSNaN: Boolean): Any {
+    var ch = chFirst
     val hasS = (ch.code or 0x20) == 's'.code
     val hasQ = (ch.code or 0x20) == 'q'.code
     if (hasQ or hasS)
@@ -242,7 +238,7 @@ private inline fun parseNanText(md: MutDec, txt: Latin1Iterator, collapseSNaN: B
  * - [PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION] — see above
  * - [PARSE_VALUE_OUT_OF_RANGE] — see above
  */
-private inline fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
+private inline fun parseFiniteValueText(md: MutDec, sign: Boolean, chFirst: Char, txt: Latin1Iterator, ctx: DecContext): Any {
     val precision = ctx.precision
     var residue: Residue = Residue.EXACT
 
@@ -251,13 +247,10 @@ private inline fun parseFiniteValueText(md: MutDec, txt: Latin1Iterator, ctx: De
     var hasDot = false
     var expSign = false
 
-    var ch = txt.nextChar()
+    var ch = chFirst
     if (ch.code == 0)
         return PARSE_EMPTY_STRING
 
-    val sign = ch == '-'
-    if (ch == '-' || ch == '+')
-        ch = txt.nextChar()
     var fractionalDigitCount = 0
     var accum19a = 0L
     var accum19b = 0L

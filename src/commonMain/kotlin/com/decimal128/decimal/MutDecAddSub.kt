@@ -214,7 +214,8 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
 internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, ctx: DecContext): Residue {
     verify { !m.isZero() }
     verify { !s.isZero() }
-    val pentad = ctx.tmps.pentad
+    val tmps = ctx.tmps
+    val pentad = tmps.pentad
     verify { m.compareNumericMagnitudeTo(s) > 0 }
     verify { m.qExp != s.qExp }
     if (m.qExp > s.qExp) {
@@ -263,7 +264,7 @@ internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec,
                 // There is overlap and there will be residue.
                 // align x by shiftLeftX
                 //
-                val tmpY = MutDec()
+                val tmpY = tmps.c256
                 val residue = c256SetScaleDownPow10(tmpY, s, shiftSRight, pentad)
                 if (shiftMLeft > 0)
                     c256SetSubScaled(z, m, shiftMLeft, tmpY, pentad)
