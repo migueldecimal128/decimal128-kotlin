@@ -167,6 +167,7 @@ private inline fun c256IsMultipleOf5(x: C256): Boolean {
     }
 }
 
+@Suppress("unused")
 internal fun c256SetPow2(z: C256, pow2: Int) {
     if (pow2 !in 0..255)
         throw IllegalArgumentException()
@@ -238,7 +239,7 @@ internal fun c256Set(z: C256, dd: DoubleDouble, pentad: Pentad): C256 {
     c256Set(z, dd.hi)
     if (dd.lo == 0.0)
         return z
-    val uLo = C256()
+    val uLo = DecContext.current().tmps.c256
     uLo.c256Set(dd.lo)
     if (dd.lo > 0)
         c256SetAddUnscaled(z, z, uLo, pentad)
