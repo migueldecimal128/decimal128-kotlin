@@ -384,6 +384,10 @@ class Decimal private constructor(
         /**
          * Returns a quiet NaN with a 128-bit diagnostic payload.
          * If the payload exceeds 33 digits, the canonical no-payload NaN is returned.
+         *
+         * IEEE 754-2019 3.5.2 c) 2)
+         * If the value exceeds the maximum, the significand c is non-
+         * canonical and the value used for c is zero.
          */
         fun qNaN(sign: Boolean, dw1: Long, dw0: Long): Decimal {
             val payloadIsZero =
