@@ -16,12 +16,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Parses [str] into a [Decimal], using [ctx] for precision, rounding, and parse preferences.
+ * Parses [str] into a [Decimal], using using the current [DecContext] for
+ * precision, rounding, and parse preferences.
  *
  * Behaviour on failure mirrors [parseToMutDec].
  *
  * @param str the string to parse
- * @param ctx precision, rounding mode, and parse preferences; defaults to the current context
  * @return the parsed [Decimal]
  * @throws NumberFormatException if [str] is malformed and
  * [DecPrefs.parseMalformedThrowsNumberFormatException] is set
@@ -142,8 +142,8 @@ private inline fun parseNanText(md: MutDec, sign: Boolean, chFirst: Char, txt: L
         ((txt.nextCharCode() or 0x20) != 'n'.code)
     )
         return PARSE_MALFORMED
-    var payloadDw0: Long = 0L
-    var payloadDw1: Long = 0L
+    var payloadDw0 = 0L
+    var payloadDw1 = 0L
     ch = txt.nextChar()
     if (ch.code != 0) {
         var accumDigitCount = 0

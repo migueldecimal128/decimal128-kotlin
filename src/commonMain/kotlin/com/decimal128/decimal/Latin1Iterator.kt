@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("NOTHING_TO_INLINE", "unused")
 
 package com.decimal128.decimal
 
@@ -17,8 +17,7 @@ private val EMPTY_BYTE_ARRAY = ByteArray(0)
  *
  * @param len the length of the iteration window
  */
-abstract class Latin1Iterator(len: Int) {
-    protected var len = len
+abstract class Latin1Iterator(protected var len: Int) {
     protected var i = 0
 
     /** Returns true if there are more characters to read in the forward direction. */
@@ -55,9 +54,7 @@ abstract class Latin1Iterator(len: Int) {
     init { require(len >= 0) { "Invalid offset/length range" } }
 }
 
-class StringLatin1Iterator(str: String): Latin1Iterator(str.length) {
-    private var str = str
-
+class StringLatin1Iterator(private var str: String): Latin1Iterator(str.length) {
     /** Returns the character at the given absolute index in the underlying string. */
     override fun getCharAt(i: Int) = str[i]
 
@@ -79,9 +76,7 @@ class StringLatin1Iterator(str: String): Latin1Iterator(str.length) {
 
 }
 
-class CharSequenceLatin1Iterator(csq: CharSequence) : Latin1Iterator(csq.length) {
-    private var csq = csq
-
+class CharSequenceLatin1Iterator(private var csq: CharSequence) : Latin1Iterator(csq.length) {
 
     /** Returns the character at the given absolute index in the underlying [CharSequence]. */
     override fun getCharAt(i: Int) = csq[i]

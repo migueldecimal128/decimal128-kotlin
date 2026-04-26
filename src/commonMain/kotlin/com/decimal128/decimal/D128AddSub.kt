@@ -5,6 +5,7 @@ package com.decimal128.decimal
 
 import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import com.decimal128.decimal.Residue.Companion.EXACT
+import com.decimal128.decimal.Residue.Companion.LT_HALF
 import kotlin.math.max
 import kotlin.math.min
 
@@ -35,7 +36,7 @@ internal fun d128AddSubImpl(x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext
 
         INF_ZER, INF_FNZ -> x
         //INF_FNZ -> x
-        INF_INF -> addInfInf(xSteal, x, ySteal, y, ctx)
+        INF_INF -> addInfInf(xSteal, x, ySteal, ctx)
 
         else -> nanOperandFound(x, y, ctx)
     }
@@ -70,7 +71,7 @@ private fun addZerZer(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: Dec
     return Decimal.zero(isRoundTowardNegative, qMin)
 }
 
-private fun addInfInf(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal =
+private fun addInfInf(xSteal: Int, x: Decimal, ySteal: Int, ctx: DecContext): Decimal =
     if (xSteal == ySteal)
         x
     else
@@ -152,11 +153,11 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
             verify { shiftLeft > 0 }
             dw0Sum += n0
             dw1Sum += n1 + if (unsignedLT(dw0Sum, n0)) 1L else 0L
-            residue = Residue.EXACT
+            residue = EXACT
         }
         shiftRight >= nDigitLen -> { // fully swamped
             if (shiftRight > nDigitLen)
-                residue = Residue.LT_HALF
+                residue = LT_HALF
             else
                 residue = Residue.fromValuePow10(n1, n0, nDigitLen)
         }

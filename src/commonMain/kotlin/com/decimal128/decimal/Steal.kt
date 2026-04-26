@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("NOTHING_TO_INLINE", "unused")
 
 package com.decimal128.decimal
 
@@ -110,8 +110,6 @@ internal inline fun stealDigitLen(steal: Int) =
 private const val STEAL_BITLEN_CORRECTION_SHIFT = 9
 private const val STEAL_BITLEN_CORRECTION_MASK = 0x3F
 internal inline fun stealBitLen(steal: Int): Int {
-    //(steal and STEAL_DIGITLEN_UNSHIFTED_MASK) - ((steal shr STEAL_BITLEN_CORRECTION_SHIFT) and STEAL_BITLEN_CORRECTION_MASK)
-    val digitLen = stealDigitLen(steal)
     val stealUnshifted = steal and STEAL_DIGITLEN_UNSHIFTED_MASK
     val correction = ((steal shr STEAL_BITLEN_CORRECTION_SHIFT) and STEAL_BITLEN_CORRECTION_MASK)
     val bitLen = stealUnshifted - correction
