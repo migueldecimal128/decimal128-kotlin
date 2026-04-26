@@ -73,7 +73,6 @@ open class ArithmeticBenchmark {
         scaleBig = aBig.scale()
     }
 
-    /*
     // ── Addition ──────────────────────────────────────────────────────────────
 
     @Benchmark
@@ -122,7 +121,6 @@ open class ArithmeticBenchmark {
         bh.consume(aBig.divide(bBig, mc))
     }
 
-     */
     // ── parse ──────────────────────────────────────────────────────────────
 
     @Benchmark
