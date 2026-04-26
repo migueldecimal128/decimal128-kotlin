@@ -2,8 +2,6 @@
 
 package com.decimal128.decimal
 
-import kotlin.math.max
-
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09L
 
@@ -79,71 +77,16 @@ internal object IntegerParsePrint {
 
     fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
         val dwAbs = ((n xor (n shr 31)) - (n shr 31)).toUInt().toLong()
-        val sign01 = n ushr 31
+        val signBit = n ushr 31
         utf8[off] = '-'.code.toByte()
         val digitLen = calcDigitLen64(dwAbs)
+        // digitPrintCount = max(digitLen, 1), branchless
         val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
-        u64ToUtf8(digitPrintCount, dwAbs, utf8, off + sign01)
-        return sign01 + digitPrintCount
+        u64ToUtf8(digitPrintCount, dwAbs, utf8, off + signBit)
+        return signBit + digitPrintCount
     }
-
-    fun int256ToUtf8(sign: Boolean, c: C256, utf8: ByteArray, off: Int): Int {
-        val sign01 = if (sign) 1 else 0
-        utf8[off] = '-'.code.toByte() // if non-negative then this will be overwritten
-        return sign01 + c256ToUtf8(c, utf8, off + sign01)
-    }
-
-    internal fun u64ToUtf8(dw0: Long, utf8: ByteArray, off: Int): Int =
-        u64ToUtf8(max(calcDigitLen64(dw0), 1), dw0, utf8, off)
 
     internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
-        when {
-            digitPrintCount > 1 -> u64ToUtf8_chunk8(digitPrintCount, dw0, utf8, off)
-            digitPrintCount == 1 -> utf8[off] = ('0'.code + dw0.toInt()).toByte()
-        }
-        return digitPrintCount
-    }
-
-    internal fun u128ToUtf8(digitPrintCount: Int, dw1: ULong, dw0: ULong, utf8: ByteArray, off: Int): Int =
-        u128ToUtf8(digitPrintCount, dw1.toLong(), dw0.toLong(), utf8, off)
-
-    internal fun u128ToUtf8(digitPrintCount: Int, dw1: Long, dw0: Long, utf8: ByteArray, off: Int): Int {
-        if (dw1 == 0L)
-            return u64ToUtf8(digitPrintCount, dw0, utf8, off)
-        var dw1T = dw1
-        var dw0T = dw0
-        var i = off + digitPrintCount
-        var remainingDigits = digitPrintCount
-        while (dw1T != 0L) {
-            val q2 = unsignedMulHi(dw1T, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
-            val r2 = dw1T - (q2 * 1_0000_0000L)
-            val s2 = (r2 shl 32) or (dw0T ushr 32)
-            val q1 = unsignedMulHi(s2, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
-            val r1 = s2 - (q1 * 1_0000_0000L)
-            val s1 = (r1 shl 32) or (dw0T and MASK32L)
-            val q0 = unsignedMulHi(s1, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
-            val r0 = s1 - (q0 * 1_0000_0000L)
-            dw0T = (q1 shl 32) + q0
-            dw1T = q2
-            render8DigitsBeforeIndex(r0, utf8, i)
-            i -= 8
-            remainingDigits -= 8
-        }
-        while (remainingDigits >= 8) {
-            val t0 = unsignedMulHi(dw0T, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
-            val r0 = dw0T - (t0 * 1_0000_0000L)
-            dw0T = t0
-            render8DigitsBeforeIndex(r0, utf8, i)
-            i -= 8
-            remainingDigits -= 8
-        }
-        if (remainingDigits > 0) {
-            renderTailDigitsBeforeIndex(dw0T, utf8, i)
-        }
-        return digitPrintCount
-    }
-
-    internal fun u64ToUtf8_chunk8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining
         var dwT = dw0
@@ -156,8 +99,43 @@ internal object IntegerParsePrint {
             digitsRemaining -= 8
         }
         if (digitsRemaining > 0)
-            if (renderTailDigitsBeforeIndex(dwT, utf8, ich) != digitsRemaining)
-                throw IllegalStateException() // rendered digits did not match digitsRemaining
+            renderTailDigitsBeforeIndex(digitsRemaining, dwT, utf8, ich)
+        return digitPrintCount
+    }
+
+    internal fun u128ToUtf8(digitPrintCount: Int, dw1: ULong, dw0: ULong, utf8: ByteArray, off: Int): Int =
+        u128ToUtf8(digitPrintCount, dw1.toLong(), dw0.toLong(), utf8, off)
+
+    internal fun u128ToUtf8(digitPrintCount: Int, dw1: Long, dw0: Long, utf8: ByteArray, off: Int): Int {
+        var dw1T = dw1
+        var dw0T = dw0
+        var ich = off + digitPrintCount
+        var remainingDigitCount = digitPrintCount
+        while (dw1T != 0L) {
+            val q2 = unsignedMulHi(dw1T, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
+            val r2 = dw1T - (q2 * 1_0000_0000L)
+            val s2 = (r2 shl 32) or (dw0T ushr 32)
+            val q1 = unsignedMulHi(s2, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
+            val r1 = s2 - (q1 * 1_0000_0000L)
+            val s1 = (r1 shl 32) or (dw0T and MASK32L)
+            val q0 = unsignedMulHi(s1, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
+            val r0 = s1 - (q0 * 1_0000_0000L)
+            dw0T = (q1 shl 32) + q0
+            dw1T = q2
+            render8DigitsBeforeIndex(r0, utf8, ich)
+            ich -= 8
+            remainingDigitCount -= 8
+        }
+        while (remainingDigitCount >= 8) {
+            val t0 = unsignedMulHi(dw0T, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
+            val r0 = dw0T - (t0 * 1_0000_0000L)
+            dw0T = t0
+            render8DigitsBeforeIndex(r0, utf8, ich)
+            ich -= 8
+            remainingDigitCount -= 8
+        }
+        if (remainingDigitCount > 0)
+            renderTailDigitsBeforeIndex(remainingDigitCount, dw0T, utf8, ich)
         return digitPrintCount
     }
 
@@ -323,10 +301,11 @@ internal object IntegerParsePrint {
     private const val M_1E9_DIV_1E4 = 879_609_303L
     private const val S_1E9_DIV_1E4 = 43
 
-    fun renderTailDigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int): Int {
+    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, utf8: ByteArray, offMaxx: Int) {
         var t = dw
+        var remainingDigitCount = renderDigitCount
         var ib = offMaxx
-        while (t >= 1000L) {
+        while (remainingDigitCount >= 4) {
             val t0 = unsignedMulHi(t, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
             val abcd = t - (t0 * 10000L)
             t = t0
@@ -342,20 +321,19 @@ internal object IntegerParsePrint {
                 utf8[ib - 2] = (c.toInt() + '0'.code).toByte()
                 utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
                 ib -= 4
+                remainingDigitCount -= 4
             } else {
                 throw IllegalArgumentException()
             }
         }
-        if (t != 0L || dw == 0L) {
-            do {
-                val divTen = (t * 0xCCCCCCCDL) ushr 35
-                val digit = (t - (divTen * 10L)).toInt()
-                utf8[--ib] = ('0'.code + digit).toByte()
-                t = divTen
-            } while (t != 0L)
+        while (remainingDigitCount > 0) {
+            val divTen = (t * 0xCCCCCCCDL) ushr 35
+            val digit = (t - (divTen * 10L)).toInt()
+            utf8[--ib] = ('0'.code + digit).toByte()
+            t = divTen
+            --remainingDigitCount
         }
-
-        return offMaxx - ib
+        verify { offMaxx - ib == renderDigitCount }
     }
 
     fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {

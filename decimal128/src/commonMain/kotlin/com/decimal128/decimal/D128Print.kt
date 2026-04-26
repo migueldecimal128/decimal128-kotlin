@@ -213,8 +213,7 @@ private fun toNormalizedScientificString(
     val iE = signLen + decimalPointLen + printedDigitLen
     utf8[iE] = exponentEUtf8Byte
     utf8[iE + 1] = expSignByte // will get overwritten when expSignLen == 0
-    val j = IntegerParsePrint.renderTailDigitsBeforeIndex(eExpAbs.toLong(), utf8, totalLen)
-    verify { j == expDigitLen }
+    IntegerParsePrint.renderTailDigitsBeforeIndex(expDigitLen, eExpAbs.toLong(), utf8, totalLen)
     return utf8.decodeToString(0, totalLen)
 }
 

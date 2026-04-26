@@ -9,7 +9,6 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
-import com.decimal128.decimal.IntegerParsePrint.int256ToUtf8
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
 import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_RESULT_WOULD_EXCEED_PRECISION
