@@ -50,3 +50,5 @@ bin/
 .DS_Store
 /#.gitignore#
 /.idea/workspace.xml
+*~
+benchmarks/results/
