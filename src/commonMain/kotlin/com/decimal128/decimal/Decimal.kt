@@ -189,7 +189,10 @@ class Decimal private constructor(
         val NEG_ZEROeQ_TINY = Decimal(stealEncodeZER(1, Q_TINY), 0L, 0L)
         val NEG_ZEROeQ_MAX = Decimal(stealEncodeZER(1, Q_MAX), 0L, 0L)
 
-        private val SMALL_POS_INT_CACHE: Array<Decimal> = Array<Decimal>(11) { i ->
+        // Unclear to me how big this cache should be.
+        // Needs instrumentation in a real-world application.
+        // For now, we will go thru 12, to pick up 12 months in a year.
+        private val SMALL_POS_INT_CACHE: Array<Decimal> = Array<Decimal>(13) { i ->
             if (i == 0) ZERO else decimalFNZ(0, 0, 0L, i.toLong()) }
 
 
