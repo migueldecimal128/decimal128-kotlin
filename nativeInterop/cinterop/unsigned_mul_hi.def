@@ -1,7 +1,7 @@
 headers = unsigned_mul_hi.h
 package = com.decimal128.unsignedmulhi
 
-compilerOpts = -Isrc/nativeInterop/cinterop -O3 -std=c11
+compilerOpts = -O3 -std=c11
 ---
 #include <stdint.h>
 

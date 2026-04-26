@@ -92,7 +92,8 @@ kotlin {
         compilations.getByName("main") {
             cinterops {
                 create("unsigned_mul_hi") {
-                    defFile(project.file("src/nativeInterop/cinterop/unsigned_mul_hi.def"))
+                    defFile(rootProject.file("nativeInterop/cinterop/unsigned_mul_hi.def"))
+		    includeDirs(rootProject.file("nativeInterop/cinterop"))
                 }
             }
         }
