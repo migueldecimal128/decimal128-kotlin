@@ -13,4 +13,4 @@ rootProject.name = "decimal128-kotlin"
 
 include(":decimal128")
 include(":benchmarks")
-
+include(":decimal128-bid-string-codec")
