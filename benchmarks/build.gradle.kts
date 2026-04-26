@@ -14,9 +14,7 @@ kotlin {
 }
 
 dependencies {
-    // if first line fails, then try second line as a more explicit replacement
-    jmh(rootProject)                        // the root project
-    //jmh(project(mapOf("path" to ":", "configuration" to "jvmRuntimeElements")))
+    jmh(project(":decimal128"))
 
     jmh("org.openjdk.jmh:jmh-core:1.37")
     jmh("org.openjdk.jmh:jmh-generator-annprocess:1.37")

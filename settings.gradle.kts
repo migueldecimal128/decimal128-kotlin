@@ -11,5 +11,6 @@ plugins {
 
 rootProject.name = "decimal128-kotlin"
 
+include(":decimal128")
 include(":benchmarks")
 
