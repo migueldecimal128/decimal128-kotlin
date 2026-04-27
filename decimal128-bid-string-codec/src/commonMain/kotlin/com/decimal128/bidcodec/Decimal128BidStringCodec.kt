@@ -926,26 +926,6 @@ public object Decimal128BidStringCodec {
         return p1 to p0
     }
 
-    private fun unsignedMulHi(x: Long, y: Long): Long {
-        val xLo = x and 0xFFFFFFFFL
-        val xHi = x ushr 32
-        val yLo = y and 0xFFFFFFFFL
-        val yHi = y ushr 32
-
-        val pp00 = xLo * yLo
-        val pp01 = xHi * yLo
-        val pp10 = xLo * yHi
-        val pp11 = xHi * yHi
-
-        val mid = pp01 + pp10  // may overflow
-        val midCarryShifted = if (unsignedLT(mid, pp01)) (1L shl 32) else 0L
-
-        val midWithLo = (pp00 shr 32) + (mid and 0xFFFFFFFFL)
-        // midWithLo cannot overflow: max is (2^32-1) + (2^32-1) < 2^33
-
-        return pp11 + (mid shr 32) + midCarryShifted + (midWithLo shr 32)
-    }
-
     private fun unsignedCmp(x: Long, y: Long): Int =
         (x xor Long.MIN_VALUE).compareTo(y xor Long.MIN_VALUE)
 

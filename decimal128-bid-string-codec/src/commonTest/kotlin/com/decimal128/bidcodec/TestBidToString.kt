@@ -12,6 +12,7 @@ class TestBidToString {
     // simple test ...
     // put only canonical representation in these test cases
     val tcs = arrayOf(
+        "1234567890123456789012345678901234",
         "Infinity",
 
         "NaN",
