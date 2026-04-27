@@ -57,6 +57,7 @@ kotlin {
     sourceSets {
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(project(":decimal128"))
         }
     }
 }

@@ -332,7 +332,7 @@ internal object IntegerParsePrint {
         verify { offMaxx - ib == renderDigitCount }
     }
 
-    fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
+    private fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
         val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val efgh  = dw - (abcd * 10000L)
 
