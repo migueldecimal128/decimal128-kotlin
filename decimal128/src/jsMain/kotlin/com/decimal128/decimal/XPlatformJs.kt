@@ -3,12 +3,10 @@
 package com.decimal128.decimal
 
 actual inline fun unsignedMulHi(x: Long, y: Long): Long {
-    val xULong = x.toULong()
-    val yULong = y.toULong()
-    val xLo = xULong and 0xFFFFFFFFUL
-    val xHi = xULong shr 32
-    val yLo = yULong and 0xFFFFFFFFUL
-    val yHi = yULong shr 32
+    val xLo = x and 0xFFFFFFFFL
+    val xHi = x ushr 32
+    val yLo = y and 0xFFFFFFFFL
+    val yHi = y ushr 32
 
     val pp00 = xLo * yLo
     val pp01 = xHi * yLo
@@ -16,12 +14,12 @@ actual inline fun unsignedMulHi(x: Long, y: Long): Long {
     val pp11 = xHi * yHi
 
     val mid = pp01 + pp10  // may overflow
-    val midCarry = if (mid < pp01) 1UL else 0UL  // carry from mid overflow
+    val midCarryShifted = if (unsignedLT(mid, pp01)) (1L shl 32) else 0L
 
-    val midWithLo = (pp00 shr 32) + (mid and 0xFFFFFFFFUL)
+    val midWithLo = (pp00 ushr 32) + (mid and 0xFFFFFFFFL)
     // midWithLo cannot overflow: max is (2^32-1) + (2^32-1) < 2^33
 
-    return (pp11 + (mid shr 32) + (midCarry shl 32) + (midWithLo shr 32)).toLong()
+    return pp11 + (mid ushr 32) + midCarryShifted + (midWithLo ushr 32)
 }
 
 actual inline fun unsignedDiv(x: Long, y: Long): Long =
