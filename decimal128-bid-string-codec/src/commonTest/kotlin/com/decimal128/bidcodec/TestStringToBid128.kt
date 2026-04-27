@@ -2,6 +2,7 @@ package com.decimal128.bidcodec
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -434,5 +435,11 @@ class TestStringToBid128 {
         return dw to true
     }
 
+    @Test
+    fun testParseReturnErrorRejectsTooSmallDest() {
+        assertFailsWith<IllegalArgumentException> {
+            Decimal128BidStringCodec.parseReturnError(LongArray(1), "0")
+        }
+    }
 
 }
