@@ -41,19 +41,6 @@ kotlin {
         }
     }
 
-    // Same shared cinterop as :decimal128 — both modules independently compile
-    // their own binding from the shared .def at the repo root.
-    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
-        compilations.getByName("main") {
-            cinterops {
-                create("unsigned_mul_hi") {
-                    defFile(rootProject.file("nativeInterop/cinterop/unsigned_mul_hi.def"))
-                    includeDirs(rootProject.file("nativeInterop/cinterop"))
-                }
-            }
-        }
-    }
-
     sourceSets {
         commonTest.dependencies {
             implementation(kotlin("test"))
