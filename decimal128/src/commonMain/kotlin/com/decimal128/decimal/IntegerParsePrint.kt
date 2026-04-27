@@ -5,6 +5,9 @@ package com.decimal128.decimal
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09L
 
+private const val BARRETT_DIVISOR_1E8 = 1_0000_0000L
+private const val BARRETT_MU_1E8 = 0x2AF31DC461
+
 private const val M_U32_DIV_1E1 = 0xCCCCCCCDL
 private const val S_U32_DIV_1E1 = 35
 
@@ -59,17 +62,17 @@ internal object IntegerParsePrint {
         // add 1, then add -1 if the inbound digitLen was non-zero
         val printDigitLen = c.digitLen + 1 + (-c.digitLen shr 31)
         if (c.bitLen <= 128)
-            return u128ToUtf8(printDigitLen, c.dw1.toULong(), c.dw0.toULong(), utf8, off)
+            return u128ToUtf8(printDigitLen, c.dw1, c.dw0, utf8, off)
         val t: C256 = tmp?.c256Set(c) ?: C256(c)
         do {
             val ibMaxx = off + t.digitLen
-            val r = barrettDivMod_32_256(t, t, DIVISOR_1E9, MU_1E9)
-            render9DigitsBeforeIndex(r, utf8, ibMaxx)
+            val r = barrettDivMod_32_256(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
+            render8DigitsBeforeIndex(r, utf8, ibMaxx)
         } while (t.bitLen > 128)
         do {
             val ibMaxx = off + t.digitLen
-            val r = barrettDivMod_32_128(t, t, DIVISOR_1E9, MU_1E9)
-            render9DigitsBeforeIndex(r, utf8, ibMaxx)
+            val r = barrettDivMod_32_128(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
+            render8DigitsBeforeIndex(r, utf8, ibMaxx)
         } while (t.bitLen > 64)
         u64ToUtf8(t.digitLen, t.dw0, utf8, off)
         return printDigitLen
@@ -102,9 +105,6 @@ internal object IntegerParsePrint {
             renderTailDigitsBeforeIndex(digitsRemaining, dwT, utf8, ich)
         return digitPrintCount
     }
-
-    internal fun u128ToUtf8(digitPrintCount: Int, dw1: ULong, dw0: ULong, utf8: ByteArray, off: Int): Int =
-        u128ToUtf8(digitPrintCount, dw1.toLong(), dw0.toLong(), utf8, off)
 
     internal fun u128ToUtf8(digitPrintCount: Int, dw1: Long, dw0: Long, utf8: ByteArray, off: Int): Int {
         var dw1T = dw1
@@ -369,67 +369,6 @@ internal object IntegerParsePrint {
             utf8[offMaxx - 3] = (f.toInt() + '0'.code).toByte()
             utf8[offMaxx - 2] = (g.toInt() + '0'.code).toByte()
             utf8[offMaxx - 1] = (h.toInt() + '0'.code).toByte()
-        } else {
-            throw IndexOutOfBoundsException()
-        }
-    }
-
-    /**
-     * Renders a 9-digit chunk [dw] (0 ≤ [dw] < 1e9) into ASCII digits in [utf8],
-     * ending just before [offMaxx].
-     *
-     * Digits are extracted using reciprocal-multiply division by powers
-     * of 10 to avoid slow hardware division instructions.
-     *
-     * The layout written is:
-     * ```
-     * utf8[offMaxx - 9] .. utf8[offMaxx - 1] = '0'..'9'
-     * ```
-     *
-     * @param dw the 9-digit unsigned long value to render ... `0..999999999`
-     * @param utf8 the output byte buffer for ASCII digits.
-     * @param offMaxx the maximum exclusive offset within [utf8];
-     * digits occupy the range `offMaxx - 9 .. offMaxx - 1`.
-     */
-    fun render9DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
-        check (unsignedLT(dw, 1_000_000_000L))
-        //val abcde = unsignedMulHi(dw, M_U64_DIV_1E4) shr S_U64_DIV_1E4
-        val abcde = (dw * M_1E9_DIV_1E4) ushr S_1E9_DIV_1E4
-        val fghi  = dw - (abcde * 10000L)
-
-        val abc = (abcde * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-        val de = abcde - (abc * 100L)
-
-        val fg = (fghi * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-        val hi = fghi - (fg * 100L)
-
-        val a = (abc * M_U32_DIV_1E2) shr S_U32_DIV_1E2
-        val bc = abc - (a * 100L)
-
-        val b = (bc * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val c = bc - (b * 10L)
-
-        val d = (de * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val e = de - (d * 10L)
-
-        val f = (fg * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val g = fg - (f * 10L)
-
-        val h = (hi * M_U32_DIV_1E1) shr S_U32_DIV_1E1
-        val i = hi - (h * 10L)
-
-        // Explicit bounds check to enable elimination of individual checks
-        val offMin = offMaxx - 9
-        if (offMin >= 0 && offMaxx <= utf8.size) {
-            utf8[offMaxx - 9] = (a.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 8] = (b.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 7] = (c.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 6] = (d.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 5] = (e.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 4] = (f.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 3] = (g.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 2] = (h.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 1] = (i.toInt() + '0'.code).toByte()
         } else {
             throw IndexOutOfBoundsException()
         }
