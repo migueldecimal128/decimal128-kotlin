@@ -139,7 +139,7 @@ private fun decFinalizeUnderflowRegion(sign: Boolean,
  * completely so that the most significant coefficient digit
  * becomes the rounding digit.
  *
- * Compare against (10**digitLen)/2
+ * We compare our coefficient against (10**digitLen)/2
  *
  */
 private fun decFinalizeUnderflowBoundary(sign: Boolean,

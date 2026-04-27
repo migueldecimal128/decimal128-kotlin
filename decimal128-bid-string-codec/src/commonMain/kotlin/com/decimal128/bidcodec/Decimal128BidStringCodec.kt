@@ -654,21 +654,249 @@ public object Decimal128BidStringCodec {
              // allow any exponent with Zero
              bid128Zero(bid128Longs, sign, qExp)
          } else {
-             bid128RoundAndFinalize(bid128Longs, sign, qExp, dw1, dw0, residue)
+             bid128RoundAndFinalizeFnz(bid128Longs, sign, qExp, dw1, dw0, residue)
          }
          return null
     }
 
     private fun bid128Zero(bid128Longs: LongArray, sign: Boolean, qExp: Int) {
         val qClamped = max(min(qExp, 6111), -6176)
-        val qBiased = qClamped + 6176
-        bid128Longs[0] = (qBiased.toLong() shl (3 + 46)) or if (sign) Long.MIN_VALUE else 0
+        bid128Set(bid128Longs, sign, qClamped, 0L, 0L)
+    }
+
+    private const val MAXX_COEFF_34_HI = 0x0001ED09BEAD87C0L // 10**34
+    private const val MAXX_COEFF_34_LO = 0x378D8E6400000000L
+    // 10**33 is the smallest 34-digit coefficient
+    private const val MIN_PRECISION_34_COEFF_HI = 0x0000314DC6448D93L
+    private const val MIN_PRECISION_34_COEFF_LO = 0x38C15B0A00000000L
+
+    private fun bid128RoundAndFinalizeFnz(bid128Longs: LongArray, sign: Boolean, qExpIn: Int, dw1In: Long, dw0In: Long, residueIn: Int) {
+        // Step 1: Fast path: already in valid decimal128 range ...
+        //         ... and no roundTiesToEven rounding
+        if (residueIn <= LT_HALF || residueIn == HALF && (dw0In and 1L) == 0L) {
+            if (coeffQExpFit(dw1In, dw0In, qExpIn)) {
+                bid128Set(bid128Longs, sign, qExpIn, dw1In, dw0In)
+                return
+            }
+        }
+        // Step 2: special values ... not applicable ... only FNZ
+
+        // Step 3: zero coefficient ... not applicable ... only FNZ
+
+        // Step 4: underflow
+        // divert iff range truncation exceeds precision truncation
+        val rangeTruncationNeeded = -6176 - qExpIn
+        val digitLenIn = calcDigitLen128(dw1In, dw0In)
+        val precisionTruncationNeeded = max(digitLenIn - 34, 0)
+        if (rangeTruncationNeeded > precisionTruncationNeeded) {
+            bid128FinalizeUnderflowRegion(bid128Longs, sign, qExpIn, dw1In, dw0In, residueIn)
+            return
+        }
+
+        // Step 5: normalize to <= precision, accumulating residue
+        var totalResidue = residueIn
+        var dw1 = dw1In
+        var dw0 = dw0In
+        var qExp = qExpIn
+        if (precisionTruncationNeeded > 0) {
+            val truncationResidue: Int = u128ScaleDownPow10(bid128Longs, dw1, dw0, precisionTruncationNeeded)
+            dw1 = bid128Longs[0]
+            dw0 = bid128Longs[1]
+            totalResidue = residueMerge(truncationResidue, totalResidue)
+            qExp += precisionTruncationNeeded
+            verify { calcDigitLen128(dw1, dw0) == 34 }
+        }
+
+        // step 6: rounding ... in this world only roundTiesToEven
+        val applyRounding = totalResidue == GT_HALF || totalResidue == HALF && (dw0 and 1L) != 0L
+        if (applyRounding) {
+            // step 6.1: increment
+            ++dw0
+            dw1 += if (dw0 == 0L) 1L else 0L
+
+            // step 6.2: rollover
+            if (dw1 == MAXX_COEFF_34_HI && dw0 == MAXX_COEFF_34_LO) {
+                dw1 = MIN_PRECISION_34_COEFF_HI
+                dw0 = MIN_PRECISION_34_COEFF_LO
+                ++qExp
+            }
+        }
+
+        // step 7: check final bounds
+        verify { qExp >= -6176 }
+        verify { calcDigitLen128(dw1, dw0) <= 34 }
+        if (qExp > 6111) {
+            val qExcess = qExp - 6111
+            val digitLen = calcDigitLen128(dw1, dw0)
+            if (digitLen + qExcess <= 34)
+                bid128FinalizeClamping(bid128Longs, sign, qExp, dw1, dw0)
+            else
+                bid128FinalizeOverflow(bid128Longs, sign)
+            return
+        }
+        bid128Set(bid128Longs, sign, qExp, dw1, dw0)
+    }
+
+    private fun bid128Set(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long) {
+        val qBiased = qExp + 6176
+        val s = if (sign) Long.MIN_VALUE else 0
+        val g = qBiased.toLong() shl (3 + 46)
+        bid128Longs[0] = s or g or dw1
+        bid128Longs[1] = dw0
+    }
+
+    private fun bid128FinalizeOverflow(bid128Longs: LongArray, sign: Boolean) {
+        bid128Longs[0] = (if (sign) Long.MIN_VALUE else 0L) or 0x7800000000000000L
         bid128Longs[1] = 0L
     }
 
-    private fun bid128RoundAndFinalize(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long, residue: Int) {
-        TODO()
+    private fun bid128FinalizeClamping(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long) {
+        val qExcess = qExp - 6111
+        verify { qExcess > 0 && qExcess <= 34 - calcDigitLen128(dw1, dw0) }
+        val (dw1Scaled, dw0Scaled) = umul128xPow10to128(dw1, dw0, qExcess)
+        verify { coeffQExpFit(dw1Scaled, dw0Scaled, 6111) }
+        bid128Set(bid128Longs, sign, 6111, dw1Scaled, dw0Scaled)
     }
+
+    private inline fun coeffQExpFit(dw1: Long, dw0: Long, qExp: Int): Boolean {
+        if (qExp < -6176 || qExp > 6111)
+            return false
+        if (dw1.countLeadingZeroBits() > 128 - 113)
+            return true
+        val pow10Offset = 34 shl 1
+        val maxxHi = POW10[pow10Offset + 1]
+        return unsignedLT(dw1, maxxHi) || dw1 == maxxHi && unsignedLT(dw0, POW10[pow10Offset])
+    }
+
+
+    private fun bid128FinalizeUnderflowRegion(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long, residue: Int) {
+        // IEEE 754 7.5 Underflow - handle subnormal region
+        verify { qExp < -6176 }
+        val truncationNeeded = -6176 - qExp
+        val digitLen = calcDigitLen128(dw1, dw0)
+        when {
+            truncationNeeded > digitLen -> {
+                // Result is swamped - becomes zero with roundTiesToEven
+                // This is always inexact
+                bid128Zero(bid128Longs, sign, -6176)
+            }
+            truncationNeeded == digitLen ->
+                bid128FinalizeUnderflowBoundary(bid128Longs, sign, qExp, dw1, dw0, residue)
+            else ->
+                bid128FinalizeSubnormal(bid128Longs, sign, qExp, dw1, dw0, residue)
+        }
+    }
+
+    /**
+     * The most significant digit of our current coefficient is exactly
+     * to the right of our range.
+     * Therefore, the coefficient itself determines rounding.
+     * Compare the coefficient with its own (10**digitLen) / 2
+     */
+
+    private fun bid128FinalizeUnderflowBoundary(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long, residueIn: Int) {
+        val digitLen = calcDigitLen128(dw1, dw0)
+        verify { digitLen != 0 }
+        val scaleResidue = residueFromValuePow10(dw1, dw0, digitLen)
+        val totalResidue = residueMerge(scaleResidue, residueIn)
+        // roundTiesToEven ...
+        // only if we are GT_HALF since otherwise the result is 0 ... which is even
+        bid128Set(bid128Longs, sign, -6176, 0L, if (totalResidue == GT_HALF) 1L else 0L)
+    }
+
+    private fun residueFromValuePow10(dw1: Long, dw0: Long, pow10: Int): Int {
+        if ((dw1 or dw0) == 0L)
+            return EXACT
+        val pow10Index = pow10 shl 1
+        val pow10Hi = POW10[pow10Index + 1]
+        val pow10Lo = POW10[pow10Index]
+
+        val halfHi = pow10Hi ushr 1
+        val halfLo = (pow10Hi shl 63) or (pow10Lo ushr 1)
+        verify { dw1 >= 0 && halfHi >= 0 }
+        if (dw1 != halfHi) {
+            return if (dw1 < halfHi) LT_HALF else GT_HALF
+        }
+        if (dw0 != halfLo)
+            return if (unsignedLT(dw0, halfLo)) LT_HALF else GT_HALF
+        return HALF
+    }
+
+    private fun bid128FinalizeSubnormal(bid128Longs: LongArray, sign: Boolean, qExpIn: Int,
+                                        dw1In: Long, dw0In: Long, residueIn: Int) {
+        val truncationNeeded = -6176 - qExpIn
+        verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1In, dw0In) }
+
+        val scaleResidue = u128ScaleDownPow10(bid128Longs, dw1In, dw0In, truncationNeeded)
+        val totalResidue = residueMerge(scaleResidue, residueIn)
+        var dw1T = bid128Longs[0]
+        var dw0T = bid128Longs[1]
+        var qExpT = -6176
+
+        val roundUp =
+            totalResidue == GT_HALF || totalResidue == HALF && (dw0T and 1L) != 0L
+        if (roundUp) {
+            // apply rounding
+            ++dw0T
+            dw1T += if (dw0T == 0L) 1L else 0L
+            if (dw1T == MAXX_COEFF_34_HI && dw0T == MAXX_COEFF_34_LO) {
+                dw1T = MIN_PRECISION_34_COEFF_HI
+                dw0T = MIN_PRECISION_34_COEFF_LO
+                ++qExpT
+            }
+        }
+        bid128Set(bid128Longs, sign, qExpT, dw1T, dw0T)
+    }
+
+    private fun u128ScaleDownPow10(bid128Longs: LongArray, dw1: Long, dw0: Long, precisionTruncationNeeded: Int): Int {
+        verify { (dw1 or dw0) != 0L }
+        verify { precisionTruncationNeeded > 0 && precisionTruncationNeeded < calcDigitLen128(dw1, dw0) }
+        var scaleResidue = EXACT
+        var dw1T = dw1
+        var dw0T = dw0
+        var digitsRemaining = precisionTruncationNeeded
+        do {
+            val stepPow10 = min(digitsRemaining, 9)
+            val rem = u128DivModPow10Max9(bid128Longs, dw1T, dw0T, stepPow10)
+            dw1T = bid128Longs[0]
+            dw0T = bid128Longs[1]
+            val stepResidue = residueFromValuePow10(0L, rem, stepPow10)
+            scaleResidue = residueMerge(stepResidue, scaleResidue)
+            digitsRemaining -= stepPow10
+        } while (digitsRemaining > 0)
+        return scaleResidue
+    }
+
+    private fun u128DivModPow10Max9(quotLongs: LongArray, dwHi: Long, dwLo: Long, pow10: Int): Long {
+        require(pow10 in 1..9) { "n must be in 1..9: pow10=$pow10" }
+        require(dwHi in 0 until (1L shl 49)) { "dHi exceeds 49 bits: dHi=$dwHi" }
+
+        val mask = (1L shl pow10) - 1
+        val b = dwLo and mask
+        val sHi = dwHi ushr pow10
+        val sLo = (dwLo ushr pow10) or (dwHi shl (64 - pow10))
+
+        val k = 50 - pow10
+        val maskK = (1L shl k) - 1
+        val hi63 = (sHi shl (14 + pow10)) or (sLo ushr k)
+        val loK = sLo and maskK
+        // remember ... this POW10 table has 2 slots per power, so double the index
+        val d = POW10[pow10 shl 1] ushr pow10     // = 5^n
+        val q1 = hi63 / d
+        val r1 = hi63 % d
+        val mid = (r1 shl k) or loK
+        val q0 = mid / d
+        val r0 = mid % d
+
+        val qLo = (q1 shl k) + q0
+        val qHi = q1 ushr (14 + pow10)
+        val remainder = (r0 shl pow10) or b
+
+        quotLongs[0] = qHi
+        quotLongs[1] = qLo
+        return remainder
+    }
+
 
     private const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
     private fun residueFromDecimalDigit(digit: Int): Int = (DIGIT_MAP shr (digit shl 1)) and 0x03
@@ -678,6 +906,48 @@ public object Decimal128BidStringCodec {
         val r = (oldResidue or s) and 0x03
         return r
     }
+
+    private inline fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
+        val pow10Offset = pow10 shl 1
+        val pow10Dw1 = POW10[pow10Offset + 1]
+        val pow10Dw0 = POW10[pow10Offset    ]
+        return umul128x128to128(dw1, dw0, pow10Dw1, pow10Dw0)
+    }
+
+    private inline fun umul128x128to128(x1: Long, x0: Long, y1: Long, y0: Long): Pair<Long, Long> {
+        val pp00Hi = unsignedMulHi(x0, y0)
+        val pp00Lo = x0 * y0
+        val pp10Lo = x1 * y0
+        val pp01Lo = x0 * y1
+
+        val p0 = pp00Lo
+        val p1 = pp00Hi + pp10Lo + pp01Lo
+
+        return p1 to p0
+    }
+
+    private fun unsignedMulHi(x: Long, y: Long): Long {
+        val xLo = x and 0xFFFFFFFFL
+        val xHi = x ushr 32
+        val yLo = y and 0xFFFFFFFFL
+        val yHi = y ushr 32
+
+        val pp00 = xLo * yLo
+        val pp01 = xHi * yLo
+        val pp10 = xLo * yHi
+        val pp11 = xHi * yHi
+
+        val mid = pp01 + pp10  // may overflow
+        val midCarryShifted = if (unsignedLT(mid, pp01)) (1L shl 32) else 0L
+
+        val midWithLo = (pp00 shr 32) + (mid and 0xFFFFFFFFL)
+        // midWithLo cannot overflow: max is (2^32-1) + (2^32-1) < 2^33
+
+        return pp11 + (mid shr 32) + midCarryShifted + (midWithLo shr 32)
+    }
+
+    private fun unsignedCmp(x: Long, y: Long): Int =
+        (x xor Long.MIN_VALUE).compareTo(y xor Long.MIN_VALUE)
 
 
 }
