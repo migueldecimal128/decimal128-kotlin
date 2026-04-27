@@ -3,6 +3,7 @@
 package com.decimal128.bidcodec
 
 import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Thin codec converting between BID128 binary representations and decimal
@@ -26,7 +27,7 @@ public object Decimal128BidStringCodec {
      * @return the decimal string form of the BID128 value
      */
     public fun toString(bid128Hi: Long, bid128Lo: Long): String {
-        return bid128Decode(bid128Hi, bid128Lo)
+        return decodeBid128toString(bid128Hi, bid128Lo)
     }
 
     /**
@@ -35,28 +36,30 @@ public object Decimal128BidStringCodec {
      * On success: `dest[0]` is set to `dw1` (high 64 bits), `dest[1]` is set
      * to `dw0` (low 64 bits), and this method returns `null`.
      *
-     * On failure: `dest[0]` and `dest[1]` are set to zero, and this method
+     * On failure: `dest[0]` and `dest[1]` are unchanged, and this method
      * returns a human-readable error message describing the failure. The
      * exact wording of error messages is not part of the API contract and
      * may change between versions.
      *
-     * @param dest a `LongArray` of size at least 2, into which the parsed
+     * @param bid128Longs a `LongArray` of size at least 2, into which the parsed
      *             BID128 value is written on success
      * @param str  the decimal string to parse
      * @return `null` on success, or a human-readable error message on failure
      * @throws IllegalArgumentException if `dest.size < 2`
      */
-    public fun parseReturnError(dest: LongArray, str: String): String? {
-        require(dest.size >= 2) { "dest must have size >= 2, was ${dest.size}" }
-        TODO("not yet implemented")
+    public fun parseReturnError(bid128Longs: LongArray, str: String): String? {
+        require(bid128Longs.size >= 2) { "bid128Longs must have size >= 2, was ${bid128Longs.size}" }
+        return encodeStringToBid128OrError(bid128Longs, str)
     }
+
+    // -- decode to String --------------------------------------------------------
 
     // 34 nines
     private val coeffMaxHi = 0x0001ED09BEAD87C0L
     private val coeffMaxLo = 0x378D8E63FFFFFFFFL
 
 
-    private fun bid128Decode(bid128Hi: Long, bid128Lo: Long): String {
+    private fun decodeBid128toString(bid128Hi: Long, bid128Lo: Long): String {
         // IEEE754-2019 Table 3.6-Decimal2 Interchange format parameters -- p 23
         val k = 128 // storage width in bits
         val p = 34 // precision in digits
@@ -154,8 +157,6 @@ public object Decimal128BidStringCodec {
             unsignedLT(payloadMaxHi, payloadHi) ||
             payloadHi == payloadMaxHi && unsignedLT(payloadMaxLo, payloadLo))
             return base
-        if (payloadHi == 0L)
-            return base + payloadLo.toString()
         val digitLen = calcDigitLen128(payloadHi, payloadLo)
         val utf8 = ByteArray(base.length + digitLen)
         for (i in 0..<base.length)
@@ -443,5 +444,240 @@ public object Decimal128BidStringCodec {
 
         return p1 to p0
     }
+
+    // -- encode bid128 from String --------------------------------------------------------
+
+    private fun encodeStringToBid128OrError(bid128Longs: LongArray, str: String): String? {
+        val txt = StringIterator(str)
+        var ch = txt.nextChar()
+        val sign = ch == '-'
+        if (ch == '+' || ch == '-')
+            ch = txt.nextChar()
+        if (ch >= '0' && ch <= '9' || ch == '.')
+            return parseFiniteValueText(bid128Longs, sign, ch, txt)
+        val chLower = (ch.code or 0x20).toChar()
+        if (chLower == 'i')
+            return parseInfinityText(bid128Longs, sign, ch, txt)
+        return parseNanText(bid128Longs, sign, ch, txt)
+    }
+
+    private class StringIterator(var str: String) {
+        private var i = 0
+        /** Returns the next character and advances the iterator, or '\u0000' if at end. */
+        fun nextChar(): Char = if (i < str.length) str[i++] else '\u0000'
+
+    }
+
+    private fun parseInfinityText(bid128Longs: LongArray, sign: Boolean, chFirst: Char, txt: StringIterator): String? {
+        var ch = chFirst
+        var chPrevCode = 0
+        for (target in "infinity") {
+            if (ch.code or 0x20 != target.code) {
+                if (ch.code == 0)
+                    break
+                else
+                    return "failure parsing infinity"
+            }
+            chPrevCode = ch.code or 0x20
+            ch = txt.nextChar()
+        }
+        if (ch.code != 0 || (chPrevCode != 'f'.code && chPrevCode != 'y'.code))
+            return "failure parsing Infinity"
+        bid128Longs[0] = 0x7800000000000000 or if (sign) Long.MIN_VALUE else 0
+        bid128Longs[1] = 0L
+        return null
+    }
+
+    private fun parseNanText(bid128Longs: LongArray, sign: Boolean, chFirst: Char, txt: StringIterator): String? {
+        var ch = chFirst
+        val hasS = (ch.code or 0x20) == 's'.code
+        val hasQ = (ch.code or 0x20) == 'q'.code
+        if (hasQ or hasS)
+            ch = txt.nextChar()
+        if (((ch.code or 0x20) != 'n'.code) ||
+            ((txt.nextChar().code or 0x20) != 'a'.code) ||
+            ((txt.nextChar().code or 0x20) != 'n'.code)
+        )
+            return "failure parsing NaN"
+        var payloadDw0 = 0L
+        var payloadDw1 = 0L
+        ch = txt.nextChar()
+        if (ch.code != 0) {
+            var accumDigitCount = 0
+            var accum19a = 0L
+            var accum19b = 0L
+            do {
+                if (ch >= '0' && ch <= '9') {
+                    val d = ch - '0'
+                    // flush leading zeros from payload ... don't increment
+                    accumDigitCount += (-(accumDigitCount or d)) ushr 31
+                    if (accumDigitCount <= 19)
+                        accum19a = (accum19a * 10L) + d.toLong()
+                    else
+                        accum19b = (accum19b * 10L) + d.toLong()
+                } else {
+                    if (ch != '(' && ch != ')' &&
+                        ch != '[' && ch != ']' &&
+                        ch != '{' && ch != '}'
+                    )
+                        return "non-digit NaN payload character"
+                }
+                ch = txt.nextChar()
+            } while (ch.code != 0)
+            if (accumDigitCount > 33) {
+                // IEEE754-2019 3.5.2 Encodings
+                //  ... as the payload of a NaN). If the value exceeds the maximum,
+                //  the significand c is non-canonical and the value used for c is zero.
+                payloadDw0 = 0
+                payloadDw1 = 0
+            } else {
+                payloadDw0 = accum19a
+                payloadDw1 = 0L
+                if (accumDigitCount > 19) {
+                    val pow10 = accumDigitCount - 19
+                    val (hi, lo) = fmaPow10(accum19a, pow10, accum19b)
+                    payloadDw1 = hi
+                    payloadDw0 = lo
+                }
+            }
+        }
+        val withoutPayload = (if (hasS) 0x7E00000000000000 else 0x7C00000000000000) or (if (sign) Long.MIN_VALUE else 0L)
+        bid128Longs[0] = withoutPayload or payloadDw1
+        bid128Longs[1] = payloadDw0
+        return null
+    }
+
+    private fun fmaPow10(x: Long, pow10: Int, a: Long): Pair<Long, Long> {
+        val y = POW10[pow10 shl 1]
+        val prodLo = x * y
+        val prodHi = unsignedMulHi(x, y)
+        val sumLo = prodLo + a
+        val sumHi = prodHi + if (unsignedLT(sumLo, prodLo)) 1L else 0L
+        return sumHi to sumLo
+    }
+
+    private const val EXACT   = 0
+    private const val LT_HALF = 1
+    private const val HALF    = 2
+    private const val GT_HALF = 3
+
+    private fun parseFiniteValueText(bid128Longs: LongArray, sign: Boolean, chFirst: Char, txt: StringIterator): String? {
+        var residue = EXACT
+
+        var hasCoefficientDigit = false // have we seen any digits at all, including zero
+        var significantDigitCount = 0 // does not count leading zeros
+        var hasDot = false
+        var expSign = false
+
+        var ch = chFirst
+         if (ch.code == 0)
+             return "empty string"
+
+         var fractionalDigitCount = 0
+         var accum19a = 0L
+         var accum19b = 0L
+         var exp = 0
+
+         while (ch in '0'..'9' || ch == '.') {
+             when (ch) {
+                 in '0'..'9' -> {
+                     val d = ch - '0'
+                     hasCoefficientDigit = true
+                     // count while flushing leading zeros
+                     significantDigitCount += (-(significantDigitCount or d)) ushr 31
+                     when {
+                         significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
+                         significantDigitCount <= 34 -> accum19b = (accum19b * 10L) + d.toLong()
+                         significantDigitCount == 34 + 1 ->
+                             residue = residueFromDecimalDigit(d)
+                         else ->
+                             residue = residueMerge(residue, residueFromDecimalDigit(d))
+                     }
+                     if (hasDot)
+                         ++fractionalDigitCount
+                 }
+
+                 '.' -> when {
+                     hasDot -> return "double radix dot"
+                     else -> hasDot = true
+                 }
+             }
+             ch = txt.nextChar()
+         }
+         if (!hasCoefficientDigit)
+             return "no coefficient digit"
+         // this path has at least one digit
+         if (ch == 'E' || ch == 'e') {
+             ch = txt.nextChar()
+             if (ch == '+' || ch == '-') {
+                 expSign = ch == '-'
+                 ch = txt.nextChar()
+             }
+             var hasExpDigit = false
+             var expSignificantDigitCount = 0
+             while (ch in '0'..'9') {
+                 hasExpDigit = true
+                 val eDigit = ch - '0'
+                 // count while flushing leading zeros
+                 expSignificantDigitCount +=
+                     (-(expSignificantDigitCount or eDigit)) ushr 31
+                 exp = exp * 10 + eDigit
+                 ch = txt.nextChar()
+             }
+             if (!hasExpDigit)
+                 return "no exponent digit"
+             // clamp exp to 9999 once after the loop
+             if (expSignificantDigitCount > 4)
+                 exp = 9999
+         }
+         if (ch.code != 0)
+             return "unexpected char"
+         // we have at least one digit
+         var dw0 = accum19a
+         var dw1 = 0L
+         if (significantDigitCount > 19) {
+             val pow10 = min(34, significantDigitCount) - 19
+             val (hi, lo) = fmaPow10(accum19a, pow10, accum19b)
+             dw1 = hi
+             dw0 = lo
+         }
+         // at this point, our coeff <= precision digits
+         // but we need to deal with residue and rounding
+         // rounding rollover could affect the exponent
+         //
+         // when we accept oversize coefficients, then whether the excess
+         // digits are to the right or left of the exponent will affect
+         // the qExp ...
+         val signedExp = if (expSign) -exp else exp
+         val qExp = signedExp - fractionalDigitCount + max(0, significantDigitCount - 34)
+         if ((dw1 or dw0) == 0L) {
+             // allow any exponent with Zero
+             bid128Zero(bid128Longs, sign, qExp)
+         } else {
+             bid128RoundAndFinalize(bid128Longs, sign, qExp, dw1, dw0, residue)
+         }
+         return null
+    }
+
+    private fun bid128Zero(bid128Longs: LongArray, sign: Boolean, qExp: Int) {
+        val qClamped = max(min(qExp, 6111), -6176)
+        val qBiased = qClamped + 6176
+        bid128Longs[0] = (qBiased.toLong() shl (3 + 46)) or if (sign) Long.MIN_VALUE else 0
+        bid128Longs[1] = 0L
+    }
+
+    private fun bid128RoundAndFinalize(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long, residue: Int) {
+        TODO()
+    }
+
+    private const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
+    private fun residueFromDecimalDigit(digit: Int): Int = (DIGIT_MAP shr (digit shl 1)) and 0x03
+
+    private fun residueMerge(oldResidue: Int, newStickyResidue: Int): Int {
+        val s = (newStickyResidue and 1) or (newStickyResidue ushr 1)
+        val r = (oldResidue or s) and 0x03
+        return r
+    }
+
 
 }

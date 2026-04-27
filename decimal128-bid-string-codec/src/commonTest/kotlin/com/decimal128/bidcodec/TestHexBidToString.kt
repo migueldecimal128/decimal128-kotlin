@@ -12,7 +12,7 @@ class TestHexBidToString {
     data class TC(val hexStr: String, val expected: String)
 
     val tcs = arrayOf(
-        TC("[2FFCA45894E48295,67D9DA2155555555]", "0.3333333333333333333333333333333333"),
+        TC("[7E00000000000000,8000000000000000]", "sNaN9223372036854775808"),
 
 // === Zero with various exponents ===
         TC("[0000000000000000,0000000000000000]", "0E-6176"),       // smallest exponent zero
@@ -73,6 +73,9 @@ class TestHexBidToString {
         TC("[7C00000000000000,0000000000000001]", "NaN1"),           // payload = 1
         TC("[7E00000000000000,0000000000000000]", "sNaN"),           // signaling NaN
         TC("[7E00000000000000,0000000000000001]", "sNaN1"),
+        TC("[7E00000000000000,7FFFFFFFFFFFFFFF]", "sNaN9223372036854775807"),
+        TC("[7E00000000000000,8000000000000000]", "sNaN9223372036854775808"),
+        TC("[7E00000000000000,FFFFFFFFFFFFFFFF]", "sNaN18446744073709551615"),
         TC("[7C00314DC6448D93,38C15B09FFFFFFFF]", "NaN999999999999999999999999999999999"), // max payload
         TC("[7C00314DC6448D94,38C15B09FFFFFFFF]", "NaN"),            // non-canonical ... c == 0
         TC("[7C00314DC6448D93,38C15B0A00000000]", "NaN"),            // non-canonical ... c == 0
@@ -107,8 +110,8 @@ class TestHexBidToString {
                 val decHex = "[${hex16(decBid128Hi)},${hex16(decBid128Lo)}]"
                 println("""
                     test case says: ${tc.hexStr}
-                      decimal says: $decHex
                    observedDecimal: $observedDecimal
+                      decimal says: ${tc.expected} => $decHex
                 """.trimIndent())
             }
         }

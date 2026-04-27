@@ -50,7 +50,7 @@ internal fun parseToDecimal(str: String): Decimal {
  */
 internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext.current()): MutDec {
     val strIterator = ctx.tmps.parseStringLatin1Iterator.reload(str)
-    val mutDecOrReason = parseDecimalOrReason(md, strIterator, ctx)
+    val mutDecOrReason = parseMutDecOrReason(md, strIterator, ctx)
     if (mutDecOrReason is MutDec)
         return mutDecOrReason
     val reason: InvalidOperationReason =
@@ -62,7 +62,7 @@ internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext
     return ctx.setNanSignalInvalidOperation(md, reason)
 }
 
-private fun parseDecimalOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
+private fun parseMutDecOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContext): Any {
     var ch = txt.nextChar()
     if (ch >= '0' && ch <= '9')
         return parseFiniteValueText(md, sign = false, ch, txt, ctx)
