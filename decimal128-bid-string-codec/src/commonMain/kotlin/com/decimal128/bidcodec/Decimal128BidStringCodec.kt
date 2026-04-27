@@ -180,10 +180,12 @@ public object Decimal128BidStringCodec {
     }
 
     private fun fnzString(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): String {
+        val digitLen = calcDigitLen128(dw1, dw0)
+        val eExp = qExp + (digitLen - 1)
         return when {
             qExp == 0 -> fnzToIntegerString(sign, dw1, dw0)
-            qExp <= 0 && qExp >= -6 -> fnzToDecimalPointString(sign, qExp, dw1, dw0)
-            else -> fnzToNormalizedScientificString(sign, qExp, dw1, dw0)
+            qExp <= 0 && eExp >= -6 -> fnzToDecimalPointString(sign, qExp, digitLen, dw1, dw0)
+            else -> fnzToNormalizedScientificString(sign, qExp, digitLen, dw1, dw0)
         }
     }
 
@@ -203,26 +205,24 @@ public object Decimal128BidStringCodec {
         return utf8.decodeToString()
     }
 
-    private fun fnzToDecimalPointString(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): String {
-        val xDigitLen = calcDigitLen128(dw1, dw0)
+    private fun fnzToDecimalPointString(sign: Boolean, qExp: Int, digitLen: Int, dw1: Long, dw0: Long): String {
         val digitsRightOfDecimal = -qExp
-        val leadingZeroCount = max(1 + digitsRightOfDecimal - xDigitLen, 0)
+        val leadingZeroCount = max(1 + digitsRightOfDecimal - digitLen, 0)
         val signLen = if (sign) 1 else 0
         val decimalPointLen = 1
-        val totalLen = signLen + leadingZeroCount + decimalPointLen + xDigitLen
+        val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
         val utf8 = ByteArray(totalLen)
         utf8[0] = '-'.code.toByte()
         for (i in signLen..leadingZeroCount) // there is one extra here
             utf8[i] = '0'.code.toByte()
-        u128ToUtf8(xDigitLen, dw1, dw0, utf8, signLen + leadingZeroCount)
+        u128ToUtf8(digitLen, dw1, dw0, utf8, signLen + leadingZeroCount)
         for (i in totalLen - 1 downTo totalLen - digitsRightOfDecimal)
             utf8[i] = utf8[i - 1]
         utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
         return utf8.decodeToString()
     }
 
-    private fun fnzToNormalizedScientificString(sign: Boolean, qExp: Int, dw1: Long, dw0: Long): String {
-        val digitLen = calcDigitLen128(dw1, dw0)
+    private fun fnzToNormalizedScientificString(sign: Boolean, qExp: Int, digitLen: Int, dw1: Long, dw0: Long): String {
         verify { digitLen > 0 }
         val eExp = qExp + (digitLen - 1)
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)

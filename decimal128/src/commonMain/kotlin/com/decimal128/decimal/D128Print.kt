@@ -155,17 +155,17 @@ private fun toIntegerString(steal: Int, dw1: Long, dw0: Long, utf8: ByteArray): 
  * @param utf8 scratch buffer; index 0 must contain `'-'`
  */
 private fun toDecimalPointString(steal: Int, dw1: Long, dw0: Long, utf8: ByteArray): String {
-    val xQ = stealQExp(steal)
-    val xDigitLen = stealDigitLen(steal)
-    val digitsRightOfDecimal = -xQ
-    val leadingZeroCount = max(1 + digitsRightOfDecimal - xDigitLen, 0)
+    val qExp = stealQExp(steal)
+    val digitLen = stealDigitLen(steal)
+    val digitsRightOfDecimal = -qExp
+    val leadingZeroCount = max(1 + digitsRightOfDecimal - digitLen, 0)
     val signLen = stealSignBit(steal)
     val decimalPointLen = 1
-    val totalLen = signLen + leadingZeroCount + decimalPointLen + xDigitLen
+    val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
     verify { utf8[0] == '-'.code.toByte() }
     for (i in signLen..leadingZeroCount) // there is one extra here
         utf8[i] = '0'.code.toByte()
-    IntegerParsePrint.u128ToUtf8(xDigitLen, dw1, dw0, utf8, signLen + leadingZeroCount)
+    IntegerParsePrint.u128ToUtf8(digitLen, dw1, dw0, utf8, signLen + leadingZeroCount)
     for (i in totalLen - 1 downTo totalLen - digitsRightOfDecimal)
         utf8[i] = utf8[i - 1]
     utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
@@ -196,9 +196,9 @@ private fun toNormalizedScientificString(
     val eExp = stealSciExp(steal)
     val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
     val signLen = stealSignBit(steal)
-    val xDigitLen = stealDigitLen(steal)
-    val decimalPointLen = if (xDigitLen > 1) 1 else 0
-    val printedDigitLen = xDigitLen + 1 - (-xDigitLen ushr 31)
+    val digitLen = stealDigitLen(steal)
+    val decimalPointLen = if (digitLen > 1) 1 else 0
+    val printedDigitLen = digitLen + 1 - (-digitLen ushr 31)
     val expELen = 1
     val expSignLen = if (eExp < 0 || printExponentPlusSign) 1 else 0
     val expSignByte = (if (eExp < 0) '-' else '+').code.toByte()

@@ -14,9 +14,6 @@ class Decimal128BidStringCodecTest {
     @Test
     fun apiIsReachable() {
         assertFailsWith<NotImplementedError> {
-            Decimal128BidStringCodec.toString(0L, 0L)
-        }
-        assertFailsWith<NotImplementedError> {
             val dest = LongArray(2)
             Decimal128BidStringCodec.parseReturnError(dest, "0")
         }
