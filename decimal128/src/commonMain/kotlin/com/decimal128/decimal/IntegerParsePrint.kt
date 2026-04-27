@@ -60,22 +60,18 @@ internal object IntegerParsePrint {
     fun c256ToUtf8(c: C256, utf8: ByteArray, off: Int, tmp: C256? = null): Int {
         // minimum printDigitLen is 1
         // add 1, then add -1 if the inbound digitLen was non-zero
-        val printDigitLen = c.digitLen + 1 + (-c.digitLen shr 31)
-        if (c.bitLen <= 128)
-            return u128ToUtf8(printDigitLen, c.dw1, c.dw0, utf8, off)
-        val t: C256 = tmp?.c256Set(c) ?: C256(c)
-        do {
-            val ibMaxx = off + t.digitLen
-            val r = barrettDivMod_32_256(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
-            render8DigitsBeforeIndex(r, utf8, ibMaxx)
-        } while (t.bitLen > 128)
-        do {
-            val ibMaxx = off + t.digitLen
-            val r = barrettDivMod_32_128(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
-            render8DigitsBeforeIndex(r, utf8, ibMaxx)
-        } while (t.bitLen > 64)
-        u64ToUtf8(t.digitLen, t.dw0, utf8, off)
-        return printDigitLen
+        var remainingDigitCount = c.digitLen + 1 + (-c.digitLen shr 31)
+        var t = c
+        if (c.bitLen > 128) {
+            t = tmp?.c256Set(c) ?: C256(c)
+            do {
+                val ibMaxx = off + t.digitLen
+                val r = barrettDivMod_32_256(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
+                render8DigitsBeforeIndex(r, utf8, ibMaxx)
+                remainingDigitCount -= 8
+            } while (t.bitLen > 128)
+        }
+        return u128ToUtf8(remainingDigitCount, t.dw1, t.dw0, utf8, off)
     }
 
     fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
