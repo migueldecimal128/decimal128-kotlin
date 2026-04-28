@@ -1,8 +1,13 @@
 # decimal128 for Kotlin Multiplatform
 
-A pure-Kotlin implementation of **IEEE 754-2019 decimal128** floating-point arithmetic. It runs on Kotlin JVM, Native, and JavaScript with no external dependencies.
+A pure-Kotlin implementation of **IEEE 754-2019 decimal128** floating-point arithmetic. 
+It runs on Kotlin JVM, Native, and JavaScript with no external dependencies.
 
-`Decimal` is designed to be a high-performance cross-platform alternative to Java `BigDecimal`. Instance memory footprint is much smaller (32 bytes, including object header on most JVMs) and heap allocation of intermediate temp values is explicitly kept to a minimum.
+`Decimal` is engineered to be a high-performance cross-platform alternative
+to Java `BigDecimal`. Instance memory footprint is much smaller
+(32 bytes, including object header on most JVMs) and 
+heap allocation of intermediate temp values is explicitly 
+kept to a minimum.
 
 Unlike binary floating-point (`Double`, `Float`), `Decimal` is exact for values expressible as
 `coefficient × 10^exponent`, with 34 digits of precision and controlled rounding, making it the
@@ -52,6 +57,7 @@ println("0.1".toDecimal() + "0.2".toDecimal())  // 0.3  (Decimal)
 34 decimal digits, coupled with a base-10 exponent ± 6000 that aligns
 the radix point — so `4.3210` is represented exactly as `43210e-4`
 (i.e. `43210 × 10^−4`). 34 digits × 10^±6000 ... what's not to like?
+
 ---
 
 ## Decimal vs Double
@@ -95,7 +101,7 @@ with regulatory or contractual requirements:
 **Flags** — Exception flags (e.g. `divByZero`, `overflow`, `underflow`) are generally
 not accessible from high-level languages, including Kotlin and Java. 
 The ThreadLocal `DecContext` object provides direct access to the exception flags
-register and supports usder-defined trap handlers, 
+register and supports user-defined trap handlers, 
 in accordance with IEEE 754-2019 decimal128. 
 
 ---
@@ -111,15 +117,31 @@ that would produce infinity or NaN throw `ArithmeticException` instead.
 The same person, Mike Cowlishaw, was the prime mover behind both `BigDecimal` and the
 addition of decimal floating point to the IEEE754-2008/2019 standard. 
 
-**Performance** — `BigDecimal` base objects consume 48 bytes in the heap. There is
+**Memory Footprint** — `BigDecimal` base objects generally consume 48 bytes
+in the heap; 40 bytes + heap quantum alignment to a 16-byte boundary. There is
 sufficient space in the base object for _compact_ significands that fit in 64 bits
 ... 18 decimal digits. Larger significands allocate a separate `BigInteger` object.
-Intermediate and final results that require on `BigInteger` lean heavily on
+Intermediate and final results that require `BigInteger` lean heavily on
 heap allocation and garbage collection, while polluting the CPU-cache.
 `Decimal` is cache-friendly and allocation-light. 
-Objects consume a fixed 32 bytes of heap storage. 
-Reused mutable temporaries minimize heap allocation during
-operations and stay hot in the CPU-cache. 
+Objects consume a fixed 32 bytes of heap storage. jmh benchmarks demonstrate that
+arithmetic operations do not require any heap-allocated temp storage.
+
+|Benchmark|Runtime|Units|Allocation|Units|
+|---|---|---|---|---|
+|ArithmeticBenchmark.bigDecimalAdd|38.5|ns/op|176|B/op|
+|ArithmeticBenchmark.bigDecimalDivide|73.802|ns/op|328|B/op|
+|ArithmeticBenchmark.bigDecimalMultiply|11.448|ns/op|168|B/op|
+|ArithmeticBenchmark.bigDecimalSubtract|22.545|ns/op|176|B/op|
+|ArithmeticBenchmark.decimalAdd|7.463|ns/op|32|B/op|
+|ArithmeticBenchmark.decimalDivide|71.869|ns/op|32|B/op|
+|ArithmeticBenchmark.decimalMultiply|6.297|ns/op|32|B/op|
+|ArithmeticBenchmark.decimalSubtract|10.135|ns/op|32|B/op|
+
+Recall that jmh heap allocation numbers are requested size
+and do not include internal fragmentation from rounding up
+to the next heap quantum boundary. 
+
 
 **Transcendental and financial functions** — `Decimal` includes
 `log10`, `exp10`, `ln`, `exp`,

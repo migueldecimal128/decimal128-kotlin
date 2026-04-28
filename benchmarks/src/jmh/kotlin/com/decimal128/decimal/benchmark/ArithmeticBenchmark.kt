@@ -21,10 +21,11 @@ open class ArithmeticBenchmark {
     // "compact" → 18 digits or fewer, hits BigDecimal's intCompact fast path
     // "full"    → 30+ digits, forces BigDecimal into BigInteger-backed storage
     @Param(
-        "compact_aligned", "full_aligned",
-        "compact_shift2", "full_shift2",
-        "compact_shift10", "full_shift10",
-        "compact_shift30", "full_shift30",
+        "finance_shift2",
+        //"compact_aligned", "full_aligned",
+        //"compact_shift2", "full_shift2",
+        //"compact_shift10", "full_shift10",
+        //"compact_shift30", "full_shift30",
     )
     lateinit var regime: String
 
@@ -43,6 +44,10 @@ open class ArithmeticBenchmark {
     @Setup(Level.Trial)
     fun setup() {
         val (aStr, bStr) = when (regime) {
+            "finance_aligned" ->
+                "99.44" to "399.95"
+            "finance_shift2" ->
+                "123456789.0000" to "999999.99"
             "compact_aligned" ->
                 "-123456789012345678" to "9876543210123456"
             "full_aligned" ->
