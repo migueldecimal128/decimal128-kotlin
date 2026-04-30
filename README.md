@@ -622,8 +622,11 @@ A C implementation of IEEE 754-2019 decimal floating-point arithmetic.
 https://www.intel.com/content/www/us/en/developer/articles/tool/intel-decimal-floating-point-math-library.html
 
 **What Every Computer Scientist Should Know About Floating-Point Arithmetic** — David Goldberg
-The classic paper documenting the behavioral quirks of binary floating-point.
-https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
+The classic paper documenting the behavioral quirks of binary floating-point. 
+You might not read it completely, but try to make it thru
+the first few pages. 
+https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html 
+https://docs.oracle.com/cd/E19957-01/800-7895/800-7895.pdf
 
 **SQL:1999 Standard (ISO/IEC 9075-2:1999)**
 The SQL database standard defines `DECIMAL` as an exact numeric type with a defined precision and scale.
