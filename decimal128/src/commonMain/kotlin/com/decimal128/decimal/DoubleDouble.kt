@@ -4,22 +4,7 @@
 package com.decimal128.decimal
 
 import kotlin.math.abs
-
-private fun mathUlp(x: Double): Double {
-    val exp = ((x.toBits() ushr 52) and 0x7FFL).toInt()
-    return when (exp) {
-        0x7FF -> kotlin.math.abs(x)          // NaN or Infinity — matches Java
-        0     -> Double.MIN_VALUE             // zero or subnormal
-        else  -> {
-            val e = exp - 52                  // SIGNIFICAND_WIDTH - 1 = 52
-            if (e >= -1022) {                 // Double.MIN_EXPONENT = -1022
-                Double.fromBits(e.toLong() shl 52)
-            } else {
-                Double.fromBits(1L shl (e + 1074))  // 1074 = 1022 + 52
-            }
-        }
-    }
-}
+import kotlin.math.ulp
 
 class DoubleDouble(a: Double, b: Double) {
     constructor() : this(0.0, 0.0)
@@ -448,8 +433,7 @@ class DoubleDouble(a: Double, b: Double) {
     fun EQwithinUlpSlop(other: DoubleDouble, ulpSlop: Int): Boolean {
         if (hi != other.hi)
             return false
-        val ulpLo = mathUlp(lo)
-        return abs(lo - other.lo) <= ulpLo * ulpSlop
+        return abs(lo - other.lo) <= lo.ulp * ulpSlop
     }
 
     override fun equals(other: Any?) = (other is DoubleDouble) && (hi == other.hi) && (lo == other.lo)
