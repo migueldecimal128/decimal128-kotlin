@@ -12,7 +12,7 @@ internal fun d128FmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
         ZER_ZER,
         ZER_FNZ,
         FNZ_ZER -> fmaZeroProd(x, y, a, ctx)
-        ZER_INF -> ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
+        ZER_INF -> ctx.signalInvalidOperation(InvalidCause.MUL_ZERO_BY_INFINITY)
 
         FNZ_FNZ -> {
             verify { a.isInfinite() }
@@ -21,7 +21,7 @@ internal fun d128FmaImpl(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
         FNZ_INF, INF_FNZ, INF_INF ->
             fmaInfProd(x.signFlag xor y.signFlag, a, ctx)
 
-        INF_ZER -> ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY)
+        INF_ZER -> ctx.signalInvalidOperation(InvalidCause.MUL_ZERO_BY_INFINITY)
         //INF_FNZ -> fmaInfProd(x.sign xor y.sign, a, ctx)
         //INF_INF -> fmaInfProd(x.sign xor y.sign, a, ctx)
 
@@ -61,7 +61,7 @@ private fun fmaNanAddend(x: Decimal, y: Decimal, a: Decimal, ctx: DecContext): D
 
     if (!hasSNAN) {
         if ((stealIsZER(stealX) and stealIsINF(stealY)) or (stealIsINF(stealX) and stealIsZER(stealY)))
-            return ctx.signalInvalidOperation(InvalidOperationReason.MUL_ZERO_BY_INFINITY, theNaN)
+            return ctx.signalInvalidOperation(InvalidCause.MUL_ZERO_BY_INFINITY, theNaN)
         return theNaN
     }
     return ctx.signalSNanOperandFound(theNaN)
@@ -89,6 +89,6 @@ private fun fmaInfProd(infSign: Boolean, a: Decimal, ctx: DecContext): Decimal {
     verify { !a.isNaN() }
     if (a.isFinite() || a.signFlag == infSign)
         return Decimal.infinity(infSign)
-    return ctx.signalInvalidOperation(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
+    return ctx.signalInvalidOperation(InvalidCause.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }
 

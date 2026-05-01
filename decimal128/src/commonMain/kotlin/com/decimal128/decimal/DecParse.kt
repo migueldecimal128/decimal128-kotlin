@@ -3,15 +3,15 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.InvalidOperationReason.PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
-import com.decimal128.decimal.InvalidOperationReason.PARSE_INVALID_UNDERSCORE_LOCATION
-import com.decimal128.decimal.InvalidOperationReason.PARSE_DOUBLE_DOT
-import com.decimal128.decimal.InvalidOperationReason.PARSE_EMPTY_STRING
-import com.decimal128.decimal.InvalidOperationReason.PARSE_MALFORMED
-import com.decimal128.decimal.InvalidOperationReason.PARSE_NO_COEFFICIENT_DIGIT
-import com.decimal128.decimal.InvalidOperationReason.PARSE_NO_EXPONENT_DIGIT
-import com.decimal128.decimal.InvalidOperationReason.PARSE_UNEXPECTED_CHAR
-import com.decimal128.decimal.InvalidOperationReason.PARSE_VALUE_OUT_OF_RANGE
+import com.decimal128.decimal.InvalidCause.PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
+import com.decimal128.decimal.InvalidCause.PARSE_INVALID_UNDERSCORE_LOCATION
+import com.decimal128.decimal.InvalidCause.PARSE_DOUBLE_DOT
+import com.decimal128.decimal.InvalidCause.PARSE_EMPTY_STRING
+import com.decimal128.decimal.InvalidCause.PARSE_MALFORMED
+import com.decimal128.decimal.InvalidCause.PARSE_NO_COEFFICIENT_DIGIT
+import com.decimal128.decimal.InvalidCause.PARSE_NO_EXPONENT_DIGIT
+import com.decimal128.decimal.InvalidCause.PARSE_UNEXPECTED_CHAR
+import com.decimal128.decimal.InvalidCause.PARSE_VALUE_OUT_OF_RANGE
 import kotlin.math.max
 import kotlin.math.min
 
@@ -53,8 +53,8 @@ internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext
     val mutDecOrReason = parseMutDecOrReason(md, strIterator, ctx)
     if (mutDecOrReason is MutDec)
         return mutDecOrReason
-    val reason: InvalidOperationReason =
-        if (mutDecOrReason is InvalidOperationReason) mutDecOrReason
+    val reason: InvalidCause =
+        if (mutDecOrReason is InvalidCause) mutDecOrReason
         else throw IllegalStateException()
     if (ctx.decPrefs.parseMalformedThrowsNumberFormatException) {
         throw NumberFormatException("invalid decimal format:$reason:'$str'")
@@ -86,7 +86,7 @@ private fun parseMutDecOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContext
  *
  * @param md the destination to write the infinity value into
  * @param txt iterator over the full input, positioned before any sign character
- * @return [md] on success, or [InvalidOperationReason.PARSE_MALFORMED] if the
+ * @return [md] on success, or [InvalidCause.PARSE_MALFORMED] if the
  * input is not a valid infinity form
  */
 private inline fun parseInfinityText(md: MutDec, sign: Boolean, chFirst: Char, txt: Latin1Iterator): Any {
@@ -114,7 +114,7 @@ private inline fun parseInfinityText(md: MutDec, sign: Boolean, chFirst: Char, t
  * `nan`, `qnan`, `snan`. After the prefix, any mix of decimal digits and
  * bracket characters (`()`, `[]`, `{}`) may follow; digits are collected as
  * the NaN payload. Any other character returns
- * [InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN].
+ * [InvalidCause.PARSE_NON_DIGIT_AFTER_NAN].
  *
  * The payload is capped at 33 significant digits.
  * If more digits are present the payload is set to zero, per IEEE 754-2019
@@ -126,9 +126,9 @@ private inline fun parseInfinityText(md: MutDec, sign: Boolean, chFirst: Char, t
  * @param md the destination to write the NaN value into
  * @param txt iterator over the full input, positioned before any sign character
  * @param collapseSNaN if `true`, an `snan` prefix produces a quiet NaN
- * @return [md] on success, or [InvalidOperationReason.PARSE_MALFORMED] if the
+ * @return [md] on success, or [InvalidCause.PARSE_MALFORMED] if the
  * input does not begin with a valid NaN prefix, or
- * [InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN] if an unexpected
+ * [InvalidCause.PARSE_NON_DIGIT_AFTER_NAN] if an unexpected
  * character follows the prefix
  */
 private inline fun parseNanText(md: MutDec, sign: Boolean, chFirst: Char, txt: Latin1Iterator, collapseSNaN: Boolean): Any {
@@ -163,7 +163,7 @@ private inline fun parseNanText(md: MutDec, sign: Boolean, chFirst: Char, txt: L
                     ch != '[' && ch != ']' &&
                     ch != '{' && ch != '}'
                 )
-                    return InvalidOperationReason.PARSE_NON_DIGIT_AFTER_NAN
+                    return InvalidCause.PARSE_NON_DIGIT_AFTER_NAN
             }
             ch = txt.nextChar()
         } while (ch.code != 0)

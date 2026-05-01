@@ -12,14 +12,14 @@ internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Mu
     if (binopSignature == FNZ_FNZ)
         return mutDecDivFnzFnz(z, quotientSign, x, y, ctx)
     else when (binopSignature) {
-        ZER_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
+        ZER_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_ZERO_BY_ZERO)
         ZER_FNZ -> z.setZero(quotientSign, stealQExp(xSteal) - stealQExp(ySteal))
         ZER_INF,
         FNZ_INF -> z.setZero(quotientSign, Q_TINY)
         FNZ_ZER -> ctx.signalDivByZero(z.setInfinite(quotientSign))
         INF_ZER,
         INF_FNZ -> z.setInfinite(quotientSign)
-        INF_INF -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_INF_BY_INF)
+        INF_INF -> ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_INF_BY_INF)
         else -> z.setNanOperandFound(x, y, ctx)
     }
     return z
@@ -34,8 +34,8 @@ internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext):
     } else {
         val quotientSign = x.sign xor y.sign
         when (binopSignature) {
-            ZER_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
-            INF_INF -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_INF_BY_INF)
+            ZER_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_ZERO_BY_ZERO)
+            INF_INF -> ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_INF_BY_INF)
             FNZ_INF,
             ZER_FNZ,
             ZER_INF -> z.setZero(quotientSign)
@@ -59,7 +59,7 @@ internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): 
         if (!z.isZero()) { // truncation could generate z == 0
             val headroom = ctx.precision - z.digitLen
             if (headroom < zQ) // 1234567890123456789012345678901234 / .000000001
-                return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_INT_OVERFLOWS_COEFFICIENT)
+                return ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_INT_OVERFLOWS_COEFFICIENT)
             c256SetScaleUpPow10(z, z, zQ, ctx.tmps.pentad)
         }
         z.qExp = 0
@@ -91,12 +91,12 @@ fun mutDecSetRemTruncImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boo
         when (binopSignature) {
             ZER_FNZ -> z.setZero(stealSignFlag(xSteal), min(stealQExp(xSteal), stealQExp(ySteal)))
 
-            FNZ_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_BY_ZERO_IN_REMAINDER_OP)
-            ZER_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.DIV_ZERO_BY_ZERO)
+            FNZ_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_BY_ZERO_IN_REMAINDER_OP)
+            ZER_ZER -> ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_ZERO_BY_ZERO)
 
             INF_ZER,
             INF_FNZ,
-            INF_INF -> ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.INF_NUMERATOR_IN_REMAINDER_OP)
+            INF_INF -> ctx.setNanSignalInvalidOperation(z, InvalidCause.INF_NUMERATOR_IN_REMAINDER_OP)
             ZER_INF,
             FNZ_INF -> z.set(x)
             else -> z.setNanOperandFound(x, y, ctx)

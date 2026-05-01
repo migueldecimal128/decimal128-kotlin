@@ -221,7 +221,7 @@ private fun mutDecPowFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): M
 
     // negative base with non-integer exponent → invalid
     if (stealSignFlag(xSteal))
-        return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.POWER_OF_NEG_BASE_NON_INTEGER_EXPONENT)
+        return ctx.setNanSignalInvalidOperation(z, InvalidCause.POWER_OF_NEG_BASE_NON_INTEGER_EXPONENT)
 
     // x^y = exp(y * ln(x))
     // FIXME ... figure out where tmps come from
@@ -267,7 +267,7 @@ internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): 
             val t = ctx.tmps.mdecTrans1.setAdd(MutDec.ONE, x, ctx)
             when {
                 t.isNegative() ->
-                    return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.COMPOUND_X_LT_NEG_ONE)
+                    return ctx.setNanSignalInvalidOperation(z, InvalidCause.COMPOUND_X_LT_NEG_ONE)
                 n == 0 -> return z.setOne()
                 t.isZero() -> {
                     return if (n < 0) {
@@ -295,7 +295,7 @@ internal fun mutDecCompoundImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): 
         STEAL_TYP_ZER -> return z.setOne()
         STEAL_TYP_INF -> return when {
             stealSignFlag(xSteal) ->
-                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.COMPOUND_X_LT_NEG_ONE)
+                ctx.setNanSignalInvalidOperation(z, InvalidCause.COMPOUND_X_LT_NEG_ONE)
             n > 0 -> z.setInfinite()
             n == 0 -> z.setOne() // compound (x, 0) is 1 for x ≥ −1 or quiet NaN
             else -> // n < 0
@@ -333,13 +333,13 @@ internal fun mutDecRootnImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): Mut
     val ctx = DecContext.current()
     val xSteal = x.steal
     if (n == 0)
-        return ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.ROOTN_BAD_ARGS)
+        return ctx.setNanSignalInvalidOperation(z, InvalidCause.ROOTN_BAD_ARGS)
     val xSignFlag = stealSignFlag(xSteal)
     val nIsOdd = (n and 1) != 0
     return when (stealTyp(xSteal)) {
         STEAL_TYP_FNZ -> {
             if (xSignFlag && !nIsOdd)
-                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.ROOTN_BAD_ARGS)
+                ctx.setNanSignalInvalidOperation(z, InvalidCause.ROOTN_BAD_ARGS)
             else
                 mutDecRootnImplFNZ(z, x, n, ctx)
         }
@@ -362,7 +362,7 @@ internal fun mutDecRootnImpl(z: MutDec, x: MutDec, n: Int, ctx: DecContext): Mut
             //rootn (−∞, n) is qNaN and signals the invalid operation exception for even n < 0.
             //rootn (−∞, n) is qNaN and signals the invalid operation exception for even n > 0
             xSignFlag ->
-                ctx.setNanSignalInvalidOperation(z, InvalidOperationReason.ROOTN_BAD_ARGS)
+                ctx.setNanSignalInvalidOperation(z, InvalidCause.ROOTN_BAD_ARGS)
             //rootn (+∞, n) is +0 for n < 0
             n < 0 -> z.setZero()
             //rootn (+∞, n) is +∞ for n > 0

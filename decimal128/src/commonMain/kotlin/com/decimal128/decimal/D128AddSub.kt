@@ -75,7 +75,7 @@ private fun addInfInf(xSteal: Int, x: Decimal, ySteal: Int, ctx: DecContext): De
     if (xSteal == ySteal)
         x
     else
-        ctx.signalInvalidOperation(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
+        ctx.signalInvalidOperation(InvalidCause.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 
 private inline fun addFnzFnz(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext) =
     if (stealQExp(xSteal) == stealQExp(ySteal))

@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.InvalidOperationReason.LOG_OF_NEG_NUMBER
+import com.decimal128.decimal.InvalidCause.LOG_OF_NEG_NUMBER
 
 internal fun d128Log10Impl(x: Decimal): Decimal =
     if (x.isExactPowerOfTen())

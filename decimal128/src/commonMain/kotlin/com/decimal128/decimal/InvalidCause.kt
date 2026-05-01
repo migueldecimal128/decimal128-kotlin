@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-enum class InvalidOperationReason {
+enum class InvalidCause {
     NAN_OPERAND,       // an operand was a NaN
     SNAN_OPERAND,      // An operand was an sNaN
     MAGNITUDE_SUBTRACTION_OF_INFINITIES, // e.g., (+∞) + (-∞)

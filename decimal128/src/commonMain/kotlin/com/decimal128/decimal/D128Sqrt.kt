@@ -15,7 +15,7 @@ internal fun d128SqrtImpl(x: Decimal, ctx: DecContext = DecContext.current()): D
                         reduceToPreferredQExp = true)
                 )
             } else {
-                return signalInvalidOperation(InvalidOperationReason.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
+                return signalInvalidOperation(InvalidCause.SQUARE_ROOT_OF_NEG_FINITE_NON_ZERO)
             }
         }
 
@@ -30,7 +30,7 @@ internal fun d128SqrtImpl(x: Decimal, ctx: DecContext = DecContext.current()): D
             if (!xSign) {
                 return Decimal.POS_INFINITY
             } else {
-                return signalInvalidOperation(InvalidOperationReason.SQUARE_ROOT_OF_NEG_INFINITY)
+                return signalInvalidOperation(InvalidCause.SQUARE_ROOT_OF_NEG_INFINITY)
             }
         }
 

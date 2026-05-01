@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Decimal.Companion.decimalFNZ
-import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
-import com.decimal128.decimal.InvalidOperationReason.QUANTUM_SCALE_OUT_OF_RANGE
+import com.decimal128.decimal.InvalidCause.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
+import com.decimal128.decimal.InvalidCause.QUANTUM_SCALE_OUT_OF_RANGE
 import kotlin.math.min
 
 internal fun stripTrailingZerosImpl(x: Decimal, ctx: DecContext, maxToStrip: Int = 99): Decimal {
@@ -53,7 +53,7 @@ private fun withScaleImplFNZ(x: Decimal, decimalScale: Int): Decimal {
                 umul128xPow10to128(pentad, x.dw1, x.dw0, -qDelta)
                 return decimalFNZ(x.signFlag, xQ + qDelta, pentad.dw1, pentad.dw0)
             }
-            return ctx.signalInvalidOperation(InvalidOperationReason.UNABLE_TO_SCALE)
+            return ctx.signalInvalidOperation(InvalidCause.UNABLE_TO_SCALE)
         }
 
         qDelta > 0 -> { // scale and round as needed

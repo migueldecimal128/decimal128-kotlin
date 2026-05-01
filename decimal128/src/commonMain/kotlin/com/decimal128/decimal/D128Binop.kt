@@ -29,7 +29,7 @@ internal fun nanOperandFound(x: Decimal, y: Decimal,
     if (!alwaysSignal && !isSignaling)
         return theNaN
     if (!isSignaling)
-        return ctx.signalInvalidOperation(InvalidOperationReason.NAN_OPERAND, theNaN)
+        return ctx.signalInvalidOperation(InvalidCause.NAN_OPERAND, theNaN)
     return ctx.signalSNanOperandFound(theNaN)
 }
 

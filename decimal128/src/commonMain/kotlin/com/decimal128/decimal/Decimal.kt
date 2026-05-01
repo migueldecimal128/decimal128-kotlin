@@ -18,7 +18,7 @@ import com.decimal128.decimal.Decimal.Companion.POS_QNAN
 import com.decimal128.decimal.Decimal.Companion.POS_SNAN
 import com.decimal128.decimal.Decimal.Companion.POS_ZEROe0
 import com.decimal128.decimal.Decimal.Companion.ZERO
-import com.decimal128.decimal.InvalidOperationReason.*
+import com.decimal128.decimal.InvalidCause.*
 import com.decimal128.decimal.Ieee754Class.*
 import kotlin.math.max
 import kotlin.math.min

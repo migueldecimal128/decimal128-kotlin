@@ -123,7 +123,7 @@ class DecContext(
     fun signal(
         decException: DecException,
         d: Decimal,
-        exceptionReason: InvalidOperationReason? = null
+        exceptionReason: InvalidCause? = null
     ): Decimal {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
@@ -134,7 +134,7 @@ class DecContext(
         return decTrapHandlers.signal(trapContext)
     }
 
-    fun signal(decException: DecException, l: Long, exceptionReason: InvalidOperationReason? = null): Long {
+    fun signal(decException: DecException, l: Long, exceptionReason: InvalidCause? = null): Long {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException)) {
             decFlags.set(decException)
@@ -148,7 +148,7 @@ class DecContext(
     fun signalMutDec(
         decException: DecException,
         mutDec: MutDec,
-        invalidOpReason: InvalidOperationReason? = null
+        invalidOpReason: InvalidCause? = null
     ): MutDec {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(decException))
@@ -166,7 +166,7 @@ class DecContext(
         return signalMutDec(INVALID_OPERATION, mutDec)
     }
 
-    fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, mutDec: MutDec): MutDec {
+    fun signalInvalidOperation(invalidOpReason: InvalidCause, mutDec: MutDec): MutDec {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
@@ -175,15 +175,15 @@ class DecContext(
         return signalMutDec(INVALID_OPERATION, mutDec, invalidOpReason)
     }
 
-    fun setNanSignalInvalidOperation(z: MutDec, invalidOpReason: InvalidOperationReason): MutDec {
+    fun setNanSignalInvalidOperation(z: MutDec, invalidOpReason: InvalidCause): MutDec {
         z.setNaN()
         return signalInvalidOperation(invalidOpReason, z)
     }
 
-    fun signalInvalidOperation(invalidOpReason: InvalidOperationReason): Decimal =
+    fun signalInvalidOperation(invalidOpReason: InvalidCause): Decimal =
         this@DecContext.signalInvalidOperation(invalidOpReason, Decimal.NaN)
 
-    fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, dec: Decimal): Decimal {
+    fun signalInvalidOperation(invalidOpReason: InvalidCause, dec: Decimal): Decimal {
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(INVALID_OPERATION)) {
             decFlags.set(INVALID_OPERATION)
@@ -203,7 +203,7 @@ class DecContext(
                 Decimal.qNaN(nan.signFlag, nan.dw1, nan.dw0)
             else
                 nan
-        return signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, quietedNaN)
+        return signalInvalidOperation(InvalidCause.SNAN_OPERAND, quietedNaN)
     }
 
     fun signalDivByZero(mutDec: MutDec): MutDec {
@@ -344,7 +344,7 @@ class DecContext(
         }
         return signal(
             INVALID_OPERATION,
-            l, InvalidOperationReason.CONVERT_NON_FINITE_TO_INTEGER
+            l, InvalidCause.CONVERT_NON_FINITE_TO_INTEGER
         )
     }
 
@@ -405,6 +405,6 @@ internal fun signalInexact(dec: Decimal): Decimal =
 internal fun signalInexact(l: Long): Long =
     DecContext.current().signalInexact(l)
 
-internal fun signalInvalidOperation(invalidOpReason: InvalidOperationReason, x: Decimal = Decimal.NaN): Decimal =
+internal fun signalInvalidOperation(invalidOpReason: InvalidCause, x: Decimal = Decimal.NaN): Decimal =
     DecContext.current().signalInvalidOperation(invalidOpReason, x)
 

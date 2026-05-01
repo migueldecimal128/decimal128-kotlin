@@ -10,8 +10,8 @@ import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
 import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
-import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
-import com.decimal128.decimal.InvalidOperationReason.QUANTIZE_RESULT_WOULD_EXCEED_PRECISION
+import com.decimal128.decimal.InvalidCause.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
+import com.decimal128.decimal.InvalidCause.QUANTIZE_RESULT_WOULD_EXCEED_PRECISION
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -273,9 +273,9 @@ class MutDec() : C256(), Comparable<MutDec> {
         if (!alwaysSignal && !isSignaling)
             return this
         if (!isSignaling)
-            return ctx.signalInvalidOperation(InvalidOperationReason.NAN_OPERAND, this)
+            return ctx.signalInvalidOperation(InvalidCause.NAN_OPERAND, this)
         quietSNaN()
-        return ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, this)
+        return ctx.signalInvalidOperation(InvalidCause.SNAN_OPERAND, this)
     }
 
     internal fun quietSNaN() {
@@ -366,7 +366,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             return finalizeFnz(stealSignFlag(steal), stealQExp(steal), ctx)
         if (stealIsSNAN(xSteal)) {
             quietSNaN()
-            ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, this)
+            ctx.signalInvalidOperation(InvalidCause.SNAN_OPERAND, this)
         }
         verify { validate() }
         return this
@@ -630,7 +630,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
             else -> { // STEAL_TYP_NAN
                 verify { isNaN() }
-                ctx.signalInvalidOperation(InvalidOperationReason.NAN_OPERAND, this)
+                ctx.signalInvalidOperation(InvalidCause.NAN_OPERAND, this)
                 return Long.MIN_VALUE
             }
         }
@@ -690,7 +690,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             else -> {
                 if (stealIsSNAN(steal)) {
                     quietSNaN()
-                    ctx.signalInvalidOperation(InvalidOperationReason.SNAN_OPERAND, this)
+                    ctx.signalInvalidOperation(InvalidCause.SNAN_OPERAND, this)
                 }
             }
         }

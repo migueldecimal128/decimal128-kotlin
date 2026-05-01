@@ -20,7 +20,7 @@ internal fun d128MulImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
         FNZ_ZER -> Decimal.zero(prodSignFlag, prodExp)
 
         ZER_INF,
-        INF_ZER -> ctx.signalInvalidOperation(InvalidOperationReason.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
+        INF_ZER -> ctx.signalInvalidOperation(InvalidCause.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 
         FNZ_INF,
         INF_FNZ,

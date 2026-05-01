@@ -31,10 +31,10 @@ internal fun d128DivImpl(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
 }
 
 private fun divZerZer(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
-    ctx.signalInvalidOperation(InvalidOperationReason.DIV_ZERO_BY_ZERO)
+    ctx.signalInvalidOperation(InvalidCause.DIV_ZERO_BY_ZERO)
 
 private fun divInfInf(x: Decimal, y: Decimal, ctx: DecContext): Decimal =
-    ctx.signalInvalidOperation(InvalidOperationReason.DIV_INF_BY_INF)
+    ctx.signalInvalidOperation(InvalidCause.DIV_INF_BY_INF)
 
 private fun divFnzZero(x: Decimal, y: Decimal, ctx: DecContext): Decimal {
     val r = if (x.signFlag xor y.signFlag) Decimal.NEG_INFINITY else Decimal.POS_INFINITY
@@ -111,7 +111,7 @@ internal fun remImpl(isTrunc: Boolean, x: Decimal, y: Decimal, ctx: DecContext):
         FNZ_ZER,
         INF_ZER,
         INF_FNZ,
-        INF_INF -> ctx.signalInvalidOperation(InvalidOperationReason.DIV_INF_BY_INF)
+        INF_INF -> ctx.signalInvalidOperation(InvalidCause.DIV_INF_BY_INF)
 
         else -> nanOperandFound(x, y, ctx)
     }

@@ -4,6 +4,6 @@ data class DecExceptionContext(
     val ctx: DecContext,
     val defaultReturn: Decimal,
     val exception: DecException,
-    val exceptionReason: InvalidOperationReason? = null
+    val exceptionReason: InvalidCause? = null
 ) {
 }

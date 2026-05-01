@@ -3,7 +3,7 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.InvalidOperationReason.POWER_OF_NEG_BASE_NON_INTEGER_EXPONENT
+import com.decimal128.decimal.InvalidCause.POWER_OF_NEG_BASE_NON_INTEGER_EXPONENT
 import kotlin.math.min
 import kotlin.math.max
 
