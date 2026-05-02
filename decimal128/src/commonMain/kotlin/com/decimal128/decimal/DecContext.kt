@@ -254,7 +254,12 @@ class DecContext(
         return signalMutDec(trap, mutDec)
     }
 
-    fun signalInexactOverflow(decInfinity: Decimal): Decimal {
+    fun signalInexactOverflow(dec: Decimal): Decimal {
+        // must be either infinite or max finite magnitude
+        // FIXME - consider do not pass an arg, but construct one here since
+        //  we came here to the context to decide which to construct
+        verify { dec.isInfinite() ||
+                dec.qExp == 6111 && dec.dw1 == this.dw1MaxxCoeff && dec.dw0 == this.dw0MaxxCoeff - 1 }
         val decTrapHandlers = decTrapHandlers
         if (decTrapHandlers == null || !decTrapHandlers.hasTrapHandler(OVERFLOW) && !decTrapHandlers.hasTrapHandler(
                 INEXACT
@@ -262,10 +267,10 @@ class DecContext(
         ) {
             decFlags.set(OVERFLOW)
             decFlags.set(INEXACT)
-            return decInfinity
+            return dec
         }
         val trap = if (decTrapHandlers.hasTrapHandler(OVERFLOW)) OVERFLOW else INEXACT
-        return signal(trap, decInfinity)
+        return signal(trap, dec)
     }
 
     fun signalRoundedInexact(dec: Decimal): Decimal {
