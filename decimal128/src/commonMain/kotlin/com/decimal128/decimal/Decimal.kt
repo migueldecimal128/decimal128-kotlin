@@ -277,6 +277,18 @@ class Decimal private constructor(
             return decimalFNZ((l ushr 63).toInt(), 0, 0L, (l xor signMask) - signMask)
         }
 
+        /**
+         * Returns a `Decimal` with value [dw] where the
+         * Long param is interpreted as unsigned.
+         */
+        fun fromUnsigned(dw: Long): Decimal {
+            if (dw >= 0L && dw < SMALL_POS_INT_CACHE.size.toLong()) {
+                val i = dw.toInt()
+                return SMALL_POS_INT_CACHE[i]
+            }
+            return decimalFNZ(0, 0, 0L, dw)
+        }
+
         /** Decodes a BID-encoded decimal128 from two 64-bit words. */
         fun decodeBid128(bid128Hi: Long, bid128Lo: Long): Decimal =
             bid128Decode(bid128Hi, bid128Lo)

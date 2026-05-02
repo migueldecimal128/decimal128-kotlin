@@ -26,8 +26,15 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
                                        rounding: DecRounding, ctx: DecContext,
                                        beQuiet: Boolean = false): Decimal {
     // Step 1: Fast path: already in valid decimal128 range
-    if (inboundResidue == EXACT && ctx.coeffQexpFit(dw1In, dw0In, qExpIn))
+    if (inboundResidue == EXACT && ctx.coeffQexpFit(dw1In, dw0In, qExpIn)) {
+        // allocate zero thru this path to reuse cached zeros
+        if ((dw1In or dw0In) == 0L)
+            return Decimal.zero(sign, qExpIn)
+        // pull small positive integers from the cache
+        if ((dw1In == 0L) and (qExpIn == 0) && !sign)
+            return Decimal.fromUnsigned(dw0In)
         return decimalFinite(sign, qExpIn, dw1In, dw0In)
+    }
 
     // Step 2: special values ... not applicable here ... only Finite
 
