@@ -173,7 +173,7 @@ actual value class Residue internal constructor(val value:Int) {
         val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
 
         val biasMapEvenOdd = ULP_BIAS_MAP or ((lsdwIsOdd and 1) shl 2)
-        val bitIndex = (decRounding.value shl 3) + (value and 0x03) // mask off isNegated bit
+        val bitIndex = (decRounding.value shl 3) + value
         val roundingMapShifted = biasMapEvenOdd shr bitIndex
         val bias = roundingMapShifted and 1
         return bias

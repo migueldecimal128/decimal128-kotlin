@@ -40,7 +40,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
 
     // Step 3: zero coefficient
     if ((dw1In or dw0In) == 0L)
-        return decFinalizeZero(sign, inboundResidue, qExpIn, rounding, ctx, beQuiet)
+        return decFinalizeZero(sign, qExpIn, inboundResidue, rounding, ctx, beQuiet)
 
     val precision = ctx.precision
 
@@ -98,10 +98,12 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
     return if (!applyRounding || beQuiet) ret else ctx.signalInexact(ret)
 }
 
-private fun decFinalizeZero(sign: Boolean,
-                            residue: Residue, qExp: Int,
-                            rounding: DecRounding, ctx: DecContext,
-                            beQuiet: Boolean): Decimal {
+private fun decFinalizeZero(
+    sign: Boolean,
+    qExp: Int, residue: Residue,
+    rounding: DecRounding, ctx: DecContext,
+    beQuiet: Boolean
+): Decimal {
     val z: Decimal
     if (residue != EXACT && residue.ulpRoundUp(rounding.negate(sign), lsdwIsOdd = 0L)) {
         when {
