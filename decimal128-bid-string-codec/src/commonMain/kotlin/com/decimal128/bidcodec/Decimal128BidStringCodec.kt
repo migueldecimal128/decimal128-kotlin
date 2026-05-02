@@ -181,9 +181,11 @@ object Decimal128BidStringCodec {
     // 10**34 ... has 35 digits ... maxx = max eXclusive
     private const val MAXX_COEFF_34_HI = 0x0001ED09BEAD87C0L
     private const val MAXX_COEFF_34_LO = 0x378D8E6400000000L
+
     // 10**33 is the smallest 34-digit coefficient
     private const val MIN_PRECISION_34_COEFF_HI = 0x0000314DC6448D93L
     private const val MIN_PRECISION_34_COEFF_LO = 0x38C15B0A00000000L
+
     // 33 nines
     private const val MAX_PAYLOAD_HI = MIN_PRECISION_34_COEFF_HI
     private const val MAX_PAYLOAD_LO = MIN_PRECISION_34_COEFF_LO - 1L
@@ -270,17 +272,20 @@ object Decimal128BidStringCodec {
         //  non-canonical and the value used for c is zero.
         if ((dw1 or dw0) == 0L ||
             unsignedLT(MAXX_COEFF_34_HI, dw1) ||
-            dw1 == MAXX_COEFF_34_HI && unsignedLT(MAXX_COEFF_34_LO - 1L, dw0)) {
-                return zerString(sign, qExp)
-            }
+            dw1 == MAXX_COEFF_34_HI && unsignedLT(MAXX_COEFF_34_LO - 1L, dw0)
+        ) {
+            return zerString(sign, qExp)
+        }
         return fnzString(sign, qExp, dw1, dw0)
     }
 
     private fun infString(sign: Boolean) =
         if (sign) "-Infinity" else "Infinity"
 
-    private fun nanString(sign: Boolean, isSignaling: Boolean,
-                                 payloadHi: Long, payloadLo: Long): String {
+    private fun nanString(
+        sign: Boolean, isSignaling: Boolean,
+        payloadHi: Long, payloadLo: Long
+    ): String {
         val base =
             if (!isSignaling)
                 if (sign) "-NaN" else "NaN"
@@ -289,7 +294,8 @@ object Decimal128BidStringCodec {
         if ((payloadHi or payloadLo) == 0L ||
             // non canonical IEEE 754-2019 3.5.2 c) 2)
             unsignedLT(MAX_PAYLOAD_HI, payloadHi) ||
-            payloadHi == MAX_PAYLOAD_HI && unsignedLT(MAX_PAYLOAD_LO, payloadLo))
+            payloadHi == MAX_PAYLOAD_HI && unsignedLT(MAX_PAYLOAD_LO, payloadLo)
+        )
             return base
         val digitLen = calcDigitLen128(payloadHi, payloadLo)
         val utf8 = ByteArray(base.length + digitLen)
@@ -366,8 +372,10 @@ object Decimal128BidStringCodec {
      * right by one position to insert the decimal point. Leading zeros
      * are written directly into the buffer before the digit rendering.
      */
-    private fun fnzToDecimalPointString(sign: Boolean, qExp: Int,
-                                        digitLen: Int, dw1: Long, dw0: Long): String {
+    private fun fnzToDecimalPointString(
+        sign: Boolean, qExp: Int,
+        digitLen: Int, dw1: Long, dw0: Long
+    ): String {
         val digitsRightOfDecimal = -qExp
         val leadingZeroCount = max(1 + digitsRightOfDecimal - digitLen, 0)
         val signLen = if (sign) 1 else 0
@@ -394,8 +402,10 @@ object Decimal128BidStringCodec {
      * exponent value. The `+` sign is omitted for non-negative exponents,
      * matching the behavior of `Double.toString` in Kotlin and Java.
      */
-    private fun fnzToNormalizedScientificString(sign: Boolean, qExp: Int,
-                                                digitLen: Int, dw1: Long, dw0: Long): String {
+    private fun fnzToNormalizedScientificString(
+        sign: Boolean, qExp: Int,
+        digitLen: Int, dw1: Long, dw0: Long
+    ): String {
         verify { digitLen > 0 }
         val eExp = qExp + (digitLen - 1)
         val eExpAbs = (eExp xor (eExp shr 31)) - (eExp shr 31)
@@ -459,8 +469,10 @@ object Decimal128BidStringCodec {
      *
      * @return `digitPrintCount`, unchanged from the input
      */
-    private fun u128ToUtf8(digitPrintCount: Int, dw1: Long, dw0: Long,
-                           utf8: ByteArray, off: Int): Int {
+    private fun u128ToUtf8(
+        digitPrintCount: Int, dw1: Long, dw0: Long,
+        utf8: ByteArray, off: Int
+    ): Int {
         var dw1T = dw1
         var dw0T = dw0
         var ich = off + digitPrintCount
@@ -531,7 +543,7 @@ object Decimal128BidStringCodec {
      */
     private fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
         val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
-        val efgh  = dw - (abcd * 10000L)
+        val efgh = dw - (abcd * 10000L)
 
         val ab = (abcd * M_U32_DIV_1E2) ushr S_U32_DIV_1E2
         val cd = abcd - (ab * 100L)
@@ -639,7 +651,8 @@ object Decimal128BidStringCodec {
      */
     private fun encodeStringToBid128OrError(bid128Longs: LongArray, str: String): String? {
         val txt = StringIterator(str)
-        var ch = txt.nextChar()
+        val chFirst = txt.nextChar()
+        var ch = chFirst
         val sign = ch == '-'
         if (ch == '+' || ch == '-')
             ch = txt.nextChar()
@@ -648,7 +661,11 @@ object Decimal128BidStringCodec {
         val chLower = (ch.code or 0x20).toChar()
         if (chLower == 'i')
             return parseInfinityText(bid128Longs, sign, ch, txt)
-        return parseNanText(bid128Longs, sign, ch, txt)
+        if (chLower == 'n' || chLower == 's' || chLower == 'q')
+            return parseNanText(bid128Longs, sign, ch, txt)
+        if (chFirst == '\u0000')
+            return "empty string"
+        return "invalid format"
     }
 
     /**
@@ -662,6 +679,7 @@ object Decimal128BidStringCodec {
      */
     private class StringIterator(var str: String) {
         private var i = 0
+
         /** Returns the next character and advances the iterator, or '\u0000' if at end. */
         fun nextChar(): Char = if (i < str.length) str[i++] else '\u0000'
 
@@ -752,7 +770,8 @@ object Decimal128BidStringCodec {
                 }
             }
         }
-        val withoutPayload = (if (hasS) 0x7E00000000000000 else 0x7C00000000000000) or (if (sign) Long.MIN_VALUE else 0L)
+        val withoutPayload =
+            (if (hasS) 0x7E00000000000000 else 0x7C00000000000000) or (if (sign) Long.MIN_VALUE else 0L)
         bid128Longs[0] = withoutPayload or payloadDw1
         bid128Longs[1] = payloadDw0
         return null
@@ -776,7 +795,12 @@ object Decimal128BidStringCodec {
      * `.` and is processed by the main loop. Returns `null` on success or
      * a human-readable error string on syntax errors.
      */
-    private fun parseFiniteValueText(bid128Longs: LongArray, sign: Boolean, chFirst: Char, txt: StringIterator): String? {
+    private fun parseFiniteValueText(
+        bid128Longs: LongArray,
+        sign: Boolean,
+        chFirst: Char,
+        txt: StringIterator
+    ): String? {
         var residue = EXACT
 
         var hasCoefficientDigit = false // have we seen any digits at all, including zero
@@ -784,110 +808,92 @@ object Decimal128BidStringCodec {
         var hasDot = false
         var expSign = false
 
+        verify { chFirst.code != 0 }
         var ch = chFirst
-         if (ch.code == 0)
-             return "empty string"
+        var fractionalDigitCount = 0
+        var accum19a = 0L
+        var accum19b = 0L
+        var exp = 0
 
-         var fractionalDigitCount = 0
-         var accum19a = 0L
-         var accum19b = 0L
-         var exp = 0
+        while (ch in '0'..'9' || ch == '.') {
+            when (ch) {
+                in '0'..'9' -> {
+                    val d = ch - '0'
+                    hasCoefficientDigit = true
+                    // count while flushing leading zeros
+                    significantDigitCount += (-(significantDigitCount or d)) ushr 31
+                    when {
+                        significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
+                        significantDigitCount <= 34 -> accum19b = (accum19b * 10L) + d.toLong()
+                        significantDigitCount == 34 + 1 ->
+                            residue = residueFromDecimalDigit(d)
 
-         while (ch in '0'..'9' || ch == '.') {
-             when (ch) {
-                 in '0'..'9' -> {
-                     val d = ch - '0'
-                     hasCoefficientDigit = true
-                     // count while flushing leading zeros
-                     significantDigitCount += (-(significantDigitCount or d)) ushr 31
-                     when {
-                         significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
-                         significantDigitCount <= 34 -> accum19b = (accum19b * 10L) + d.toLong()
-                         significantDigitCount == 34 + 1 ->
-                             residue = residueFromDecimalDigit(d)
-                         else ->
-                             residue = residueMerge(residue, residueFromDecimalDigit(d))
-                     }
-                     if (hasDot)
-                         ++fractionalDigitCount
-                 }
+                        else ->
+                            residue = residueMerge(residue, residueFromDecimalDigit(d))
+                    }
+                    if (hasDot)
+                        ++fractionalDigitCount
+                }
 
-                 '.' -> when {
-                     hasDot -> return "double radix dot"
-                     else -> hasDot = true
-                 }
-             }
-             ch = txt.nextChar()
-         }
-         if (!hasCoefficientDigit)
-             return "no coefficient digit"
-         // this path has at least one digit
-         if (ch == 'E' || ch == 'e') {
-             ch = txt.nextChar()
-             if (ch == '+' || ch == '-') {
-                 expSign = ch == '-'
-                 ch = txt.nextChar()
-             }
-             var hasExpDigit = false
-             var expSignificantDigitCount = 0
-             while (ch in '0'..'9') {
-                 hasExpDigit = true
-                 val eDigit = ch - '0'
-                 // count while flushing leading zeros
-                 expSignificantDigitCount +=
-                     (-(expSignificantDigitCount or eDigit)) ushr 31
-                 exp = exp * 10 + eDigit
-                 ch = txt.nextChar()
-             }
-             if (!hasExpDigit)
-                 return "no exponent digit"
-             // clamp exp to 9999 once after the loop
-             if (expSignificantDigitCount > 4)
-                 exp = 9999
-         }
-         if (ch.code != 0)
-             return "unexpected char"
-         // we have at least one digit
-         var dw0 = accum19a
-         var dw1 = 0L
-         if (significantDigitCount > 19) {
-             val pow10 = min(34, significantDigitCount) - 19
-             val (hi, lo) = u128FmaPow10(accum19a, pow10, accum19b)
-             dw1 = hi
-             dw0 = lo
-         }
-         // at this point, our coeff <= precision digits
-         // but we need to deal with residue and rounding
-         // rounding rollover could affect the exponent
-         //
-         // when we accept oversize coefficients, then whether the excess
-         // digits are to the right or left of the exponent will affect
-         // the qExp ...
-         val signedExp = if (expSign) -exp else exp
-         val qExp = signedExp - fractionalDigitCount + max(0, significantDigitCount - 34)
-         if ((dw1 or dw0) == 0L) {
-             // allow any exponent with Zero
-             bid128Zero(bid128Longs, sign, qExp)
-         } else {
-             bid128RoundAndFinalizeFnz(bid128Longs, sign, qExp, dw1, dw0, residue)
-         }
-         return null
+                '.' -> when {
+                    hasDot -> return "double radix dot"
+                    else -> hasDot = true
+                }
+            }
+            ch = txt.nextChar()
+        }
+        if (!hasCoefficientDigit)
+            return "no coefficient digit"
+        // this path has at least one digit
+        if (ch == 'E' || ch == 'e') {
+            ch = txt.nextChar()
+            if (ch == '+' || ch == '-') {
+                expSign = ch == '-'
+                ch = txt.nextChar()
+            }
+            var hasExpDigit = false
+            var expSignificantDigitCount = 0
+            while (ch in '0'..'9') {
+                hasExpDigit = true
+                val eDigit = ch - '0'
+                // count while flushing leading zeros
+                expSignificantDigitCount +=
+                    (-(expSignificantDigitCount or eDigit)) ushr 31
+                exp = exp * 10 + eDigit
+                ch = txt.nextChar()
+            }
+            if (!hasExpDigit)
+                return "no exponent digit"
+            // clamp exp to 9999 once after the loop
+            if (expSignificantDigitCount > 4)
+                exp = 9999
+        }
+        if (ch.code != 0)
+            return "unexpected char"
+        // we have at least one digit
+        var dw0 = accum19a
+        var dw1 = 0L
+        if (significantDigitCount > 19) {
+            val pow10 = min(34, significantDigitCount) - 19
+            val (hi, lo) = u128FmaPow10(accum19a, pow10, accum19b)
+            dw1 = hi
+            dw0 = lo
+        }
+        // at this point, our coeff <= precision digits
+        // but we need to deal with residue and rounding
+        // rounding rollover could affect the exponent
+        //
+        // when we accept oversize coefficients, then whether the excess
+        // digits are to the right or left of the exponent will affect
+        // the qExp ...
+        val signedExp = if (expSign) -exp else exp
+        val qExp = signedExp - fractionalDigitCount + max(0, significantDigitCount - 34)
+        bid128RoundAndFinalizeFinite(bid128Longs, sign, qExp, dw1, dw0, residue)
+        return null
     }
 
     /**
-     * Encode zero into [bid128Longs] with the given sign and quantum
-     * exponent. The exponent is clamped to the BID128 range [-6176, 6111];
-     * zeros at exponents outside this range are not representable, but
-     * since the value is zero, clamping rather than failing is the
-     * appropriate behavior.
-     */
-    private fun bid128Zero(bid128Longs: LongArray, sign: Boolean, qExp: Int) {
-        val qClamped = max(min(qExp, 6111), -6176)
-        bid128Set(bid128Longs, sign, qClamped, 0L, 0L)
-    }
-
-    /**
-     * Round and finalize a finite non-zero parsed coefficient/exponent
+     * Round and finalize a finite parsed coefficient/exponent
      * pair into the BID128 encoding stored in [bid128Longs].
      *
      * Implements `roundTiesToEven` rounding with full handling of the
@@ -899,9 +905,13 @@ object Decimal128BidStringCodec {
      * Step 1 (fast path): if the input already fits within precision and
      * range and no rounding is required (residue ≤ LT_HALF, or HALF with
      * an even retained low bit), encode and return immediately.
+     * This picks up the vast majority of cases.
      *
-     * Steps 2-3 are not applicable here — special values and zero are
-     * handled by callers before reaching this function.
+     * Step 2 (zero coefficient): zeros that are out of qExp range get
+     * clamped to the valid range.
+     *
+     * -Step 3 (special values): Not applicable here — special values
+     * are handled by callers before reaching this function.
      *
      * Step 4 (underflow): if the exponent is below Emin and the required
      * range truncation exceeds the precision truncation, divert to
@@ -919,7 +929,14 @@ object Decimal128BidStringCodec {
      * absorb the excess into the coefficient (clamping near Emax) or
      * overflow to infinity.
      */
-    private fun bid128RoundAndFinalizeFnz(bid128Longs: LongArray, sign: Boolean, qExpIn: Int, dw1In: Long, dw0In: Long, residueIn: Int) {
+    private fun bid128RoundAndFinalizeFinite(
+        bid128Longs: LongArray,
+        sign: Boolean,
+        qExpIn: Int,
+        dw1In: Long,
+        dw0In: Long,
+        residueIn: Int
+    ) {
         // Step 1: Fast path: already in valid decimal128 range ...
         //         ... and no roundTiesToEven rounding
         if (residueIn <= LT_HALF || residueIn == HALF && (dw0In and 1L) == 0L) {
@@ -927,10 +944,15 @@ object Decimal128BidStringCodec {
                 bid128Set(bid128Longs, sign, qExpIn, dw1In, dw0In)
                 return
             }
+            // Step 2: zero coefficient with out-of-range qExp ... clamp qExp
+            if ((dw1In or dw0In) == 0L) {
+                val qClamped = max(min(qExpIn, 6111), -6176)
+                bid128Set(bid128Longs, sign, qClamped, 0L, 0L)
+                return
+            }
         }
-        // Step 2: special values ... not applicable ... only FNZ
 
-        // Step 3: zero coefficient ... not applicable ... only FNZ
+        // Step 3: special values ... not applicable ... only Finite
 
         // Step 4: underflow
         // divert iff range truncation exceeds precision truncation
@@ -999,7 +1021,7 @@ object Decimal128BidStringCodec {
      * must have at most 34 decimal digits.
      */
     private fun bid128Set(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long) {
-        verify { qExp >= -6176 && qExp <= 6111}
+        verify { qExp >= -6176 && qExp <= 6111 }
         verify { calcDigitLen128(dw1, dw0) <= 34 }
         val qBiased = qExp + 6176
         val s = if (sign) Long.MIN_VALUE else 0
@@ -1067,7 +1089,14 @@ object Decimal128BidStringCodec {
      *  - Truncation is less than the digit count: representable as a
      *    subnormal; some precision is preserved, with rounding.
      */
-    private fun bid128FinalizeUnderflowRegion(bid128Longs: LongArray, sign: Boolean, qExp: Int, dw1: Long, dw0: Long, residue: Int) {
+    private fun bid128FinalizeUnderflowRegion(
+        bid128Longs: LongArray,
+        sign: Boolean,
+        qExp: Int,
+        dw1: Long,
+        dw0: Long,
+        residue: Int
+    ) {
         // IEEE 754 7.5 Underflow - handle subnormal region
         verify { qExp < -6176 }
         val truncationNeeded = -6176 - qExp
@@ -1077,10 +1106,12 @@ object Decimal128BidStringCodec {
             truncationNeeded > digitLen -> {
                 // Result is swamped - becomes zero with roundTiesToEven
                 // This is always inexact
-                bid128Zero(bid128Longs, sign, -6176)
+                bid128RoundAndFinalizeFinite(bid128Longs, sign, -6176, 0L, 0L, LT_HALF)
             }
+
             truncationNeeded == digitLen ->
                 bid128FinalizeUnderflowBoundary(bid128Longs, sign, dw1, dw0, residue)
+
             else ->
                 bid128FinalizeSubnormal(bid128Longs, sign, qExp, dw1, dw0, residue)
         }
@@ -1097,8 +1128,10 @@ object Decimal128BidStringCodec {
      * decision between zero (always even, the default outcome) and 1 ulp
      * (the smallest subnormal, only when total residue is GT_HALF).
      */
-    private fun bid128FinalizeUnderflowBoundary( bid128Longs: LongArray, sign: Boolean,
-                                                 dw1: Long, dw0: Long, residueIn: Int) {
+    private fun bid128FinalizeUnderflowBoundary(
+        bid128Longs: LongArray, sign: Boolean,
+        dw1: Long, dw0: Long, residueIn: Int
+    ) {
         val digitLen = calcDigitLen128(dw1, dw0)
         verify { digitLen != 0 }
         val scaleResidue = residueFromValuePow10(dw1, dw0, digitLen)
@@ -1108,8 +1141,10 @@ object Decimal128BidStringCodec {
         bid128Set(bid128Longs, sign, -6176, 0L, if (totalResidue == GT_HALF) 1L else 0L)
     }
 
-    private fun bid128FinalizeSubnormal(bid128Longs: LongArray, sign: Boolean, qExpIn: Int,
-                                        dw1In: Long, dw0In: Long, residueIn: Int) {
+    private fun bid128FinalizeSubnormal(
+        bid128Longs: LongArray, sign: Boolean, qExpIn: Int,
+        dw1In: Long, dw0In: Long, residueIn: Int
+    ) {
         val truncationNeeded = -6176 - qExpIn
         verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1In, dw0In) }
 
@@ -1150,9 +1185,9 @@ object Decimal128BidStringCodec {
      * For `roundTiesToEven`, [HALF] rounds to the nearest even retained
      * digit; [LT_HALF] and [GT_HALF] are unambiguous; [EXACT] is a no-op.
      */
-    private const val EXACT   = 0
+    private const val EXACT = 0
     private const val LT_HALF = 1
-    private const val HALF    = 2
+    private const val HALF = 2
     private const val GT_HALF = 3
 
     /**
@@ -1165,6 +1200,7 @@ object Decimal128BidStringCodec {
      *  - 6..9    → [GT_HALF] (digit > 5)
      */
     private const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
+
     /**
      * Classify a single discarded decimal digit (0..9) as [EXACT],
      * [LT_HALF], [HALF], or [GT_HALF] via lookup in [DIGIT_MAP].
@@ -1218,7 +1254,8 @@ object Decimal128BidStringCodec {
      * in little-endian order: `POW10[2*i]` is the low 64 bits, `POW10[2*i + 1]`
      * the high 64 bits, of `10^i`. Sized to the BID128 coefficient bound.
      */
-    private val POW10 = longArrayOf( // little-endian order
+    private val POW10 = longArrayOf(
+        // little-endian order
         1L, 0L,                            // 1 (0)
         0x000000000000000AuL.toLong(), 0L, // 10 (10**1)
         0x0000000000000064uL.toLong(), 0L, // 100 (10**2)
@@ -1288,7 +1325,7 @@ object Decimal128BidStringCodec {
         val hiDigitCount = loDigitCount + 1
         val pow10Offset = (loDigitCount shl 1)
         val p1 = POW10[pow10Offset + 1]
-        val p0 = POW10[pow10Offset    ]
+        val p0 = POW10[pow10Offset]
         val cmp1 = unsignedCmp(dw1, p1)
         if (cmp1 != 0)
             return hiDigitCount - (cmp1 ushr 31)
@@ -1345,7 +1382,7 @@ object Decimal128BidStringCodec {
     private inline fun umul128xPow10to128(dw1: Long, dw0: Long, pow10: Int): Pair<Long, Long> {
         val pow10Offset = pow10 shl 1
         val pow10Dw1 = POW10[pow10Offset + 1]
-        val pow10Dw0 = POW10[pow10Offset    ]
+        val pow10Dw0 = POW10[pow10Offset]
         return umul128x128to128(dw1, dw0, pow10Dw1, pow10Dw0)
     }
 
