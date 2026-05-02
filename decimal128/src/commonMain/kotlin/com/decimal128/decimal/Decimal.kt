@@ -123,7 +123,7 @@ expect abstract class DecimalRep(steal: Int, dw1: Long, dw0: Long) {
  * [DecContext] is *not* thread-safe and should be kept thread-local.
  *
  * @see DecContext
- * @see DecRounding
+ * @see RoundingDirection
  */
 class Decimal private constructor(
     steal: Int,
@@ -1480,7 +1480,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToEven`.
      */
     fun roundToIntegralTiesToEven(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
+        d128RoundToIntegral(this, RoundingDirection.TIES_TO_EVEN, suppressInexact = true)
 
     /**
      * Rounds to the nearest integer, ties resolved away from zero.
@@ -1489,7 +1489,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralTiesToAway`.
      */
     fun roundToIntegralTiesToAway(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
+        d128RoundToIntegral(this, RoundingDirection.TIES_TO_AWAY, suppressInexact = true)
 
     /**
      * Rounds toward zero (truncation).
@@ -1498,7 +1498,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardZero`.
      */
     fun roundToIntegralTowardZero(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
+        d128RoundToIntegral(this, RoundingDirection.TOWARD_ZERO, suppressInexact = true)
 
     /**
      * Rounds toward positive infinity (ceiling).
@@ -1507,7 +1507,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardPositive`.
      */
     fun roundToIntegralTowardPositive(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
+        d128RoundToIntegral(this, RoundingDirection.TOWARD_POSITIVE, suppressInexact = true)
 
     /**
      * Rounds toward negative infinity (floor).
@@ -1516,7 +1516,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralTowardNegative`.
      */
     fun roundToIntegralTowardNegative(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
+        d128RoundToIntegral(this, RoundingDirection.TOWARD_NEGATIVE, suppressInexact = true)
 
     /**
      * Rounds to an integer using the rounding mode from [DecContext.current],
@@ -1525,7 +1525,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact`.
      */
     fun roundToIntegralSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = false)
+        d128RoundToIntegral(this, DecContext.current().roundingDirection, suppressInexact = false)
 
     /**
      * Rounds to an integer using the rounding mode from [DecContext.current].
@@ -1534,7 +1534,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralValue`.
      */
     fun roundToIntegral(): Decimal =
-        d128RoundToIntegral(this, DecContext.current().decRounding, suppressInexact = true)
+        d128RoundToIntegral(this, DecContext.current().roundingDirection, suppressInexact = true)
 
     /**
      * Rounds to the nearest integer, ties resolved to even (banker's rounding),
@@ -1543,7 +1543,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToEven`.
      */
     fun roundToIntegralTiesToEvenSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
+        d128RoundToIntegral(this, RoundingDirection.TIES_TO_EVEN, suppressInexact = false)
 
     /**
      * Rounds to the nearest integer, ties resolved away from zero,
@@ -1552,7 +1552,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTiesToAway`.
      */
     fun roundToIntegralTiesToAwaySignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
+        d128RoundToIntegral(this, RoundingDirection.TIES_TO_AWAY, suppressInexact = false)
 
     /**
      * Rounds toward zero (truncation),
@@ -1561,7 +1561,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardZero`.
      */
     fun roundToIntegralTowardZeroSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
+        d128RoundToIntegral(this, RoundingDirection.TOWARD_ZERO, suppressInexact = false)
 
     /**
      * Rounds toward positive infinity (ceiling),
@@ -1570,7 +1570,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardPositive`.
      */
     fun roundToIntegralTowardPositiveSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
+        d128RoundToIntegral(this, RoundingDirection.TOWARD_POSITIVE, suppressInexact = false)
 
     /**
      * Rounds toward negative infinity (floor),
@@ -1579,7 +1579,7 @@ class Decimal private constructor(
      * IEEE 754-2019 §5.3.1 `roundToIntegralExact` with `roundTowardNegative`.
      */
     fun roundToIntegralTowardNegativeSignalInexact(): Decimal =
-        d128RoundToIntegral(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
+        d128RoundToIntegral(this, RoundingDirection.TOWARD_NEGATIVE, suppressInexact = false)
 
 // ── Conversion to Kotlin Integer Types ───────────────────────────────────
 
@@ -1592,7 +1592,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTiesToEven(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TIES_TO_EVEN, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] using round-half-to-even (banker's rounding),
@@ -1603,7 +1603,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTiesToEvenSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TIES_TO_EVEN, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] using round-half-away-from-zero.
@@ -1614,7 +1614,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTiesToAway(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TIES_TO_AWAY, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] using round-half-away-from-zero,
@@ -1625,7 +1625,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTiesToAwaySignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TIES_TO_AWAY, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by truncating toward zero.
@@ -1636,7 +1636,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTowardZero(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_ZERO, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by truncating toward zero.
@@ -1644,7 +1644,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * Returns [Long.MIN_VALUE] on overflow, NaN, or infinity.
      */
     fun toLongTowardZeroNoFlags(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true, suppressInvalid = true)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_ZERO, suppressInexact = true, suppressInvalid = true)
 
     /**
      * Converts this decimal to [Long] by truncating toward zero,
@@ -1655,7 +1655,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTowardZeroSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_ZERO, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward positive infinity (ceiling).
@@ -1666,7 +1666,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTowardPositive(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_POSITIVE, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward positive infinity (ceiling),
@@ -1677,7 +1677,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTowardPositiveSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_POSITIVE, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward negative infinity (floor).
@@ -1688,7 +1688,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTowardNegative(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_NEGATIVE, suppressInexact = true, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Long] by rounding toward negative infinity (floor),
@@ -1699,7 +1699,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toLongTowardNegativeSignalInexact(): Long =
-        d128ConvertToLong(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false, suppressInvalid = false)
+        d128ConvertToLong(this, RoundingDirection.TOWARD_NEGATIVE, suppressInexact = false, suppressInvalid = false)
 
     /**
      * Converts this decimal to [Int] using round-half-to-even (banker's rounding).
@@ -1710,7 +1710,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTiesToEven(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = true)
+        d128ConvertToInt(this, RoundingDirection.TIES_TO_EVEN, suppressInexact = true)
 
     /**
      * Converts this decimal to [Int] using round-half-to-even (banker's rounding),
@@ -1721,7 +1721,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTiesToEvenSignalInexact(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_EVEN, suppressInexact = false)
+        d128ConvertToInt(this, RoundingDirection.TIES_TO_EVEN, suppressInexact = false)
 
     /**
      * Converts this decimal to [Int] using round-half-away-from-zero.
@@ -1732,7 +1732,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTiesToAway(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = true)
+        d128ConvertToInt(this, RoundingDirection.TIES_TO_AWAY, suppressInexact = true)
 
     /**
      * Converts this decimal to [Int] using round-half-away-from-zero,
@@ -1743,7 +1743,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTiesToAwaySignalInexact(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TIES_TO_AWAY, suppressInexact = false)
+        d128ConvertToInt(this, RoundingDirection.TIES_TO_AWAY, suppressInexact = false)
 
     /**
      * Converts this decimal to [Int] by truncating toward zero.
@@ -1754,7 +1754,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTowardZero(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = true)
+        d128ConvertToInt(this, RoundingDirection.TOWARD_ZERO, suppressInexact = true)
 
     /**
      * Converts this decimal to [Int] by truncating toward zero,
@@ -1765,7 +1765,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTowardZeroSignalInexact(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_ZERO, suppressInexact = false)
+        d128ConvertToInt(this, RoundingDirection.TOWARD_ZERO, suppressInexact = false)
 
     /**
      * Converts this decimal to [Int] by rounding toward positive infinity (ceiling).
@@ -1776,7 +1776,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTowardPositive(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = true)
+        d128ConvertToInt(this, RoundingDirection.TOWARD_POSITIVE, suppressInexact = true)
 
     /**
      * Converts this decimal to [Int] by rounding toward positive infinity (ceiling),
@@ -1787,7 +1787,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTowardPositiveSignalInexact(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_POSITIVE, suppressInexact = false)
+        d128ConvertToInt(this, RoundingDirection.TOWARD_POSITIVE, suppressInexact = false)
 
     /**
      * Converts this decimal to [Int] by rounding toward negative infinity (floor).
@@ -1798,7 +1798,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTowardNegative(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = true)
+        d128ConvertToInt(this, RoundingDirection.TOWARD_NEGATIVE, suppressInexact = true)
 
     /**
      * Converts this decimal to [Int] by rounding toward negative infinity (floor),
@@ -1809,7 +1809,7 @@ t     * Converts this decimal to [Long] using round-half-to-even (banker's round
      * IEEE754-2019 5.8
      */
     fun toIntTowardNegativeSignalInexact(): Int =
-        d128ConvertToInt(this, DecRounding.ROUND_TOWARD_NEGATIVE, suppressInexact = false)
+        d128ConvertToInt(this, RoundingDirection.TOWARD_NEGATIVE, suppressInexact = false)
 
     // ── Elementary Functions ──────────────────────────────────────────────────────────────
 

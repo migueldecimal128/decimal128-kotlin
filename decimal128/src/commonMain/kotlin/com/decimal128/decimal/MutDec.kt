@@ -3,11 +3,11 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_AWAY
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_EVEN
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_NEGATIVE
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_POSITIVE
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import com.decimal128.decimal.InvalidCause.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
@@ -504,7 +504,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun eqJavaStyleTo(other: MutDec) : Boolean = mutDecEqJavaStyle(this, other)
 
-    fun setRoundToIntegral(x: MutDec, rounding: DecRounding, ctx: DecContext): MutDec {
+    fun setRoundToIntegral(x: MutDec, rounding: RoundingDirection, ctx: DecContext): MutDec {
         val xSteal = x.steal
         if (!stealIsFinite(xSteal) || stealQExp(xSteal) >= 0)
             return set(x, ctx)
@@ -522,7 +522,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 residue = Residue.fromValueDecade(x)
                 verify { residue != Residue.EXACT }
             }
-            val roundUp = residue.ulpRoundUp(rounding.negate(xSign), 0L)
+            val roundUp = residue.ulpRoundUp(rounding.negated(xSign), 0L)
             if (! roundUp)
                 setZero(xSign)
             else
@@ -535,24 +535,24 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun setRoundToIntegralTiesToEven(x: MutDec, ctx: DecContext) =
-        setRoundToIntegral(x, ROUND_TIES_TO_EVEN, ctx)
+        setRoundToIntegral(x, TIES_TO_EVEN, ctx)
 
     fun setRoundToIntegralTiesToAway(x: MutDec, ctx: DecContext) =
-        setRoundToIntegral(x, ROUND_TIES_TO_AWAY, ctx)
+        setRoundToIntegral(x, TIES_TO_AWAY, ctx)
 
     fun setRoundToIntegralTowardZero(x: MutDec, ctx: DecContext) =
-        setRoundToIntegral(x, ROUND_TOWARD_ZERO, ctx)
+        setRoundToIntegral(x, TOWARD_ZERO, ctx)
 
     fun setRoundToIntegralTowardPositive(x: MutDec, ctx: DecContext) =
-        setRoundToIntegral(x, ROUND_TOWARD_POSITIVE, ctx)
+        setRoundToIntegral(x, TOWARD_POSITIVE, ctx)
 
     fun setRoundToIntegralTowardNegative(x: MutDec, ctx: DecContext) =
-        setRoundToIntegral(x, ROUND_TOWARD_NEGATIVE, ctx)
+        setRoundToIntegral(x, TOWARD_NEGATIVE, ctx)
 
     fun setRoundToIntegralExact(x: MutDec, ctx: DecContext): MutDec =
-        setRoundToIntegral(x, ctx.decRounding, ctx)
+        setRoundToIntegral(x, ctx.roundingDirection, ctx)
 
-    fun convertToLong(rounding: DecRounding, ctx: DecContext): Long {
+    fun convertToLong(rounding: RoundingDirection, ctx: DecContext): Long {
         val steal = steal
         val signMask = stealSignMask(steal).toLong()
         val sign = stealSignFlag(steal)
@@ -582,7 +582,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                             residue = Residue.fromValueDecade(this)
                             verify { residue != Residue.EXACT }
                         }
-                        val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                        val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
                         return ctx.signalInexact(
                             if (!roundUp)
                                 0L
@@ -594,7 +594,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     val tmps = ctx.tmps
                     val t = tmps.mdecFmaParseConvert
                     val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad)
-                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
                     if (roundUp)
                         c256MutateIncrement(t)
                     val tSteal = stealEncodeFNZ(sign, 0, stealPackedLengths(t.steal))
@@ -637,22 +637,22 @@ class MutDec() : C256(), Comparable<MutDec> {
     }
 
     fun convertToLongTiesToEven(x: MutDec, ctx: DecContext): Long  =
-        convertToLong(ROUND_TIES_TO_EVEN, ctx)
+        convertToLong(TIES_TO_EVEN, ctx)
 
     fun convertToLongTiesToAway(x: MutDec, ctx: DecContext): Long  =
-        convertToLong(ROUND_TIES_TO_AWAY, ctx)
+        convertToLong(TIES_TO_AWAY, ctx)
 
     fun convertToLongTowardZero(x: MutDec, ctx: DecContext): Long  =
-        convertToLong(ROUND_TOWARD_ZERO, ctx)
+        convertToLong(TOWARD_ZERO, ctx)
 
     fun convertToLongTowardPositive(x: MutDec, ctx: DecContext): Long  =
-        convertToLong(ROUND_TOWARD_POSITIVE, ctx)
+        convertToLong(TOWARD_POSITIVE, ctx)
 
     fun convertToLongTowardNegative(x: MutDec, ctx: DecContext): Long  =
-        convertToLong(ROUND_TOWARD_NEGATIVE, ctx)
+        convertToLong(TOWARD_NEGATIVE, ctx)
 
     fun convertToLongExact(ctx: DecContext): Long =
-        convertToLong(ctx.decRounding, ctx)
+        convertToLong(ctx.roundingDirection, ctx)
 
     /**
      * setNextUp and setNextDown are not considered arithmetic
@@ -788,7 +788,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                             return setZero(xSign, yQ)
                         // Scale down by delta positions
                         val residue = c256SetScaleDownPow10(this, x, delta, pentad)
-                        return roundAndFinalizeFinite(xSign, yQ, residue, ctx.decRounding, ctx)
+                        return roundAndFinalizeFinite(xSign, yQ, residue, ctx.roundingDirection, ctx)
                     }
 
                     else -> {  // delta < 0
@@ -943,7 +943,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val truncIsOdd: Boolean = mutDecSetRemTruncImpl(this, x, yT, ctx)
         if (isFiniteNonZero()) {
             val rem2 = tmps.mdecDivRemPowCtzd
-            val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
+            val truncCtx = ctx.withRoundingAndNewFlags(TOWARD_ZERO)
             if (sign) {
                 rem2.setAdd(this, yT, truncCtx)  // this + yT
             } else {

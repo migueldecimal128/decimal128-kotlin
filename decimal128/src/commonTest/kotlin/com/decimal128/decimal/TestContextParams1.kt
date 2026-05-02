@@ -15,7 +15,7 @@ class TestContextParams1 {
         val contexts = arrayOf(decimal128Kotlin(), decimal128IEEE(), decimal128Extended38())
         for (ctx in contexts) {
             for (i in 0..4) {
-                val rounding = DecRounding.fromValue(i)
+                val rounding = RoundingDirection.fromValue(i)
                 val decPrefs = DecPrefs().copy(
                     printExponentPlusSign = false,
                     printExponentLowercaseE = false,

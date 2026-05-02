@@ -14,8 +14,8 @@ class TestMutDecQuantize {
         val targetQ = -targetScale
         val expected =
             bdToIeeeDecimal128(bdX.setScale(targetScale,
-                ctx.decRounding.mapToRoundingMode()),
-                ctx.decRounding.mapToRoundingMode())
+                ctx.roundingDirection.mapToRoundingMode()),
+                ctx.roundingDirection.mapToRoundingMode())
     }
 
     val tcs = arrayOf(

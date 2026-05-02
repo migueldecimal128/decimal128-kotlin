@@ -1,6 +1,6 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.DecRounding
+import com.decimal128.decimal.RoundingDirection
 
 object DectestParser1 {
 
@@ -59,13 +59,13 @@ object DectestParser1 {
         }
     }
 
-    fun decRoundingFromDectestName(name: String): DecRounding? =
+    fun decRoundingFromDectestName(name: String): RoundingDirection? =
         when (name.lowercase()) {
-            "half_even" -> DecRounding.ROUND_TIES_TO_EVEN
-            "half_up"   -> DecRounding.ROUND_TIES_TO_AWAY
-            "ceiling"   -> DecRounding.ROUND_TOWARD_POSITIVE
-            "floor"     -> DecRounding.ROUND_TOWARD_NEGATIVE
-            "down"      -> DecRounding.ROUND_TOWARD_ZERO
+            "half_even" -> RoundingDirection.TIES_TO_EVEN
+            "half_up"   -> RoundingDirection.TIES_TO_AWAY
+            "ceiling"   -> RoundingDirection.TOWARD_POSITIVE
+            "floor"     -> RoundingDirection.TOWARD_NEGATIVE
+            "down"      -> RoundingDirection.TOWARD_ZERO
             "up"        -> null
             "05up"      -> null
             "half_down" -> null

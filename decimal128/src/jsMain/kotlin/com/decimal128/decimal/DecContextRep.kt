@@ -4,7 +4,7 @@
 package com.decimal128.decimal
 
 actual abstract class DecContextRep actual constructor(
-    decRounding: DecRounding,
+    roundingDirection: RoundingDirection,
     decPrefs: DecPrefs,
     decTrapHandlers: DecTrapHandlers?,
     decFlags: DecFlags,
@@ -12,7 +12,7 @@ actual abstract class DecContextRep actual constructor(
     isExtendedPrecision38: Boolean
 ) {
     //@JvmField DecRounding is a value class :(
-    internal actual val decRounding: DecRounding = decRounding
+    internal actual val roundingDirection: RoundingDirection = roundingDirection
     internal actual val decPrefs: DecPrefs = decPrefs
     internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
     internal actual val decFlags: DecFlags = decFlags
@@ -27,7 +27,7 @@ actual abstract class DecContextRep actual constructor(
     internal actual val dw1MinFullPrecisionCoeff:Long = pow10_128_dw1(precision - 1)
 
     override fun toString(): String =
-        "DecContext(precision=$precision, decRounding=$decRounding, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+        "DecContext(precision=$precision, decRounding=$roundingDirection, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 }
 
 private var ctxCurrent: DecContext = DecContext.decimal128Kotlin()

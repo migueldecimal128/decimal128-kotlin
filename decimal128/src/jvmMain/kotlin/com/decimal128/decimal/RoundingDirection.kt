@@ -6,21 +6,21 @@ private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
 
 
 @JvmInline
-actual value class DecRounding private constructor(val value:Int) {
+actual value class RoundingDirection private constructor(val value:Int) {
     actual companion object {
-        actual val ROUND_TIES_TO_EVEN = DecRounding(0)
-        actual val ROUND_TIES_TO_AWAY = DecRounding(1)
-        actual val ROUND_TOWARD_ZERO = DecRounding(2)
-        actual val ROUND_TOWARD_POSITIVE = DecRounding(3)
-        actual val ROUND_TOWARD_NEGATIVE = DecRounding(4)
+        actual val TIES_TO_EVEN = RoundingDirection(0)
+        actual val TIES_TO_AWAY = RoundingDirection(1)
+        actual val TOWARD_ZERO = RoundingDirection(2)
+        actual val TOWARD_POSITIVE = RoundingDirection(3)
+        actual val TOWARD_NEGATIVE = RoundingDirection(4)
 
-        actual fun fromValue(value:Int) : DecRounding {
+        actual fun fromValue(value:Int) : RoundingDirection {
             return when (value) {
-                0 -> ROUND_TIES_TO_EVEN
-                1 -> ROUND_TIES_TO_AWAY
-                2 -> ROUND_TOWARD_ZERO
-                3 -> ROUND_TOWARD_POSITIVE
-                4 -> ROUND_TOWARD_NEGATIVE
+                0 -> TIES_TO_EVEN
+                1 -> TIES_TO_AWAY
+                2 -> TOWARD_ZERO
+                3 -> TOWARD_POSITIVE
+                4 -> TOWARD_NEGATIVE
                 else -> throw RuntimeException("value:$value out of range for RoundingDirection")
             }
         }
@@ -29,11 +29,11 @@ actual value class DecRounding private constructor(val value:Int) {
 
     // roundTiesToEve, roundTiesToAway, and roundTiesTowardZero are the same independent of sign
     // roundTowardPositive and roundTowardNegative are complementary
-    actual fun negate() :DecRounding {
-        return if (value < 3) this else if (value == 3) ROUND_TOWARD_NEGATIVE else ROUND_TOWARD_POSITIVE
+    actual fun negated() :RoundingDirection {
+        return if (value < 3) this else if (value == 3) TOWARD_NEGATIVE else TOWARD_POSITIVE
     }
 
-    actual fun negate(sign: Boolean) = if (sign) negate() else this
+    actual fun negated(sign: Boolean) = if (sign) negated() else this
 
     /**
      * Whether overflow under this rounding direction produces infinity (vs. the

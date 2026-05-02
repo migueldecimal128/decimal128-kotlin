@@ -20,13 +20,13 @@ internal fun MutDec.finalizeFnz(sign: Boolean,
         this.steal = stealEncodeFNZ(sign, inboundQExp, stealPackedLengths(steal))
         return this
     }
-    return roundAndFinalizeFnz(sign, inboundQExp, EXACT, ctx.decRounding, ctx)
+    return roundAndFinalizeFnz(sign, inboundQExp, EXACT, ctx.roundingDirection, ctx)
 }
 
 
 internal inline fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
                                                inboundResidue: Residue, ctx: DecContext): MutDec =
-    roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, ctx.decRounding, ctx)
+    roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, ctx.roundingDirection, ctx)
 
 
 internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext): MutDec{
@@ -35,11 +35,11 @@ internal fun MutDec.roundAndFinalizeFnz(inboundResidue: Residue, ctx: DecContext
     val qExp = stealQExp(steal)
     verify { stealBitLen(steal) != 0 }
     verify { qExp >= -8000 && qExp <= 8000 }
-    return roundAndFinalizeFnz(sign, qExp, inboundResidue, ctx.decRounding, ctx)
+    return roundAndFinalizeFnz(sign, qExp, inboundResidue, ctx.roundingDirection, ctx)
 }
 
 internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
-                                           inboundResidue: Residue, rounding: DecRounding,
+                                           inboundResidue: Residue, rounding: RoundingDirection,
                                            ctx: DecContext): MutDec {
     return if (stealBitLen(steal) != 0)
         roundAndFinalizeFnz(sign, inboundQExp, inboundResidue, rounding, ctx)
@@ -56,7 +56,7 @@ internal fun MutDec.roundAndFinalizeFinite(sign: Boolean, inboundQExp: Int,
  * 5. Signal once with all flags
  */
 internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
-                                        inboundResidue: Residue, rounding: DecRounding,
+                                        inboundResidue: Residue, rounding: RoundingDirection,
                                         ctx: DecContext): MutDec {
     verify { stealPackedLengths(steal) != 0 }
     this.steal =
@@ -92,7 +92,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
 
     // Step 6: Apply rounding ... might increment coefficient
     val applyRounding = totalResidue != EXACT
-    if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
+    if (applyRounding && totalResidue.ulpRoundUp(rounding.negated(sign), dw0)) {
         // Step 6.1: increment
         c256MutateIncrement()
 
@@ -127,7 +127,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
 }
 
 internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
-                                         inboundResidue: Residue, rounding: DecRounding,
+                                         inboundResidue: Residue, rounding: RoundingDirection,
                                          ctx: DecContext): MutDec {
     verify { digitLen == 0 }
     val qExpCapped = max(min(qExp, Q_MAX), Q_TINY)
@@ -137,7 +137,7 @@ internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
     // This can happen in quantize operations where a non-zero value rounds to zero
     if (inboundResidue != EXACT) {
         // Check if rounding would produce a non-zero result
-        val roundUp = inboundResidue.ulpRoundUp(rounding.negate(sign), 0L)
+        val roundUp = inboundResidue.ulpRoundUp(rounding.negated(sign), 0L)
         if (roundUp) {
             c256SetOne()
             this.steal = stealEncodeFNZ(sign, qExpCapped, PACKED_LENGTHS_1_1)
@@ -154,7 +154,7 @@ internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
     return this
 }
 
-private fun MutDec.finalizeOverflow(sign: Boolean, rounding: DecRounding, ctx: DecContext): MutDec {
+private fun MutDec.finalizeOverflow(sign: Boolean, rounding: RoundingDirection, ctx: DecContext): MutDec {
     // IEEE 754 7.4 Overflow - always inexact
     verify { digitLen <= ctx.precision }
     return ctx.signalInexactOverflow(
@@ -166,7 +166,7 @@ private fun MutDec.finalizeUnderflowRegion(
     sign: Boolean,
     qExp: Int,
     residue: Residue,
-    rounding: DecRounding,
+    rounding: RoundingDirection,
     ctx: DecContext
 ): MutDec {
     // IEEE 754 7.5 Underflow - handle subnormal region
@@ -198,13 +198,13 @@ private fun MutDec.finalizeUnderflowRegion(
 private fun MutDec.finalizeUnderflowBoundary(
     sign: Boolean,
     inboundResidue: Residue,
-    rounding: DecRounding,
+    rounding: RoundingDirection,
     ctx: DecContext
 ): MutDec {
     // no value params ... nothing to verify
     val scaleResidue = Residue.fromValueDecade(this)
     val totalResidue = scaleResidue.merge(inboundResidue)
-    val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), 0L)
+    val roundUp = totalResidue.ulpRoundUp(rounding.negated(sign), 0L)
 
     return ctx.signalInexactUnderflow(
         if (roundUp) setMinFiniteMagnitude(sign, ctx)
@@ -214,7 +214,7 @@ private fun MutDec.finalizeUnderflowBoundary(
 private fun MutDec.finalizeSubnormal(
     sign: Boolean,
     inboundResidue: Residue,
-    rounding: DecRounding,
+    rounding: RoundingDirection,
     ctx: DecContext,
     truncationNeeded: Int
 ): MutDec {
@@ -234,7 +234,7 @@ private fun MutDec.finalizeSubnormal(
         return this
 
     // Apply rounding
-    val roundUp = totalResidue.ulpRoundUp(rounding.negate(sign), dw0)
+    val roundUp = totalResidue.ulpRoundUp(rounding.negated(sign), dw0)
     if (roundUp) {
         c256MutateIncrement()
 

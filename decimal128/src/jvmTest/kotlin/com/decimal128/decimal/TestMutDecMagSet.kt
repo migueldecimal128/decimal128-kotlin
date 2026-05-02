@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_AWAY
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -13,12 +13,12 @@ class TestMutDecMagSet {
     val verbose = false
 
     class TC(val bdA: BigDecimal, val ctx: DecContext) {
-        constructor(str: String, rd: DecRounding) : this(BigDecimal(str), DecContext.decimal128Kotlin().with(rd))
+        constructor(str: String, rd: RoundingDirection) : this(BigDecimal(str), DecContext.decimal128Kotlin().with(rd))
         constructor(str: String) : this(BigDecimal(str), DecContext.decimal128Kotlin())
         constructor(bdA: BigDecimal) : this(bdA, DecContext.decimal128Kotlin())
         val biA = bdA.unscaledValue()
         val expA = -bdA.scale()
-        val bdRounded = bdToIeeeDecimal128(bdA, ctx.decRounding.mapToRoundingMode())
+        val bdRounded = bdToIeeeDecimal128(bdA, ctx.roundingDirection.mapToRoundingMode())
         val biRounded = bdRounded.unscaledValue()
         val expRounded = -bdRounded.scale()
     }
@@ -31,10 +31,10 @@ class TestMutDecMagSet {
         TC("9.9999999999999999999999999999999995E+6144"), // overflow to Infinity
 
         TC("1e-6175"),
-        TC("0E+6145", ROUND_TIES_TO_AWAY),
-        TC("3.05079656515623149897192850E-6151", ROUND_TOWARD_ZERO),
+        TC("0E+6145", TIES_TO_AWAY),
+        TC("3.05079656515623149897192850E-6151", TOWARD_ZERO),
         TC("2.2170825345518895501686941901839130E-5813"),
-        TC("3.18227787914677743006698769411248000E+2275", ROUND_TIES_TO_AWAY),
+        TC("3.18227787914677743006698769411248000E+2275", TIES_TO_AWAY),
         TC("11e-6177"),
 
         TC("9.9999999999999999999999999999999994E+6144"),
@@ -43,10 +43,10 @@ class TestMutDecMagSet {
         TC("7.36956901257177558648652733739540513555E-6144"), // double rounding!
 
         TC("6.57913228239533914943656987782647149234312929384644E+6233"),
-        TC("6.57913228239533914943656987782647149234312929384644E+6233", ROUND_TOWARD_ZERO),
+        TC("6.57913228239533914943656987782647149234312929384644E+6233", TOWARD_ZERO),
 
-        TC("1.1111111112222222222333333333344446E+0", ROUND_TOWARD_ZERO),
-        TC("1.362849775152463544468720357836334504420E+0", ROUND_TOWARD_ZERO),
+        TC("1.1111111112222222222333333333344446E+0", TOWARD_ZERO),
+        TC("1.362849775152463544468720357836334504420E+0", TOWARD_ZERO),
 
         TC("1111111111222222222233333333334444e-6210"), // 34 digits =>
         TC("11111111112222222222333333333344444e-6211"), // 35 digits =>
@@ -120,7 +120,7 @@ class TestMutDecMagSet {
 
     fun randDecimal128Context(): DecContext {
         val i = random.nextInt(4)
-        val env = DecContext.decimal128Kotlin().with(DecRounding.fromValue(i))
+        val env = DecContext.decimal128Kotlin().with(RoundingDirection.fromValue(i))
         return env
     }
 
@@ -130,7 +130,7 @@ class TestMutDecMagSet {
         val biRounded = case.biRounded
         val expRounded = case.expRounded
         val env = case.ctx
-        val roundingMode = env.decRounding.mapToRoundingMode()
+        val roundingMode = env.roundingDirection.mapToRoundingMode()
         val dec = MutDec()
         if (verbose)
             println("bdA:$bdA roundingMode:$roundingMode => bdRounded:$bdRounded => biRounded:$biRounded + expRounded:$expRounded")

@@ -2,7 +2,7 @@ package com.decimal128.decimal.dectest
 
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
-import com.decimal128.decimal.DecRounding
+import com.decimal128.decimal.RoundingDirection
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.MutDec
 import com.decimal128.decimal.loadTestResourceAsString
@@ -36,12 +36,12 @@ class TestMutDecDectest {
         "half_down",
     )
 
-    private val decRoundings = arrayOf(
-        DecRounding.Companion.ROUND_TIES_TO_EVEN,
-        DecRounding.Companion.ROUND_TIES_TO_AWAY,
-        DecRounding.Companion.ROUND_TOWARD_ZERO,
-        DecRounding.Companion.ROUND_TOWARD_POSITIVE,
-        DecRounding.Companion.ROUND_TOWARD_NEGATIVE,
+    private val roundingDirections = arrayOf(
+        RoundingDirection.Companion.TIES_TO_EVEN,
+        RoundingDirection.Companion.TIES_TO_AWAY,
+        RoundingDirection.Companion.TOWARD_ZERO,
+        RoundingDirection.Companion.TOWARD_POSITIVE,
+        RoundingDirection.Companion.TOWARD_NEGATIVE,
     )
 
     private val dectestFiles = arrayOf(
@@ -788,9 +788,9 @@ class TestMutDecDectest {
         if (maxExponent != 6144)
             return null
         val roundingIndex = validRoundingStrings.indexOf(rounding)
-        if (roundingIndex < 0 || roundingIndex >= decRoundings.size)
+        if (roundingIndex < 0 || roundingIndex >= roundingDirections.size)
             return null
-        val roundedCtx = ctx.with(decRoundings[roundingIndex])
+        val roundedCtx = ctx.with(roundingDirections[roundingIndex])
         return roundedCtx
     }
 

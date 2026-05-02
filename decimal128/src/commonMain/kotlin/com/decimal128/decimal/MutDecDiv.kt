@@ -1,7 +1,7 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.Compare754Result.*
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
 import kotlin.math.min
 
 internal fun mutDecDivImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
@@ -49,7 +49,7 @@ internal fun mutDecDivIntImpl(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext):
 }
 
 internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): MutDec {
-    val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
+    val truncCtx = ctx.withRoundingAndNewFlags(TOWARD_ZERO)
     z.setDiv(x, y, truncCtx)
     z.setRoundToIntegralExact(z, truncCtx)
     // Normalize integer toward qExp = 0 using available precision
@@ -113,7 +113,7 @@ fun setRemTruncFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): Boolean
     // setRemainder is an EXACT operation, so we will use a temp
     // environment so that INEXACT flag/trap does not get signaled.
     // use INTERNAL_TMP_ENV so that flag-setting
-    val truncCtx = ctx.withRoundingAndNewFlags(ROUND_TOWARD_ZERO)
+    val truncCtx = ctx.withRoundingAndNewFlags(TOWARD_ZERO)
     val n = ctx.tmps.mdecDivRemPowCtzd.setDiv(x, y, truncCtx)
     if (n.qExp < 0)
         n.setRoundToIntegralExact(n, truncCtx)

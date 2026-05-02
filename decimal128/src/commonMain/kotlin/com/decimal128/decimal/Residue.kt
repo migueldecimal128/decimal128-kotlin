@@ -34,16 +34,16 @@ internal expect value class Residue internal constructor(val value:Int) {
         fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue
     }
 
-    fun ulpRoundUp(decRounding: DecRounding, lsdwIsOdd: Long): Boolean
+    fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long): Boolean
 
-    fun ulpRoundUp01L(decRounding: DecRounding, lsdwIsOdd: Long): Long
+    fun ulpRoundUp01L(roundingDirection: RoundingDirection, lsdwIsOdd: Long): Long
 
-    fun ulpBias(decRounding: DecRounding, lsdwIsOdd: Long): Long
+    fun ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long): Long
 
-    fun ulpBiasY(decRounding: DecRounding, lsdwIsOdd: Long): Long
+    fun ulpBiasY(roundingDirection: RoundingDirection, lsdwIsOdd: Long): Long
 
     // used in add case when there is no overlap
-    fun ulpBiasX(decRounding: DecRounding, lsdwIsOdd: Long): Long
+    fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long): Long
 
     fun merge(stickyResidue: Residue): Residue
 

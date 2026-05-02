@@ -13,13 +13,13 @@ class TestMutDecMagMul {
     val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecContext) {
-        constructor(strA: String, strB: String, decRounding: DecRounding) :
-                this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin().with(decRounding))
+        constructor(strA: String, strB: String, roundingDirection: RoundingDirection) :
+                this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin().with(roundingDirection))
         constructor(strA: String, strB: String) :
                 this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin())
         constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext.decimal128Kotlin())
 
-        val rm = ctx.decRounding.mapToRoundingMode()
+        val rm = ctx.roundingDirection.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -29,7 +29,7 @@ class TestMutDecMagMul {
 
     val cases = arrayOf(
         TC("2.132605340208488890479E+1158", "4.6211615602131956617E+5175"),
-        TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", DecRounding.ROUND_TOWARD_POSITIVE),
+        TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.TOWARD_POSITIVE),
         TC("1", "0"),
         TC("1", "0e-6176"),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
@@ -46,7 +46,7 @@ class TestMutDecMagMul {
 
     @Test
     fun testProblemChild() {
-        val tc = TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", DecRounding.ROUND_TOWARD_POSITIVE)
+        val tc = TC("1.2967505698781432914870320E-3651", "5.56450878649625E-2965", RoundingDirection.TOWARD_POSITIVE)
         test1(tc)
     }
 
@@ -78,7 +78,7 @@ class TestMutDecMagMul {
 
     fun randDecimal128Context(): DecContext {
         val i = random.nextInt(5)
-        val env = DecContext.decimal128Kotlin().with(DecRounding.fromValue(i))
+        val env = DecContext.decimal128Kotlin().with(RoundingDirection.fromValue(i))
         return env
     }
 
@@ -87,7 +87,7 @@ class TestMutDecMagMul {
         val bdB = tc.bdB
         val expected = tc.bdP
         val env = tc.ctx
-        val rm = env.decRounding.mapToRoundingMode()
+        val rm = env.roundingDirection.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA * bdB:$bdB (rm:$rm) => expected:$expected")

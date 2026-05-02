@@ -4,11 +4,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigInteger
 import java.util.*
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_EVEN
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_AWAY
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_NEGATIVE
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_POSITIVE
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.lang.Math.min
@@ -18,19 +18,19 @@ class TestC256ScaleDown {
     val verbose = false
 
     class TC(
-        val biA: BigInteger, val pow10: Int, val sign: Boolean, val decRounding: DecRounding)
+        val biA: BigInteger, val pow10: Int, val sign: Boolean, val roundingDirection: RoundingDirection)
      {
 
         constructor(
             x: String, pow10: Int, sign: Boolean,
-            decRounding: DecRounding
+            roundingDirection: RoundingDirection
         ) :
-                this(BigInteger(x), pow10, sign, decRounding)
+                this(BigInteger(x), pow10, sign, roundingDirection)
 
          val digitLen = biA.toString().length
          val bd = if (sign) BigDecimal(biA).negate() else BigDecimal(biA)
          val bdScaled = bd.scaleByPowerOfTen(-pow10)
-         val bdRounded = bdScaled.setScale(0, decRounding.mapToRoundingMode())
+         val bdRounded = bdScaled.setScale(0, roundingDirection.mapToRoundingMode())
          val inexact = bdScaled.compareTo(bdRounded) != 0
          val biRoundedAbs = bdRounded.toBigIntegerExact().abs()
          val biUnrounded = bdScaled.setScale(0, RoundingMode.DOWN).toBigIntegerExact().abs()
@@ -52,39 +52,39 @@ class TestC256ScaleDown {
     val bi5321 = bi5.shiftLeft(144).or(bi3.shiftLeft(96)).or(bi2.shiftLeft(48)).or(bi1)
 
     val cases = arrayOf(
-        TC("313632014659747341935386347255122675838030894814755919430800302558372603616", 37, false, ROUND_TIES_TO_AWAY),
-        TC(BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE), 2, false, ROUND_TIES_TO_EVEN),
-        TC("599", 2, false, ROUND_TIES_TO_EVEN),
-        TC("2", 1, false, ROUND_TIES_TO_EVEN),
-        TC("10", 1, false, ROUND_TIES_TO_EVEN),
-        TC("5500000000000001", 15, false, ROUND_TIES_TO_EVEN),
-        TC("5000000000000000", 15, false, ROUND_TIES_TO_EVEN),
-        TC("5500000000000000", 14, false, ROUND_TIES_TO_EVEN),
-        TC("5500000000000000", 15, false, ROUND_TIES_TO_EVEN),
-        TC("8399566454088370176858046088293", 0, true, ROUND_TIES_TO_EVEN),
-        TC("511", 0, true, ROUND_TIES_TO_EVEN),
-        TC(bi5321.shiftLeft(1), 1, true, ROUND_TIES_TO_EVEN),
-        TC("99999999999999999999999999999999999999999999", 1, true, ROUND_TIES_TO_EVEN),
-        TC(bi54321, 1, true, ROUND_TIES_TO_EVEN),
-        TC("1087", 2, true, ROUND_TOWARD_ZERO),
-        TC("18010334491269082087", 2, true, ROUND_TOWARD_ZERO),
-        TC(BigInteger.ONE.shiftLeft(66), 1, false, ROUND_TIES_TO_EVEN),
-        TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE),
-        TC("2155134570088770723972178854394", 3, false, ROUND_TIES_TO_EVEN),
-        TC("78694514899641471", 8, false, ROUND_TOWARD_ZERO),
-        TC("218013830959062861903198505440629832955", 9, false, ROUND_TIES_TO_EVEN),
-        TC("8833659103727869972", 4, false, ROUND_TOWARD_NEGATIVE),
-        TC("8833659103727869972", 4, true, ROUND_TOWARD_POSITIVE),
-        TC("8833659103727869972", 4, true, ROUND_TOWARD_NEGATIVE),
-        TC("2243325502234968696719", 9, false, ROUND_TIES_TO_EVEN),
-        TC("316413813903600685246406848", 8, false, ROUND_TIES_TO_EVEN),
-        TC("1598575705195620085819330297435841000492438", 6, false, ROUND_TOWARD_ZERO),
-        TC("1087", 2, true, ROUND_TOWARD_ZERO),
-        TC("1087", 2, false, ROUND_TIES_TO_EVEN),
-        TC("18010334491269082087", 2, true, ROUND_TOWARD_ZERO),
-        TC("3482748081595369130101", 16, false, ROUND_TIES_TO_EVEN),
-        TC("167457751028870756383096012673692132664", 39, false, ROUND_TIES_TO_AWAY),
-        TC("74", 1, false, ROUND_TIES_TO_EVEN),
+        TC("313632014659747341935386347255122675838030894814755919430800302558372603616", 37, false, TIES_TO_AWAY),
+        TC(BigInteger.ONE.shiftLeft(64).subtract(BigInteger.ONE), 2, false, TIES_TO_EVEN),
+        TC("599", 2, false, TIES_TO_EVEN),
+        TC("2", 1, false, TIES_TO_EVEN),
+        TC("10", 1, false, TIES_TO_EVEN),
+        TC("5500000000000001", 15, false, TIES_TO_EVEN),
+        TC("5000000000000000", 15, false, TIES_TO_EVEN),
+        TC("5500000000000000", 14, false, TIES_TO_EVEN),
+        TC("5500000000000000", 15, false, TIES_TO_EVEN),
+        TC("8399566454088370176858046088293", 0, true, TIES_TO_EVEN),
+        TC("511", 0, true, TIES_TO_EVEN),
+        TC(bi5321.shiftLeft(1), 1, true, TIES_TO_EVEN),
+        TC("99999999999999999999999999999999999999999999", 1, true, TIES_TO_EVEN),
+        TC(bi54321, 1, true, TIES_TO_EVEN),
+        TC("1087", 2, true, TOWARD_ZERO),
+        TC("18010334491269082087", 2, true, TOWARD_ZERO),
+        TC(BigInteger.ONE.shiftLeft(66), 1, false, TIES_TO_EVEN),
+        TC("8833659103727869972", 4, false, TOWARD_POSITIVE),
+        TC("2155134570088770723972178854394", 3, false, TIES_TO_EVEN),
+        TC("78694514899641471", 8, false, TOWARD_ZERO),
+        TC("218013830959062861903198505440629832955", 9, false, TIES_TO_EVEN),
+        TC("8833659103727869972", 4, false, TOWARD_NEGATIVE),
+        TC("8833659103727869972", 4, true, TOWARD_POSITIVE),
+        TC("8833659103727869972", 4, true, TOWARD_NEGATIVE),
+        TC("2243325502234968696719", 9, false, TIES_TO_EVEN),
+        TC("316413813903600685246406848", 8, false, TIES_TO_EVEN),
+        TC("1598575705195620085819330297435841000492438", 6, false, TOWARD_ZERO),
+        TC("1087", 2, true, TOWARD_ZERO),
+        TC("1087", 2, false, TIES_TO_EVEN),
+        TC("18010334491269082087", 2, true, TOWARD_ZERO),
+        TC("3482748081595369130101", 16, false, TIES_TO_EVEN),
+        TC("167457751028870756383096012673692132664", 39, false, TIES_TO_AWAY),
+        TC("74", 1, false, TIES_TO_EVEN),
     )
 
     @Test
@@ -97,7 +97,7 @@ class TestC256ScaleDown {
 
     @Test
     fun testProblemChild() {
-        val tc = TC("8833659103727869972", 4, false, ROUND_TOWARD_POSITIVE)
+        val tc = TC("8833659103727869972", 4, false, TOWARD_POSITIVE)
         test1(tc)
     }
 
@@ -171,8 +171,8 @@ class TestC256ScaleDown {
 
     fun buildTestCase(bi:BigInteger, xPow10:Int) : TC {
         val sign = random.nextBoolean()
-        val decRounding = DecRounding.fromValue(random.nextInt(5))
-        val tc = TC(bi, xPow10, sign, decRounding)
+        val roundingDirection = RoundingDirection.fromValue(random.nextInt(5))
+        val tc = TC(bi, xPow10, sign, roundingDirection)
         return tc
     }
 
@@ -208,11 +208,11 @@ class TestC256ScaleDown {
         val coeffObserved = C256()
         val pow10 = case.pow10
         if (verbose)
-            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.decRounding} expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = sign:$sign ${case.roundingDirection} expected:$expected")
         c256SetScaleDownPow10(coeffObserved, coeffA, pow10, Pentad())
         val observed = coeffObserved.coeffToBigInteger()
         if (! observed.equals(expected))
-            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.decRounding} expected:$expected")
+            println("$coeffA (${coeffA.digitLen}) / 10**$pow10 = $coeffObserved (${coeffObserved.digitLen}) sign:$sign ${case.roundingDirection} expected:$expected")
         assertEquals(expected, observed)
     }
 

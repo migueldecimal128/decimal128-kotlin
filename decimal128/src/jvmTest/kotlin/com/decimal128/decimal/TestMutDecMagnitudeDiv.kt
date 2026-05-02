@@ -12,13 +12,13 @@ class TestMutDecMagnitudeDiv {
     val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecContext) {
-        constructor(strA: String, strB: String, rd: DecRounding) :
+        constructor(strA: String, strB: String, rd: RoundingDirection) :
                 this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin().with(rd))
         constructor(strA: String, strB: String) :
                 this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin())
         constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext.decimal128Kotlin())
 
-        val rm = ctx.decRounding.mapToRoundingMode()
+        val rm = ctx.roundingDirection.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -29,17 +29,17 @@ class TestMutDecMagnitudeDiv {
     }
 
     val cases = arrayOf(
-        TC("1.05138115419E-1636", "1.297600068158632391583639985E+4509", DecRounding.ROUND_TOWARD_POSITIVE),
-        TC("5.8331E+4541", "1.06765154850769863710859340415777E-5653", DecRounding.ROUND_TOWARD_POSITIVE),
+        TC("1.05138115419E-1636", "1.297600068158632391583639985E+4509", RoundingDirection.TOWARD_POSITIVE),
+        TC("5.8331E+4541", "1.06765154850769863710859340415777E-5653", RoundingDirection.TOWARD_POSITIVE),
         TC("8.62772233398E+826", "3.37229718376401328925734846797201E-3185"),
         TC("1", "2"),
         TC("0E+4519", "4.14999526830484824E+2722"),
         TC("2.7710284E-1295", "2.912E-5964"),
         TC("3.4648355837009412658250388928553E-289", "1.432458417443E-546"),
-        TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", DecRounding.ROUND_TOWARD_POSITIVE),
-        TC("1.221824056626775696489E-5049", "6.4667951153346922410790519767E-4095", DecRounding.ROUND_TIES_TO_AWAY),
-        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",DecRounding.ROUND_TIES_TO_EVEN),
-        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",DecRounding.ROUND_TOWARD_ZERO),
+        TC("2.76087719145005779930318E+4433", "8.24163109571752684E+5964", RoundingDirection.TOWARD_POSITIVE),
+        TC("1.221824056626775696489E-5049", "6.4667951153346922410790519767E-4095", RoundingDirection.TIES_TO_AWAY),
+        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.TIES_TO_EVEN),
+        TC("3.936175555033646832418361E+4916", "1.9547932317865978101179491106E+3786",RoundingDirection.TOWARD_ZERO),
         TC("1", "3"),
         TC("1", "2"),
         )
@@ -86,7 +86,7 @@ class TestMutDecMagnitudeDiv {
 
     fun randDecimal128Context(): DecContext {
         val i = random.nextInt(4)
-        val env = DecContext.decimal128Kotlin().with(DecRounding.fromValue(i))
+        val env = DecContext.decimal128Kotlin().with(RoundingDirection.fromValue(i))
         return env
     }
 
@@ -95,7 +95,7 @@ class TestMutDecMagnitudeDiv {
         val bdB = tc.bdB
         val expected = tc.bdQ
         val env = tc.ctx
-        val rm = env.decRounding.mapToRoundingMode()
+        val rm = env.roundingDirection.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA / bdB:$bdB (rm:$rm) => expected:$expected")

@@ -59,7 +59,7 @@ private fun withScaleImplFNZ(x: Decimal, decimalScale: Int): Decimal {
         qDelta > 0 -> { // scale and round as needed
             val t1 = ctx.tmps.mdecBridge1.set(x)
             val residue = c256SetScaleDownPow10(t1, t1, qDelta, ctx.tmps.pentad)
-            t1.roundAndFinalizeFinite(stealSignFlag(xSteal), qDesired, residue, ctx.decRounding, ctx)
+            t1.roundAndFinalizeFinite(stealSignFlag(xSteal), qDesired, residue, ctx.roundingDirection, ctx)
             return Decimal.from(t1)
         }
 

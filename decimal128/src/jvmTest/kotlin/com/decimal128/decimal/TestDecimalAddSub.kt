@@ -1,8 +1,8 @@
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_AWAY
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_POSITIVE
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -14,13 +14,13 @@ class TestDecimalAddSub {
     val verbose = false
 
     class TC(val bdAraw: BigDecimal, val bdBraw: BigDecimal, val ctx: DecContext) {
-        constructor(strA: String, strB: String, rd: DecRounding) :
+        constructor(strA: String, strB: String, rd: RoundingDirection) :
                 this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin().with(rd))
         constructor(strA: String, strB: String) :
                 this(BigDecimal(strA), BigDecimal(strB), DecContext.decimal128Kotlin())
         constructor(bdA: BigDecimal, bdB: BigDecimal) : this(bdA, bdB, DecContext.decimal128Kotlin())
 
-        val rm = ctx.decRounding.mapToRoundingMode()
+        val rm = ctx.roundingDirection.mapToRoundingMode()
         val bdA = bdToIeeeDecimal128(bdAraw, rm)
         val bdAIsFinite = bdIsFinite(bdA)
         val bdB = bdToIeeeDecimal128(bdBraw, rm)
@@ -29,22 +29,22 @@ class TestDecimalAddSub {
     }
 
     val cases = arrayOf(
-        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
+        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", TOWARD_POSITIVE),
         TC("4.682646551193821E+1896", "-3.6154999561049707802E+1896"),
         TC("-5.67892220171928869550639447E+859", "0E-5736"),
         TC("12E3", "-4"),
-        TC("-2.055E+2463", "4E+4142", ROUND_TIES_TO_AWAY),
+        TC("-2.055E+2463", "4E+4142", TIES_TO_AWAY),
         TC("22E1", "-2E2"),
         TC("-2E2", "22E1"),
-        TC("2.9E-3804", "-1.8251376154629220824597360992E-3779", ROUND_TIES_TO_AWAY),
+        TC("2.9E-3804", "-1.8251376154629220824597360992E-3779", TIES_TO_AWAY),
         TC("1", "1e1"),
-        TC("0E-114", "1.768449379828632909538225435741516E+3531", ROUND_TOWARD_ZERO),
-        TC("-4.949004E-4622", "2.06229042911321265462351537682015E-4592", ROUND_TIES_TO_AWAY),
+        TC("0E-114", "1.768449379828632909538225435741516E+3531", TOWARD_ZERO),
+        TC("-4.949004E-4622", "2.06229042911321265462351537682015E-4592", TIES_TO_AWAY),
         TC("-3.87184285392449585406072732173794E+5253", "3.4414437429652711952247662511911E+2910"),
         TC("1.3886853281837524782330363161313E-2355", "1.287963674772144018606726951628158E-2341"),
-        TC("3.5564499921671956252714452E+621", "0E+5834", ROUND_TOWARD_POSITIVE),
-        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", ROUND_TOWARD_POSITIVE),
-        TC("2.14402028641E+4038", "9.0688499219445651743894779402E-76", ROUND_TOWARD_POSITIVE),
+        TC("3.5564499921671956252714452E+621", "0E+5834", TOWARD_POSITIVE),
+        TC("3.577396280843936609447212543753E-5366", "2.327539848910E-5939", TOWARD_POSITIVE),
+        TC("2.14402028641E+4038", "9.0688499219445651743894779402E-76", TOWARD_POSITIVE),
         TC("1.17100139250993218892100442826921E-2997", "1.03684390716810037961251682741E-3170"),
         TC("2", "3"),
         TC("0", "9e99"),
@@ -78,7 +78,7 @@ class TestDecimalAddSub {
 
     fun randDecimal128Rounding(): DecContext {
         val i = random.nextInt(4)
-        val env = DecContext.decimal128Kotlin().with(DecRounding.fromValue(i))
+        val env = DecContext.decimal128Kotlin().with(RoundingDirection.fromValue(i))
         return env
     }
 
@@ -87,7 +87,7 @@ class TestDecimalAddSub {
         val bdB = tc.bdB
         val expected = tc.bdP
         val ctx = tc.ctx
-        val rm = ctx.decRounding.mapToRoundingMode()
+        val rm = ctx.roundingDirection.mapToRoundingMode()
 
         if (verbose)
             println("bdA:$bdA + bdB:$bdB (rm:$rm) => expected:$expected")

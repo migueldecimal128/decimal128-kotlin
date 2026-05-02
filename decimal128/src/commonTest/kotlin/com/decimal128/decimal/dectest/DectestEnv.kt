@@ -1,6 +1,6 @@
 package com.decimal128.decimal.dectest
 
-import com.decimal128.decimal.DecRounding
+import com.decimal128.decimal.RoundingDirection
 
 data class DectestEnv(
     val extended: Boolean = true,
@@ -8,7 +8,7 @@ data class DectestEnv(
     val precision: Int = 34,
     val maxExp: Int = 6144,
     val minExp: Int = -6143,
-    val rounding: DecRounding? = DecRounding.ROUND_TIES_TO_EVEN
+    val rounding: RoundingDirection? = RoundingDirection.TIES_TO_EVEN
 ) {
 
     val qExpMax: Int

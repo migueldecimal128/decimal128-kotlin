@@ -1,12 +1,12 @@
 package com.decimal128.decimal.fptest
 
 import com.decimal128.decimal.DecContext
-import com.decimal128.decimal.DecRounding
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_AWAY
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_ZERO
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_POSITIVE
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TOWARD_NEGATIVE
+import com.decimal128.decimal.RoundingDirection
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_EVEN
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_AWAY
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_POSITIVE
+import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_NEGATIVE
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.Compare754Result.*
 import org.junit.jupiter.api.Test
@@ -266,13 +266,13 @@ class TestFptestDecimal {
             }
         }
 
-        fun roundingDirection(): DecRounding {
+        fun roundingDirection(): RoundingDirection {
             return when (round) {
-                "=0" -> ROUND_TIES_TO_EVEN
-                "=^" -> ROUND_TIES_TO_AWAY
-                ">"  -> ROUND_TOWARD_POSITIVE
-                "<"  -> ROUND_TOWARD_NEGATIVE
-                "0"  -> ROUND_TOWARD_ZERO
+                "=0" -> TIES_TO_EVEN
+                "=^" -> TIES_TO_AWAY
+                ">"  -> TOWARD_POSITIVE
+                "<"  -> TOWARD_NEGATIVE
+                "0"  -> TOWARD_ZERO
                 else -> throw RuntimeException("what is '$round' ?")
             }
         }

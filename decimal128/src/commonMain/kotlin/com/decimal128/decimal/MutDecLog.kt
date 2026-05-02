@@ -220,7 +220,7 @@ internal fun extractKMostSigDigitRounded(x: MutDec, ctx: DecContext): Int {
     val digitLen = stealDigitLen(xSteal)
     verify { !stealSignFlag(xSteal) && digitLen > 0 }
     val residue = c256SetScaleDownPow10(z, x, digitLen - 1, pentad)
-    z.roundAndFinalizeFnz(false, 0, residue, DecRounding.ROUND_TIES_TO_AWAY, ctx)
+    z.roundAndFinalizeFnz(false, 0, residue, RoundingDirection.TIES_TO_AWAY, ctx)
     verify { z.digitLen <= 2 && z.dw0 > 0 && z.dw0 <= 10 }
     return z.dw0.toInt()
 }

@@ -12,18 +12,18 @@ internal inline fun decFinalizeFinite(sign: Boolean,
                                       qExp: Int,
                                       ctx: DecContext = DecContext.current(),
                                       beQuiet: Boolean = false): Decimal =
-    decRoundAndFinalizeFinite(sign, dw1, dw0, EXACT, qExp, ctx.decRounding, ctx, beQuiet)
+    decRoundAndFinalizeFinite(sign, dw1, dw0, EXACT, qExp, ctx.roundingDirection, ctx, beQuiet)
 
 internal fun decRoundAndFinalizeFinite(sign: Boolean,
                                        dw1: Long, dw0: Long, residue: Residue,
                                        qExp: Int,
                                        ctx: DecContext, beQuiet: Boolean = false): Decimal =
-    decRoundAndFinalizeFinite(sign, dw1, dw0, residue, qExp, ctx.decRounding, ctx, beQuiet)
+    decRoundAndFinalizeFinite(sign, dw1, dw0, residue, qExp, ctx.roundingDirection, ctx, beQuiet)
 
 internal fun decRoundAndFinalizeFinite(sign: Boolean,
                                        dw1In: Long, dw0In: Long, inboundResidue: Residue,
                                        qExpIn: Int,
-                                       rounding: DecRounding, ctx: DecContext,
+                                       rounding: RoundingDirection, ctx: DecContext,
                                        beQuiet: Boolean = false): Decimal {
     // Step 1: Fast path: already in valid decimal128 range
     if (inboundResidue == EXACT && ctx.coeffQexpFit(dw1In, dw0In, qExpIn)) {
@@ -71,7 +71,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
 
     // step 6: rounding
     val applyRounding = totalResidue != EXACT
-    if (applyRounding && totalResidue.ulpRoundUp(rounding.negate(sign), dw0)) {
+    if (applyRounding && totalResidue.ulpRoundUp(rounding.negated(sign), dw0)) {
         // step 6.1: increment
         ++dw0
         dw1 += if (dw0 == 0L) 1L else 0L
@@ -101,11 +101,11 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
 private fun decFinalizeZero(
     sign: Boolean,
     qExp: Int, residue: Residue,
-    rounding: DecRounding, ctx: DecContext,
+    rounding: RoundingDirection, ctx: DecContext,
     beQuiet: Boolean
 ): Decimal {
     val z: Decimal
-    if (residue != EXACT && residue.ulpRoundUp(rounding.negate(sign), lsdwIsOdd = 0L)) {
+    if (residue != EXACT && residue.ulpRoundUp(rounding.negated(sign), lsdwIsOdd = 0L)) {
         when {
             qExp > Q_MAX -> return decFinalizeOverflow(sign, rounding, ctx, beQuiet)
             qExp < Q_TINY ->
@@ -121,7 +121,7 @@ private fun decFinalizeZero(
 
 private fun decFinalizeUnderflowRegion(sign: Boolean,
                                        dw1: Long, dw0: Long, residue: Residue,
-                                       qExp: Int, rounding: DecRounding,
+                                       qExp: Int, rounding: RoundingDirection,
                                        ctx: DecContext, beQuiet: Boolean): Decimal {
     // IEEE 754 7.5 Underflow - handle subnormal region
     verify { qExp < Q_TINY }
@@ -153,14 +153,14 @@ private fun decFinalizeUnderflowRegion(sign: Boolean,
  */
 private fun decFinalizeUnderflowBoundary(sign: Boolean,
                                          dw1: Long, dw0: Long, residue: Residue,
-                                         rounding: DecRounding, ctx: DecContext,
+                                         rounding: RoundingDirection, ctx: DecContext,
                                          beQuiet: Boolean): Decimal {
     // no value params ... nothing to verify
     val digitLen = calcDigitLen128(dw1, dw0)
     val scaleResidue = Residue.fromValuePow10(dw1, dw0, digitLen)
     val totalResidue = scaleResidue.merge(residue)
     val z =
-        if (totalResidue.ulpRoundUp(rounding.negate(sign), 0L)) minFiniteMagnitude(sign, ctx)
+        if (totalResidue.ulpRoundUp(rounding.negated(sign), 0L)) minFiniteMagnitude(sign, ctx)
         else Decimal.zero(sign, Q_TINY)
     return if (beQuiet) z else ctx.signalInexactUnderflow(z)
 }
@@ -168,7 +168,7 @@ private fun decFinalizeUnderflowBoundary(sign: Boolean,
 private fun decFinalizeSubnormal(sign: Boolean,
                                  dw1: Long, dw0: Long, residue: Residue,
                                  qExp: Int,
-                                 rounding: DecRounding, ctx: DecContext,
+                                 rounding: RoundingDirection, ctx: DecContext,
                                  beQuiet: Boolean): Decimal {
     val truncationNeeded = Q_TINY - qExp
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
@@ -180,7 +180,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
     var dw0T = tmpPair.dw0
     var qExpT = Q_TINY
 
-    if (totalResidue != EXACT && totalResidue.ulpRoundUp(rounding.negate(sign), dw0T)) {
+    if (totalResidue != EXACT && totalResidue.ulpRoundUp(rounding.negated(sign), dw0T)) {
         // apply rounding
         ++dw0T
         dw1T += if (dw0T == 0L) 1L else 0L
@@ -210,7 +210,7 @@ private fun decFinalizeClamping(sign: Boolean,
     return decimalFNZ(sign, qMax, dw1S, dw0S)
 }
 
-private fun decFinalizeOverflow(sign: Boolean, rounding: DecRounding,
+private fun decFinalizeOverflow(sign: Boolean, rounding: RoundingDirection,
                                 ctx: DecContext, beQuiet: Boolean): Decimal {
     // IEEE 754 7.4 Overflow - always inexact
     val z =

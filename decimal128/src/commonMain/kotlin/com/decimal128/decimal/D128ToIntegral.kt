@@ -45,7 +45,7 @@ internal fun d128IsOddIntegral(x: Decimal): Boolean {
     }
 }
 
-internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, suppressInexact: Boolean = false): Decimal {
+internal fun d128RoundToIntegral(x: Decimal, rounding: RoundingDirection, suppressInexact: Boolean = false): Decimal {
     val stealX = x.steal
     if (!stealIsFinite(stealX)) {
         if (stealIsSNAN(stealX))
@@ -89,7 +89,7 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: DecRounding, suppressInex
  *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
  * @return the converted [Long], or [Long.MIN_VALUE] if the value is NaN, infinite, or out of range
  */
-internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding,
+internal fun d128ConvertToLong(x: Decimal, rounding: RoundingDirection,
                                suppressInexact: Boolean,
                                suppressInvalid: Boolean): Long {
     val steal = x.steal
@@ -136,7 +136,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding,
                         residue = Residue.fromValueDecade(x)
                         verify { residue != EXACT }
                     }
-                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
                     val ret = if (!roundUp) 0L else (signMaskLong shl 1) or 1L
                     if (!suppressInexact)
                         signalInexact(x)
@@ -149,7 +149,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding,
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
                     var r0 = dwPair.dw0
-                    val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
+                    val roundUp01 = residue.ulpRoundUp01L(rounding.negated(sign), r0)
                     r0 += roundUp01
                     verify { dwPair.dw1 == 0L }
                     if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
@@ -182,7 +182,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: DecRounding,
  *   [DecException.INVALID_OPERATION] is always signaled regardless of this flag.
  * @return the converted [Int], or [Int.MIN_VALUE] if the value is NaN, infinite, or out of range
  */
-fun d128ConvertToInt(x: Decimal, rounding: DecRounding, suppressInexact: Boolean): Int {
+fun d128ConvertToInt(x: Decimal, rounding: RoundingDirection, suppressInexact: Boolean): Int {
     val steal = x.steal
     if (stealIsFinite(steal)) {
         val signMask = stealSignMask(steal)
@@ -228,7 +228,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, suppressInexact: Boolean
                         residue = Residue.fromValueDecade(x)
                         verify { residue != Residue.EXACT }
                     }
-                    val roundUp = residue.ulpRoundUp(rounding.negate(sign), 0L)
+                    val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
                     val ret = if (!roundUp) 0 else (signMask shl 1) or 1
                     if (!suppressInexact)
                         signalInexact(x)
@@ -240,7 +240,7 @@ fun d128ConvertToInt(x: Decimal, rounding: DecRounding, suppressInexact: Boolean
                     val dwPair = DecContext.current().tmps.pentad
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     var r0 = dwPair.dw0
-                    val roundUp01 = residue.ulpRoundUp01L(rounding.negate(sign), r0)
+                    val roundUp01 = residue.ulpRoundUp01L(rounding.negated(sign), r0)
                     verify { dwPair.dw1 == 0L }
                     // r0 cannot roll over
                     // worse case is 10 9s 99999_99999 which rolls up to 11 digits

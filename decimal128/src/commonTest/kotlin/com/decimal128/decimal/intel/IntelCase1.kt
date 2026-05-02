@@ -3,8 +3,8 @@ package com.decimal128.decimal.intel
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecFlags
-import com.decimal128.decimal.DecRounding
-import com.decimal128.decimal.DecRounding.Companion.ROUND_TIES_TO_EVEN
+import com.decimal128.decimal.RoundingDirection
+import com.decimal128.decimal.RoundingDirection.Companion.TIES_TO_EVEN
 import com.decimal128.decimal.Decimal
 import com.decimal128.decimal.Pentad
 import com.decimal128.decimal.bid128Decode
@@ -122,12 +122,12 @@ class IntelCase1 private constructor (
     }
 
     companion object {
-        val decRoundingMap = arrayOf(
-            ROUND_TIES_TO_EVEN,
-            DecRounding.ROUND_TOWARD_NEGATIVE,
-            DecRounding.ROUND_TOWARD_POSITIVE,
-            DecRounding.ROUND_TOWARD_ZERO,
-            DecRounding.ROUND_TIES_TO_AWAY
+        val roundingDirectionMaps = arrayOf(
+            TIES_TO_EVEN,
+            RoundingDirection.TOWARD_NEGATIVE,
+            RoundingDirection.TOWARD_POSITIVE,
+            RoundingDirection.TOWARD_ZERO,
+            RoundingDirection.TIES_TO_AWAY
         )
 
         val allowedTailKeys = setOf(
@@ -224,5 +224,5 @@ class IntelCase1 private constructor (
 
     }
 
-    fun decRounding(): DecRounding = decRoundingMap[rounding]
+    fun decRounding(): RoundingDirection = roundingDirectionMaps[rounding]
 }
