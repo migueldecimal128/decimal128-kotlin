@@ -105,7 +105,7 @@ private fun decFinalizeZero(
     beQuiet: Boolean
 ): Decimal {
     val z: Decimal
-    if (residue != EXACT && residue.ulpRoundUp(rounding.forMagnitude(sign), lsdwIsOdd = 0L)) {
+    if (residue != EXACT && residue.ulpRoundUp(rounding.forMagnitude(sign), isOdd = 0L)) {
         when {
             qExp > Q_MAX -> return decFinalizeOverflow(sign, rounding, ctx, beQuiet)
             qExp < Q_TINY ->

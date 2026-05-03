@@ -3,11 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.Residue.Companion.EXACT
-import com.decimal128.decimal.Residue.Companion.GT_HALF
-import com.decimal128.decimal.Residue.Companion.HALF
-import com.decimal128.decimal.Residue.Companion.LT_HALF
-
 internal expect value class Residue internal constructor(val value:Int) {
 
     companion object {
@@ -41,13 +36,11 @@ internal expect value class Residue internal constructor(val value:Int) {
 
 }
 
-internal fun Residue.ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =
-    ulpBias(roundingDirection, lsdwIsOdd) != 0L
+internal fun Residue.ulpRoundUp(roundingDirection: RoundingDirection, isOdd: Long) : Boolean =
+    ulpBias(roundingDirection, isOdd) != 0L
 
-internal fun Residue.ulpRoundUp01L(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long =
-    -ulpBias(roundingDirection, lsdwIsOdd) ushr 63
-
-
+internal fun Residue.ulpRoundUp01L(roundingDirection: RoundingDirection, isOdd: Long) : Long =
+    -ulpBias(roundingDirection, isOdd) ushr 63
 
 internal fun Residue.ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
     val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
