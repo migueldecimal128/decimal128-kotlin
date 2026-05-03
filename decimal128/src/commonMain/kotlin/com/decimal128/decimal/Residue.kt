@@ -13,28 +13,145 @@ internal expect value class Residue internal constructor(val value:Int) {
 
         operator fun invoke(res: Int): Residue
 
-        internal inline fun fromDecimalDigit(digit: Int): Residue
-
-        fun fromValueDecade(c:C256): Residue
-
-        fun fromValueDecade(x: Decimal): Residue
-
-        fun fromValuePow10(dw1: Long, dw0: Long, pow10: Int): Residue
-
-        fun fromRoundBitStickyBitsStickyBits(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long): Residue
-
-        fun fromRoundBitStickBit(roundBit: Int, stickyBit: Int): Residue
-
-        fun fromRoundBitStickyBits(isolatedRoundBit: Long, stickyBits: Long): Residue
-
-        fun fromRemainderDivisor(r: C256, d: C256): Residue
-
-        fun fromRemainderDivisor(remainder: Long, divisor: Long): Residue
-
-        fun residueFromRemainderPow10(remainder: Long, pow10: Int): Residue
     }
 
 }
+
+private const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
+
+internal inline fun Residue.Companion.fromDecimalDigit(digit: Int): Residue = Residue((DIGIT_MAP shr (digit shl 1)) and 0x03)
+
+// FIXME - this method is fine, but it needs a better name
+//  ... and perhaps a better implementation
+internal fun Residue.Companion.fromValueDecade(c:C256): Residue {
+    val digitLen = c.digitLen
+    if (digitLen == 0)
+        return EXACT
+    val c0 = c.dw0
+    val c1 = c.dw1
+    val cmp = when {
+        digitLen < MIN_POW10_DIGIT_LEN_128 -> compareWithHalfPow10_1(c0, digitLen)
+        digitLen < MIN_POW10_DIGIT_LEN_192 -> compareWithHalfPow10_2(c1, c0, digitLen)
+        digitLen < MIN_POW10_DIGIT_LEN_256 -> compareWithHalfPow10_3(c.dw2, c1, c0, digitLen)
+        else -> compareWithHalfPow10_4(c.dw3, c.dw2, c1, c0, digitLen)
+    }
+    val residueValue = (cmp + 2) and 0x03
+    val residue = Residue(residueValue)
+    return residue
+}
+
+internal fun Residue.Companion.fromValueDecade(x: Decimal): Residue {
+    val digitLen = stealDigitLen(x.steal)
+    if (digitLen == 0)
+        return EXACT
+    val x0 = x.dw0
+    val x1 = x.dw1
+    val cmp = when {
+        digitLen < MIN_POW10_DIGIT_LEN_128 -> compareWithHalfPow10_1(x0, digitLen)
+        else -> compareWithHalfPow10_2(x1, x0, digitLen)
+    }
+    val residueValue = (cmp + 2) and 0x03
+    val residue = Residue(residueValue)
+    return residue
+}
+
+internal fun Residue.Companion.fromValuePow10(dw1: Long, dw0: Long, pow10: Int): Residue {
+    val pow10Offset = (pow10 shl 1) and POW10_BCE
+    val dw1P = POW10[pow10Offset + 1]
+    val dw0P = POW10[pow10Offset    ]
+    val dw1H = dw1P ushr 1
+    val dw0H = (dw1P shl 63) or (dw0P ushr 1)
+    val cmp = ucmp128(dw1, dw0, dw1H, dw0H)
+    return Residue(cmp + 2)
+}
+
+
+internal fun Residue.Companion.fromRoundBitStickyBitsStickyBits(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long) : Residue {
+    val stickyBit = if (stickyBitsFracCompare >= 0 || stickyBitsPow2 != 0L) 1 else 0
+    val roundBit = if (isolatedRoundBit == 0L) 0 else 1
+    val residueValue = ((roundBit shl 1) or stickyBit) and 0x03
+    val residueX = Residue(residueValue)
+    val residueY =
+        if (stickyBitsPow2 == 0L) {
+            if (stickyBitsFracCompare < 0) {
+                if (isolatedRoundBit == 0L) EXACT else HALF
+            } else {
+                if (isolatedRoundBit == 0L) LT_HALF else GT_HALF
+            }
+        } else {
+            if (isolatedRoundBit == 0L) LT_HALF else GT_HALF
+        }
+    if (residueX != residueY)
+        println("residueX:$residueX residueY:$residueY")
+    verify { residueX == residueY }
+    return residueX
+}
+
+internal fun Residue.Companion.fromRoundBitStickBit(roundBit: Int, stickyBit: Int) : Residue {
+    verify { roundBit in 0..1 }
+    verify { stickyBit in 0..1 }
+    val residueValue = (roundBit shl 1) or stickyBit
+    val residueX = Residue(residueValue)
+    return residueX
+}
+
+internal fun Residue.Companion.fromRoundBitStickyBits(isolatedRoundBit: Long, stickyBits: Long) : Residue {
+    val roundBit = ((isolatedRoundBit or -isolatedRoundBit) ushr 63).toInt()
+    val stickyBit = ((stickyBits or -stickyBits) ushr 63).toInt()
+    val residueValue = (roundBit shl 1) or stickyBit
+    val residueX = Residue(residueValue)
+    return residueX
+}
+
+internal fun Residue.Companion.fromRemainderDivisor(r: C256, d: C256): Residue {
+    if (r.dw3 < 0L) {
+        // high bit of residue is set
+        // doubling is certainly larger
+        return GT_HALF
+    }
+    val s3 = (r.dw3 shl 1) or (r.dw2 ushr -1)
+    if (s3 != d.dw3) {
+        val cmp = unsignedCmp(s3, d.dw3)
+        return if (cmp < 0) LT_HALF else GT_HALF
+    }
+    val s2 = (r.dw2 shl 1) or (r.dw1 ushr -1)
+    if (s2 != d.dw2) {
+        val cmp = unsignedCmp(s2, d.dw2)
+        return if (cmp < 0) LT_HALF else GT_HALF
+    }
+    val s1 = (r.dw1 shl 1) or (r.dw0 ushr -1)
+    if (s1 != d.dw1) {
+        val cmp = unsignedCmp(s1, d.dw1)
+        return if (cmp < 0) LT_HALF else GT_HALF
+    }
+    val s0 = (r.dw0 shl 1)
+    if (s0 != d.dw0) {
+        val cmp = unsignedCmp(s0, d.dw0)
+        return if (cmp < 0) LT_HALF else GT_HALF
+    }
+    return EXACT
+}
+
+internal fun Residue.Companion.fromRemainderDivisor(remainder: Long, divisor: Long): Residue {
+    val residue = when {
+        remainder == 0L -> EXACT
+        remainder < 0L -> GT_HALF // hi bit set .. so doubling would be 65 bits ... GT y0
+        unsignedLT(2 * remainder, divisor) -> LT_HALF // we are doubling the remainder here
+        unsignedCmp(2 * remainder, divisor) > 0 -> GT_HALF
+        else -> HALF
+    }
+    return residue
+}
+
+internal fun Residue.Companion.residueFromRemainderPow10(remainder: Long, pow10: Int): Residue {
+    val nonZeroMask = ((remainder or -remainder) shr 63).toInt()
+    val pow10div2 = pow10_64(pow10) ushr 1
+    val cmp = unsignedCmp(remainder, pow10div2)
+    val index = ((cmp + 2) and nonZeroMask) and 0x03
+    val residue = Residue(index)
+    return residue
+}
+
 
 internal fun Residue.ulpRoundUp(roundingDirection: RoundingDirection, isOdd: Long) : Boolean =
     ulpBias(roundingDirection, isOdd) != 0L
