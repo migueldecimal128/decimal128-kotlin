@@ -12,9 +12,7 @@ internal expect value class Residue internal constructor(val value:Int) {
         val GT_HALF: Residue
 
         operator fun invoke(res: Int): Residue
-
     }
-
 }
 
 private const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
@@ -65,7 +63,19 @@ internal fun Residue.Companion.fromValuePow10(dw1: Long, dw0: Long, pow10: Int):
     return Residue(cmp + 2)
 }
 
-
+/**
+ * With range reciprocal multiplication for powers of 10
+ * we get 2 sets of sticky bits and a round bit.
+ *
+ * The first sticky bits come from shifting the dividend
+ * right in order to remove powers of 2 ...
+ * (since our recip mul is actually powers of 5)
+ *
+ * The second sticky bits represent the fractional portion
+ * to the right of the radix after our _division_ by power of 5.
+ *
+ * The round bit ... is the rounding bit.
+ */
 internal fun Residue.Companion.fromRoundBitStickyBitsStickyBits(isolatedRoundBit: Long, stickyBitsFracCompare: Int, stickyBitsPow2: Long) : Residue {
     val stickyBit = if (stickyBitsFracCompare >= 0 || stickyBitsPow2 != 0L) 1 else 0
     val roundBit = if (isolatedRoundBit == 0L) 0 else 1
