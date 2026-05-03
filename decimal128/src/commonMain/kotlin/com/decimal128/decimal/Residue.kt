@@ -80,21 +80,7 @@ internal fun Residue.Companion.fromRoundBitStickyBitsStickyBits(isolatedRoundBit
     val stickyBit = if (stickyBitsFracCompare >= 0 || stickyBitsPow2 != 0L) 1 else 0
     val roundBit = if (isolatedRoundBit == 0L) 0 else 1
     val residueValue = ((roundBit shl 1) or stickyBit) and 0x03
-    val residueX = Residue(residueValue)
-    val residueY =
-        if (stickyBitsPow2 == 0L) {
-            if (stickyBitsFracCompare < 0) {
-                if (isolatedRoundBit == 0L) EXACT else HALF
-            } else {
-                if (isolatedRoundBit == 0L) LT_HALF else GT_HALF
-            }
-        } else {
-            if (isolatedRoundBit == 0L) LT_HALF else GT_HALF
-        }
-    if (residueX != residueY)
-        println("residueX:$residueX residueY:$residueY")
-    verify { residueX == residueY }
-    return residueX
+    return Residue(residueValue)
 }
 
 internal fun Residue.Companion.fromRoundBitStickBit(roundBit: Int, stickyBit: Int) : Residue {

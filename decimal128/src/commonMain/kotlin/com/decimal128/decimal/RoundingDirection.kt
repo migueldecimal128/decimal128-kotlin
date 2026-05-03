@@ -13,8 +13,39 @@ expect value class RoundingDirection private constructor(val value:Int) {
 
 }
 
+/**
+ * Returns the rounding direction to apply when operating on the magnitude
+ * of a signed value with this rounding direction.
+ *
+ * For sign-magnitude representations, arithmetic is performed on the
+ * unsigned magnitude with the sign reattached at the end. This requires
+ * mapping the original (signed-space) rounding direction to an equivalent
+ * direction in magnitude space:
+ *
+ * | Direction          | Positive sign | Negative sign     |
+ * |--------------------|---------------|-------------------|
+ * | `TIES_TO_EVEN`     | unchanged     | unchanged         |
+ * | `TIES_TO_AWAY`     | unchanged     | unchanged         |
+ * | `TOWARD_ZERO`      | unchanged     | unchanged         |
+ * | `TOWARD_POSITIVE`  | unchanged     | `TOWARD_NEGATIVE` |
+ * | `TOWARD_NEGATIVE`  | unchanged     | `TOWARD_POSITIVE` |
+ *
+ * Rounding toward +∞ on a negative value moves toward zero in magnitude
+ * space — equivalent to rounding toward −∞ on the magnitude. The two
+ * directional rules swap; the three sign-symmetric rules are unchanged.
+ *
+ * ## Encoding
+ *
+ * Branchless via a packed lookup. The map holds 4-bit nybbles indexed by
+ * `(sign ? 8 : 0) or value`:
+ *
+ *   Positive sign (indices 0..4):  identity map (low 32 bits)
+ *   Negative sign (indices 8..12): swap of 3 and 4 (high 32 bits)
+ *
+ * @param sign `true` if the operand is negative, `false` if positive.
+ */
 internal fun RoundingDirection.forMagnitude(sign: Boolean): RoundingDirection {
-    val magnitudeMap: Long = 0x0003421_000043210L
+    val magnitudeMap: Long = 0x00034210_00043210L
     val index = (if (sign) 8 else 0) or value
     val shift = index shl 2  // index * 4
     val result = ((magnitudeMap shr shift) and 0xFL).toInt()
