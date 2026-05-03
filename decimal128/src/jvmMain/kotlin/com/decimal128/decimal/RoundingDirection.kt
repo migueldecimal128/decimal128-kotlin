@@ -3,8 +3,6 @@ package com.decimal128.decimal
 private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
     "ROUND_TOWARD_ZERO", "ROUND_TOWARD_POSITIVE", "ROUND_TOWARD_NEGATIVE")
 
-
-
 @JvmInline
 actual value class RoundingDirection private constructor(val value:Int) {
     actual companion object {
@@ -27,13 +25,13 @@ actual value class RoundingDirection private constructor(val value:Int) {
 
     }
 
-    // roundTiesToEve, roundTiesToAway, and roundTiesTowardZero are the same independent of sign
-    // roundTowardPositive and roundTowardNegative are complementary
-    actual fun negated() :RoundingDirection {
-        return if (value < 3) this else if (value == 3) TOWARD_NEGATIVE else TOWARD_POSITIVE
+    actual fun forMagnitude(sign: Boolean): RoundingDirection {
+        val magnitudeMap: Long = 0x0003421_000043210L
+        val index = (if (sign) 8 else 0) or value
+        val shift = index shl 2  // index * 4
+        val result = ((magnitudeMap shr shift) and 0xFL).toInt()
+        return RoundingDirection(result)
     }
-
-    actual fun negated(sign: Boolean) = if (sign) negated() else this
 
     /**
      * Whether overflow under this rounding direction produces infinity (vs. the

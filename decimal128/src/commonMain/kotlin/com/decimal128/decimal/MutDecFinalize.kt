@@ -92,7 +92,7 @@ internal fun MutDec.roundAndFinalizeFnz(sign: Boolean, inboundQExp: Int,
 
     // Step 6: Apply rounding ... might increment coefficient
     val applyRounding = totalResidue != EXACT
-    if (applyRounding && totalResidue.ulpRoundUp(rounding.negated(sign), dw0)) {
+    if (applyRounding && totalResidue.ulpRoundUp(rounding.forMagnitude(sign), dw0)) {
         // Step 6.1: increment
         c256MutateIncrement()
 
@@ -137,7 +137,7 @@ internal fun MutDec.roundAndFinalizeZero(sign: Boolean, qExp: Int,
     // This can happen in quantize operations where a non-zero value rounds to zero
     if (inboundResidue != EXACT) {
         // Check if rounding would produce a non-zero result
-        val roundUp = inboundResidue.ulpRoundUp(rounding.negated(sign), 0L)
+        val roundUp = inboundResidue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
         if (roundUp) {
             c256SetOne()
             this.steal = stealEncodeFNZ(sign, qExpCapped, PACKED_LENGTHS_1_1)
@@ -204,7 +204,7 @@ private fun MutDec.finalizeUnderflowBoundary(
     // no value params ... nothing to verify
     val scaleResidue = Residue.fromValueDecade(this)
     val totalResidue = scaleResidue.merge(inboundResidue)
-    val roundUp = totalResidue.ulpRoundUp(rounding.negated(sign), 0L)
+    val roundUp = totalResidue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
 
     return ctx.signalInexactUnderflow(
         if (roundUp) setMinFiniteMagnitude(sign, ctx)
@@ -234,7 +234,7 @@ private fun MutDec.finalizeSubnormal(
         return this
 
     // Apply rounding
-    val roundUp = totalResidue.ulpRoundUp(rounding.negated(sign), dw0)
+    val roundUp = totalResidue.ulpRoundUp(rounding.forMagnitude(sign), dw0)
     if (roundUp) {
         c256MutateIncrement()
 

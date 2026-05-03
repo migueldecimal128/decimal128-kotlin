@@ -136,7 +136,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: RoundingDirection,
                         residue = Residue.fromValueDecade(x)
                         verify { residue != EXACT }
                     }
-                    val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
+                    val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
                     val ret = if (!roundUp) 0L else (signMaskLong shl 1) or 1L
                     if (!suppressInexact)
                         signalInexact(x)
@@ -149,7 +149,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: RoundingDirection,
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     // DANGER! CAUTION! r0 might roll over to ZEEERO with this roundUp
                     var r0 = dwPair.dw0
-                    val roundUp01 = residue.ulpRoundUp01L(rounding.negated(sign), r0)
+                    val roundUp01 = residue.ulpRoundUp01L(rounding.forMagnitude(sign), r0)
                     r0 += roundUp01
                     verify { dwPair.dw1 == 0L }
                     if (r0 > 0L || r0 == Long.MIN_VALUE && sign) {
@@ -228,7 +228,7 @@ fun d128ConvertToInt(x: Decimal, rounding: RoundingDirection, suppressInexact: B
                         residue = Residue.fromValueDecade(x)
                         verify { residue != Residue.EXACT }
                     }
-                    val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
+                    val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
                     val ret = if (!roundUp) 0 else (signMask shl 1) or 1
                     if (!suppressInexact)
                         signalInexact(x)
@@ -240,7 +240,7 @@ fun d128ConvertToInt(x: Decimal, rounding: RoundingDirection, suppressInexact: B
                     val dwPair = DecContext.current().tmps.pentad
                     val residue = c128ScaleDownPow10(dwPair, x.dw1, dw0, fracDigitLen)
                     var r0 = dwPair.dw0
-                    val roundUp01 = residue.ulpRoundUp01L(rounding.negated(sign), r0)
+                    val roundUp01 = residue.ulpRoundUp01L(rounding.forMagnitude(sign), r0)
                     verify { dwPair.dw1 == 0L }
                     // r0 cannot roll over
                     // worse case is 10 9s 99999_99999 which rolls up to 11 digits

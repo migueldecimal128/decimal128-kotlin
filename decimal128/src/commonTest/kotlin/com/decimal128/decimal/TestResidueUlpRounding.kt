@@ -146,7 +146,7 @@ class TestResidueUlpRounding {
     fun test1(tc: TC) {
         if (verbose)
             println("$tc")
-        val effectiveRoundingDirection = tc.roundingDirection.negated(tc.sign)
+        val effectiveRoundingDirection = tc.roundingDirection.forMagnitude(tc.sign)
         val observedBias = tc.residue.ulpBias(effectiveRoundingDirection, tc.lsdw)
         assertEquals(tc.expectedBias, observedBias)
     }

@@ -522,7 +522,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                 residue = Residue.fromValueDecade(x)
                 verify { residue != Residue.EXACT }
             }
-            val roundUp = residue.ulpRoundUp(rounding.negated(xSign), 0L)
+            val roundUp = residue.ulpRoundUp(rounding.forMagnitude(xSign), 0L)
             if (! roundUp)
                 setZero(xSign)
             else
@@ -582,7 +582,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                             residue = Residue.fromValueDecade(this)
                             verify { residue != Residue.EXACT }
                         }
-                        val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
+                        val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
                         return ctx.signalInexact(
                             if (!roundUp)
                                 0L
@@ -594,7 +594,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                     val tmps = ctx.tmps
                     val t = tmps.mdecFmaParseConvert
                     val residue = c256SetScaleDownPow10(t, this, fracDigitLen, tmps.pentad)
-                    val roundUp = residue.ulpRoundUp(rounding.negated(sign), 0L)
+                    val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
                     if (roundUp)
                         c256MutateIncrement(t)
                     val tSteal = stealEncodeFNZ(sign, 0, stealPackedLengths(t.steal))

@@ -14,9 +14,7 @@ expect value class RoundingDirection private constructor(val value:Int) {
     // roundTiesToEve, roundTiesToAway, and roundTiesTowardZero are the same independent of sign
     // roundTowardPositive and roundTowardNegative are complementary
 
-    fun negated(): RoundingDirection
-
-    fun negated(sign: Boolean): RoundingDirection
+    fun forMagnitude(sign: Boolean): RoundingDirection
 
     fun overflowsToInfinity(sign: Boolean): Boolean
 
