@@ -105,7 +105,7 @@ private inline fun addUnscaledMagnitudes(sign: Boolean, x: Decimal, y: Decimal, 
     val x1 = x.dw1
     val y1 = y.dw1
     val s1 = x1 + y1 + carry0
-    return decFinalizeFinite(sign, s1, s0, x.qExp, ctx)
+    return decFinalizeFinite(sign, x.qExp, s1, s0, ctx)
 }
 
 private inline fun addFnzFnzScaled(xSteal: Int, x: Decimal, ySteal: Int, y: Decimal, ctx: DecContext): Decimal {
@@ -168,7 +168,7 @@ private fun addFnzScaledMagnitudes(resultSign: Boolean, x: Decimal, y: Decimal, 
             dw1Sum += resultPentad.dw1 + if (unsignedLT(dw0Sum, resultPentad.dw0)) 1L else 0L
         }
     }
-    return decRoundAndFinalizeFinite(resultSign, dw1Sum, dw0Sum, residue, qAlign, ctx)
+    return decRoundAndFinalizeFinite(resultSign, qAlign, dw1Sum, dw0Sum, residue, ctx)
 }
 
 /**
@@ -257,7 +257,7 @@ private fun subFnzScaledMagnitude(sign: Boolean, m: Decimal, s: Decimal, ctx: De
                     dw1Diff -= 1L
             }
         }
-        return decRoundAndFinalizeFinite(sign, dw1Diff, dw0Diff, residue, qAlign, ctx)
+        return decRoundAndFinalizeFinite(sign, qAlign, dw1Diff, dw0Diff, residue, ctx)
     }
 
     // fall back to wide 256-bit ALU for more precision

@@ -72,8 +72,8 @@ internal fun d128RoundToIntegral(x: Decimal, rounding: RoundingDirection, suppre
         else -> c128ScaleDownPow10(pentadResult, dw1, dw0, pow10)
     }
     return decRoundAndFinalizeFinite(
-        sign, pentadResult.dw1, pentadResult.dw0,
-        residue, 0, rounding, ctx, suppressInexact
+        sign, 0, pentadResult.dw1,
+        pentadResult.dw0, residue, rounding, ctx, suppressInexact
     )
 }
 

@@ -91,7 +91,7 @@ private fun tenPowN(sign: Boolean, n: Int, preferredQExp: Int): Decimal {
     return when {
         coeffExp <= 0 || coeffExp > 33 -> {
             // coefficient is 1, qExp = n
-            decFinalizeFinite(sign, 0L, 1L, n)
+            decFinalizeFinite(sign, n, 0L, 1L)
         }
 
         else -> {
@@ -99,7 +99,7 @@ private fun tenPowN(sign: Boolean, n: Int, preferredQExp: Int): Decimal {
             val pow10Offset = (coeffExp shl 1) and POW10_BCE
             val dw1 = POW10[pow10Offset + 1]
             val dw0 = POW10[pow10Offset]
-            decFinalizeFinite(sign, dw1, dw0, preferredQExp)
+            decFinalizeFinite(sign, preferredQExp, dw1, dw0)
         }
     }
 }

@@ -52,7 +52,7 @@ internal fun d128FusedMulPow10Subtract(sign: Boolean, x: Decimal, pow10: Int, y:
     val d0 = p0 - y.dw0
     val borrow0 = if (unsignedLT(p0, d0)) 1L else 0L
     val d1 = p1 - y.dw1 - borrow0
-    return decFinalizeFinite(sign, d1, d0, y.qExp, ctx)
+    return decFinalizeFinite(sign, y.qExp, d1, d0, ctx)
 }
 
 internal fun d128IsExactPowerOfTen(x: Decimal): Boolean {

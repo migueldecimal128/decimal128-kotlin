@@ -42,7 +42,7 @@ private inline fun mulFnzFnz(prodSignFlag: Boolean, prodExp: Int, prodBitLen: In
     if (prodBitLen <= 128) {
         val p0 = x.dw0 * y.dw0
         val p1 = unsignedMulHi(x.dw0, y.dw0) + (x.dw1 * y.dw0) + (y.dw1 * x.dw0)
-        return decFinalizeFinite(prodSignFlag, p1, p0, prodExp, ctx)
+        return decFinalizeFinite(prodSignFlag, prodExp, p1, p0, ctx)
     }
     return mulFnzFnz256(x, y, ctx)
 }
@@ -69,7 +69,7 @@ internal fun d128SqrImpl(x: Decimal, ctx: DecContext): Decimal {
                 val xDw0 = x.dw0
                 val p0 = xDw0 * xDw0
                 val p1 = unsignedMulHi(xDw0, xDw0) + ((x.dw1 * xDw0) shl 1)
-                return decFinalizeFinite(false, p1, p0, stealQExp(xSteal) shl 1, ctx)
+                return decFinalizeFinite(false, stealQExp(xSteal) shl 1, p1, p0, ctx)
             } else {
                 val tmps = ctx.tmps
                 val m = tmps.mdecBridge1.set(x)

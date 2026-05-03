@@ -7,24 +7,32 @@ import com.decimal128.decimal.Decimal.Companion.decimalFNZ
 import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import com.decimal128.decimal.Residue.Companion.EXACT
 
-internal inline fun decFinalizeFinite(sign: Boolean,
-                                      dw1: Long, dw0: Long,
-                                      qExp: Int,
-                                      ctx: DecContext = DecContext.current(),
-                                      beQuiet: Boolean = false): Decimal =
-    decRoundAndFinalizeFinite(sign, dw1, dw0, EXACT, qExp, ctx.roundingDirection, ctx, beQuiet)
+internal inline fun decFinalizeFinite(
+    sign: Boolean,
+    qExp: Int,
+    dw1: Long, dw0: Long,
+    ctx: DecContext = DecContext.current(),
+    beQuiet: Boolean = false
+): Decimal =
+    decRoundAndFinalizeFinite(sign, qExp, dw1, dw0, EXACT, ctx.roundingDirection, ctx, beQuiet)
 
-internal fun decRoundAndFinalizeFinite(sign: Boolean,
-                                       dw1: Long, dw0: Long, residue: Residue,
-                                       qExp: Int,
-                                       ctx: DecContext, beQuiet: Boolean = false): Decimal =
-    decRoundAndFinalizeFinite(sign, dw1, dw0, residue, qExp, ctx.roundingDirection, ctx, beQuiet)
+internal fun decRoundAndFinalizeFinite(
+    sign: Boolean,
+    qExp: Int,
+    dw1: Long, dw0: Long,
+    residue: Residue,
+    ctx: DecContext, beQuiet: Boolean = false
+): Decimal =
+    decRoundAndFinalizeFinite(sign, qExp, dw1, dw0, residue, ctx.roundingDirection, ctx, beQuiet)
 
-internal fun decRoundAndFinalizeFinite(sign: Boolean,
-                                       dw1In: Long, dw0In: Long, inboundResidue: Residue,
-                                       qExpIn: Int,
-                                       rounding: RoundingDirection, ctx: DecContext,
-                                       beQuiet: Boolean = false): Decimal {
+internal fun decRoundAndFinalizeFinite(
+    sign: Boolean,
+    qExpIn: Int,
+    dw1In: Long, dw0In: Long,
+    inboundResidue: Residue,
+    rounding: RoundingDirection, ctx: DecContext,
+    beQuiet: Boolean = false
+): Decimal {
     // Step 1: Fast path: already in valid decimal128 range
     if (inboundResidue == EXACT && ctx.coeffQexpFit(dw1In, dw0In, qExpIn)) {
         // allocate zero thru this path to reuse cached zeros
@@ -51,7 +59,7 @@ internal fun decRoundAndFinalizeFinite(sign: Boolean,
         if (ctx.coeffFits(dw1In, dw0In)) 0
         else calcDigitLen128(dw1In, dw0In) - precision
     if (rangeTruncationNeeded > precisionTruncationNeeded)
-        return decFinalizeUnderflowRegion(sign, dw1In, dw0In,inboundResidue, qExpIn, rounding, ctx, beQuiet)
+        return decFinalizeUnderflowRegion(sign, qExpIn, dw1In, dw0In, inboundResidue, rounding, ctx, beQuiet)
 
     // Step 5: normalize to <= precision, accumulating residue
     var totalResidue = inboundResidue
@@ -109,8 +117,10 @@ private fun decFinalizeZero(
         when {
             qExp > Q_MAX -> return decFinalizeOverflow(sign, rounding, ctx, beQuiet)
             qExp < Q_TINY ->
-                return decFinalizeUnderflowRegion(sign, dw1 = 0L, dw0 = 1L,
-                    residue, qExp, rounding, ctx, beQuiet)
+                return decFinalizeUnderflowRegion(
+                    sign, qExp, dw1 = 0L,
+                    dw0 = 1L, residue, rounding, ctx, beQuiet
+                )
             else -> z = decimalFNZ(sign, qExp, dw1 = 0L, dw0 = 1L)
         }
     } else {
@@ -119,10 +129,12 @@ private fun decFinalizeZero(
     return if (residue == EXACT || beQuiet) z else ctx.signalInexact(z)
 }
 
-private fun decFinalizeUnderflowRegion(sign: Boolean,
-                                       dw1: Long, dw0: Long, residue: Residue,
-                                       qExp: Int, rounding: RoundingDirection,
-                                       ctx: DecContext, beQuiet: Boolean): Decimal {
+private fun decFinalizeUnderflowRegion(
+    sign: Boolean,
+    qExp: Int, dw1: Long, dw0: Long,
+    residue: Residue, rounding: RoundingDirection,
+    ctx: DecContext, beQuiet: Boolean
+): Decimal {
     // IEEE 754 7.5 Underflow - handle subnormal region
     verify { qExp < Q_TINY }
     val truncationNeeded = Q_TINY - qExp

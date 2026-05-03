@@ -832,7 +832,7 @@ class Decimal private constructor(
             stealIsFinite(steal) -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
                 val qNew = qExp + pow10DeltaCapped
-                decFinalizeFinite(signFlag, dw1, dw0, qNew)
+                decFinalizeFinite(signFlag, qNew, dw1, dw0)
             }
 
             stealIsINF(steal) -> this
