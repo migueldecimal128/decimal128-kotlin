@@ -21,8 +21,6 @@ actual value class Residue internal constructor(val value:Int) {
 
         private val RESIDUE_MAP = arrayOf(EXACT, LT_HALF, HALF, GT_HALF)
 
-        private val STRING_NAMES = arrayOf("EXACT", "LT_HALF", "HALF", "GT_HALF")
-
         private const val DIGIT_MAP = 0b11_11_11_11_10_01_01_01_01_00
 
         internal actual inline fun fromDecimalDigit(digit: Int): Residue = Residue((DIGIT_MAP shr (digit shl 1)) and 0x03)
@@ -161,109 +159,6 @@ actual value class Residue internal constructor(val value:Int) {
 
     }
 
-    actual fun ulpRoundUp(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Boolean =
-        ulpBias(roundingDirection, lsdwIsOdd) != 0L
+    override fun toString() = toDebugString()
 
-    actual fun ulpRoundUp01L(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long =
-        -ulpBias(roundingDirection, lsdwIsOdd) ushr 63
-
-    actual fun ulpBias(roundingDirection: RoundingDirection, lsdwIsOdd: Long) = ulpBiasY(roundingDirection, lsdwIsOdd)
-
-    actual fun ulpBiasY(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        val ULP_BIAS_MAP = 0b0_00000000_00001110_00000000_00001100_00001000L
-
-        val biasMapEvenOdd = ULP_BIAS_MAP or ((lsdwIsOdd and 1) shl 2)
-        val bitIndex = (roundingDirection.value shl 3) + value
-        val roundingMapShifted = biasMapEvenOdd shr bitIndex
-        val bias = roundingMapShifted and 1
-        return bias
-    }
-
-    // used in add case when there is no overlap
-    actual fun ulpBiasX(roundingDirection: RoundingDirection, lsdwIsOdd: Long) : Long {
-        return when (roundingDirection) {
-            TIES_TO_EVEN -> when (value) {
-                LT_HALF.value -> 0L
-                HALF.value -> lsdwIsOdd and 1L
-                GT_HALF.value -> 1L
-                // EXACT
-                else -> 0L
-            }
-            TIES_TO_AWAY -> when (value) {
-                LT_HALF.value -> 0L
-                HALF.value -> 1L
-                GT_HALF.value -> 1L
-                // EXACT
-                else -> 0L
-            }
-            TOWARD_ZERO -> when (value) {
-                LT_HALF.value -> 0L
-                HALF.value -> 0L
-                GT_HALF.value -> 0L
-                // EXACT
-                else -> 0L
-            }
-            TOWARD_POSITIVE -> when (value) {
-                LT_HALF.value -> 1L
-                HALF.value -> 1L
-                GT_HALF.value -> 1L
-                // EXACT
-                else -> 0L
-            }
-            // ROUND_TOWARD_NEGATIVE
-            else -> when (value) {
-                LT_HALF.value -> 0L
-                HALF.value -> 0L
-                GT_HALF.value -> 0L
-                // EXACT
-                else -> 0L
-            }
-        }
-    }
-
-    /*
-                previous
-                exact lt_half half    gt_half
-    exact       exact lt_half lt_half lt_half
-    lt_half     lt_half lt_half lt_half lt_half
-    half        half, gt_half, gt_half, gtHalf
-    gt_half     gt_half gt_half gt_half gt_half
-
-     */
-
-    /**
-     * Merges previous residue with new stickResidue in left-to-right fashion ...
-     * as though parsing digits left to right.
-     */
-    actual fun merge(stickyResidue: Residue): Residue {
-        /*
-        val mergedResidue = when (this.value) {
-            EXACT.value -> if (stickyResidue.value == EXACT.value) EXACT else LT_HALF
-            LT_HALF.value -> LT_HALF
-            HALF.value -> if (stickyResidue.value == EXACT.value) HALF else GT_HALF
-            GT_HALF.value -> GT_HALF
-
-            else -> throw RuntimeException("unrecognized Residue.value")
-        }
-         */
-        val s = (stickyResidue.value and 1) or (stickyResidue.value ushr 1)
-        val r = (this.value or s) and 0x03
-        val mergedResidue = Residue(r)
-        return mergedResidue
-    }
-
-    actual fun subtractionInverse() : Residue {
-        val inverse = when (this.value) {
-            EXACT.value -> EXACT
-            LT_HALF.value -> GT_HALF
-            HALF.value -> HALF
-            GT_HALF.value -> LT_HALF
-            else -> throw RuntimeException("unrecognized Residue.value")
-        }
-        return inverse
-    }
-
-    override fun toString() : String {
-        return if (this.value in STRING_NAMES.indices) STRING_NAMES[this.value] else "invalid Residue:$value"
-    }
 }
