@@ -1,8 +1,5 @@
 package com.decimal128.decimal
 
-private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
-    "ROUND_TOWARD_ZERO", "ROUND_TOWARD_POSITIVE", "ROUND_TOWARD_NEGATIVE")
-
 @JvmInline
 actual value class RoundingDirection private constructor(val value:Int) {
     actual companion object {
@@ -25,6 +22,6 @@ actual value class RoundingDirection private constructor(val value:Int) {
 
     }
 
-    override fun toString() = TO_STRING_MAP[value]
+    override fun toString() = toDebugString()
 
 }

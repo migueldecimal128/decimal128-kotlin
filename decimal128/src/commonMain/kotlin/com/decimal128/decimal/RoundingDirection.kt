@@ -129,3 +129,7 @@ internal fun RoundingDirection.underflowsToZero(sign: Boolean): Boolean {
     return ((table ushr (this.value * 4 + signBit)) and 1) != 0
 }
 
+private val TO_STRING_MAP = arrayOf("ROUND_TIES_TO_EVEN", "ROUND_TIES_TO_AWAY",
+    "ROUND_TOWARD_ZERO", "ROUND_TOWARD_POSITIVE", "ROUND_TOWARD_NEGATIVE")
+
+internal fun RoundingDirection.toDebugString(): String = TO_STRING_MAP[value]
