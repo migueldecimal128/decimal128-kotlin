@@ -1,6 +1,6 @@
 package com.decimal128.decimal
 
-enum class PrintStyle {
+enum class FormatStyle {
     AUTO,                 // GDAS to-scientific-string (sic)
     ENGINEERING,          // GDAS to-engineering-string
     ALWAYS_SCIENTIFIC,    // always scientific notaion

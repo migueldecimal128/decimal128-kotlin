@@ -94,7 +94,7 @@ class TestMutDecToString {
     }
 
     fun test1(tc: TC) {
-        val ctxEPlus = DecContext.decimal128Kotlin().with(DecPrefs.KOTLIN_DEFAULT.copy(printExponentPlusSign = true))
+        val ctxEPlus = DecContext.decimal128Kotlin()
         val strVal = tc.strVal
         val bd = tc.bd
         val expected = tc.expected

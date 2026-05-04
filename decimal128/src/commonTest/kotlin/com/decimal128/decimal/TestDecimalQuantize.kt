@@ -86,7 +86,7 @@ class TestDecimalQuantize {
     fun test(tc: TC) {
         if (verbose)
             println("$tc")
-        val ctx = DecContext.decimal128Kotlin().with(DecPrefs.KOTLIN_DEFAULT.copy(printExponentPlusSign = true))
+        val ctx = DecContext.decimal128Kotlin().with(PrintPrefs.DEFAULT_KOTLIN.copy(exponentPlusSign = true))
         ctx.eval {
             val x = tc.xStr.toDecimal()
             val y = tc.yStr.toDecimal()

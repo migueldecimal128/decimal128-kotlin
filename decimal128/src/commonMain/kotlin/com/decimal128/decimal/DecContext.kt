@@ -8,14 +8,18 @@ import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_NEGATIVE
 
 expect abstract class DecContextRep(
     roundingDirection: RoundingDirection,
-    decPrefs: DecPrefs,
+    parsePrefs: ParsePrefs,
+    printPrefs: PrintPrefs,
+    arithmeticPrefs: ArithmeticPrefs,
     decTrapHandlers: DecTrapHandlers?,
     decFlags: DecFlags,
     decTmps: DecTmps,
     isExtendedPrecision38: Boolean = false
 ) {
     internal val roundingDirection: RoundingDirection
-    internal val decPrefs: DecPrefs
+    internal val parsePrefs: ParsePrefs
+    internal val printPrefs: PrintPrefs
+    internal val arithmeticPrefs: ArithmeticPrefs
     internal val decTrapHandlers: DecTrapHandlers?
     internal val decFlags: DecFlags
     internal val tmps: DecTmps
@@ -42,19 +46,23 @@ expect object DecContextThreadLocal {
 
 class DecContext(
     roundingDirection: RoundingDirection,
-    decPrefs: DecPrefs,
+    parsePrefs: ParsePrefs,
+    printPrefs: PrintPrefs,
+    arithmeticPrefs: ArithmeticPrefs,
     decTrapHandlers: DecTrapHandlers?,
     decFlags: DecFlags,
     decTmps: DecTmps,
     isExtendedPrecision38: Boolean = false
 ) : DecContextRep(
-    roundingDirection, decPrefs, decTrapHandlers, decFlags, decTmps, isExtendedPrecision38
+    roundingDirection, parsePrefs, printPrefs, arithmeticPrefs, decTrapHandlers, decFlags, decTmps, isExtendedPrecision38
 ) {
 
     companion object {
         fun decimal128Kotlin(): DecContext = DecContext(
             roundingDirection = RoundingDirection.TIES_TO_EVEN,
-            decPrefs = DecPrefs.KOTLIN_DEFAULT, // parseMalformedSignalsInvalidOperation = false
+            parsePrefs = ParsePrefs.DEFAULT_KOTLIN,
+            printPrefs = PrintPrefs.DEFAULT_KOTLIN,
+            arithmeticPrefs = ArithmeticPrefs.DEFAULT_KOTLIN,
             decTrapHandlers = null,
             decFlags = DecFlags(),
             decTmps = DecTmps(),
@@ -62,7 +70,9 @@ class DecContext(
 
         fun decimal128IEEE(): DecContext = DecContext(
             roundingDirection = RoundingDirection.TIES_TO_EVEN,
-            decPrefs = DecPrefs.IEEE_DEFAULT, // parseMalformedSignalsInvalidOperation = false
+            parsePrefs = ParsePrefs.DEFAULT_IEEE,
+            printPrefs = PrintPrefs.DEFAULT_IEEE,
+            arithmeticPrefs = ArithmeticPrefs.DEFAULT_IEEE,
             decTrapHandlers = null,
             decFlags = DecFlags(),
             decTmps = DecTmps(),
@@ -70,7 +80,9 @@ class DecContext(
 
         fun decimal128Extended38(): DecContext = DecContext(
             roundingDirection = RoundingDirection.TIES_TO_EVEN,
-            decPrefs = DecPrefs.KOTLIN_DEFAULT, // perhaps this should be IEEE ... depending upon NaN behavior
+            parsePrefs = ParsePrefs.DEFAULT_IEEE,
+            printPrefs = PrintPrefs.DEFAULT_IEEE,
+            arithmeticPrefs = ArithmeticPrefs.DEFAULT_IEEE,
             decTrapHandlers = null,  // parseMalformedSignalsInvalidOperation = false
             decFlags = DecFlags(),
             decTmps = DecTmps(),
@@ -91,25 +103,31 @@ class DecContext(
 
 
     fun withExtendedPrecision38() =
-        DecContext(roundingDirection, decPrefs, decTrapHandlers, decFlags, tmps, true)
+        DecContext(roundingDirection, parsePrefs, printPrefs, arithmeticPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38 = true)
 
     fun with(newRoundingDirection: RoundingDirection) =
-        DecContext(newRoundingDirection, decPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
+        DecContext(newRoundingDirection, parsePrefs, printPrefs, arithmeticPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 
-    fun with(newDecPrefs: DecPrefs) =
-        DecContext(roundingDirection, newDecPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
+    fun with(newParsePrefs: ParsePrefs) =
+        DecContext(roundingDirection, newParsePrefs, printPrefs, arithmeticPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
+
+    fun with(newPrintPrefs: PrintPrefs) =
+        DecContext(roundingDirection, parsePrefs, newPrintPrefs, arithmeticPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
+
+    fun with(newArithmeticPrefs: ArithmeticPrefs) =
+        DecContext(roundingDirection, parsePrefs, printPrefs, newArithmeticPrefs, decTrapHandlers, decFlags, tmps, isExtendedPrecision38)
 
     fun withRoundingAndNewFlags(roundingDirection: RoundingDirection) =
-        DecContext(roundingDirection, decPrefs, decTrapHandlers, DecFlags(), tmps, isExtendedPrecision38)
+        DecContext(roundingDirection, parsePrefs, printPrefs, arithmeticPrefs, decTrapHandlers, DecFlags(), tmps, isExtendedPrecision38)
 
     fun withTrapHandler(decTrapHandler: DecTrapHandler?, vararg exceptions: DecException): DecContext {
         val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withTrapHandler(decTrapHandler, exceptions)
-        return DecContext(roundingDirection, decPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
+        return DecContext(roundingDirection, parsePrefs, printPrefs, arithmeticPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
     }
 
     fun withThrownException(vararg exceptions: DecException): DecContext {
         val newTrapHandlers = (decTrapHandlers ?: DecTrapHandlers.NONE).withThrownException(exceptions)
-        return DecContext(roundingDirection, decPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
+        return DecContext(roundingDirection, parsePrefs, printPrefs, arithmeticPrefs, newTrapHandlers, decFlags, tmps, isExtendedPrecision38)
     }
 
     fun isOverflow(): Boolean = decFlags.isSet(OVERFLOW)
@@ -363,7 +381,8 @@ class DecContext(
 
     fun getFptestExceptionsString() = decFlags.getFptestExceptionsString()
 
-    fun parseDiscardNanPayload() = decPrefs.parseDiscardNanPayload
+    // FIXME - switch to preserve rather than discard
+    fun parseDiscardNanPayload() = parsePrefs.preserveNANPayload
 
     internal fun coeffFits(dw1: Long, dw0: Long): Boolean {
         // if bitLen < 113 then it is guaranteed to fit

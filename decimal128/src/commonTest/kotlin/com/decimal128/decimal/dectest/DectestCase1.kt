@@ -3,8 +3,9 @@ package com.decimal128.decimal.dectest
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecException
 import com.decimal128.decimal.DecFlags
-import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
+import com.decimal128.decimal.FormatStyle
+import com.decimal128.decimal.PrintPrefs
 
 data class DectestCase1(
     val text: String,
@@ -95,16 +96,15 @@ data class DectestCase1(
             "conversion_syntax" to DecException.INVALID_OPERATION,
         )
 
-        private fun allocDecContext(dectestEnv: DectestEnv, printStyleEngineering: Boolean = false): DecContext {
+        private fun allocDecContext(dectestEnv: DectestEnv, formatStyleEngineering: Boolean = false): DecContext {
             require(dectestEnv.precision == 34)
             require(dectestEnv.maxExp == 6144)
             require(dectestEnv.minExp == -6143)
             require(dectestEnv.rounding != null)
             val decContext = DecContext.decimal128IEEE().
             with(dectestEnv.rounding).
-            with(DecPrefs.IEEE_DEFAULT.
-            copy(printExponentPlusSign = true,
-                printStyle = if (printStyleEngineering) DecPrefs.PrintStyle.ENGINEERING else DecPrefs.PrintStyle.AUTO
+            with(PrintPrefs.DEFAULT_IEEE.
+            copy(formatStyle = if (formatStyleEngineering) FormatStyle.ENGINEERING else FormatStyle.AUTO
                 ))
             return decContext
         }
@@ -112,7 +112,7 @@ data class DectestCase1(
         /**
          * Parse a single decTest test case line into a DectestCase object.
          */
-        fun parseDectestCase(text: String, env: DectestEnv, printStyleEngineering: Boolean = false): DectestCase1 {
+        fun parseDectestCase(text: String, env: DectestEnv, formatStyleEngineering: Boolean = false): DectestCase1 {
             // Split at ->
             val (lhs, rhs) = ARROW.split(text, 2)
 
@@ -155,7 +155,7 @@ data class DectestCase1(
                 conditions = conditions,
                 dectestEnv = env,
                 expectedDecFlags = conditionsToDecFlags(conditions),
-                decContext = allocDecContext(env, printStyleEngineering)
+                decContext = allocDecContext(env, formatStyleEngineering)
             )
         }
 

@@ -5,7 +5,9 @@ package com.decimal128.decimal
 
 actual abstract class DecContextRep actual constructor(
     roundingDirection: RoundingDirection,
-    decPrefs: DecPrefs,
+    parsePrefs: ParsePrefs,
+    printPrefs: PrintPrefs,
+    arithmeticPrefs: ArithmeticPrefs,
     decTrapHandlers: DecTrapHandlers?,
     decFlags: DecFlags,
     decTmps: DecTmps,
@@ -14,7 +16,11 @@ actual abstract class DecContextRep actual constructor(
     //@JvmField DecRounding is a value class :(
     internal actual val roundingDirection: RoundingDirection = roundingDirection
     @JvmField
-    internal actual val decPrefs: DecPrefs = decPrefs
+    internal actual val parsePrefs: ParsePrefs = parsePrefs
+    @JvmField
+    internal actual val printPrefs: PrintPrefs = printPrefs
+    @JvmField
+    internal actual val arithmeticPrefs: ArithmeticPrefs = arithmeticPrefs
     @JvmField
     internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
     @JvmField
@@ -33,7 +39,7 @@ actual abstract class DecContextRep actual constructor(
     internal actual val dw1MinFullPrecisionCoeff:Long = pow10_128_dw1(precision - 1)
 
     override fun toString(): String =
-        "DecContext(isExtendedPrecision38:$isExtendedPrecision38, decRounding=$roundingDirection, decPrefs=$decPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
+        "DecContext(isExtendedPrecision38:$isExtendedPrecision38, decRounding=$roundingDirection, parsePrefs=$parsePrefs, printPrefs=$printPrefs, arithmeticPrefs=$arithmeticPrefs, decTrapHandlers=$decTrapHandlers, decFlags=$decFlags)"
 }
 
 actual object DecContextThreadLocal {

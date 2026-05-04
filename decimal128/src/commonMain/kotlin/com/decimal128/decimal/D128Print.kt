@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.DecPrefs.PrintStyle
 import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
 import kotlin.math.abs
 import kotlin.math.max
@@ -12,8 +11,8 @@ import kotlin.math.max
  * Formats [x] as a string according to [ctx] preferences.
  *
  * For finite values, the format is selected by [DecPrefs.printStyle]:
- * - [PrintStyle.COEFFICIENT_QEXPONENT] — integer coefficient plus quantum exponent
- * - [PrintStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic Spec
+ * - [FormatStyle.COEFFICIENT_QEXPONENT] — integer coefficient plus quantum exponent
+ * - [FormatStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic Spec
  * - Otherwise — plain decimal-point or normalized scientific notation, depending on
  *   the exponent and [DecPrefs.printMinPlainExponent]
  *
@@ -33,8 +32,8 @@ internal fun d128ToString(x: Decimal, ctx: DecContext): String {
  * Formats a Decimal128 value as a string according to [ctx] preferences.
  *
  * For finite values, the format is selected by [DecPrefs.printStyle]:
- * - [PrintStyle.COEFFICIENT_QEXPONENT] — integer coefficient plus quantum exponent
- * - [PrintStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic specification
+ * - [FormatStyle.COEFFICIENT_QEXPONENT] — integer coefficient plus quantum exponent
+ * - [FormatStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic specification
  * - Otherwise — plain decimal-point or normalized scientific notation, depending on
  *   the exponent and [DecPrefs.printMinPlainExponent]
  *
@@ -48,23 +47,23 @@ internal fun d128ToString(x: Decimal, ctx: DecContext): String {
  * @return the formatted string
  */
 internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): String {
-    val prefs = ctx.decPrefs
+    val printPrefs = ctx.printPrefs
     val utf8 = ctx.tmps.utf8BytesPrintOnly
     // a minus sign is always written
     // individual routines will overwrite it for non-negative values
     utf8[0] = '-'.code.toByte()
     if (stealIsFinite(steal)) {
-        val printStyle = prefs.printStyle
-        val exponentEUtf8Byte = (if (prefs.printExponentLowercaseE) 'e' else 'E').code.toByte()
-        val printExponentPlusSign = prefs.printExponentPlusSign
-        if (printStyle != PrintStyle.COEFFICIENT_QEXPONENT) {
+        val printStyle = printPrefs.formatStyle
+        val exponentEUtf8Byte = (if (printPrefs.exponentLowercaseE) 'e' else 'E').code.toByte()
+        val printExponentPlusSign = printPrefs.exponentPlusSign
+        if (printStyle != FormatStyle.COEFFICIENT_QEXPONENT) {
             val qExp = stealQExp(steal)
             return when {
                 qExp == 0 -> toIntegerString(steal, dw1, dw0, utf8)
-                qExp < 0 && stealSciExp(steal) >= prefs.printMinPlainExponent ->
+                qExp < 0 && stealSciExp(steal) >= printPrefs.minPlainExponent ->
                     toDecimalPointString(steal, dw1, dw0, utf8)
 
-                printStyle != PrintStyle.ENGINEERING ->
+                printStyle != FormatStyle.ENGINEERING ->
                     toNormalizedScientificString(
                         steal,
                         dw1,
@@ -85,17 +84,17 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
         }
     }
     var signBit = stealSignBit(steal)
-    val caseOffset = if (prefs.printSpecialValueAllCaps) 8 else 0
+    val caseOffset = printPrefs.specialsCase.ordinal shl 3
     if (stealIsINF(steal)) {
-        val infShortOffset = if (prefs.printInfinityShort3Char) 2 else 0
+        val infShortOffset = if (printPrefs.infinityShort) 2 else 0
         return SPECIAL_VALUE_STRINGS[(caseOffset + infShortOffset + signBit) and SVS_BCE]
     }
-    if (!prefs.printNaNMinusSign)
+    if (!printPrefs.nanMinusSign)
         signBit = 0
-    val nanIndex = (if (stealIsQNAN(steal) || prefs.printCollapseSNaN) 4 else 6) + signBit
+    val nanIndex = (if (stealIsQNAN(steal) || printPrefs.collapseSNAN) 4 else 6) + signBit
     val nanStr = SPECIAL_VALUE_STRINGS[(caseOffset + nanIndex) and SVS_BCE]
     val digitLen = stealDigitLen(steal)
-    if (digitLen == 0 || !prefs.printNaNPayload)
+    if (digitLen == 0 || !printPrefs.nanPayload)
         return nanStr
     val payloadNanLen = nanStr.length + digitLen
     for (i in nanStr.indices)
@@ -105,6 +104,7 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
 }
 
 private val SPECIAL_VALUE_STRINGS = arrayOf(
+    "infinity", "-infinity", "inf", "-inf", "nan", "-nan", "snan", "-snan",
     "Infinity", "-Infinity", "Inf", "-Inf", "NaN", "-NaN", "sNaN", "-sNaN",
     "INFINITY", "-INFINITY", "INF", "-INF", "NAN", "-NAN", "SNAN", "-SNAN",
 )

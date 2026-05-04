@@ -42,14 +42,14 @@ package com.decimal128.decimal
  *   Default: `false`.
  *
  * @property style Selects between scientific, engineering, and raw-cohort forms.
- *   See [PrintStyle].
- *   Default: [PrintStyle.AUTO] (GDAS to-scientific-string).
+ *   See [FormatStyle].
+ *   Default: [FormatStyle.AUTO] (GDAS to-scientific-string).
  *
  * @property specialsCase Letter case used for `Infinity`, `NaN`, and `sNaN`.
  *   See [SpecialsCase].
  *   Default: [SpecialsCase.MIXEDCASE].
  *
- * @property minPlainExponent In [PrintStyle.AUTO], values whose adjusted exponent
+ * @property minPlainExponent In [FormatStyle.AUTO], values whose adjusted exponent
  *   is below this threshold render in scientific form rather than plain decimal.
  *   GDAS specifies `-6`, meaning values smaller than `1E-6` use scientific notation.
  *   Default: `-6`.
@@ -61,8 +61,14 @@ data class PrintPrefs(
     val infinityShort: Boolean = false,
     val nanMinusSign: Boolean = true,
     val nanPayload: Boolean = true,
-    val collapseSNaN: Boolean = false,
-    val style: PrintStyle = PrintStyle.AUTO,
+    val collapseSNAN: Boolean = false,
+    val formatStyle: FormatStyle = FormatStyle.AUTO,
     val specialsCase: SpecialsCase = SpecialsCase.MIXEDCASE,
     val minPlainExponent: Int = -6,
-)
+) {
+    companion object {
+        val DEFAULT_IEEE = PrintPrefs()
+        val DEFAULT_KOTLIN = DEFAULT_IEEE
+    }
+
+}

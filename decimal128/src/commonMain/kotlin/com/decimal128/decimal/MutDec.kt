@@ -264,7 +264,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val stealX = x.steal
         val stealY = y.steal
         verify { stealHasNAN(stealX, stealY) }
-        val preferSnan = ctx.decPrefs.propagatePreferSnan
+        val preferSnan = ctx.arithmeticPrefs.propagatePreferSNAN
         val takeY = !stealIsNAN(stealX) || (preferSnan && stealIsSNAN(stealY) && !stealIsSNAN(stealX))
         val theNaN = if (takeY) y else x
         set(theNaN)

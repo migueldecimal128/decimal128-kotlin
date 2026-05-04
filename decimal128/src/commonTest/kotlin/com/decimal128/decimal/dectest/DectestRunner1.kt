@@ -328,7 +328,7 @@ object DectestRunner1 {
     fun runUnaryStringCtxOp(fileName: String,
                             opName: String,
                             unaryStringCtxOp: (Decimal, DecContext) -> String,
-                            printStyleEngineering: Boolean = false,
+                            formatStyleEngineering: Boolean = false,
                             verbose: Boolean = true,
                             skip: Boolean = true,
                             skipCases: Array<String> = arrayOf(),
@@ -337,16 +337,16 @@ object DectestRunner1 {
             println("SKIPPED: $fileName not available on this platform")
             return
         }
-        val allTests = DectestParser1.parse(fileText, opName, printStyleEngineering)
+        val allTests = DectestParser1.parse(fileText, opName, formatStyleEngineering)
         runUnaryStringCtxOp(allTests, unaryStringCtxOp, skip, skipCases, verbose)
     }
 
     fun runUnaryStringCtxOp(unaryStringCtxOp: (Decimal, DecContext) -> String,
-                            printStyleEngineering: Boolean = false,
+                            formatStyleEngineering: Boolean = false,
                             verbose: Boolean = true,
                             cases: Array<String> = emptyArray(),
     ) {
-        val cases2 = DectestParser1.parse(cases, printStyleEngineering = printStyleEngineering)
+        val cases2 = DectestParser1.parse(cases, formatStyleEngineering = formatStyleEngineering)
         runUnaryStringCtxOp(cases2, unaryStringCtxOp, verbose = verbose)
     }
 

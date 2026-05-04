@@ -54,5 +54,12 @@ data class ArithmeticPrefs(
     val throwOnDivisionByZero: Boolean = false,
     val throwOnOverflow: Boolean = false,
     val throwOnUnderflow: Boolean = false,
-)
+) {
+    companion object {
+        val DEFAULT_IEEE = ArithmeticPrefs()
+        val DEFAULT_INTEL = ArithmeticPrefs(propagatePreferSNAN = false)
+        val DEFAULT_KOTLIN = ArithmeticPrefs(throwOnInvalidOperation = true,
+            throwOnDivisionByZero = true, throwOnOverflow = true, throwOnUnderflow = true)
+    }
+}
 

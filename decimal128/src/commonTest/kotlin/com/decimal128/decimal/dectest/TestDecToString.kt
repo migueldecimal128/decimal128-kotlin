@@ -42,7 +42,7 @@ class TestDecToString {
             "dqBase.decTest",
             "toEng",
             ::d128ToString,
-            printStyleEngineering = true,
+            formatStyleEngineering = true,
             verbose = verbose,
             skip = true,
             skipCases = arrayOf<String>(
@@ -53,7 +53,7 @@ class TestDecToString {
     @Test
     fun testToEngCases() = runUnaryStringCtxOp(
         ::d128ToString,
-        printStyleEngineering = true,
+        formatStyleEngineering = true,
         verbose = verbose,
         cases = arrayOf<String>(
             "dqbast800 toEng 0e+1              -> \"0.00E+3\"",

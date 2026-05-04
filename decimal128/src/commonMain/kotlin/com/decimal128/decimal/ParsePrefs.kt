@@ -46,5 +46,10 @@ data class ParsePrefs(
     val throwOnInexact: Boolean = false,        // > 34 significant digits → rounded
     val throwOnOverflow: Boolean = false,       // exponent too large → infinity
     val throwOnUnderflow: Boolean = false,      // exponent too small → subnormal/zero
-)
+) {
+    companion object {
+        val DEFAULT_IEEE = ParsePrefs()
+        val DEFAULT_KOTLIN = ParsePrefs(throwOnMalformedText = true)
+    }
+}
 

@@ -16,11 +16,11 @@ class TestContextParams1 {
         for (ctx in contexts) {
             for (i in 0..4) {
                 val rounding = RoundingDirection.fromValue(i)
-                val decPrefs = DecPrefs().copy(
-                    printExponentPlusSign = false,
-                    printExponentLowercaseE = false,
+                val printPrefs = PrintPrefs.DEFAULT_KOTLIN.copy(
+                    exponentPlusSign = false,
+                    exponentLowercaseE = false,
                     )
-                val ctxT = ctx.with(rounding).with(decPrefs)
+                val ctxT = ctx.with(rounding).with(printPrefs)
                 ctxT.eval {
                     val a = ".10".toDecimal()
                     val b = "3.0".toDecimal()

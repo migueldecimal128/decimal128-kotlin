@@ -83,7 +83,7 @@ class TestMutDecCompound {
 
         // x very close to -1 from above (near zero base)
         TC("-0.9999999999", 1, "1E-10"),        // 1+x is tiny positive
-        TC("-0.9999999999", -1, "1E10"),       // discounting with tiny base
+        TC("-0.9999999999", -1, "1E+10"),       // discounting with tiny base
         TC("-0.9999999999", Int.MAX_VALUE, "0E-6176"), // tiny base ^ huge n -> 0
         TC("-0.9999999999", Int.MIN_VALUE, "Infinity"), // tiny base ^ huge neg n -> Inf
 
@@ -101,7 +101,7 @@ class TestMutDecCompound {
         // n = 1 (identity-ish)
         TC("0", 1, "1"),                        // (1+0)^1 = 1
         TC("-1", 1, "0"),                       // (1+-1)^1 = 0
-        TC("1E+6144", 1, "1.000000000000000000000000000000000E6144"),        // may overflow to Infinity depending on precision
+        TC("1E+6144", 1, "1.000000000000000000000000000000000E+6144"),        // may overflow to Infinity depending on precision
 
         // Quantum edge cases for zero result
         TC("-1", Int.MAX_VALUE, "0"),          // check qExp = floor(MAX_INT * min(0, Q(-1)))

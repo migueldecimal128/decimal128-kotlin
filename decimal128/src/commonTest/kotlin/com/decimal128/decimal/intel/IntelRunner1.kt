@@ -1,5 +1,6 @@
 package com.decimal128.decimal.intel
 
+import com.decimal128.decimal.ArithmeticPrefs
 import com.decimal128.decimal.DecContext
 import com.decimal128.decimal.DecPrefs
 import com.decimal128.decimal.Decimal
@@ -592,7 +593,7 @@ object IntelRunner1 {
                 println("test:${tc.text}")
             }
             val ctx = DecContext.decimal128Kotlin().with(tc.decRounding()).with(
-                DecPrefs.KOTLIN_DEFAULT.copy(propagatePreferSnan = false)
+                ArithmeticPrefs.DEFAULT_INTEL // .copy(propagatePreferSNAN = false)
             )
             ctx.eval {
                 ctx.decFlags.clearAll()

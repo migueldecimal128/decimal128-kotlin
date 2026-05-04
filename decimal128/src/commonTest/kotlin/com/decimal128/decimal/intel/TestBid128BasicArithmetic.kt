@@ -5,10 +5,10 @@ import kotlin.test.Test
 
 class TestBid128BasicArithmetic {
 
-    val verbose = false
+    val verbose = true
 
-    val decPrefs = DecPrefs().copy(propagatePreferSnan = false)
-    val decContext = DecContext.decimal128Kotlin().with(decPrefs)
+    val arithmeticPrefs = ArithmeticPrefs().copy(propagatePreferSNAN = false)
+    val decContext = DecContext.decimal128Kotlin().with(arithmeticPrefs)
 
     /*****************************************************************************
      *
@@ -31,6 +31,7 @@ class TestBid128BasicArithmetic {
     @Test
     fun testAddCases() = IntelRunner1.runBinaryDecimalCtxOp(
         arrayOf(
+            "bid128_add 0 -9.E-6155 -958896965.958776968777978E-6196 [80000000000001e7e4171bf4d3a00000] 00",
             "bid128_add 0 [7d10b0e971a5f461,4d85007ab72ecfeb] [fffbfffffedacced,7ffcfbfffbffebdd] [7c0030e971a5f4614d85007ab72ecfeb] 01",
             "bid128_add 0 [0001ed09bead87c0378d8e64ffffffff] [0001ed09bead87c0378d8e64ffffffff] [00000000000000000000000000000000] 00",
             "bid128_add 1 [0001ed09bead87c0378d8e62ffffffff] [0001ed09bead87c0378d8e62ffffffff] [0002629b8c891b267182b613cccccccc] 20",

@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.InvalidCause.PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
 import com.decimal128.decimal.InvalidCause.PARSE_INVALID_UNDERSCORE_LOCATION
 import com.decimal128.decimal.InvalidCause.PARSE_DOUBLE_DOT
 import com.decimal128.decimal.InvalidCause.PARSE_EMPTY_STRING
@@ -11,7 +10,6 @@ import com.decimal128.decimal.InvalidCause.PARSE_MALFORMED
 import com.decimal128.decimal.InvalidCause.PARSE_NO_COEFFICIENT_DIGIT
 import com.decimal128.decimal.InvalidCause.PARSE_NO_EXPONENT_DIGIT
 import com.decimal128.decimal.InvalidCause.PARSE_UNEXPECTED_CHAR
-import com.decimal128.decimal.InvalidCause.PARSE_VALUE_OUT_OF_RANGE
 import kotlin.math.max
 import kotlin.math.min
 
@@ -56,7 +54,7 @@ internal fun parseToMutDec(md: MutDec, str: String, ctx: DecContext = DecContext
     val reason: InvalidCause =
         if (mutDecOrReason is InvalidCause) mutDecOrReason
         else throw IllegalStateException()
-    if (ctx.decPrefs.parseMalformedThrowsNumberFormatException) {
+    if (ctx.parsePrefs.throwOnMalformedText) {
         throw NumberFormatException("invalid decimal format:$reason:'$str'")
     }
     return ctx.setNanSignalInvalidOperation(md, reason)
@@ -74,7 +72,7 @@ private fun parseMutDecOrReason(md: MutDec, txt: Latin1Iterator, ctx: DecContext
     val chLower = (ch.code or 0x20).toChar()
     if (chLower == 'i')
         return parseInfinityText(md, sign, ch, txt)
-    return parseNanText(md, sign, ch, txt, ctx.decPrefs.parseCollapseSNaN)
+    return parseNanText(md, sign, ch, txt, ctx.parsePrefs.collapseSNAN)
 }
 
 /**
@@ -244,6 +242,7 @@ private inline fun parseFiniteValueText(md: MutDec, sign: Boolean, chFirst: Char
 
     var hasCoefficientDigit = false // have we seen any digits at all, including zero
     var significantDigitCount = 0 // does not count leading zeros
+    var hasInexactDigit = false
     var hasDot = false
     var expSign = false
 
@@ -267,8 +266,10 @@ private inline fun parseFiniteValueText(md: MutDec, sign: Boolean, chFirst: Char
                 when {
                     significantDigitCount <= 19 -> accum19a = (accum19a * 10L) + d.toLong()
                     significantDigitCount <= precision -> accum19b = (accum19b * 10L) + d.toLong()
-                    significantDigitCount == precision + 1 ->
+                    significantDigitCount == precision + 1 -> {
                         residue = Residue.fromDecimalDigit(d)
+                        hasInexactDigit = hasInexactDigit or (ch != '0')
+                    }
 
                     else ->
                         residue = residue.merge(Residue.fromDecimalDigit(d))
@@ -341,8 +342,8 @@ private inline fun parseFiniteValueText(md: MutDec, sign: Boolean, chFirst: Char
         dw0T += accum19b
         dw1T += if (unsignedLT(dw0T, accum19b)) 1L else 0L
     }
-    if (significantDigitCount > precision && ctx.decPrefs.parseThrowOnDigitOverflow)
-        return PARSE_COEFFICIENT_EXCEEDS_MAX_PRECISION
+    if (hasInexactDigit && ctx.parsePrefs.throwOnInexact)
+        throw NumberFormatException("Coefficient exceeds 34 digits of precision:$txt")
     // at this point, our coeff <= precision digits
     // but we need to deal with residue and rounding
     // rounding rollover could affect the exponent
@@ -356,8 +357,12 @@ private inline fun parseFiniteValueText(md: MutDec, sign: Boolean, chFirst: Char
         return md.setZero(sign, qExp)
     md.c256Set128(dw1T, dw0T)
     md.roundAndFinalizeFnz(sign, qExp, residue, ctx)
-    if (!md.isFiniteNonZero() && ctx.decPrefs.parseThrowOnOutOfRange) {
-        return PARSE_VALUE_OUT_OF_RANGE
+    if (!md.isFiniteNonZero()) {
+        if (md.isInfinite() && ctx.parsePrefs.throwOnOverflow) {
+            throw NumberFormatException("parsed text value overflows to Infinity:$txt")
+        } else if (md.isZero() && ctx.parsePrefs.throwOnUnderflow) {
+            throw NumberFormatException("parsed text value underflows to 0:$txt")
+        }
     }
     return md
 }

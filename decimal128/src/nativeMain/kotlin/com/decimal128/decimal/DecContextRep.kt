@@ -5,7 +5,9 @@ package com.decimal128.decimal
 
 actual abstract class DecContextRep actual constructor(
     roundingDirection: RoundingDirection,
-    decPrefs: DecPrefs,
+    parsePrefs: ParsePrefs,
+    printPrefs: PrintPrefs,
+    arithmeticPrefs: ArithmeticPrefs,
     decTrapHandlers: DecTrapHandlers?,
     decFlags: DecFlags,
     decTmps: DecTmps,
@@ -13,7 +15,9 @@ actual abstract class DecContextRep actual constructor(
 ) {
     //@JvmField DecRounding is a value class :(
     internal actual val roundingDirection: RoundingDirection = roundingDirection
-    internal actual val decPrefs: DecPrefs = decPrefs
+    internal actual val parsePrefs: ParsePrefs = parsePrefs
+    internal actual val printPrefs: PrintPrefs = printPrefs
+    internal actual val arithmeticPrefs: ArithmeticPrefs = arithmeticPrefs
     internal actual val decTrapHandlers: DecTrapHandlers? = decTrapHandlers
     internal actual val decFlags: DecFlags = decFlags
     internal actual val tmps: DecTmps = decTmps

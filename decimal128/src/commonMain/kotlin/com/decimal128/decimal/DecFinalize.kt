@@ -196,6 +196,8 @@ private fun decFinalizeSubnormal(sign: Boolean,
         // apply rounding
         ++dw0T
         dw1T += if (dw0T == 0L) 1L else 0L
+        // the inbound coefficient may have had > 34 digits
+        // even though we just scaled down, the roundUp might overflow
         if (!ctx.coeffFits(dw1T, dw0T)) {
             dw1T = ctx.dw1MinFullPrecisionCoeff
             dw0T = ctx.dw0MinFullPrecisionCoeff
