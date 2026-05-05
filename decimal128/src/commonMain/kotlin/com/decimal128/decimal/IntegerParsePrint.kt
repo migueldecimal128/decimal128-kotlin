@@ -2,7 +2,10 @@
 
 package com.decimal128.decimal
 
+internal const val ASCII_SIZE = 64
+internal const val ASCII_BCE = ASCII_SIZE - 1
 internal typealias AsciiBuffer = ByteArray
+
 
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09L

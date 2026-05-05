@@ -298,11 +298,11 @@ object Decimal128BidStringCodec {
         )
             return base
         val digitLen = calcDigitLen128(payloadHi, payloadLo)
-        val utf8 = ByteArray(base.length + digitLen)
+        val ascii = ByteArray(base.length + digitLen)
         for (i in 0..<base.length)
-            utf8[i] = base[i].code.toByte()
-        u128ToUtf8(digitLen, payloadHi, payloadLo, utf8, base.length)
-        return utf8.decodeToString()
+            ascii[i] = base[i].code.toByte()
+        u128ToAscii(digitLen, payloadHi, payloadLo, ascii, base.length)
+        return ascii.decodeToString()
     }
 
     private val ZEROS = arrayOf(
@@ -347,7 +347,7 @@ object Decimal128BidStringCodec {
      * integer string (no decimal point, no exponent).
      *
      * Fast path: when the value fits in a non-negative `Long`, defers to
-     * `Long.toString`. General path: renders via [u128ToUtf8] into a byte
+     * `Long.toString`. General path: renders via [u128ToAscii] into a byte
      * buffer sized exactly to the result.
      */
     private fun fnzToIntegerString(sign: Boolean, dw1: Long, dw0: Long): String {
@@ -357,10 +357,10 @@ object Decimal128BidStringCodec {
         val digitLen = calcDigitLen128(dw1, dw0)
         val printDigitLen = digitLen + 1 - (-digitLen ushr 31)
         val signBit = if (sign) 1 else 0
-        val utf8 = ByteArray(signBit + printDigitLen)
-        utf8[0] = '-'.code.toByte()
-        u128ToUtf8(printDigitLen, dw1, dw0, utf8, signBit)
-        return utf8.decodeToString()
+        val ascii = ByteArray(signBit + printDigitLen)
+        ascii[0] = '-'.code.toByte()
+        u128ToAscii(printDigitLen, dw1, dw0, ascii, signBit)
+        return ascii.decodeToString()
     }
 
     /**
@@ -381,15 +381,15 @@ object Decimal128BidStringCodec {
         val signLen = if (sign) 1 else 0
         val decimalPointLen = 1
         val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
-        val utf8 = ByteArray(totalLen)
-        utf8[0] = '-'.code.toByte()
+        val ascii = ByteArray(totalLen)
+        ascii[0] = '-'.code.toByte()
         for (i in signLen..leadingZeroCount) // there is one extra here
-            utf8[i] = '0'.code.toByte()
-        u128ToUtf8(digitLen, dw1, dw0, utf8, signLen + leadingZeroCount)
+            ascii[i] = '0'.code.toByte()
+        u128ToAscii(digitLen, dw1, dw0, ascii, signLen + leadingZeroCount)
         for (i in totalLen - 1 downTo totalLen - digitsRightOfDecimal)
-            utf8[i] = utf8[i - 1]
-        utf8[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
-        return utf8.decodeToString()
+            ascii[i] = ascii[i - 1]
+        ascii[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
+        return ascii.decodeToString()
     }
 
     /**
@@ -416,18 +416,18 @@ object Decimal128BidStringCodec {
         val expSignLen = if (eExp < 0) 1 else 0
         val expDigitLen = max(calcDigitLen128(0L, eExpAbs.toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
-        val utf8 = ByteArray(totalLen)
-        utf8[0] = '-'.code.toByte()
-        u128ToUtf8(printedDigitLen, dw1, dw0, utf8, signLen + decimalPointLen)
+        val ascii = ByteArray(totalLen)
+        ascii[0] = '-'.code.toByte()
+        u128ToAscii(printedDigitLen, dw1, dw0, ascii, signLen + decimalPointLen)
         if (decimalPointLen > 0) {
-            utf8[signLen] = utf8[signLen + 1]
-            utf8[signLen + 1] = '.'.code.toByte()
+            ascii[signLen] = ascii[signLen + 1]
+            ascii[signLen + 1] = '.'.code.toByte()
         }
         val iE = signLen + decimalPointLen + printedDigitLen
-        utf8[iE] = 'E'.code.toByte()
-        utf8[iE + 1] = '-'.code.toByte()
-        renderTailDigitsBeforeIndex(expDigitLen, eExpAbs.toLong(), utf8, totalLen)
-        return utf8.decodeToString()
+        ascii[iE] = 'E'.code.toByte()
+        ascii[iE + 1] = '-'.code.toByte()
+        renderTailDigitsBeforeIndex(expDigitLen, eExpAbs.toLong(), ascii, totalLen)
+        return ascii.decodeToString()
 
     }
 
@@ -449,7 +449,7 @@ object Decimal128BidStringCodec {
 
     /**
      * Render a 128-bit unsigned integer as `digitPrintCount` decimal digits
-     * into [utf8], ending at offset `off + digitPrintCount`.
+     * into [ascii], ending at offset `off + digitPrintCount`.
      *
      * Three phases:
      *
@@ -469,9 +469,9 @@ object Decimal128BidStringCodec {
      *
      * @return `digitPrintCount`, unchanged from the input
      */
-    private fun u128ToUtf8(
+    private fun u128ToAscii(
         digitPrintCount: Int, dw1: Long, dw0: Long,
-        utf8: ByteArray, off: Int
+        ascii: ByteArray, off: Int
     ): Int {
         var dw1T = dw1
         var dw0T = dw0
@@ -488,7 +488,7 @@ object Decimal128BidStringCodec {
             val r0 = s1 - (q0 * 1_0000_0000L)
             dw0T = (q1 shl 32) + q0
             dw1T = q2
-            render8DigitsBeforeIndex(r0, utf8, ich)
+            render8DigitsBeforeIndex(r0, ascii, ich)
             ich -= 8
             remainingDigitCount -= 8
         }
@@ -496,12 +496,12 @@ object Decimal128BidStringCodec {
             val t0 = unsignedMulHi(dw0T, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
             val r0 = dw0T - (t0 * 1_0000_0000L)
             dw0T = t0
-            render8DigitsBeforeIndex(r0, utf8, ich)
+            render8DigitsBeforeIndex(r0, ascii, ich)
             ich -= 8
             remainingDigitCount -= 8
         }
         if (remainingDigitCount > 0)
-            renderTailDigitsBeforeIndex(remainingDigitCount, dw0T, utf8, ich)
+            renderTailDigitsBeforeIndex(remainingDigitCount, dw0T, ascii, ich)
         return digitPrintCount
     }
 
@@ -527,7 +527,7 @@ object Decimal128BidStringCodec {
     private const val S_U64_DIV_1E4 = 11 // + 64 high
 
     /**
-     * Render exactly 8 decimal digits of [dw] into [utf8], ending at
+     * Render exactly 8 decimal digits of [dw] into [ascii], ending at
      * `offMaxx`. Caller must ensure `dw < 10^8`; the function pads with
      * leading zeros if `dw` has fewer than 8 significant digits.
      *
@@ -539,9 +539,9 @@ object Decimal128BidStringCodec {
      *
      * Always writes exactly 8 bytes at offsets `offMaxx - 8` through
      * `offMaxx - 1`. Throws [IndexOutOfBoundsException] if those offsets
-     * are not within [utf8].
+     * are not within [ascii].
      */
-    private fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
+    private fun render8DigitsBeforeIndex(dw: Long, ascii: ByteArray, offMaxx: Int) {
         val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val efgh = dw - (abcd * 10000L)
 
@@ -565,22 +565,22 @@ object Decimal128BidStringCodec {
 
         // Explicit bounds check to enable elimination of individual checks
         val offMin = offMaxx - 8
-        if (offMin >= 0 && offMaxx <= utf8.size) {
-            utf8[offMaxx - 8] = (a.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 7] = (b.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 6] = (c.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 5] = (d.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 4] = (e.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 3] = (f.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 2] = (g.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 1] = (h.toInt() + '0'.code).toByte()
+        if (offMin >= 0 && offMaxx <= ascii.size) {
+            ascii[offMaxx - 8] = (a.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 7] = (b.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 6] = (c.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 5] = (d.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 4] = (e.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 3] = (f.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 2] = (g.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 1] = (h.toInt() + '0'.code).toByte()
         } else {
             throw IndexOutOfBoundsException()
         }
     }
 
     /**
-     * Render exactly [renderDigitCount] decimal digits of [dw] into [utf8],
+     * Render exactly [renderDigitCount] decimal digits of [dw] into [ascii],
      * ending at `offMaxx`. Pads with leading zeros if `dw` has fewer
      * significant digits than `renderDigitCount`.
      *
@@ -598,9 +598,9 @@ object Decimal128BidStringCodec {
      * `offMaxx - renderDigitCount` through `offMaxx - 1`.
      *
      * @throws IllegalArgumentException if the 4-digit phase would write
-     *         outside [utf8]
+     *         outside [ascii]
      */
-    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, utf8: ByteArray, offMaxx: Int) {
+    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, ascii: ByteArray, offMaxx: Int) {
         var t = dw
         var remainingDigitCount = renderDigitCount
         var ib = offMaxx
@@ -614,11 +614,11 @@ object Decimal128BidStringCodec {
             val b = ab - (a * 10L)
             val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
             val d = cd - (c * 10L)
-            if (ib - 4 >= 0 && ib <= utf8.size) {
-                utf8[ib - 4] = (a.toInt() + '0'.code).toByte()
-                utf8[ib - 3] = (b.toInt() + '0'.code).toByte()
-                utf8[ib - 2] = (c.toInt() + '0'.code).toByte()
-                utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
+            if (ib - 4 >= 0 && ib <= ascii.size) {
+                ascii[ib - 4] = (a.toInt() + '0'.code).toByte()
+                ascii[ib - 3] = (b.toInt() + '0'.code).toByte()
+                ascii[ib - 2] = (c.toInt() + '0'.code).toByte()
+                ascii[ib - 1] = (d.toInt() + '0'.code).toByte()
                 ib -= 4
                 remainingDigitCount -= 4
             } else {
@@ -628,7 +628,7 @@ object Decimal128BidStringCodec {
         while (remainingDigitCount > 0) {
             val divTen = (t * 0xCCCCCCCDL) ushr 35
             val digit = (t - (divTen * 10L)).toInt()
-            utf8[--ib] = ('0'.code + digit).toByte()
+            ascii[--ib] = ('0'.code + digit).toByte()
             t = divTen
             --remainingDigitCount
         }

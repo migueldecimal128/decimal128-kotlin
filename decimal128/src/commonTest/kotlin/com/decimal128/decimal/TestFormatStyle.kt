@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestFormatStyle {
 
-    val verbose = false
+    val verbose = true
 
     data class TC(
         val str: String,
@@ -16,6 +16,7 @@ class TestFormatStyle {
     )
 
     val tcs = arrayOf(
+        TC("0.0",   auto = "0.0",     exponential = "0E-1",     engineering = "0.0",     raw = "0E-1"),
         // --- Zero (cohort matters; 0 vs 0E+0 vs 0.0) ---
         TC("0",     auto = "0",       exponential = "0E+0",     engineering = "0",       raw = "0E+0"),
         TC("-0",    auto = "-0",      exponential = "-0E+0",    engineering = "-0",      raw = "-0E+0"),
