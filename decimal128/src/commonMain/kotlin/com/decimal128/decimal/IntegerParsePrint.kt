@@ -51,13 +51,13 @@ internal object IntegerParsePrint {
 
     private fun c256ToStringImpl(sign: Boolean, c: C256): String {
         val signBit = if (sign) 1 else 0
-        val utf8 = ByteArray(c.digitLen + signBit)
-        utf8[0] = '-'.code.toByte() // if non-negative then this will be overwritten
-        c256ToUtf8(c, utf8, signBit)
-        return utf8.decodeToString()
+        val ascii = ByteArray(c.digitLen + signBit)
+        ascii[0] = '-'.code.toByte() // if non-negative then this will be overwritten
+        c256ToASCII(c, ascii, signBit)
+        return ascii.decodeToString()
     }
 
-    fun c256ToUtf8(c: C256, utf8: ByteArray, off: Int, tmp: C256? = null): Int {
+    fun c256ToASCII(c: C256, ascii: ByteArray, off: Int, tmp: C256? = null): Int {
         // minimum printDigitLen is 1
         // add 1, then add -1 if the inbound digitLen was non-zero
         var remainingDigitCount = c.digitLen + 1 + (-c.digitLen shr 31)
@@ -67,25 +67,25 @@ internal object IntegerParsePrint {
             do {
                 val ibMaxx = off + t.digitLen
                 val r = barrettDivMod_32_256(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
-                render8DigitsBeforeIndex(r, utf8, ibMaxx)
+                render8DigitsBeforeIndex(r, ascii, ibMaxx)
                 remainingDigitCount -= 8
             } while (t.bitLen > 128)
         }
-        return u128ToUtf8(remainingDigitCount, t.dw1, t.dw0, utf8, off)
+        return u128ToASCII(remainingDigitCount, t.dw1, t.dw0, ascii, off)
     }
 
-    fun int32ToUtf8(n: Int, utf8: ByteArray, off: Int): Int {
+    fun int32ToASCII(n: Int, ascii: ByteArray, off: Int): Int {
         val dwAbs = ((n xor (n shr 31)) - (n shr 31)).toUInt().toLong()
         val signBit = n ushr 31
-        utf8[off] = '-'.code.toByte()
+        ascii[off] = '-'.code.toByte()
         val digitLen = calcDigitLen64(dwAbs)
         // digitPrintCount = max(digitLen, 1), branchless
         val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
-        u64ToUtf8(digitPrintCount, dwAbs, utf8, off + signBit)
+        u64ToASCII(digitPrintCount, dwAbs, ascii, off + signBit)
         return signBit + digitPrintCount
     }
 
-    internal fun u64ToUtf8(digitPrintCount: Int, dw0: Long, utf8: ByteArray, off: Int): Int {
+    internal fun u64ToASCII(digitPrintCount: Int, dw0: Long, ascii: ByteArray, off: Int): Int {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining
         var dwT = dw0
@@ -93,16 +93,16 @@ internal object IntegerParsePrint {
             val q = unsignedMulHi(dwT, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
             val r = dwT - (q * 1_0000_0000L)
             dwT = q
-            render8DigitsBeforeIndex(r, utf8, ich)
+            render8DigitsBeforeIndex(r, ascii, ich)
             ich -= 8
             digitsRemaining -= 8
         }
         if (digitsRemaining > 0)
-            renderTailDigitsBeforeIndex(digitsRemaining, dwT, utf8, ich)
+            renderTailDigitsBeforeIndex(digitsRemaining, dwT, ascii, ich)
         return digitPrintCount
     }
 
-    internal fun u128ToUtf8(digitPrintCount: Int, dw1: Long, dw0: Long, utf8: ByteArray, off: Int): Int {
+    internal fun u128ToASCII(digitPrintCount: Int, dw1: Long, dw0: Long, ascii: ByteArray, off: Int): Int {
         var dw1T = dw1
         var dw0T = dw0
         var ich = off + digitPrintCount
@@ -118,7 +118,7 @@ internal object IntegerParsePrint {
             val r0 = s1 - (q0 * 1_0000_0000L)
             dw0T = (q1 shl 32) + q0
             dw1T = q2
-            render8DigitsBeforeIndex(r0, utf8, ich)
+            render8DigitsBeforeIndex(r0, ascii, ich)
             ich -= 8
             remainingDigitCount -= 8
         }
@@ -126,12 +126,12 @@ internal object IntegerParsePrint {
             val t0 = unsignedMulHi(dw0T, M_U64_DIV_1E8) ushr S_U64_DIV_1E8
             val r0 = dw0T - (t0 * 1_0000_0000L)
             dw0T = t0
-            render8DigitsBeforeIndex(r0, utf8, ich)
+            render8DigitsBeforeIndex(r0, ascii, ich)
             ich -= 8
             remainingDigitCount -= 8
         }
         if (remainingDigitCount > 0)
-            renderTailDigitsBeforeIndex(remainingDigitCount, dw0T, utf8, ich)
+            renderTailDigitsBeforeIndex(remainingDigitCount, dw0T, ascii, ich)
         return digitPrintCount
     }
 
@@ -144,31 +144,31 @@ internal object IntegerParsePrint {
         bytes[0    ] = '-'.code.toByte()
         bytes[s    ] = '0'.code.toByte()
         bytes[s + 1] = 'x'.code.toByte()
-        u256ToHexUtf8(u, hexitCount, bytes, s + 2)
+        u256ToHexASCII(u, hexitCount, bytes, s + 2)
         return bytes.decodeToString()
     }
 
-    fun u256ToHexUtf8(u: C256, hexitCount: Int, utf8: ByteArray, off: Int) {
+    fun u256ToHexASCII(u: C256, hexitCount: Int, ascii: ByteArray, off: Int) {
         var hexitsRemaining = hexitCount
         var ich = off
         for (i in (u.bitLen - 1) ushr 6 downTo 0) {
             val dw = u[i]
             val thisHexitCount = if ((hexitsRemaining and 0x0F) != 0) (hexitsRemaining and 0x0F) else 16
-            u64ToHexUtf8(dw, thisHexitCount, utf8, ich)
+            u64ToHexASCII(dw, thisHexitCount, ascii, ich)
             hexitsRemaining -= thisHexitCount
             ich += thisHexitCount
         }
         verify { hexitsRemaining == 0 }
-        verify { ich == utf8.size }
+        verify { ich == ascii.size }
     }
 
-    fun u64ToHexUtf8(dw: Long, hexitCount: Int, utf8: ByteArray, off: Int) {
+    fun u64ToHexASCII(dw: Long, hexitCount: Int, ascii: ByteArray, off: Int) {
         var t = dw
         verify { hexitCount in 1..16 }
         for (i in hexitCount - 1 downTo 0) {
             val h = (t and 0x0FL).toInt()
             val ch = if (h < 10) '0' + h else 'A' - 10 + h
-            utf8[off + i] = ch.code.toByte()
+            ascii[off + i] = ch.code.toByte()
             t = t ushr 4
         }
     }
@@ -297,7 +297,7 @@ internal object IntegerParsePrint {
     private const val M_1E9_DIV_1E4 = 879_609_303L
     private const val S_1E9_DIV_1E4 = 43
 
-    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, utf8: ByteArray, offMaxx: Int) {
+    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, ascii: ByteArray, offMaxx: Int) {
         var t = dw
         var remainingDigitCount = renderDigitCount
         var ib = offMaxx
@@ -311,11 +311,11 @@ internal object IntegerParsePrint {
             val b = ab - (a * 10L)
             val c = (cd * M_U32_DIV_1E1) ushr S_U32_DIV_1E1
             val d = cd - (c * 10L)
-            if (ib - 4 >= 0 && ib <= utf8.size) {
-                utf8[ib - 4] = (a.toInt() + '0'.code).toByte()
-                utf8[ib - 3] = (b.toInt() + '0'.code).toByte()
-                utf8[ib - 2] = (c.toInt() + '0'.code).toByte()
-                utf8[ib - 1] = (d.toInt() + '0'.code).toByte()
+            if (ib - 4 >= 0 && ib <= ascii.size) {
+                ascii[ib - 4] = (a.toInt() + '0'.code).toByte()
+                ascii[ib - 3] = (b.toInt() + '0'.code).toByte()
+                ascii[ib - 2] = (c.toInt() + '0'.code).toByte()
+                ascii[ib - 1] = (d.toInt() + '0'.code).toByte()
                 ib -= 4
                 remainingDigitCount -= 4
             } else {
@@ -325,14 +325,14 @@ internal object IntegerParsePrint {
         while (remainingDigitCount > 0) {
             val divTen = (t * 0xCCCCCCCDL) ushr 35
             val digit = (t - (divTen * 10L)).toInt()
-            utf8[--ib] = ('0'.code + digit).toByte()
+            ascii[--ib] = ('0'.code + digit).toByte()
             t = divTen
             --remainingDigitCount
         }
         verify { offMaxx - ib == renderDigitCount }
     }
 
-    private fun render8DigitsBeforeIndex(dw: Long, utf8: ByteArray, offMaxx: Int) {
+    private fun render8DigitsBeforeIndex(dw: Long, ascii: ByteArray, offMaxx: Int) {
         val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val efgh  = dw - (abcd * 10000L)
 
@@ -356,15 +356,15 @@ internal object IntegerParsePrint {
 
         // Explicit bounds check to enable elimination of individual checks
         val offMin = offMaxx - 8
-        if (offMin >= 0 && offMaxx <= utf8.size) {
-            utf8[offMaxx - 8] = (a.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 7] = (b.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 6] = (c.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 5] = (d.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 4] = (e.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 3] = (f.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 2] = (g.toInt() + '0'.code).toByte()
-            utf8[offMaxx - 1] = (h.toInt() + '0'.code).toByte()
+        if (offMin >= 0 && offMaxx <= ascii.size) {
+            ascii[offMaxx - 8] = (a.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 7] = (b.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 6] = (c.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 5] = (d.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 4] = (e.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 3] = (f.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 2] = (g.toInt() + '0'.code).toByte()
+            ascii[offMaxx - 1] = (h.toInt() + '0'.code).toByte()
         } else {
             throw IndexOutOfBoundsException()
         }

@@ -9,7 +9,7 @@ import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_NEGATIVE
 import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_POSITIVE
 import com.decimal128.decimal.RoundingDirection.Companion.TOWARD_ZERO
 import com.decimal128.decimal.Ieee754Class.*
-import com.decimal128.decimal.IntegerParsePrint.int32ToUtf8
+import com.decimal128.decimal.IntegerParsePrint.int32ToASCII
 import com.decimal128.decimal.InvalidCause.QUANTIZE_EXACTLY_ONE_OPERAND_IS_INFINITE
 import com.decimal128.decimal.InvalidCause.QUANTIZE_RESULT_WOULD_EXCEED_PRECISION
 import kotlin.math.abs

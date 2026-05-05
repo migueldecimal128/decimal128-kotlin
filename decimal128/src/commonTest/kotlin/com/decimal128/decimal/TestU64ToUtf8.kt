@@ -12,7 +12,7 @@ class TestU64ToUtf8 {
         for (digitCount in 1..19) {
             t = 10L * t + (digitCount % 10).toLong()
             val utf8 = ByteArray(21) { 'x'.code.toByte() }
-            val ret = IntegerParsePrint.u64ToUtf8(digitCount, t, utf8, 1)
+            val ret = IntegerParsePrint.u64ToASCII(digitCount, t, utf8, 1)
             val str = utf8.decodeToString()
             val str2 = utf8.decodeToString(1, ret)
             if (verbose)
@@ -23,7 +23,7 @@ class TestU64ToUtf8 {
     @Test
     fun testProblemChild() {
         val utf8 = ByteArray(21) { 'x'.code.toByte() }
-        val ret = IntegerParsePrint.u64ToUtf8(2, 45L, utf8, 1)
+        val ret = IntegerParsePrint.u64ToASCII(2, 45L, utf8, 1)
         val str = utf8.decodeToString()
         val str2 = utf8.decodeToString(1, ret)
         if (verbose)
