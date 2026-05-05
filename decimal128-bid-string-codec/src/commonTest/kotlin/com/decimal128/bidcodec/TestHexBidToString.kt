@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 
 class TestHexBidToString {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val hexStr: String, val expected: String)
 

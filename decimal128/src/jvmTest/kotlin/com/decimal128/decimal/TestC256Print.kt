@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestC256Print {
 
-    val verbose = true
+    val verbose = false
 
     val tcs = arrayOf(
         "12345678901234567890123456789012345678901234567890",

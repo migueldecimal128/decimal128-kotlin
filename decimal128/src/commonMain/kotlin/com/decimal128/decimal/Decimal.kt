@@ -433,6 +433,10 @@ class Decimal private constructor(
             }
         }
 
+        fun nan(sign: Boolean, signaling: Boolean, payload: Long): Decimal {
+            return if (signaling) sNaN(sign, 0L, payload) else qNaN(sign, 0L, payload)
+        }
+
         fun infinity(sign: Boolean) = if (sign) NEG_INFINITY else POS_INFINITY
 
         fun infinity(signBit: Int) = if ((signBit and 1) != 0) NEG_INFINITY else POS_INFINITY

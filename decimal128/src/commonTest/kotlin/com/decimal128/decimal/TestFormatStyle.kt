@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class TestFormatStyle {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(
         val str: String,

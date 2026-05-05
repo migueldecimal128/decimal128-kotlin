@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 
 class TestBidToString {
 
-    val verbose = true
+    val verbose = false
 
     // simple test ...
     // put only canonical representation in these test cases

@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 
 class TestStringToBid128 {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val expectedHex: String, val str: String)
 

@@ -103,12 +103,12 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
     val caseOffset = printPrefs.specialsCase.ordinal shl 3
     if (stealIsINF(steal)) {
         val infShortOffset = if (printPrefs.infinityShort) 2 else 0
-        return SPECIAL_VALUE_STRINGS[(caseOffset + infShortOffset + signBit) and SVS_BCE]
+        return SPECIAL_VALUE_STRINGS[caseOffset + infShortOffset + signBit]
     }
     if (!printPrefs.nanMinusSign)
         signBit = 0
-    val nanIndex = (if (stealIsQNAN(steal) || printPrefs.collapseSNAN) 4 else 6) + signBit
-    val nanStr = SPECIAL_VALUE_STRINGS[(caseOffset + nanIndex) and SVS_BCE]
+    val nanIndex = if (stealIsQNAN(steal) || printPrefs.collapseSNAN) 4 else 6
+    val nanStr = SPECIAL_VALUE_STRINGS[caseOffset + nanIndex + signBit]
     val digitLen = stealDigitLen(steal)
     if (digitLen == 0 || !printPrefs.nanPayload)
         return nanStr
@@ -124,7 +124,6 @@ private val SPECIAL_VALUE_STRINGS = arrayOf(
     "Infinity", "-Infinity", "Inf", "-Inf", "NaN", "-NaN", "sNaN", "-sNaN",
     "INFINITY", "-INFINITY", "INF", "-INF", "NAN", "-NAN", "SNAN", "-SNAN",
 )
-private const val SVS_BCE = 0x0F // Special Value Strings Bounds Check Elimination
 
 private val SMALL_INTEGER_STRINGS = arrayOf(
     "0", "1", "2", "3", "4", "5", "6", "7",

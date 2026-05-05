@@ -6,7 +6,7 @@ import java.math.BigInteger
 
 class TestDivByPow10 {
 
-    val verbose = true
+    val verbose = false
 
     data class TC(val strDividend: String, val pow10: Int)
 
