@@ -11,7 +11,7 @@ import kotlin.math.max
  * Formats [x] as a string according to [ctx] preferences.
  *
  * For finite values, the format is selected by [DecPrefs.printStyle]:
- * - [FormatStyle.COEFFICIENT_QEXPONENT] — integer coefficient plus quantum exponent
+ * - [FormatStyle.RAW] — integer coefficient plus quantum exponent
  * - [FormatStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic Spec
  * - Otherwise — plain decimal-point or normalized scientific notation, depending on
  *   the exponent and [DecPrefs.printMinPlainExponent]
@@ -32,7 +32,7 @@ internal fun d128ToString(x: Decimal, ctx: DecContext): String {
  * Formats a Decimal128 value as a string according to [ctx] preferences.
  *
  * For finite values, the format is selected by [DecPrefs.printStyle]:
- * - [FormatStyle.COEFFICIENT_QEXPONENT] — integer coefficient plus quantum exponent
+ * - [FormatStyle.RAW] — integer coefficient plus quantum exponent
  * - [FormatStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic specification
  * - Otherwise — plain decimal-point or normalized scientific notation, depending on
  *   the exponent and [DecPrefs.printMinPlainExponent]
@@ -57,13 +57,13 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
         val exponentEUtf8Byte = (if (printPrefs.exponentLowercaseE) 'e' else 'E').code.toByte()
         val printExponentPlusSign = printPrefs.exponentPlusSign
         return when (formatStyle) {
-            FormatStyle.COEFFICIENT_QEXPONENT ->
+            FormatStyle.RAW ->
                 toCoefficientQExponentString(
                     steal, dw1, dw0,
                     exponentEUtf8Byte, printExponentPlusSign, utf8
                 )
 
-            FormatStyle.ALWAYS_SCIENTIFIC ->
+            FormatStyle.EXPONENTIAL ->
                 toNormalizedScientificString(
                     steal, dw1, dw0,
                     exponentEUtf8Byte, printExponentPlusSign, utf8

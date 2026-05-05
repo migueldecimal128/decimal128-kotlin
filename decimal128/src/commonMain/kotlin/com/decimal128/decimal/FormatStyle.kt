@@ -12,17 +12,17 @@ package com.decimal128.decimal
  *   exponent constrained to a multiple of 3, so the integer part has 1, 2, or 3
  *   digits. Useful for displaying values with SI-style magnitudes.
  *
- * @property ALWAYS_SCIENTIFIC Forces exponential notation regardless of magnitude.
+ * @property EXPONENTIAL Forces exponential notation regardless of magnitude.
  *   Not GDAS-canonical; useful for tabular alignment or when consistent format is
  *   required across a range of magnitudes.
  *
- * @property COEFFICIENT_QEXPONENT Renders the raw cohort representation as
+ * @property RAW Renders the raw cohort representation as
  *   `coefficient × 10^qExp`. Preserves the exact internal state of the value.
  *   Useful for debugging and for testing cohort-preservation invariants.
  */
 enum class FormatStyle {
     AUTO,
     ENGINEERING,
-    ALWAYS_SCIENTIFIC,
-    COEFFICIENT_QEXPONENT
+    EXPONENTIAL,
+    RAW
 }
