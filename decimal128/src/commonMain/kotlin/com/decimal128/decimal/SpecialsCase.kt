@@ -1,14 +1,24 @@
 package com.decimal128.decimal
 
 /**
- * Specification of character case used for non-finite specials.
+ * Character case used when rendering non-finite specials (`Infinity`, `NaN`, `sNaN`).
  *
- * @property LOWERCASE infinity/inf, nan, snan
- * @property MIXEDCASE Infinity/Inf, NaN, sNaN
- * @property UPPERCASE INFINITY/INF, NAN, SNAN
+ * The choice of long vs. short form for infinity (`Infinity` vs. `Inf`) is controlled
+ * separately by [PrintPrefs.infinityShort].
+ *
+ * @property LOWERCASE Lowercase form: `infinity`/`inf`, `nan`, `snan`. Matches
+ *   `Double.toString` in C, Swift, Python `float`, and JavaScript's lowercase form.
+ *
+ * @property MIXEDCASE Mixed-case form: `Infinity`/`Inf`, `NaN`, `sNaN`. GDAS
+ *   canonical, also used by `BigDecimal.toString` in Java/Kotlin and Python's
+ *   `decimal.Decimal`.
+ *
+ * @property UPPERCASE Uppercase form: `INFINITY`/`INF`, `NAN`, `SNAN`. Used by
+ *   IBM mainframe environments (Db2 SQL, COBOL on z/OS, PL/I) and matches
+ *   C `printf("%F")` / `printf("%G")` output.
  */
 enum class SpecialsCase {
-    LOWERCASE, // inf, nan, snan
-    MIXEDCASE, // Inf or Infinity, NaN, sNaN
-    UPPERCASE  // INF or INFINITY, NAN, SNAN
+    LOWERCASE,
+    MIXEDCASE,
+    UPPERCASE
 }

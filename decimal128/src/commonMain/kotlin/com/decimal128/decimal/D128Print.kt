@@ -53,36 +53,52 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
     // individual routines will overwrite it for non-negative values
     utf8[0] = '-'.code.toByte()
     if (stealIsFinite(steal)) {
-        val printStyle = printPrefs.formatStyle
+        val formatStyle = printPrefs.formatStyle
         val exponentEUtf8Byte = (if (printPrefs.exponentLowercaseE) 'e' else 'E').code.toByte()
         val printExponentPlusSign = printPrefs.exponentPlusSign
-        if (printStyle != FormatStyle.COEFFICIENT_QEXPONENT) {
-            val qExp = stealQExp(steal)
-            return when {
-                qExp == 0 -> toIntegerString(steal, dw1, dw0, utf8)
-                qExp < 0 && stealSciExp(steal) >= printPrefs.minPlainExponent ->
-                    toDecimalPointString(steal, dw1, dw0, utf8)
+        return when (formatStyle) {
+            FormatStyle.COEFFICIENT_QEXPONENT ->
+                toCoefficientQExponentString(
+                    steal, dw1, dw0,
+                    exponentEUtf8Byte, printExponentPlusSign, utf8
+                )
 
-                printStyle != FormatStyle.ENGINEERING ->
-                    toNormalizedScientificString(
-                        steal,
-                        dw1,
-                        dw0,
-                        exponentEUtf8Byte,
-                        printExponentPlusSign,
-                        utf8
-                    )
+            FormatStyle.ALWAYS_SCIENTIFIC ->
+                toNormalizedScientificString(
+                    steal, dw1, dw0,
+                    exponentEUtf8Byte, printExponentPlusSign, utf8
+                )
 
-                else ->
-                    toEngineeringString(steal, dw1, dw0, exponentEUtf8Byte, printExponentPlusSign, utf8)
+            FormatStyle.ENGINEERING -> {
+                val qExp = stealQExp(steal)
+                when {
+                    qExp == 0 -> toIntegerString(steal, dw1, dw0, utf8)
+                    qExp < 0 && stealSciExp(steal) >= printPrefs.minPlainExponent ->
+                        toDecimalPointString(steal, dw1, dw0, utf8)
+                    else ->
+                        toEngineeringString(
+                            steal, dw1, dw0,
+                            exponentEUtf8Byte, printExponentPlusSign, utf8
+                        )
+                }
             }
-        } else {
-            return toCoefficientQExponentString(
-                steal, dw1, dw0,
-                exponentEUtf8Byte, printExponentPlusSign, utf8
-            )
+
+            FormatStyle.AUTO -> {
+                val qExp = stealQExp(steal)
+                when {
+                    qExp == 0 -> toIntegerString(steal, dw1, dw0, utf8)
+                    qExp < 0 && stealSciExp(steal) >= printPrefs.minPlainExponent ->
+                        toDecimalPointString(steal, dw1, dw0, utf8)
+                    else ->
+                        toNormalizedScientificString(
+                            steal, dw1, dw0,
+                            exponentEUtf8Byte, printExponentPlusSign, utf8
+                        )
+                }
+            }
         }
     }
+    // ... non-finite handling unchanged
     var signBit = stealSignBit(steal)
     val caseOffset = printPrefs.specialsCase.ordinal shl 3
     if (stealIsINF(steal)) {
@@ -102,7 +118,6 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
     IntegerParsePrint.u128ToUtf8(digitLen, dw1, dw0, utf8, nanStr.length)
     return utf8.decodeToString(0, payloadNanLen)
 }
-
 private val SPECIAL_VALUE_STRINGS = arrayOf(
     "infinity", "-infinity", "inf", "-inf", "nan", "-nan", "snan", "-snan",
     "Infinity", "-Infinity", "Inf", "-Inf", "NaN", "-NaN", "sNaN", "-sNaN",
@@ -406,7 +421,8 @@ private fun toCoefficientQExponentString(
     val expDigitLen = max(calcDigitLen64(abs(qExp).toLong()), 1)
     val totalLen = signLen + printedDigitLen + expELen + expSignLen + expDigitLen
     verify { utf8[0] == '-'.code.toByte() }
-    var i = IntegerParsePrint.u128ToUtf8(printedDigitLen, dw1, dw0, utf8, signLen)
+    var i = signLen
+    i += IntegerParsePrint.u128ToUtf8(printedDigitLen, dw1, dw0, utf8, signLen)
     utf8[i++] = exponentEUtf8Byte
     if (printExponentPlusSign && qExp >= 0)
         utf8[i++] = '+'.code.toByte()
