@@ -41,7 +41,7 @@ actual open class DecTmps {
     // perhaps this should be 76 in order to support 253-bit coefficients
     // in flight in the debugger
     @JvmField
-    internal actual val utf8BytesPrintOnly: ByteArray = ByteArray(MAX_DEC77_CHAR_LEN)
+    internal actual val asciiBuffer: ByteArray = ByteArray(MAX_DEC77_CHAR_LEN)
 
     @JvmField
     internal actual val parseStringLatin1Iterator: StringLatin1Iterator = StringLatin1Iterator("")

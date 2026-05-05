@@ -2,6 +2,8 @@
 
 package com.decimal128.decimal
 
+internal typealias AsciiBuffer = ByteArray
+
 private const val DIVISOR_1E9 = 1_000_000_000L
 private const val MU_1E9 = 0x44B82FA09L
 
@@ -57,7 +59,7 @@ internal object IntegerParsePrint {
         return ascii.decodeToString()
     }
 
-    fun c256ToASCII(c: C256, ascii: ByteArray, off: Int, tmp: C256? = null): Int {
+    fun c256ToASCII(c: C256, ascii: AsciiBuffer, off: Int, tmp: C256? = null): Int {
         // minimum printDigitLen is 1
         // add 1, then add -1 if the inbound digitLen was non-zero
         var remainingDigitCount = c.digitLen + 1 + (-c.digitLen shr 31)
@@ -74,7 +76,7 @@ internal object IntegerParsePrint {
         return u128ToASCII(remainingDigitCount, t.dw1, t.dw0, ascii, off)
     }
 
-    fun int32ToASCII(n: Int, ascii: ByteArray, off: Int): Int {
+    fun int32ToASCII(n: Int, ascii: AsciiBuffer, off: Int): Int {
         val dwAbs = ((n xor (n shr 31)) - (n shr 31)).toUInt().toLong()
         val signBit = n ushr 31
         ascii[off] = '-'.code.toByte()
@@ -85,7 +87,7 @@ internal object IntegerParsePrint {
         return signBit + digitPrintCount
     }
 
-    internal fun u64ToASCII(digitPrintCount: Int, dw0: Long, ascii: ByteArray, off: Int): Int {
+    internal fun u64ToASCII(digitPrintCount: Int, dw0: Long, ascii: AsciiBuffer, off: Int): Int {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining
         var dwT = dw0
@@ -102,7 +104,7 @@ internal object IntegerParsePrint {
         return digitPrintCount
     }
 
-    internal fun u128ToASCII(digitPrintCount: Int, dw1: Long, dw0: Long, ascii: ByteArray, off: Int): Int {
+    internal fun u128ToASCII(digitPrintCount: Int, dw1: Long, dw0: Long, ascii: AsciiBuffer, off: Int): Int {
         var dw1T = dw1
         var dw0T = dw0
         var ich = off + digitPrintCount
@@ -148,7 +150,7 @@ internal object IntegerParsePrint {
         return bytes.decodeToString()
     }
 
-    fun u256ToHexASCII(u: C256, hexitCount: Int, ascii: ByteArray, off: Int) {
+    fun u256ToHexASCII(u: C256, hexitCount: Int, ascii: AsciiBuffer, off: Int) {
         var hexitsRemaining = hexitCount
         var ich = off
         for (i in (u.bitLen - 1) ushr 6 downTo 0) {
@@ -162,7 +164,7 @@ internal object IntegerParsePrint {
         verify { ich == ascii.size }
     }
 
-    fun u64ToHexASCII(dw: Long, hexitCount: Int, ascii: ByteArray, off: Int) {
+    fun u64ToHexASCII(dw: Long, hexitCount: Int, ascii: AsciiBuffer, off: Int) {
         var t = dw
         verify { hexitCount in 1..16 }
         for (i in hexitCount - 1 downTo 0) {
@@ -297,7 +299,7 @@ internal object IntegerParsePrint {
     private const val M_1E9_DIV_1E4 = 879_609_303L
     private const val S_1E9_DIV_1E4 = 43
 
-    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, ascii: ByteArray, offMaxx: Int) {
+    fun renderTailDigitsBeforeIndex(renderDigitCount: Int, dw: Long, ascii: AsciiBuffer, offMaxx: Int) {
         var t = dw
         var remainingDigitCount = renderDigitCount
         var ib = offMaxx
@@ -332,7 +334,7 @@ internal object IntegerParsePrint {
         verify { offMaxx - ib == renderDigitCount }
     }
 
-    private fun render8DigitsBeforeIndex(dw: Long, ascii: ByteArray, offMaxx: Int) {
+    private fun render8DigitsBeforeIndex(dw: Long, ascii: AsciiBuffer, offMaxx: Int) {
         val abcd = unsignedMulHi(dw, M_U64_DIV_1E4) ushr S_U64_DIV_1E4
         val efgh  = dw - (abcd * 10000L)
 

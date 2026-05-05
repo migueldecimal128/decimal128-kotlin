@@ -48,7 +48,7 @@ internal fun d128ToString(x: Decimal, ctx: DecContext): String {
  */
 internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): String {
     val printPrefs = ctx.printPrefs
-    val utf8 = ctx.tmps.utf8BytesPrintOnly
+    val utf8 = ctx.tmps.asciiBuffer
     // a minus sign is always written
     // individual routines will overwrite it for non-negative values
     utf8[0] = '-'.code.toByte()

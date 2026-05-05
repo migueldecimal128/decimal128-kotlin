@@ -29,7 +29,7 @@ expect open class DecTmps() {
     // printing must have dedicated tmps because toString()
     // will be called during debugging and we don't want to
     // overwrite another tmp when stepping through code.
-    internal val utf8BytesPrintOnly: ByteArray
+    internal val asciiBuffer: AsciiBuffer
     internal val parseStringLatin1Iterator: StringLatin1Iterator
 }
 
