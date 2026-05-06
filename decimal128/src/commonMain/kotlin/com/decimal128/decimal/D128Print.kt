@@ -304,7 +304,9 @@ private fun toEngineeringString(
         i = signLen + decimalPointLen + printedDigitLen
 
         if (expAlignZeroCount > 0) {
-                repeat(expAlignZeroCount) { ascii[i++] = '0'.code.toByte() }
+            for (j in 0..<expAlignZeroCount) {
+                ascii[i++] = '0'.code.toByte()
+            }
         } else if (digitLen > leftOfRadixPointCount) {
             for (j in 0..<leftOfRadixPointCount)
                 ascii[signLen + j] = ascii[signLen + j + 1]
