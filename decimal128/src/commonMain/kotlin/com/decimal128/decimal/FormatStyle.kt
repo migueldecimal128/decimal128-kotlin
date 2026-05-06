@@ -16,7 +16,7 @@ package com.decimal128.decimal
  *   Not GDAS-canonical; useful for tabular alignment or when consistent format is
  *   required across a range of magnitudes.
  *
- * @property RAW Renders the raw cohort representation as
+ * @property COEFFICIENT_QEXP Renders the raw cohort representation as
  *   `coefficient × 10^qExp`. Preserves the exact internal state of the value.
  *   Useful for debugging and for testing cohort-preservation invariants.
  */
@@ -24,5 +24,5 @@ enum class FormatStyle {
     AUTO,
     ENGINEERING,
     EXPONENTIAL,
-    RAW
+    COEFFICIENT_QEXP
 }

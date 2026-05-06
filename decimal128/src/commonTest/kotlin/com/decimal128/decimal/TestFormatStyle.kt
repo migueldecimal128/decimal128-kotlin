@@ -16,6 +16,7 @@ class TestFormatStyle {
     )
 
     val tcs = arrayOf(
+        TC("0.0000001",     auto = "1E-7",      exponential = "1E-7",      engineering = "100E-9",    raw = "1E-7"),
         TC("0.0",   auto = "0.0",     exponential = "0E-1",     engineering = "0.0",     raw = "0E-1"),
         // --- Zero (cohort matters; 0 vs 0E+0 vs 0.0) ---
         TC("0",     auto = "0",       exponential = "0E+0",     engineering = "0",       raw = "0E+0"),
@@ -107,7 +108,7 @@ class TestFormatStyle {
         val ctxAuto = ctx.with(printPrefs.copy(formatStyle = FormatStyle.AUTO))
         val ctxEngineering = ctx.with(printPrefs.copy(formatStyle = FormatStyle.ENGINEERING))
         val ctxAlwaysScientific = ctx.with(printPrefs.copy(formatStyle = FormatStyle.EXPONENTIAL))
-        val ctxCoeffQExp = ctx.with(printPrefs.copy(formatStyle = FormatStyle.RAW))
+        val ctxCoeffQExp = ctx.with(printPrefs.copy(formatStyle = FormatStyle.COEFFICIENT_QEXP))
 
         val auto = ctxAuto.eval { x.toString() }
         val engineering = ctxEngineering.eval { x.toString() }

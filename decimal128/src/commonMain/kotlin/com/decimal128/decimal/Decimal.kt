@@ -577,7 +577,7 @@ class Decimal private constructor(
      *
      * IEEE754-2019 5.7.2
      */
-    fun isFinite(): Boolean = stealIsFinite(steal)
+    fun isFinite(): Boolean = stealIsFIN(steal)
 
     /**
      * Returns `true` if this value is normal or subnormal and non-zero.
@@ -653,7 +653,7 @@ class Decimal private constructor(
         val digitLen = stealDigitLen(steal)
         verify { digitLen == calcDigitLen128(dw1, dw0) }
         return when {
-            stealIsFinite(steal) -> qExp in -6176..6111 && digitLen <= 34
+            stealIsFIN(steal) -> qExp in -6176..6111 && digitLen <= 34
             stealIsINF(steal) -> digitLen == 0
             else -> // NAN
                 digitLen <= 33
@@ -689,7 +689,7 @@ class Decimal private constructor(
         val stealX = steal
         val stealY = other.steal
         return when {
-            stealIsFinite(stealX) -> stealIsFinite(stealY) && stealQExp(stealX) == stealQExp(stealY)
+            stealIsFIN(stealX) -> stealIsFIN(stealY) && stealQExp(stealX) == stealQExp(stealY)
             stealIsINF(stealX) -> stealIsINF(stealY)
             else -> stealIsNAN(stealY)
         }
@@ -709,7 +709,7 @@ class Decimal private constructor(
      */
     fun quantum(): Decimal {
         val steal = this.steal
-        if (stealIsFinite(steal))
+        if (stealIsFIN(steal))
             return Decimal.from(stealQExp(steal))
         return DecContext.current().signalInvalidOperation(QUANTUM_OF_NON_FINITE, this)
     }
@@ -726,7 +726,7 @@ class Decimal private constructor(
      */
     fun quantumInt(): Int {
         val steal = this.steal
-        if (stealIsFinite(steal))
+        if (stealIsFIN(steal))
             return stealQExp(steal)
         DecContext.current().signalInvalidOperation(QUANTUM_OF_NON_FINITE, this)
         return Int.MIN_VALUE
@@ -833,7 +833,7 @@ class Decimal private constructor(
     fun scaleB(pow10Delta: Int): Decimal {
         val steal = steal
         return when {
-            stealIsFinite(steal) -> {
+            stealIsFIN(steal) -> {
                 val pow10DeltaCapped = max(min(pow10Delta, 100_000), -100_000)
                 val qNew = qExp + pow10DeltaCapped
                 decFinalizeFinite(signFlag, qNew, dw1, dw0)

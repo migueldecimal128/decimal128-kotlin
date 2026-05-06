@@ -98,7 +98,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun isSignMinus() = stealSignFlag(steal)
     fun isNormal() = stealIsNormal(steal)
-    fun isFinite() = stealIsFinite(steal)
+    fun isFinite() = stealIsFIN(steal)
     fun isZero() = stealIsZER(steal)
     fun isFiniteNonZero() = stealIsFNZ(steal)
     fun isSubnormal() = stealIsSubnormal(steal)
@@ -506,7 +506,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun setRoundToIntegral(x: MutDec, rounding: RoundingDirection, ctx: DecContext): MutDec {
         val xSteal = x.steal
-        if (!stealIsFinite(xSteal) || stealQExp(xSteal) >= 0)
+        if (!stealIsFIN(xSteal) || stealQExp(xSteal) >= 0)
             return set(x, ctx)
         val xSign = stealSignFlag(xSteal)
         if (stealIsZER(xSteal))
@@ -858,7 +858,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val xSteal = x.steal
         val xSign = stealSignFlag(xSteal)
         when {
-            stealIsFinite(xSteal) -> {
+            stealIsFIN(xSteal) -> {
                 val p10 = min(max(pow10, -100_000), 100_000)
                 val targetQ = stealQExp(xSteal) + p10
                 return (
@@ -895,7 +895,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         when {
             stealIsZER(xSteal) -> return setZero(xSign)
             maxToStrip <= 0 -> return set(x)
-            stealIsFinite(xSteal) -> {
+            stealIsFIN(xSteal) -> {
                 val tmps = ctx.tmps
                 val t = tmps.mdecDivRemPowCtzd.set(x)
                 val ctzdActual = c256CountTrailingZeroDigitsAndIsOddDestructive(t) shr 1
@@ -1023,7 +1023,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     override fun toString(): String {
         val steal = steal
-        if (!stealIsFinite(steal) || stealBitLen(steal) <= 127)
+        if (!stealIsFIN(steal) || stealBitLen(steal) <= 127)
             return d128ToString(steal, dw1, dw0, DecContext.current())
         // this is called only when the MutDec has not been normalized ...
         // ... only in the debugger
@@ -1033,7 +1033,7 @@ class MutDec() : C256(), Comparable<MutDec> {
 
     fun toString(ctx: DecContext): String {
         val steal = steal
-        if (!stealIsFinite(steal) || stealBitLen(steal) <= 127)
+        if (!stealIsFIN(steal) || stealBitLen(steal) <= 127)
             return d128ToString(steal, dw1, dw0, ctx)
         // this is called only when the MutDec has not been normalized ...
         // ... only in the debugger

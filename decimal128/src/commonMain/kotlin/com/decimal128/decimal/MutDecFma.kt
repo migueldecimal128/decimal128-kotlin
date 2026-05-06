@@ -10,7 +10,7 @@ internal fun mutDecFmaImpl(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: DecC
     val ySteal = y.steal
     val aSteal = a.steal
     val signatureXY = binopSignatureOf(xSteal, ySteal)
-    if (signatureXY == FNZ_FNZ && stealIsFinite(aSteal))
+    if (signatureXY == FNZ_FNZ && stealIsFIN(aSteal))
         return mutDecFmaFnzFnzFinite(z, x, y, a, ctx)
     if (stealIsNAN(aSteal))
         return fmaNanAddend(z, x, y, a, ctx)
@@ -99,7 +99,7 @@ private inline fun fmaZeroProd(z: MutDec, x: MutDec, y: MutDec, a: MutDec, ctx: 
 private inline fun fmaInfProd(z: MutDec, infSign: Boolean, a: MutDec, ctx: DecContext): MutDec {
     val aSteal = a.steal
     verify { !stealIsNAN(aSteal) }
-    if (stealIsFinite(aSteal) || stealSignFlag(aSteal) == infSign)
+    if (stealIsFIN(aSteal) || stealSignFlag(aSteal) == infSign)
         return z.setInfinite(infSign)
     return ctx.setNanSignalInvalidOperation(z, InvalidCause.MAGNITUDE_SUBTRACTION_OF_INFINITIES)
 }

@@ -4,6 +4,8 @@
 package com.decimal128.decimal
 
 import com.decimal128.decimal.IntegerParsePrint.int32ToASCII
+import com.decimal128.decimal.IntegerParsePrint.u64ToASCII
+import com.decimal128.decimal.IntegerParsePrint.uIntToASCII
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -11,7 +13,7 @@ import kotlin.math.max
  * Formats [x] as a string according to [ctx] preferences.
  *
  * For finite values, the format is selected by [DecPrefs.printStyle]:
- * - [FormatStyle.RAW] — integer coefficient plus quantum exponent
+ * - [FormatStyle.COEFFICIENT_QEXP] — integer coefficient plus quantum exponent
  * - [FormatStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic Spec
  * - Otherwise — plain decimal-point or normalized scientific notation, depending on
  *   the exponent and [DecPrefs.printMinPlainExponent]
@@ -32,7 +34,7 @@ internal fun d128ToString(x: Decimal, ctx: DecContext): String {
  * Formats a Decimal128 value as a string according to [ctx] preferences.
  *
  * For finite values, the format is selected by [DecPrefs.printStyle]:
- * - [FormatStyle.RAW] — integer coefficient plus quantum exponent
+ * - [FormatStyle.COEFFICIENT_QEXP] — integer coefficient plus quantum exponent
  * - [FormatStyle.ENGINEERING] — engineering notation per the General Decimal Arithmetic specification
  * - Otherwise — plain decimal-point or normalized scientific notation, depending on
  *   the exponent and [DecPrefs.printMinPlainExponent]
@@ -53,55 +55,30 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
     // a minus sign is always written
     // individual routines will overwrite it for non-negative values
     ascii[0] = '-'.code.toByte()
-    if (stealIsFinite(steal)) {
-        val formatStyle = printPrefs.formatStyle
-        val expEByte = (if (printPrefs.exponentLowercaseE) 'e' else 'E').code.toByte()
-        val exponentPlusSign = printPrefs.exponentPlusSign
-        if (formatStyle == FormatStyle.RAW) {
-            return toCoefficientQExponentString(
-                steal, dw1, dw0,
-                expEByte, exponentPlusSign, ascii
-            )
-        }
-        if (formatStyle == FormatStyle.EXPONENTIAL) {
-            return toNormalizedScientificString(
-                steal, dw1, dw0,
-                expEByte, exponentPlusSign, ascii
-            )
-
-        }
-        val qExp = stealQExp(steal)
-        if (qExp == 0) {
-            return toIntegerString(steal, dw1, dw0, ascii)
-        }
-        val sciExp = stealSciExp(steal)
-        if (qExp < 0 && sciExp >= printPrefs.minPlainExponent) {
-            return toDecimalPointString(steal, dw1, dw0, ascii)
-        }
-        if (formatStyle == FormatStyle.AUTO) {
-            return toNormalizedScientificString(
-                steal, dw1, dw0,
-                expEByte, exponentPlusSign, ascii
-            )
-        } else {
-            verify { formatStyle == FormatStyle.ENGINEERING }
-            return toEngineeringString(
-                steal, dw1, dw0,
-                expEByte, exponentPlusSign, ascii
-            )
-        }
+    if (stealIsFIN(steal)) {
+        return toFiniteString(steal, dw1, dw0, printPrefs, ascii)
+    } else {
+        return toNonFiniteString(steal, dw1, dw0, printPrefs, ascii)
     }
-    // ... non-finite handling unchanged
-    var signBit = stealSignBit(steal)
+}
+
+private val SPECIAL_VALUE_STRINGS = arrayOf(
+    "infinity", "-infinity", "inf", "-inf", "nan", "-nan", "snan", "-snan",
+    "Infinity", "-Infinity", "Inf", "-Inf", "NaN", "-NaN", "sNaN", "-sNaN",
+    "INFINITY", "-INFINITY", "INF", "-INF", "NAN", "-NAN", "SNAN", "-SNAN",
+)
+
+private fun toNonFiniteString(steal: Int, dw1: Long, dw0: Long, printPrefs: PrintPrefs, ascii: AsciiBuffer): String {
+    // non-finite
+    val signBit = stealSignBit(steal)
     val caseOffset = printPrefs.specialsCase.ordinal shl 3
     if (stealIsINF(steal)) {
         val infShortOffset = if (printPrefs.infinityShort) 2 else 0
         return SPECIAL_VALUE_STRINGS[caseOffset + infShortOffset + signBit]
     }
-    if (!printPrefs.nanMinusSign)
-        signBit = 0
+    val effectiveSignBit = if (printPrefs.nanMinusSign) signBit else 0
     val nanIndex = if (stealIsQNAN(steal) || printPrefs.collapseSNAN) 4 else 6
-    val nanStr = SPECIAL_VALUE_STRINGS[caseOffset + nanIndex + signBit]
+    val nanStr = SPECIAL_VALUE_STRINGS[caseOffset + nanIndex + effectiveSignBit]
     val digitLen = stealDigitLen(steal)
     if (digitLen == 0 || !printPrefs.nanPayload)
         return nanStr
@@ -112,11 +89,30 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
     return ascii.decodeToString(0, payloadNanLen)
 }
 
-private val SPECIAL_VALUE_STRINGS = arrayOf(
-    "infinity", "-infinity", "inf", "-inf", "nan", "-nan", "snan", "-snan",
-    "Infinity", "-Infinity", "Inf", "-Inf", "NaN", "-NaN", "sNaN", "-sNaN",
-    "INFINITY", "-INFINITY", "INF", "-INF", "NAN", "-NAN", "SNAN", "-SNAN",
-)
+private inline fun toFiniteString(steal: Int, dw1: Long, dw0: Long, printPrefs: PrintPrefs, ascii: AsciiBuffer): String {
+    val formatStyle = printPrefs.formatStyle
+    val expEByte = (if (printPrefs.exponentLowercaseE) 'e' else 'E').code.toByte()
+    val expPlusSign = printPrefs.exponentPlusSign
+    if (formatStyle == FormatStyle.COEFFICIENT_QEXP) {
+        return toCoefficientQExpString(steal, dw1, dw0, expEByte, expPlusSign, ascii)
+    }
+    if (formatStyle == FormatStyle.EXPONENTIAL) {
+        return toExponentialString(steal, dw1, dw0, expEByte, expPlusSign, ascii)
+    }
+    val qExp = stealQExp(steal)
+    if (qExp == 0) {
+        return toIntegerString(steal, dw1, dw0, ascii)
+    }
+    val sciExp = stealSciExp(steal)
+    if (qExp < 0 && sciExp >= printPrefs.minPlainExponent) {
+        return toDecimalPointString(steal, dw1, dw0, ascii)
+    }
+    if (formatStyle == FormatStyle.AUTO) {
+        return toExponentialString(steal, dw1, dw0, expEByte, expPlusSign, ascii)
+    }
+    verify { formatStyle == FormatStyle.ENGINEERING }
+    return toEngineeringString(steal, dw1, dw0, expEByte, expPlusSign, ascii)
+}
 
 private val SMALL_INTEGER_STRINGS = arrayOf(
     "0", "1", "2", "3", "4", "5", "6", "7",
@@ -171,12 +167,19 @@ private fun toDecimalPointString(steal: Int, dw1: Long, dw0: Long, ascii: ByteAr
     val decimalPointLen = 1
     val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
     verify { ascii[0] == '-'.code.toByte() }
-    for (i in signLen..leadingZeroCount) // there is one extra here
+    var i = signLen
+    while (i <= leadingZeroCount) { // there is one extra here
         ascii[i] = '0'.code.toByte()
+        i += 1
+    }
     IntegerParsePrint.u128ToASCII(digitLen, dw1, dw0, ascii, signLen + leadingZeroCount)
-    for (i in totalLen - 1 downTo totalLen - digitsRightOfDecimal)
+    val iDot = totalLen - digitsRightOfDecimal - 1
+    i = totalLen - 1
+    while (i > iDot) {
         ascii[i] = ascii[i - 1]
-    ascii[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
+        i -= 1
+    }
+    ascii[iDot] = '.'.code.toByte()
     return ascii.decodeToString(0, totalLen)
 }
 
@@ -193,7 +196,7 @@ private fun toDecimalPointString(steal: Int, dw1: Long, dw0: Long, ascii: ByteAr
  * @param expPlusSign if `true`, a `+` is written before non-negative exponents
  * @param ascii scratch buffer; index 0 must contain `'-'`
  */
-private fun toNormalizedScientificString(
+private fun toExponentialString(
     steal: Int,
     dw1: Long,
     dw0: Long,
@@ -206,11 +209,11 @@ private fun toNormalizedScientificString(
     val signLen = stealSignBit(steal)
     val digitLen = stealDigitLen(steal)
     val decimalPointLen = if (digitLen > 1) 1 else 0
-    val printedDigitLen = digitLen + 1 - (-digitLen ushr 31)
+    val printedDigitLen = digitLen + 1 + (-digitLen shr 31)
     val expELen = 1
     val expSignLen = if (eExp < 0 || expPlusSign) 1 else 0
     val expSignByte = (if (eExp < 0) '-' else '+').code.toByte()
-    val expDigitLen = max(calcDigitLen64(eExpAbs.toLong()), 1)
+    val expDigitLen = max(calcDigitLenInt(eExpAbs), 1)
     val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
     verify { ascii[0] == '-'.code.toByte() }
     IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, ascii, signLen + decimalPointLen)
@@ -229,8 +232,18 @@ private fun toNormalizedScientificString(
  * Formats a decimal as an engineering string per the General Decimal Arithmetic
  * specification, writing into [ascii] and returning the result.
  *
- * Dispatches to [toEngineeringStringZero] or [toEngineeringStringNonZero]
- * depending on whether the coefficient is zero.
+ * Be advised that dealing with ZER coefficient is quite different from
+ * a FNZ coefficient.
+ *
+ * For a ZER coefficient ...
+ * The exponent is rounded up to the next multiple of three, and the
+ * coefficient is written as `0`, `0.0`, or `0.00` accordingly. If the
+ * adjusted exponent is zero, no exponent part is written.
+ *
+ * for a FNZ coefficient ...
+ * Engineering notation adjusts the exponent to a multiple of three, placing
+ * one to three digits left of the radix point (e.g. `123E+6`, `12.3E+6`,
+ * `1.23E+6`). If the adjusted exponent is zero, no exponent part is written.
  *
  * @param steal packed sign, digit length, and scientific exponent
  * @param dw1 high 64 bits of the coefficient
@@ -241,145 +254,70 @@ private fun toNormalizedScientificString(
  */
 private fun toEngineeringString(
     steal: Int,
-    dw1: Long,
-    dw0: Long,
-    expEByte: Byte,
-    expPlusSign: Boolean,
-    ascii: ByteArray
+     dw1: Long,
+     dw0: Long,
+     expEByte: Byte,
+     expPlusSign: Boolean,
+     ascii: AsciiBuffer
 ): String {
     val digitLen = stealDigitLen(steal)
     val eExp = stealSciExp(steal)
     val signLen = stealSignBit(steal)
 
-    return if (digitLen == 0)
-        toEngineeringStringZero(eExp, signLen, expEByte, expPlusSign, ascii)
-    else
-        toEngineeringStringNonZero(
-            steal,
-            dw1,
-            dw0,
-            digitLen,
-            eExp,
-            signLen,
-            expEByte,
-            expPlusSign,
-            ascii
-        )
-}
+    val isZero = digitLen == 0
+    var zerExpAdjustment = 0
+    var fnzExpAdjustment = 0
+    // expAdjustment differs for a zero/fnz coefficient
+    if (isZero) {
+        zerExpAdjustment = (3 - ((eExp % 3) + 3) % 3) % 3
+    } else {
+        fnzExpAdjustment = (if (eExp >= 0) eExp else ((eExp % 3) + 3)) % 3
+    }
+    val adjustedExp = eExp + zerExpAdjustment - fnzExpAdjustment
 
-/**
- * Formats a zero decimal as an engineering string per
- * General Decimal Arithmetic Specification,
- * writing into [ascii] and returning the result.
- *
- * The exponent is rounded up to the next multiple of three, and the
- * coefficient is written as `0`, `0.0`, or `0.00` accordingly. If the
- * adjusted exponent is zero, no exponent part is written.
- *
- * @param eExp the full (non-adjusted) exponent
- * @param signLen 1 if negative, 0 otherwise
- * @param expEByte the exponent separator byte, e.g. `'E'` or `'e'`
- * @param expPlusSign if `true`, a `+` is written before non-negative exponents
- * @param ascii scratch buffer; index 0 must contain `'-'`
- */
-private fun toEngineeringStringZero(
-    eExp: Int,
-    signLen: Int,
-    expEByte: Byte,
-    expPlusSign: Boolean,
-    ascii: ByteArray
-): String {
-    // zero path — round exponent up to next multiple of 3
-    val expAdjustment = (3 - ((eExp % 3) + 3) % 3) % 3
-    val adjustedExp = eExp + expAdjustment
+    val adjustedExpMask = adjustedExp shr 31
+    val adjustedExpAbs = (adjustedExp xor adjustedExpMask) - adjustedExpMask
+    val expSign = (if (adjustedExp < 0) '-' else '+').code.toByte()
+    val expSignLen = if (eExp < 0 || expPlusSign) 1 else 0
+    val expDigitLen = max(calcDigitLenInt(adjustedExpAbs), 1)
+    var i: Int
+    if (isZero) {
+        // write '0.00' always ... truncate as needed
+        ascii[signLen] = '0'.code.toByte()
+        ascii[signLen + 1] = '.'.code.toByte()
+        ascii[signLen + 2] = '0'.code.toByte()
+        ascii[signLen + 3] = '0'.code.toByte()
 
-    // write '0.00' always ... truncate as needed
-    ascii[signLen] = '0'.code.toByte()
-    ascii[signLen + 1] = '.'.code.toByte()
-    ascii[signLen + 2] = '0'.code.toByte()
-    ascii[signLen + 3] = '0'.code.toByte()
+        // truncate based on expAdjustment
+        // expAdjustment == 0 → "0"     (just the '0')
+        // expAdjustment == 1 → "0.0"   (one trailing zero)
+        // expAdjustment == 2 → "0.00"  (two trailing zeros)
+        i = signLen + 1 + if (zerExpAdjustment == 0) 0 else 1 + zerExpAdjustment
+    } else {
+        // non-zero coefficient ... 1 or more digits to left of decimal point
+        val expAlignZeroCount = max(0, 1 + fnzExpAdjustment - digitLen)
+        val leftOfRadixPointCount = 1 + fnzExpAdjustment
+        val decimalPointLen = if (digitLen > leftOfRadixPointCount) 1 else 0
+        val printedDigitLen = digitLen
 
-    // truncate based on expAdjustment
-    // expAdjustment == 0 → "0"     (just the '0')
-    // expAdjustment == 1 → "0.0"   (one trailing zero)
-    // expAdjustment == 2 → "0.00"  (two trailing zeros)
-    var i = signLen + 1 + if (expAdjustment == 0) 0 else 1 + expAdjustment
+        IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, ascii, signLen + decimalPointLen)
+        i = signLen + decimalPointLen + printedDigitLen
 
-    if (adjustedExp == 0)
-        return ascii.decodeToString(0, i)
-
-    ascii[i++] = expEByte
-    if (expPlusSign && adjustedExp >= 0)
-        ascii[i++] = '+'.code.toByte()
-    val expLen = int32ToASCII(adjustedExp, ascii, i)
-    return ascii.decodeToString(0, i + expLen)
-}
-
-/**
- * Formats a non-zero finite decimal as an engineering string per
- * General Decimal Arithmetic Specification,
- * writing into [utf8] and returning the result.
- *
- * Engineering notation adjusts the exponent to a multiple of three, placing
- * one to three digits left of the radix point (e.g. `123E+6`, `12.3E+6`,
- * `1.23E+6`). If the adjusted exponent is zero, no exponent part is written.
- *
- * @param steal packed sign, digit length, and quantum exponent — no, wait...
- * @param dw1 high 64 bits of the coefficient
- * @param dw0 low 64 bits of the coefficient
- * @param digitLen number of significant digits in the coefficient
- * @param eExp the full (non-adjusted) exponent
- * @param signLen 1 if negative, 0 otherwise
- * @param exponentEUtf8Byte the exponent separator byte, e.g. `'E'` or `'e'`
- * @param printExponentPlusSign if `true`, a `+` is written before non-negative exponents
- * @param utf8 scratch buffer; index 0 must contain `'-'`
- */
-private fun toEngineeringStringNonZero(
-    steal: Int,
-    dw1: Long,
-    dw0: Long,
-    digitLen: Int,
-    eExp: Int,
-    signLen: Int,
-    exponentEUtf8Byte: Byte,
-    printExponentPlusSign: Boolean,
-    utf8: ByteArray
-): String {
-    val expAdjustment = (if (eExp >= 0) eExp else ((eExp % 3) + 3)) % 3
-    val leftOfRadixPointCount = 1 + expAdjustment
-    val adjustedExp = eExp - expAdjustment
-    val expAlignZeroCount = max(0, 1 + expAdjustment - digitLen)
-    val decimalPointLen = if (digitLen > leftOfRadixPointCount) 1 else 0
-    val printedDigitLen = digitLen
-    val expSignLen = if (adjustedExp < 0 || printExponentPlusSign) 1 else 0
-    val expDigitLen = max(calcDigitLen64(abs(adjustedExp).toLong()), 1)
-    val totalLen = signLen + decimalPointLen + expAlignZeroCount +
-            printedDigitLen + (if (adjustedExp != 0) 1 + expSignLen + expDigitLen else 0)
-
-    IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, utf8, signLen + decimalPointLen)
-    var i = signLen + decimalPointLen + printedDigitLen
-
-    when {
-        expAlignZeroCount > 0 -> {
-            repeat(expAlignZeroCount) { utf8[i++] = '0'.code.toByte() }
-        }
-
-        digitLen > leftOfRadixPointCount -> {
+        if (expAlignZeroCount > 0) {
+                repeat(expAlignZeroCount) { ascii[i++] = '0'.code.toByte() }
+        } else if (digitLen > leftOfRadixPointCount) {
             for (j in 0..<leftOfRadixPointCount)
-                utf8[signLen + j] = utf8[signLen + j + 1]
-            utf8[signLen + leftOfRadixPointCount] = '.'.code.toByte()
+                ascii[signLen + j] = ascii[signLen + j + 1]
+            ascii[signLen + leftOfRadixPointCount] = '.'.code.toByte()
         }
     }
-
     if (adjustedExp == 0)
-        return utf8.decodeToString(0, i)
-
-    utf8[i++] = exponentEUtf8Byte
-    if (printExponentPlusSign && adjustedExp >= 0)
-        utf8[i++] = '+'.code.toByte()
-    val j = int32ToASCII(adjustedExp, utf8, i)
-    verify { i + j == totalLen }
-    return utf8.decodeToString(0, totalLen)
+        return ascii.decodeToString(0, i)
+    ascii[i] = expEByte; i += 1
+    ascii[i] = expSign; i += expSignLen
+    u64ToASCII(expDigitLen, adjustedExpAbs.toLong(), ascii, i)
+    val totalLen = i + expDigitLen
+    return ascii.decodeToString(0, totalLen)
 }
 
 /**
@@ -397,7 +335,7 @@ private fun toEngineeringStringNonZero(
  * @param printExponentPlusSign if `true`, a `+` is written before non-negative exponents
  * @param utf8 scratch buffer; index 0 must contain `'-'`
  */
-private fun toCoefficientQExponentString(
+private fun toCoefficientQExpString(
     steal: Int,
     dw1: Long,
     dw0: Long,

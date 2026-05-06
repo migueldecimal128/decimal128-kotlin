@@ -51,7 +51,7 @@ internal inline fun stealBothZER(stealX: Int, stealY: Int) =
     stealIsZER(stealX) and stealIsZER(stealY)
 internal inline fun stealBothFinite(stealX: Int, stealY: Int) =
     // below only works because it is a NON-FINITE bit // stealIsFinite(stealX) and stealIsFinite(stealY)
-    stealIsFinite(stealX or stealY)
+    stealIsFIN(stealX or stealY)
 internal inline fun stealBothINF(stealX: Int, stealY: Int) =
     stealIsINF(stealX) and stealIsINF(stealY)
 internal inline fun stealBothNAN(stealX: Int, stealY: Int) =
@@ -62,8 +62,8 @@ internal inline fun stealHasINF(stealX: Int, stealY: Int) =
 internal inline fun stealHasNAN(stealX: Int, stealY: Int) =
     stealIsNAN(stealX) or stealIsNAN(stealY)
 
-internal inline fun stealIsFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) == 0
-internal inline fun stealNotFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) != 0
+internal inline fun stealIsFIN(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) == 0
+internal inline fun stealIsNotFinite(steal: Int): Boolean = (steal and STEAL_NONFINITE_BIT) != 0
 internal inline fun stealIsNormal(steal: Int): Boolean {
     if (! stealIsFNZ(steal))
         return false
@@ -137,7 +137,6 @@ internal inline fun stealSciExp(steal: Int): Int {
     // if the digitLen is non-zero then subtract 1
     // if digitLen == 0 then sciExp stays 0 ... 0e0
     // eExp = qExp + (digitLen - (-digitLen ushr 31))
-    // eExp = qExp + (digitLen - (-bitLen ushr 31))
     return ((steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR) +
             ((steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK) -
             (-(steal and STEAL_DIGITLEN_UNSHIFTED_MASK) ushr 31)

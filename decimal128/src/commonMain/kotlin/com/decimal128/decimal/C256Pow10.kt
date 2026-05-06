@@ -55,6 +55,12 @@ internal fun calcMaxDigitLenForBitLen(bitLen: Int): Int {
     return ((bitLen * 19729) ushr 16) + 1
 }
 
+internal inline fun calcDigitLenInt(n: Int): Int {
+    verify { n >= 0 }
+    val dw = n.toLong()
+    return calcDigitLen64(dw)
+}
+
 /**
  * Calcs the number of decimal digits in the unsigned long.
  * note that the value 0L returns 0

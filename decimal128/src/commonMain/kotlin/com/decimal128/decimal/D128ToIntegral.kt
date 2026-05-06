@@ -47,7 +47,7 @@ internal fun d128IsOddIntegral(x: Decimal): Boolean {
 
 internal fun d128RoundToIntegral(x: Decimal, rounding: RoundingDirection, suppressInexact: Boolean = false): Decimal {
     val stealX = x.steal
-    if (!stealIsFinite(stealX)) {
+    if (!stealIsFIN(stealX)) {
         if (stealIsSNAN(stealX))
             return nanOperandFound(x)
         return x
@@ -93,7 +93,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: RoundingDirection,
                                suppressInexact: Boolean,
                                suppressInvalid: Boolean): Long {
     val steal = x.steal
-    if (stealIsFinite(steal)) {
+    if (stealIsFIN(steal)) {
         val signMaskLong = stealSignMask(steal).toLong()
         val sign = stealSignFlag(steal)
         val qExp = stealQExp(steal)
@@ -184,7 +184,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: RoundingDirection,
  */
 fun d128ConvertToInt(x: Decimal, rounding: RoundingDirection, suppressInexact: Boolean): Int {
     val steal = x.steal
-    if (stealIsFinite(steal)) {
+    if (stealIsFIN(steal)) {
         val signMask = stealSignMask(steal)
         val sign = stealSignFlag(steal)
         val qExp = stealQExp(steal)

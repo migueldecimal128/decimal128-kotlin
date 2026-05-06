@@ -90,6 +90,11 @@ internal object IntegerParsePrint {
         return signBit + digitPrintCount
     }
 
+    fun uIntToASCII(digitPrintCount: Int, u: Int, ascii: AsciiBuffer, off: Int): Int {
+        verify { u >= 0 }
+        return u64ToASCII(digitPrintCount, u.toLong(), ascii, off)
+    }
+
     internal fun u64ToASCII(digitPrintCount: Int, dw0: Long, ascii: AsciiBuffer, off: Int): Int {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining

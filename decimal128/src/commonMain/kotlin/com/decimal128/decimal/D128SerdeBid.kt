@@ -82,7 +82,7 @@ private inline fun encodeSignAndGCombinationFieldBid128(d: Decimal): Long {
     val steal = d.steal
     val signBitLong = stealSignBit(steal).toLong() shl 63
     val gCombinationField = when {
-        stealIsFinite(steal) -> {
+        stealIsFIN(steal) -> {
             val qExp = stealQExp(steal)
             verify { qExp in QTINY_Neg6176..QMAX_6111 }
             val biasedQExp = qExp - QTINY_Neg6176 // remember qTiny is negative
