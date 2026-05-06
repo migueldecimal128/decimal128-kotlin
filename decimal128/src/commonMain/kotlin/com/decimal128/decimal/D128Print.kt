@@ -3,7 +3,6 @@
 
 package com.decimal128.decimal
 
-import com.decimal128.decimal.IntegerParsePrint.int32ToASCII
 import com.decimal128.decimal.IntegerParsePrint.u64ToASCII
 import com.decimal128.decimal.IntegerParsePrint.uIntToASCII
 import kotlin.math.abs
@@ -305,7 +304,8 @@ private fun toEngineeringString(
 
         if (expAlignZeroCount > 0) {
             for (j in 0..<expAlignZeroCount) {
-                ascii[i++] = '0'.code.toByte()
+                ascii[i] = '0'.code.toByte()
+                i += 1
             }
         } else if (digitLen > leftOfRadixPointCount) {
             for (j in 0..<leftOfRadixPointCount)
@@ -319,31 +319,32 @@ private fun toEngineeringString(
     ascii[i] = expSign; i += expSignLen
     u64ToASCII(expDigitLen, adjustedExpAbs.toLong(), ascii, i)
     val totalLen = i + expDigitLen
-    return ascii.decodeToString(0, totalLen)
+    val ret = ascii.decodeToString(0, totalLen)
+    return ret
 }
 
 /**
  * Formats a decimal as an integer coefficient plus quantum exponent
- * (e.g. `-123E+4`) into [utf8] and returns the result.
+ * (e.g. `-123E+4`) into [ascii] and returns the result.
  *
  * [steal] encodes the sign, digit length, and quantum exponent via [stealSignBit],
- * [stealDigitLen], and [stealQExp]. [utf8] must be large enough to hold the
+ * [stealDigitLen], and [stealQExp]. [ascii] must be large enough to hold the
  * result and pre-populated with a `'-'` at index 0.
  *
  * @param steal packed sign, digit length, and quantum exponent
  * @param dw1 high 64 bits of the coefficient
  * @param dw0 low 64 bits of the coefficient
- * @param exponentEUtf8Byte the exponent separator byte, e.g. `'E'` or `'e'`
- * @param printExponentPlusSign if `true`, a `+` is written before non-negative exponents
- * @param utf8 scratch buffer; index 0 must contain `'-'`
+ * @param expEByte the exponent separator byte, e.g. `'E'` or `'e'`
+ * @param expPlusSign if `true`, a `+` is written before non-negative exponents
+ * @param ascii scratch buffer; index 0 must contain `'-'`
  */
 private fun toCoefficientQExpString(
     steal: Int,
     dw1: Long,
     dw0: Long,
-    exponentEUtf8Byte: Byte,
-    printExponentPlusSign: Boolean,
-    utf8: ByteArray
+    expEByte: Byte,
+    expPlusSign: Boolean,
+    ascii: ByteArray
 ): String {
     val digitLen = stealDigitLen(steal)
     val signLen = stealSignBit(steal)
@@ -351,18 +352,17 @@ private fun toCoefficientQExpString(
     val qExpAbs = abs(qExp)
     val printedDigitLen = max(digitLen, 1)
     val expELen = 1
-    val expSignLen = if (qExp < 0 || printExponentPlusSign) 1 else 0
+    val expSignLen = if (qExp < 0 || expPlusSign) 1 else 0
     val expSignByte = if (qExp < 0) '-'.code.toByte() else '+'.code.toByte()
-    val expDigitLen = max(calcDigitLen64(qExpAbs.toLong()), 1)
-    val totalLen = signLen + printedDigitLen + expELen + expSignLen + expDigitLen
-    verify { utf8[0] == '-'.code.toByte() }
+    val expDigitLen = max(calcDigitLenInt(qExpAbs), 1)
+    verify { ascii[0] == '-'.code.toByte() }
     var i = signLen
-    i += IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, utf8, signLen)
-    utf8[i++] = exponentEUtf8Byte
-    utf8[i] = expSignByte
-    i += expSignLen
-    val j = int32ToASCII(qExpAbs, utf8, i)
-    verify { i + j == totalLen }
-    return utf8.decodeToString(0, totalLen)
+    IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, ascii, signLen)
+    i += printedDigitLen
+    ascii[i] = expEByte; i += 1
+    ascii[i] = expSignByte; i += expSignLen
+    uIntToASCII(expDigitLen, qExpAbs, ascii, i)
+    val totalLen = i + expDigitLen
+    return ascii.decodeToString(0, totalLen)
 }
 

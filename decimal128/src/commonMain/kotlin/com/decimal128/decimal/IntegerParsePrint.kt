@@ -62,7 +62,7 @@ internal object IntegerParsePrint {
         return ascii.decodeToString()
     }
 
-    fun c256ToASCII(c: C256, ascii: AsciiBuffer, off: Int, tmp: C256? = null): Int {
+    internal fun c256ToASCII(c: C256, ascii: AsciiBuffer, off: Int, tmp: C256? = null) {
         // minimum printDigitLen is 1
         // add 1, then add -1 if the inbound digitLen was non-zero
         var remainingDigitCount = c.digitLen + 1 + (-c.digitLen shr 31)
@@ -76,7 +76,7 @@ internal object IntegerParsePrint {
                 remainingDigitCount -= 8
             } while (t.bitLen > 128)
         }
-        return u128ToASCII(remainingDigitCount, t.dw1, t.dw0, ascii, off)
+        u128ToASCII(remainingDigitCount, t.dw1, t.dw0, ascii, off)
     }
 
     fun int32ToASCII(n: Int, ascii: AsciiBuffer, off: Int): Int {
@@ -90,12 +90,12 @@ internal object IntegerParsePrint {
         return signBit + digitPrintCount
     }
 
-    fun uIntToASCII(digitPrintCount: Int, u: Int, ascii: AsciiBuffer, off: Int): Int {
+    internal fun uIntToASCII(digitPrintCount: Int, u: Int, ascii: AsciiBuffer, off: Int) {
         verify { u >= 0 }
-        return u64ToASCII(digitPrintCount, u.toLong(), ascii, off)
+        u64ToASCII(digitPrintCount, u.toLong(), ascii, off)
     }
 
-    internal fun u64ToASCII(digitPrintCount: Int, dw0: Long, ascii: AsciiBuffer, off: Int): Int {
+    internal fun u64ToASCII(digitPrintCount: Int, dw0: Long, ascii: AsciiBuffer, off: Int) {
         var digitsRemaining = digitPrintCount
         var ich = off + digitsRemaining
         var dwT = dw0
@@ -109,10 +109,9 @@ internal object IntegerParsePrint {
         }
         if (digitsRemaining > 0)
             renderTailDigitsBeforeIndex(digitsRemaining, dwT, ascii, ich)
-        return digitPrintCount
     }
 
-    internal fun u128ToASCII(digitPrintCount: Int, dw1: Long, dw0: Long, ascii: AsciiBuffer, off: Int): Int {
+    internal fun u128ToASCII(digitPrintCount: Int, dw1: Long, dw0: Long, ascii: AsciiBuffer, off: Int) {
         var dw1T = dw1
         var dw0T = dw0
         var ich = off + digitPrintCount
@@ -142,7 +141,6 @@ internal object IntegerParsePrint {
         }
         if (remainingDigitCount > 0)
             renderTailDigitsBeforeIndex(remainingDigitCount, dw0T, ascii, ich)
-        return digitPrintCount
     }
 
     fun int256ToHexString(sign: Boolean, u: C256): String {
