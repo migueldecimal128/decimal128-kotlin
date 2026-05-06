@@ -50,15 +50,15 @@ class DecFlags {
         val bytes = ByteArray(5)
         var ib = 0
         if (isSet(INEXACT))
-            bytes[ib++] = 'x'.code.toByte()
+            bytes[ib++] = ascii_x
         if (isSet(UNDERFLOW))
-            bytes[ib++] = 'u'.code.toByte()
+            bytes[ib++] = ascii_u
         if (isSet(OVERFLOW))
-            bytes[ib++] = 'o'.code.toByte()
+            bytes[ib++] = ascii_o
         if (isSet(DIVIDE_BY_ZERO))
-            bytes[ib++] = 'z'.code.toByte()
+            bytes[ib++] = ascii_z
         if (isSet(INVALID_OPERATION))
-            bytes[ib++] = 'i'.code.toByte()
+            bytes[ib++] = ascii_i
         return bytes.decodeToString(0, ib)
     }
 

@@ -53,7 +53,7 @@ internal fun d128ToString(steal: Int, dw1: Long, dw0: Long, ctx: DecContext): St
     check(ascii.size >= ASCII_SIZE)
     // a minus sign is always written
     // individual routines will overwrite it for non-negative values
-    ascii[0] = '-'.code.toByte()
+    ascii[0] = ascii_minus
     if (stealIsFIN(steal)) {
         return toFiniteString(steal, dw1, dw0, printPrefs, ascii)
     } else {
@@ -90,7 +90,7 @@ private fun toNonFiniteString(steal: Int, dw1: Long, dw0: Long, printPrefs: Prin
 
 private inline fun toFiniteString(steal: Int, dw1: Long, dw0: Long, printPrefs: PrintPrefs, ascii: AsciiBuffer): String {
     val formatStyle = printPrefs.formatStyle
-    val expEByte = (if (printPrefs.exponentLowercaseE) 'e' else 'E').code.toByte()
+    val expEByte = if (printPrefs.exponentLowercaseE) ascii_e else ascii_E
     val expPlusSign = printPrefs.exponentPlusSign
     if (formatStyle == FormatStyle.COEFFICIENT_QEXP) {
         return toCoefficientQExpString(steal, dw1, dw0, expEByte, expPlusSign, ascii)
@@ -140,7 +140,7 @@ private fun toIntegerString(steal: Int, dw1: Long, dw0: Long, ascii: AsciiBuffer
     }
     val signLen = signBit
     val digitLen = stealDigitLen(steal)
-    verify { ascii[0] == '-'.code.toByte() }
+    verify { ascii[0] == ascii_minus }
     IntegerParsePrint.u128ToASCII(digitLen, dw1, dw0, ascii, signLen)
     return ascii.decodeToString(0, signLen + digitLen)
 }
@@ -165,10 +165,10 @@ private fun toDecimalPointString(steal: Int, dw1: Long, dw0: Long, ascii: ByteAr
     val signLen = stealSignBit(steal)
     val decimalPointLen = 1
     val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
-    verify { ascii[0] == '-'.code.toByte() }
+    verify { ascii[0] == ascii_minus }
     var i = signLen
     while (i <= leadingZeroCount) { // there is one extra here
-        ascii[i] = '0'.code.toByte()
+        ascii[i] = ascii_0
         i += 1
     }
     IntegerParsePrint.u128ToASCII(digitLen, dw1, dw0, ascii, signLen + leadingZeroCount)
@@ -178,7 +178,7 @@ private fun toDecimalPointString(steal: Int, dw1: Long, dw0: Long, ascii: ByteAr
         ascii[i] = ascii[i - 1]
         i -= 1
     }
-    ascii[iDot] = '.'.code.toByte()
+    ascii[iDot] = ascii_dot
     return ascii.decodeToString(0, totalLen)
 }
 
@@ -211,14 +211,14 @@ private fun toExponentialString(
     val printedDigitLen = digitLen + 1 + (-digitLen shr 31)
     val expELen = 1
     val expSignLen = if (eExp < 0 || expPlusSign) 1 else 0
-    val expSignByte = (if (eExp < 0) '-' else '+').code.toByte()
+    val expSignByte = if (eExp < 0) ascii_minus else ascii_plus
     val expDigitLen = max(calcDigitLenInt(eExpAbs), 1)
     val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
-    verify { ascii[0] == '-'.code.toByte() }
+    verify { ascii[0] == ascii_minus }
     IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, ascii, signLen + decimalPointLen)
     if (decimalPointLen > 0) {
         ascii[signLen] = ascii[signLen + 1]
-        ascii[signLen + 1] = '.'.code.toByte()
+        ascii[signLen + 1] = ascii_dot
     }
     val iE = signLen + decimalPointLen + printedDigitLen
     ascii[iE] = expEByte
@@ -276,16 +276,16 @@ private fun toEngineeringString(
 
     val adjustedExpMask = adjustedExp shr 31
     val adjustedExpAbs = (adjustedExp xor adjustedExpMask) - adjustedExpMask
-    val expSign = (if (adjustedExp < 0) '-' else '+').code.toByte()
+    val expSign = if (adjustedExp < 0) ascii_minus else ascii_plus
     val expSignLen = if (eExp < 0 || expPlusSign) 1 else 0
     val expDigitLen = max(calcDigitLenInt(adjustedExpAbs), 1)
     var i: Int
     if (isZero) {
         // write '0.00' always ... truncate as needed
-        ascii[signLen] = '0'.code.toByte()
-        ascii[signLen + 1] = '.'.code.toByte()
-        ascii[signLen + 2] = '0'.code.toByte()
-        ascii[signLen + 3] = '0'.code.toByte()
+        ascii[signLen] = ascii_0
+        ascii[signLen + 1] = ascii_dot
+        ascii[signLen + 2] = ascii_0
+        ascii[signLen + 3] = ascii_0
 
         // truncate based on expAdjustment
         // expAdjustment == 0 → "0"     (just the '0')
@@ -304,13 +304,13 @@ private fun toEngineeringString(
 
         if (expAlignZeroCount > 0) {
             for (j in 0..<expAlignZeroCount) {
-                ascii[i] = '0'.code.toByte()
+                ascii[i] = ascii_0
                 i += 1
             }
         } else if (digitLen > leftOfRadixPointCount) {
             for (j in 0..<leftOfRadixPointCount)
                 ascii[signLen + j] = ascii[signLen + j + 1]
-            ascii[signLen + leftOfRadixPointCount] = '.'.code.toByte()
+            ascii[signLen + leftOfRadixPointCount] = ascii_dot
         }
     }
     if (adjustedExp == 0)
@@ -353,9 +353,9 @@ private fun toCoefficientQExpString(
     val printedDigitLen = max(digitLen, 1)
     val expELen = 1
     val expSignLen = if (qExp < 0 || expPlusSign) 1 else 0
-    val expSignByte = if (qExp < 0) '-'.code.toByte() else '+'.code.toByte()
+    val expSignByte = if (qExp < 0) ascii_minus else ascii_plus
     val expDigitLen = max(calcDigitLenInt(qExpAbs), 1)
-    verify { ascii[0] == '-'.code.toByte() }
+    verify { ascii[0] == ascii_minus }
     var i = signLen
     IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, ascii, signLen)
     i += printedDigitLen

@@ -14,6 +14,93 @@ internal const val E_MAX = 6144
 internal const val E_MIN = -6143
 internal const val NAN_PAYLOAD_PRECISION_33 = 33
 
+/*
+    0 1 2 3 4 5 6 7 8 9 A B C D E F
+2  SP ! " # $ % & ' ( ) * + , - . /
+3   0 1 2 3 4 5 6 7 8 9 : ; < = > ?
+4   @ A B C D E F G H I J K L M N O
+5   P Q R S T U V W X Y Z [ \ ] ^ _
+6   ` a b c d e f g h i j k l m n o
+7   p q r s t u v w x y z { | } ~ DEL
+*/
+
+internal const val ascii_minus: Byte = 0x2D
+internal const val ascii_plus: Byte = 0x2B
+internal const val ascii_dot: Byte = 0x2E
+internal const val ascii_underbar: Byte = 0x5F
+internal const val ascii_lParen: Byte = 0x28
+internal const val ascii_rParen: Byte = 0x29
+internal const val ascii_lSquare: Byte = 0x5B
+internal const val ascii_rSquare: Byte = 0x5D
+internal const val ascii_lCurly: Byte = 0x7B
+internal const val ascii_rCurly: Byte = 0x7D
+internal const val ascii_lAngle: Byte = 0x3C
+internal const val ascii_rAngle: Byte = 0x3E
+
+internal const val ascii_0: Byte = 0x30
+internal const val ascii_1: Byte = 0x31
+internal const val ascii_2: Byte = 0x32
+internal const val ascii_3: Byte = 0x33
+internal const val ascii_4: Byte = 0x34
+internal const val ascii_5: Byte = 0x35
+internal const val ascii_6: Byte = 0x36
+internal const val ascii_7: Byte = 0x37
+internal const val ascii_8: Byte = 0x38
+internal const val ascii_9: Byte = 0x39
+
+internal const val ascii_A: Byte = 0x41
+internal const val ascii_B: Byte = 0x42
+internal const val ascii_C: Byte = 0x43
+internal const val ascii_D: Byte = 0x44
+internal const val ascii_E: Byte = 0x45
+internal const val ascii_F: Byte = 0x46
+internal const val ascii_G: Byte = 0x47
+internal const val ascii_H: Byte = 0x48
+internal const val ascii_I: Byte = 0x49
+internal const val ascii_J: Byte = 0x4A
+internal const val ascii_K: Byte = 0x4B
+internal const val ascii_L: Byte = 0x4C
+internal const val ascii_M: Byte = 0x4D
+internal const val ascii_N: Byte = 0x4E
+internal const val ascii_O: Byte = 0x4F
+internal const val ascii_P: Byte = 0x50
+internal const val ascii_Q: Byte = 0x51
+internal const val ascii_R: Byte = 0x52
+internal const val ascii_S: Byte = 0x53
+internal const val ascii_T: Byte = 0x54
+internal const val ascii_U: Byte = 0x55
+internal const val ascii_V: Byte = 0x56
+internal const val ascii_W: Byte = 0x57
+internal const val ascii_X: Byte = 0x58
+internal const val ascii_Y: Byte = 0x59
+internal const val ascii_Z: Byte = 0x5A
+
+internal const val ascii_a: Byte = 0x61
+internal const val ascii_b: Byte = 0x62
+internal const val ascii_c: Byte = 0x63
+internal const val ascii_d: Byte = 0x64
+internal const val ascii_e: Byte = 0x65
+internal const val ascii_f: Byte = 0x66
+internal const val ascii_g: Byte = 0x67
+internal const val ascii_h: Byte = 0x68
+internal const val ascii_i: Byte = 0x69
+internal const val ascii_j: Byte = 0x6A
+internal const val ascii_k: Byte = 0x6B
+internal const val ascii_l: Byte = 0x6C
+internal const val ascii_m: Byte = 0x6D
+internal const val ascii_n: Byte = 0x6E
+internal const val ascii_o: Byte = 0x6F
+internal const val ascii_p: Byte = 0x70
+internal const val ascii_q: Byte = 0x71
+internal const val ascii_r: Byte = 0x72
+internal const val ascii_s: Byte = 0x73
+internal const val ascii_t: Byte = 0x74
+internal const val ascii_u: Byte = 0x75
+internal const val ascii_v: Byte = 0x76
+internal const val ascii_w: Byte = 0x77
+internal const val ascii_x: Byte = 0x78
+internal const val ascii_y: Byte = 0x79
+internal const val ascii_z: Byte = 0x7A
 
 
 // Automatically generated ... but not any more

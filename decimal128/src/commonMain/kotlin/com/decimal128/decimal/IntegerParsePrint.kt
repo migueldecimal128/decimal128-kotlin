@@ -57,7 +57,7 @@ internal object IntegerParsePrint {
     private fun c256ToStringImpl(sign: Boolean, c: C256): String {
         val signBit = if (sign) 1 else 0
         val ascii = ByteArray(c.digitLen + signBit)
-        ascii[0] = '-'.code.toByte() // if non-negative then this will be overwritten
+        ascii[0] = ascii_minus // if non-negative then this will be overwritten
         c256ToASCII(c, ascii, signBit)
         return ascii.decodeToString()
     }
@@ -82,7 +82,7 @@ internal object IntegerParsePrint {
     fun int32ToASCII(n: Int, ascii: AsciiBuffer, off: Int): Int {
         val dwAbs = ((n xor (n shr 31)) - (n shr 31)).toUInt().toLong()
         val signBit = n ushr 31
-        ascii[off] = '-'.code.toByte()
+        ascii[off] = ascii_minus
         val digitLen = calcDigitLen64(dwAbs)
         // digitPrintCount = max(digitLen, 1), branchless
         val digitPrintCount = digitLen + 1 + (-digitLen shr 31)
@@ -149,9 +149,9 @@ internal object IntegerParsePrint {
             return "0x0"
         val hexitCount = (u.bitLen + 3) ushr 2
         val bytes = ByteArray(s + 2 + hexitCount)
-        bytes[0    ] = '-'.code.toByte()
-        bytes[s    ] = '0'.code.toByte()
-        bytes[s + 1] = 'x'.code.toByte()
+        bytes[0    ] = ascii_minus
+        bytes[s    ] = ascii_0
+        bytes[s + 1] = ascii_x
         u256ToHexASCII(u, hexitCount, bytes, s + 2)
         return bytes.decodeToString()
     }

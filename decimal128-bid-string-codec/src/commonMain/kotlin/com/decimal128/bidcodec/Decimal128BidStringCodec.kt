@@ -358,7 +358,7 @@ object Decimal128BidStringCodec {
         val printDigitLen = digitLen + 1 - (-digitLen ushr 31)
         val signBit = if (sign) 1 else 0
         val ascii = ByteArray(signBit + printDigitLen)
-        ascii[0] = '-'.code.toByte()
+        ascii[0] = ascii_minus
         u128ToAscii(printDigitLen, dw1, dw0, ascii, signBit)
         return ascii.decodeToString()
     }
@@ -382,13 +382,13 @@ object Decimal128BidStringCodec {
         val decimalPointLen = 1
         val totalLen = signLen + leadingZeroCount + decimalPointLen + digitLen
         val ascii = ByteArray(totalLen)
-        ascii[0] = '-'.code.toByte()
+        ascii[0] = ascii_minus
         for (i in signLen..leadingZeroCount) // there is one extra here
-            ascii[i] = '0'.code.toByte()
+            ascii[i] = ascii_0
         u128ToAscii(digitLen, dw1, dw0, ascii, signLen + leadingZeroCount)
         for (i in totalLen - 1 downTo totalLen - digitsRightOfDecimal)
             ascii[i] = ascii[i - 1]
-        ascii[totalLen - digitsRightOfDecimal - 1] = '.'.code.toByte()
+        ascii[totalLen - digitsRightOfDecimal - 1] = ascii_dot
         return ascii.decodeToString()
     }
 
@@ -417,15 +417,15 @@ object Decimal128BidStringCodec {
         val expDigitLen = max(calcDigitLen128(0L, eExpAbs.toLong()), 1)
         val totalLen = signLen + decimalPointLen + printedDigitLen + expELen + expSignLen + expDigitLen
         val ascii = ByteArray(totalLen)
-        ascii[0] = '-'.code.toByte()
+        ascii[0] = ascii_minus
         u128ToAscii(printedDigitLen, dw1, dw0, ascii, signLen + decimalPointLen)
         if (decimalPointLen > 0) {
             ascii[signLen] = ascii[signLen + 1]
-            ascii[signLen + 1] = '.'.code.toByte()
+            ascii[signLen + 1] = ascii_dot
         }
         val iE = signLen + decimalPointLen + printedDigitLen
         ascii[iE] = 'E'.code.toByte()
-        ascii[iE + 1] = '-'.code.toByte()
+        ascii[iE + 1] = ascii_minus
         renderTailDigitsBeforeIndex(expDigitLen, eExpAbs.toLong(), ascii, totalLen)
         return ascii.decodeToString()
 
