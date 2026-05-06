@@ -85,7 +85,7 @@ private fun toNonFiniteString(steal: Int, dw1: Long, dw0: Long, printPrefs: Prin
     for (i in nanStr.indices)
         ascii[i] = nanStr[i].code.toByte()
     IntegerParsePrint.u128ToASCII(digitLen, dw1, dw0, ascii, nanStr.length)
-    return ascii.decodeToString(0, payloadNanLen)
+    return ascii.toString(payloadNanLen)
 }
 
 private inline fun toFiniteString(steal: Int, dw1: Long, dw0: Long, printPrefs: PrintPrefs, ascii: AsciiBuffer): String {
@@ -142,7 +142,7 @@ private fun toIntegerString(steal: Int, dw1: Long, dw0: Long, ascii: AsciiBuffer
     val digitLen = stealDigitLen(steal)
     verify { ascii[0] == ascii_minus }
     IntegerParsePrint.u128ToASCII(digitLen, dw1, dw0, ascii, signLen)
-    return ascii.decodeToString(0, signLen + digitLen)
+    return ascii.toString(signLen + digitLen)
 }
 
 /**
@@ -179,7 +179,7 @@ private fun toDecimalPointString(steal: Int, dw1: Long, dw0: Long, ascii: ByteAr
         i -= 1
     }
     ascii[iDot] = ascii_dot
-    return ascii.decodeToString(0, totalLen)
+    return ascii.toString(totalLen)
 }
 
 /**
@@ -224,7 +224,7 @@ private fun toExponentialString(
     ascii[iE] = expEByte
     ascii[iE + 1] = expSignByte // will get overwritten when expSignLen == 0
     IntegerParsePrint.renderTailDigitsBeforeIndex(expDigitLen, eExpAbs.toLong(), ascii, totalLen)
-    return ascii.decodeToString(0, totalLen)
+    return ascii.toString(totalLen)
 }
 
 /**
@@ -308,18 +308,20 @@ private fun toEngineeringString(
                 i += 1
             }
         } else if (digitLen > leftOfRadixPointCount) {
-            for (j in 0..<leftOfRadixPointCount)
+            for (j in 0..<leftOfRadixPointCount) {
                 ascii[signLen + j] = ascii[signLen + j + 1]
+            }
             ascii[signLen + leftOfRadixPointCount] = ascii_dot
         }
     }
-    if (adjustedExp == 0)
-        return ascii.decodeToString(0, i)
+    if (adjustedExp == 0) {
+        return ascii.toString(i)
+    }
     ascii[i] = expEByte; i += 1
     ascii[i] = expSign; i += expSignLen
-    u64ToASCII(expDigitLen, adjustedExpAbs.toLong(), ascii, i)
+    uIntToASCII(expDigitLen, adjustedExpAbs, ascii, i)
     val totalLen = i + expDigitLen
-    val ret = ascii.decodeToString(0, totalLen)
+    val ret = ascii.toString(totalLen)
     return ret
 }
 
@@ -363,6 +365,6 @@ private fun toCoefficientQExpString(
     ascii[i] = expSignByte; i += expSignLen
     uIntToASCII(expDigitLen, qExpAbs, ascii, i)
     val totalLen = i + expDigitLen
-    return ascii.decodeToString(0, totalLen)
+    return ascii.toString(totalLen)
 }
 
