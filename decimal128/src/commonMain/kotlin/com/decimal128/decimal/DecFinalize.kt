@@ -6,6 +6,7 @@ package com.decimal128.decimal
 import com.decimal128.decimal.Decimal.Companion.decimalFNZ
 import com.decimal128.decimal.Decimal.Companion.decimalFinite
 import com.decimal128.decimal.Residue.Companion.EXACT
+import kotlin.math.max
 
 internal inline fun decFinalizeFinite(
     sign: Boolean,
@@ -34,7 +35,7 @@ internal fun decRoundAndFinalizeFinite(
     beQuiet: Boolean = false
 ): Decimal {
     // Step 1: Fast path: already in valid decimal128 range
-    if (inboundResidue == EXACT && ctx.coeffQexpFit(dw1In, dw0In, qExpIn)) {
+    if (inboundResidue == EXACT && ctx.isCanonical(qExpIn, dw1In, dw0In)) {
         // allocate zero thru this path to reuse cached zeros
         if ((dw1In or dw0In) == 0L)
             return Decimal.zero(sign, qExpIn)
@@ -55,9 +56,7 @@ internal fun decRoundAndFinalizeFinite(
     // Step 4: underflow
     // divert iff range truncation exceeds precision truncation
     val rangeTruncationNeeded = -6176 - qExpIn
-    val precisionTruncationNeeded =
-        if (ctx.coeffFits(dw1In, dw0In)) 0
-        else calcDigitLen128(dw1In, dw0In) - precision
+    val precisionTruncationNeeded = max(calcDigitLen128(dw1In, dw0In) - precision, 0)
     if (rangeTruncationNeeded > precisionTruncationNeeded)
         return decFinalizeUnderflowRegion(sign, qExpIn, dw1In, dw0In, inboundResidue, rounding, ctx, beQuiet)
 
@@ -199,7 +198,7 @@ private fun decFinalizeSubnormal(sign: Boolean,
         dw1T += if (dw0T == 0L) 1L else 0L
         // the inbound coefficient may have had > 34 digits
         // even though we just scaled down, the roundUp might overflow
-        if (!ctx.coeffFits(dw1T, dw0T)) {
+        if (!ctx.isCanonical(dw1T, dw0T)) {
             dw1T = ctx.dw1MinFullPrecisionCoeff
             dw0T = ctx.dw0MinFullPrecisionCoeff
             ++qExpT
@@ -218,7 +217,7 @@ private fun decFinalizeClamping(sign: Boolean,
     umul128xPow10to128(pentad, dw1, dw0, qExcess)
     val dw1S = pentad.dw1
     val dw0S = pentad.dw0
-    verify { ctx.coeffFits(dw1S, dw0S) }
+    verify { ctx.isCanonical(dw1S, dw0S) }
     // successful clamping does not signal because
     // the returned value is numerically equal
     return decimalFNZ(sign, 6111, dw1S, dw0S)

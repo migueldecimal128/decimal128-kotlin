@@ -384,23 +384,14 @@ class DecContext(
     // FIXME - switch to preserve rather than discard
     fun parseDiscardNanPayload() = parsePrefs.preserveNANPayload
 
-    internal fun coeffFits(dw1: Long, dw0: Long): Boolean {
-        // if bitLen < 113 then it is guaranteed to fit
-        if (dw1.countLeadingZeroBits() > 128 - 113)
-            return true
-        val pow10Offset = (this.precision shl 1) and POW10_BCE
-        val maxxHi = POW10[pow10Offset + 1]
-        return unsignedLT(dw1, maxxHi) || dw1 == maxxHi && unsignedLT(dw0, POW10[pow10Offset])
+    internal fun isCanonical(dw1: Long, dw0: Long): Boolean {
+        return unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && unsignedLT(dw0, dw0MaxxCoeff)
     }
 
-    internal inline fun coeffQexpFit(dw1: Long, dw0: Long, qExp: Int): Boolean {
-        if (qExp < Q_TINY || qExp > Q_MAX)
+    internal inline fun isCanonical(qExp: Int, dw1: Long, dw0: Long): Boolean {
+        if (qExp < -6176 || qExp > 6111)
             return false
-        if (dw1.countLeadingZeroBits() > 128 - 113)
-            return true
-        val pow10Offset = (this.precision shl 1) and POW10_BCE
-        val maxxHi = POW10[pow10Offset + 1]
-        return unsignedLT(dw1, maxxHi) || dw1 == maxxHi && unsignedLT(dw0, POW10[pow10Offset])
+        return unsignedLT(dw1, dw1MaxxCoeff) || dw1 == dw1MaxxCoeff && dw0 < dw0MaxxCoeff
     }
 
     internal inline fun coeffIsMaxx(dw1: Long, dw0: Long): Boolean {
