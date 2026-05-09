@@ -139,19 +139,31 @@ private fun decFinalizeUnderflowRegion(
     verify { qExp < -6176 }
     val truncationNeeded = -6176 - qExp
     val digitLen = calcDigitLen128(dw1, dw0)
-    when {
-        truncationNeeded > digitLen -> {
-            // Result is swamped - becomes zero or min finite
-            // This is always inexact
-            val z =
-                if (rounding.underflowsToZero(sign)) Decimal.zero(sign, -6176)
-                else minFiniteMagnitude(sign, ctx)
-            return if (beQuiet) z else ctx.signalInexactUnderflow(z)
-        }
-        truncationNeeded == digitLen ->
-            return decFinalizeUnderflowBoundary(sign, dw1, dw0, residue, rounding, ctx, beQuiet)
-        else ->
-            return decFinalizeSubnormal(sign, dw1, dw0, residue, qExp, rounding, ctx, beQuiet)
+    if (truncationNeeded > digitLen) {
+        return finalizeUnderflowFullySwamped(sign, rounding, ctx, beQuiet)
+    }
+    if (truncationNeeded == digitLen) {
+        return finalizeUnderflowExactBoundary(sign, dw1, dw0, residue, rounding, ctx, beQuiet)
+    }
+    return finalizeSubnormal(sign, dw1, dw0, residue, qExp, rounding, ctx, beQuiet)
+}
+
+private fun finalizeUnderflowFullySwamped(sign: Boolean,
+                                          rounding: RoundingDirection,
+                                          ctx: DecContext,
+                                          beQuiet: Boolean): Decimal {
+    // Result is fully swamped - becomes zero or min finite
+    // This is always inexact
+    val z: Decimal
+    if (rounding.underflowsToZero(sign)) {
+        z = Decimal.zero(sign, -6176)
+    } else {
+        z = minFiniteMagnitude(sign, ctx)
+    }
+    if (beQuiet) {
+        return z
+    } else {
+        return ctx.signalInexactUnderflow(z)
     }
 }
 
@@ -163,10 +175,10 @@ private fun decFinalizeUnderflowRegion(
  * We compare our coefficient against (10**digitLen)/2
  *
  */
-private fun decFinalizeUnderflowBoundary(sign: Boolean,
-                                         dw1: Long, dw0: Long, residue: Residue,
-                                         rounding: RoundingDirection, ctx: DecContext,
-                                         beQuiet: Boolean): Decimal {
+private fun finalizeUnderflowExactBoundary(sign: Boolean,
+                                           dw1: Long, dw0: Long, residue: Residue,
+                                           rounding: RoundingDirection, ctx: DecContext,
+                                           beQuiet: Boolean): Decimal {
     // no value params ... nothing to verify
     val digitLen = calcDigitLen128(dw1, dw0)
     val scaleResidue = Residue.fromValuePow10(dw1, dw0, digitLen)
@@ -177,11 +189,11 @@ private fun decFinalizeUnderflowBoundary(sign: Boolean,
     return if (beQuiet) z else ctx.signalInexactUnderflow(z)
 }
 
-private fun decFinalizeSubnormal(sign: Boolean,
-                                 dw1: Long, dw0: Long, residue: Residue,
-                                 qExp: Int,
-                                 rounding: RoundingDirection, ctx: DecContext,
-                                 beQuiet: Boolean): Decimal {
+private fun finalizeSubnormal(sign: Boolean,
+                              dw1: Long, dw0: Long, residue: Residue,
+                              qExp: Int,
+                              rounding: RoundingDirection, ctx: DecContext,
+                              beQuiet: Boolean): Decimal {
     val truncationNeeded = -6176 - qExp
     verify { truncationNeeded > 0 && truncationNeeded < calcDigitLen128(dw1, dw0) }
 
