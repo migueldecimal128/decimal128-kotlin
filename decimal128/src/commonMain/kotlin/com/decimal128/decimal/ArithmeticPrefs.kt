@@ -20,11 +20,6 @@ package com.decimal128.decimal
  *   the Invalid Operation flag.
  *   Default: `true` (GDAS / DecTest).
  *
- * @property preserveNANPayload When `true`, NaN payloads propagate through arithmetic
- *   per GDAS. When `false`, all NaN results are canonical (zero payload), matching
- *   `java.lang.Double` and RISC-V semantics.
- *   Default: `true` (GDAS canonical).
- *
  * @property throwOnInvalidOperation When `true`, operations that produce an Invalid
  *   Operation condition (e.g., `0 × ∞`, `√-1`, signaling NaN consumed) throw instead
  *   of returning NaN.
@@ -49,7 +44,6 @@ package com.decimal128.decimal
  */
 data class ArithmeticPrefs(
     val propagatePreferSNAN: Boolean = true,
-    val preserveNANPayload: Boolean = true,
     val throwOnInvalidOperation: Boolean = false,
     val throwOnDivisionByZero: Boolean = false,
     val throwOnOverflow: Boolean = false,

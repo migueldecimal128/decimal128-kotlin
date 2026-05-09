@@ -136,7 +136,7 @@ private fun toIntegerString(steal: Int, dw1: Long, dw0: Long, ascii: AsciiBuffer
     val signBit = stealSignBit(steal)
     if (stealBitLen(steal) < 4) {
         val i = ((signBit shl 4) + dw0.toInt()) and 0x1F // bounds-check-elimination
-        return SMALL_INTEGER_STRINGS[i]
+        return SMALL_INTEGER_STRINGS[i and (SMALL_INTEGER_STRINGS.size - 1)]
     }
     val signLen = signBit
     val digitLen = stealDigitLen(steal)
@@ -282,10 +282,10 @@ private fun toEngineeringString(
     var i: Int
     if (isZero) {
         // write '0.00' always ... truncate as needed
-        ascii[signLen] = ascii_0
-        ascii[signLen + 1] = ascii_dot
-        ascii[signLen + 2] = ascii_0
-        ascii[signLen + 3] = ascii_0
+        ascii[(signLen + 0) and ASCII_BCE] = ascii_0
+        ascii[(signLen + 1) and ASCII_BCE] = ascii_dot
+        ascii[(signLen + 2) and ASCII_BCE] = ascii_0
+        ascii[(signLen + 3) and ASCII_BCE] = ascii_0
 
         // truncate based on expAdjustment
         // expAdjustment == 0 → "0"     (just the '0')
@@ -302,16 +302,18 @@ private fun toEngineeringString(
         IntegerParsePrint.u128ToASCII(printedDigitLen, dw1, dw0, ascii, signLen + decimalPointLen)
         i = signLen + decimalPointLen + printedDigitLen
 
-        if (expAlignZeroCount > 0) {
-            for (j in 0..<expAlignZeroCount) {
-                ascii[i] = ascii_0
+        if (expAlignZeroCount >= 1) {
+            if (expAlignZeroCount > 1) {
+                ascii[i and ASCII_BCE] = ascii_0
                 i += 1
             }
+            ascii[i and ASCII_BCE] = ascii_0
+            i += 1
         } else if (digitLen > leftOfRadixPointCount) {
             for (j in 0..<leftOfRadixPointCount) {
-                ascii[signLen + j] = ascii[signLen + j + 1]
+                ascii[(signLen + j) and ASCII_BCE] = ascii[(signLen + j + 1) and ASCII_BCE]
             }
-            ascii[signLen + leftOfRadixPointCount] = ascii_dot
+            ascii[(signLen + leftOfRadixPointCount) and ASCII_BCE] = ascii_dot
         }
     }
     if (adjustedExp == 0) {
