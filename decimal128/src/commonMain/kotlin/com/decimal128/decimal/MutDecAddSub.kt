@@ -16,9 +16,9 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
     val binopSignature = binopSignatureOf(xSteal, ySteal)
     if (binopSignature == FNZ_FNZ) {
         if (stealQExp(xSteal) == stealQExp(ySteal))
-            unscaledAddFnzFnz(z, x, ySign, y, ctx)
+            addAlignedFnzFnz(z, x, ySign, y, ctx)
         else
-            scaledAddFnzFnz(z, x, ySign, y, ctx)
+            addUnalignedFnzFnz(z, x, ySign, y, ctx)
     }else {
         val xSign = stealSignFlag(xSteal)
         when (binopSignature) {
@@ -41,7 +41,7 @@ internal fun mutDecAddImpl(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx:
     return z
 }
 
-private /*inline*/ fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private /*inline*/ fun addAlignedFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     val xSteal = x.steal
     val ySteal = y.steal
     val xQ = stealQExp(xSteal)
@@ -81,27 +81,27 @@ private /*inline*/ fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y
     return z.finalizeFnz(zSign, xQ, ctx)
 }
 
-private /*inline*/ fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
+private /*inline*/ fun addUnalignedFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ctx: DecContext): MutDec {
     verify { x.isFiniteNonZero() && y.isFiniteNonZero()}
-    val qX = x.qExp
-    val qY = y.qExp
-    verify { qX != qY }
+    val xQ = x.qExp
+    val yQ = y.qExp
+    verify { xQ != yQ }
     val xSign = x.sign
     val residue: Residue
     if (xSign == ySign) {
         residue = mutDecAddMagUnalignedFnzFnz(z, xSign, x, y, ctx)
     } else {
-        val cmp = mutDecCompareNumericMagnitude(x, y)
+        val cmp = mutDecCmpMagFnzFnz(x, y)
         when {
             cmp > 0 ->
-                residue = mutDecMagScaledSub(z, xSign, x, y, ctx)
+                residue = mutDecSubMagUnalignedFnzFnz(z, xSign, x, y, ctx)
             cmp < 0 ->
-                residue = mutDecMagScaledSub(z, ySign, y, x, ctx)
+                residue = mutDecSubMagUnalignedFnzFnz(z, ySign, y, x, ctx)
 
             else -> {
                 // Magnitudes are equal and signs opposite → exact cancellation
                 // IEEE 754: sign is +0 except when rounding toward negative
-                z.setZero(ctx.isRoundTowardNegative(), min(qX, qY))
+                z.setZero(ctx.isRoundTowardNegative(), min(xQ, yQ))
                 return z // I don't think I need to finalize in this case
             }
         }
@@ -192,13 +192,12 @@ private fun mutDecAddMagUnalignedFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: 
 // uses Guard digit
 // decrements when non-exact so that standard round and finalize routine can be called
 // m == minuend  s == subtrahend
-internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, ctx: DecContext): Residue {
-    verify { !m.isZero() }
-    verify { !s.isZero() }
+internal fun mutDecSubMagUnalignedFnzFnz(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec, ctx: DecContext): Residue {
+    verify { m.isFiniteNonZero() && s.isFiniteNonZero() }
+    verify { m.qExp != s.qExp }
+    verify { mutDecCmpMagFnzFnz(m, s) > 0 }
     val tmps = ctx.tmps
     val pentad = tmps.pentad
-    verify { m.compareNumericMagnitudeTo(s) > 0 }
-    verify { m.qExp != s.qExp }
     if (m.qExp > s.qExp) {
         val gap = m.qExp - s.qExp
         val headroomWithGuard =

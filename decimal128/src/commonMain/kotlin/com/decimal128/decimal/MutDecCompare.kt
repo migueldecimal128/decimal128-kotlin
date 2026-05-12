@@ -56,7 +56,7 @@ internal fun mutDecEqJavaStyle(x: MutDec, y: MutDec): Boolean {
     val ySteal = y.steal
     val signature = binopSignatureOf(xSteal, ySteal)
     return if (signature == FNZ_FNZ) {
-        stealSignBit(xSteal) == stealSignBit(ySteal) && cmpMagFnzFnz(x, y) == 0
+        stealSignBit(xSteal) == stealSignBit(ySteal) && mutDecCmpMagFnzFnz(x, y) == 0
     } else when (signature) {
         FNZ_ZER,
         FNZ_INF,
@@ -77,7 +77,7 @@ private inline fun negateForSign(cmp: Int, signMask: Int) =
 
 private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
     verify { x.isFiniteNonZero() && y.isFiniteNonZero() }
-    val cmpMag = cmpMagFnzFnz(x, y)
+    val cmpMag = mutDecCmpMagFnzFnz(x, y)
 
     // If x and y represent the same floating-point datum:
     //  i) If x and y have negative sign,
@@ -93,7 +93,7 @@ private inline fun cmpTotalOrderMagFnzFnz(x: MutDec, y: MutDec): Int {
     return cmp
 }
 
-private fun cmpMagFnzFnz(x: MutDec, y: MutDec): Int {
+internal fun mutDecCmpMagFnzFnz(x: MutDec, y: MutDec): Int {
     val xSteal = x.steal
     val ySteal = y.steal
     val cmpSteal = stealCompareMagnitudeFnzFnz(xSteal, ySteal)
@@ -125,7 +125,7 @@ private fun cmpTotalOrderMagnitudeNanFound(x: MutDec, y: MutDec): Int {
 
 internal fun mutDecCompareNumericMagnitude(x: MutDec, y: MutDec): Int {
     if (stealBothFNZ(x.steal, y.steal))
-        return cmpMagFnzFnz(x, y)
+        return mutDecCmpMagFnzFnz(x, y)
     val xTyp = stealTyp(x.steal)
     val yTyp = stealTyp(y.steal)
     if ((xTyp != STEAL_TYP_NAN) && (yTyp != STEAL_TYP_NAN)) {

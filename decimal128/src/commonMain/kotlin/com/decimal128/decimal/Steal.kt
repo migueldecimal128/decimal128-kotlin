@@ -136,10 +136,10 @@ internal inline fun stealWithQExp(oldSteal: Int, qExp: Int) =
 internal inline fun stealSciExp(steal: Int): Int {
     // if the digitLen is non-zero then subtract 1
     // if digitLen == 0 then sciExp stays 0 ... 0e0
-    // eExp = qExp + (digitLen - (-digitLen ushr 31))
+    // eExp = qExp + digitLen + (-digitLen shr 31)
     return ((steal shl STEAL_QEXP_DECODE_SHL) shr STEAL_QEXP_DECODE_SHR) +
-            ((steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK) -
-            (-(steal and STEAL_DIGITLEN_UNSHIFTED_MASK) ushr 31)
+            ((steal ushr STEAL_DIGITLEN_SHIFT) and STEAL_DIGITLEN_MASK) +
+            (-(steal and STEAL_DIGITLEN_UNSHIFTED_MASK) shr 31)
 }
 
 internal fun stealBExpMin(steal: Int): Int =

@@ -5,6 +5,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.time.TimeSource
 
 class TestBExpMinMax {
 
@@ -48,5 +49,21 @@ class TestBExpMinMax {
         }
         if (verbose)
             println("deltaZeroCount:$deltaZeroCount deltaOneCount:$deltaOneCount")
+    }
+
+
+    @Test
+    fun throughput() {
+        var checksum = 0
+        val mark = TimeSource.Monotonic.markNow()
+        for (bitLen in 0..255) {
+            for (qExp in -7000..7000) {
+                checksum += calcBExpMin(bitLen, qExp)
+                checksum += calcBExpMax(bitLen, qExp)
+            }
+        }
+        val elapsed = mark.elapsedNow()
+        println("elapsed: $elapsed checksum: $checksum")
+        assertTrue(checksum != Int.MIN_VALUE)
     }
 }
