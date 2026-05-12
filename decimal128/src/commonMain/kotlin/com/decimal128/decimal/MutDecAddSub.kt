@@ -198,62 +198,61 @@ internal fun mutDecSubMagUnalignedFnzFnz(z: MutDec, mSign: Boolean, m: MutDec, s
     verify { mutDecCmpMagFnzFnz(m, s) > 0 }
     val tmps = ctx.tmps
     val pentad = tmps.pentad
-    if (m.qExp > s.qExp) {
-        val gap = m.qExp - s.qExp
-        val headroomWithGuard =
-            if (s.digitLen > ctx.precision) {
-                // It is possible for y.digitLen > precision because
-                // of intermediate result of a FMA operation.
-                // In this case we might have to scale x.coeff up to
-                // x.digitLen == y.digitLen
-                // This will not exceed our 256-bit ALU capacity
-                s.digitLen - m.digitLen
-            } else {
-                1 + ctx.precision - m.digitLen  // Standard with guard
-            }
+    val mQ = m.qExp
+    val mDigitLen = m.digitLen
+    val sQ = s.qExp
+    val sDigitLen = s.digitLen
+    val gap = mQ - sQ
+    if (gap > 0) {
+        val headroomWithGuard: Int
+        if (sDigitLen > ctx.precision) {
+            // It is possible for y.digitLen > precision because
+            // of intermediate result of a FMA operation.
+            // In this case we might have to scale x.coeff up to
+            // x.digitLen == y.digitLen
+            // This will not exceed our 256-bit ALU capacity
+            headroomWithGuard = sDigitLen - mDigitLen
+        } else {
+            headroomWithGuard = 1 + ctx.precision - mDigitLen  // Standard with guard
+        }
         val shiftMLeft = min(gap, max(0, headroomWithGuard))
 
-        val qAlign = m.qExp - shiftMLeft
-        val shiftSRight = qAlign - s.qExp
+        val qAlign = mQ - shiftMLeft
+        val shiftSRight = qAlign - sQ
         verify { shiftSRight >= 0 }
 
-        val residue = when {
-            shiftSRight == 0 -> {
-                verify { shiftMLeft > 0 }
-                c256SetSubScaled(z, m, shiftMLeft, s, pentad) // z = (x * 10^shiftXLeft) - y
-                EXACT
+        val residue: Residue
+        if (shiftSRight == 0) {
+            verify { shiftMLeft > 0 }
+            c256SetSubScaled(z, m, shiftMLeft, s, pentad) // z = (x * 10^shiftXLeft) - y
+            residue = EXACT
+        } else if (shiftSRight >= sDigitLen) {
+            if (shiftSRight > sDigitLen) {
+                residue = Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
+            } else {
+                residue = Residue.fromDecade(s).subtractionInverse()
             }
-
-            shiftSRight >= s.digitLen -> {
-                val residueT = if (shiftSRight > s.digitLen)
-                    Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
-                else
-                    Residue.fromDecade(s).subtractionInverse()
-                if (shiftMLeft > 0) {
-                    c256SetMulPow10(z, m, shiftMLeft, ctx.tmps.pentad)
-                } else {
-                    z.c256Set(m)
-                }
-                verify { residueT != EXACT }
-                // decrement and let the residue possibly round it back up
+            verify { residue != EXACT }
+            if (shiftMLeft > 0) {
+                c256SetMulPow10(z, m, shiftMLeft, ctx.tmps.pentad)
+            } else {
+                z.c256Set(m)
+            }
+            // decrement and let the residue possibly round it back up
+            z.c256MutateDecrement()
+        } else { // shiftYRight > 0
+            // There is overlap and there will be residue.
+            // align x by shiftLeftX
+            //
+            val tmpY = tmps.c256
+            val residueT = c256SetScaleDownPow10(tmpY, s, shiftSRight, pentad)
+            if (shiftMLeft > 0)
+                c256SetSubScaled(z, m, shiftMLeft, tmpY, pentad)
+            else
+                c256SetSubUnscaled(z, m, tmpY)
+            if (residueT != EXACT)
                 z.c256MutateDecrement()
-                residueT
-            }
-
-            else -> { // shiftYRight > 0
-                // There is overlap and there will be residue.
-                // align x by shiftLeftX
-                //
-                val tmpY = tmps.c256
-                val residue = c256SetScaleDownPow10(tmpY, s, shiftSRight, pentad)
-                if (shiftMLeft > 0)
-                    c256SetSubScaled(z, m, shiftMLeft, tmpY, pentad)
-                else
-                    c256SetSubUnscaled(z, m, tmpY)
-                if (residue != EXACT)
-                    z.c256MutateDecrement()
-                residue.subtractionInverse()
-            }
+            residue = residueT.subtractionInverse()
         }
         z.steal = stealEncodeFNZ(mSign, qAlign, stealPackedLengths(z.steal))
         return residue
@@ -266,9 +265,8 @@ internal fun mutDecSubMagUnalignedFnzFnz(z: MutDec, mSign: Boolean, m: MutDec, s
         // is larger than y
         // 99999e0 - 1e1
         // just adjust y's coefficient and subtract
-        val gap = s.qExp - m.qExp
-        c256FusedSubMulPow10(z, m, s, gap, pentad)
-        z.steal = stealEncodeFNZ(mSign, m.qExp, stealPackedLengths(z.steal))
+        c256FusedSubMulPow10(z, m, s, -gap, pentad)
+        z.steal = stealEncodeFNZ(mSign, mQ, stealPackedLengths(z.steal))
         return EXACT
     }
 }
