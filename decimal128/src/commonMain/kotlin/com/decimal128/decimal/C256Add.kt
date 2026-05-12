@@ -6,9 +6,9 @@ internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pent
     verify { x.bitLen <= 127 }
     verify { y.bitLen <= 127 }
     when {
-        scaleDelta == 0 -> c256SetAddUnscaled(z, x, y, pentad)
-        scaleDelta > 0 -> c256SetAddScaled(z, x, scaleDelta, y)
-        else -> c256SetAddScaled(z, y, -scaleDelta, x)
+        scaleDelta == 0 -> c256SetAddAligned(z, x, y, pentad)
+        scaleDelta > 0 -> c256SetFusedMulPow10Add(z, x, scaleDelta, y)
+        else -> c256SetFusedMulPow10Add(z, y, -scaleDelta, x)
     }
 }
 
@@ -18,7 +18,7 @@ internal fun c256SetAdd(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pent
  * This code is called from FMA, so it x might have 76 digits == 253 bits.
  * y will have been normalized and will have up thru 38 digits == 127 bits
  */
-internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256, pentad: Pentad) {
+internal fun c256SetAddAligned(z: C256, x: C256, y: C256, pentad: Pentad) {
     verify { x.bitLen <= 253 }
     verify { y.bitLen <= 127 }
     val maxBitLen = max(x.bitLen, y.bitLen) + 1
@@ -43,10 +43,10 @@ internal fun c256SetAddUnscaled(z: C256, x: C256, y: C256, pentad: Pentad) {
     z.c256Set256(z3, z2, z1, z0)
 }
 
-internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256) =
-    c256SetAddScaled(z, x, scaleDelta, y, Pentad())
+internal fun c256SetFusedMulPow10Add(z: C256, x: C256, scaleDelta: Int, y: C256) =
+    c256SetFusedMulPow10Add(z, x, scaleDelta, y, Pentad())
 
-internal fun c256SetAddScaled(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pentad) {
+internal fun c256SetFusedMulPow10Add(z: C256, x: C256, scaleDelta: Int, y: C256, pentad: Pentad) {
     verify { scaleDelta > 0 }
     verify { scaleDelta < 38 }
 

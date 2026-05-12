@@ -202,7 +202,7 @@ private fun MutDec.finalizeUnderflowBoundary(
     ctx: DecContext
 ): MutDec {
     // no value params ... nothing to verify
-    val scaleResidue = Residue.fromValueDecade(this)
+    val scaleResidue = Residue.fromDecade(this)
     val totalResidue = scaleResidue.merge(inboundResidue)
     val roundUp = totalResidue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
 
@@ -253,7 +253,7 @@ private fun MutDec.finalizeSubnormal(
 private fun MutDec.finalizeClamping(sign: Boolean, qExp: Int, ctx: DecContext): MutDec {
     val qExcess = qExp - Q_MAX
     verify { qExcess > 0 && qExcess <= ctx.precision - digitLen }
-    c256SetScaleUpPow10(this, this, qExcess, ctx.tmps.pentad)
+    c256SetMulPow10(this, this, qExcess, ctx.tmps.pentad)
     this.steal = stealEncodeFNZ(sign, Q_MAX, stealPackedLengths(this.steal))
     return this
 }

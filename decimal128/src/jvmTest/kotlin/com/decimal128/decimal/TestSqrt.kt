@@ -7,7 +7,6 @@ import java.lang.Math.unsignedMultiplyHigh
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
-import java.math.RoundingMode
 import java.util.*
 import java.lang.Math.max
 import java.lang.Math.min
@@ -152,7 +151,7 @@ class TestSqrt{
         val radicandScaled = C256()
         val scaleUp = 70 - radicand.digitLen + (radicand.digitLen and 1) + (radicand.qExp and 1)
         val tmpPentad = Pentad()
-        c256SetScaleUpPow10(radicandScaled, radicand, scaleUp, tmpPentad)
+        c256SetMulPow10(radicandScaled, radicand, scaleUp, tmpPentad)
         if (verbose)
             println("radicand:$radicand radicandScaled:$radicandScaled")
 
@@ -201,7 +200,7 @@ class TestSqrt{
         delta0Coeff.c256SetShiftLeft(delta0Coeff, max(delta0Exp - 52, 0))
 
         val guess1Coeff = C256()
-        c256SetAddUnscaled(guess1Coeff, guess0Coeff, delta0Coeff, Pentad())
+        c256SetAddAligned(guess1Coeff, guess0Coeff, delta0Coeff, Pentad())
         if (verbose)
             println(" --> guess1Coeff:$guess1Coeff")
 
@@ -222,7 +221,7 @@ class TestSqrt{
         val residue1 = c256SetDiv(delta1, residual1, guess1x2, tmps)
 
         val guess2 = C256()
-        c256SetAddUnscaled(guess2, guess1Coeff, delta1, Pentad())
+        c256SetAddAligned(guess2, guess1Coeff, delta1, Pentad())
         if (verbose)
             println(" --> guess2:$guess2")
 
@@ -373,7 +372,7 @@ class TestSqrt{
         val coeffRadicandScaled = C256()
         val pentad = ctx.tmps.pentad
         val scaleUp = 48 - rDigitLen + ((rDigitLen xor rQExp) and 1)
-        c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, pentad)
+        c256SetMulPow10(coeffRadicandScaled, radicand, scaleUp, pentad)
         if (verbose)
             println("radicand:$radicand radicandScaled:$coeffRadicandScaled")
 
@@ -397,7 +396,7 @@ class TestSqrt{
         val coeffX1Squared = C256()
         c256SetSqr(coeffX1Squared, coeffX1, pentad)
         val coeff2X1 = C256()
-        c256SetAddUnscaled(coeff2X1, coeffX1, coeffX1, pentad)
+        c256SetAddAligned(coeff2X1, coeffX1, coeffX1, pentad)
         if (verbose)
             println(" ==> coeffX1Squared:$coeffX1Squared coeffX1 * 2:$coeff2X1")
         val residual = C256()
@@ -406,17 +405,17 @@ class TestSqrt{
             c256SetSubUnscaled(residual, coeffRadicandScaled, coeffX1Squared)
         else
             c256SetSubUnscaled(residual, coeffX1Squared, coeffRadicandScaled)
-        c256SetScaleUpPow10(residual, residual, 20, pentad)
+        c256SetMulPow10(residual, residual, 20, pentad)
         if (verbose)
             println(" ==> scaledUpResidual:$residual")
         c256SetDiv(residual, residual, coeff2X1, tmps)
         if (verbose)
             println(" ==> residualAfterDivision:$residual")
         val coeffX1Scaled = C256()
-        c256SetScaleUpPow10(coeffX1Scaled, coeffX1, 20, pentad)
+        c256SetMulPow10(coeffX1Scaled, coeffX1, 20, pentad)
         sqrt.setOne()
         if (lessThan)
-            c256SetAddUnscaled(sqrt, coeffX1Scaled, residual, pentad)
+            c256SetAddAligned(sqrt, coeffX1Scaled, residual, pentad)
         else
             c256SetSubUnscaled(sqrt, coeffX1Scaled, residual)
         if (verbose)

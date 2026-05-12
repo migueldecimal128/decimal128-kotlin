@@ -287,7 +287,7 @@ fun expImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     // always scale coefficient to max precision
     val headroom = max(ctx.precision - z.digitLen, 0)
     if (headroom > 0)
-        c256SetScaleUpPow10(z, z, headroom, pentad)
+        c256SetMulPow10(z, z, headroom, pentad)
     // round to ctx precision
     // result is always INEXACT
     val flags = ctx.decFlags
@@ -390,7 +390,7 @@ internal fun exp10ImplFNZ(z: MutDec, x: MutDec, ctx: DecContext): MutDec {
     // always scale coefficient to max precision
     val headroom = max(ctx.precision - z.digitLen, 0)
     if (headroom > 0)
-        c256SetScaleUpPow10(z, z, headroom, ctx.tmps.pentad)
+        c256SetMulPow10(z, z, headroom, ctx.tmps.pentad)
     // round to ctx precision
     // result is always INEXACT
     val flags = ctx.decFlags

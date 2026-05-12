@@ -58,7 +58,7 @@ private /*inline*/ fun unscaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y
     val isRoundTowardNegative = ctx.isRoundTowardNegative()
     val pentad = ctx.tmps.pentad
     if (xSign == ySign) {
-        c256SetAddUnscaled(z, x, y, pentad)
+        c256SetAddAligned(z, x, y, pentad)
         zSign = xSign
     } else {
         val cmp = c256UnscaledCompare(x, y)
@@ -89,7 +89,7 @@ private /*inline*/ fun scaledAddFnzFnz(z: MutDec, x: MutDec, ySign: Boolean, y: 
     val xSign = x.sign
     val residue: Residue
     if (xSign == ySign) {
-        residue = mutDecMagScaledAdd(z, xSign, x, y, ctx)
+        residue = mutDecAddMagUnalignedFnzFnz(z, xSign, x, y, ctx)
     } else {
         val cmp = mutDecCompareNumericMagnitude(x, y)
         when {
@@ -120,6 +120,7 @@ private inline fun addZerZer(z: MutDec, x: MutDec, ySign: Boolean, y: MutDec, ct
 }
 
 internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: Int, ctx: DecContext): MutDec {
+    // it is not the case the xSign == x.sign because this may be part of a subtraction operation
     var zQ = x.qExp
     val delta = zQ - otherExp
     val headroom = max(0, ctx.precision - x.digitLen)
@@ -127,14 +128,15 @@ internal fun setScaleToMinQexp(z: MutDec, xSign: Boolean, x: MutDec, otherExp: I
         z.c256Set(x)
     } else {
         val shiftLeft = min(headroom, delta)
-        c256SetScaleUpPow10(z, x, shiftLeft, ctx.tmps.pentad)
+        c256SetMulPow10(z, x, shiftLeft, ctx.tmps.pentad)
         zQ -= shiftLeft
     }
     return z.finalizeFnz(xSign, zQ, ctx)
 }
 
-private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
+private fun mutDecAddMagUnalignedFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecContext): Residue {
     verify { stealQExp(x.steal) != stealQExp(y.steal) } // the unscaled case should have been caught earlier
+    verify { x.isFiniteNonZero() && y.isFiniteNonZero()}
 
     val flipFlop = stealQExp(x.steal) > stealQExp(y.steal)
     val m = if (flipFlop) x else y
@@ -152,60 +154,39 @@ private fun mutDecMagScaledAdd(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, c
     val headroom = ctx.precision - mDigitLen
     val shiftLeft = min(max(headroom, 0), qDelta)
     val qAlign = mQ - shiftLeft
-    when {
-        (mDigitLen > 0 && nDigitLen > 0) -> {
-            verify { m.isFiniteNonZero() && n.isFiniteNonZero()}
-            val shiftRight = qAlign - nQ
-            val residue = when {
-                shiftRight == 0 -> {
-                    verify { shiftLeft > 0 }
-                    c256SetAddScaled(z, m, shiftLeft, n, pentad)
-                    EXACT
-                }
-
-                shiftRight >= nDigitLen -> {
-                    // perform in this order to avoid aliasing z === n issue
-                    val residueT = if (shiftRight > nDigitLen)
-                        LT_HALF
-                    else
-                        Residue.fromValueDecade(n)
-                    c256SetScaleUpPow10(z, m, shiftLeft, pentad)
-                    residueT
-                }
-
-                else -> {
-                    // shift right required ... shift left maybe
-                    // shift right first into our destination
-                    // then do a fused scaling, allowing us to
-                    // perform this op without allocating of temp variables
-                    val t = if (m === z) MutDec() else z
-                    val residue = c256SetScaleDownPow10(t, n, shiftRight, pentad)
-                    if (shiftLeft > 0)
-                        c256SetAddScaled(z, m, shiftLeft, t)
-                    else
-                        c256SetAddUnscaled(z, m, t, pentad)
-                    residue
-                }
-            }
-            z.steal = stealEncodeFNZ(sign, qAlign, stealPackedLengths(z.steal))
-            return residue
+    val shiftRight = qAlign - nQ
+    val residue: Residue
+    if (shiftRight == 0) {
+        verify { shiftLeft > 0 }
+        c256SetFusedMulPow10Add(z, m, shiftLeft, n, pentad)
+        residue = EXACT
+    } else if (shiftRight >= nDigitLen) {
+        // perform in this order to avoid aliasing z === n issue
+        if (shiftRight > nDigitLen) {
+            residue = LT_HALF
+        } else {
+            residue = Residue.fromDecade(n)
         }
-        // one of the two is zero
-        // return the value of the non-zero (if any), scaled to the smaller exponent
-        (mDigitLen > 0) -> {
-            verify { m.isFinite() }
-            c256SetScaleUpPow10(z, m, shiftLeft, ctx.tmps.pentad)
-            z.steal = stealEncodeFNZ(sign, qAlign, stealPackedLengths(z.steal))
-            return EXACT
+        c256SetMulPow10(z, m, shiftLeft, pentad)
+    } else {
+        // shift right required ... shift left maybe
+        // shift right first into our destination
+        // then do a fused scaling, allowing us to
+        // perform this op without allocating of temp variables
+        val t: MutDec
+        if (m === z) {
+            t = MutDec()
+        } else {
+            t = z
         }
-
-        else -> {
-            verify { stealTyp(mSteal) == STEAL_TYP_ZER }
-            // if m == 0 then return n ... n != 0 and n == 0
-            z.set(n)
-            return EXACT
-        }
+        residue = c256SetScaleDownPow10(t, n, shiftRight, pentad)
+        if (shiftLeft > 0)
+            c256SetFusedMulPow10Add(z, m, shiftLeft, t)
+        else
+            c256SetAddAligned(z, m, t, pentad)
     }
+    z.steal = stealEncodeFNZ(sign, qAlign, stealPackedLengths(z.steal))
+    return residue
 }
 
 // uses Guard digit
@@ -248,9 +229,9 @@ internal fun mutDecMagScaledSub(z: MutDec, mSign: Boolean, m: MutDec, s: MutDec,
                 val residueT = if (shiftSRight > s.digitLen)
                     Residue.GT_HALF // actually Residue.LT_HALF.subtractionInverse()
                 else
-                    Residue.fromValueDecade(s).subtractionInverse()
+                    Residue.fromDecade(s).subtractionInverse()
                 if (shiftMLeft > 0) {
-                    c256SetScaleUpPow10(z, m, shiftMLeft, ctx.tmps.pentad)
+                    c256SetMulPow10(z, m, shiftMLeft, ctx.tmps.pentad)
                 } else {
                     z.c256Set(m)
                 }

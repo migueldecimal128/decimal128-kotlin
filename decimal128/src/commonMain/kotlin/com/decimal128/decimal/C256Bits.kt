@@ -242,7 +242,7 @@ internal fun c256Set(z: C256, dd: DoubleDouble, pentad: Pentad): C256 {
     val uLo = DecContext.current().tmps.c256
     uLo.c256Set(dd.lo)
     if (dd.lo > 0)
-        c256SetAddUnscaled(z, z, uLo, pentad)
+        c256SetAddAligned(z, z, uLo, pentad)
     else
         c256SetSubUnscaled(z, z, uLo)
     return z

@@ -7,7 +7,7 @@ import com.decimal128.decimal.Residue.Companion.EXACT
 import kotlin.math.min
 
 
-internal fun c256SetScaleUpPow10(z: C256, x: C256, pow10: Int, pentad: Pentad) {
+internal fun c256SetMulPow10(z: C256, x: C256, pow10: Int, pentad: Pentad) {
     when {
         pow10 > 0 -> {
             val pow10BitLen = pow10BitLen(pow10)
@@ -55,7 +55,7 @@ internal fun c256SetScaleDownPow10(z: C256, x: C256, pow10: Int, pentad: Pentad)
     if (x.bitLen > 0 && pow10 > 0) {
         val productDigitCount = x.digitLen - pow10
         if (productDigitCount <= 0) {
-            val residue = if (productDigitCount == 0) Residue.fromValueDecade(x) else Residue.LT_HALF
+            val residue = if (productDigitCount == 0) Residue.fromDecade(x) else Residue.LT_HALF
             z.c256SetZero()
             return residue
         }

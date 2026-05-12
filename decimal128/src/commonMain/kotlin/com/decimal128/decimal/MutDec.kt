@@ -519,7 +519,7 @@ class MutDec() : C256(), Comparable<MutDec> {
             if (fracDigitLen > digitLen)
                 residue = Residue.LT_HALF
             else {
-                residue = Residue.fromValueDecade(x)
+                residue = Residue.fromDecade(x)
                 verify { residue != Residue.EXACT }
             }
             val roundUp = residue.ulpRoundUp(rounding.forMagnitude(xSign), 0L)
@@ -579,7 +579,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         if (fracDigitLen > digitLen)
                             residue = Residue.LT_HALF
                         else {
-                            residue = Residue.fromValueDecade(this)
+                            residue = Residue.fromDecade(this)
                             verify { residue != Residue.EXACT }
                         }
                         val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
@@ -703,7 +703,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val qExp = stealQExp(steal)
         val headroom = min(precision - stealDigitLen(steal), qExp - Q_TINY)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad)
+            c256SetMulPow10(this, this, headroom, ctx.tmps.pentad)
             this.qExp = qExp - headroom
         }
         // note that this could have changed digitLen ...
@@ -719,7 +719,7 @@ class MutDec() : C256(), Comparable<MutDec> {
         val headroom =
             min(ctx.precision - digitLen + if (c256IsPowerOf10(this)) 1 else 0, qExp - Q_TINY)
         if (headroom > 0) {
-            c256SetScaleUpPow10(this, this, headroom, ctx.tmps.pentad)
+            c256SetMulPow10(this, this, headroom, ctx.tmps.pentad)
             this.qExp -= headroom
         }
         c256MutateDecrement()
@@ -805,7 +805,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         }
 
                         // Scale up coefficient
-                        c256SetScaleUpPow10(this, x, scaleAmount, pentad)
+                        c256SetMulPow10(this, x, scaleAmount, pentad)
                         this.steal = stealEncodeFNZ(xSign, yQ, stealPackedLengths(this.steal))
                         verify { digitLen <= ctx.precision }
                         return this
@@ -836,7 +836,7 @@ class MutDec() : C256(), Comparable<MutDec> {
                         val headroom = min(ctx.precision - xDigitLen, xQ - Q_TINY)
                         if (qDelta <= headroom) {
                             val pentad = ctx.tmps.pentad
-                            c256SetScaleUpPow10(this, x, qDelta, pentad)
+                            c256SetMulPow10(this, x, qDelta, pentad)
                             return finalizeFnz(stealSignFlag(xSteal), xQ - qDelta, ctx)
                         }
                         return set(x)  // can't achieve, return as-is

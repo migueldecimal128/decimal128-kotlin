@@ -32,7 +32,7 @@ fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext, reduceToPr
     val coeffRadicandScaled = C256()
     val pentad = tmps.pentad
     val scaleUp = 48 - rDigitLen + ((rDigitLen xor rQExp) and 1)
-    c256SetScaleUpPow10(coeffRadicandScaled, radicand, scaleUp, pentad)
+    c256SetMulPow10(coeffRadicandScaled, radicand, scaleUp, pentad)
 
     val dRadicandScaled = coeffRadicandScaled.c256ToFloorDouble()
 
@@ -50,20 +50,20 @@ fun mutDecSqrtPosFnz(sqrt: MutDec, radicand: MutDec, ctx: DecContext, reduceToPr
     val coeffX1Squared = C256()
     c256SetSqr(coeffX1Squared, coeffX1, pentad)
     val coeff2X1 = C256()
-    c256SetAddUnscaled(coeff2X1, coeffX1, coeffX1, pentad)
+    c256SetAddAligned(coeff2X1, coeffX1, coeffX1, pentad)
     val residual = C256()
     val lessThan = c256UnscaledCompare(coeffX1Squared, coeffRadicandScaled) < 0
     if (lessThan)
         c256SetSubUnscaled(residual, coeffRadicandScaled, coeffX1Squared)
     else
         c256SetSubUnscaled(residual, coeffX1Squared, coeffRadicandScaled)
-    c256SetScaleUpPow10(residual, residual, 20, pentad)
+    c256SetMulPow10(residual, residual, 20, pentad)
     c256SetDiv(residual, residual, coeff2X1, tmps)
     val coeffX1Scaled = C256()
-    c256SetScaleUpPow10(coeffX1Scaled, coeffX1, 20, pentad)
+    c256SetMulPow10(coeffX1Scaled, coeffX1, 20, pentad)
     sqrt.setOne()
     if (lessThan)
-        c256SetAddUnscaled(sqrt, coeffX1Scaled, residual, pentad)
+        c256SetAddAligned(sqrt, coeffX1Scaled, residual, pentad)
     else
         c256SetSubUnscaled(sqrt, coeffX1Scaled, residual)
     val sqrtQExp = -((scaleUp shr 1) + 20) + (rQExp shr 1)

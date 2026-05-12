@@ -21,7 +21,7 @@ internal inline fun Residue.Companion.fromDecimalDigit(digit: Int): Residue = Re
 
 // FIXME - this method is fine, but it needs a better name
 //  ... and perhaps a better implementation
-internal fun Residue.Companion.fromValueDecade(c:C256): Residue {
+internal fun Residue.Companion.fromDecade(c:C256): Residue {
     val digitLen = c.digitLen
     if (digitLen == 0)
         return EXACT
@@ -38,7 +38,7 @@ internal fun Residue.Companion.fromValueDecade(c:C256): Residue {
     return residue
 }
 
-internal fun Residue.Companion.fromValueDecade(x: Decimal): Residue {
+internal fun Residue.Companion.fromDecade(x: Decimal): Residue {
     val digitLen = stealDigitLen(x.steal)
     if (digitLen == 0)
         return EXACT

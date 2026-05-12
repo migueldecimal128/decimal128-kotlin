@@ -133,7 +133,7 @@ internal fun d128ConvertToLong(x: Decimal, rounding: RoundingDirection,
                     if (fracDigitLen > digitLen)
                         residue = LT_HALF
                     else {
-                        residue = Residue.fromValueDecade(x)
+                        residue = Residue.fromDecade(x)
                         verify { residue != EXACT }
                     }
                     val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)
@@ -225,7 +225,7 @@ fun d128ConvertToInt(x: Decimal, rounding: RoundingDirection, suppressInexact: B
                     if (fracDigitLen > digitLen)
                         residue = LT_HALF
                     else {
-                        residue = Residue.fromValueDecade(x)
+                        residue = Residue.fromDecade(x)
                         verify { residue != Residue.EXACT }
                     }
                     val roundUp = residue.ulpRoundUp(rounding.forMagnitude(sign), 0L)

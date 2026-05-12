@@ -169,7 +169,7 @@ class TestResidueUlpResidue {
     fun test1(tc: UlpResidueCase) {
         if (verbose)
             println("$tc")
-        val observedResidue = Residue.fromValueDecade(tc.coeff)
+        val observedResidue = Residue.fromDecade(tc.coeff)
         assertEquals(tc.expectedResidue, observedResidue)
     }
 

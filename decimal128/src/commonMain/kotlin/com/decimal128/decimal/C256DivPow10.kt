@@ -19,7 +19,7 @@ internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int, pentad: Pentad): Resi
                 if (xBitLen < halfPow10BitLen) {
                     if (xBitLen == 0) Residue.EXACT else Residue.LT_HALF
                 } else {
-                    Residue.fromValueDecade(x)
+                    Residue.fromDecade(x)
                 })
     }
     if (pow10 < RRMP10_K_MAXX)

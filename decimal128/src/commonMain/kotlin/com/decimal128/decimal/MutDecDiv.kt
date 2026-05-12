@@ -60,7 +60,7 @@ internal fun setDivIntFnzFnz(z: MutDec, x: MutDec, y: MutDec, ctx: DecContext): 
             val headroom = ctx.precision - z.digitLen
             if (headroom < zQ) // 1234567890123456789012345678901234 / .000000001
                 return ctx.setNanSignalInvalidOperation(z, InvalidCause.DIV_INT_OVERFLOWS_COEFFICIENT)
-            c256SetScaleUpPow10(z, z, zQ, ctx.tmps.pentad)
+            c256SetMulPow10(z, z, zQ, ctx.tmps.pentad)
         }
         z.qExp = 0
     }
@@ -176,7 +176,7 @@ fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecCont
     val tmps = ctx.tmps
     val pentad = tmps.pentad
     val scaledNumerator = tmps.mdecDivRemPowCtzd
-    c256SetScaleUpPow10(scaledNumerator, x, numeratorScale, pentad)
+    c256SetMulPow10(scaledNumerator, x, numeratorScale, pentad)
     val residue = when {
         (stealBitLen(ySteal) <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)
         else -> c256SetDiv(z, scaledNumerator, y, tmps)

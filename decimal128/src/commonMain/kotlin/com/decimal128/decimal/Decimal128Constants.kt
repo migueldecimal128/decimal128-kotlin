@@ -213,7 +213,7 @@ private val checkSize_DWORD_TABLES = run {
 }
 
 // barrett division thru by 10**13 by shifting out powers of 2 and using and pow5
-internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX
+internal const val BARRETT_POW10_MAXX = BARRETT_POW5_MU_MAXX // 14
 internal const val BARRETT_POW10_MAX = BARRETT_POW10_MAXX - 1
 
 /**

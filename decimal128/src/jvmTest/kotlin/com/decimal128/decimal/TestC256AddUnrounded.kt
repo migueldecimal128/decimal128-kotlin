@@ -65,7 +65,7 @@ class TestC256AddUnrounded {
         val coeffA = newCoeff(case.biA)
         val coeffB = newCoeff(case.biB)
         val coeffC = C256()
-        c256SetAddUnscaled(coeffC, coeffA, coeffB, Pentad())
+        c256SetAddAligned(coeffC, coeffA, coeffB, Pentad())
         if (verbose)
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         val oldDigitCount = coeffC.digitLen
@@ -79,7 +79,7 @@ class TestC256AddUnrounded {
             println("$coeffA + $coeffB = $coeffC   expected:$expected")
         assert (biC.equals(expected))
 
-        c256SetAddUnscaled(coeffA, coeffA, coeffB, Pentad())
+        c256SetAddAligned(coeffA, coeffA, coeffB, Pentad())
         assert (coeffA.coeffToBigInteger().equals(expected))
     }
 
