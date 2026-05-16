@@ -93,7 +93,7 @@ internal fun c256CountTrailingZeroDigitsAndIsOddDestructive(c: C256): Int {
         if (ctzBits == 0)
             return (ctzd shl 1) or (c.dw0.toInt() and 1)
         val chunk = min(ctzBits, BARRETT_POW10_MAX)
-        val rem = barrettDivRemPow10(c, c, chunk)
+        val rem = barrettDivPow10Rem(c, c, chunk)
         if (rem != 0L) {
             val ntzdRem = ctzdU64(rem)
             val pow10 = POW10[(ntzdRem shl 1) and POW10_BCE]

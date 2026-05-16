@@ -72,7 +72,7 @@ internal object IntegerParsePrint {
             t = tmp?.c256Set(c) ?: C256(c)
             do {
                 val ibMaxx = off + t.digitLen
-                val r = barrettDivMod_32_256(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
+                val r = barrettDivRem_32_256(t, t, BARRETT_DIVISOR_1E8, BARRETT_MU_1E8)
                 render8DigitsBeforeIndex(r, ascii, ibMaxx)
                 remainingDigitCount -= 8
             } while (t.bitLen > 128)

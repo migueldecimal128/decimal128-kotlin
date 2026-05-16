@@ -177,9 +177,11 @@ fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecCont
     val pentad = tmps.pentad
     val scaledNumerator = tmps.mdecDivRemPowCtzd
     c256SetMulPow10(scaledNumerator, x, numeratorScale, pentad)
-    val residue = when {
-        (stealBitLen(ySteal) <= 64) -> c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)
-        else -> c256SetDiv(z, scaledNumerator, y, tmps)
+    val residue: Residue
+    if (stealBitLen(ySteal) <= 64) {
+        residue = c256SetDivX64(z, scaledNumerator, y.dw0, tmps.knuthD)
+    } else {
+        residue = c256SetDiv(z, scaledNumerator, y, tmps)
     }
     val qPreferred = stealQExp(xSteal) - stealQExp(ySteal)
     var qZ = qPreferred - numeratorScale
@@ -190,7 +192,7 @@ fun mutDecDivFnzFnz(z: MutDec, sign: Boolean, x: MutDec, y: MutDec, ctx: DecCont
             do {
                 val deltaQ = qPreferred - qZ
                 val chunk = min(min(9, deltaQ), ntz)
-                val chunkRemainder = barrettDivRemPow10(quot, z, chunk)
+                val chunkRemainder = barrettDivPow10Rem(quot, z, chunk)
                 // FIXME -- the stripTrailingZeros code uses a faster way to
                 //  countTrailingZeroDigits
                 if (chunkRemainder > 0) {

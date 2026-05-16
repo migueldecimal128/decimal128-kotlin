@@ -2,23 +2,23 @@
 
 package com.decimal128.decimal
 
-internal fun barrettDivPow10(z: C256, x: C256, pow10: Int): Residue {
+internal fun barrettDivPow10Residue(z: C256, x: C256, pow10: Int): Residue {
     verify { pow10 in 1..<BARRETT_POW10_MAXX }
-    val remainder = barrettDivRemPow10(z, x, pow10)
+    val remainder = barrettDivPow10Rem(z, x, pow10)
     val residue = Residue.residueFromRemainderPow10(remainder, pow10)
     return residue
 }
 
-internal fun barrettDivRemPow10(z: C256, x: C256, pow10: Int): Long {
+internal fun barrettDivPow10Rem(z: C256, x: C256, pow10: Int): Long {
     verify { pow10 in 1..<BARRETT_POW10_MAXX }
     val loBits = x.dw0 and ((1L shl pow10) - 1)
     c256SetShiftRight(z, x, pow10)
-    val remainder5 = barrettDivModPow5(z, z, pow10)
+    val remainder5 = barrettDivPow5Rem(z, z, pow10)
     val remainder10 = (remainder5 shl pow10) + loBits
     return remainder10
 }
 
-internal fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
+internal fun barrettDivPow5Rem(z: C256, x: C256, pow5: Int): Long {
     verify { pow5 in 1..<BARRETT_POW10_MAXX }
 
     val denom = POW10[POW5_64_BASE + pow5]
@@ -26,36 +26,36 @@ internal fun barrettDivModPow5(z: C256, x: C256, pow5: Int): Long {
     val xBitLen = x.bitLen
     val remainder = when {
         xBitLen <= 64 ->
-            barrettDivMod_64(z, x.dw0, denom, mu)
+            barrettDivRem_64(z, x.dw0, denom, mu)
 
         pow5 <= 4 -> when {
 
             xBitLen <= 118 ->
-                barrettDivMod_54_118(z, x, denom, mu)
+                barrettDivRem_54_118(z, x, denom, mu)
 
             xBitLen <= 172 ->
-                barrettDivMod_54_172(z, x, denom, mu)
+                barrettDivRem_54_172(z, x, denom, mu)
 
             xBitLen <= 226 ->
-                barrettDivMod_54_226(z, x, denom, mu)
+                barrettDivRem_54_226(z, x, denom, mu)
 
             else ->
-                barrettDivMod_54_256(z, x, denom, mu)
+                barrettDivRem_54_256(z, x, denom, mu)
         }
 
         xBitLen <= 128 ->
-            barrettDivMod_32_128(z, x, denom, mu)
+            barrettDivRem_32_128(z, x, denom, mu)
 
         xBitLen <= 192 ->
-            barrettDivMod_32_192(z, x, denom, mu)
+            barrettDivRem_32_192(z, x, denom, mu)
 
         else ->
-            barrettDivMod_32_256(z, x, denom, mu)
+            barrettDivRem_32_256(z, x, denom, mu)
     }
     return remainder
 }
 
-private fun barrettDivMod_64(q: C256, dw0: Long, denom: Long, mu: Long): Long {
+private fun barrettDivRem_64(q: C256, dw0: Long, denom: Long, mu: Long): Long {
     val dwG = dw0
 
     val qHatG = unsignedMulHi(dwG, mu)
@@ -71,7 +71,7 @@ private fun barrettDivMod_64(q: C256, dw0: Long, denom: Long, mu: Long): Long {
     return remainder
 }
 
-internal fun barrettDivMod_32_256(q: C256, x: C256, denom: Long, mu: Long): Long {
+internal fun barrettDivRem_32_256(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1;
@@ -144,7 +144,7 @@ internal fun barrettDivMod_32_256(q: C256, x: C256, denom: Long, mu: Long): Long
     return remainder
 }
 
-private fun barrettDivMod_32_192(q: C256, x: C256, denom: Long, mu: Long): Long {
+private fun barrettDivRem_32_192(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1;
@@ -199,7 +199,7 @@ private fun barrettDivMod_32_192(q: C256, x: C256, denom: Long, mu: Long): Long 
     return remainder
 }
 
-internal fun barrettDivMod_32_128(q: C256, x: C256, denom: Long, mu: Long): Long {
+internal fun barrettDivRem_32_128(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1
@@ -236,7 +236,7 @@ internal fun barrettDivMod_32_128(q: C256, x: C256, denom: Long, mu: Long): Long
     return remainder
 }
 
-private fun barrettDivMod_54_256(q: C256, x: C256, denom: Long, mu: Long): Long {
+private fun barrettDivRem_54_256(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1;
@@ -293,7 +293,7 @@ private fun barrettDivMod_54_256(q: C256, x: C256, denom: Long, mu: Long): Long 
     return remainder
 }
 
-private fun barrettDivMod_54_226(q: C256, x: C256, denom: Long, mu: Long): Long {
+private fun barrettDivRem_54_226(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1;
@@ -342,7 +342,7 @@ private fun barrettDivMod_54_226(q: C256, x: C256, denom: Long, mu: Long): Long 
     return remainder
 }
 
-private fun barrettDivMod_54_172(q: C256, x: C256, denom: Long, mu: Long): Long {
+private fun barrettDivRem_54_172(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1;
@@ -381,7 +381,7 @@ private fun barrettDivMod_54_172(q: C256, x: C256, denom: Long, mu: Long): Long 
     return remainder
 }
 
-private fun barrettDivMod_54_118(q: C256, x: C256, denom: Long, mu: Long): Long {
+private fun barrettDivRem_54_118(q: C256, x: C256, denom: Long, mu: Long): Long {
 
     val dw0 = x.dw0;
     val dw1 = x.dw1

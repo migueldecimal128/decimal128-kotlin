@@ -9,7 +9,7 @@ internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int, pentad: Pentad): Resi
         if (xBitLen <= 64)
             return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
         if (pow10 < BARRETT_POW10_MAXX)
-            return barrettDivPow10(z, x, pow10)
+            return barrettDivPow10Residue(z, x, pow10)
     }
     val pow10BitLen = pow10BitLen(pow10)
     if (xBitLen < pow10BitLen) {

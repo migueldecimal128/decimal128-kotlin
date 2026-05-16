@@ -33,7 +33,7 @@ internal fun c128ScaleDownPow10(resultPentad: Pentad, dw1: Long, dw0: Long, pow1
         return residue
     }
     if (pow10 < BARRETT_POW10_MAXX)
-        return barrettDivPow10(resultPentad, dw1, dw0, pow10)
+        return barrettDivPow10Residue(resultPentad, dw1, dw0, pow10)
 
     val tmps = DecContext.current().tmps
     val t = tmps.mdecDivRemPowCtzd
@@ -45,7 +45,7 @@ internal fun c128ScaleDownPow10(resultPentad: Pentad, dw1: Long, dw0: Long, pow1
     return residue
 }
 
-private fun barrettDivPow10(result: Pentad, dw1: Long, dw0: Long, pow10: Int): Residue {
+private fun barrettDivPow10Residue(result: Pentad, dw1: Long, dw0: Long, pow10: Int): Residue {
     val lowBits = dw0 and ((1L shl pow10) - 1)
     val shifted1 = dw1 ushr pow10
     val shifted0 = (dw1 shl (64 - pow10)) or (dw0 ushr pow10)

@@ -136,9 +136,9 @@ internal object DivDirect {
         return rem
     }
 
-    fun divModX32(z: C256?, x: C256, y0: Long): Long {
+    fun divRemX32(z: C256?, x: C256, y0: Long): Long {
         if ((y0 ushr 16) == 0L)
-            return divModX16(z, x, y0)
+            return divRemX16(z, x, y0)
         val x0 = x.dw0; val x1 = x.dw1
         val x2 = x.dw2; val x3 = x.dw3
         val xBitLen = x.bitLen
@@ -154,7 +154,7 @@ internal object DivDirect {
         throw IllegalArgumentException()
     }
 
-    fun divModX16(z: C256?, x: C256, y0: Long): Long {
+    fun divRemX16(z: C256?, x: C256, y0: Long): Long {
         val x0 = x.dw0; val x1 = x.dw1
         val x2 = x.dw2; val x3 = x.dw3
         val xBitLen = x.bitLen

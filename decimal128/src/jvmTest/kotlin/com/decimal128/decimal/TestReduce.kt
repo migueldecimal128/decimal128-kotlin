@@ -98,7 +98,7 @@ class TestReduce {
         var r = 0L // remainder
         do {
             val powStep = min(ntzRemaining, BARRETT_POW5_MU_MAXX - 1)
-            r = barrettDivModPow5(coeffReduceDivTmp, coeffReduceDivTmp, powStep)
+            r = barrettDivPow5Rem(coeffReduceDivTmp, coeffReduceDivTmp, powStep)
             if (r != 0L) {
                 val rReduction = calcReductionPow5_64(r, ntzRemaining)
                 ntzRemaining -= rReduction

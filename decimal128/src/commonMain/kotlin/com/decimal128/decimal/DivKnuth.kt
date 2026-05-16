@@ -20,7 +20,7 @@ private const val VN = 10
 private const val Q = 18
 private const val BCE = 0x1F
 
-internal fun divKnuth(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArray): Residue {
+internal fun knuthDivRem(quot: C256?, rem: C256?, x: C256, y: C256, knuthD: IntArray): Residue {
     verify { c256GTOne(y) }
     verify { c256UnscaledCompare(x, y) > 0 }
     check(knuthD.size == 32)
@@ -172,7 +172,7 @@ private inline fun compareRemainderDoubled(x: C256, knuthD: IntArray): Int {
  *
  * returns the remainder, not the Residue
  */
-internal fun divKnuthDivModX64(quot: C256?, x: C256, y0: Long, knuthD: IntArray): Long {
+internal fun knuthDivRemX64(quot: C256?, x: C256, y0: Long, knuthD: IntArray): Long {
     verify { (y0 ushr 32) != 0L }
     verify { x.bitLen > 64 }
     check(knuthD.size == 32)
