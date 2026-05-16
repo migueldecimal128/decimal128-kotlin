@@ -7,7 +7,7 @@ internal fun c256SetDivPow10(z: C256, x: C256, pow10: Int, pentad: Pentad): Resi
     val xBitLen = x.bitLen
     if (pow10 < MAGIC_POW10_M_MAXX) {
         if (xBitLen <= 64)
-            return DivMagic.magicDivPow10_64(z, x.dw0, pow10)
+            return DivMagic.magicDivPow10Residue(z, x.dw0, pow10)
         if (pow10 < BARRETT_POW10_MAXX)
             return barrettDivPow10Residue(z, x, pow10)
     }

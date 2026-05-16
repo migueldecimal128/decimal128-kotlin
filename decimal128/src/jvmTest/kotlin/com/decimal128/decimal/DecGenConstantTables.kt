@@ -10,7 +10,7 @@ import kotlin.test.fail
 
 class DecGenConstantTables {
 
-    val verbose = false
+    val verbose = true
 
     val resourceFilePath = "src/commonMain/resources/com/decimal128/decimal/decimal128_tables.bin"
     val staticConstPath = "src/commonMain/resources/com/decimal128/decimal/Decimal128Tables.kt"
@@ -161,18 +161,15 @@ class DecGenConstantTables {
     private fun initBarrett() {
         // initialize Barrett division
         val biTwoPow64 = BigInt.Companion.ONE.shl(64)
-        var biPow5 = BigInt.Companion.ONE
-
-        // mu for 10**0 == 0 ... used for checking div by 1 case
-        for (i in 1..<BARRETT_POW10_MAXX) {
-            biPow5 *= 5
-            val mu5 = biTwoPow64 / biPow5
-            X_DWORD_TABLES[BARRETT_POW5_MU_BASE + i] = mu5.toLong()
+        if (verbose) {
+            println("initBarrett()")
         }
         for (i in 1..<BARRETT_POW5_MU_MAXX) {
-            val t = BigInt.Companion.fromUnsigned(X_DWORD_TABLES[POW5_64_BASE + i])
+            val t = BigInt.fromUnsigned(X_DWORD_TABLES[POW5_64_BASE + i])
             val mu = biTwoPow64 / t
             X_DWORD_TABLES[BARRETT_POW5_MU_BASE + i] = mu.toLong()
+            if (verbose)
+                println("${mu.toLong()}, // $i")
         }
     }
 
